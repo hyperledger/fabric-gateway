@@ -1,0 +1,37 @@
+/*
+Copyright 2020 IBM All Rights Reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
+syntax = "proto3";
+
+option go_package = "github.com/hyperledger/fabric-gateway/gateway";
+option java_multiple_files = true;
+option java_package = "org.hyperledger.fabric-gateway.gateway";
+option java_outer_classname = "GatewayProto";
+
+package gateway;
+
+service Gateway {
+    rpc SubmitTransaction(Transaction) returns (Response) {}
+    rpc EvaluateTransaction(Transaction) returns (Response) {}
+}
+
+message Transaction {
+    Identity id = 1;
+    string channel = 2;
+    string chaincodeID = 3;
+    string txnName = 4;
+    repeated string args = 5;
+}
+
+message Identity {
+    string msp = 1;
+    string cert = 2;
+    string key = 3;
+}
+
+message Response {
+    bytes value = 1;
+}
