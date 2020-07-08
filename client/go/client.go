@@ -25,7 +25,7 @@ func main() {
 	defer conn.Close()
 	client := pb.NewGatewayClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
 	identity := &pb.Identity{
@@ -53,6 +53,8 @@ func main() {
 	}
 	doit(client.SubmitTransaction(ctx, txn))
 
+	time.Sleep(5 * time.Second)
+
 	txn.TxnName = "queryCar"
 	txn.Args = []string{"CAR10"}
 	doit(client.EvaluateTransaction(ctx, txn))
@@ -60,6 +62,8 @@ func main() {
 	txn.TxnName = "changeCarOwner"
 	txn.Args = []string{"CAR10", "Archie"}
 	doit(client.SubmitTransaction(ctx, txn))
+
+	time.Sleep(5 * time.Second)
 
 	txn.TxnName = "queryCar"
 	txn.Args = []string{"CAR10"}
