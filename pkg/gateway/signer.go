@@ -13,19 +13,19 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/msp"
 	"github.com/hyperledger/fabric/bccsp/utils"
 	"github.com/pkg/errors"
 )
 
-type signer struct {
+type Signer struct {
 	mspid      string
 	cert       []byte
 	privateKey *ecdsa.PrivateKey
 }
 
-func (si *signer) Sign(msg []byte) ([]byte, error) {
+func (si Signer) Sign(msg []byte) ([]byte, error) {
 	// Before signing, we need to hash our message
 	// The hash is what we actually sign
 	msgHash := sha256.New()
@@ -51,7 +51,7 @@ func (si *signer) Sign(msg []byte) ([]byte, error) {
 	return utils.MarshalECDSASignature(r, s)
 }
 
-func (si *signer) Serialize() ([]byte, error) {
+func (si Signer) Serialize() ([]byte, error) {
 	serializedIdentity := &msp.SerializedIdentity{
 		Mspid:   si.mspid,
 		IdBytes: si.cert,
@@ -59,7 +59,7 @@ func (si *signer) Serialize() ([]byte, error) {
 	return proto.Marshal(serializedIdentity)
 }
 
-func createSigner(mspid string, certPem string, keyPem string) (*signer, error) {
+func CreateSigner(mspid string, certPem string, keyPem string) (*Signer, error) {
 	privPem, _ := pem.Decode([]byte(keyPem))
 
 	if privPem.Type != "PRIVATE KEY" {
@@ -81,7 +81,7 @@ func createSigner(mspid string, certPem string, keyPem string) (*signer, error) 
 		return nil, errors.New("unable to cast private key")
 	}
 
-	return &signer{
+	return &Signer{
 		mspid:      mspid,
 		cert:       []byte(certPem),
 		privateKey: privateKey,

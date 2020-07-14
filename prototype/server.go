@@ -50,7 +50,7 @@ func main() {
 		"connection-org1.yaml",
 	)
 
-	endorserClients, err := connectToPeers()
+	endorserClients, deliverClients, err := connectToPeers()
 	if err != nil {
 		log.Fatalf("failed to connect to peers: %s", err)
 	}
@@ -60,7 +60,7 @@ func main() {
 		log.Fatalf("failed to connect to orderer: %s", err)
 	}
 
-	gwServer, _ := gateway.NewGatewayServer(ccpPath, endorserClients, broadcastClient)
+	gwServer, _ := gateway.NewGatewayServer(ccpPath, endorserClients, deliverClients, broadcastClient)
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterGatewayServer(grpcServer, gwServer)
@@ -68,8 +68,9 @@ func main() {
 	grpcServer.Serve(lis)
 }
 
-func connectToPeers() ([]peer.EndorserClient, error) {
+func connectToPeers() ([]peer.EndorserClient, []peer.DeliverClient, error) {
 	var endorserClients []peer.EndorserClient
+	var deliverClients []peer.DeliverClient
 	// make client connection to peer
 	// organizations/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
 	pemPath := filepath.Join(
@@ -85,13 +86,14 @@ func connectToPeers() ([]peer.EndorserClient, error) {
 	)
 	peerCreds, err := credentials.NewClientTLSFromFile(pemPath, "")
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to read credentials: ")
+		return nil, nil, errors.Wrap(err, "failed to read credentials: ")
 	}
 	peerConn, err := grpc.Dial(peerURLs[0], grpc.WithTransportCredentials(peerCreds))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to connect to peer: ")
+		return nil, nil, errors.Wrap(err, "failed to connect to peer: ")
 	}
 	endorserClients = append(endorserClients, peer.NewEndorserClient(peerConn))
+	deliverClients = append(deliverClients, peer.NewDeliverClient(peerConn))
 
 	pemPath2 := filepath.Join(
 		"..",
@@ -106,15 +108,16 @@ func connectToPeers() ([]peer.EndorserClient, error) {
 	)
 	peerCreds2, err := credentials.NewClientTLSFromFile(pemPath2, "")
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to read credentials: ")
+		return nil, nil, errors.Wrap(err, "failed to read credentials: ")
 	}
 	peerConn2, err := grpc.Dial(peerURLs[1], grpc.WithTransportCredentials(peerCreds2))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to connect to peer: ")
+		return nil, nil, errors.Wrap(err, "failed to connect to peer: ")
 	}
 	endorserClients = append(endorserClients, peer.NewEndorserClient(peerConn2))
+	deliverClients = append(deliverClients, peer.NewDeliverClient(peerConn2))
 
-	return endorserClients, nil
+	return endorserClients, deliverClients, nil
 }
 
 func connectToOrderer() (orderer.AtomicBroadcast_BroadcastClient, error) {

@@ -4,6 +4,9 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+// compile using
+// protoc -I. -I$GOPATH/src/github.com/hyperledger/fabric-protos --go_out=plugins=grpc:. --go_opt=paths=source_relative protos/gateway.proto
+
 syntax = "proto3";
 
 option go_package = "github.com/hyperledger/fabric-gateway/gateway";
@@ -11,11 +14,20 @@ option java_multiple_files = true;
 option java_package = "org.hyperledger.fabric-gateway.gateway";
 option java_outer_classname = "GatewayProto";
 
-package gateway;
+package protos;
+
+import "peer/proposal.proto";
+import "common/common.proto";
 
 service Gateway {
-    rpc SubmitTransaction(Transaction) returns (Response) {}
-    rpc EvaluateTransaction(Transaction) returns (Response) {}
+    // prototype 1
+    rpc SubmitTransaction(Transaction) returns (Result) {}
+    rpc EvaluateTransaction(Transaction) returns (Result) {}
+
+    // prototype 2
+    rpc Prepare(SignedProposal) returns (PreparedTransaction) {}
+    rpc Commit(PreparedTransaction) returns (stream Event) {}
+    rpc Evaluate(SignedProposal) returns (Result) {}
 }
 
 message Transaction {
@@ -32,6 +44,19 @@ message Identity {
     string key = 3;
 }
 
-message Response {
+// The value that is returned by the transaction function
+message Result {
+    bytes value = 1;
+}
+
+// The set of transaction responses from the endorsing peers for signing by the client
+// before submitting to ordering service (via gateway)
+message PreparedTransaction {
+    string txId = 1;
+    Result response = 2;
+    common.Envelope envelope = 3;
+}
+
+message Event {
     bytes value = 1;
 }
