@@ -18,48 +18,48 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (gs *GatewayServer) createProposal(txn *pb.Transaction, signer *Signer) (*peer.Proposal, error) {
-	if txn.ChaincodeID == "" {
-		return nil, errors.New("ChaincodeID is required")
-	}
+// func (gs *GatewayServer) createProposal(txn *pb.Transaction, signer *Signer) (*peer.Proposal, error) {
+// 	if txn.ChaincodeID == "" {
+// 		return nil, errors.New("ChaincodeID is required")
+// 	}
 
-	if txn.TxnName == "" {
-		return nil, errors.New("Fcn is required")
-	}
+// 	if txn.TxnName == "" {
+// 		return nil, errors.New("Fcn is required")
+// 	}
 
-	// Add function name to arguments
-	argsArray := make([][]byte, len(txn.Args)+1)
-	argsArray[0] = []byte(txn.TxnName)
-	for i, arg := range txn.Args {
-		argsArray[i+1] = []byte(arg)
-	}
+// 	// Add function name to arguments
+// 	argsArray := make([][]byte, len(txn.Args)+1)
+// 	argsArray[0] = []byte(txn.TxnName)
+// 	for i, arg := range txn.Args {
+// 		argsArray[i+1] = []byte(arg)
+// 	}
 
-	// create invocation spec to target a chaincode with arguments
-	ccis := &peer.ChaincodeInvocationSpec{
-		ChaincodeSpec: &peer.ChaincodeSpec{
-			Type:        peer.ChaincodeSpec_NODE,
-			ChaincodeId: &peer.ChaincodeID{Name: txn.ChaincodeID},
-			Input:       &peer.ChaincodeInput{Args: argsArray},
-		},
-	}
+// 	// create invocation spec to target a chaincode with arguments
+// 	ccis := &peer.ChaincodeInvocationSpec{
+// 		ChaincodeSpec: &peer.ChaincodeSpec{
+// 			Type:        peer.ChaincodeSpec_NODE,
+// 			ChaincodeId: &peer.ChaincodeID{Name: txn.ChaincodeID},
+// 			Input:       &peer.ChaincodeInput{Args: argsArray},
+// 		},
+// 	}
 
-	creator, err := signer.Serialize()
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to serialize Signer: ")
-	}
+// 	creator, err := signer.Serialize()
+// 	if err != nil {
+// 		return nil, errors.Wrap(err, "Failed to serialize Signer: ")
+// 	}
 
-	proposal, _, err := protoutil.CreateChaincodeProposal(
-		common.HeaderType_ENDORSER_TRANSACTION,
-		txn.Channel,
-		ccis,
-		creator,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create chaincode proposal")
-	}
+// 	proposal, _, err := protoutil.CreateChaincodeProposal(
+// 		common.HeaderType_ENDORSER_TRANSACTION,
+// 		txn.Channel,
+// 		ccis,
+// 		creator,
+// 	)
+// 	if err != nil {
+// 		return nil, errors.Wrap(err, "failed to create chaincode proposal")
+// 	}
 
-	return proposal, nil
-}
+// 	return proposal, nil
+// }
 
 func (gs *GatewayServer) signProposal(proposal *peer.Proposal, signer *Signer) (*peer.SignedProposal, error) {
 	proposalBytes, err := proto.Marshal(proposal)

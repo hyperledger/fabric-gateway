@@ -22,7 +22,12 @@ import (
 )
 
 func (gs *GatewayServer) Evaluate(ctx context.Context, signedProposal *peer.SignedProposal) (*pb.Result, error) {
-	response, err := gs.endorserClients[0].ProcessProposal(ctx, signedProposal) // choose suitable peer
+	channelHeader, err := getChannelHeaderFromSignedProposal(signedProposal)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to unpack channel header: ")
+	}
+	endorsers := gs.registry.getEndorsers(channelHeader.ChannelId)
+	response, err := endorsers[0].ProcessProposal(ctx, signedProposal) // choose suitable peer
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to evaluate transaction: ")
 	}
@@ -36,11 +41,16 @@ func (gs *GatewayServer) Prepare(ctx context.Context, signedProposal *peer.Signe
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal signed proposal")
 	}
+	channelHeader, err := getChannelHeaderFromSignedProposal(signedProposal)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to unpack channel header: ")
+	}
+	endorsers := gs.registry.getEndorsers(channelHeader.ChannelId)
 
 	var responses []*peer.ProposalResponse
 	// send to all the endorsers
-	for i := 0; i < len(gs.endorserClients); i++ {
-		response, err := gs.endorserClients[i].ProcessProposal(ctx, signedProposal)
+	for i := 0; i < len(endorsers); i++ {
+		response, err := endorsers[i].ProcessProposal(ctx, signedProposal)
 		if err != nil {
 			return nil, errors.Wrap(err, "Failed to process proposal: ")
 		}
@@ -50,18 +60,6 @@ func (gs *GatewayServer) Prepare(ctx context.Context, signedProposal *peer.Signe
 	env, err := createUnsignedTx(&proposal, responses...)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to assemble transaction: ")
-	}
-
-	// get the txId
-	var header common.Header
-	err = proto.Unmarshal(proposal.Header, &header)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to unmarshal header: ")
-	}
-	var channelHeader common.ChannelHeader
-	err = proto.Unmarshal(header.ChannelHeader, &channelHeader)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to unmarshal channel header: ")
 	}
 
 	retVal, err := getValueFromResponse(responses[0])
@@ -78,15 +76,22 @@ func (gs *GatewayServer) Prepare(ctx context.Context, signedProposal *peer.Signe
 }
 
 func (gs *GatewayServer) Commit(txn *pb.PreparedTransaction, cs pb.Gateway_CommitServer) error {
-	done := make(chan bool)
-	go listenForTxEvents(gs.deliverClients, "mychannel", txn.TxId, gs.gatewaySigner, done)
+	channelHeader, err := getChannelHeaderFromEnvelope(txn.Envelope)
+	if err != nil {
+		return errors.Wrap(err, "Failed to unpack channel header: ")
+	}
+	deliverers := gs.registry.getDeliverers(channelHeader.ChannelId)
+	orderers := gs.registry.getOrderers(channelHeader.ChannelId)
 
-	err := gs.broadcastClient.Send(txn.Envelope)
+	done := make(chan bool)
+	go listenForTxEvents(deliverers, "mychannel", txn.TxId, gs.gatewaySigner, done)
+
+	err = orderers[0].Send(txn.Envelope)
 	if err != nil {
 		return errors.Wrap(err, "failed to send envelope to orderer")
 	}
 
-	oresp, err := gs.broadcastClient.Recv()
+	oresp, err := orderers[0].Recv()
 	if err == io.EOF {
 		return errors.Wrap(err, "failed to to get response from orderer")
 	}
@@ -108,4 +113,37 @@ func (gs *GatewayServer) Commit(txn *pb.PreparedTransaction, cs pb.Gateway_Commi
 	}
 
 	return nil
+}
+
+func getChannelHeaderFromSignedProposal(signedProposal *peer.SignedProposal) (*common.ChannelHeader, error) {
+	var proposal peer.Proposal
+	err := proto.Unmarshal(signedProposal.ProposalBytes, &proposal)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal signed proposal")
+	}
+	var header common.Header
+	err = proto.Unmarshal(proposal.Header, &header)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to unmarshal header: ")
+	}
+	var channelHeader common.ChannelHeader
+	err = proto.Unmarshal(header.ChannelHeader, &channelHeader)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to unmarshal channel header: ")
+	}
+	return &channelHeader, nil
+}
+
+func getChannelHeaderFromEnvelope(envelope *common.Envelope) (*common.ChannelHeader, error) {
+	var payload common.Payload
+	err := proto.Unmarshal(envelope.Payload, &payload)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal signed proposal")
+	}
+	var channelHeader common.ChannelHeader
+	err = proto.Unmarshal(payload.Header.ChannelHeader, &channelHeader)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to unmarshal channel header: ")
+	}
+	return &channelHeader, nil
 }

@@ -20,28 +20,9 @@ import "peer/proposal.proto";
 import "common/common.proto";
 
 service Gateway {
-    // prototype 1
-    rpc SubmitTransaction(Transaction) returns (Result) {}
-    rpc EvaluateTransaction(Transaction) returns (Result) {}
-
-    // prototype 2
     rpc Prepare(SignedProposal) returns (PreparedTransaction) {}
     rpc Commit(PreparedTransaction) returns (stream Event) {}
     rpc Evaluate(SignedProposal) returns (Result) {}
-}
-
-message Transaction {
-    Identity id = 1;
-    string channel = 2;
-    string chaincodeID = 3;
-    string txnName = 4;
-    repeated string args = 5;
-}
-
-message Identity {
-    string msp = 1;
-    string cert = 2;
-    string key = 3;
 }
 
 // The value that is returned by the transaction function
