@@ -59,7 +59,7 @@ func NewGatewayServer(config Config) (*GatewayServer, error) {
 		ClientTlsCertHash: fabutil.ComputeSHA256(clientTLSCert.Certificate[0]),
 	}
 
-	registry := newRegistry()
+	registry := newRegistry(signer)
 
 	// seed the registry with the 'bootstrap peer' for invoking discovery
 	registry.addMSP(config.MspID(), config.BootstrapPeer().TLSCert)

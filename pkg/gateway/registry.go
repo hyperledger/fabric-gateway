@@ -13,9 +13,12 @@ import (
 	"os"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/discovery"
 	"github.com/hyperledger/fabric-protos-go/orderer"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/hyperledger/fabric/protoutil"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -23,6 +26,7 @@ import (
 )
 
 type registry struct {
+	signer   *Signer
 	peers    map[string]peerClient
 	orderers map[string]ordererClient
 	msps     map[string]mspInfo
@@ -59,8 +63,9 @@ type endpoint struct {
 	hostnameOverride string
 }
 
-func newRegistry() *registry {
+func newRegistry(signer *Signer) *registry {
 	return &registry{
+		signer:   signer,
 		peers:    make(map[string]peerClient),
 		orderers: make(map[string]ordererClient),
 		msps:     make(map[string]mspInfo),
@@ -84,9 +89,17 @@ func (reg *registry) addPeer(channel string, mspid string, host string, port uin
 		if err != nil {
 			return errors.Wrap(err, "failed to connect to peer: ")
 		}
+		ec := peer.NewEndorserClient(conn)
+		// query channels for this peer
+		channels, err := reg.getChannels(ec)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(url, channels)
+
 		reg.peers[url] = peerClient{
 			endpoint:        ep,
-			endorserClient:  peer.NewEndorserClient(conn),
+			endorserClient:  ec,
 			deliverClient:   peer.NewDeliverClient(conn),
 			discoveryClient: discovery.NewDiscoveryClient(conn),
 		}
@@ -195,4 +208,64 @@ func translateUrl(url string) string {
 		return "localhost:" + parts[1]
 	}
 	return url
+}
+
+func (reg *registry) getChannels(target peer.EndorserClient) ([]string, error) {
+	// create invocation spec to target a chaincode with arguments
+	ccis := &peer.ChaincodeInvocationSpec{
+		ChaincodeSpec: &peer.ChaincodeSpec{
+			ChaincodeId: &peer.ChaincodeID{Name: "cscc"},
+			Input:       &peer.ChaincodeInput{Args: [][]byte{[]byte("GetChannels")}},
+		},
+	}
+
+	creator, err := reg.signer.Serialize()
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to serialize Signer: ")
+	}
+
+	proposal, _, err := protoutil.CreateChaincodeProposal(
+		common.HeaderType_ENDORSER_TRANSACTION,
+		"",
+		ccis,
+		creator,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create chaincode proposal")
+	}
+
+	proposalBytes, err := proto.Marshal(proposal)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal chaincode proposal")
+	}
+
+	signature, err := reg.signer.Sign(proposalBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	signedProposal := &peer.SignedProposal{
+		ProposalBytes: proposalBytes,
+		Signature:     signature,
+	}
+
+	response, err := target.ProcessProposal(context.TODO(), signedProposal)
+	if err != nil {
+		return nil, err
+	}
+
+	cqr := &peer.ChannelQueryResponse{}
+	err = proto.Unmarshal(response.GetResponse().Payload, cqr)
+	if err != nil {
+		return nil, err
+	}
+
+	channelNames := make([]string, 0)
+
+	for _, channel := range cqr.Channels {
+		channelNames = append(channelNames, channel.ChannelId)
+		fmt.Println(channel.ChannelId)
+	}
+
+	return channelNames, nil
 }
