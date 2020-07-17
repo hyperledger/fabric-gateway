@@ -8,10 +8,8 @@ package gateway
 
 import (
 	"crypto/tls"
-	"io/ioutil"
-	"path/filepath"
+	"fmt"
 
-	"github.com/hyperledger/fabric-gateway/pkg/util"
 	"github.com/hyperledger/fabric-protos-go/discovery"
 	fabutil "github.com/hyperledger/fabric/common/util"
 	"github.com/pkg/errors"
@@ -23,33 +21,32 @@ type GatewayServer struct {
 	gatewaySigner *Signer
 }
 
-// NewGatewayServer creates a server side implementation of the gateway server grpc
-func NewGatewayServer() (*GatewayServer, error) {
-	idfile := filepath.Join(
-		"..",
-		"..",
-		"fabric-samples",
-		"fabcar",
-		"javascript",
-		"wallet",
-		"events.id",
-	)
+type Config interface {
+	BootstrapPeer() PeerEndpoint
+	MspID() string
+	Certificate() string
+	Key() string
+}
 
-	id, err := util.ReadWalletIdentity(idfile)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to read gateway identity")
-	}
+type PeerEndpoint struct {
+	Host    string
+	Port    uint32
+	TLSCert []byte
+}
+
+// NewGatewayServer creates a server side implementation of the gateway server grpc
+func NewGatewayServer(config Config) (*GatewayServer, error) {
 
 	signer, err := CreateSigner(
-		id.MspID,
-		id.Credentials.Certificate,
-		id.Credentials.Key,
+		config.MspID(),
+		config.Certificate(),
+		config.Key(),
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create gateway identity")
 	}
 
-	clientTLSCert, err := tls.X509KeyPair([]byte(id.Credentials.Certificate), []byte(id.Credentials.Key))
+	clientTLSCert, err := tls.X509KeyPair([]byte(config.Certificate()), []byte(config.Key()))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create tls cert")
 	}
@@ -65,27 +62,12 @@ func NewGatewayServer() (*GatewayServer, error) {
 	registry := newRegistry()
 
 	// seed the registry with the 'bootstrap peer' for invoking discovery
-	// read the TLS root cert for the gateway's org
-	pemPath := filepath.Join(
-		"..",
-		"..",
-		"fabric-samples",
-		"test-network",
-		"organizations",
-		"peerOrganizations",
-		"org1.example.com",
-		"tlsca",
-		"tlsca.org1.example.com-cert.pem",
-	)
-	pem, err := ioutil.ReadFile(pemPath)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to read TLS cert")
-	}
-	registry.addMSP("Org1MSP", pem)
+	registry.addMSP(config.MspID(), config.BootstrapPeer().TLSCert)
 
-	registry.addPeer("mychannel", "Org1MSP", "peer0.org1.example.com", 7051)
+	registry.addPeer("mychannel", config.MspID(), config.BootstrapPeer().Host, config.BootstrapPeer().Port)
 
-	discoveryClient := registry.peers["peer0.org1.example.com:7051"].discoveryClient
+	url := fmt.Sprintf("%s:%d", config.BootstrapPeer().Host, config.BootstrapPeer().Port)
+	discoveryClient := registry.peers[url].discoveryClient
 
 	// hmm, need to know a channel name first
 	chDiscovery := newChannelDiscovery("mychannel", discoveryClient, signer, authInfo, registry)

@@ -7,10 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/hyperledger/fabric-gateway/client/go/sdk"
 	"github.com/hyperledger/fabric-gateway/pkg/gateway"
@@ -19,20 +19,12 @@ import (
 )
 
 func main() {
-	idfile := filepath.Join(
-		"..",
-		"..",
-		"..",
-		"fabric-samples",
-		"fabcar",
-		"javascript",
-		"wallet",
-		"appUser.id",
-	)
+	idPath := flag.String("id", "", "path to the client's wallet identity")
+	flag.Parse()
 
-	id, err := util.ReadWalletIdentity(idfile)
+	id, err := util.ReadWalletIdentity(*idPath)
 	if err != nil {
-		log.Fatalf("failed to read gateway identity: %s", err)
+		log.Fatalf("failed to read client identity: %s", err)
 	}
 
 	signer, err := gateway.CreateSigner(
