@@ -71,8 +71,14 @@ func NewGatewayServer(config Config) (*GatewayServer, error) {
 
 	// hmm, need to know a channel name first
 	chDiscovery := newChannelDiscovery("mychannel", discoveryClient, signer, authInfo, registry)
-	chDiscovery.discoverConfig()
-	chDiscovery.discoverPeers()
+	err = chDiscovery.discoverConfig()
+	if err != nil {
+		fmt.Printf("ERROR discovering config: %s\n", err)
+	}
+	err = chDiscovery.discoverPeers()
+	if err != nil {
+		fmt.Printf("ERROR discovering peers: %s\n", err)
+	}
 
 	return &GatewayServer{
 		authInfo,

@@ -33,6 +33,12 @@ func main() {
 		id.Credentials.Key,
 	)
 
+	// pem, err := ioutil.ReadFile("/Users/acoleman/gopath/src/github.com/hyperledger/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem")
+	// if err != nil {
+	// 	log.Fatalf("failed to read tls cert: %s", err)
+	// }
+
+	// gw, err := sdk.ConnectTLS("localhost:6051", signer, pem)
 	gw, err := sdk.Connect("localhost:1234", signer)
 	defer gw.Close()
 

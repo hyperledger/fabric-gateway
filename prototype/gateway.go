@@ -25,13 +25,31 @@ func main() {
 	mspid := flag.String("m", "", "MSP ID of org")
 	tlsPath := flag.String("tlscert", "", "path to the org's TLS Certificate")
 	idPath := flag.String("id", "", "path to the gateway's wallet identity")
+	certPath := flag.String("cert", "", "path to the gateway's Certificate")
+	keyPath := flag.String("key", "", "path to the gateway's private key")
 
 	flag.Parse()
 
+	var cert, key string
 	// extract bootstrap config from command line flags
-	id, err := util.ReadWalletIdentity(*idPath)
-	if err != nil {
-		log.Fatalf("failed to read gateway identity: %s", err)
+	if *idPath != "" {
+		id, err := util.ReadWalletIdentity(*idPath)
+		if err != nil {
+			log.Fatalf("failed to read gateway identity: %s", err)
+		}
+		cert = id.Credentials.Certificate
+		key = id.Credentials.Key
+	} else {
+		f, err := ioutil.ReadFile(*certPath)
+		if err != nil {
+			log.Fatalf("Failed to read gateway cert: %s", err)
+		}
+		cert = string(f)
+		f, err = ioutil.ReadFile(*keyPath)
+		if err != nil {
+			log.Fatalf("Failed to read gateway key: %s", err)
+		}
+		key = string(f)
 	}
 
 	pem, err := ioutil.ReadFile(*tlsPath)
@@ -42,8 +60,8 @@ func main() {
 	config := &bootstrapconfig{
 		bootstrapPeer: &gateway.PeerEndpoint{*host, uint32(*port), pem},
 		mspid:         *mspid,
-		cert:          id.Credentials.Certificate,
-		key:           id.Credentials.Key,
+		cert:          cert,
+		key:           key,
 	}
 
 	// setup server and listen

@@ -8,6 +8,7 @@ package sdk
 
 import (
 	"context"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"time"
@@ -16,6 +17,7 @@ import (
 	pb "github.com/hyperledger/fabric-gateway/protos"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type Gateway struct {
@@ -42,6 +44,26 @@ type Transaction struct {
 
 func Connect(url string, signer *gateway.Signer) (*Gateway, error) {
 	conn, err := grpc.Dial(url, grpc.WithInsecure())
+	if err != nil {
+		return nil, errors.Wrap(err, "fail to dial: ")
+	}
+	client := pb.NewGatewayClient(conn)
+
+	return &Gateway{
+		url:    url,
+		signer: signer,
+		conn:   conn,
+		client: client,
+	}, nil
+}
+
+func ConnectTLS(url string, signer *gateway.Signer, tlscert []byte) (*Gateway, error) {
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(tlscert) {
+		return nil, errors.New("Failed to append certificate to client credentials")
+	}
+	creds := credentials.NewClientTLSFromCert(certPool, "localhost")
+	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, errors.Wrap(err, "fail to dial: ")
 	}

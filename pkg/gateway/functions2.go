@@ -83,6 +83,10 @@ func (gs *GatewayServer) Commit(txn *pb.PreparedTransaction, cs pb.Gateway_Commi
 	deliverers := gs.registry.getDeliverers(channelHeader.ChannelId)
 	orderers := gs.registry.getOrderers(channelHeader.ChannelId)
 
+	if len(orderers) == 0 {
+		return errors.New("no orderers discovered")
+	}
+
 	done := make(chan bool)
 	go listenForTxEvents(deliverers, "mychannel", txn.TxId, gs.gatewaySigner, done)
 
