@@ -38,11 +38,12 @@ func createProposal(txn *Transaction, args []string, signer *gateway.Signer) (*p
 		return nil, errors.Wrap(err, "Failed to serialize Signer: ")
 	}
 
-	proposal, _, err := protoutil.CreateChaincodeProposal(
+	proposal, _, err := protoutil.CreateChaincodeProposalWithTransient(
 		common.HeaderType_ENDORSER_TRANSACTION,
 		txn.contract.network.name,
 		ccis,
 		creator,
+		txn.transient,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create chaincode proposal")

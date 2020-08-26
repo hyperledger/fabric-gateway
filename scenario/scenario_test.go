@@ -8,7 +8,6 @@ package scenario
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -22,6 +21,7 @@ import (
 	messages "github.com/cucumber/messages-go/v10"
 	"github.com/hyperledger/fabric-gateway/client/go/sdk"
 	"github.com/hyperledger/fabric-gateway/pkg/gateway"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -40,28 +40,26 @@ var contract *sdk.Contract
 var transaction *sdk.Transaction
 var transactionResult []byte
 
-func FeatureContext(s *godog.Suite) {
+func InitializeTestSuite(ctx *godog.TestSuiteContext) {
+	ctx.AfterSuite(func() {
+		stopGateway()
+		stopFabric()
+	})
+}
+
+func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I connect the gateway$`, iConnectTheGateway)
 	s.Step(`^I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organizations on channel (\w+) with endorsement policy ([^ ]+) and arguments(.+)$`, deployChaincode)
 	s.Step(`^I have a gateway for (.+)$`, startGateway)
-	s.Step(`^I have a gateway as user User(\d+) using the tls connection profile$`, iHaveAGatewayAsUserUserUsingTheTlsConnectionProfile)
+	s.Step(`^I have a gateway as user User(\d+) using the tls connection profile$`, haveGateway)
 	s.Step(`^I have created and joined all channels from the tls connection profile$`, createAndJoinChannels)
 	s.Step(`^I have deployed a (\w+) Fabric network$`, haveFabricNetwork)
-	s.Step(`^I prepare a (\w+) transaction$`, prepareTransaction)
+	s.Step(`^I prepare an? (\w+) transaction$`, prepareTransaction)
+	s.Step(`^I set transient data on the transaction to$`, setTransientData)
 	s.Step(`^I (submit|evaluate) the transaction with arguments (.+)$`, actionTransaction)
 	s.Step(`^I use the (\w+) contract$`, useContract)
 	s.Step(`^I use the (\w+) network$`, useNetwork)
 	s.Step(`^the response should be JSON matching$`, theResponseShouldBeJSONMatching)
-	s.AfterSuite(func() {
-		fmt.Println("killing gateway")
-		if gatewayProcess != nil {
-			pgid, err := syscall.Getpgid(gatewayProcess.Process.Pid)
-			if err == nil {
-				syscall.Kill(-pgid, 15)
-			}
-		}
-		stopFabric()
-	})
 }
 
 func startFabric() error {
@@ -100,6 +98,42 @@ func stopFabric() error {
 	return nil
 }
 
+func startGateway(mspid string) error {
+	if gatewayProcess == nil {
+		gatewayProcess = exec.Command(
+			"go", "run", "gateway.go",
+			"-h", "peer0.org1.example.com",
+			"-p", "7051",
+			"-m", mspid,
+			"-cert", "../scenario/fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User2@org1.example.com/msp/signcerts/User2@org1.example.com-cert.pem",
+			"-key", "../scenario/fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User2@org1.example.com/msp/keystore/key.pem",
+			"-tlscert", "../scenario/fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem",
+		)
+		gatewayProcess.Dir = gatewayDir
+		gatewayProcess.Env = append(os.Environ(), "DISCOVERY_AS_LOCALHOST=TRUE")
+		gatewayProcess.Stdout = os.Stdout
+		gatewayProcess.Stderr = os.Stderr
+		gatewayProcess.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+		err := gatewayProcess.Start()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func stopGateway() error {
+	if gatewayProcess != nil {
+		pgid, err := syscall.Getpgid(gatewayProcess.Process.Pid)
+		if err == nil {
+			gatewayProcess = nil
+			return syscall.Kill(-pgid, 15)
+		}
+		return err
+	}
+	return nil
+}
+
 func createCryptoMaterial() error {
 	cmd := exec.Command("./generate.sh")
 	cmd.Dir = "fixtures"
@@ -122,25 +156,23 @@ func deployChaincode(ccType, ccName, version, channelName, policyType, argsJSON 
 		return nil
 	}
 
-	var args []string
-	err := json.Unmarshal([]byte(argsJSON), &args)
-	if err != nil {
-		return err
-	}
-	init := map[string]interface{}{
-		"function": args[0],
-		"Args":     args[1:],
-	}
-	initArg, err := json.Marshal(init)
-
-	fmt.Println(string(initArg))
+	// var args []string
+	// err := json.Unmarshal([]byte(argsJSON), &args)
+	// if err != nil {
+	// 	return err
+	// }
+	// init := map[string]interface{}{
+	// 	"function": args[0],
+	// 	"Args":     args[1:],
+	// }
+	// initArg, err := json.Marshal(init)
 
 	ccPath := "/opt/gopath/src/github.com/chaincode/" + ccType + "/" + ccName
 	ccLabel := ccName + "v" + version
 	ccPackage := ccName + ".tar.gz"
 
 	// org1
-	_, err = dockerCommand(
+	_, err := dockerCommand(
 		"exec", "org1_cli", "peer", "lifecycle", "chaincode", "package", ccPackage,
 		"--lang", ccType,
 		"--label", ccLabel,
@@ -245,29 +277,30 @@ func deployChaincode(ccType, ccName, version, channelName, policyType, argsJSON 
 	return nil
 }
 
-func iHaveAGatewayAsUserUserUsingTheTlsConnectionProfile(arg1 int) error {
-	mspid := "Org1MSP"
-	certPath := "fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem"
-	keyPath := "fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/key.pem"
-	f, err := ioutil.ReadFile(certPath)
-	if err != nil {
-		return err
+func haveGateway(arg1 int) error {
+	if gw == nil {
+		mspid := "Org1MSP"
+		certPath := "fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem"
+		keyPath := "fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/key.pem"
+		f, err := ioutil.ReadFile(certPath)
+		if err != nil {
+			return err
+		}
+		cert := string(f)
+		f, err = ioutil.ReadFile(keyPath)
+		if err != nil {
+			return err
+		}
+		key := string(f)
+
+		signer, err := gateway.CreateSigner(
+			mspid,
+			cert,
+			key,
+		)
+
+		gw, err = sdk.Connect("localhost:1234", signer)
 	}
-	cert := string(f)
-	f, err = ioutil.ReadFile(keyPath)
-	if err != nil {
-		return err
-	}
-	key := string(f)
-
-	signer, err := gateway.CreateSigner(
-		mspid,
-		cert,
-		key,
-	)
-
-	gw, err = sdk.Connect("localhost:1234", signer)
-
 	return nil
 }
 
@@ -344,38 +377,13 @@ func dockerCommand(args ...string) (string, error) {
 	out, err := cmd.CombinedOutput()
 	fmt.Println(string(out))
 	if err != nil {
-		fmt.Println(err)
-		return "", err
+		return "", errors.Wrap(err, string(out))
 	}
 
 	return string(out), nil
 }
 
-func startGateway(mspid string) error {
-	gatewayProcess = exec.Command(
-		"go", "run", "gateway.go",
-		"-h", "peer0.org1.example.com",
-		"-p", "7051",
-		"-m", "Org1MSP",
-		"-cert", "../scenario/fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User2@org1.example.com/msp/signcerts/User2@org1.example.com-cert.pem",
-		"-key", "../scenario/fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User2@org1.example.com/msp/keystore/key.pem",
-		"-tlscert", "../scenario/fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem",
-	)
-	gatewayProcess.Dir = gatewayDir
-	gatewayProcess.Env = append(os.Environ(), "DISCOVERY_AS_LOCALHOST=TRUE")
-	gatewayProcess.Stdout = os.Stdout
-	gatewayProcess.Stderr = os.Stderr
-	gatewayProcess.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	err := gatewayProcess.Start()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func haveFabricNetwork(tlsType string) error {
-	fmt.Println(tlsType)
 	if !fabricRunning {
 		return startFabric()
 	}
@@ -384,6 +392,15 @@ func haveFabricNetwork(tlsType string) error {
 
 func prepareTransaction(txnName string) error {
 	transaction = contract.CreateTransaction(txnName)
+	return nil
+}
+
+func setTransientData(table *messages.PickleStepArgument_PickleTable) error {
+	transient := make(map[string][]byte)
+	for _, row := range table.Rows {
+		transient[row.Cells[0].Value] = []byte(row.Cells[1].Value)
+	}
+	transaction.SetTransient(transient)
 	return nil
 }
 
@@ -402,9 +419,6 @@ func actionTransaction(action, argsJSON string) error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Println(string(transactionResult))
-
 	return nil
 }
 
@@ -419,7 +433,6 @@ func useNetwork(channelName string) error {
 }
 
 func theResponseShouldBeJSONMatching(arg *messages.PickleStepArgument_PickleDocString) error {
-	fmt.Println(arg.GetContent())
 	same, err := JSONEqual([]byte(arg.GetContent()), transactionResult)
 	if err != nil {
 		return err

@@ -38,8 +38,9 @@ type Contract struct {
 }
 
 type Transaction struct {
-	contract *Contract
-	name     string
+	contract  *Contract
+	name      string
+	transient map[string][]byte
 }
 
 func Connect(url string, signer *gateway.Signer) (*Gateway, error) {
@@ -108,6 +109,10 @@ func (ct *Contract) EvaluateTransaction(name string, args ...string) ([]byte, er
 
 func (ct *Contract) SubmitTransaction(name string, args ...string) ([]byte, error) {
 	return ct.CreateTransaction(name).Submit(args...)
+}
+
+func (tx *Transaction) SetTransient(transientData map[string][]byte) {
+	tx.transient = transientData
 }
 
 func (tx *Transaction) Evaluate(args ...string) ([]byte, error) {
