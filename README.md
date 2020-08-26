@@ -14,3 +14,8 @@ To use
 - In a separate command window:
 - `cd ..../fabric-gateway/client/go`
 - `go run client2.go  -id ../../../fabric-samples/fabcar/javascript/wallet/appUser.id`
+
+Running the scenario tests
+- Install Godog (https://github.com/cucumber/godog#install)
+- `cd scenario`
+- Run `godog`

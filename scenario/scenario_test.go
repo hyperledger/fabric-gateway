@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"reflect"
@@ -40,6 +39,30 @@ var network *sdk.Network
 var contract *sdk.Contract
 var transaction *sdk.Transaction
 var transactionResult []byte
+
+func FeatureContext(s *godog.Suite) {
+	s.Step(`^I connect the gateway$`, iConnectTheGateway)
+	s.Step(`^I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organizations on channel (\w+) with endorsement policy ([^ ]+) and arguments(.+)$`, deployChaincode)
+	s.Step(`^I have a gateway for (.+)$`, startGateway)
+	s.Step(`^I have a gateway as user User(\d+) using the tls connection profile$`, iHaveAGatewayAsUserUserUsingTheTlsConnectionProfile)
+	s.Step(`^I have created and joined all channels from the tls connection profile$`, createAndJoinChannels)
+	s.Step(`^I have deployed a (\w+) Fabric network$`, haveFabricNetwork)
+	s.Step(`^I prepare a (\w+) transaction$`, prepareTransaction)
+	s.Step(`^I (submit|evaluate) the transaction with arguments (.+)$`, actionTransaction)
+	s.Step(`^I use the (\w+) contract$`, useContract)
+	s.Step(`^I use the (\w+) network$`, useNetwork)
+	s.Step(`^the response should be JSON matching$`, theResponseShouldBeJSONMatching)
+	s.AfterSuite(func() {
+		fmt.Println("killing gateway")
+		if gatewayProcess != nil {
+			pgid, err := syscall.Getpgid(gatewayProcess.Process.Pid)
+			if err == nil {
+				syscall.Kill(-pgid, 15)
+			}
+		}
+		stopFabric()
+	})
+}
 
 func startFabric() error {
 	if !fabricRunning {
@@ -228,12 +251,12 @@ func iHaveAGatewayAsUserUserUsingTheTlsConnectionProfile(arg1 int) error {
 	keyPath := "fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/key.pem"
 	f, err := ioutil.ReadFile(certPath)
 	if err != nil {
-		log.Fatalf("Failed to read gateway cert: %s", err)
+		return err
 	}
 	cert := string(f)
 	f, err = ioutil.ReadFile(keyPath)
 	if err != nil {
-		log.Fatalf("Failed to read gateway key: %s", err)
+		return err
 	}
 	key := string(f)
 
@@ -416,28 +439,4 @@ func JSONEqual(a, b []byte) (bool, error) {
 		return false, err
 	}
 	return reflect.DeepEqual(j2, j), nil
-}
-
-func FeatureContext(s *godog.Suite) {
-	s.AfterSuite(func() {
-		fmt.Println("killing gateway")
-		if gatewayProcess != nil {
-			pgid, err := syscall.Getpgid(gatewayProcess.Process.Pid)
-			if err == nil {
-				syscall.Kill(-pgid, 15)
-			}
-		}
-		stopFabric()
-	})
-	s.Step(`^I connect the gateway$`, iConnectTheGateway)
-	s.Step(`^I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organizations on channel (\w+) with endorsement policy ([^ ]+) and arguments(.+)$`, deployChaincode)
-	s.Step(`^I have a gateway for (.+)$`, startGateway)
-	s.Step(`^I have a gateway as user User(\d+) using the tls connection profile$`, iHaveAGatewayAsUserUserUsingTheTlsConnectionProfile)
-	s.Step(`^I have created and joined all channels from the tls connection profile$`, createAndJoinChannels)
-	s.Step(`^I have deployed a (\w+) Fabric network$`, haveFabricNetwork)
-	s.Step(`^I prepare a (\w+) transaction$`, prepareTransaction)
-	s.Step(`^I (submit|evaluate) the transaction with arguments (.+)$`, actionTransaction)
-	s.Step(`^I use the (\w+) contract$`, useContract)
-	s.Step(`^I use the (\w+) network$`, useNetwork)
-	s.Step(`^the response should be JSON matching$`, theResponseShouldBeJSONMatching)
 }
