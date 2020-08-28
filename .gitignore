@@ -1,4 +1,5 @@
 .vscode/**
+node_modules
 scenario/fixtures/crypto-material/crypto-config/
 scenario/fixtures/crypto-material/genesis.block
 scenario/fixtures/crypto-material/mychannel.block

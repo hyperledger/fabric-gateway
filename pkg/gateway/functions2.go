@@ -27,6 +27,9 @@ func (gs *GatewayServer) Evaluate(ctx context.Context, signedProposal *peer.Sign
 		return nil, errors.Wrap(err, "Failed to unpack channel header: ")
 	}
 	endorsers := gs.registry.getEndorsers(channelHeader.ChannelId)
+	if len(endorsers) == 0 {
+		return nil, errors.New("No endorsing peers found for channel: " + channelHeader.ChannelId)
+	}
 	response, err := endorsers[0].ProcessProposal(ctx, signedProposal) // choose suitable peer
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to evaluate transaction: ")
