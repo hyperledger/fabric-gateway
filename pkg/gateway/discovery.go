@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-protos-go/discovery"
 	"github.com/hyperledger/fabric-protos-go/gossip"
 	"github.com/pkg/errors"
@@ -20,13 +21,13 @@ import (
 type channelDiscovery struct {
 	channel  string
 	client   discovery.DiscoveryClient
-	signer   *Signer
+	sign     identity.Sign
 	authInfo *discovery.AuthInfo
 	registry *registry
 }
 
-func newChannelDiscovery(channel string, client discovery.DiscoveryClient, signer *Signer, authInfo *discovery.AuthInfo, registry *registry) *channelDiscovery {
-	return &channelDiscovery{channel, client, signer, authInfo, registry}
+func newChannelDiscovery(channel string, client discovery.DiscoveryClient, sign identity.Sign, authInfo *discovery.AuthInfo, registry *registry) *channelDiscovery {
+	return &channelDiscovery{channel, client, sign, authInfo, registry}
 }
 
 func (cd *channelDiscovery) invokeDiscovery(request *discovery.Request) (*discovery.Response, error) {
@@ -35,7 +36,12 @@ func (cd *channelDiscovery) invokeDiscovery(request *discovery.Request) (*discov
 		return nil, errors.Wrap(err, "Failed to marshal discovery request: ")
 	}
 
-	signature, err := cd.signer.Sign(payload)
+	digest, err := identity.Hash(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	signature, err := cd.sign(digest)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to sign discovery request: ")
 	}
@@ -59,7 +65,7 @@ func (cd *channelDiscovery) discoverConfig() error {
 	request := &discovery.Request{
 		Authentication: cd.authInfo,
 		Queries: []*discovery.Query{
-			&discovery.Query{
+			{
 				Channel: cd.channel,
 				Query: &discovery.Query_ConfigQuery{
 					ConfigQuery: &discovery.ConfigQuery{},
@@ -99,7 +105,7 @@ func (cd *channelDiscovery) discoverPeers() error {
 	request := &discovery.Request{
 		Authentication: cd.authInfo,
 		Queries: []*discovery.Query{
-			&discovery.Query{
+			{
 				Channel: cd.channel,
 				Query: &discovery.Query_PeerQuery{
 					PeerQuery: &discovery.PeerMembershipQuery{},

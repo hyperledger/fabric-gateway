@@ -22,7 +22,7 @@ import (
 func createDeliverEnvelope(
 	channelID string,
 	// certificate tls.Certificate,
-	signer *Signer,
+	signer protoutil.Signer,
 ) (*common.Envelope, error) {
 	// var tlsCertHash []byte
 	// check for client certificate and create hash if present
@@ -66,7 +66,7 @@ func createDeliverEnvelope(
 	return env, nil
 }
 
-func listenForTxEvents(deliverClients []peer.DeliverClient, channel string, txid string, signer *Signer, done chan<- bool) error {
+func listenForTxEvents(deliverClients []peer.DeliverClient, channel string, txid string, signer protoutil.Signer, done chan<- bool) error {
 	envelope, err := createDeliverEnvelope(channel, signer)
 	if err != nil {
 		return errors.Wrap(err, "failed to create deliver env")
@@ -122,6 +122,4 @@ func listenForTxEvent(deliverClient peer.DeliverClient, txid string, envelope *c
 			return errors.Errorf("received unexpected response type (%T)", r)
 		}
 	}
-
-	return nil
 }

@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"reflect"
@@ -20,7 +21,7 @@ import (
 	"github.com/cucumber/godog"
 	messages "github.com/cucumber/messages-go/v10"
 	"github.com/hyperledger/fabric-gateway/client/go/sdk"
-	"github.com/hyperledger/fabric-gateway/pkg/gateway"
+	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/pkg/errors"
 )
 
@@ -43,7 +44,7 @@ var transactionResult []byte
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctx.AfterSuite(func() {
 		stopGateway()
-		stopFabric()
+		// stopFabric()
 	})
 }
 
@@ -293,13 +294,17 @@ func haveGateway(arg1 int) error {
 		}
 		key := string(f)
 
-		signer, err := gateway.CreateSigner(
-			mspid,
-			cert,
-			key,
-		)
+		id, err := identity.NewIdentity(mspid, []byte(cert))
+		if err != nil {
+			log.Fatal(err)
+		}
 
-		gw, err = sdk.Connect("localhost:1234", signer)
+		signer, err := identity.NewPrivateKeyPEMSign([]byte(key))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		gw, err = sdk.Connect("localhost:1234", id, signer)
 	}
 	return nil
 }

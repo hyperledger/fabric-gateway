@@ -18,20 +18,30 @@ import (
 	"github.com/hyperledger/fabric/bccsp/utils"
 )
 
-// Signer function generates a digital signature of the supplied digest
-type Signer = func(digest []byte) ([]byte, error)
+// Sign function generates a digital signature of the supplied digest
+type Sign = func(digest []byte) ([]byte, error)
 
-// NewPrivateKeySigner returns a Signer that uses the supplied private key
-func NewPrivateKeySigner(privateKey crypto.PrivateKey) (Signer, error) {
+// NewPrivateKeyPEMSign returns a Signer function that uses the supplied PEM encoded private key
+func NewPrivateKeyPEMSign(privateKeyPEM []byte) (Sign, error) {
+	privateKey, err := PrivateKeyFromPEM(privateKeyPEM)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewPrivateKeySign(privateKey)
+}
+
+// NewPrivateKeySign returns a Signer function that uses the supplied private key
+func NewPrivateKeySign(privateKey crypto.PrivateKey) (Sign, error) {
 	switch key := privateKey.(type) {
 	case *ecdsa.PrivateKey:
-		return newECDSAPrivateKeySigner(key), nil
+		return ecdsaPrivateKeySign(key), nil
 	default:
 		return nil, fmt.Errorf("Unsupported key type: %T", privateKey)
 	}
 }
 
-func newECDSAPrivateKeySigner(privateKey *ecdsa.PrivateKey) Signer {
+func ecdsaPrivateKeySign(privateKey *ecdsa.PrivateKey) Sign {
 	return func(digest []byte) ([]byte, error) {
 		r, s, err := ecdsa.Sign(rand.Reader, privateKey, digest)
 		if err != nil {

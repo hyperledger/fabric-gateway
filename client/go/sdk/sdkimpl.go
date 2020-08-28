@@ -8,14 +8,14 @@ package sdk
 
 import (
 	"github.com/golang/protobuf/proto"
-	"github.com/hyperledger/fabric-gateway/pkg/gateway"
+	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/hyperledger/fabric/protoutil"
 	"github.com/pkg/errors"
 )
 
-func createProposal(txn *Transaction, args []string, signer *gateway.Signer) (*peer.Proposal, error) {
+func createProposal(txn *Transaction, args []string, id *identity.Identity) (*peer.Proposal, error) {
 
 	// Add function name to arguments
 	argsArray := make([][]byte, len(args)+1)
@@ -33,9 +33,9 @@ func createProposal(txn *Transaction, args []string, signer *gateway.Signer) (*p
 		},
 	}
 
-	creator, err := signer.Serialize()
+	creator, err := identity.Serialize(id)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to serialize Signer: ")
+		return nil, errors.Wrap(err, "Failed to serialize identity: ")
 	}
 
 	proposal, _, err := protoutil.CreateChaincodeProposalWithTransient(
@@ -52,29 +52,38 @@ func createProposal(txn *Transaction, args []string, signer *gateway.Signer) (*p
 	return proposal, nil
 }
 
-func signProposal(proposal *peer.Proposal, signer *gateway.Signer) (*peer.SignedProposal, error) {
+func signProposal(proposal *peer.Proposal, sign identity.Sign) (*peer.SignedProposal, error) {
 	proposalBytes, err := proto.Marshal(proposal)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal chaincode proposal")
 	}
 
-	signature, err := signer.Sign(proposalBytes)
+	signature, err := signMessage(proposalBytes, sign)
 	if err != nil {
 		return nil, err
 	}
 
-	sproposal := &peer.SignedProposal{
+	signedProposal := &peer.SignedProposal{
 		ProposalBytes: proposalBytes,
 		Signature:     signature,
 	}
-	return sproposal, nil
+	return signedProposal, nil
 }
 
-func signEnvelope(envelope *common.Envelope, signer *gateway.Signer) error {
-	signature, err := signer.Sign(envelope.Payload)
+func signEnvelope(envelope *common.Envelope, sign identity.Sign) error {
+	signature, err := signMessage(envelope.Payload, sign)
 	if err != nil {
 		return err
 	}
 	envelope.Signature = signature
 	return nil
+}
+
+func signMessage(message []byte, sign identity.Sign) ([]byte, error) {
+	digest, err := identity.Hash(message)
+	if err != nil {
+		return nil, err
+	}
+
+	return sign(digest)
 }

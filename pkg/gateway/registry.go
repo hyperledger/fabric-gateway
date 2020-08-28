@@ -26,7 +26,7 @@ import (
 )
 
 type registry struct {
-	signer   *Signer
+	signer   *signingIdentity
 	peers    map[string]peerClient
 	orderers map[string]ordererClient
 	msps     map[string]mspInfo
@@ -63,7 +63,7 @@ type endpoint struct {
 	hostnameOverride string
 }
 
-func newRegistry(signer *Signer) *registry {
+func newRegistry(signer *signingIdentity) *registry {
 	return &registry{
 		signer:   signer,
 		peers:    make(map[string]peerClient),
@@ -85,7 +85,7 @@ func (reg *registry) addPeer(channel string, mspid string, host string, port uin
 			return errors.New("Failed to append certificate to client credentials")
 		}
 		creds := credentials.NewClientTLSFromCert(certPool, host)
-		conn, err := grpc.Dial(translateUrl(url), grpc.WithTransportCredentials(creds))
+		conn, err := grpc.Dial(translateURL(url), grpc.WithTransportCredentials(creds))
 		if err != nil {
 			return errors.Wrap(err, "failed to connect to peer: ")
 		}
@@ -131,7 +131,7 @@ func (reg *registry) addOrderer(channel string, mspid string, host string, port 
 			return errors.New("Failed to append certificate to client credentials")
 		}
 		creds := credentials.NewClientTLSFromCert(certPool, host)
-		conn, err := grpc.Dial(translateUrl(url), grpc.WithTransportCredentials(creds))
+		conn, err := grpc.Dial(translateURL(url), grpc.WithTransportCredentials(creds))
 		if err != nil {
 			return err
 		}
@@ -202,7 +202,7 @@ func (reg *registry) getOrderers(channel string) []orderer.AtomicBroadcast_Broad
 	return orderers
 }
 
-func translateUrl(url string) string {
+func translateURL(url string) string {
 	if os.Getenv("DISCOVERY_AS_LOCALHOST") == "TRUE" {
 		parts := strings.Split(url, ":")
 		return "localhost:" + parts[1]

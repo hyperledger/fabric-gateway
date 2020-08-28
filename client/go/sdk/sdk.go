@@ -13,7 +13,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/hyperledger/fabric-gateway/pkg/gateway"
+	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	pb "github.com/hyperledger/fabric-gateway/protos"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -22,7 +22,8 @@ import (
 
 type Gateway struct {
 	url    string
-	signer *gateway.Signer
+	id     *identity.Identity
+	sign   identity.Sign
 	conn   *grpc.ClientConn
 	client pb.GatewayClient
 }
@@ -43,7 +44,7 @@ type Transaction struct {
 	transient map[string][]byte
 }
 
-func Connect(url string, signer *gateway.Signer) (*Gateway, error) {
+func Connect(url string, id *identity.Identity, sign identity.Sign) (*Gateway, error) {
 	conn, err := grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
 		return nil, errors.Wrap(err, "fail to dial: ")
@@ -52,13 +53,14 @@ func Connect(url string, signer *gateway.Signer) (*Gateway, error) {
 
 	return &Gateway{
 		url:    url,
-		signer: signer,
+		id:     id,
+		sign:   sign,
 		conn:   conn,
 		client: client,
 	}, nil
 }
 
-func ConnectTLS(url string, signer *gateway.Signer, tlscert []byte) (*Gateway, error) {
+func ConnectTLS(url string, id *identity.Identity, sign identity.Sign, tlscert []byte) (*Gateway, error) {
 	certPool := x509.NewCertPool()
 	if !certPool.AppendCertsFromPEM(tlscert) {
 		return nil, errors.New("Failed to append certificate to client credentials")
@@ -72,7 +74,8 @@ func ConnectTLS(url string, signer *gateway.Signer, tlscert []byte) (*Gateway, e
 
 	return &Gateway{
 		url:    url,
-		signer: signer,
+		id:     id,
+		sign:   sign,
 		conn:   conn,
 		client: client,
 	}, nil
@@ -119,11 +122,11 @@ func (tx *Transaction) Evaluate(args ...string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 	gw := tx.contract.network.gateway
-	proposal, err := createProposal(tx, args, gw.signer)
+	proposal, err := createProposal(tx, args, gw.id)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create proposal: ")
 	}
-	signedProposal, err := signProposal(proposal, gw.signer)
+	signedProposal, err := signProposal(proposal, gw.sign)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to sign proposal: ")
 	}
@@ -140,11 +143,11 @@ func (tx *Transaction) Submit(args ...string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 	gw := tx.contract.network.gateway
-	proposal, err := createProposal(tx, args, gw.signer)
+	proposal, err := createProposal(tx, args, gw.id)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create proposal: ")
 	}
-	signedProposal, err := signProposal(proposal, gw.signer)
+	signedProposal, err := signProposal(proposal, gw.sign)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to sign proposal: ")
 	}
@@ -154,7 +157,7 @@ func (tx *Transaction) Submit(args ...string) ([]byte, error) {
 		return nil, errors.Wrap(err, "failed to prepare transaction: ")
 	}
 
-	err = signEnvelope(preparedTxn.Envelope, gw.signer)
+	err = signEnvelope(preparedTxn.Envelope, gw.sign)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to sign transaction: ")
 	}

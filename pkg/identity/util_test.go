@@ -7,11 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package identity
 
 import (
-	"strings"
+	"bytes"
 	"testing"
 )
 
-func TestIdentity(t *testing.T) {
+func TestUtil(t *testing.T) {
 	certificatePEM := `-----BEGIN CERTIFICATE-----
 MIIDujCCAqKgAwIBAgIIE31FZVaPXTUwDQYJKoZIhvcNAQEFBQAwSTELMAkGA1UE
 BhMCVVMxEzARBgNVBAoTCkdvb2dsZSBJbmMxJTAjBgNVBAMTHEdvb2dsZSBJbnRl
@@ -35,50 +35,47 @@ RvOTa8hYiU6A475WuZKyEHcwnGYe57u2I2KbMgcKjPniocj4QzgYsVAVKW3IwaOh
 yE+vPxsiUkvQHdO2fojCkY8jg70jxM+gu59tPDNbw3Uh/2Ij310FgTHsnGQMyA==
 -----END CERTIFICATE-----`
 
-	t.Run("NewIdentity", func(t *testing.T) {
-		mspID := "mspID"
-		identity, err := NewIdentity(mspID, []byte(certificatePEM))
+	t.Run("Serialize", func(t *testing.T) {
+		inputIdentity, err := NewIdentity("mspID", []byte(certificatePEM))
 		if err != nil {
 			t.Errorf("Failed to create identity: %v", err)
 		}
 
-		if identity.MspID != mspID {
-			t.Errorf("Expected %s, got %s", mspID, identity.MspID)
-		}
-	})
-
-	t.Run("Certificate to PEM conversion", func(t *testing.T) {
-		certificate, err := CertificateFromPEM([]byte(certificatePEM))
+		identityMessage, err := Serialize(inputIdentity)
 		if err != nil {
-			t.Errorf("Failed to create certificate: %v", err)
+			t.Errorf("Failed to serialize identity: %v", err)
 		}
 
-		certBytes, err := CertificateToPEM(certificate)
+		outputIdentity, err := Deserialize(identityMessage)
 		if err != nil {
-			t.Errorf("Failed to create PEM: %v", err)
+			t.Errorf("Failed to deserialize identity: %v", err)
 		}
 
-		resultPEM := strings.TrimSpace(string(certBytes))
-		if certificatePEM != resultPEM {
-			t.Errorf("Input and output PEM does not match. Expected:\n%s\nGot:\n%s", certificatePEM, resultPEM)
+		if outputIdentity.MspID != inputIdentity.MspID {
+			t.Errorf("Expected MspID %s, got %s", inputIdentity.MspID, outputIdentity.MspID)
 		}
-	})
 
-	t.Run("NewIdentity from bad PEM fails", func(t *testing.T) {
-		pem := []byte("Non-PEM content")
-
-		_, err := NewIdentity("mspID", pem)
-		if err == nil {
-			t.Errorf("Expected error, got nil")
+		if !outputIdentity.Certificate.Equal(inputIdentity.Certificate) {
+			t.Errorf("Expected Certificate:\n%v\nGot:\n%v", inputIdentity.Certificate, outputIdentity.Certificate)
 		}
 	})
 
-	t.Run("CertificateFromPEM ", func(t *testing.T) {
-		pem := []byte("-----BEGIN CERTIFICATE-----\nBAD/DATA-----END CERTIFICATE-----")
+	t.Run("Hash", func(t *testing.T) {
+		foo := []byte("foo")
+		bar := []byte("bar")
 
-		_, err := NewIdentity("mspID", pem)
-		if err == nil {
-			t.Errorf("Expected error, got nil")
+		fooHash, err := Hash(foo)
+		if err != nil {
+			t.Errorf("Failed to hash %s", foo)
+		}
+
+		barHash, err := Hash(bar)
+		if err != nil {
+			t.Errorf("Failed to has %s", bar)
+		}
+
+		if bytes.Equal(fooHash, barHash) {
+			t.Errorf("Hashes for %s and %s were identical: %v", foo, bar, fooHash)
 		}
 	})
 }

@@ -10,6 +10,7 @@ import (
 	"crypto/tls"
 	"fmt"
 
+	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-protos-go/discovery"
 	fabutil "github.com/hyperledger/fabric/common/util"
 	"github.com/pkg/errors"
@@ -18,7 +19,7 @@ import (
 type GatewayServer struct {
 	discoveryAuth *discovery.AuthInfo
 	registry      *registry
-	gatewaySigner *Signer
+	gatewaySigner *signingIdentity
 }
 
 type Config interface {
@@ -36,21 +37,26 @@ type PeerEndpoint struct {
 
 // NewGatewayServer creates a server side implementation of the gateway server grpc
 func NewGatewayServer(config Config) (*GatewayServer, error) {
-
-	signer, err := CreateSigner(
-		config.MspID(),
-		config.Certificate(),
-		config.Key(),
-	)
+	id, err := identity.NewIdentity(config.MspID(), []byte(config.Certificate()))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create gateway identity")
+		return nil, err
+	}
+
+	signer, err := identity.NewPrivateKeyPEMSign([]byte(config.Key()))
+	if err != nil {
+		return nil, err
+	}
+
+	signingIdentity, err := newSigningIdentity(id, signer)
+	if err != nil {
+		return nil, err
 	}
 
 	clientTLSCert, err := tls.X509KeyPair([]byte(config.Certificate()), []byte(config.Key()))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create tls cert")
 	}
-	clientID, err := signer.Serialize()
+	clientID, err := signingIdentity.Serialize()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to serialize gateway id")
 	}
@@ -59,7 +65,7 @@ func NewGatewayServer(config Config) (*GatewayServer, error) {
 		ClientTlsCertHash: fabutil.ComputeSHA256(clientTLSCert.Certificate[0]),
 	}
 
-	registry := newRegistry(signer)
+	registry := newRegistry(signingIdentity)
 
 	// seed the registry with the 'bootstrap peer' for invoking discovery
 	registry.addMSP(config.MspID(), config.BootstrapPeer().TLSCert)
@@ -80,9 +86,10 @@ func NewGatewayServer(config Config) (*GatewayServer, error) {
 		fmt.Printf("ERROR discovering peers: %s\n", err)
 	}
 
-	return &GatewayServer{
+	result := &GatewayServer{
 		authInfo,
 		registry,
-		signer,
-	}, nil
+		signingIdentity,
+	}
+	return result, nil
 }

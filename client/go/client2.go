@@ -13,7 +13,7 @@ import (
 	"os"
 
 	"github.com/hyperledger/fabric-gateway/client/go/sdk"
-	"github.com/hyperledger/fabric-gateway/pkg/gateway"
+	"github.com/hyperledger/fabric-gateway/pkg/identity"
 
 	"github.com/hyperledger/fabric-gateway/pkg/util"
 )
@@ -22,24 +22,22 @@ func main() {
 	idPath := flag.String("id", "", "path to the client's wallet identity")
 	flag.Parse()
 
-	id, err := util.ReadWalletIdentity(*idPath)
+	walletIdentity, err := util.ReadWalletIdentity(*idPath)
 	if err != nil {
 		log.Fatalf("failed to read client identity: %s", err)
 	}
 
-	signer, err := gateway.CreateSigner(
-		id.MspID,
-		id.Credentials.Certificate,
-		id.Credentials.Key,
-	)
+	id, err := identity.NewIdentity(walletIdentity.MspID, []byte(walletIdentity.Credentials.Certificate))
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// pem, err := ioutil.ReadFile("/Users/acoleman/gopath/src/github.com/hyperledger/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem")
-	// if err != nil {
-	// 	log.Fatalf("failed to read tls cert: %s", err)
-	// }
+	signer, err := identity.NewPrivateKeyPEMSign([]byte(walletIdentity.Credentials.Key))
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// gw, err := sdk.ConnectTLS("localhost:6051", signer, pem)
-	gw, err := sdk.Connect("localhost:1234", signer)
+	gw, err := sdk.Connect("localhost:1234", id, signer)
 	defer gw.Close()
 
 	network := gw.GetNetwork("mychannel")

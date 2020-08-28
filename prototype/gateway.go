@@ -58,10 +58,14 @@ func main() {
 	}
 
 	config := &bootstrapconfig{
-		bootstrapPeer: &gateway.PeerEndpoint{*host, uint32(*port), pem},
-		mspid:         *mspid,
-		cert:          cert,
-		key:           key,
+		bootstrapPeer: &gateway.PeerEndpoint{
+			Host:    *host,
+			Port:    uint32(*port),
+			TLSCert: pem,
+		},
+		mspid: *mspid,
+		cert:  cert,
+		key:   key,
 	}
 
 	// setup server and listen

@@ -11,6 +11,7 @@ import (
 	"crypto/rand"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	pb "github.com/hyperledger/fabric-gateway/protos"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/peer"
@@ -61,13 +62,13 @@ import (
 // 	return proposal, nil
 // }
 
-func (gs *GatewayServer) signProposal(proposal *peer.Proposal, signer *Signer) (*peer.SignedProposal, error) {
+func (gs *GatewayServer) signProposal(proposal *peer.Proposal, sign identity.Sign) (*peer.SignedProposal, error) {
 	proposalBytes, err := proto.Marshal(proposal)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal chaincode proposal")
 	}
 
-	signature, err := signer.Sign(proposalBytes)
+	signature, err := sign(proposalBytes)
 	if err != nil {
 		return nil, err
 	}
