@@ -44,7 +44,7 @@ var transactionResult []byte
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctx.AfterSuite(func() {
 		stopGateway()
-		// stopFabric()
+		stopFabric()
 	})
 }
 

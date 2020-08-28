@@ -14,15 +14,14 @@ import (
 
 	"github.com/hyperledger/fabric-gateway/client/go/sdk"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
-
-	"github.com/hyperledger/fabric-gateway/pkg/util"
+	"github.com/hyperledger/fabric-gateway/pkg/wallet"
 )
 
 func main() {
 	idPath := flag.String("id", "", "path to the client's wallet identity")
 	flag.Parse()
 
-	walletIdentity, err := util.ReadWalletIdentity(*idPath)
+	walletIdentity, err := wallet.ReadWalletIdentity(*idPath)
 	if err != nil {
 		log.Fatalf("failed to read client identity: %s", err)
 	}

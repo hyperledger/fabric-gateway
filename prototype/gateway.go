@@ -14,7 +14,7 @@ import (
 	"net"
 
 	"github.com/hyperledger/fabric-gateway/pkg/gateway"
-	"github.com/hyperledger/fabric-gateway/pkg/util"
+	"github.com/hyperledger/fabric-gateway/pkg/wallet"
 	pb "github.com/hyperledger/fabric-gateway/protos"
 	"google.golang.org/grpc"
 )
@@ -33,7 +33,7 @@ func main() {
 	var cert, key string
 	// extract bootstrap config from command line flags
 	if *idPath != "" {
-		id, err := util.ReadWalletIdentity(*idPath)
+		id, err := wallet.ReadWalletIdentity(*idPath)
 		if err != nil {
 			log.Fatalf("failed to read gateway identity: %s", err)
 		}

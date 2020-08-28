@@ -47,8 +47,8 @@ yE+vPxsiUkvQHdO2fojCkY8jg70jxM+gu59tPDNbw3Uh/2Ij310FgTHsnGQMyA==
 			t.Errorf("Failed to create identity: %v", err)
 		}
 
-		if identity.MspID != mspID {
-			t.Errorf("Expected %s, got %s", mspID, identity.MspID)
+		if identity.MspID() != mspID {
+			t.Errorf("Expected %s, got %s", mspID, identity.MspID())
 		}
 	})
 

@@ -13,26 +13,42 @@ import (
 )
 
 // Identity represents a client identity.
-type Identity struct {
-	MspID   string // ID of the Membership Service Provider to which this identity belongs.
-	IDBytes []byte // Credential data. For an X.509 identity this would be PEM encoded ASN.1 DER certificate data.
+type Identity interface {
+	MspID() string       // ID of the Membership Service Provider to which this identity belongs.
+	Credentials() []byte // Implementation-specific credentials.
 }
 
-// NewX509Identity creates a new Identity from a certificate PEM.
-func NewX509Identity(mspID string, certificate *x509.Certificate) (*Identity, error) {
+// X509Identity represents a client identity backed by an X.509 certificate.
+type X509Identity struct {
+	mspID       string
+	certificate []byte
+}
+
+// MspID returns the ID of the Membership Service Provider to which this identity belongs.
+func (id *X509Identity) MspID() string {
+	return id.mspID
+}
+
+// Credentials as an X.509 certificate in PEM encoded ASN.1 DER format.
+func (id *X509Identity) Credentials() []byte {
+	return id.certificate
+}
+
+// NewX509Identity creates a new Identity from an X.509 certificate.
+func NewX509Identity(mspID string, certificate *x509.Certificate) (*X509Identity, error) {
 	certificatePEM, err := CertificateToPEM(certificate)
 	if err != nil {
 		return nil, err
 	}
 
-	identity := &Identity{
-		MspID:   mspID,
-		IDBytes: certificatePEM,
+	identity := &X509Identity{
+		mspID:       mspID,
+		certificate: certificatePEM,
 	}
 	return identity, nil
 }
 
-// CertificateToPEM converts a certificate to PEM encoded ASN.1 DER data.
+// CertificateToPEM converts an X.509 certificate to PEM encoded ASN.1 DER data.
 func CertificateToPEM(certificate *x509.Certificate) ([]byte, error) {
 	block := &pem.Block{
 		Type:  "CERTIFICATE",
@@ -41,7 +57,7 @@ func CertificateToPEM(certificate *x509.Certificate) ([]byte, error) {
 	return pemEncode(block)
 }
 
-// CertificateFromPEM creates a certificate from PEM encoded data.
+// CertificateFromPEM creates an X.509 certificate from PEM encoded data.
 func CertificateFromPEM(certificatePEM []byte) (*x509.Certificate, error) {
 	block, _ := pem.Decode(certificatePEM)
 	if block == nil {

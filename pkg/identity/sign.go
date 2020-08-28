@@ -20,7 +20,7 @@ import (
 // Sign function generates a digital signature of the supplied digest.
 type Sign = func(digest []byte) ([]byte, error)
 
-// NewPrivateKeySign returns a Signer function that uses the supplied private key.
+// NewPrivateKeySign returns a Sign function that uses the supplied private key.
 func NewPrivateKeySign(privateKey crypto.PrivateKey) (Sign, error) {
 	switch key := privateKey.(type) {
 	case *ecdsa.PrivateKey:
