@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package identity
 
 import (
-	"bytes"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rand"
@@ -18,20 +17,10 @@ import (
 	"github.com/hyperledger/fabric/bccsp/utils"
 )
 
-// Sign function generates a digital signature of the supplied digest
+// Sign function generates a digital signature of the supplied digest.
 type Sign = func(digest []byte) ([]byte, error)
 
-// NewPrivateKeyPEMSign returns a Signer function that uses the supplied PEM encoded private key
-func NewPrivateKeyPEMSign(privateKeyPEM []byte) (Sign, error) {
-	privateKey, err := PrivateKeyFromPEM(privateKeyPEM)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewPrivateKeySign(privateKey)
-}
-
-// NewPrivateKeySign returns a Signer function that uses the supplied private key
+// NewPrivateKeySign returns a Sign function that uses the supplied private key.
 func NewPrivateKeySign(privateKey crypto.PrivateKey) (Sign, error) {
 	switch key := privateKey.(type) {
 	case *ecdsa.PrivateKey:
@@ -57,7 +46,7 @@ func ecdsaPrivateKeySign(privateKey *ecdsa.PrivateKey) Sign {
 	}
 }
 
-// PrivateKeyFromPEM creates a private key from PEM encoded data
+// PrivateKeyFromPEM creates a private key from PEM encoded data.
 func PrivateKeyFromPEM(privateKeyPEM []byte) (crypto.PrivateKey, error) {
 	block, _ := pem.Decode(privateKeyPEM)
 	if block == nil {
@@ -72,7 +61,7 @@ func PrivateKeyFromPEM(privateKeyPEM []byte) (crypto.PrivateKey, error) {
 	return privateKey, nil
 }
 
-// PrivateKeyToPEM converts a private key to PEM encoded PKCS #8 data
+// PrivateKeyToPEM converts a private key to PEM encoded PKCS #8 data.
 func PrivateKeyToPEM(privateKey crypto.PrivateKey) ([]byte, error) {
 	privateKeyBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
 	if err != nil {
@@ -83,11 +72,5 @@ func PrivateKeyToPEM(privateKey crypto.PrivateKey) ([]byte, error) {
 		Type:  "PRIVATE KEY",
 		Bytes: privateKeyBytes,
 	}
-
-	var buffer bytes.Buffer
-	if err := pem.Encode(&buffer, block); err != nil {
-		return nil, err
-	}
-
-	return buffer.Bytes(), nil
+	return pemEncode(block)
 }

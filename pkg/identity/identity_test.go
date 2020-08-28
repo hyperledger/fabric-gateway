@@ -35,19 +35,24 @@ RvOTa8hYiU6A475WuZKyEHcwnGYe57u2I2KbMgcKjPniocj4QzgYsVAVKW3IwaOh
 yE+vPxsiUkvQHdO2fojCkY8jg70jxM+gu59tPDNbw3Uh/2Ij310FgTHsnGQMyA==
 -----END CERTIFICATE-----`
 
-	t.Run("NewIdentity", func(t *testing.T) {
+	t.Run("NewX509Identity", func(t *testing.T) {
 		mspID := "mspID"
-		identity, err := NewIdentity(mspID, []byte(certificatePEM))
+		certificate, err := CertificateFromPEM([]byte(certificatePEM))
+		if err != nil {
+			t.Errorf("Failed to create certificate PEM: %v", err)
+		}
+
+		identity, err := NewX509Identity(mspID, certificate)
 		if err != nil {
 			t.Errorf("Failed to create identity: %v", err)
 		}
 
-		if identity.MspID != mspID {
-			t.Errorf("Expected %s, got %s", mspID, identity.MspID)
+		if identity.MspID() != mspID {
+			t.Errorf("Expected %s, got %s", mspID, identity.MspID())
 		}
 	})
 
-	t.Run("Certificate to PEM conversion", func(t *testing.T) {
+	t.Run("Certificate / PEM conversion", func(t *testing.T) {
 		certificate, err := CertificateFromPEM([]byte(certificatePEM))
 		if err != nil {
 			t.Errorf("Failed to create certificate: %v", err)
@@ -64,19 +69,19 @@ yE+vPxsiUkvQHdO2fojCkY8jg70jxM+gu59tPDNbw3Uh/2Ij310FgTHsnGQMyA==
 		}
 	})
 
-	t.Run("NewIdentity from bad PEM fails", func(t *testing.T) {
+	t.Run("CertificateFromPEM fails with invalid PEM", func(t *testing.T) {
 		pem := []byte("Non-PEM content")
 
-		_, err := NewIdentity("mspID", pem)
+		_, err := CertificateFromPEM(pem)
 		if err == nil {
 			t.Errorf("Expected error, got nil")
 		}
 	})
 
-	t.Run("CertificateFromPEM ", func(t *testing.T) {
+	t.Run("CertificateFromPEM fails with invalid certificate", func(t *testing.T) {
 		pem := []byte("-----BEGIN CERTIFICATE-----\nBAD/DATA-----END CERTIFICATE-----")
 
-		_, err := NewIdentity("mspID", pem)
+		_, err := CertificateFromPEM(pem)
 		if err == nil {
 			t.Errorf("Expected error, got nil")
 		}

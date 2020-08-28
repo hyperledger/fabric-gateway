@@ -22,7 +22,7 @@ import (
 
 type Gateway struct {
 	url    string
-	id     *identity.Identity
+	id     identity.Identity
 	sign   identity.Sign
 	conn   *grpc.ClientConn
 	client pb.GatewayClient
@@ -44,7 +44,7 @@ type Transaction struct {
 	transient map[string][]byte
 }
 
-func Connect(url string, id *identity.Identity, sign identity.Sign) (*Gateway, error) {
+func Connect(url string, id identity.Identity, sign identity.Sign) (*Gateway, error) {
 	conn, err := grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
 		return nil, errors.Wrap(err, "fail to dial: ")
@@ -60,7 +60,7 @@ func Connect(url string, id *identity.Identity, sign identity.Sign) (*Gateway, e
 	}, nil
 }
 
-func ConnectTLS(url string, id *identity.Identity, sign identity.Sign, tlscert []byte) (*Gateway, error) {
+func ConnectTLS(url string, id identity.Identity, sign identity.Sign, tlscert []byte) (*Gateway, error) {
 	certPool := x509.NewCertPool()
 	if !certPool.AppendCertsFromPEM(tlscert) {
 		return nil, errors.New("Failed to append certificate to client credentials")

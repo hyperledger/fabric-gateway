@@ -13,7 +13,7 @@ type signingIdentity struct {
 
 // newSigningIdentity creates an implementation ot the Fabric protoutil.Signer interface from an identity and signing
 // function
-func newSigningIdentity(id *identity.Identity, sign identity.Sign) (*signingIdentity, error) {
+func newSigningIdentity(id identity.Identity, sign identity.Sign) (*signingIdentity, error) {
 	serializedID, err := identity.Serialize(id)
 	if err != nil {
 		return nil, err

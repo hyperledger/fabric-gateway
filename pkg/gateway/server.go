@@ -37,12 +37,22 @@ type PeerEndpoint struct {
 
 // NewGatewayServer creates a server side implementation of the gateway server grpc
 func NewGatewayServer(config Config) (*GatewayServer, error) {
-	id, err := identity.NewIdentity(config.MspID(), []byte(config.Certificate()))
+	certificate, err := identity.CertificateFromPEM([]byte(config.Certificate()))
 	if err != nil {
 		return nil, err
 	}
 
-	signer, err := identity.NewPrivateKeyPEMSign([]byte(config.Key()))
+	id, err := identity.NewX509Identity(config.MspID(), certificate)
+	if err != nil {
+		return nil, err
+	}
+
+	privateKey, err := identity.PrivateKeyFromPEM([]byte(config.Key()))
+	if err != nil {
+		return nil, err
+	}
+
+	signer, err := identity.NewPrivateKeySign(privateKey)
 	if err != nil {
 		return nil, err
 	}

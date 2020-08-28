@@ -14,25 +14,34 @@ import (
 
 	"github.com/hyperledger/fabric-gateway/client/go/sdk"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
-
-	"github.com/hyperledger/fabric-gateway/pkg/util"
+	"github.com/hyperledger/fabric-gateway/pkg/wallet"
 )
 
 func main() {
 	idPath := flag.String("id", "", "path to the client's wallet identity")
 	flag.Parse()
 
-	walletIdentity, err := util.ReadWalletIdentity(*idPath)
+	walletIdentity, err := wallet.ReadWalletIdentity(*idPath)
 	if err != nil {
 		log.Fatalf("failed to read client identity: %s", err)
 	}
 
-	id, err := identity.NewIdentity(walletIdentity.MspID, []byte(walletIdentity.Credentials.Certificate))
+	certificate, err := identity.CertificateFromPEM([]byte(walletIdentity.Credentials.Certificate))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	signer, err := identity.NewPrivateKeyPEMSign([]byte(walletIdentity.Credentials.Key))
+	id, err := identity.NewX509Identity(walletIdentity.MspID, certificate)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	privateKey, err := identity.PrivateKeyFromPEM([]byte(walletIdentity.Credentials.Key))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	signer, err := identity.NewPrivateKeySign(privateKey)
 	if err != nil {
 		log.Fatal(err)
 	}

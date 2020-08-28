@@ -49,21 +49,6 @@ func TestSigner(t *testing.T) {
 		}
 	})
 
-	t.Run("Create signer with ECDSA private key PEM", func(t *testing.T) {
-		privateKey := newECDSAPrivateKey(t)
-		pem, err := PrivateKeyToPEM(privateKey)
-		if err != nil {
-			t.Errorf("Failed to create PEM: %v", err)
-		}
-
-		signer, err := NewPrivateKeyPEMSign(pem)
-		if err != nil {
-			t.Errorf("Failed to create identity: %v", err)
-		}
-
-		assertSignature(t, signer)
-	})
-
 	t.Run("Create signer with ECDSA private key", func(t *testing.T) {
 		privateKey := newECDSAPrivateKey(t)
 		signer, err := NewPrivateKeySign(privateKey)
@@ -92,7 +77,7 @@ func TestSigner(t *testing.T) {
 		}
 	})
 
-	t.Run("Create private key from invalid PEM fails", func(t *testing.T) {
+	t.Run("Create private key fails with invalid PEM", func(t *testing.T) {
 		pem := []byte("Non-PEM content")
 
 		_, err := PrivateKeyFromPEM(pem)
@@ -101,10 +86,10 @@ func TestSigner(t *testing.T) {
 		}
 	})
 
-	t.Run("Create signer from PEM with invalid private key data fails", func(t *testing.T) {
+	t.Run("Create private key from PEM fails with invalid private key data", func(t *testing.T) {
 		pem := []byte("-----BEGIN PRIVATE KEY-----\nBAD/DATA-----END PRIVATE KEY-----")
 
-		_, err := NewPrivateKeyPEMSign(pem)
+		_, err := PrivateKeyFromPEM(pem)
 		if err == nil {
 			t.Errorf("Expected error, got nil")
 		}

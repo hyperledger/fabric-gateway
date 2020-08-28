@@ -15,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func createProposal(txn *Transaction, args []string, id *identity.Identity) (*peer.Proposal, error) {
+func createProposal(txn *Transaction, args []string, id identity.Identity) (*peer.Proposal, error) {
 
 	// Add function name to arguments
 	argsArray := make([][]byte, len(args)+1)
