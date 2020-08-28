@@ -294,12 +294,22 @@ func haveGateway(arg1 int) error {
 		}
 		key := string(f)
 
-		id, err := identity.NewIdentity(mspid, []byte(cert))
+		certificate, err := identity.CertificateFromPEM([]byte(cert))
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		signer, err := identity.NewPrivateKeyPEMSign([]byte(key))
+		id, err := identity.NewX509Identity(mspid, certificate)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		privateKey, err := identity.PrivateKeyFromPEM([]byte(key))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		signer, err := identity.NewPrivateKeySign(privateKey)
 		if err != nil {
 			log.Fatal(err)
 		}

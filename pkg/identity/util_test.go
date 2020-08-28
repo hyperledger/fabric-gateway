@@ -36,9 +36,9 @@ yE+vPxsiUkvQHdO2fojCkY8jg70jxM+gu59tPDNbw3Uh/2Ij310FgTHsnGQMyA==
 -----END CERTIFICATE-----`
 
 	t.Run("Serialize", func(t *testing.T) {
-		inputIdentity, err := NewIdentity("mspID", []byte(certificatePEM))
-		if err != nil {
-			t.Errorf("Failed to create identity: %v", err)
+		inputIdentity := &Identity{
+			MspID:   "mspID",
+			IDBytes: []byte(certificatePEM),
 		}
 
 		identityMessage, err := Serialize(inputIdentity)
@@ -55,8 +55,8 @@ yE+vPxsiUkvQHdO2fojCkY8jg70jxM+gu59tPDNbw3Uh/2Ij310FgTHsnGQMyA==
 			t.Errorf("Expected MspID %s, got %s", inputIdentity.MspID, outputIdentity.MspID)
 		}
 
-		if !outputIdentity.Certificate.Equal(inputIdentity.Certificate) {
-			t.Errorf("Expected Certificate:\n%v\nGot:\n%v", inputIdentity.Certificate, outputIdentity.Certificate)
+		if !bytes.Equal(inputIdentity.IDBytes, outputIdentity.IDBytes) {
+			t.Errorf("Expected Certificate:\n%v\nGot:\n%v", inputIdentity.IDBytes, outputIdentity.IDBytes)
 		}
 	})
 

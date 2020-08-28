@@ -1,7 +1,9 @@
 package identity
 
 import (
+	"bytes"
 	"crypto/sha256"
+	"encoding/pem"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/msp"
@@ -9,25 +11,25 @@ import (
 
 // Serialize an identity to protobuf SerializedIdentity message bytes
 func Serialize(id *Identity) ([]byte, error) {
-	certPem, err := CertificateToPEM(id.Certificate)
-	if err != nil {
-		return nil, err
-	}
-
 	serializedIdentity := &msp.SerializedIdentity{
 		Mspid:   id.MspID,
-		IdBytes: certPem,
+		IdBytes: id.IDBytes,
 	}
 	return proto.Marshal(serializedIdentity)
 }
 
 // Deserialize SerializedIdentity protobuf message bytes to an Identity
 func Deserialize(message []byte) (*Identity, error) {
-	deserializedIdentity := &msp.SerializedIdentity{}
-	if err := proto.Unmarshal(message, deserializedIdentity); err != nil {
+	serializedIdentity := &msp.SerializedIdentity{}
+	if err := proto.Unmarshal(message, serializedIdentity); err != nil {
 		return nil, err
 	}
-	return NewIdentity(deserializedIdentity.Mspid, deserializedIdentity.IdBytes)
+
+	result := &Identity{
+		MspID:   serializedIdentity.Mspid,
+		IDBytes: serializedIdentity.IdBytes,
+	}
+	return result, nil
 }
 
 // Hash the supplied message bytes to create digest for signing
@@ -40,4 +42,14 @@ func Hash(message []byte) ([]byte, error) {
 	}
 
 	return hash.Sum(nil), nil
+}
+
+func pemEncode(block *pem.Block) ([]byte, error) {
+	var buffer bytes.Buffer
+	if err := pem.Encode(&buffer, block); err != nil {
+		return nil, err
+	}
+
+	return buffer.Bytes(), nil
+
 }
