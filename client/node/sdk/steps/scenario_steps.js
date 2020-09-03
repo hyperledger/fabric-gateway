@@ -225,14 +225,17 @@ Given('I use the {word} contract', (contractName) => {
   this.contract = this.network.getContract(contractName);
 });
 
-When(/I prepare to (evaluate|submit) an? ([^ ]+) transaction with arguments? (.+)/, (action, txnName, jsonArgs) => {
+When(/I prepare to (evaluate|submit) an? ([^ ]+) transaction/, (action, txnName) => {
   this.txn = this.contract.createTransaction(txnName);
-  const args = JSON.parse(jsonArgs);
   if(action === 'evaluate') {
     this.txn = this.contract.prepareToEvaluate(txnName);
   } else {
     this.txn = this.contract.prepareToSubmit(txnName);
   }
+});
+
+When(/I set the transaction arguments? to (.+)/, (jsonArgs) => {
+  const args = JSON.parse(jsonArgs);
   this.txn.setArgs(...args);
 });
 

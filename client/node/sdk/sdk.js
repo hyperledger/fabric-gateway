@@ -160,6 +160,11 @@ class Transaction {
 }
 
 class EvaluateTransaction extends Transaction {
+    constructor(name, contract) {
+        super(name, contract);
+        this.args = [];
+    }
+
     setArgs(...args) {
         this.args = args;
         return this;
@@ -171,6 +176,11 @@ class EvaluateTransaction extends Transaction {
 }
 
 class SubmitTransaction extends Transaction {
+    constructor(name, contract) {
+        super(name, contract);
+        this.args = [];
+    }
+
     setArgs(...args) {
         this.args = args;
         return this;
