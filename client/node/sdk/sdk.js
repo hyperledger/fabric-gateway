@@ -138,6 +138,7 @@ class Transaction {
 
     setTransient(transientMap) {
         this.transientMap = transientMap;
+        return this;
     }
 
     async evaluate(...args) {
@@ -161,6 +162,7 @@ class Transaction {
 class EvaluateTransaction extends Transaction {
     setArgs(...args) {
         this.args = args;
+        return this;
     }
 
     async invoke() {
@@ -171,6 +173,7 @@ class EvaluateTransaction extends Transaction {
 class SubmitTransaction extends Transaction {
     setArgs(...args) {
         this.args = args;
+        return this;
     }
 
     async invoke() {
