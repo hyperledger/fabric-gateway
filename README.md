@@ -22,6 +22,11 @@ To use
     - `node client.js`
 
 Running the scenario tests
-- Install Godog (https://github.com/cucumber/godog#install)
-- `cd scenario`
-- Run `godog`
+- Go:
+    - Install Godog (https://github.com/cucumber/godog#install)
+    - `cd scenario`
+    - Run `godog`
+- Node:
+    - `cd client/node/sdk`
+    - `npm install`
+    - `./node_modules/.bin/cucumber-js --require './steps/**/*.js' ../../../scenario/features/*.feature`

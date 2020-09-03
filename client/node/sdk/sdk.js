@@ -19,7 +19,6 @@ const PROTO_PATH = [
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const protobuf = require('protobufjs');
-const fs = require('fs');
 const crypto = require('crypto');
 const elliptic = require('elliptic');
 const EC = elliptic.ec;
@@ -29,15 +28,16 @@ const { KEYUTIL } = require('jsrsasign');
 
 const packageDefinition = protoLoader.loadSync(
     PROTO_PATH,
-    {keepCase: true,
-     longs: String,
-     enums: String,
-     defaults: true,
-     oneofs: true
+    {
+        keepCase: true,
+        longs: String,
+        enums: String,
+        defaults: true,
+        oneofs: true
     });
 
 const protoDescriptor = grpc.loadPackageDefinition(packageDefinition);
-//console.log(protoDescriptor.protos.Gateway);
+//console.log(protoDescriptor);
 // The protoDescriptor object has the full package hierarchy
 const protos = protoDescriptor.protos;
 
@@ -53,37 +53,37 @@ class Gateway {
         this.stub = new protos.Gateway(url, grpc.credentials.createInsecure());
         this.evaluate = signedProposal => {
             return new Promise((resolve, reject) => {
-                this.stub.evaluate(signedProposal, function(err, result) {
+                this.stub.evaluate(signedProposal, function (err, result) {
                     if (err) reject(err);
                     resolve(result.value.toString());
                 });
-            })    
+            })
         };
         this.prepare = signedProposal => {
             return new Promise((resolve, reject) => {
-                this.stub.prepare(signedProposal, function(err, result) {
+                this.stub.prepare(signedProposal, function (err, result) {
                     if (err) reject(err);
                     resolve(result);
                 });
-            })    
+            })
         };
         this.commit = preparedTransaction => {
             return new Promise((resolve, reject) => {
                 const call = this.stub.commit(preparedTransaction);
-                call.on('data', function(event) {
+                call.on('data', function (event) {
                     console.log('Event received: ', event.value.toString());
                 });
-                call.on('end', function() {
-                  resolve()
+                call.on('end', function () {
+                    resolve()
                 });
-                call.on('error', function(e) {
-                  // An error has occurred and the stream has been closed.
-                  reject(e);
+                call.on('error', function (e) {
+                    // An error has occurred and the stream has been closed.
+                    reject(e);
                 });
-                call.on('status', function(status) {
-                  // process status
+                call.on('status', function (status) {
+                    // process status
                 });
-            })    
+            })
         };
     }
 
@@ -95,7 +95,7 @@ class Gateway {
 class Network {
     constructor(name, gateway) {
         this.name = name;
-        this.gateway = gateway; 
+        this.gateway = gateway;
     }
 
     getContract(contractName) {
@@ -120,12 +120,24 @@ class Contract {
     async submitTransaction(name, ...args) {
         return this.createTransaction(name).submit(...args);
     }
+
+    prepareToEvaluate(transactionName) {
+        return new EvaluateTransaction(transactionName, this);
+    }
+
+    prepareToSubmit(transactionName) {
+        return new SubmitTransaction(transactionName, this);
+    }
 }
 
 class Transaction {
     constructor(name, contract) {
         this.name = name;
         this.contract = contract;
+    }
+
+    setTransient(transientMap) {
+        this.transientMap = transientMap;
     }
 
     async evaluate(...args) {
@@ -143,6 +155,26 @@ class Transaction {
         preparedTxn.envelope.signature = gw.signer.sign(preparedTxn.envelope.payload);
         await gw.commit(preparedTxn);
         return preparedTxn.response.value.toString();
+    }
+}
+
+class EvaluateTransaction extends Transaction {
+    setArgs(...args) {
+        this.args = args;
+    }
+
+    async invoke() {
+        return this.evaluate(...this.args);
+    }
+}
+
+class SubmitTransaction extends Transaction {
+    setArgs(...args) {
+        this.args = args;
+    }
+
+    async invoke() {
+        return this.submit(...this.args);
     }
 }
 
@@ -174,17 +206,17 @@ class Signer {
 
 function _preventMalleability(sig, curve) {
 
-	const halfOrder = curve.n.shrn(1);
-	if (!halfOrder) {
-		throw new Error('Can not find the half order needed to calculate "s" value for immalleable signatures. Unsupported curve name: ' + curve);
-	}
+    const halfOrder = curve.n.shrn(1);
+    if (!halfOrder) {
+        throw new Error('Can not find the half order needed to calculate "s" value for immalleable signatures. Unsupported curve name: ' + curve);
+    }
 
-	if (sig.s.cmp(halfOrder) === 1) {
-		const bigNum = curve.n;
-		sig.s = bigNum.sub(sig.s);
-	}
+    if (sig.s.cmp(halfOrder) === 1) {
+        const bigNum = curve.n;
+        sig.s = bigNum.sub(sig.s);
+    }
 
-	return sig;
+    return sig;
 }
 
 function createProposal(txn, args, signer) {
@@ -215,14 +247,14 @@ function createProposal(txn, args, signer) {
             nonce: nonce
         })
     }
-    
+
     const allArgs = [Buffer.from(txn.name)];
     args.forEach(arg => allArgs.push(Buffer.from(arg)));
 
     const ccis = marshal('protos.ChaincodeInvocationSpec', {
         chaincodeSpec: create('protos.ChaincodeSpec', {
             type: 2,
-            chaincodeId:  create('protos.ChaincodeID', {
+            chaincodeId: create('protos.ChaincodeID', {
                 name: txn.contract.name
             }),
             input: create('protos.ChaincodeInput', {
@@ -230,12 +262,12 @@ function createProposal(txn, args, signer) {
             })
         })
     })
-    
+
     const proposal = {
         header: marshal('common.Header', hdr),
         payload: marshal('protos.ChaincodeProposalPayload', {
             input: ccis,
-            transientMap: null
+            TransientMap: txn.transientMap
         })
     }
 
