@@ -26,9 +26,10 @@ import (
 )
 
 const (
+	fixturesDir       = "../../../../scenario/fixtures"
 	dockerComposeFile = "docker-compose-tls.yaml"
-	dockerComposeDir  = "fixtures/docker-compose"
-	gatewayDir        = "../prototype"
+	dockerComposeDir  = fixturesDir + "/docker-compose"
+	gatewayDir        = "../../../../prototype"
 )
 
 type Transaction interface {
@@ -141,14 +142,15 @@ func stopFabric() error {
 
 func startGateway(mspid string) error {
 	if gatewayProcess == nil {
+		org1Dir := "../scenario/fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com"
 		gatewayProcess = exec.Command(
 			"go", "run", "gateway.go",
 			"-h", "peer0.org1.example.com",
 			"-p", "7051",
 			"-m", mspid,
-			"-cert", "../scenario/fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User2@org1.example.com/msp/signcerts/User2@org1.example.com-cert.pem",
-			"-key", "../scenario/fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User2@org1.example.com/msp/keystore/key.pem",
-			"-tlscert", "../scenario/fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem",
+			"-cert", org1Dir+"/users/User2@org1.example.com/msp/signcerts/User2@org1.example.com-cert.pem",
+			"-key", org1Dir+"/users/User2@org1.example.com/msp/keystore/key.pem",
+			"-tlscert", org1Dir+"/tlsca/tlsca.org1.example.com-cert.pem",
 		)
 		gatewayProcess.Dir = gatewayDir
 		gatewayProcess.Env = append(os.Environ(), "DISCOVERY_AS_LOCALHOST=TRUE")
@@ -177,7 +179,7 @@ func stopGateway() error {
 
 func createCryptoMaterial() error {
 	cmd := exec.Command("./generate.sh")
-	cmd.Dir = "fixtures"
+	cmd.Dir = fixturesDir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return err
@@ -320,9 +322,10 @@ func deployChaincode(ccType, ccName, version, channelName, policyType, argsJSON 
 
 func haveGateway(arg1 int) error {
 	if gw == nil {
+		pemsDir := fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp"
 		mspid := "Org1MSP"
-		certPath := "fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem"
-		keyPath := "fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/key.pem"
+		certPath := pemsDir + "/signcerts/User1@org1.example.com-cert.pem"
+		keyPath := pemsDir + "/keystore/key.pem"
 		f, err := ioutil.ReadFile(certPath)
 		if err != nil {
 			return err

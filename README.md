@@ -24,8 +24,8 @@ To use
 Running the scenario tests
 - Go:
     - Install Godog (https://github.com/cucumber/godog#install)
-    - `cd scenario`
-    - Run `godog`
+    - `cd client/go/sdk/scenario`
+    - Run `godog ../../../../scenario/features/`
 - Node:
     - `cd client/node/sdk`
     - `npm install`
