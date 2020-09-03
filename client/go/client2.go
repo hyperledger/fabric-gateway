@@ -51,11 +51,11 @@ func main() {
 	network := gw.GetNetwork("mychannel")
 	contract := network.GetContract("fabcar")
 
-	try(contract.Evaluate("queryAllCars").Invoke())
-	try(contract.Submit("createCar", "CAR10", "VW", "Polo", "Grey", "Mary").Invoke())
-	try(contract.Evaluate("queryCar", "CAR10").Invoke())
-	try(contract.Submit("changeCarOwner", "CAR10", "Archie").Invoke())
-	try(contract.Evaluate("queryCar", "CAR10").Invoke())
+	try(contract.EvaluateTransaction("queryAllCars"))
+	try(contract.SubmitTransaction("createCar", "CAR10", "VW", "Polo", "Grey", "Mary"))
+	try(contract.EvaluateTransaction("queryCar", "CAR10"))
+	try(contract.SubmitTransaction("changeCarOwner", "CAR10", "Archie"))
+	try(contract.EvaluateTransaction("queryCar", "CAR10"))
 
 }
 

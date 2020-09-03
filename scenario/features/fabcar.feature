@@ -15,9 +15,11 @@ Feature: Configure Fabric using SDK and submit/evaluate using a network Gateway
         And I connect the gateway
         And I use the mychannel network
         And I use the fabcar contract
-        When I prepare to submit a createCar transaction with arguments ["CAR10", "Trabant", "601 Estate", "brown", "Simon"]
+        When I prepare to submit a createCar transaction
+        And I set the transaction arguments to ["CAR10", "Trabant", "601 Estate", "brown", "Simon"]
         And I invoke the transaction
-        And I prepare to evaluate a queryCar transaction with argument ["CAR10"]
+        And I prepare to evaluate a queryCar transaction
+        And I set the transaction argument to ["CAR10"]
         And I invoke the transaction
         Then the response should be JSON matching
             """
@@ -35,9 +37,11 @@ Feature: Configure Fabric using SDK and submit/evaluate using a network Gateway
         And I connect the gateway
         And I use the mychannel network
         And I use the fabcar contract
-        When I prepare to submit a createCar transaction with arguments ["CAR11", "Tesla", "Model X", "black", "Jon Doe"]
+        When I prepare to submit a createCar transaction
+        And I set the transaction arguments to ["CAR11", "Tesla", "Model X", "black", "Jon Doe"]
         And I invoke the transaction
-        And I prepare to evaluate a queryCar transaction with argument ["CAR11"]
+        And I prepare to evaluate a queryCar transaction
+        And I set the transaction arguments to ["CAR11"]
         And I invoke the transaction
         Then the response should be JSON matching
             """

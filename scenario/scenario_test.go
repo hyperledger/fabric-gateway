@@ -32,8 +32,41 @@ const (
 )
 
 type Transaction interface {
+	WithArgs(...string)
 	SetTransient(map[string][]byte)
 	Invoke() ([]byte, error)
+}
+
+type SubmitTransaction struct {
+	transaction *sdk.SubmitTransaction
+}
+
+func (submit *SubmitTransaction) WithArgs(args ...string) {
+	submit.transaction.WithArgs(args...)
+}
+
+func (submit *SubmitTransaction) SetTransient(data map[string][]byte) {
+	submit.transaction.SetTransient(data)
+}
+
+func (submit *SubmitTransaction) Invoke() ([]byte, error) {
+	return submit.transaction.Invoke()
+}
+
+type EvaluateTransaction struct {
+	transaction *sdk.EvaluateTransaction
+}
+
+func (evaluate *EvaluateTransaction) WithArgs(args ...string) {
+	evaluate.transaction.WithArgs(args...)
+}
+
+func (evaluate *EvaluateTransaction) SetTransient(data map[string][]byte) {
+	evaluate.transaction.SetTransient(data)
+}
+
+func (evaluate *EvaluateTransaction) Invoke() ([]byte, error) {
+	return evaluate.transaction.Invoke()
 }
 
 var fabricRunning bool = false
@@ -60,8 +93,9 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I have a gateway as user User(\d+) using the tls connection profile$`, haveGateway)
 	s.Step(`^I have created and joined all channels from the tls connection profile$`, createAndJoinChannels)
 	s.Step(`^I have deployed a (\w+) Fabric network$`, haveFabricNetwork)
-	s.Step(`^I prepare to submit an? (\w+) transaction with arguments? (.+)$`, prepareSubmit)
-	s.Step(`^I prepare to evaluate an? (\w+) transaction with arguments? (.+)$`, prepareSubmit)
+	s.Step(`^I prepare to submit an? (\w+) transaction$`, prepareSubmit)
+	s.Step(`^I prepare to evaluate an? (\w+) transaction$`, prepareEvaluate)
+	s.Step(`^I set the transaction arguments? to (.+)$`, setArguments)
 	s.Step(`^I set transient data on the transaction to$`, setTransientData)
 	s.Step(`^I invoke the transaction$`, invokeTransaction)
 	s.Step(`^I use the (\w+) contract$`, useContract)
@@ -411,23 +445,27 @@ func haveFabricNetwork(tlsType string) error {
 	return nil
 }
 
-func prepareSubmit(txnName string, argsJSON string) error {
-	args, err := unmarshalArgs(argsJSON)
-	if err != nil {
-		return err
+func prepareSubmit(txnName string) error {
+	transaction = &SubmitTransaction{
+		contract.Submit(txnName),
 	}
-
-	transaction = contract.Submit(txnName, args...)
 	return nil
 }
 
-func prepareEvaluate(txnName string, argsJSON string) error {
+func prepareEvaluate(txnName string) error {
+	transaction = &EvaluateTransaction{
+		contract.Evaluate(txnName),
+	}
+	return nil
+}
+
+func setArguments(argsJSON string) error {
 	args, err := unmarshalArgs(argsJSON)
 	if err != nil {
 		return err
 	}
 
-	transaction = contract.Evaluate(txnName, args...)
+	transaction.WithArgs(args...)
 	return nil
 }
 

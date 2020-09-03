@@ -108,28 +108,52 @@ func (nw *Network) GetContract(name string) *Contract {
 	}
 }
 
-func (ct *Contract) newTransaction(name string, args []string) *transaction {
+func (ct *Contract) EvaluateTransaction(name string, args ...string) ([]byte, error) {
+	return ct.Evaluate(name).WithArgs(args...).Invoke()
+}
+
+func (ct *Contract) SubmitTransaction(name string, args ...string) ([]byte, error) {
+	return ct.Submit(name).WithArgs(args...).Invoke()
+}
+
+func (ct *Contract) newTransaction(name string) *transaction {
 	return &transaction{
 		contract: ct,
 		name:     name,
-		args:     args,
+		args:     nil,
 	}
 }
 
-func (ct *Contract) Evaluate(name string, args ...string) *EvaluateTransaction {
+func (ct *Contract) Evaluate(name string) *EvaluateTransaction {
 	return &EvaluateTransaction{
-		ct.newTransaction(name, args),
+		ct.newTransaction(name),
 	}
 }
 
-func (ct *Contract) Submit(name string, args ...string) *SubmitTransaction {
+func (ct *Contract) Submit(name string) *SubmitTransaction {
 	return &SubmitTransaction{
-		ct.newTransaction(name, args),
+		ct.newTransaction(name),
 	}
 }
 
-func (tx *transaction) SetTransient(transientData map[string][]byte) {
+func (tx *EvaluateTransaction) WithArgs(args ...string) *EvaluateTransaction {
+	tx.args = args
+	return tx
+}
+
+func (tx *SubmitTransaction) WithArgs(args ...string) *SubmitTransaction {
+	tx.args = args
+	return tx
+}
+
+func (tx *SubmitTransaction) SetTransient(transientData map[string][]byte) *SubmitTransaction {
 	tx.transient = transientData
+	return tx
+}
+
+func (tx *EvaluateTransaction) SetTransient(transientData map[string][]byte) *EvaluateTransaction {
+	tx.transient = transientData
+	return tx
 }
 
 func (tx *EvaluateTransaction) Invoke() ([]byte, error) {
