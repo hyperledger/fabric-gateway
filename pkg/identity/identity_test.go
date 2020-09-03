@@ -39,33 +39,33 @@ yE+vPxsiUkvQHdO2fojCkY8jg70jxM+gu59tPDNbw3Uh/2Ij310FgTHsnGQMyA==
 		mspID := "mspID"
 		certificate, err := CertificateFromPEM([]byte(certificatePEM))
 		if err != nil {
-			t.Errorf("Failed to create certificate PEM: %v", err)
+			t.Fatalf("Failed to create certificate PEM: %v", err)
 		}
 
 		identity, err := NewX509Identity(mspID, certificate)
 		if err != nil {
-			t.Errorf("Failed to create identity: %v", err)
+			t.Fatalf("Failed to create identity: %v", err)
 		}
 
 		if identity.MspID() != mspID {
-			t.Errorf("Expected %s, got %s", mspID, identity.MspID())
+			t.Fatalf("Expected %s, got %s", mspID, identity.MspID())
 		}
 	})
 
 	t.Run("Certificate / PEM conversion", func(t *testing.T) {
 		certificate, err := CertificateFromPEM([]byte(certificatePEM))
 		if err != nil {
-			t.Errorf("Failed to create certificate: %v", err)
+			t.Fatalf("Failed to create certificate: %v", err)
 		}
 
 		certBytes, err := CertificateToPEM(certificate)
 		if err != nil {
-			t.Errorf("Failed to create PEM: %v", err)
+			t.Fatalf("Failed to create PEM: %v", err)
 		}
 
 		resultPEM := strings.TrimSpace(string(certBytes))
 		if certificatePEM != resultPEM {
-			t.Errorf("Input and output PEM does not match. Expected:\n%s\nGot:\n%s", certificatePEM, resultPEM)
+			t.Fatalf("Input and output PEM does not match. Expected:\n%s\nGot:\n%s", certificatePEM, resultPEM)
 		}
 	})
 
@@ -74,7 +74,7 @@ yE+vPxsiUkvQHdO2fojCkY8jg70jxM+gu59tPDNbw3Uh/2Ij310FgTHsnGQMyA==
 
 		_, err := CertificateFromPEM(pem)
 		if err == nil {
-			t.Errorf("Expected error, got nil")
+			t.Fatalf("Expected error, got nil")
 		}
 	})
 
@@ -83,7 +83,7 @@ yE+vPxsiUkvQHdO2fojCkY8jg70jxM+gu59tPDNbw3Uh/2Ij310FgTHsnGQMyA==
 
 		_, err := CertificateFromPEM(pem)
 		if err == nil {
-			t.Errorf("Expected error, got nil")
+			t.Fatalf("Expected error, got nil")
 		}
 	})
 }

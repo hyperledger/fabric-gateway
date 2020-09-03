@@ -38,10 +38,19 @@ type Contract struct {
 	name    string
 }
 
-type Transaction struct {
+type transaction struct {
 	contract  *Contract
 	name      string
 	transient map[string][]byte
+	args      []string
+}
+
+type EvaluateTransaction struct {
+	*transaction
+}
+
+type SubmitTransaction struct {
+	*transaction
 }
 
 func Connect(url string, id identity.Identity, sign identity.Sign) (*Gateway, error) {
@@ -99,30 +108,35 @@ func (nw *Network) GetContract(name string) *Contract {
 	}
 }
 
-func (ct *Contract) CreateTransaction(name string) *Transaction {
-	return &Transaction{
+func (ct *Contract) newTransaction(name string, args []string) *transaction {
+	return &transaction{
 		contract: ct,
 		name:     name,
+		args:     args,
 	}
 }
 
-func (ct *Contract) EvaluateTransaction(name string, args ...string) ([]byte, error) {
-	return ct.CreateTransaction(name).Evaluate(args...)
+func (ct *Contract) Evaluate(name string, args ...string) *EvaluateTransaction {
+	return &EvaluateTransaction{
+		ct.newTransaction(name, args),
+	}
 }
 
-func (ct *Contract) SubmitTransaction(name string, args ...string) ([]byte, error) {
-	return ct.CreateTransaction(name).Submit(args...)
+func (ct *Contract) Submit(name string, args ...string) *SubmitTransaction {
+	return &SubmitTransaction{
+		ct.newTransaction(name, args),
+	}
 }
 
-func (tx *Transaction) SetTransient(transientData map[string][]byte) {
+func (tx *transaction) SetTransient(transientData map[string][]byte) {
 	tx.transient = transientData
 }
 
-func (tx *Transaction) Evaluate(args ...string) ([]byte, error) {
+func (tx *EvaluateTransaction) Invoke() ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 	gw := tx.contract.network.gateway
-	proposal, err := createProposal(tx, args, gw.id)
+	proposal, err := createProposal(tx.transaction, gw.id)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create proposal: ")
 	}
@@ -139,44 +153,66 @@ func (tx *Transaction) Evaluate(args ...string) ([]byte, error) {
 	return result.Value, nil
 }
 
-func (tx *Transaction) Submit(args ...string) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
-	gw := tx.contract.network.gateway
-	proposal, err := createProposal(tx, args, gw.id)
+func (tx *SubmitTransaction) Invoke() ([]byte, error) {
+	result, commit, err := tx.InvokeAsync()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create proposal: ")
+		return nil, err
+	}
+
+	if err = <-commit; err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (tx *SubmitTransaction) InvokeAsync() ([]byte, chan error, error) {
+	gw := tx.contract.network.gateway
+	proposal, err := createProposal(tx.transaction, gw.id)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to create proposal: ")
 	}
 	signedProposal, err := signProposal(proposal, gw.sign)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to sign proposal: ")
+		return nil, nil, errors.Wrap(err, "failed to sign proposal: ")
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 
 	preparedTxn, err := gw.client.Prepare(ctx, signedProposal)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to prepare transaction: ")
+		cancel()
+		return nil, nil, errors.Wrap(err, "failed to prepare transaction: ")
 	}
 
 	err = signEnvelope(preparedTxn.Envelope, gw.sign)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to sign transaction: ")
+		cancel()
+		return nil, nil, errors.Wrap(err, "failed to sign transaction: ")
 	}
 
 	stream, err := gw.client.Commit(ctx, preparedTxn)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to commit transaction: ")
+		cancel()
+		return nil, nil, errors.Wrap(err, "failed to commit transaction: ")
 	}
 
-	for {
-		event, err := stream.Recv()
-		if err == io.EOF {
-			break
+	commit := make(chan error)
+	go func() {
+		defer cancel()
+		for {
+			event, err := stream.Recv()
+			if err == io.EOF {
+				commit <- nil
+				return
+			}
+			if err != nil {
+				commit <- errors.Wrap(err, "failed to receive event: ")
+				return
+			}
+			fmt.Println(event)
 		}
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to receive event: ")
-		}
-		fmt.Println(event)
-	}
+	}()
 
-	return preparedTxn.Response.Value, nil
+	return preparedTxn.Response.Value, commit, nil
 }

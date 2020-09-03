@@ -10,7 +10,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/hyperledger/fabric-gateway/client/go/sdk"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
@@ -51,18 +50,18 @@ func main() {
 
 	network := gw.GetNetwork("mychannel")
 	contract := network.GetContract("fabcar")
-	try(contract.EvaluateTransaction("queryAllCars"))
-	try(contract.SubmitTransaction("createCar", "CAR10", "VW", "Polo", "Grey", "Mary"))
-	try(contract.EvaluateTransaction("queryCar", "CAR10"))
-	try(contract.SubmitTransaction("changeCarOwner", "CAR10", "Archie"))
-	try(contract.EvaluateTransaction("queryCar", "CAR10"))
+
+	try(contract.Evaluate("queryAllCars").Invoke())
+	try(contract.Submit("createCar", "CAR10", "VW", "Polo", "Grey", "Mary").Invoke())
+	try(contract.Evaluate("queryCar", "CAR10").Invoke())
+	try(contract.Submit("changeCarOwner", "CAR10", "Archie").Invoke())
+	try(contract.Evaluate("queryCar", "CAR10").Invoke())
 
 }
 
 func try(result []byte, err error) {
 	if err != nil {
-		fmt.Printf("Error: %s", err)
-		os.Exit(1)
+		log.Panicf("Error: %s", err)
 	}
 	fmt.Println(string(result))
 }

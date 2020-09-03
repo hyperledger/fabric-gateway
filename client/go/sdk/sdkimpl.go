@@ -15,12 +15,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func createProposal(txn *Transaction, args []string, id identity.Identity) (*peer.Proposal, error) {
+func createProposal(txn *transaction, id identity.Identity) (*peer.Proposal, error) {
 
 	// Add function name to arguments
-	argsArray := make([][]byte, len(args)+1)
+	argsArray := make([][]byte, len(txn.args)+1)
 	argsArray[0] = []byte(txn.name)
-	for i, arg := range args {
+	for i, arg := range txn.args {
 		argsArray[i+1] = []byte(arg)
 	}
 

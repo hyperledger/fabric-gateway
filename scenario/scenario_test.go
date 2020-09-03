@@ -31,6 +31,11 @@ const (
 	gatewayDir        = "../prototype"
 )
 
+type Transaction interface {
+	SetTransient(map[string][]byte)
+	Invoke() ([]byte, error)
+}
+
 var fabricRunning bool = false
 var channelsJoined bool = false
 var runningChaincodes = make(map[string]bool)
@@ -38,7 +43,7 @@ var gatewayProcess *exec.Cmd
 var gw *sdk.Gateway
 var network *sdk.Network
 var contract *sdk.Contract
-var transaction *sdk.Transaction
+var transaction Transaction
 var transactionResult []byte
 
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
@@ -55,9 +60,10 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I have a gateway as user User(\d+) using the tls connection profile$`, haveGateway)
 	s.Step(`^I have created and joined all channels from the tls connection profile$`, createAndJoinChannels)
 	s.Step(`^I have deployed a (\w+) Fabric network$`, haveFabricNetwork)
-	s.Step(`^I prepare an? (\w+) transaction$`, prepareTransaction)
+	s.Step(`^I prepare to submit an? (\w+) transaction with arguments? (.+)$`, prepareSubmit)
+	s.Step(`^I prepare to evaluate an? (\w+) transaction with arguments? (.+)$`, prepareSubmit)
 	s.Step(`^I set transient data on the transaction to$`, setTransientData)
-	s.Step(`^I (submit|evaluate) the transaction with arguments (.+)$`, actionTransaction)
+	s.Step(`^I invoke the transaction$`, invokeTransaction)
 	s.Step(`^I use the (\w+) contract$`, useContract)
 	s.Step(`^I use the (\w+) network$`, useNetwork)
 	s.Step(`^the response should be JSON matching$`, theResponseShouldBeJSONMatching)
@@ -405,9 +411,34 @@ func haveFabricNetwork(tlsType string) error {
 	return nil
 }
 
-func prepareTransaction(txnName string) error {
-	transaction = contract.CreateTransaction(txnName)
+func prepareSubmit(txnName string, argsJSON string) error {
+	args, err := unmarshalArgs(argsJSON)
+	if err != nil {
+		return err
+	}
+
+	transaction = contract.Submit(txnName, args...)
 	return nil
+}
+
+func prepareEvaluate(txnName string, argsJSON string) error {
+	args, err := unmarshalArgs(argsJSON)
+	if err != nil {
+		return err
+	}
+
+	transaction = contract.Evaluate(txnName, args...)
+	return nil
+}
+
+func unmarshalArgs(argsJSON string) ([]string, error) {
+	var args []string
+	err := json.Unmarshal([]byte(argsJSON), &args)
+	if err != nil {
+		return nil, err
+	}
+
+	return args, nil
 }
 
 func setTransientData(table *messages.PickleStepArgument_PickleTable) error {
@@ -419,19 +450,9 @@ func setTransientData(table *messages.PickleStepArgument_PickleTable) error {
 	return nil
 }
 
-func actionTransaction(action, argsJSON string) error {
-	var args []string
-	err := json.Unmarshal([]byte(argsJSON), &args)
-	if err != nil {
-		return err
-	}
-
-	if action == "submit" {
-		transactionResult, err = transaction.Submit(args...)
-	} else {
-		transactionResult, err = transaction.Evaluate(args...)
-	}
-	if err != nil {
+func invokeTransaction() error {
+	var err error
+	if transactionResult, err = transaction.Invoke(); err != nil {
 		return err
 	}
 	return nil

@@ -43,20 +43,20 @@ yE+vPxsiUkvQHdO2fojCkY8jg70jxM+gu59tPDNbw3Uh/2Ij310FgTHsnGQMyA==
 
 		identityMessage, err := Serialize(inputIdentity)
 		if err != nil {
-			t.Errorf("Failed to serialize identity: %v", err)
+			t.Fatalf("Failed to serialize identity: %v", err)
 		}
 
 		outputIdentity, err := Deserialize(identityMessage)
 		if err != nil {
-			t.Errorf("Failed to deserialize identity: %v", err)
+			t.Fatalf("Failed to deserialize identity: %v", err)
 		}
 
 		if outputIdentity.MspID() != inputIdentity.MspID() {
-			t.Errorf("Expected MspID %s, got %s", inputIdentity.MspID(), outputIdentity.MspID())
+			t.Fatalf("Expected MspID %s, got %s", inputIdentity.MspID(), outputIdentity.MspID())
 		}
 
 		if !bytes.Equal(inputIdentity.Credentials(), outputIdentity.Credentials()) {
-			t.Errorf("Expected Credentials:\n%v\nGot:\n%v", inputIdentity.Credentials(), outputIdentity.Credentials())
+			t.Fatalf("Expected Credentials:\n%v\nGot:\n%v", inputIdentity.Credentials(), outputIdentity.Credentials())
 		}
 	})
 
@@ -66,16 +66,16 @@ yE+vPxsiUkvQHdO2fojCkY8jg70jxM+gu59tPDNbw3Uh/2Ij310FgTHsnGQMyA==
 
 		fooHash, err := Hash(foo)
 		if err != nil {
-			t.Errorf("Failed to hash %s", foo)
+			t.Fatalf("Failed to hash %s", foo)
 		}
 
 		barHash, err := Hash(bar)
 		if err != nil {
-			t.Errorf("Failed to has %s", bar)
+			t.Fatalf("Failed to has %s", bar)
 		}
 
 		if bytes.Equal(fooHash, barHash) {
-			t.Errorf("Hashes for %s and %s were identical: %v", foo, bar, fooHash)
+			t.Fatalf("Hashes for %s and %s were identical: %v", foo, bar, fooHash)
 		}
 	})
 }

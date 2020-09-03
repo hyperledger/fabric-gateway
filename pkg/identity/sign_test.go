@@ -20,7 +20,7 @@ func TestSigner(t *testing.T) {
 	newECDSAPrivateKey := func(t *testing.T) *ecdsa.PrivateKey {
 		privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		if err != nil {
-			t.Errorf("Failed to generate key")
+			t.Fatalf("Failed to generate key")
 		}
 		return privateKey
 	}
@@ -28,11 +28,11 @@ func TestSigner(t *testing.T) {
 	assertSignature := func(t *testing.T, sign Sign) {
 		signature, err := sign([]byte("digest"))
 		if err != nil {
-			t.Errorf("Signing error: %v", err)
+			t.Fatalf("Signing error: %v", err)
 		}
 
 		if signature == nil {
-			t.Errorf("Signature was nil")
+			t.Fatalf("Signature was nil")
 		}
 	}
 
@@ -40,12 +40,12 @@ func TestSigner(t *testing.T) {
 		var privateKey crypto.PrivateKey
 		_, err := NewPrivateKeySign(privateKey)
 		if err == nil {
-			t.Errorf("Expected error, got nil")
+			t.Fatalf("Expected error, got nil")
 		}
 
 		expectedType := fmt.Sprintf("%T", privateKey)
 		if !strings.Contains(err.Error(), expectedType) {
-			t.Errorf("Expected error to contain %s: %s", expectedType, err)
+			t.Fatalf("Expected error to contain %s: %s", expectedType, err)
 		}
 	})
 
@@ -53,7 +53,7 @@ func TestSigner(t *testing.T) {
 		privateKey := newECDSAPrivateKey(t)
 		signer, err := NewPrivateKeySign(privateKey)
 		if err != nil {
-			t.Errorf("Failed to create identity: %v", err)
+			t.Fatalf("Failed to create identity: %v", err)
 		}
 
 		assertSignature(t, signer)
@@ -64,16 +64,16 @@ func TestSigner(t *testing.T) {
 
 		pem, err := PrivateKeyToPEM(inputKey)
 		if err != nil {
-			t.Errorf("Failed to create PEM: %v", err)
+			t.Fatalf("Failed to create PEM: %v", err)
 		}
 
 		outputKey, err := PrivateKeyFromPEM(pem)
 		if err != nil {
-			t.Errorf("Failed to create private key: %v", err)
+			t.Fatalf("Failed to create private key: %v", err)
 		}
 
 		if !inputKey.Equal(outputKey) {
-			t.Errorf("Keys do not match. Expected:\n%v\nGot:\n%v", inputKey, outputKey)
+			t.Fatalf("Keys do not match. Expected:\n%v\nGot:\n%v", inputKey, outputKey)
 		}
 	})
 
@@ -82,7 +82,7 @@ func TestSigner(t *testing.T) {
 
 		_, err := PrivateKeyFromPEM(pem)
 		if err == nil {
-			t.Errorf("Expected error, got nil")
+			t.Fatalf("Expected error, got nil")
 		}
 	})
 
@@ -91,7 +91,7 @@ func TestSigner(t *testing.T) {
 
 		_, err := PrivateKeyFromPEM(pem)
 		if err == nil {
-			t.Errorf("Expected error, got nil")
+			t.Fatalf("Expected error, got nil")
 		}
 	})
 
@@ -100,7 +100,7 @@ func TestSigner(t *testing.T) {
 
 		_, err := PrivateKeyToPEM(privateKey)
 		if err == nil {
-			t.Errorf("Expected error, got nil")
+			t.Fatalf("Expected error, got nil")
 		}
 	})
 }

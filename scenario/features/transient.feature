@@ -15,11 +15,11 @@ Feature: Configure Fabric using SDK and submit/evaluate using a network Gateway
 		And I connect the gateway
 		And I use the mychannel network
 		And I use the fabcar contract
-		When I prepare an echoTransient transaction
+		When I prepare to evaluate an echoTransient transaction with arguments []
 		And I set transient data on the transaction to
 			| key1 | value1 |
 			| key2 | value2 |
-		And I evaluate the transaction with arguments []
+		And I invoke the transaction
 		Then the response should be JSON matching
 		    """
 		    {
