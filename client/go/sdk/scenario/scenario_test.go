@@ -32,42 +32,17 @@ const (
 	gatewayDir        = "../../../../prototype"
 )
 
-type Transaction interface {
-	WithArgs(...string)
-	SetTransient(map[string][]byte)
-	Invoke() ([]byte, error)
-}
+type TransactionType int
 
-type SubmitTransaction struct {
-	transaction *sdk.SubmitTransaction
-}
+const (
+	Evaluate TransactionType = iota
+	Submit
+)
 
-func (submit *SubmitTransaction) WithArgs(args ...string) {
-	submit.transaction.WithArgs(args...)
-}
-
-func (submit *SubmitTransaction) SetTransient(data map[string][]byte) {
-	submit.transaction.SetTransient(data)
-}
-
-func (submit *SubmitTransaction) Invoke() ([]byte, error) {
-	return submit.transaction.Invoke()
-}
-
-type EvaluateTransaction struct {
-	transaction *sdk.EvaluateTransaction
-}
-
-func (evaluate *EvaluateTransaction) WithArgs(args ...string) {
-	evaluate.transaction.WithArgs(args...)
-}
-
-func (evaluate *EvaluateTransaction) SetTransient(data map[string][]byte) {
-	evaluate.transaction.SetTransient(data)
-}
-
-func (evaluate *EvaluateTransaction) Invoke() ([]byte, error) {
-	return evaluate.transaction.Invoke()
+type Transaction struct {
+	txType  TransactionType
+	name    string
+	options []sdk.ProposalOption
 }
 
 var fabricRunning bool = false
@@ -77,7 +52,7 @@ var gatewayProcess *exec.Cmd
 var gw *sdk.Gateway
 var network *sdk.Network
 var contract *sdk.Contract
-var transaction Transaction
+var transaction *Transaction
 var transactionResult []byte
 
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
@@ -449,15 +424,17 @@ func haveFabricNetwork(tlsType string) error {
 }
 
 func prepareSubmit(txnName string) error {
-	transaction = &SubmitTransaction{
-		contract.Submit(txnName),
+	transaction = &Transaction{
+		txType: Submit,
+		name:   txnName,
 	}
 	return nil
 }
 
 func prepareEvaluate(txnName string) error {
-	transaction = &EvaluateTransaction{
-		contract.Evaluate(txnName),
+	transaction = &Transaction{
+		txType: Evaluate,
+		name:   txnName,
 	}
 	return nil
 }
@@ -468,7 +445,7 @@ func setArguments(argsJSON string) error {
 		return err
 	}
 
-	transaction.WithArgs(args...)
+	transaction.options = append(transaction.options, sdk.WithArguments(args...))
 	return nil
 }
 
@@ -487,16 +464,33 @@ func setTransientData(table *messages.PickleStepArgument_PickleTable) error {
 	for _, row := range table.Rows {
 		transient[row.Cells[0].Value] = []byte(row.Cells[1].Value)
 	}
-	transaction.SetTransient(transient)
+
+	transaction.options = append(transaction.options, sdk.WithTransient(transient))
 	return nil
 }
 
 func invokeTransaction() error {
-	var err error
-	if transactionResult, err = transaction.Invoke(); err != nil {
+	invoke, err := transactionInvokeFn(transaction.txType)
+	if err != nil {
+		return err
+	}
+
+	transactionResult, err = invoke(transaction.name, transaction.options...)
+	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func transactionInvokeFn(txType TransactionType) (func(string, ...sdk.ProposalOption) ([]byte, error), error) {
+	switch txType {
+	case Submit:
+		return contract.SubmitSync, nil
+	case Evaluate:
+		return contract.Evaluate, nil
+	default:
+		return nil, fmt.Errorf("Unknown transaction type: %v", txType)
+	}
 }
 
 func useContract(contractName string) error {
