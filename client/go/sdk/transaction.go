@@ -12,29 +12,39 @@ import (
 	"io"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	gateway "github.com/hyperledger/fabric-gateway/protos"
 	"github.com/pkg/errors"
 )
 
+// Transaction represents an endorsed transaction that can be submitted to the orderer for commit to the ledger.
 type Transaction struct {
 	contract            *Contract
 	preparedTransaction *gateway.PreparedTransaction
 }
 
+// Result of the proposed transaction invocation.
 func (transaction *Transaction) Result() []byte {
 	return transaction.preparedTransaction.Response.Value
 }
 
+// Bytes of the serialized transaction.
+func (transaction *Transaction) Bytes() ([]byte, error) {
+	transactionBytes, err := proto.Marshal(transaction.preparedTransaction)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to marshall Proposal protobuf")
+	}
+
+	return transactionBytes, nil
+}
+
+// Hash the transaction to obtain a digest to be signed.
 func (transaction *Transaction) Hash() ([]byte, error) {
 	return identity.Hash(transaction.preparedTransaction.Envelope.Payload)
 }
 
-func (transaction *Transaction) Sign(signature []byte) *Transaction {
-	transaction.preparedTransaction.Envelope.Signature = signature
-	return transaction
-}
-
+// Submit the transaction to the orderer for commit to the ledger.
 func (transaction *Transaction) Submit() (chan error, error) {
 	if err := transaction.signMessage(); err != nil {
 		return nil, err
@@ -78,10 +88,16 @@ func (transaction *Transaction) signMessage() error {
 		return err
 	}
 
-	transaction.preparedTransaction.Envelope.Signature, err = transaction.contract.network.gateway.sign(digest)
+	signature, err := transaction.contract.network.gateway.sign(digest)
 	if err != nil {
 		return err
 	}
 
+	transaction.setSignature(signature)
+
 	return nil
+}
+
+func (transaction *Transaction) setSignature(signature []byte) {
+	transaction.preparedTransaction.Envelope.Signature = signature
 }
