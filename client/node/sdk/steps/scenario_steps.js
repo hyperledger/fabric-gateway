@@ -16,7 +16,7 @@ const expect = chai.expect;
 const fixturesDir = __dirname + '/../../../../scenario/fixtures';
 const dockerComposeDir = fixturesDir + '/docker-compose';
 const dockerComposeFile = 'docker-compose-tls.yaml';
-const gatewayDir = __dirname + '/../../../../prototype';
+const gatewayDir = __dirname + '/../../../../bin';
 
 const TIMEOUTS = {
   HUGE_TIME: 20 * 60 * 1000,
@@ -101,8 +101,7 @@ Given('I have a gateway for {word}', (mspid) => {
   if (!this.gatewayProcess) {
     const env = { DISCOVERY_AS_LOCALHOST: 'TRUE' };
     Object.assign(env, process.env);
-    this.gatewayProcess = spawn('go', [
-      'run', 'gateway.go',
+    this.gatewayProcess = spawn('./gateway', [
       '-h', 'peer0.org1.example.com',
       '-p', '7051',
       '-m', mspid,

@@ -29,7 +29,7 @@ const (
 	fixturesDir       = "../../../../scenario/fixtures"
 	dockerComposeFile = "docker-compose-tls.yaml"
 	dockerComposeDir  = fixturesDir + "/docker-compose"
-	gatewayDir        = "../../../../prototype"
+	gatewayDir        = "../../../../bin"
 )
 
 type TransactionType int
@@ -119,7 +119,8 @@ func startGateway(mspid string) error {
 	if gatewayProcess == nil {
 		org1Dir := "../scenario/fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com"
 		gatewayProcess = exec.Command(
-			"go", "run", "gateway.go",
+			"./gateway",
+			//"go", "run", "gateway.go",
 			"-h", "peer0.org1.example.com",
 			"-p", "7051",
 			"-m", mspid,

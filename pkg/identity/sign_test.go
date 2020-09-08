@@ -72,7 +72,10 @@ func TestSigner(t *testing.T) {
 			t.Fatalf("Failed to create private key: %v", err)
 		}
 
-		if !inputKey.Equal(outputKey) {
+		if !(inputKey.PublicKey.X.Cmp(outputKey.(*ecdsa.PrivateKey).PublicKey.X) == 0 &&
+			inputKey.PublicKey.Y.Cmp(outputKey.(*ecdsa.PrivateKey).PublicKey.Y) == 0 &&
+			inputKey.D.Cmp(outputKey.(*ecdsa.PrivateKey).D) == 0) {
+			//if !inputKey.Equal(outputKey) {
 			t.Fatalf("Keys do not match. Expected:\n%v\nGot:\n%v", inputKey, outputKey)
 		}
 	})

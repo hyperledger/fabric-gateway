@@ -30,3 +30,11 @@ Running the scenario tests
     - `cd client/node/sdk`
     - `npm install`
     - `./node_modules/.bin/cucumber-js --require './steps/**/*.js' ../../../scenario/features/*.feature`
+
+Alternatively, use the makefile:
+- `make build` - compile the gateway
+- `make unit-test` - run the unit tests (& report coverage)
+- `make test-scenario-sdk-go` run the scenario tests for the Go SDK
+- `make test-scenario-sdk-node` run the scenario tests for the Node SDK
+- `make test-scenario` run the scenario tests for all SDKs
+- `make test` run all unit and scenario tests
