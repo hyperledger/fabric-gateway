@@ -26,7 +26,7 @@ type proposalBuilder struct {
 }
 
 func (builder *proposalBuilder) build() (*Proposal, error) {
-	proposalProto, err := builder.newProposalProto()
+	proposalProto, transactionID, err := builder.newProposalProto()
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to create Proposal protobuf")
 	}
@@ -37,13 +37,14 @@ func (builder *proposalBuilder) build() (*Proposal, error) {
 	}
 
 	proposal := &Proposal{
-		contract: builder.contract,
-		bytes:    proposalBytes,
+		contract:      builder.contract,
+		transactionID: transactionID,
+		bytes:         proposalBytes,
 	}
 	return proposal, nil
 }
 
-func (builder *proposalBuilder) newProposalProto() (*peer.Proposal, error) {
+func (builder *proposalBuilder) newProposalProto() (*peer.Proposal, string, error) {
 	// Add function name to arguments
 	argsArray := make([][]byte, len(builder.args)+1)
 	argsArray[0] = []byte(builder.name)
@@ -62,10 +63,10 @@ func (builder *proposalBuilder) newProposalProto() (*peer.Proposal, error) {
 
 	creator, err := identity.Serialize(builder.contract.network.gateway.id)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to serialize identity: ")
+		return nil, "", errors.Wrap(err, "Failed to serialize identity: ")
 	}
 
-	result, _, err := protoutil.CreateChaincodeProposalWithTransient(
+	result, transactionID, err := protoutil.CreateChaincodeProposalWithTransient(
 		common.HeaderType_ENDORSER_TRANSACTION,
 		builder.contract.network.name,
 		ccis,
@@ -73,10 +74,10 @@ func (builder *proposalBuilder) newProposalProto() (*peer.Proposal, error) {
 		builder.transient,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to create chaincode proposal")
+		return nil, "", errors.Wrap(err, "Failed to create chaincode proposal")
 	}
 
-	return result, nil
+	return result, transactionID, nil
 }
 
 // ProposalOption implements an option for a transaction proposal.
@@ -100,9 +101,10 @@ func WithTransient(transient map[string][]byte) ProposalOption {
 
 // Proposal represents a transaction proposal that can be sent to peers for endorsement or evaluated as a query.
 type Proposal struct {
-	contract  *Contract
-	bytes     []byte
-	signature []byte
+	contract      *Contract
+	transactionID string
+	bytes         []byte
+	signature     []byte
 }
 
 // Bytes of the serialized proposal.
@@ -113,6 +115,11 @@ func (proposal *Proposal) Bytes() ([]byte, error) {
 // Hash the proposal to obtain a digest to be signed.
 func (proposal *Proposal) Hash() ([]byte, error) {
 	return identity.Hash(proposal.bytes)
+}
+
+// TransactionID for the proposal.
+func (proposal *Proposal) TransactionID() string {
+	return proposal.transactionID
 }
 
 // Endorse the proposal to obtain an endorsed transaction for submission to the orderer.
