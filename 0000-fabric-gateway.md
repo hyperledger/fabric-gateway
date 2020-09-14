@@ -113,9 +113,9 @@ Implementation options:
 
 ## Scaling and load balancing
 
-Currently a client application is responsible for load balancing its requests between multiple peers.  The Gateway will handle this on behalf of the client application.  The Gateway will be able to maintain information on block height of each peer in order to optimise the routing of queries.
+Currently a client application is responsible for load balancing its requests between multiple peers.  The Gateway will handle this on behalf of the set of currently connected client applications.
 
-The Gateway itself will be stateless (i.e. not maintain client session state) and so can be scaled using an appriopriate load balancer.
+Ideally, the Gateway itself will be stateless (i.e. not maintain client session state) and so can be scaled independently with clients routing though an appriopriate load balancer.
 
 ## Gateway SDKs
 
