@@ -47,16 +47,20 @@ service Gateway {
 }
 ```
 
+The client credentials (private key) are never passed to the Gateway.  Client applications are responsible for managing their user keys (optionally using SDK Wallets) and signing the protobuf payloads.
+
 Submitting a transaction is a two step process (performed by the client SDK):
-- The client creates a SignedProposal message as defined in `fabric-protos/peer/proposal.proto` and signed with the user's identity
-- The `Prepare` service is invoked on the Gateway, passing the SignedProposal message
-  - The Gateway will determine the endorsement plan for the requested chaincode and forward to the appropriate peers for endorsement. It will return to the client a `PreparedTransaction` message which contains a `Envelope` message as defined in `fabric-protos/common/common.proto`.  It will also contain other information, such as the return value of the chaincode function and the transaction ID so that the client doesn't necessarily need to unpack the `Envelope` payload.
-- The client signs the hash of the Envelope payload using the user's private key and sets the signature field in the `Envelope` in the `PreparedTransaction`.
-- The `Commit` service is invoked on the Gateway, passing the signed `PreparedTransaction` message.  A stream is opened to return multiple return values.
-  - The Gateway will register transaction event listeners for the given channel/txId.
-  - It will then broadcast the `Envelope` to the ordering service.
-  - The success/error response is passed back to the client in the stream
-  - The Gateway awaits suffient tx commit events before returning and closing the stream, indicating to the client that transaction has been committed.
+- __Prepare__
+  - The client creates a SignedProposal message as defined in `fabric-protos/peer/proposal.proto` and signed with the user's identity
+  - The `Prepare` service is invoked on the Gateway, passing the SignedProposal message
+    - The Gateway will determine the endorsement plan for the requested chaincode and forward to the appropriate peers for endorsement. It will return to the client a `PreparedTransaction` message which contains a `Envelope` message as defined in `fabric-protos/common/common.proto`.  It will also contain other information, such as the return value of the chaincode function and the transaction ID so that the client doesn't necessarily need to unpack the `Envelope` payload.
+- __Commit__
+  - The client signs the hash of the Envelope payload using the user's private key and sets the signature field in the `Envelope` in the `PreparedTransaction`.
+  - The `Commit` service is invoked on the Gateway, passing the signed `PreparedTransaction` message.  A stream is opened to return multiple return values.
+    - The Gateway will register transaction event listeners for the given channel/txId.
+    - It will then broadcast the `Envelope` to the ordering service.
+    - The success/error response is passed back to the client in the stream
+    - The Gateway awaits suffient tx commit events before returning and closing the stream, indicating to the client that transaction has been committed.
 
 Evaluating a transaction is a simple process of invoking the `Evaluate` service passing a SignedProposal message.  The Gateway passes the request to a peer of it's choosing according to a defined policy (probably same org, highest block count) and returns the chaincode function return value to the client.
 
