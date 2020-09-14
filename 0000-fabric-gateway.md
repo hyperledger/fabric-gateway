@@ -72,6 +72,45 @@ The following is an example command line invocation using a prototype:
 
 Alternatively, the Gateway server will be designed to be embeddable within a Peer, in which case the all of the above parameters will be taken from the peer configuration.
 
+### Discovery
+
+On startup, the gateway will connect to its primary peer(s), as specified in the command line option (or its host, if embedded in a peer).  The discovery service will be invoked to build and maintain a cache of the network topology per channel.  This will be used to identify endorsers based on the chaincode endorsement policy.
+
+#### Collection endorsement policy
+
+Discovery can be used to get endorsing peers for a given chaincode where the transaction function will write to a given collection, and this will take into account the collection level endorsement policy.
+Ideally we could take care of these endorsement requirements in the Gateway without the client needing to have any implicit knowledge of them. Suggest extending contract metadata to include information on collections, which can be queried by Fabric Gateway. If that isn't possible then we might need some way for the client to specify the collections that will be used (not desirable).
+
+### State based endorsement
+
+This is driven by business logic and rules. Requires the client to supply constraints on endorsing organisations as part of the proposal endorsement.
+
+### Chaincode-to-chaincode endorsement
+
+Augment contract metadata for transactions with additional chaincodes / transactions that will be invoked, then we use discovery to narrow the set of endorsers.
+
+### Proposal response consistency checking
+
+Current client SDK implementations do minimal checking of proposal responses before sending to the orderer. There have been some requests for more rigorous checking of proposal responses prior to submit to the orderer.
+
+Prior to sending to the orderer, Fabric Gateway should check that proposal responses are:
+- Consistent, including having matching response payloads.
+- Meet all applicable endorsement requirements.
+
+### Ensure query results reflect latest ledger state
+
+Query results should be obtained from peers whose ledger height is at least that of the most recent events sent to clients.
+
+Scenario:
+- Client receipt of chaincode event triggers business process.
+- Business process queries ledger to obtain private data, which cannot be included in event payload since it is private.
+The private data must be consistent with the state of the ledger after commit of the transaction that emitted the chaincode event, so the query must be processed by a peer with ledger height of at least the block number that contained the chaincode event.
+
+Implementation options:
+- Only direct queries (and endorsement requests) to the peer(s) with the highest ledger height.
+- Client proposals include last observed ledger height so Gateway can target any peers with at least that ledger height.
+ A view of ledger height can be tracked by the Gateway from block events it has received.
+
 ## Scaling and load balancing
 
 Currently a client application is responsible for load balancing its requests between multiple peers.  The Gateway will handle this on behalf of the client application.  The Gateway will be able to maintain information on block height of each peer in order to optimise the routing of queries.
@@ -151,5 +190,14 @@ The CI pipeline will run the unit tests for the Gateway and its SDKs as well as 
 # Unresolved questions
 [unresolved]: #unresolved-questions
 
-- How to authenticate  clients  with  Gateway
-  - Mutual TLS, OAuth?
+### Client inspection of proposal responses
+
+Fabric is designed such that the client should have the opportunity to inspect the transaction response payload and then make a decision on whether or not that transaction should be sent to the orderer to be committed.
+
+There is the possibility of a client being able to send proposals that are subsequently not submitted to the orderer and recorded on the ledger, either because:
+- The proposal is not successfully endorsed; or
+- The client actively chooses not to submit a successfully endorsed transaction.
+
+This is viewed by some as a potential security vulnerability as it allows an attacker to probe the system.
+
+Fabric Gateway should provide the capability for some kind of audit of submitted proposals, including their transaction ID so they can be reconciled against committed transactions.
