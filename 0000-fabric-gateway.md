@@ -102,6 +102,11 @@ SDKs will be created for the following languages:
 
 It is proposed that these SDKs will be maintained in the same GitHub respository as the gateway itself (`hyperledger/fabric-gateway`) to ensure that they all stay up to date with each other and with the core gateway.  This will be enforced in the CI pipeline by running the end-to-end scenario tests across all SDKs.
 
+Publication of SDK releases will be as follows:
+- Node SDK published to NPM.
+- Java SDK published to Maven Central.
+- Go SDK published to separate GitHub repo (e.g. fabric-gateway-go) and tagged.
+
 Contributors are invited to create SDKs for other languages, e.g. Python, Rust.
 
 
@@ -136,18 +141,15 @@ of the gateway against a multi-org multi-peer network.  These tests will include
 - transient / private data
 - error handling
 
+The CI pipeline will run the unit tests for the Gateway and its SDKs as well as the end-to-end scenario (cucumber) tests against all SDKs.
+
 # Dependencies
 [dependencies]: #dependencies
 
-
+- Fabric protobuf definitions will be pulled from the `hyperledger/fabric-protos` repo.
 
 # Unresolved questions
 [unresolved]: #unresolved-questions
 
-- What parts of the design do you expect to resolve through the RFC process
-  before this gets merged?
-- What parts of the design do you expect to resolve through the implementation
-  of this feature before stabilization?
-- What related issues do you consider out of scope for this RFC that could be
-  addressed in the future independently of the solution that comes out of this
-  RFC?
+- How to authenticate  clients  with  Gateway
+  - Mutual TLS, OAuth?
