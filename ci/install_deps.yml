@@ -1,0 +1,24 @@
+# Copyright the Hyperledger Fabric contributors. All rights reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+steps:
+  - script: |
+      sudo apt-get clean
+      sudo apt-get update
+      sudo apt-get install -y gcc make
+      echo "vsts  hard  nofile  65535" | sudo tee -a /etc/security/limits.conf
+      echo "vsts  soft  nofile  65535" | sudo tee -a /etc/security/limits.conf
+    displayName: Install Dependencies
+  - task: GoTool@0
+    inputs:
+      version: $(GOVER)
+      goPath:  $(GOPATH)
+    displayName: Install Go $(GOVER)
+  - script: GO111MODULE=off go get -u github.com/myitcv/gobin
+    displayName: Install gobin
+  - script: |
+      GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.10.0
+      go get -u golang.org/x/lint/golint
+      go get -u golang.org/x/tools/cmd/goimports
+    displayName: Install Go tools

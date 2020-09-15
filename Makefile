@@ -18,7 +18,7 @@ test-scenario-sdk-go: build
 	cd $(go_sdk_dir)/scenario; godog $(base_dir)/scenario/features/
 
 test-scenario-sdk-node: build
-	cd $(node_sdk_dir); ./node_modules/.bin/cucumber-js --require './steps/**/*.js' $(base_dir)/scenario/features/*.feature
+	cd $(node_sdk_dir); npm install; ./node_modules/.bin/cucumber-js --require './steps/**/*.js' $(base_dir)/scenario/features/*.feature
 
 test-scenario: test-scenario-sdk-go test-scenario-sdk-node
 

@@ -6,15 +6,16 @@ SPDX-License-Identifier: Apache-2.0
 
 'use strict';
 
+const protoBase = __dirname + '/node_modules/fabric-protos/protos';
 const PROTO_PATH = [
     __dirname + '/../../../protos/gateway.proto',
-    __dirname + '/../../../../fabric-protos/peer/proposal.proto',
-    __dirname + '/../../../../fabric-protos/peer/proposal_response.proto',
-    __dirname + '/../../../../fabric-protos/peer/chaincode.proto',
-    __dirname + '/../../../../fabric-protos/common/common.proto',
-    __dirname + '/../../../../fabric-protos/common/policies.proto',
-    __dirname + '/../../../../fabric-protos/msp/identities.proto',
-    __dirname + '/../../../../fabric-protos/msp/msp_principal.proto',
+    protoBase + '/peer/proposal.proto',
+    protoBase + '/peer/proposal_response.proto',
+    protoBase + '/peer/chaincode.proto',
+    protoBase + '/common/common.proto',
+    protoBase + '/common/policies.proto',
+    protoBase + '/msp/identities.proto',
+    protoBase + '/msp/msp_principal.proto',
 ];
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');

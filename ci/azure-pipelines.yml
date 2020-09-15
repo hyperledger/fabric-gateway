@@ -1,0 +1,58 @@
+# Copyright the Hyperledger Fabric contributors. All rights reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: $(SourceBranchName)-$(Date:yyyyMMdd)$(Rev:.rrr)
+trigger:
+- master
+pr:
+- master
+
+variables:
+  GOPATH: $(Agent.BuildDirectory)/go
+  PATH: $(Agent.BuildDirectory)/go/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+  GOVER: 1.14.7
+
+jobs:
+- job: UnitTest
+  pool:
+    vmImage: ubuntu-18.04
+  dependsOn: []
+  timeoutInMinutes: 60
+  steps:
+  - template: install_deps.yml
+  - checkout: self
+  - script: make unit-test
+    displayName: Run checks and unit test
+#   - script: bash <(curl https://codecov.io/bash) -t $CODECOV_UPLOAD_TOKEN
+#     env:
+#       CODECOV_UPLOAD_TOKEN: $(CODECOV_UPLOAD_TOKEN)
+#     displayName: Upload coverage to Codecov    
+
+- job: ScenarioTestGo
+  pool:
+    vmImage: ubuntu-18.04
+  dependsOn: []
+  timeoutInMinutes: 60
+  steps:
+  - template: install_deps.yml
+  - checkout: self
+  - script: make test-scenario-sdk-go
+    displayName: Run Go SDK scenario tests
+    env:
+      # TODO: update this variable name in the Makefile
+      JENKINS_URL: true
+
+- job: ScenarioTestNode
+  pool:
+    vmImage: ubuntu-18.04
+  dependsOn: []
+  timeoutInMinutes: 60
+  steps:
+  - template: install_deps.yml
+  - checkout: self
+  - script: make test-scenario-sdk-node
+    displayName: Run Node SDK scenario tests
+    env:
+      # TODO: update this variable name in the Makefile
+      JENKINS_URL: true
