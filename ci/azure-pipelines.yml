@@ -22,8 +22,10 @@ jobs:
   steps:
   - template: install_deps.yml
   - checkout: self
+  - script: make lint
+    displayName: Run checks
   - script: make unit-test
-    displayName: Run checks and unit test
+    displayName: Run unit tests
 #   - script: bash <(curl https://codecov.io/bash) -t $CODECOV_UPLOAD_TOKEN
 #     env:
 #       CODECOV_UPLOAD_TOKEN: $(CODECOV_UPLOAD_TOKEN)

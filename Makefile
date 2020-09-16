@@ -14,6 +14,9 @@ build:
 unit-test:
 	go test -cover ./...
 
+lint:
+	golint ./...
+
 test-scenario-sdk-go: build
 	cd $(go_sdk_dir)/scenario; godog $(base_dir)/scenario/features/
 

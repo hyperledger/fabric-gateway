@@ -27,6 +27,7 @@ type credentials struct {
 	Key         string `json:"privateKey"`
 }
 
+// ReadWalletIdentity loads a user's credentials from a filesystem wallet
 func ReadWalletIdentity(pathname string) (*X509Identity, error) {
 	content, err := ioutil.ReadFile(filepath.Clean(pathname))
 	if err != nil {

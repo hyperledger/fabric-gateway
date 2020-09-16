@@ -16,12 +16,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-type GatewayServer struct {
+// Server represents the GRPC server for the Gateway
+type Server struct {
 	discoveryAuth *discovery.AuthInfo
 	registry      *registry
 	gatewaySigner *signingIdentity
 }
 
+// Config is a local cache of the discovery results
 type Config interface {
 	BootstrapPeer() PeerEndpoint
 	MspID() string
@@ -29,6 +31,7 @@ type Config interface {
 	Key() string
 }
 
+// PeerEndpoint represents the connection details of a peer
 type PeerEndpoint struct {
 	Host    string
 	Port    uint32
@@ -36,7 +39,7 @@ type PeerEndpoint struct {
 }
 
 // NewGatewayServer creates a server side implementation of the gateway server grpc
-func NewGatewayServer(config Config) (*GatewayServer, error) {
+func NewGatewayServer(config Config) (*Server, error) {
 	certificate, err := identity.CertificateFromPEM([]byte(config.Certificate()))
 	if err != nil {
 		return nil, err
@@ -96,7 +99,7 @@ func NewGatewayServer(config Config) (*GatewayServer, error) {
 		fmt.Printf("ERROR discovering peers: %s\n", err)
 	}
 
-	result := &GatewayServer{
+	result := &Server{
 		authInfo,
 		registry,
 		signingIdentity,

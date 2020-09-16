@@ -21,7 +21,8 @@ import (
 	"github.com/hyperledger/fabric-protos-go/peer"
 )
 
-func (gs *GatewayServer) Evaluate(ctx context.Context, signedProposal *peer.SignedProposal) (*pb.Result, error) {
+// Evaluate will invoke the transaction function as specified in the SignedProposal
+func (gs *Server) Evaluate(ctx context.Context, signedProposal *peer.SignedProposal) (*pb.Result, error) {
 	channelHeader, err := getChannelHeaderFromSignedProposal(signedProposal)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to unpack channel header: ")
@@ -38,7 +39,9 @@ func (gs *GatewayServer) Evaluate(ctx context.Context, signedProposal *peer.Sign
 	return getValueFromResponse(response)
 }
 
-func (gs *GatewayServer) Prepare(ctx context.Context, signedProposal *peer.SignedProposal) (*pb.PreparedTransaction, error) {
+// Prepare will collect endorsements by invoking the transaction function specified in the SignedProposal against
+// sufficient Peers to satisfy the endorsement policy.
+func (gs *Server) Prepare(ctx context.Context, signedProposal *peer.SignedProposal) (*pb.PreparedTransaction, error) {
 	var proposal peer.Proposal
 	err := proto.Unmarshal(signedProposal.ProposalBytes, &proposal)
 	if err != nil {
@@ -78,7 +81,9 @@ func (gs *GatewayServer) Prepare(ctx context.Context, signedProposal *peer.Signe
 	return preparedTxn, nil
 }
 
-func (gs *GatewayServer) Commit(txn *pb.PreparedTransaction, cs pb.Gateway_CommitServer) error {
+// Commit will send the signed transaction to the ordering service.  The output stream will close
+// once the transaction is committed on a sufficient number of peers according to a defined policy.
+func (gs *Server) Commit(txn *pb.PreparedTransaction, cs pb.Gateway_CommitServer) error {
 	channelHeader, err := getChannelHeaderFromEnvelope(txn.Envelope)
 	if err != nil {
 		return errors.Wrap(err, "Failed to unpack channel header: ")

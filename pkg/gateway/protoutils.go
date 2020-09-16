@@ -62,7 +62,7 @@ import (
 // 	return proposal, nil
 // }
 
-func (gs *GatewayServer) signProposal(proposal *peer.Proposal, sign identity.Sign) (*peer.SignedProposal, error) {
+func (gs *Server) signProposal(proposal *peer.Proposal, sign identity.Sign) (*peer.SignedProposal, error) {
 	proposalBytes, err := proto.Marshal(proposal)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal chaincode proposal")
