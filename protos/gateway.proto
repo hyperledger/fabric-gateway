@@ -20,14 +20,19 @@ import "peer/proposal.proto";
 import "common/common.proto";
 
 service Gateway {
-    rpc Prepare(SignedProposal) returns (PreparedTransaction) {}
+    rpc Prepare(ProposedTransaction) returns (PreparedTransaction) {}
     rpc Commit(PreparedTransaction) returns (stream Event) {}
-    rpc Evaluate(SignedProposal) returns (Result) {}
+    rpc Evaluate(ProposedTransaction) returns (Result) {}
 }
 
 // The value that is returned by the transaction function
 message Result {
     bytes value = 1;
+}
+
+// The signed proposal ready for endorsement plus any processing options
+message ProposedTransaction {
+    SignedProposal proposal = 1;
 }
 
 // The set of transaction responses from the endorsing peers for signing by the client

@@ -22,7 +22,8 @@ import (
 )
 
 // Evaluate will invoke the transaction function as specified in the SignedProposal
-func (gs *Server) Evaluate(ctx context.Context, signedProposal *peer.SignedProposal) (*pb.Result, error) {
+func (gs *Server) Evaluate(ctx context.Context, proposedTransaction *pb.ProposedTransaction) (*pb.Result, error) {
+	signedProposal := proposedTransaction.Proposal
 	channelHeader, err := getChannelHeaderFromSignedProposal(signedProposal)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to unpack channel header: ")
@@ -41,7 +42,8 @@ func (gs *Server) Evaluate(ctx context.Context, signedProposal *peer.SignedPropo
 
 // Prepare will collect endorsements by invoking the transaction function specified in the SignedProposal against
 // sufficient Peers to satisfy the endorsement policy.
-func (gs *Server) Prepare(ctx context.Context, signedProposal *peer.SignedProposal) (*pb.PreparedTransaction, error) {
+func (gs *Server) Prepare(ctx context.Context, proposedTransaction *pb.ProposedTransaction) (*pb.PreparedTransaction, error) {
+	signedProposal := proposedTransaction.Proposal
 	var proposal peer.Proposal
 	err := proto.Unmarshal(signedProposal.ProposalBytes, &proposal)
 	if err != nil {

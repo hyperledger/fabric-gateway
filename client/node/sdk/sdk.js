@@ -146,14 +146,16 @@ class Transaction {
         const gw = this.contract.network.gateway;
         const proposal = createProposal(this, args, gw.signer);
         const signedProposal = signProposal(proposal, gw.signer);
-        return gw.evaluate(signedProposal);
+        const wrapper = createProposedWrapper(this, signedProposal);
+        return gw.evaluate(wrapper);
     }
 
     async submit(...args) {
         const gw = this.contract.network.gateway;
         const proposal = createProposal(this, args, gw.signer);
         const signedProposal = signProposal(proposal, gw.signer);
-        const preparedTxn = await gw.prepare(signedProposal);
+        const wrapper = createProposedWrapper(this, signedProposal);
+        const preparedTxn = await gw.prepare(wrapper);
         preparedTxn.envelope.signature = gw.signer.sign(preparedTxn.envelope.payload);
         await gw.commit(preparedTxn);
         return preparedTxn.response.value.toString();
@@ -231,6 +233,12 @@ function _preventMalleability(sig, curve) {
     }
 
     return sig;
+}
+
+function createProposedWrapper(txn, signedProposal) {
+    return {
+        proposal: signedProposal
+    };
 }
 
 function createProposal(txn, args, signer) {

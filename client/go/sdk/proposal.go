@@ -12,6 +12,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
+	pb "github.com/hyperledger/fabric-gateway/protos"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/hyperledger/fabric/protoutil"
@@ -124,7 +125,7 @@ func (proposal *Proposal) TransactionID() string {
 
 // Endorse the proposal to obtain an endorsed transaction for submission to the orderer.
 func (proposal *Proposal) Endorse() (*Transaction, error) {
-	signedProposal, err := proposal.newSignedProposal()
+	txProposal, err := proposal.newProposedTransaction()
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +133,7 @@ func (proposal *Proposal) Endorse() (*Transaction, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
-	preparedTransaction, err := proposal.contract.network.gateway.client.Prepare(ctx, signedProposal)
+	preparedTransaction, err := proposal.contract.network.gateway.client.Prepare(ctx, txProposal)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to endorse proposal")
 	}
@@ -146,7 +147,7 @@ func (proposal *Proposal) Endorse() (*Transaction, error) {
 
 // Evaluate the proposal to obtain a transaction result. This is effectively a query.
 func (proposal *Proposal) Evaluate() ([]byte, error) {
-	signedProposal, err := proposal.newSignedProposal()
+	txProposal, err := proposal.newProposedTransaction()
 	if err != nil {
 		return nil, err
 	}
@@ -154,12 +155,23 @@ func (proposal *Proposal) Evaluate() ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
-	result, err := proposal.contract.network.gateway.client.Evaluate(ctx, signedProposal)
+	result, err := proposal.contract.network.gateway.client.Evaluate(ctx, txProposal)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to evaluate transaction")
 	}
 
 	return result.Value, nil
+}
+
+func (proposal *Proposal) newProposedTransaction() (*pb.ProposedTransaction, error) {
+	signedProposal, err := proposal.newSignedProposal()
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.ProposedTransaction{
+		Proposal: signedProposal,
+	}, nil
 }
 
 func (proposal *Proposal) newSignedProposal() (*peer.SignedProposal, error) {
