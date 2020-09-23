@@ -7,12 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package identity
 
 import (
-	"strings"
+	"bytes"
 	"testing"
 )
 
 func TestIdentity(t *testing.T) {
-	certificatePEM := `-----BEGIN CERTIFICATE-----
+	const certificatePEM = `-----BEGIN CERTIFICATE-----
 MIIDujCCAqKgAwIBAgIIE31FZVaPXTUwDQYJKoZIhvcNAQEFBQAwSTELMAkGA1UE
 BhMCVVMxEzARBgNVBAoTCkdvb2dsZSBJbmMxJTAjBgNVBAMTHEdvb2dsZSBJbnRl
 cm5ldCBBdXRob3JpdHkgRzIwHhcNMTQwMTI5MTMyNzQzWhcNMTQwNTI5MDAwMDAw
@@ -52,38 +52,34 @@ yE+vPxsiUkvQHdO2fojCkY8jg70jxM+gu59tPDNbw3Uh/2Ij310FgTHsnGQMyA==
 		}
 	})
 
-	t.Run("Certificate / PEM conversion", func(t *testing.T) {
-		certificate, err := CertificateFromPEM([]byte(certificatePEM))
-		if err != nil {
-			t.Fatalf("Failed to create certificate: %v", err)
+	t.Run("Serialize", func(t *testing.T) {
+		inputIdentity := &X509Identity{
+			mspID:       "mspID",
+			certificate: []byte(certificatePEM),
 		}
 
-		certBytes, err := CertificateToPEM(certificate)
+		identityMessage, err := Serialize(inputIdentity)
 		if err != nil {
-			t.Fatalf("Failed to create PEM: %v", err)
+			t.Fatalf("Failed to serialize identity: %v", err)
 		}
 
-		resultPEM := strings.TrimSpace(string(certBytes))
-		if certificatePEM != resultPEM {
-			t.Fatalf("Input and output PEM does not match. Expected:\n%s\nGot:\n%s", certificatePEM, resultPEM)
+		outputIdentity, err := Deserialize(identityMessage)
+		if err != nil {
+			t.Fatalf("Failed to deserialize identity: %v", err)
+		}
+
+		if outputIdentity.MspID() != inputIdentity.MspID() {
+			t.Fatalf("Expected MspID %s, got %s", inputIdentity.MspID(), outputIdentity.MspID())
+		}
+
+		if !bytes.Equal(inputIdentity.Credentials(), outputIdentity.Credentials()) {
+			t.Fatalf("Expected Credentials:\n%v\nGot:\n%v", inputIdentity.Credentials(), outputIdentity.Credentials())
 		}
 	})
 
-	t.Run("CertificateFromPEM fails with invalid PEM", func(t *testing.T) {
-		pem := []byte("Non-PEM content")
-
-		_, err := CertificateFromPEM(pem)
-		if err == nil {
-			t.Fatalf("Expected error, got nil")
-		}
-	})
-
-	t.Run("CertificateFromPEM fails with invalid certificate", func(t *testing.T) {
-		pem := []byte("-----BEGIN CERTIFICATE-----\nBAD/DATA-----END CERTIFICATE-----")
-
-		_, err := CertificateFromPEM(pem)
-		if err == nil {
-			t.Fatalf("Expected error, got nil")
+	t.Run("Deserialize fails on bad message", func(t *testing.T) {
+		if identity, err := Deserialize([]byte("BAD_SERIALIZED_IDENTITY")); err == nil {
+			t.Fatalf("Expected an error, got identity: %v", identity)
 		}
 	})
 }

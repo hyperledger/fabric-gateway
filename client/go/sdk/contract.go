@@ -56,7 +56,7 @@ func (contract *Contract) SubmitAsync(transactionName string, options ...Proposa
 
 	result := transaction.Result()
 
-	commit, err := transaction.Submit()
+	commit, err := transaction.Commit()
 	if err != nil {
 		return nil, nil, err
 	}
