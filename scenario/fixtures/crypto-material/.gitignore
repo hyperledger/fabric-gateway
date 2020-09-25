@@ -1,0 +1,6 @@
+crypto-config/
+genesis.block
+mychannel.block
+channel.tx
+Org1MSPanchors.tx
+Org2MSPanchors.tx

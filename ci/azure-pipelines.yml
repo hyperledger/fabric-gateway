@@ -39,7 +39,7 @@ jobs:
   steps:
   - template: install_deps.yml
   - checkout: self
-  - script: make test-scenario-sdk-go
+  - script: make scenario-test-go
     displayName: Run Go SDK scenario tests
     env:
       # TODO: update this variable name in the Makefile
@@ -53,7 +53,7 @@ jobs:
   steps:
   - template: install_deps.yml
   - checkout: self
-  - script: make test-scenario-sdk-node
+  - script: make scenario-test-node
     displayName: Run Node SDK scenario tests
     env:
       # TODO: update this variable name in the Makefile

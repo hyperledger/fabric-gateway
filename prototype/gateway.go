@@ -7,15 +7,17 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
+	"path/filepath"
 
-	"github.com/hyperledger/fabric-gateway/pkg/gateway"
-	"github.com/hyperledger/fabric-gateway/pkg/wallet"
+	gateway "github.com/hyperledger/fabric-gateway/pkg/server"
 	pb "github.com/hyperledger/fabric-gateway/protos"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 )
 
@@ -33,7 +35,7 @@ func main() {
 	var cert, key string
 	// extract bootstrap config from command line flags
 	if *idPath != "" {
-		id, err := wallet.ReadWalletIdentity(*idPath)
+		id, err := readWalletIdentity(*idPath)
 		if err != nil {
 			log.Fatalf("failed to read gateway identity: %s", err)
 		}
@@ -103,4 +105,32 @@ func (bc *bootstrapconfig) Certificate() string {
 
 func (bc *bootstrapconfig) Key() string {
 	return bc.key
+}
+
+type x509Identity struct {
+	Version     int         `json:"version"`
+	MspID       string      `json:"mspId"`
+	IDType      string      `json:"type"`
+	Credentials credentials `json:"credentials"`
+}
+
+type credentials struct {
+	Certificate string `json:"certificate"`
+	Key         string `json:"privateKey"`
+}
+
+// readWalletIdentity loads a user's credentials from a filesystem wallet
+func readWalletIdentity(pathname string) (*x509Identity, error) {
+	content, err := ioutil.ReadFile(filepath.Clean(pathname))
+	if err != nil {
+		return nil, err
+	}
+
+	id := &x509Identity{}
+
+	if err := json.Unmarshal(content, &id); err != nil {
+		return nil, errors.Wrap(err, "Invalid identity format")
+	}
+
+	return id, err
 }

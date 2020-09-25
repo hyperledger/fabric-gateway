@@ -5,26 +5,38 @@
 #
 
 base_dir := $(PWD)
-node_sdk_dir := $(base_dir)/client/node/sdk
-go_sdk_dir := $(base_dir)/client/go/sdk
 
-build:
+go_dir := $(base_dir)/pkg
+node_dir := $(base_dir)/node
+scenario_dir := $(base_dir)/scenario
+
+build: build-go build-node
+
+build-go:
 	go build -o bin/gateway prototype/gateway.go
 
-unit-test:
-	go test -cover ./...
+build-node:
+	cd $(node_dir); npm install
+
+unit-test: unit-test-go unit-test-node
+
+unit-test-go:
+	go test -cover $(go_dir)/...
+
+unit-test-node: build-node
+	cd $(node_dir); npm test
 
 lint:
-	golint ./...
+	golint $(go_dir)/...
 
-test-scenario-sdk-go: build
-	cd $(go_sdk_dir)/scenario; godog $(base_dir)/scenario/features/
+scenario-test-go: build-go
+	cd $(scenario_dir)/go; godog $(scenario_dir)/features/
 
-test-scenario-sdk-node: build
-	cd $(node_sdk_dir); npm install; ./node_modules/.bin/cucumber-js --require './steps/**/*.js' $(base_dir)/scenario/features/*.feature
+scenario-test-node: build
+	cd $(scenario_dir)/node; npm install; npm test
 
-test-scenario: test-scenario-sdk-go test-scenario-sdk-node
+scenario-test: scenario-test-go scenario-test-node
 
-test: unit-test test-scenario
+test: unit-test scenario-test
 
 all: test
