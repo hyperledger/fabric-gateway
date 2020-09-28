@@ -20,16 +20,16 @@ import (
 
 	"github.com/cucumber/godog"
 	messages "github.com/cucumber/messages-go/v10"
-	"github.com/hyperledger/fabric-gateway/client/go/sdk"
+	sdk "github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/pkg/errors"
 )
 
 const (
-	fixturesDir       = "../../../../scenario/fixtures"
+	fixturesDir       = "../fixtures"
 	dockerComposeFile = "docker-compose-tls.yaml"
 	dockerComposeDir  = fixturesDir + "/docker-compose"
-	gatewayDir        = "../../../../bin"
+	gatewayDir        = "../../bin"
 )
 
 type TransactionType int
@@ -302,18 +302,18 @@ func haveGateway(arg1 int) error {
 		mspid := "Org1MSP"
 		certPath := pemsDir + "/signcerts/User1@org1.example.com-cert.pem"
 		keyPath := pemsDir + "/keystore/key.pem"
-		f, err := ioutil.ReadFile(certPath)
-		if err != nil {
-			return err
-		}
-		cert := string(f)
-		f, err = ioutil.ReadFile(keyPath)
-		if err != nil {
-			return err
-		}
-		key := string(f)
 
-		certificate, err := identity.CertificateFromPEM([]byte(cert))
+		certificatePEM, err := ioutil.ReadFile(certPath)
+		if err != nil {
+			return err
+		}
+
+		privateKeyPEM, err := ioutil.ReadFile(keyPath)
+		if err != nil {
+			return err
+		}
+
+		certificate, err := identity.CertificateFromPEM(certificatePEM)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -323,7 +323,7 @@ func haveGateway(arg1 int) error {
 			log.Fatal(err)
 		}
 
-		privateKey, err := identity.PrivateKeyFromPEM([]byte(key))
+		privateKey, err := identity.PrivateKeyFromPEM(privateKeyPEM)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -505,7 +505,7 @@ func useNetwork(channelName string) error {
 }
 
 func theResponseShouldBeJSONMatching(arg *messages.PickleStepArgument_PickleDocString) error {
-	same, err := JSONEqual([]byte(arg.GetContent()), transactionResult)
+	same, err := jsonEqual([]byte(arg.GetContent()), transactionResult)
 	if err != nil {
 		return err
 	}
@@ -515,7 +515,7 @@ func theResponseShouldBeJSONMatching(arg *messages.PickleStepArgument_PickleDocS
 	return nil
 }
 
-func JSONEqual(a, b []byte) (bool, error) {
+func jsonEqual(a, b []byte) (bool, error) {
 	var j, j2 interface{}
 	if err := json.Unmarshal(a, &j); err != nil {
 		return false, err

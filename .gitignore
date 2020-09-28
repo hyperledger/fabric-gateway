@@ -1,9 +1,2 @@
-.vscode/**
-node_modules
-bin
-scenario/fixtures/crypto-material/crypto-config/
-scenario/fixtures/crypto-material/genesis.block
-scenario/fixtures/crypto-material/mychannel.block
-scenario/fixtures/crypto-material/channel.tx
-scenario/fixtures/crypto-material/Org1MSPanchors.tx
-scenario/fixtures/crypto-material/Org2MSPanchors.tx
+.vscode/
+bin/

@@ -8,8 +8,9 @@ package identity
 
 import (
 	"crypto/x509"
-	"encoding/pem"
-	"fmt"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-protos-go/msp"
 )
 
 // Identity represents a client identity.
@@ -48,21 +49,25 @@ func NewX509Identity(mspID string, certificate *x509.Certificate) (*X509Identity
 	return identity, nil
 }
 
-// CertificateToPEM converts an X.509 certificate to PEM encoded ASN.1 DER data.
-func CertificateToPEM(certificate *x509.Certificate) ([]byte, error) {
-	block := &pem.Block{
-		Type:  "CERTIFICATE",
-		Bytes: certificate.Raw,
+// Serialize an identity to protobuf SerializedIdentity message bytes
+func Serialize(id Identity) ([]byte, error) {
+	serializedIdentity := &msp.SerializedIdentity{
+		Mspid:   id.MspID(),
+		IdBytes: id.Credentials(),
 	}
-	return pemEncode(block)
+	return proto.Marshal(serializedIdentity)
 }
 
-// CertificateFromPEM creates an X.509 certificate from PEM encoded data.
-func CertificateFromPEM(certificatePEM []byte) (*x509.Certificate, error) {
-	block, _ := pem.Decode(certificatePEM)
-	if block == nil {
-		return nil, fmt.Errorf("Failed to parse certificate PEM")
+// Deserialize SerializedIdentity protobuf message bytes to an Identity
+func Deserialize(message []byte) (Identity, error) {
+	serializedIdentity := &msp.SerializedIdentity{}
+	if err := proto.Unmarshal(message, serializedIdentity); err != nil {
+		return nil, err
 	}
 
-	return x509.ParseCertificate(block.Bytes)
+	result := &X509Identity{
+		mspID:       serializedIdentity.Mspid,
+		certificate: serializedIdentity.IdBytes,
+	}
+	return result, nil
 }

@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 
 const protoBase = __dirname + '/node_modules/fabric-protos/protos';
 const PROTO_PATH = [
-    __dirname + '/../../../protos/gateway.proto',
+    __dirname + '/../protos/gateway.proto',
     protoBase + '/peer/proposal.proto',
     protoBase + '/peer/proposal_response.proto',
     protoBase + '/peer/chaincode.proto',

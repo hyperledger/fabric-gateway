@@ -9,14 +9,14 @@ SPDX-License-Identifier: Apache-2.0
 const { Given, When, Then, BeforeAll, AfterAll, After } = require('cucumber');
 const { execFileSync, spawnSync, spawn } = require('child_process');
 const fs = require('fs');
-const { Gateway, Signer } = require('../sdk');
+const { Gateway, Signer } = require('fabric-gateway');
 const chai = require('chai');
 const expect = chai.expect;
 
-const fixturesDir = __dirname + '/../../../../scenario/fixtures';
+const fixturesDir = __dirname + '/../../fixtures';
 const dockerComposeDir = fixturesDir + '/docker-compose';
 const dockerComposeFile = 'docker-compose-tls.yaml';
-const gatewayDir = __dirname + '/../../../../bin';
+const gatewayDir = __dirname + '/../../../bin';
 
 const TIMEOUTS = {
   HUGE_TIME: 20 * 60 * 1000,
