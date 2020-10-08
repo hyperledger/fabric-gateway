@@ -8,32 +8,17 @@ package identity
 
 import (
 	"crypto"
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
 )
 
 func TestSigner(t *testing.T) {
-	newECDSAPrivateKey := func(t *testing.T) *ecdsa.PrivateKey {
-		privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-		if err != nil {
-			t.Fatalf("Failed to generate key")
-		}
-		return privateKey
-	}
-
-	assertSignature := func(t *testing.T, sign Sign) {
-		signature, err := sign([]byte("digest"))
-		if err != nil {
-			t.Fatalf("Signing error: %v", err)
-		}
-
-		if signature == nil {
-			t.Fatalf("Signature was nil")
-		}
+	privateKey, err := test.NewECDSAPrivateKey()
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	t.Run("Create signer with unsupported private key type fails", func(t *testing.T) {
@@ -50,12 +35,18 @@ func TestSigner(t *testing.T) {
 	})
 
 	t.Run("Create signer with ECDSA private key", func(t *testing.T) {
-		privateKey := newECDSAPrivateKey(t)
-		signer, err := NewPrivateKeySign(privateKey)
+		sign, err := NewPrivateKeySign(privateKey)
 		if err != nil {
 			t.Fatalf("Failed to create identity: %v", err)
 		}
 
-		assertSignature(t, signer)
+		signature, err := sign([]byte("digest"))
+		if err != nil {
+			t.Fatalf("Signing error: %v", err)
+		}
+
+		if signature == nil {
+			t.Fatalf("Signature was nil")
+		}
 	})
 }
