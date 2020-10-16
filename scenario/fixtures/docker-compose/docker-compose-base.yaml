@@ -100,6 +100,20 @@ services:
     volumes:
         - /var/run/:/host/var/run/
 
+  gateway:
+    container_name: gateway
+    image: hyperledger/fabric-gateway${DOCKER_IMG_TAG}
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+
+      # TLS SETTINGS
+      - GATEWAY_TLS_ENABLED=false
+
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric-gateway
+    command: gateway
+    volumes:
+        - /var/run/:/host/var/run/
+
   clibase:
     extends:
       file: docker-compose-cli.yaml

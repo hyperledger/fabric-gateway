@@ -4,7 +4,7 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package gateway
+package server
 
 import (
 	"context"
@@ -28,7 +28,7 @@ func (gs *Server) Evaluate(ctx context.Context, proposedTransaction *pb.Proposed
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to unpack channel header: ")
 	}
-	endorsers := gs.registry.getEndorsers(channelHeader.ChannelId)
+	endorsers := gs.registry.GetEndorsers(channelHeader.ChannelId)
 	if len(endorsers) == 0 {
 		return nil, errors.New("No endorsing peers found for channel: " + channelHeader.ChannelId)
 	}
@@ -53,7 +53,7 @@ func (gs *Server) Prepare(ctx context.Context, proposedTransaction *pb.ProposedT
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to unpack channel header: ")
 	}
-	endorsers := gs.registry.getEndorsers(channelHeader.ChannelId)
+	endorsers := gs.registry.GetEndorsers(channelHeader.ChannelId)
 
 	var responses []*peer.ProposalResponse
 	// send to all the endorsers
@@ -90,15 +90,14 @@ func (gs *Server) Commit(txn *pb.PreparedTransaction, cs pb.Gateway_CommitServer
 	if err != nil {
 		return errors.Wrap(err, "Failed to unpack channel header: ")
 	}
-	deliverers := gs.registry.getDeliverers(channelHeader.ChannelId)
-	orderers := gs.registry.getOrderers(channelHeader.ChannelId)
+	orderers := gs.registry.GetOrderers(channelHeader.ChannelId)
 
 	if len(orderers) == 0 {
 		return errors.New("no orderers discovered")
 	}
 
 	done := make(chan bool)
-	go listenForTxEvents(deliverers, "mychannel", txn.TxId, gs.gatewaySigner, done)
+	go gs.registry.ListenForTxEvents("mychannel", txn.TxId, done)
 
 	err = orderers[0].Send(txn.Envelope)
 	if err != nil {

@@ -11,11 +11,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
 	"os/exec"
 	"reflect"
 	"regexp"
-	"syscall"
 	"time"
 
 	"github.com/cucumber/godog"
@@ -57,7 +55,6 @@ var transactionResult []byte
 
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctx.AfterSuite(func() {
-		stopGateway()
 		stopFabric()
 	})
 }
@@ -116,40 +113,7 @@ func stopFabric() error {
 }
 
 func startGateway(mspid string) error {
-	if gatewayProcess == nil {
-		org1Dir := "../scenario/fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com"
-		gatewayProcess = exec.Command(
-			"./gateway",
-			//"go", "run", "gateway.go",
-			"-h", "peer0.org1.example.com",
-			"-p", "7051",
-			"-m", mspid,
-			"-cert", org1Dir+"/users/User2@org1.example.com/msp/signcerts/User2@org1.example.com-cert.pem",
-			"-key", org1Dir+"/users/User2@org1.example.com/msp/keystore/key.pem",
-			"-tlscert", org1Dir+"/tlsca/tlsca.org1.example.com-cert.pem",
-		)
-		gatewayProcess.Dir = gatewayDir
-		gatewayProcess.Env = append(os.Environ(), "DISCOVERY_AS_LOCALHOST=TRUE")
-		gatewayProcess.Stdout = os.Stdout
-		gatewayProcess.Stderr = os.Stderr
-		gatewayProcess.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-		err := gatewayProcess.Start()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func stopGateway() error {
-	if gatewayProcess != nil {
-		pgid, err := syscall.Getpgid(gatewayProcess.Process.Pid)
-		if err == nil {
-			gatewayProcess = nil
-			return syscall.Kill(-pgid, 15)
-		}
-		return err
-	}
+	// no-op - gateway started by docker-compose
 	return nil
 }
 
@@ -333,7 +297,7 @@ func haveGateway(arg1 int) error {
 			log.Fatal(err)
 		}
 
-		gw, err = sdk.Connect("localhost:1234", id, signer)
+		gw, err = sdk.Connect("localhost:7053", id, signer)
 	}
 	return nil
 }

@@ -4,7 +4,7 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package gateway
+package network
 
 import (
 	"context"
@@ -19,15 +19,14 @@ import (
 )
 
 type channelDiscovery struct {
-	channel  string
 	client   discovery.DiscoveryClient
 	sign     identity.Sign
 	authInfo *discovery.AuthInfo
 	registry *registry
 }
 
-func newChannelDiscovery(channel string, client discovery.DiscoveryClient, sign identity.Sign, authInfo *discovery.AuthInfo, registry *registry) *channelDiscovery {
-	return &channelDiscovery{channel, client, sign, authInfo, registry}
+func newChannelDiscovery(client discovery.DiscoveryClient, sign identity.Sign, authInfo *discovery.AuthInfo, registry *registry) *channelDiscovery {
+	return &channelDiscovery{client, sign, authInfo, registry}
 }
 
 func (cd *channelDiscovery) invokeDiscovery(request *discovery.Request) (*discovery.Response, error) {
@@ -61,12 +60,12 @@ func (cd *channelDiscovery) invokeDiscovery(request *discovery.Request) (*discov
 
 }
 
-func (cd *channelDiscovery) discoverConfig() error {
+func (cd *channelDiscovery) discoverConfig(channel string) error {
 	request := &discovery.Request{
 		Authentication: cd.authInfo,
 		Queries: []*discovery.Query{
 			{
-				Channel: cd.channel,
+				Channel: channel,
 				Query: &discovery.Query_ConfigQuery{
 					ConfigQuery: &discovery.ConfigQuery{},
 				},
@@ -94,19 +93,19 @@ func (cd *channelDiscovery) discoverConfig() error {
 	// update the orderers
 	for msp, eps := range result.GetOrderers() {
 		for _, ep := range eps.Endpoint {
-			cd.registry.addOrderer(cd.channel, msp, ep.Host, ep.Port)
+			cd.registry.addOrderer(channel, msp, ep.Host, ep.Port)
 		}
 	}
 
 	return err
 }
 
-func (cd *channelDiscovery) discoverPeers() error {
+func (cd *channelDiscovery) discoverPeers(channel string) error {
 	request := &discovery.Request{
 		Authentication: cd.authInfo,
 		Queries: []*discovery.Query{
 			{
-				Channel: cd.channel,
+				Channel: channel,
 				Query: &discovery.Query_PeerQuery{
 					PeerQuery: &discovery.PeerMembershipQuery{},
 				},
@@ -135,7 +134,7 @@ func (cd *channelDiscovery) discoverPeers() error {
 			parts := strings.Split(ep, ":")
 			host := parts[0]
 			port, _ := strconv.Atoi(parts[1])
-			cd.registry.addPeer(cd.channel, msp, host, uint32(port))
+			cd.registry.addPeer(channel, msp, host, uint32(port))
 		}
 	}
 

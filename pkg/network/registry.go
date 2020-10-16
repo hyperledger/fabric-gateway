@@ -4,20 +4,24 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package gateway
+package network
 
 import (
 	"context"
+	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-gateway/pkg/connection"
+	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/discovery"
 	"github.com/hyperledger/fabric-protos-go/orderer"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	fabutil "github.com/hyperledger/fabric/common/util"
 	"github.com/hyperledger/fabric/protoutil"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -25,12 +29,21 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// Config represents the startup configuration of the gateway
+type Config interface {
+	BootstrapPeer() connection.PeerEndpoint
+	MspID() string
+	Certificate() string
+	Key() string
+}
+
 type registry struct {
-	signer   *signingIdentity
-	peers    map[string]peerClient
-	orderers map[string]ordererClient
-	msps     map[string]mspInfo
-	channels map[string]channelInfo
+	signer     *identity.SigningIdentity
+	peers      map[string]peerClient
+	orderers   map[string]ordererClient
+	msps       map[string]mspInfo
+	channels   map[string]channelInfo
+	discoverer *channelDiscovery
 }
 
 type peerClient struct {
@@ -55,6 +68,7 @@ type channelInfo struct {
 	mspid    string
 	orderers map[string]bool
 	peers    map[string]bool
+	refresh  bool
 }
 
 type endpoint struct {
@@ -63,17 +77,63 @@ type endpoint struct {
 	hostnameOverride string
 }
 
-func newRegistry(signer *signingIdentity) *registry {
-	return &registry{
-		signer:   signer,
+func NewRegistry(config Config) (*registry, error) {
+	certificate, err := identity.CertificateFromPEM([]byte(config.Certificate()))
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := identity.NewX509Identity(config.MspID(), certificate)
+	if err != nil {
+		return nil, err
+	}
+
+	privateKey, err := identity.PrivateKeyFromPEM([]byte(config.Key()))
+	if err != nil {
+		return nil, err
+	}
+
+	signer, err := identity.NewPrivateKeySign(privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	signingIdentity, err := identity.NewSigningIdentity(id, signer)
+	if err != nil {
+		return nil, err
+	}
+
+	reg := &registry{
+		signer:   signingIdentity,
 		peers:    make(map[string]peerClient),
 		orderers: make(map[string]ordererClient),
 		msps:     make(map[string]mspInfo),
 		channels: make(map[string]channelInfo),
 	}
+	reg.addMSP(config.MspID(), config.BootstrapPeer().TLSCert)
+	reg.addPeer("", config.MspID(), config.BootstrapPeer().Host, config.BootstrapPeer().Port)
+
+	clientTLSCert, err := tls.X509KeyPair([]byte(config.Certificate()), []byte(config.Key()))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create tls cert")
+	}
+	clientID, err := signingIdentity.Serialize()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to serialize gateway id")
+	}
+	authInfo := &discovery.AuthInfo{
+		ClientIdentity:    clientID,
+		ClientTlsCertHash: fabutil.ComputeSHA256(clientTLSCert.Certificate[0]),
+	}
+	url := fmt.Sprintf("%s:%d", config.BootstrapPeer().Host, config.BootstrapPeer().Port)
+	discoveryClient := reg.peers[url].discoveryClient
+
+	reg.discoverer = newChannelDiscovery(discoveryClient, signer, authInfo, reg)
+	return reg, nil
 }
 
 func (reg *registry) addPeer(channel string, mspid string, host string, port uint32) error {
+	fmt.Printf("addPeer: %s, %s, %s, %d\n", channel, mspid, host, port)
 	// assumes that the msp registry has already been populated with this mspid
 	url := fmt.Sprintf("%s:%d", host, port)
 	if _, ok := reg.peers[url]; !ok {
@@ -112,6 +172,7 @@ func (reg *registry) addPeer(channel string, mspid string, host string, port uin
 			mspid:    mspid,
 			peers:    make(map[string]bool),
 			orderers: make(map[string]bool),
+			refresh:  true,
 		}
 	}
 	reg.channels[channel].peers[url] = true
@@ -120,6 +181,7 @@ func (reg *registry) addPeer(channel string, mspid string, host string, port uin
 }
 
 func (reg *registry) addOrderer(channel string, mspid string, host string, port uint32) error {
+	fmt.Printf("addOrderer: %s, %s, %s, %d\n", channel, mspid, host, port)
 	// assumes that the msp registry has already been populated with this mspid
 	url := fmt.Sprintf("%s:%d", host, port)
 	if _, ok := reg.orderers[url]; !ok {
@@ -156,6 +218,7 @@ func (reg *registry) addOrderer(channel string, mspid string, host string, port 
 			mspid:    mspid,
 			peers:    make(map[string]bool),
 			orderers: make(map[string]bool),
+			refresh:  true,
 		}
 	}
 	reg.channels[channel].orderers[url] = true
@@ -172,7 +235,8 @@ func (reg *registry) addMSP(mspid string, cert []byte) {
 	}
 }
 
-func (reg *registry) getEndorsers(channel string) []peer.EndorserClient {
+func (reg *registry) GetEndorsers(channel string) []peer.EndorserClient {
+	reg.discoverChannel(channel)
 	// at the moment this returns all endorsing peers in a channel
 	// eventually this should return a chaincode specific set
 	endorsers := make([]peer.EndorserClient, 0)
@@ -182,7 +246,8 @@ func (reg *registry) getEndorsers(channel string) []peer.EndorserClient {
 	return endorsers
 }
 
-func (reg *registry) getDeliverers(channel string) []peer.DeliverClient {
+func (reg *registry) GetDeliverers(channel string) []peer.DeliverClient {
+	reg.discoverChannel(channel)
 	// at the moment this returns all endorsing peers in a channel
 	// eventually this should return a chaincode specific set
 	deliverers := make([]peer.DeliverClient, 0)
@@ -192,7 +257,8 @@ func (reg *registry) getDeliverers(channel string) []peer.DeliverClient {
 	return deliverers
 }
 
-func (reg *registry) getOrderers(channel string) []orderer.AtomicBroadcast_BroadcastClient {
+func (reg *registry) GetOrderers(channel string) []orderer.AtomicBroadcast_BroadcastClient {
+	reg.discoverChannel(channel)
 	// at the moment this returns all endorsing peers in a channel
 	// eventually this should return a chaincode specific set
 	orderers := make([]orderer.AtomicBroadcast_BroadcastClient, 0)
@@ -200,6 +266,32 @@ func (reg *registry) getOrderers(channel string) []orderer.AtomicBroadcast_Broad
 		orderers = append(orderers, reg.orderers[o].broadcastClient)
 	}
 	return orderers
+}
+
+func (reg *registry) discoverChannel(channel string) error {
+	fmt.Printf("discoverChannel: %s\n", channel)
+	fmt.Println(reg.channels)
+	refresh := false
+	if _, ok := reg.channels[channel]; !ok {
+		refresh = true
+	} else {
+		refresh = reg.channels[channel].refresh
+	}
+	if refresh {
+		fmt.Println("invoking discovery")
+		err := reg.discoverer.discoverConfig(channel)
+		if err != nil {
+			return err
+		}
+		err = reg.discoverer.discoverPeers(channel)
+		if err != nil {
+			return err
+		}
+		info := reg.channels[channel]
+		info.refresh = false
+		return nil
+	}
+	return nil
 }
 
 func translateURL(url string) string {

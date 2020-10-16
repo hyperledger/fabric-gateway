@@ -4,105 +4,37 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package gateway
+package server
 
 import (
-	"crypto/tls"
-	"fmt"
-
-	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	"github.com/hyperledger/fabric-protos-go/discovery"
-	fabutil "github.com/hyperledger/fabric/common/util"
-	"github.com/pkg/errors"
+	"github.com/hyperledger/fabric-gateway/pkg/network"
+	"github.com/hyperledger/fabric-protos-go/orderer"
+	"github.com/hyperledger/fabric-protos-go/peer"
 )
 
 // Server represents the GRPC server for the Gateway
 type Server struct {
-	discoveryAuth *discovery.AuthInfo
-	registry      *registry
-	gatewaySigner *signingIdentity
+	registry Registry
 }
 
-// Config is a local cache of the discovery results
-type Config interface {
-	BootstrapPeer() PeerEndpoint
-	MspID() string
-	Certificate() string
-	Key() string
-}
-
-// PeerEndpoint represents the connection details of a peer
-type PeerEndpoint struct {
-	Host    string
-	Port    uint32
-	TLSCert []byte
+// Registry represents the current network topology
+type Registry interface {
+	GetEndorsers(channel string) []peer.EndorserClient
+	GetDeliverers(channel string) []peer.DeliverClient
+	GetOrderers(channel string) []orderer.AtomicBroadcast_BroadcastClient
+	ListenForTxEvents(channel string, txid string, done chan<- bool) error
 }
 
 // NewGatewayServer creates a server side implementation of the gateway server grpc
-func NewGatewayServer(config Config) (*Server, error) {
-	certificate, err := identity.CertificateFromPEM([]byte(config.Certificate()))
+func NewGatewayServer(config network.Config) (*Server, error) {
+
+	registry, err := network.NewRegistry(config)
 	if err != nil {
 		return nil, err
-	}
-
-	id, err := identity.NewX509Identity(config.MspID(), certificate)
-	if err != nil {
-		return nil, err
-	}
-
-	privateKey, err := identity.PrivateKeyFromPEM([]byte(config.Key()))
-	if err != nil {
-		return nil, err
-	}
-
-	signer, err := identity.NewPrivateKeySign(privateKey)
-	if err != nil {
-		return nil, err
-	}
-
-	signingIdentity, err := newSigningIdentity(id, signer)
-	if err != nil {
-		return nil, err
-	}
-
-	clientTLSCert, err := tls.X509KeyPair([]byte(config.Certificate()), []byte(config.Key()))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create tls cert")
-	}
-	clientID, err := signingIdentity.Serialize()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to serialize gateway id")
-	}
-	authInfo := &discovery.AuthInfo{
-		ClientIdentity:    clientID,
-		ClientTlsCertHash: fabutil.ComputeSHA256(clientTLSCert.Certificate[0]),
-	}
-
-	registry := newRegistry(signingIdentity)
-
-	// seed the registry with the 'bootstrap peer' for invoking discovery
-	registry.addMSP(config.MspID(), config.BootstrapPeer().TLSCert)
-
-	registry.addPeer("mychannel", config.MspID(), config.BootstrapPeer().Host, config.BootstrapPeer().Port)
-
-	url := fmt.Sprintf("%s:%d", config.BootstrapPeer().Host, config.BootstrapPeer().Port)
-	discoveryClient := registry.peers[url].discoveryClient
-
-	// hmm, need to know a channel name first
-	chDiscovery := newChannelDiscovery("mychannel", discoveryClient, signer, authInfo, registry)
-	err = chDiscovery.discoverConfig()
-	if err != nil {
-		fmt.Printf("ERROR discovering config: %s\n", err)
-	}
-	err = chDiscovery.discoverPeers()
-	if err != nil {
-		fmt.Printf("ERROR discovering peers: %s\n", err)
 	}
 
 	result := &Server{
-		authInfo,
 		registry,
-		signingIdentity,
 	}
 	return result, nil
 }

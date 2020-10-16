@@ -4,7 +4,7 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package gateway
+package network
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-protos-go/common"
 	ab "github.com/hyperledger/fabric-protos-go/orderer"
 	"github.com/hyperledger/fabric-protos-go/peer"
@@ -19,10 +20,32 @@ import (
 	"github.com/pkg/errors"
 )
 
+func (reg *registry) ListenForTxEvents(channel string, txid string, done chan<- bool) error {
+	envelope, err := createDeliverEnvelope(channel, reg.signer)
+	if err != nil {
+		return errors.Wrap(err, "failed to create deliver env")
+	}
+	eventCh := make(chan *peer.FilteredTransaction)
+
+	deliverClients := reg.GetDeliverers(channel)
+	for _, client := range deliverClients {
+		go listenForTxEvent(client, txid, envelope, eventCh)
+	}
+
+	for i := 0; i < len(deliverClients); i++ {
+		select {
+		case ev := <-eventCh:
+			fmt.Println("received", ev)
+		}
+	}
+	done <- true
+	return nil
+}
+
 func createDeliverEnvelope(
 	channelID string,
 	// certificate tls.Certificate,
-	signer protoutil.Signer,
+	signer *identity.SigningIdentity,
 ) (*common.Envelope, error) {
 	// var tlsCertHash []byte
 	// check for client certificate and create hash if present
@@ -64,27 +87,6 @@ func createDeliverEnvelope(
 	}
 
 	return env, nil
-}
-
-func listenForTxEvents(deliverClients []peer.DeliverClient, channel string, txid string, signer protoutil.Signer, done chan<- bool) error {
-	envelope, err := createDeliverEnvelope(channel, signer)
-	if err != nil {
-		return errors.Wrap(err, "failed to create deliver env")
-	}
-	eventCh := make(chan *peer.FilteredTransaction)
-
-	for _, client := range deliverClients {
-		go listenForTxEvent(client, txid, envelope, eventCh)
-	}
-
-	for i := 0; i < len(deliverClients); i++ {
-		select {
-		case ev := <-eventCh:
-			fmt.Println("received", ev)
-		}
-	}
-	done <- true
-	return nil
 }
 
 func listenForTxEvent(deliverClient peer.DeliverClient, txid string, envelope *common.Envelope, events chan<- *peer.FilteredTransaction) error {

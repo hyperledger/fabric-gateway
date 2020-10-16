@@ -80,6 +80,37 @@ services:
       - orderer.example.com
       - couchdb.org1.example.com
 
+  gateway.org1.example.com:
+    extends:
+        file: docker-compose-base.yaml
+        service: gateway
+    container_name: gateway.org1.example.com
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - GATEWAY_ID=gateway.org1.example.com
+      - GATEWAY_LISTENADDRESS=gateway.org1.example.com:7053
+      - GATEWAY_MSPID=Org1MSP
+      - GATEWAY_BOOTSTRAP_PEERS=peer0.org1.example.com:7051 # comma separated list
+
+      ## Signing identity
+      - GATEWAY_CERT_FILE=/etc/hyperledger/identity/msp/signcerts/User2@org1.example.com-cert.pem
+      - GATEWAY_KEY_FILE=/etc/hyperledger/identity/msp/keystore/key.pem
+
+      ## Enable TLS
+      - GATEWAY_TLS_ENABLED=true
+      - GATEWAY_TLS_KEY_FILE=/etc/hyperledger/gateway/tls/server.key
+      - GATEWAY_TLS_CERT_FILE=/etc/hyperledger/gateway/tls/server.crt
+      - GATEWAY_TLS_ROOTCERT_FILE=/etc/hyperledger/gateway/tls/ca.crt
+
+    ports:
+      - 7053:7053
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/:/etc/hyperledger/gateway
+        - ../crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User2@org1.example.com/:/etc/hyperledger/identity
+    depends_on:
+      - peer0.org1.example.com
+
   couchdb.org1.example.com:
     extends:
         file: docker-compose-base.yaml

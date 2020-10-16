@@ -16,7 +16,6 @@ const expect = chai.expect;
 const fixturesDir = __dirname + '/../../fixtures';
 const dockerComposeDir = fixturesDir + '/docker-compose';
 const dockerComposeFile = 'docker-compose-tls.yaml';
-const gatewayDir = __dirname + '/../../../bin';
 
 const TIMEOUTS = {
   HUGE_TIME: 20 * 60 * 1000,
@@ -42,9 +41,6 @@ BeforeAll(() => {
 });
 
 AfterAll(() => {
-  if (this.gatewayProcess) {
-    process.kill(-this.gatewayProcess.pid);
-  }
   const out = spawnSync('docker-compose', ['-f', dockerComposeFile, '-p', 'node', 'down'], { cwd: dockerComposeDir })
   console.log(out.output.toString());
 })
@@ -98,30 +94,7 @@ Given('I have created and joined all channels from the tls connection profile', 
 });
 
 Given('I have a gateway for {word}', (mspid) => {
-  if (!this.gatewayProcess) {
-    const env = { DISCOVERY_AS_LOCALHOST: 'TRUE' };
-    Object.assign(env, process.env);
-    this.gatewayProcess = spawn('./gateway', [
-      '-h', 'peer0.org1.example.com',
-      '-p', '7051',
-      '-m', mspid,
-      '-cert', '../scenario/fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User2@org1.example.com/msp/signcerts/User2@org1.example.com-cert.pem',
-      '-key', '../scenario/fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User2@org1.example.com/msp/keystore/key.pem',
-      '-tlscert', '../scenario/fixtures/crypto-material/crypto-config/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem'
-    ], {
-      cwd: gatewayDir,
-      env: env,
-      detached: true
-    });
-    this.gatewayProcess.stdout.on('data', (data) => {
-      console.log(data.toString());
-    });
-
-    this.gatewayProcess.stderr.on('data', (data) => {
-      console.error(data.toString());
-    });
-
-  }
+  // no-op, gateway started by docker-compose
 });
 
 Given(/I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organizations on channel (\w+) with endorsement policy ([^ ]+) and arguments(.+)/, { timeout: TIMEOUTS.LONG_STEP }, async (ccType, ccName, version, channelName, policyType, argsJSON) => {
@@ -208,7 +181,7 @@ Given('I have a gateway as user {word} using the tls connection profile', (user)
 
     const signer = new Signer(mspid, cert, key);
     this.gateway = new Gateway();
-    this.gateway.connect('localhost:1234', signer);
+    this.gateway.connect('localhost:7053', signer);
 }
 });
 

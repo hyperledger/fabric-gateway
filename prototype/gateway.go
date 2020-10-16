@@ -13,13 +13,34 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 
-	gateway "github.com/hyperledger/fabric-gateway/pkg/server"
+	"github.com/hyperledger/fabric-gateway/pkg/connection"
+	"github.com/hyperledger/fabric-gateway/pkg/server"
 	pb "github.com/hyperledger/fabric-gateway/protos"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"gopkg.in/yaml.v2"
 )
+
+type Config struct {
+	Gateway struct {
+		ListenAddress  string   `yaml:"listenAddress"`
+		MspId          string   `yaml:"mspId"`
+		BootstrapPeers []string `yaml:"bootstrapPeers"`
+		Tls            struct {
+			Cert struct {
+				File string
+			}
+			Key struct {
+				File string
+			}
+		}
+	}
+}
 
 func main() {
 	host := flag.String("h", "peer0.org1.example.com", "hostname of the bootstrap peer")
@@ -31,6 +52,49 @@ func main() {
 	keyPath := flag.String("key", "", "path to the gateway's private key")
 
 	flag.Parse()
+
+	// read the config file
+	cfgFile := os.Getenv("FABRIC_CFG_PATH")
+	if cfgFile != "" {
+		cfg, err := ioutil.ReadFile(cfgFile + "/gateway.yaml")
+		if err != nil {
+			log.Printf("No config yaml found at location: %s\n", cfgFile)
+		}
+		conf := Config{}
+		err = yaml.Unmarshal(cfg, &conf)
+		if err != nil {
+			log.Fatalf("failed to parse gateway config: %s\n", err)
+		}
+		fmt.Println(conf)
+	}
+
+	envCertFile := os.Getenv("GATEWAY_CERT_FILE")
+	if envCertFile != "" {
+		*certPath = envCertFile
+	}
+
+	envKeyFile := os.Getenv("GATEWAY_KEY_FILE")
+	if envKeyFile != "" {
+		*keyPath = envKeyFile
+	}
+
+	envTLSFile := os.Getenv("GATEWAY_TLS_ROOTCERT_FILE")
+	if envTLSFile != "" {
+		*tlsPath = envTLSFile
+	}
+
+	envMspID := os.Getenv("GATEWAY_MSPID")
+	if envMspID != "" {
+		*mspid = envMspID
+	}
+
+	envBootstrapPeers := os.Getenv("GATEWAY_BOOTSTRAP_PEERS")
+	if envBootstrapPeers != "" {
+		// TODO split up comma separate list
+		parts := strings.Split(envBootstrapPeers, ":")
+		*host = parts[0]
+		*port, _ = strconv.Atoi(parts[1])
+	}
 
 	var cert, key string
 	// extract bootstrap config from command line flags
@@ -60,7 +124,7 @@ func main() {
 	}
 
 	config := &bootstrapconfig{
-		bootstrapPeer: &gateway.PeerEndpoint{
+		bootstrapPeer: &connection.PeerEndpoint{
 			Host:    *host,
 			Port:    uint32(*port),
 			TLSCert: pem,
@@ -71,27 +135,30 @@ func main() {
 	}
 
 	// setup server and listen
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", 1234))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", 7053))
 	if err != nil {
 		log.Fatalf("failed to listen: %s", err)
 	}
 
-	gwServer, _ := gateway.NewGatewayServer(config)
+	gwServer, _ := server.NewGatewayServer(config)
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterGatewayServer(grpcServer, gwServer)
 	//... // determine whether to use TLS
-	grpcServer.Serve(lis)
+	fmt.Println("Gateway listening and serving")
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 }
 
 type bootstrapconfig struct {
-	bootstrapPeer *gateway.PeerEndpoint
+	bootstrapPeer *connection.PeerEndpoint
 	mspid         string
 	cert          string
 	key           string
 }
 
-func (bc *bootstrapconfig) BootstrapPeer() gateway.PeerEndpoint {
+func (bc *bootstrapconfig) BootstrapPeer() connection.PeerEndpoint {
 	return *bc.bootstrapPeer
 }
 

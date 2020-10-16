@@ -4,7 +4,7 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package network
+package connection
 
 import (
 	"crypto/x509"
@@ -17,6 +17,13 @@ import (
 type Endpoint struct {
 	Address             string
 	TLSRootCertificates []*x509.Certificate
+}
+
+// PeerEndpoint represents the connection details of a peer
+type PeerEndpoint struct {
+	Host    string
+	Port    uint32
+	TLSCert []byte
 }
 
 func (endpoint *Endpoint) tlsRootCAs() *x509.CertPool {
