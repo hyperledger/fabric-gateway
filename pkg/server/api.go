@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/pkg/errors"
 
 	pb "github.com/hyperledger/fabric-gateway/protos"
@@ -126,37 +125,4 @@ func (gs *Server) Commit(txn *pb.PreparedTransaction, cs pb.Gateway_CommitServer
 	}
 
 	return nil
-}
-
-func getChannelHeaderFromSignedProposal(signedProposal *peer.SignedProposal) (*common.ChannelHeader, error) {
-	var proposal peer.Proposal
-	err := proto.Unmarshal(signedProposal.ProposalBytes, &proposal)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal signed proposal")
-	}
-	var header common.Header
-	err = proto.Unmarshal(proposal.Header, &header)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to unmarshal header: ")
-	}
-	var channelHeader common.ChannelHeader
-	err = proto.Unmarshal(header.ChannelHeader, &channelHeader)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to unmarshal channel header: ")
-	}
-	return &channelHeader, nil
-}
-
-func getChannelHeaderFromEnvelope(envelope *common.Envelope) (*common.ChannelHeader, error) {
-	var payload common.Payload
-	err := proto.Unmarshal(envelope.Payload, &payload)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal signed proposal")
-	}
-	var channelHeader common.ChannelHeader
-	err = proto.Unmarshal(payload.Header.ChannelHeader, &channelHeader)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to unmarshal channel header: ")
-	}
-	return &channelHeader, nil
 }
