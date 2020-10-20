@@ -110,6 +110,9 @@ func (gs *Server) Commit(txn *pb.PreparedTransaction, cs pb.Gateway_CommitServer
 	if err != nil {
 		return errors.Wrap(err, "failed to to get response from orderer")
 	}
+	if oresp == nil {
+		return errors.New("received nil response from orderer")
+	}
 
 	status := oresp.Info
 

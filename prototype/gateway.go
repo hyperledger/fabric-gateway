@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/hyperledger/fabric-gateway/pkg/connection"
+	"github.com/hyperledger/fabric-gateway/pkg/network"
 	"github.com/hyperledger/fabric-gateway/pkg/server"
 	pb "github.com/hyperledger/fabric-gateway/protos"
 	"github.com/pkg/errors"
@@ -140,7 +141,11 @@ func main() {
 		log.Fatalf("failed to listen: %s", err)
 	}
 
-	gwServer, _ := server.NewGatewayServer(config)
+	registry, err := network.NewRegistry(config)
+	if err != nil {
+		log.Fatalf("failed to create network registry: %s", err)
+	}
+	gwServer, _ := server.NewGatewayServer(registry)
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterGatewayServer(grpcServer, gwServer)

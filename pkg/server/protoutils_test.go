@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-gateway/pkg/server/mocks"
 
 	"github.com/hyperledger/fabric-protos-go/peer"
@@ -38,43 +37,17 @@ func TestSignProposal(t *testing.T) {
 		}
 
 		if !bytes.Equal(sp.Signature, []byte("mysignature")) {
-			t.Fatalf("Incorrect signature: %v", sp.Signature)
+			t.Fatalf("Incorrect signature: %s", sp.Signature)
 		}
 	})
 }
 
-func marshal(msg proto.Message, t *testing.T) []byte {
-	buf, err := proto.Marshal(msg)
-	if err != nil {
-		t.Fatalf("Failed to marshal message: %v", err)
-	}
-	return buf
-}
-
-func createProposalResponse(value string, t *testing.T) *peer.ProposalResponse {
-	response := &peer.Response{
-		Status:  200,
-		Payload: []byte(value),
-	}
-	action := &peer.ChaincodeAction{
-		Response: response,
-	}
-	payload := &peer.ProposalResponsePayload{
-		ProposalHash: []byte{},
-		Extension:    marshal(action, t),
-	}
-	return &peer.ProposalResponse{
-		Payload: marshal(payload, t),
-		Response: response,
-	}
-}
-
 func TestGetValueFromResponse(t *testing.T) {
-	response := createProposalResponse("MyResult", t)
+	response := mocks.CreateProposalResponse("MyResult", t)
 
 	result, err := getValueFromResponse(response)
 	if err != nil {
-		t.Fatalf("Failed to extract value from reponse: %v", err)
+		t.Fatalf("Failed to extract value from reponse: %s", err)
 	}
 	if !bytes.Equal(result.Value, []byte("MyResult")) {
 		t.Fatalf("Incorrect value: %s", result.Value)
@@ -86,7 +59,7 @@ func TestCreateUnsignedTx(t *testing.T) {
 		Header:  []byte{},
 		Payload: []byte{},
 	}
-	response := createProposalResponse("MyResult", t)
+	response := mocks.CreateProposalResponse("MyResult", t)
 	_, err := createUnsignedTx(proposal, response)
 	if err != nil {
 		t.Fatalf("Failed to create unsigned tx: %s", err)
@@ -109,8 +82,8 @@ func TestCreateUnsignedTxWithMatchingResponses(t *testing.T) {
 		Header:  []byte{},
 		Payload: []byte{},
 	}
-	response1 := createProposalResponse("MyResult", t)
-	response2 := createProposalResponse("MyResult", t)
+	response1 := mocks.CreateProposalResponse("MyResult", t)
+	response2 := mocks.CreateProposalResponse("MyResult", t)
 	_, err := createUnsignedTx(proposal, response1, response2)
 	if err != nil {
 		t.Fatalf("Failed to create unsigned tx: %s", err)
@@ -122,8 +95,8 @@ func TestCreateUnsignedTxWithUnmatchingResponses(t *testing.T) {
 		Header:  []byte{},
 		Payload: []byte{},
 	}
-	response1 := createProposalResponse("MyResult", t)
-	response2 := createProposalResponse("DifferentResult", t)
+	response1 := mocks.CreateProposalResponse("MyResult", t)
+	response2 := mocks.CreateProposalResponse("DifferentResult", t)
 	_, err := createUnsignedTx(proposal, response1, response2)
 	if err == nil {
 		t.Fatalf("Should have failed to create unsigned tx: %s", err)
