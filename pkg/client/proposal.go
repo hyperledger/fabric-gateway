@@ -12,7 +12,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	pb "github.com/hyperledger/fabric-gateway/protos"
+	gateway "github.com/hyperledger/fabric-gateway/protos"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/hyperledger/fabric/protoutil"
@@ -23,7 +23,7 @@ type proposalBuilder struct {
 	contract  *Contract
 	name      string
 	transient map[string][]byte
-	args      []string
+	args      [][]byte
 }
 
 func (builder *proposalBuilder) build() (*Proposal, error) {
@@ -38,7 +38,8 @@ func (builder *proposalBuilder) build() (*Proposal, error) {
 	}
 
 	proposal := &Proposal{
-		contract:      builder.contract,
+		client:        builder.contract.network.gateway.client,
+		sign:          builder.contract.network.gateway.sign,
 		transactionID: transactionID,
 		bytes:         proposalBytes,
 	}
@@ -46,19 +47,11 @@ func (builder *proposalBuilder) build() (*Proposal, error) {
 }
 
 func (builder *proposalBuilder) newProposalProto() (*peer.Proposal, string, error) {
-	// Add function name to arguments
-	argsArray := make([][]byte, len(builder.args)+1)
-	argsArray[0] = []byte(builder.name)
-	for i, arg := range builder.args {
-		argsArray[i+1] = []byte(arg)
-	}
-
-	// create invocation spec to target a chaincode with arguments
-	ccis := &peer.ChaincodeInvocationSpec{
+	invocationSpec := &peer.ChaincodeInvocationSpec{
 		ChaincodeSpec: &peer.ChaincodeSpec{
 			Type:        peer.ChaincodeSpec_NODE,
 			ChaincodeId: &peer.ChaincodeID{Name: builder.contract.name},
-			Input:       &peer.ChaincodeInput{Args: argsArray},
+			Input:       &peer.ChaincodeInput{Args: builder.chaincodeArgs()},
 		},
 	}
 
@@ -70,7 +63,7 @@ func (builder *proposalBuilder) newProposalProto() (*peer.Proposal, string, erro
 	result, transactionID, err := protoutil.CreateChaincodeProposalWithTransient(
 		common.HeaderType_ENDORSER_TRANSACTION,
 		builder.contract.network.name,
-		ccis,
+		invocationSpec,
 		creator,
 		builder.transient,
 	)
@@ -81,11 +74,20 @@ func (builder *proposalBuilder) newProposalProto() (*peer.Proposal, string, erro
 	return result, transactionID, nil
 }
 
+func (builder *proposalBuilder) chaincodeArgs() [][]byte {
+	result := make([][]byte, len(builder.args)+1)
+
+	result[0] = []byte(builder.name)
+	copy(result[1:], builder.args)
+
+	return result
+}
+
 // ProposalOption implements an option for a transaction proposal.
 type ProposalOption = func(builder *proposalBuilder) error
 
 // WithArguments specifies the arguments associated with a transaction proposal.
-func WithArguments(args ...string) ProposalOption {
+func WithArguments(args ...[]byte) ProposalOption {
 	return func(builder *proposalBuilder) error {
 		builder.args = args
 		return nil
@@ -102,7 +104,8 @@ func WithTransient(transient map[string][]byte) ProposalOption {
 
 // Proposal represents a transaction proposal that can be sent to peers for endorsement or evaluated as a query.
 type Proposal struct {
-	contract      *Contract
+	client        gateway.GatewayClient
+	sign          identity.Sign
 	transactionID string
 	bytes         []byte
 	signature     []byte
@@ -133,13 +136,14 @@ func (proposal *Proposal) Endorse() (*Transaction, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
-	preparedTransaction, err := proposal.contract.network.gateway.client.Prepare(ctx, txProposal)
+	preparedTransaction, err := proposal.client.Prepare(ctx, txProposal)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to endorse proposal")
 	}
 
 	result := &Transaction{
-		contract:            proposal.contract,
+		client:              proposal.client,
+		sign:                proposal.sign,
 		preparedTransaction: preparedTransaction,
 	}
 	return result, nil
@@ -155,7 +159,7 @@ func (proposal *Proposal) Evaluate() ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
-	result, err := proposal.contract.network.gateway.client.Evaluate(ctx, txProposal)
+	result, err := proposal.client.Evaluate(ctx, txProposal)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to evaluate transaction")
 	}
@@ -163,13 +167,13 @@ func (proposal *Proposal) Evaluate() ([]byte, error) {
 	return result.Value, nil
 }
 
-func (proposal *Proposal) newProposedTransaction() (*pb.ProposedTransaction, error) {
+func (proposal *Proposal) newProposedTransaction() (*gateway.ProposedTransaction, error) {
 	signedProposal, err := proposal.newSignedProposal()
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.ProposedTransaction{
+	return &gateway.ProposedTransaction{
 		Proposal: signedProposal,
 	}, nil
 }
@@ -196,7 +200,7 @@ func (proposal *Proposal) signMessage() error {
 		return err
 	}
 
-	proposal.signature, err = proposal.contract.network.gateway.sign(digest)
+	proposal.signature, err = proposal.sign(digest)
 	if err != nil {
 		return err
 	}

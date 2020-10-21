@@ -20,7 +20,8 @@ import (
 
 // Transaction represents an endorsed transaction that can be submitted to the orderer for commit to the ledger.
 type Transaction struct {
-	contract            *Contract
+	client              gateway.GatewayClient
+	sign                identity.Sign
 	preparedTransaction *gateway.PreparedTransaction
 }
 
@@ -52,7 +53,7 @@ func (transaction *Transaction) Commit() (chan error, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 
-	stream, err := transaction.contract.network.gateway.client.Commit(ctx, transaction.preparedTransaction)
+	stream, err := transaction.client.Commit(ctx, transaction.preparedTransaction)
 	if err != nil {
 		cancel()
 		return nil, errors.Wrap(err, "Failed to submit transaction to the orderer")
@@ -88,7 +89,7 @@ func (transaction *Transaction) signMessage() error {
 		return err
 	}
 
-	signature, err := transaction.contract.network.gateway.sign(digest)
+	signature, err := transaction.sign(digest)
 	if err != nil {
 		return err
 	}

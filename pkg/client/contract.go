@@ -18,6 +18,14 @@ type Contract struct {
 	name    string
 }
 
+// EvaluateTransaction will evaluate a transaction function and return its results. The transaction function 'name'
+// will be evaluated on the endorsing peers but the responses will not be sent to the ordering service and hence will
+// not be committed to the ledger. This can be used for querying the world state.
+func (contract *Contract) EvaluateTransaction(name string, args ...string) ([]byte, error) {
+	byteArgs := stringsAsBytes(args)
+	return contract.Evaluate(name, WithArguments(byteArgs...))
+}
+
 // Evaluate a transaction and return its result.
 func (contract *Contract) Evaluate(name string, options ...ProposalOption) ([]byte, error) {
 	proposal, err := contract.NewProposal(name, options...)
@@ -26,6 +34,13 @@ func (contract *Contract) Evaluate(name string, options ...ProposalOption) ([]by
 	}
 
 	return proposal.Evaluate()
+}
+
+// SubmitTransaction will submit a transaction to the ledger. The transaction function 'name' will be evaluated on the
+// endorsing peers and then submitted to the ordering service for committing to the ledger.
+func (contract *Contract) SubmitTransaction(name string, args ...string) ([]byte, error) {
+	byteArgs := stringsAsBytes(args)
+	return contract.SubmitSync(name, WithArguments(byteArgs...))
 }
 
 // SubmitSync a transaction and returns its result immediately after successfully sending the the orderer.
@@ -83,7 +98,7 @@ func (contract *Contract) NewProposal(transactionName string, options ...Proposa
 // NewSignedProposal creates a transaction proposal with signature, which can be sent to peers for endorsement.
 func (contract *Contract) NewSignedProposal(bytes []byte, signature []byte) (*Proposal, error) {
 	proposal := &Proposal{
-		contract:  contract,
+		client:    contract.network.gateway.client,
 		bytes:     bytes,
 		signature: signature,
 	}
@@ -98,11 +113,21 @@ func (contract *Contract) NewSignedTransaction(bytes []byte, signature []byte) (
 	}
 
 	transaction := &Transaction{
-		contract:            contract,
+		client:              contract.network.gateway.client,
 		preparedTransaction: preparedTransaction,
 	}
 
 	transaction.setSignature(signature)
 
 	return transaction, nil
+}
+
+func stringsAsBytes(strings []string) [][]byte {
+	results := make([][]byte, len(strings))
+
+	for i, v := range strings {
+		results[i] = []byte(v)
+	}
+
+	return results
 }
