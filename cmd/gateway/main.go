@@ -19,18 +19,18 @@ import (
 
 func main() {
 	// read the config file
-	conf, err := loadConfig()
+	config, err := loadConfig()
 	if err != nil {
 		log.Fatalf("failed to load config: %s", err)
 	}
 
 	// setup server and listen
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", 7053))
+	lis, err := net.Listen("tcp", config.listenAddress())
 	if err != nil {
 		log.Fatalf("failed to listen: %s", err)
 	}
 
-	registry, err := network.NewRegistry(conf)
+	registry, err := network.NewRegistry(config)
 	if err != nil {
 		log.Fatalf("failed to create network registry: %s", err)
 	}

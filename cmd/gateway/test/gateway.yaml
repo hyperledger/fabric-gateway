@@ -1,0 +1,67 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+###############################################################################
+#
+#    Gateway section
+#
+###############################################################################
+gateway:
+
+    # The gateway id provides a name for this peer instance and is used when
+    # naming docker resources.
+    id: jdoe
+
+    # The networkId allows for logical separation of networks and is used when
+    # naming docker resources.
+    networkId: dev
+
+    # The Address at local network interface this gateway will listen on.
+    # By default, it will listen on all network interfaces
+    listenAddress: 0.0.0.0:7053
+
+    mspId: Org1MSP
+
+    bootstrapPeers:
+        - peer0.org1.example.com:7051
+
+    # The Gateway's signing identity
+    # X.509 certificate
+    cert:
+        file: test/cert.pem
+    # Private key
+    key:
+        file: test/key.pem
+
+    # TLS Settings
+    tls:
+        # Require server-side TLS
+        enabled:  false
+        # Require client certificates / mutual TLS.
+        # Note that clients that are not configured to use a certificate will
+        # fail to connect to the gateway.
+        clientAuthRequired: false
+        # X.509 certificate used for TLS server
+        cert:
+            file: tls/server.crt
+        # Private key used for TLS server (and client if clientAuthEnabled
+        # is set to true
+        key:
+            file: tls/server.key
+        # Trusted root certificate chain for tls.cert
+        rootcert:
+            file: test/tlsca.pem
+        # Set of root certificate authorities used to verify client certificates
+        clientRootCAs:
+            files:
+              - tls/ca.crt
+        # Private key used for TLS when making client connections.  If
+        # not set, gateway.tls.key.file will be used instead
+        clientKey:
+            file:
+        # X.509 certificate used for TLS when making client connections.
+        # If not set, gateway.tls.cert.file will be used instead
+        clientCert:
+            file:

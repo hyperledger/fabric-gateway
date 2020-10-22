@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -20,7 +19,7 @@ type config struct {
 	Gateway struct {
 		ID             string   `yaml:"id"`
 		ListenAddress  string   `yaml:"listenAddress"`
-		MspID          string   `yaml:"mspId`
+		MspID          string   `yaml:"mspId"`
 		BootstrapPeers []string `yaml:"bootstrapPeers"`
 		Cert           struct {
 			File string
@@ -65,7 +64,6 @@ func loadConfig() (*config, error) {
 	if err != nil {
 		errors.Wrap(err, "Failed to apply env-var overrides")
 	}
-	fmt.Println(conf)
 
 	return conf, nil
 }
@@ -97,4 +95,8 @@ func (c *config) TLSRootCert() []byte {
 		c.tlsRootCertPEM, _ = ioutil.ReadFile(c.Gateway.TLS.RootCert.File)
 	}
 	return c.tlsRootCertPEM
+}
+
+func (c *config) listenAddress() string {
+	return c.Gateway.ListenAddress
 }

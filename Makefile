@@ -42,13 +42,13 @@ build-node:
 unit-test: unit-test-go unit-test-node
 
 unit-test-go:
-	go test -cover $(go_dir)/...
+	go test -cover $(base_dir)/pkg/... $(base_dir)/cmd/gateway
 
 unit-test-node: build-node
 	cd $(node_dir); npm test
 
 lint:
-	golint $(go_dir)/...
+	golint $(base_dir)/pkg/... $(base_dir)/cmd/gateway
 
 scenario-test-go: docker
 	cd $(scenario_dir)/go; godog $(scenario_dir)/features/
