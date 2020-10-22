@@ -53,7 +53,7 @@ func (transaction *Transaction) Commit() (chan error, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 
-	stream, err := transaction.client.Commit(ctx, transaction.preparedTransaction)
+	stream, err := transaction.client.Submit(ctx, transaction.preparedTransaction)
 	if err != nil {
 		cancel()
 		return nil, errors.Wrap(err, "Failed to submit transaction to the orderer")

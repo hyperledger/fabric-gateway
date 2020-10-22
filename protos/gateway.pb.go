@@ -272,12 +272,12 @@ var file_protos_gateway_proto_rawDesc = []byte{
 	0x08, 0x65, 0x6e, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65, 0x22, 0x1d, 0x0a, 0x05, 0x45, 0x76, 0x65,
 	0x6e, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
 	0x0c, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x32, 0xc5, 0x01, 0x0a, 0x07, 0x47, 0x61, 0x74,
-	0x65, 0x77, 0x61, 0x79, 0x12, 0x45, 0x0a, 0x07, 0x50, 0x72, 0x65, 0x70, 0x61, 0x72, 0x65, 0x12,
+	0x65, 0x77, 0x61, 0x79, 0x12, 0x45, 0x0a, 0x07, 0x45, 0x6e, 0x64, 0x6f, 0x72, 0x73, 0x65, 0x12,
 	0x1b, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x50, 0x72, 0x6f, 0x70, 0x6f, 0x73, 0x65,
 	0x64, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x1a, 0x1b, 0x2e, 0x70,
 	0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x50, 0x72, 0x65, 0x70, 0x61, 0x72, 0x65, 0x64, 0x54, 0x72,
-	0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x00, 0x12, 0x38, 0x0a, 0x06, 0x43,
-	0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x12, 0x1b, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x50,
+	0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x00, 0x12, 0x38, 0x0a, 0x06, 0x53,
+	0x75, 0x62, 0x6d, 0x69, 0x74, 0x12, 0x1b, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x50,
 	0x72, 0x65, 0x70, 0x61, 0x72, 0x65, 0x64, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69,
 	0x6f, 0x6e, 0x1a, 0x0d, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x45, 0x76, 0x65, 0x6e,
 	0x74, 0x22, 0x00, 0x30, 0x01, 0x12, 0x39, 0x0a, 0x08, 0x45, 0x76, 0x61, 0x6c, 0x75, 0x61, 0x74,
@@ -319,11 +319,11 @@ var file_protos_gateway_proto_depIdxs = []int32{
 	4, // 0: protos.ProposedTransaction.proposal:type_name -> protos.SignedProposal
 	0, // 1: protos.PreparedTransaction.response:type_name -> protos.Result
 	5, // 2: protos.PreparedTransaction.envelope:type_name -> common.Envelope
-	1, // 3: protos.Gateway.Prepare:input_type -> protos.ProposedTransaction
-	2, // 4: protos.Gateway.Commit:input_type -> protos.PreparedTransaction
+	1, // 3: protos.Gateway.Endorse:input_type -> protos.ProposedTransaction
+	2, // 4: protos.Gateway.Submit:input_type -> protos.PreparedTransaction
 	1, // 5: protos.Gateway.Evaluate:input_type -> protos.ProposedTransaction
-	2, // 6: protos.Gateway.Prepare:output_type -> protos.PreparedTransaction
-	3, // 7: protos.Gateway.Commit:output_type -> protos.Event
+	2, // 6: protos.Gateway.Endorse:output_type -> protos.PreparedTransaction
+	3, // 7: protos.Gateway.Submit:output_type -> protos.Event
 	0, // 8: protos.Gateway.Evaluate:output_type -> protos.Result
 	6, // [6:9] is the sub-list for method output_type
 	3, // [3:6] is the sub-list for method input_type
@@ -419,8 +419,8 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type GatewayClient interface {
-	Prepare(ctx context.Context, in *ProposedTransaction, opts ...grpc.CallOption) (*PreparedTransaction, error)
-	Commit(ctx context.Context, in *PreparedTransaction, opts ...grpc.CallOption) (Gateway_CommitClient, error)
+	Endorse(ctx context.Context, in *ProposedTransaction, opts ...grpc.CallOption) (*PreparedTransaction, error)
+	Submit(ctx context.Context, in *PreparedTransaction, opts ...grpc.CallOption) (Gateway_SubmitClient, error)
 	Evaluate(ctx context.Context, in *ProposedTransaction, opts ...grpc.CallOption) (*Result, error)
 }
 
@@ -432,21 +432,21 @@ func NewGatewayClient(cc grpc.ClientConnInterface) GatewayClient {
 	return &gatewayClient{cc}
 }
 
-func (c *gatewayClient) Prepare(ctx context.Context, in *ProposedTransaction, opts ...grpc.CallOption) (*PreparedTransaction, error) {
+func (c *gatewayClient) Endorse(ctx context.Context, in *ProposedTransaction, opts ...grpc.CallOption) (*PreparedTransaction, error) {
 	out := new(PreparedTransaction)
-	err := c.cc.Invoke(ctx, "/protos.Gateway/Prepare", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/protos.Gateway/Endorse", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *gatewayClient) Commit(ctx context.Context, in *PreparedTransaction, opts ...grpc.CallOption) (Gateway_CommitClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Gateway_serviceDesc.Streams[0], "/protos.Gateway/Commit", opts...)
+func (c *gatewayClient) Submit(ctx context.Context, in *PreparedTransaction, opts ...grpc.CallOption) (Gateway_SubmitClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Gateway_serviceDesc.Streams[0], "/protos.Gateway/Submit", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &gatewayCommitClient{stream}
+	x := &gatewaySubmitClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -456,16 +456,16 @@ func (c *gatewayClient) Commit(ctx context.Context, in *PreparedTransaction, opt
 	return x, nil
 }
 
-type Gateway_CommitClient interface {
+type Gateway_SubmitClient interface {
 	Recv() (*Event, error)
 	grpc.ClientStream
 }
 
-type gatewayCommitClient struct {
+type gatewaySubmitClient struct {
 	grpc.ClientStream
 }
 
-func (x *gatewayCommitClient) Recv() (*Event, error) {
+func (x *gatewaySubmitClient) Recv() (*Event, error) {
 	m := new(Event)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -484,8 +484,8 @@ func (c *gatewayClient) Evaluate(ctx context.Context, in *ProposedTransaction, o
 
 // GatewayServer is the server API for Gateway service.
 type GatewayServer interface {
-	Prepare(context.Context, *ProposedTransaction) (*PreparedTransaction, error)
-	Commit(*PreparedTransaction, Gateway_CommitServer) error
+	Endorse(context.Context, *ProposedTransaction) (*PreparedTransaction, error)
+	Submit(*PreparedTransaction, Gateway_SubmitServer) error
 	Evaluate(context.Context, *ProposedTransaction) (*Result, error)
 }
 
@@ -493,11 +493,11 @@ type GatewayServer interface {
 type UnimplementedGatewayServer struct {
 }
 
-func (*UnimplementedGatewayServer) Prepare(context.Context, *ProposedTransaction) (*PreparedTransaction, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Prepare not implemented")
+func (*UnimplementedGatewayServer) Endorse(context.Context, *ProposedTransaction) (*PreparedTransaction, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Endorse not implemented")
 }
-func (*UnimplementedGatewayServer) Commit(*PreparedTransaction, Gateway_CommitServer) error {
-	return status.Errorf(codes.Unimplemented, "method Commit not implemented")
+func (*UnimplementedGatewayServer) Submit(*PreparedTransaction, Gateway_SubmitServer) error {
+	return status.Errorf(codes.Unimplemented, "method Submit not implemented")
 }
 func (*UnimplementedGatewayServer) Evaluate(context.Context, *ProposedTransaction) (*Result, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Evaluate not implemented")
@@ -507,42 +507,42 @@ func RegisterGatewayServer(s *grpc.Server, srv GatewayServer) {
 	s.RegisterService(&_Gateway_serviceDesc, srv)
 }
 
-func _Gateway_Prepare_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Gateway_Endorse_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ProposedTransaction)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GatewayServer).Prepare(ctx, in)
+		return srv.(GatewayServer).Endorse(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/protos.Gateway/Prepare",
+		FullMethod: "/protos.Gateway/Endorse",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayServer).Prepare(ctx, req.(*ProposedTransaction))
+		return srv.(GatewayServer).Endorse(ctx, req.(*ProposedTransaction))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Gateway_Commit_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _Gateway_Submit_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(PreparedTransaction)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(GatewayServer).Commit(m, &gatewayCommitServer{stream})
+	return srv.(GatewayServer).Submit(m, &gatewaySubmitServer{stream})
 }
 
-type Gateway_CommitServer interface {
+type Gateway_SubmitServer interface {
 	Send(*Event) error
 	grpc.ServerStream
 }
 
-type gatewayCommitServer struct {
+type gatewaySubmitServer struct {
 	grpc.ServerStream
 }
 
-func (x *gatewayCommitServer) Send(m *Event) error {
+func (x *gatewaySubmitServer) Send(m *Event) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -569,8 +569,8 @@ var _Gateway_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*GatewayServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Prepare",
-			Handler:    _Gateway_Prepare_Handler,
+			MethodName: "Endorse",
+			Handler:    _Gateway_Endorse_Handler,
 		},
 		{
 			MethodName: "Evaluate",
@@ -579,8 +579,8 @@ var _Gateway_serviceDesc = grpc.ServiceDesc{
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "Commit",
-			Handler:       _Gateway_Commit_Handler,
+			StreamName:    "Submit",
+			Handler:       _Gateway_Submit_Handler,
 			ServerStreams: true,
 		},
 	},

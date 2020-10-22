@@ -20,8 +20,8 @@ import "peer/proposal.proto";
 import "common/common.proto";
 
 service Gateway {
-    rpc Prepare(ProposedTransaction) returns (PreparedTransaction) {}
-    rpc Commit(PreparedTransaction) returns (stream Event) {}
+    rpc Endorse(ProposedTransaction) returns (PreparedTransaction) {}
+    rpc Submit(PreparedTransaction) returns (stream Event) {}
     rpc Evaluate(ProposedTransaction) returns (Result) {}
 }
 

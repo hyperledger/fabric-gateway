@@ -39,9 +39,9 @@ func (gs *Server) Evaluate(ctx context.Context, proposedTransaction *pb.Proposed
 	return getValueFromResponse(response)
 }
 
-// Prepare will collect endorsements by invoking the transaction function specified in the SignedProposal against
+// Endorse will collect endorsements by invoking the transaction function specified in the SignedProposal against
 // sufficient Peers to satisfy the endorsement policy.
-func (gs *Server) Prepare(ctx context.Context, proposedTransaction *pb.ProposedTransaction) (*pb.PreparedTransaction, error) {
+func (gs *Server) Endorse(ctx context.Context, proposedTransaction *pb.ProposedTransaction) (*pb.PreparedTransaction, error) {
 	signedProposal := proposedTransaction.Proposal
 	var proposal peer.Proposal
 	err := proto.Unmarshal(signedProposal.ProposalBytes, &proposal)
@@ -82,9 +82,9 @@ func (gs *Server) Prepare(ctx context.Context, proposedTransaction *pb.ProposedT
 	return preparedTxn, nil
 }
 
-// Commit will send the signed transaction to the ordering service.  The output stream will close
+// Submit will send the signed transaction to the ordering service.  The output stream will close
 // once the transaction is committed on a sufficient number of peers according to a defined policy.
-func (gs *Server) Commit(txn *pb.PreparedTransaction, cs pb.Gateway_CommitServer) error {
+func (gs *Server) Submit(txn *pb.PreparedTransaction, cs pb.Gateway_SubmitServer) error {
 	channelHeader, err := getChannelHeaderFromEnvelope(txn.Envelope)
 	if err != nil {
 		return errors.Wrap(err, "Failed to unpack channel header: ")

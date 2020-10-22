@@ -116,18 +116,6 @@ func NewRegistry(config Config) (*registry, error) {
 	host := parts[0]
 	port, _ := strconv.Atoi(parts[1])
 
-	// var cert, key string
-	// f, err := ioutil.ReadFile(config.Certificate())
-	// if err != nil {
-	// 	return nil, errors.Wrap(err, "Failed to read gateway cert")
-	// }
-	// cert = string(f)
-	// f, err = ioutil.ReadFile(config.Key())
-	// if err != nil {
-	// 	return nil, errors.Wrap(err, "Failed to read gateway key")
-	// }
-	// key = string(f)
-
 	reg.addMSP(config.MspID(), config.TLSRootCert())
 	reg.addPeer("", config.MspID(), host, uint32(port))
 

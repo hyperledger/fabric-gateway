@@ -91,37 +91,37 @@ func CreateProposalResponse(value string, t *testing.T) *peer.ProposalResponse {
 	}
 }
 
-type mockCommitServer struct {
+type mockSubmitServer struct {
 }
 
-func NewMockCommitServer() *mockCommitServer {
-	return &mockCommitServer{}
+func NewMockSubmitServer() *mockSubmitServer {
+	return &mockSubmitServer{}
 }
 
-func (mcs *mockCommitServer) Send(*pb.Event) error {
+func (mcs *mockSubmitServer) Send(*pb.Event) error {
 	return nil
 }
 
-func (mcs *mockCommitServer) SetHeader(metadata.MD) error {
+func (mcs *mockSubmitServer) SetHeader(metadata.MD) error {
 	return nil
 }
 
-func (mcs *mockCommitServer) SendHeader(metadata.MD) error {
+func (mcs *mockSubmitServer) SendHeader(metadata.MD) error {
 	return nil
 }
 
-func (mcs *mockCommitServer) SetTrailer(metadata.MD) {
+func (mcs *mockSubmitServer) SetTrailer(metadata.MD) {
 }
 
-func (mcs *mockCommitServer) Context() context.Context {
+func (mcs *mockSubmitServer) Context() context.Context {
 	return nil
 }
 
-func (mcs *mockCommitServer) SendMsg(m interface{}) error {
+func (mcs *mockSubmitServer) SendMsg(m interface{}) error {
 	return nil
 }
 
-func (mcs *mockCommitServer) RecvMsg(m interface{}) error {
+func (mcs *mockSubmitServer) RecvMsg(m interface{}) error {
 	return nil
 }
 

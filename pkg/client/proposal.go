@@ -136,7 +136,7 @@ func (proposal *Proposal) Endorse() (*Transaction, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
-	preparedTransaction, err := proposal.client.Prepare(ctx, txProposal)
+	preparedTransaction, err := proposal.client.Endorse(ctx, txProposal)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to endorse proposal")
 	}

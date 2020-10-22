@@ -48,7 +48,7 @@ func TestEvaluate(t *testing.T) {
 	}
 }
 
-func TestPrepare(t *testing.T) {
+func TestEndorse(t *testing.T) {
 	proposal := &peer.Proposal{
 		Header:  []byte{},
 		Payload: []byte{},
@@ -68,7 +68,7 @@ func TestPrepare(t *testing.T) {
 		Proposal: sp,
 	}
 
-	result, err := server.Prepare(context.TODO(), ptx)
+	result, err := server.Endorse(context.TODO(), ptx)
 
 	if err != nil {
 		t.Fatalf("Failed to prepare the transaction: %s", err)
@@ -79,7 +79,7 @@ func TestPrepare(t *testing.T) {
 	}
 }
 
-func TestCommit(t *testing.T) {
+func TestSubmit(t *testing.T) {
 	proposal := &peer.Proposal{
 		Header:  []byte{},
 		Payload: []byte{},
@@ -99,7 +99,7 @@ func TestCommit(t *testing.T) {
 		Proposal: sp,
 	}
 
-	preparedTx, err := server.Prepare(context.TODO(), ptx)
+	preparedTx, err := server.Endorse(context.TODO(), ptx)
 
 	if err != nil {
 		t.Fatalf("Failed to prepare the transaction: %s", err)
@@ -108,8 +108,8 @@ func TestCommit(t *testing.T) {
 	// sign the envelope
 	preparedTx.Envelope.Signature = []byte("mysignature")
 
-	cs := mocks.NewMockCommitServer()
-	err = server.Commit(preparedTx, cs)
+	cs := mocks.NewMockSubmitServer()
+	err = server.Submit(preparedTx, cs)
 
 	if err != nil {
 		t.Fatalf("Failed to commit the transaction: %s", err)

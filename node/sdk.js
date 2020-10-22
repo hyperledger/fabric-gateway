@@ -60,17 +60,17 @@ class Gateway {
                 });
             })
         };
-        this.prepare = signedProposal => {
+        this.endorse = signedProposal => {
             return new Promise((resolve, reject) => {
-                this.stub.prepare(signedProposal, function (err, result) {
+                this.stub.endorse(signedProposal, function (err, result) {
                     if (err) reject(err);
                     resolve(result);
                 });
             })
         };
-        this.commit = preparedTransaction => {
+        this.submit = preparedTransaction => {
             return new Promise((resolve, reject) => {
-                const call = this.stub.commit(preparedTransaction);
+                const call = this.stub.submit(preparedTransaction);
                 call.on('data', function (event) {
                     console.log('Event received: ', event.value.toString());
                 });
@@ -155,9 +155,9 @@ class Transaction {
         const proposal = createProposal(this, args, gw.signer);
         const signedProposal = signProposal(proposal, gw.signer);
         const wrapper = createProposedWrapper(this, signedProposal);
-        const preparedTxn = await gw.prepare(wrapper);
+        const preparedTxn = await gw.endorse(wrapper);
         preparedTxn.envelope.signature = gw.signer.sign(preparedTxn.envelope.payload);
-        await gw.commit(preparedTxn);
+        await gw.submit(preparedTxn);
         return preparedTxn.response.value.toString();
     }
 }
