@@ -27,6 +27,14 @@ gateway:
     bootstrapPeers:
         - peer0.org1.example.com:7051
 
+    # The Gateway's signing identity
+    # X.509 certificate
+    cert:
+        file: id/server.crt
+    # Private key
+    key:
+        file: id/server.key
+
     # TLS Settings
     tls:
         # Require server-side TLS

@@ -12,10 +12,10 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/hyperledger/fabric-gateway/pkg/connection"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/discovery"
@@ -31,10 +31,11 @@ import (
 
 // Config represents the startup configuration of the gateway
 type Config interface {
-	BootstrapPeer() connection.PeerEndpoint
+	BootstrapPeers() []string
 	MspID() string
-	Certificate() string
-	Key() string
+	Certificate() []byte
+	Key() []byte
+	TLSRootCert() []byte
 }
 
 type registry struct {
@@ -78,7 +79,7 @@ type endpoint struct {
 }
 
 func NewRegistry(config Config) (*registry, error) {
-	certificate, err := identity.CertificateFromPEM([]byte(config.Certificate()))
+	certificate, err := identity.CertificateFromPEM(config.Certificate())
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +89,7 @@ func NewRegistry(config Config) (*registry, error) {
 		return nil, err
 	}
 
-	privateKey, err := identity.PrivateKeyFromPEM([]byte(config.Key()))
+	privateKey, err := identity.PrivateKeyFromPEM(config.Key())
 	if err != nil {
 		return nil, err
 	}
@@ -110,10 +111,27 @@ func NewRegistry(config Config) (*registry, error) {
 		msps:     make(map[string]mspInfo),
 		channels: make(map[string]channelInfo),
 	}
-	reg.addMSP(config.MspID(), config.BootstrapPeer().TLSCert)
-	reg.addPeer("", config.MspID(), config.BootstrapPeer().Host, config.BootstrapPeer().Port)
 
-	clientTLSCert, err := tls.X509KeyPair([]byte(config.Certificate()), []byte(config.Key()))
+	parts := strings.Split(config.BootstrapPeers()[0], ":")
+	host := parts[0]
+	port, _ := strconv.Atoi(parts[1])
+
+	// var cert, key string
+	// f, err := ioutil.ReadFile(config.Certificate())
+	// if err != nil {
+	// 	return nil, errors.Wrap(err, "Failed to read gateway cert")
+	// }
+	// cert = string(f)
+	// f, err = ioutil.ReadFile(config.Key())
+	// if err != nil {
+	// 	return nil, errors.Wrap(err, "Failed to read gateway key")
+	// }
+	// key = string(f)
+
+	reg.addMSP(config.MspID(), config.TLSRootCert())
+	reg.addPeer("", config.MspID(), host, uint32(port))
+
+	clientTLSCert, err := tls.X509KeyPair(config.Certificate(), config.Key())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create tls cert")
 	}
@@ -125,7 +143,7 @@ func NewRegistry(config Config) (*registry, error) {
 		ClientIdentity:    clientID,
 		ClientTlsCertHash: fabutil.ComputeSHA256(clientTLSCert.Certificate[0]),
 	}
-	url := fmt.Sprintf("%s:%d", config.BootstrapPeer().Host, config.BootstrapPeer().Port)
+	url := fmt.Sprintf("%s:%d", host, port)
 	discoveryClient := reg.peers[url].discoveryClient
 
 	reg.discoverer = newChannelDiscovery(discoveryClient, signer, authInfo, reg)

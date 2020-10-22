@@ -34,7 +34,7 @@ include docker-env.mk
 build: build-go build-node
 
 build-go:
-	go build -o bin/gateway prototype/gateway.go
+	go build -o bin/gateway cmd/gateway/*.go
 
 build-node:
 	cd $(node_dir); npm install
@@ -73,4 +73,3 @@ docker: build-go
 	docker tag $(DOCKER_NS)/fabric-gateway $(DOCKER_NS)/fabric-gateway:$(BASE_VERSION)
 	docker tag $(DOCKER_NS)/fabric-gateway $(DOCKER_NS)/fabric-gateway:$(TWO_DIGIT_VERSION)
 	docker tag $(DOCKER_NS)/fabric-gateway $(DOCKER_NS)/fabric-gateway:$(DOCKER_TAG)
-	@touch $@
