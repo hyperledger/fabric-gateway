@@ -37,7 +37,7 @@ build-go:
 	go build -o bin/gateway cmd/gateway/*.go
 
 build-node:
-	cd $(node_dir); npm install
+	cd $(node_dir); npm install; npm run compile
 
 unit-test: unit-test-go unit-test-node
 
