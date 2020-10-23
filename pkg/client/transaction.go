@@ -45,8 +45,8 @@ func (transaction *Transaction) Hash() ([]byte, error) {
 	return identity.Hash(transaction.preparedTransaction.Envelope.Payload)
 }
 
-// Commit the transaction to the ledger by submitting to the orderer.
-func (transaction *Transaction) Commit() (chan error, error) {
+// Submit the transaction to the orderer for commit to the ledger.
+func (transaction *Transaction) Submit() (chan error, error) {
 	if err := transaction.signMessage(); err != nil {
 		return nil, err
 	}

@@ -43,7 +43,7 @@ func (contract *Contract) SubmitTransaction(name string, args ...string) ([]byte
 	return contract.SubmitSync(name, WithArguments(byteArgs...))
 }
 
-// SubmitSync a transaction and returns its result immediately after successfully sending the the orderer.
+// SubmitSync submits a transaction and returns its result only after it has been committed to the ledger.
 func (contract *Contract) SubmitSync(transactionName string, options ...ProposalOption) ([]byte, error) {
 	result, commit, err := contract.SubmitAsync(transactionName, options...)
 	if err != nil {
@@ -57,7 +57,8 @@ func (contract *Contract) SubmitSync(transactionName string, options ...Proposal
 	return result, nil
 }
 
-// SubmitAsync a transaction and returns its result immediately after successfully sending the the orderer.
+// SubmitAsync submits a transaction and returns its result immediately after successfully sending the the orderer,
+// along with a channel that can be used to receive notification when it has been committed to the ledger.
 func (contract *Contract) SubmitAsync(transactionName string, options ...ProposalOption) ([]byte, chan error, error) {
 	proposal, err := contract.NewProposal(transactionName, options...)
 	if err != nil {
@@ -71,7 +72,7 @@ func (contract *Contract) SubmitAsync(transactionName string, options ...Proposa
 
 	result := transaction.Result()
 
-	commit, err := transaction.Commit()
+	commit, err := transaction.Submit()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -105,7 +106,8 @@ func (contract *Contract) NewSignedProposal(bytes []byte, signature []byte) (*Pr
 	return proposal, nil
 }
 
-// NewSignedTransaction creates an endorsed transaction with signature, which can be submitted to the orderer for commit to the ledger.
+// NewSignedTransaction creates an endorsed transaction with signature, which can be submitted to the orderer for commit
+// to the ledger.
 func (contract *Contract) NewSignedTransaction(bytes []byte, signature []byte) (*Transaction, error) {
 	var preparedTransaction *gateway.PreparedTransaction
 	if err := proto.Unmarshal(bytes, &gateway.PreparedTransaction{}); err != nil {
