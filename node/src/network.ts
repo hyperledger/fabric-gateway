@@ -9,11 +9,11 @@ import { Contract } from "./contract"
 
 export class Network {
     private readonly name: string;
-    readonly gateway: Gateway;
+    readonly _gateway: Gateway;
 
     constructor(name: string, gateway: Gateway) {
         this.name = name;
-        this.gateway = gateway;
+        this._gateway = gateway;
     }
 
     getName() {

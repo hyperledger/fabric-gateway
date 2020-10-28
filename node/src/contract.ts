@@ -9,11 +9,11 @@ import { Transaction } from "./transaction";
 
 export class Contract {
     private readonly name: string;
-    readonly network: Network;
+    readonly _network: Network;
 
     constructor(name: string, network: Network) {
         this.name = name;
-        this.network = network;
+        this._network = network;
     }
 
     getName() {

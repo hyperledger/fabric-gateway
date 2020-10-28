@@ -16,13 +16,13 @@ export interface Builder {
 }
 
 export class Gateway {
-    signer!: Signer;
+    _signer!: Signer;
     private stub: any;
-    evaluate: any;
-    endorse: any;
-    submit: any;
+    _evaluate: any;
+    _endorse: any;
+    _submit: any;
 
-    static BuilderImpl = class {
+    private static BuilderImpl = class {
         _url: string = "";
         _signer!: Signer;
         
@@ -49,9 +49,15 @@ export class Gateway {
     private constructor() { }
 
     private connect(url: string, signer: Signer): Gateway {
-        this.signer = signer;
+        if (url.length === 0) {
+            throw new Error('Gateway URL not set');
+        }
+        if (typeof signer === 'undefined') {
+            throw new Error('Gateway signer not set');
+        }
+        this._signer = signer;
         this.stub = new protosGateway(url, grpc.credentials.createInsecure());
-        this.evaluate = (signedProposal: any) => {
+        this._evaluate = (signedProposal: any) => {
             return new Promise((resolve, reject) => {
                 this.stub.evaluate(signedProposal, function (err: any, result: any) {
                     if (err) reject(err);
@@ -59,7 +65,7 @@ export class Gateway {
                 });
             })
         };
-        this.endorse = (signedProposal: any) => {
+        this._endorse = (signedProposal: any) => {
             return new Promise((resolve, reject) => {
                 this.stub.endorse(signedProposal, function (err: any, result: any) {
                     if (err) reject(err);
@@ -67,7 +73,7 @@ export class Gateway {
                 });
             })
         };
-        this.submit = (preparedTransaction: any) => {
+        this._submit = (preparedTransaction: any) => {
             return new Promise((resolve, reject) => {
                 const call = this.stub.submit(preparedTransaction);
                 call.on('data', function (event: any) {

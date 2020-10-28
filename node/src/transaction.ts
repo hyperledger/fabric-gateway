@@ -11,7 +11,7 @@ import { Signer } from "./signer";
 
 export class Transaction {
     private readonly name: string;
-    readonly contract: Contract;
+    private readonly contract: Contract;
     private transientMap: object;
 
     constructor(name: string, contract: Contract) {
@@ -30,21 +30,21 @@ export class Transaction {
     }
 
     async evaluate(...args: string[]) {
-        const gw = this.contract.network.gateway;
-        const proposal = this.createProposal(args, gw.signer);
-        const signedProposal = this.signProposal(proposal, gw.signer);
+        const gw = this.contract._network._gateway;
+        const proposal = this.createProposal(args, gw._signer);
+        const signedProposal = this.signProposal(proposal, gw._signer);
         const wrapper = this.createProposedWrapper(signedProposal);
-        return gw.evaluate(wrapper);
+        return gw._evaluate(wrapper);
     }
 
     async submit(...args: string[]) {
-        const gw = this.contract.network.gateway;
-        const proposal = this.createProposal(args, gw.signer);
-        const signedProposal = this.signProposal(proposal, gw.signer);
+        const gw = this.contract._network._gateway;
+        const proposal = this.createProposal(args, gw._signer);
+        const signedProposal = this.signProposal(proposal, gw._signer);
         const wrapper = this.createProposedWrapper(signedProposal);
-        const preparedTxn = await gw.endorse(wrapper);
-        preparedTxn.envelope.signature = gw.signer.sign(preparedTxn.envelope.payload);
-        await gw.submit(preparedTxn);
+        const preparedTxn = await gw._endorse(wrapper);
+        preparedTxn.envelope.signature = gw._signer.sign(preparedTxn.envelope.payload);
+        await gw._submit(preparedTxn);
         return preparedTxn.response.value.toString();
     }
 
@@ -69,7 +69,7 @@ export class Transaction {
                 timestamp: create('google.protobuf.Timestamp', {
                     timestamp: Date.now()
                 }),
-                channelId: this.contract.network.getName(),
+                channelId: this.contract._network.getName(),
                 extension: marshal('protos.ChaincodeHeaderExtension', {
                     chaincodeId: create('protos.ChaincodeID', {
                         name: this.contract.getName()
