@@ -9,6 +9,12 @@ import { protosGateway } from './impl/protoutils'
 import * as grpc from '@grpc/grpc-js';
 import { Network } from './network';
 
+export interface Builder {
+    url(url: string): Builder;
+    signer(signer: Signer): Builder;
+    connect(): Gateway;
+}
+
 export class Gateway {
     signer!: Signer;
     private stub: any;
@@ -16,9 +22,33 @@ export class Gateway {
     endorse: any;
     submit: any;
 
-    constructor() { }
+    static BuilderImpl = class {
+        _url: string = "";
+        _signer!: Signer;
+        
+        url(url: string): Builder {
+            this._url = url;
+            return this;
+        }
 
-    async connect(url: string, signer: Signer) {
+        signer(signer: Signer): Builder {
+            this._signer = signer;
+            return this;
+        }
+
+        connect(): Gateway {
+            const gw = new Gateway();
+            return gw.connect(this._url, this._signer);
+        }
+    }
+
+    static createBuilder(): Builder {
+        return new Gateway.BuilderImpl()
+    }
+
+    private constructor() { }
+
+    private connect(url: string, signer: Signer): Gateway {
         this.signer = signer;
         this.stub = new protosGateway(url, grpc.credentials.createInsecure());
         this.evaluate = (signedProposal: any) => {
@@ -55,6 +85,7 @@ export class Gateway {
                 });
             })
         };
+        return this;
     }
 
     getNetwork(networkName: string) {

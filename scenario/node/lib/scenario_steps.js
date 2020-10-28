@@ -120,7 +120,7 @@ Given(/I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organizat
 
   let pattern = new RegExp('.*Package ID: (.*), Label: ' + ccLabel + '.*');
   let match = out.match(pattern);
-  if (match.length < 2) {
+  if (match === null || match.length < 2) {
     throw 'chaincode not found on org1 peer';
   }
   let packageID = match[1];
@@ -180,8 +180,7 @@ Given('I have a gateway as user {word} using the tls connection profile', (user)
     const key = fs.readFileSync(keyPath);
 
     const signer = new Signer(mspid, cert, key);
-    this.gateway = new Gateway();
-    this.gateway.connect('localhost:7053', signer);
+    this.gateway = Gateway.createBuilder().url('localhost:7053').signer(signer).connect();
 }
 });
 

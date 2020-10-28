@@ -15,14 +15,10 @@ const ecdsaCurve = curves['p256'];
 const ecdsa = new EC(ecdsaCurve);
 
 export class Signer {
-    private readonly mspid: string;
-    private readonly cert: Buffer;
     private readonly signKey: elliptic.ec.KeyPair;
     private readonly serialized: Uint8Array;
 
     constructor(mspid: string, certPem: Buffer, keyPem: Buffer) {
-        this.mspid = mspid;
-        this.cert = certPem;
         const key: any = KEYUTIL.getKey(keyPem.toString()); // convert the pem encoded key to hex encoded private key
         this.signKey = ecdsa.keyFromPrivate(key.prvKeyHex, 'hex');
         this.serialized = marshal('msp.SerializedIdentity', {
