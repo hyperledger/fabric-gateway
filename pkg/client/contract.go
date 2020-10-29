@@ -4,7 +4,7 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package sdk
+package client
 
 import (
 	"github.com/golang/protobuf/proto"
@@ -125,10 +125,10 @@ func (contract *Contract) NewSignedTransaction(bytes []byte, signature []byte) (
 }
 
 func stringsAsBytes(strings []string) [][]byte {
-	results := make([][]byte, len(strings))
+	results := make([][]byte, 0, len(strings))
 
-	for i, v := range strings {
-		results[i] = []byte(v)
+	for _, v := range strings {
+		results = append(results, []byte(v))
 	}
 
 	return results

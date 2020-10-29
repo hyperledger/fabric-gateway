@@ -25,7 +25,7 @@ func TestEndpoint(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Run("Creates an empty CertPool for no root certificates", func(t *testing.T) {
+	t.Run("Creates an empty CertPool if no root certificates", func(t *testing.T) {
 		endpoint := Endpoint{}
 
 		certPool := endpoint.tlsRootCAs()
@@ -54,6 +54,71 @@ func TestEndpoint(t *testing.T) {
 			if !bytes.Equal(expected, actual) {
 				t.Fatalf("Subjects did not match. Expected: %v, got: %v", expected, actual)
 			}
+		}
+	})
+
+	t.Run("Endpoint with no root certificates is not TLS", func(t *testing.T) {
+		endpoint := Endpoint{}
+
+		if endpoint.isTLS() {
+			t.Fatal("Expected isTLS to be false, got true")
+		}
+	})
+
+	t.Run("Endpoint with root certificates is TLS", func(t *testing.T) {
+		caCerts := []*x509.Certificate{certificate}
+		endpoint := Endpoint{
+			TLSRootCertificates: caCerts,
+		}
+
+		if !endpoint.isTLS() {
+			t.Fatal("Expected isTLS to be false, got true")
+		}
+	})
+
+	t.Run("Endpoint address string", func(t *testing.T) {
+		endpoint := Endpoint{
+			Host: "host",
+			Port: 418,
+		}
+
+		actual := endpoint.String()
+		expected := "host:418"
+
+		if actual != expected {
+			t.Fatalf("Incorrect endpoint address string. Expected: %s, got: %s", expected, actual)
+		}
+	})
+
+	t.Run("Dial non-TLS", func(t *testing.T) {
+		endpoint := Endpoint{
+			Host: "example.org",
+			Port: 7,
+		}
+
+		clientConnection, err := endpoint.Dial()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if nil == clientConnection {
+			t.Fatal("Client connection is nil")
+		}
+	})
+
+	t.Run("Dial TLS", func(t *testing.T) {
+		caCerts := []*x509.Certificate{certificate}
+		endpoint := Endpoint{
+			Host:                "example.org",
+			Port:                7,
+			TLSRootCertificates: caCerts,
+		}
+
+		clientConnection, err := endpoint.Dial()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if nil == clientConnection {
+			t.Fatal("Client connection is nil")
 		}
 	})
 }

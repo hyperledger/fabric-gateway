@@ -39,7 +39,7 @@ type Config interface {
 }
 
 type registry struct {
-	signer     *identity.SigningIdentity
+	signer     *signingIdentity
 	peers      map[string]peerClient
 	orderers   map[string]ordererClient
 	msps       map[string]mspInfo
@@ -99,7 +99,7 @@ func NewRegistry(config Config) (*registry, error) {
 		return nil, err
 	}
 
-	signingIdentity, err := identity.NewSigningIdentity(id, signer)
+	signingIdentity, err := newSigningIdentity(id, signer)
 	if err != nil {
 		return nil, err
 	}

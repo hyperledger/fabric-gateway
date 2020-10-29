@@ -12,7 +12,6 @@ import (
 	"math"
 	"time"
 
-	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-protos-go/common"
 	ab "github.com/hyperledger/fabric-protos-go/orderer"
 	"github.com/hyperledger/fabric-protos-go/peer"
@@ -45,7 +44,7 @@ func (reg *registry) ListenForTxEvents(channel string, txid string, done chan<- 
 func createDeliverEnvelope(
 	channelID string,
 	// certificate tls.Certificate,
-	signer *identity.SigningIdentity,
+	signer *signingIdentity,
 ) (*common.Envelope, error) {
 	// var tlsCertHash []byte
 	// check for client certificate and create hash if present

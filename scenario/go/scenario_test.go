@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os/exec"
 	"reflect"
 	"regexp"
@@ -19,6 +18,7 @@ import (
 	"github.com/cucumber/godog"
 	messages "github.com/cucumber/messages-go/v10"
 	sdk "github.com/hyperledger/fabric-gateway/pkg/client"
+	"github.com/hyperledger/fabric-gateway/pkg/connection"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/pkg/errors"
 )
@@ -61,18 +61,18 @@ func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 
 func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I connect the gateway$`, iConnectTheGateway)
-	s.Step(`^I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organizations on channel (\w+) with endorsement policy ([^ ]+) and arguments(.+)$`, deployChaincode)
-	s.Step(`^I have a gateway for (.+)$`, startGateway)
-	s.Step(`^I have a gateway as user User(\d+) using the tls connection profile$`, haveGateway)
+	s.Step(`^I deploy (\S+) chaincode named (\S+) at version (\S+) for all organizations on channel (\S+) with endorsement policy (\S+) and arguments (.+)$`, deployChaincode)
+	s.Step(`^I have a gateway for (\S+)$`, startGateway)
+	s.Step(`^I have a gateway as user (\S+) using the tls connection profile$`, haveGateway)
 	s.Step(`^I have created and joined all channels from the tls connection profile$`, createAndJoinChannels)
-	s.Step(`^I have deployed a (\w+) Fabric network$`, haveFabricNetwork)
-	s.Step(`^I prepare to submit an? (\w+) transaction$`, prepareSubmit)
-	s.Step(`^I prepare to evaluate an? (\w+) transaction$`, prepareEvaluate)
+	s.Step(`^I have deployed a (\S+) Fabric network$`, haveFabricNetwork)
+	s.Step(`^I prepare to submit an? (\S+) transaction$`, prepareSubmit)
+	s.Step(`^I prepare to evaluate an? (\S+) transaction$`, prepareEvaluate)
 	s.Step(`^I set the transaction arguments? to (.+)$`, setArguments)
 	s.Step(`^I set transient data on the transaction to$`, setTransientData)
 	s.Step(`^I invoke the transaction$`, invokeTransaction)
-	s.Step(`^I use the (\w+) contract$`, useContract)
-	s.Step(`^I use the (\w+) network$`, useNetwork)
+	s.Step(`^I use the (\S+) contract$`, useContract)
+	s.Step(`^I use the (\S+) network$`, useNetwork)
 	s.Step(`^the response should be JSON matching$`, theResponseShouldBeJSONMatching)
 }
 
@@ -260,7 +260,7 @@ func deployChaincode(ccType, ccName, version, channelName, policyType, argsJSON 
 	return nil
 }
 
-func haveGateway(arg1 int) error {
+func haveGateway(userName string) error {
 	if gw == nil {
 		pemsDir := fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp"
 		mspid := "Org1MSP"
@@ -279,25 +279,30 @@ func haveGateway(arg1 int) error {
 
 		certificate, err := identity.CertificateFromPEM(certificatePEM)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		id, err := identity.NewX509Identity(mspid, certificate)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		privateKey, err := identity.PrivateKeyFromPEM(privateKeyPEM)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		signer, err := identity.NewPrivateKeySign(privateKey)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
-		gw, err = sdk.Connect("localhost:7053", id, signer)
+		endpoint := &connection.Endpoint{
+			Host: "localhost",
+			Port: 7053,
+		}
+
+		gw, err = sdk.Connect(id, signer, sdk.WithEndpoint(endpoint))
 	}
 	return nil
 }
@@ -456,7 +461,7 @@ func transactionInvokeFn(txType TransactionType) (func(string, ...sdk.ProposalOp
 	case Evaluate:
 		return contract.Evaluate, nil
 	default:
-		return nil, fmt.Errorf("Unknown transaction type: %v", txType)
+		return nil, errors.Errorf("Unknown transaction type: %v", txType)
 	}
 }
 
