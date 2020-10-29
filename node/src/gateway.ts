@@ -9,92 +9,31 @@ import { protosGateway } from './impl/protoutils'
 import * as grpc from '@grpc/grpc-js';
 import { Network } from './network';
 
-export interface Builder {
-    url(url: string): Builder;
-    signer(signer: Signer): Builder;
-    connect(): Gateway;
+export interface GatewayOptions {
+    url: string;
+    signer: Signer;
 }
 
 export class Gateway {
-    _signer!: Signer;
-    private stub: any;
-    _evaluate: any;
-    _endorse: any;
-    _submit: any;
+    readonly _signer: Signer;
+    readonly _stub: any;
 
-    private static BuilderImpl = class {
-        _url: string = "";
-        _signer!: Signer;
-        
-        url(url: string): Builder {
-            this._url = url;
-            return this;
-        }
-
-        signer(signer: Signer): Builder {
-            this._signer = signer;
-            return this;
-        }
-
-        connect(): Gateway {
-            const gw = new Gateway();
-            return gw.connect(this._url, this._signer);
-        }
+    private constructor(options: GatewayOptions) {
+        this._signer = options.signer;
+        this._stub = new protosGateway(options.url, grpc.credentials.createInsecure());
     }
 
-    static createBuilder(): Builder {
-        return new Gateway.BuilderImpl()
+    static async connect(options: GatewayOptions): Promise<Gateway> {
+        const gateway = new Gateway(options);
+        await gateway._connect();
+        return gateway;
     }
 
-    private constructor() { }
-
-    private connect(url: string, signer: Signer): Gateway {
-        if (url.length === 0) {
-            throw new Error('Gateway URL not set');
-        }
-        if (typeof signer === 'undefined') {
-            throw new Error('Gateway signer not set');
-        }
-        this._signer = signer;
-        this.stub = new protosGateway(url, grpc.credentials.createInsecure());
-        this._evaluate = (signedProposal: any) => {
-            return new Promise((resolve, reject) => {
-                this.stub.evaluate(signedProposal, function (err: any, result: any) {
-                    if (err) reject(err);
-                    resolve(result.value.toString());
-                });
-            })
-        };
-        this._endorse = (signedProposal: any) => {
-            return new Promise((resolve, reject) => {
-                this.stub.endorse(signedProposal, function (err: any, result: any) {
-                    if (err) reject(err);
-                    resolve(result);
-                });
-            })
-        };
-        this._submit = (preparedTransaction: any) => {
-            return new Promise((resolve, reject) => {
-                const call = this.stub.submit(preparedTransaction);
-                call.on('data', function (event: any) {
-                    console.log('Event received: ', event.value.toString());
-                });
-                call.on('end', function () {
-                    resolve()
-                });
-                call.on('error', function (e: any) {
-                    // An error has occurred and the stream has been closed.
-                    reject(e);
-                });
-                call.on('status', function (status: any) {
-                    // process status
-                });
-            })
-        };
-        return this;
+    private async _connect() {
+        // might query available channels
     }
 
-    getNetwork(networkName: string) {
+    getNetwork(networkName: string): Network {
         return new Network(networkName, this);
     }
 }

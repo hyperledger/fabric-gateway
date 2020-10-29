@@ -171,7 +171,7 @@ Given(/I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organizat
   await new Promise(r => setTimeout(r, 10000));
 });
 
-Given('I have a gateway as user {word} using the tls connection profile', (user) => {
+Given('I have a gateway as user {word} using the tls connection profile', async (user) => {
 	if(!this.gateway) {
 		const mspid = "Org1MSP";
 		const certPath = fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem"
@@ -180,7 +180,11 @@ Given('I have a gateway as user {word} using the tls connection profile', (user)
     const key = fs.readFileSync(keyPath);
 
     const signer = new Signer(mspid, cert, key);
-    this.gateway = Gateway.createBuilder().url('localhost:7053').signer(signer).connect();
+    const options = {
+      url: 'localhost:7053',
+      signer: signer
+    }
+    this.gateway = await Gateway.connect(options);
 }
 });
 

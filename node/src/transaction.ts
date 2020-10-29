@@ -4,20 +4,23 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import { Contract } from "./contract";
-import { create, marshal } from "./impl/protoutils"
+import { Contract } from './contract';
+import { create, marshal } from './impl/protoutils'
 import * as crypto from 'crypto';
-import { Signer } from "./signer";
+import { Signer } from './signer';
 
 export class Transaction {
     private readonly name: string;
     private readonly contract: Contract;
     private transientMap: object;
+    private readonly stub: any;
 
     constructor(name: string, contract: Contract) {
         this.name = name;
         this.contract = contract;
         this.transientMap = {};
+        const gw: any = this.contract._network._gateway;
+        this.stub = gw._stub;
     }
 
     getName() {
@@ -30,21 +33,21 @@ export class Transaction {
     }
 
     async evaluate(...args: string[]) {
-        const gw = this.contract._network._gateway;
+        const gw: any = this.contract._network._gateway;
         const proposal = this.createProposal(args, gw._signer);
         const signedProposal = this.signProposal(proposal, gw._signer);
         const wrapper = this.createProposedWrapper(signedProposal);
-        return gw._evaluate(wrapper);
+        return this._evaluate(wrapper);
     }
 
     async submit(...args: string[]) {
-        const gw = this.contract._network._gateway;
+        const gw: any = this.contract._network._gateway;
         const proposal = this.createProposal(args, gw._signer);
         const signedProposal = this.signProposal(proposal, gw._signer);
         const wrapper = this.createProposedWrapper(signedProposal);
-        const preparedTxn = await gw._endorse(wrapper);
+        const preparedTxn = await this._endorse(wrapper);
         preparedTxn.envelope.signature = gw._signer.sign(preparedTxn.envelope.payload);
-        await gw._submit(preparedTxn);
+        await this._submit(preparedTxn);
         return preparedTxn.response.value.toString();
     }
 
@@ -116,6 +119,43 @@ export class Transaction {
             proposal_bytes: payload,
             signature: signature
         };
+    }
+
+    private async _endorse(signedProposal: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.stub.endorse(signedProposal, function (err: any, result: any) {
+                if (err) reject(err);
+                resolve(result);
+            });
+        })
+    };
+
+    private async _submit(preparedTransaction: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const call = this.stub.submit(preparedTransaction);
+            call.on('data', function (event: any) {
+                console.log('Event received: ', event.value.toString());
+            });
+            call.on('end', function () {
+                resolve()
+            });
+            call.on('error', function (e: any) {
+                // An error has occurred and the stream has been closed.
+                reject(e);
+            });
+            call.on('status', function (status: any) {
+                // process status
+            });
+        })
+    }
+
+    private async _evaluate(signedProposal: any): Promise<any>  {
+        return new Promise((resolve, reject) => {
+            this.stub.evaluate(signedProposal, function (err: any, result: any) {
+                if (err) reject(err);
+                resolve(result.value.toString());
+            });
+        })
     }
 }
 
