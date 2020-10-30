@@ -42,7 +42,7 @@ build-node:
 unit-test: unit-test-go unit-test-node
 
 unit-test-go:
-	go test -cover $(base_dir)/pkg/... $(base_dir)/cmd/gateway
+	go test -coverprofile=$(base_dir)/cover.out $(base_dir)/pkg/... $(base_dir)/cmd/gateway
 
 unit-test-node: build-node
 	cd $(node_dir); npm test

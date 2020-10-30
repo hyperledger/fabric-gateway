@@ -8,6 +8,7 @@ package connection
 
 import (
 	"crypto/x509"
+	"strconv"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -15,15 +16,29 @@ import (
 
 // Endpoint for a Fabric node, such as a Gateway, Peer or Orderer.
 type Endpoint struct {
-	Address             string
+	Host                string
+	Port                uint16
 	TLSRootCertificates []*x509.Certificate
 }
 
-// PeerEndpoint represents the connection details of a peer
-type PeerEndpoint struct {
-	Host    string
-	Port    uint32
-	TLSCert []byte
+// Dial creates a gRPC client connection to the endpoint.
+func (endpoint *Endpoint) Dial() (*grpc.ClientConn, error) {
+	if !endpoint.isTLS() {
+		return grpc.Dial(endpoint.String(), grpc.WithInsecure())
+	}
+
+	tlsRootCAs := endpoint.tlsRootCAs()
+	transportCredentials := credentials.NewClientTLSFromCert(tlsRootCAs, "")
+	return grpc.Dial(endpoint.String(), grpc.WithTransportCredentials(transportCredentials))
+}
+
+func (endpoint *Endpoint) isTLS() bool {
+	return len(endpoint.TLSRootCertificates) > 0
+}
+
+// String representation of the endpoint address
+func (endpoint *Endpoint) String() string {
+	return endpoint.Host + ":" + strconv.FormatUint(uint64(endpoint.Port), 10)
 }
 
 func (endpoint *Endpoint) tlsRootCAs() *x509.CertPool {
@@ -32,12 +47,4 @@ func (endpoint *Endpoint) tlsRootCAs() *x509.CertPool {
 		certPool.AddCert(certificate)
 	}
 	return certPool
-}
-
-// Dial creates a gRPC client connection to the endpoint.
-func (endpoint *Endpoint) Dial() (*grpc.ClientConn, error) {
-	tlsRootCAs := endpoint.tlsRootCAs()
-	transportCredentials := credentials.NewClientTLSFromCert(tlsRootCAs, "")
-
-	return grpc.Dial(endpoint.Address, grpc.WithTransportCredentials(transportCredentials))
 }
