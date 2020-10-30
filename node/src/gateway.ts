@@ -5,9 +5,10 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import { Signer } from './signer'
-import { protosGateway } from './impl/protoutils'
 import * as grpc from '@grpc/grpc-js';
 import { Network } from './network';
+import { ServiceClient } from '@grpc/grpc-js/build/src/make-client';
+
 
 export interface GatewayOptions {
     url: string;
@@ -16,11 +17,12 @@ export interface GatewayOptions {
 
 export class Gateway {
     readonly _signer: Signer;
-    readonly _stub: any;
+    private readonly url;
+    _client!: ServiceClient;
 
     private constructor(options: GatewayOptions) {
         this._signer = options.signer;
-        this._stub = new protosGateway(options.url, grpc.credentials.createInsecure());
+        this.url = options.url;
     }
 
     static async connect(options: GatewayOptions): Promise<Gateway> {
@@ -30,6 +32,12 @@ export class Gateway {
     }
 
     private async _connect() {
+        const Client = grpc.makeGenericClientConstructor({}, "protos.Gateway", {})
+        this._client = new Client(
+          this.url,
+          grpc.credentials.createInsecure()
+        )
+         
         // might query available channels
     }
 
