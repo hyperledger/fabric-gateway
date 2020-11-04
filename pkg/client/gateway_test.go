@@ -7,11 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/hyperledger/fabric-gateway/pkg/connection"
-	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test/mock"
 	proto "github.com/hyperledger/fabric-gateway/protos"
 	"google.golang.org/grpc"
@@ -25,26 +25,18 @@ func WithClient(client proto.GatewayClient) ConnectOption {
 	}
 }
 
+func AssertNewTestGateway(t *testing.T, client proto.GatewayClient) *Gateway {
+	id, sign := GetTestCredentials()
+	gateway, err := Connect(id, sign, WithClient(client))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return gateway
+}
+
 func TestGateway(t *testing.T) {
-	privateKey, err := test.NewECDSAPrivateKey()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	certificate, err := test.NewCertificate(privateKey)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	id, err := identity.NewX509Identity("mspID", certificate)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	sign, err := identity.NewPrivateKeySign(privateKey)
-	if err != nil {
-		t.Fatal(err)
-	}
+	id, sign := GetTestCredentials()
 
 	t.Run("Connect Gateway with no endpoint returns error", func(t *testing.T) {
 		if _, err := Connect(id, sign); nil == err {
@@ -59,7 +51,7 @@ func TestGateway(t *testing.T) {
 			t.Fatal(err)
 		}
 		if nil == gateway {
-			t.Fatalf("Expected gateway, got nil")
+			t.Fatal("Expected gateway, got nil")
 		}
 	})
 
@@ -73,7 +65,7 @@ func TestGateway(t *testing.T) {
 			t.Fatal(err)
 		}
 		if nil == gateway {
-			t.Fatalf("Expected gateway, got nil")
+			t.Fatal("Expected gateway, got nil")
 		}
 	})
 
@@ -119,6 +111,32 @@ func TestGateway(t *testing.T) {
 
 		if closeCallCount < 1 {
 			t.Fatal("Close() not called")
+		}
+	})
+
+	t.Run("Connect Gateway with failing option returns error", func(t *testing.T) {
+		expectedErr := errors.New("GATEWAY_OPTION_ERROR")
+		badOption := func(gateway *Gateway) error {
+			return expectedErr
+		}
+		_, actualErr := Connect(id, sign, badOption)
+		if !strings.Contains(actualErr.Error(), expectedErr.Error()) {
+			t.Fatalf("Expected error message to contain %s, got %v", expectedErr.Error(), actualErr)
+		}
+	})
+
+	t.Run("GetNetwork returns correctly named Network", func(t *testing.T) {
+		networkName := "network"
+		mockClient := mock.NewGatewayClient()
+		gateway := AssertNewTestGateway(t, mockClient)
+
+		network := gateway.GetNetwork(networkName)
+
+		if nil == network {
+			t.Fatal("Expected network, got nil")
+		}
+		if network.name != networkName {
+			t.Fatalf("Expected a network named %s, got %s", networkName, network.name)
 		}
 	})
 }

@@ -17,7 +17,7 @@ import (
 
 	"github.com/cucumber/godog"
 	messages "github.com/cucumber/messages-go/v10"
-	sdk "github.com/hyperledger/fabric-gateway/pkg/client"
+	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/connection"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/pkg/errors"
@@ -40,16 +40,16 @@ const (
 type Transaction struct {
 	txType  TransactionType
 	name    string
-	options []sdk.ProposalOption
+	options []client.ProposalOption
 }
 
 var fabricRunning bool = false
 var channelsJoined bool = false
 var runningChaincodes = make(map[string]bool)
 var gatewayProcess *exec.Cmd
-var gw *sdk.Gateway
-var network *sdk.Network
-var contract *sdk.Contract
+var gw *client.Gateway
+var network *client.Network
+var contract *client.Contract
 var transaction *Transaction
 var transactionResult []byte
 
@@ -292,7 +292,7 @@ func haveGateway(userName string) error {
 			return err
 		}
 
-		signer, err := identity.NewPrivateKeySign(privateKey)
+		sign, err := identity.NewPrivateKeySign(privateKey)
 		if err != nil {
 			return err
 		}
@@ -302,7 +302,7 @@ func haveGateway(userName string) error {
 			Port: 7053,
 		}
 
-		gw, err = sdk.Connect(id, signer, sdk.WithEndpoint(endpoint))
+		gw, err = client.Connect(id, sign, client.WithEndpoint(endpoint))
 	}
 	return nil
 }
@@ -416,7 +416,7 @@ func setArguments(argsJSON string) error {
 	}
 
 	byteArgs := stringsAsBytes(args)
-	transaction.options = append(transaction.options, sdk.WithArguments(byteArgs...))
+	transaction.options = append(transaction.options, client.WithArguments(byteArgs...))
 
 	return nil
 }
@@ -437,7 +437,7 @@ func setTransientData(table *messages.PickleStepArgument_PickleTable) error {
 		transient[row.Cells[0].Value] = []byte(row.Cells[1].Value)
 	}
 
-	transaction.options = append(transaction.options, sdk.WithTransient(transient))
+	transaction.options = append(transaction.options, client.WithTransient(transient))
 	return nil
 }
 
@@ -454,7 +454,7 @@ func invokeTransaction() error {
 	return nil
 }
 
-func transactionInvokeFn(txType TransactionType) (func(string, ...sdk.ProposalOption) ([]byte, error), error) {
+func transactionInvokeFn(txType TransactionType) (func(string, ...client.ProposalOption) ([]byte, error), error) {
 	switch txType {
 	case Submit:
 		return contract.SubmitSync, nil

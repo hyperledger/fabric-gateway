@@ -69,7 +69,7 @@ func (transaction *Transaction) Submit() (chan error, error) {
 				return
 			}
 			if err != nil {
-				commit <- errors.Wrap(err, "failed to receive event: ")
+				commit <- errors.Wrap(err, "Failed to receive event")
 				return
 			}
 			fmt.Println(event)

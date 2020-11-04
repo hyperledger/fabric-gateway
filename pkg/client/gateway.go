@@ -31,17 +31,33 @@ func Connect(id identity.Identity, sign identity.Sign, options ...ConnectOption)
 		sign: sign,
 	}
 
-	for _, option := range options {
-		if err := option(gateway); err != nil {
-			return nil, err
-		}
+	if err := gateway.applyConnectOptions(options); err != nil {
+		return nil, err
 	}
 
-	if nil == gateway.client {
-		return nil, errors.New("No connection details supplied")
+	if err := gateway.validate(); err != nil {
+		return nil, err
 	}
 
 	return gateway, nil
+}
+
+func (gateway *Gateway) applyConnectOptions(options []ConnectOption) error {
+	for _, option := range options {
+		if err := option(gateway); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (gateway *Gateway) validate() error {
+	if nil == gateway.client {
+		return errors.New("No connection details supplied")
+	}
+
+	return nil
 }
 
 // ConnectOption implements an option that can be used when connecting a Gateway.
@@ -65,6 +81,7 @@ func WithEndpoint(endpoint *connection.Endpoint) ConnectOption {
 // connection will not be closed when the Gateway is closed.
 func WithClientConnection(clientConnection *grpc.ClientConn) ConnectOption {
 	return func(gateway *Gateway) error {
+		gateway.closer = nil
 		gateway.client = proto.NewGatewayClient(clientConnection)
 		return nil
 	}
