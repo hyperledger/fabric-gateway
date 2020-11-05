@@ -6,10 +6,10 @@
 		"module": "commonjs",
 		"outDir": "./lib",
 		"rootDir": "./src",
-		"sourceMap": true,
+		"inlineSourceMap": true,
 		"strict": true,
 		"target": "es2017",
-		"forceConsistentCasingInFileNames": true
+		"forceConsistentCasingInFileNames": true,
 	},
 	"include": [
 		"src/"

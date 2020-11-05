@@ -8,7 +8,6 @@ import { Contract } from './contract';
 import * as crypto from 'crypto';
 import { Signer } from './signer';
 import { protos, common, google } from './protos/protos'
-import * as grpc from '@grpc/grpc-js';
 
 type Map = { [k: string]: Uint8Array; };
 
@@ -37,7 +36,7 @@ export class Transaction {
         const proposal = this.createProposal(args, gw._signer);
         const signedProposal = this.signProposal(proposal, gw._signer);
         const wrapper = this.createProposedWrapper(signedProposal);
-        return this._evaluate(wrapper);
+        return gw._client._evaluate(wrapper);
     }
 
     async submit(...args: string[]) {
@@ -45,10 +44,11 @@ export class Transaction {
         const proposal = this.createProposal(args, gw._signer);
         const signedProposal = this.signProposal(proposal, gw._signer);
         const wrapper = this.createProposedWrapper(signedProposal);
-        const preparedTxn = await this._endorse(wrapper);
-        preparedTxn.envelope!.signature = gw._signer.sign(preparedTxn.envelope!.payload ?? Buffer.from(""));
-        await this._submit(preparedTxn);
-        return preparedTxn.response?.value?.toString() ?? "";
+        const preparedTxn = await gw._client._endorse(wrapper);
+        const envelope = preparedTxn.envelope!;
+        envelope.signature = gw._signer.sign(envelope.payload!);
+        await gw._client._submit(preparedTxn);
+        return preparedTxn.response!.value!.toString();
     }
 
     private createProposedWrapper(signedProposal: protos.ISignedProposal): protos.IProposedTransaction {
@@ -112,7 +112,7 @@ export class Transaction {
         return proposal;
     }
 
-    private signProposal(proposal: protos.IProposal, signer: Signer) {
+    private signProposal(proposal: protos.IProposal, signer: Signer): protos.ISignedProposal {
         const payload = protos.Proposal.encode(proposal).finish();
         const signature = signer.sign(payload);
         return {
@@ -120,74 +120,6 @@ export class Transaction {
             signature: signature
         };
     }
-
-    private rpcSimple(method: any, requestData: any, callback: any) {
-        this.contract._network._gateway._client.makeUnaryRequest(
-            'protos.Gateway/' + method.name,
-            arg => arg,
-            arg => arg,
-            requestData,
-            new grpc.Metadata(),
-            {},
-            callback
-        )
-    }
-
-    private rpcStream(method: any, requestData: any, callback: any) {
-        let data: any = undefined;
-        const call = this.contract._network._gateway._client.makeServerStreamRequest(
-            'protos.Gateway/' + method.name,
-            arg => arg,
-            arg => arg,
-            requestData,
-            new grpc.Metadata(),
-            {}
-        );
-        call.on('data', function (event: any) {
-            data = event;
-        });
-        call.on('end', function () {
-            callback(null, data);
-        });
-        call.on('error', function (e: any) {
-            // An error has occurred and the stream has been closed.
-            callback(e, null);
-        });
-        call.on('status', function (status: any) {
-            // process status
-        });
-    }
-
-    private async _evaluate(signedProposal: protos.IProposedTransaction): Promise<string> {
-        const service = protos.Gateway.create(this.rpcSimple.bind(this), false, false);
-        return new Promise((resolve, reject) => {
-            service.evaluate(signedProposal, function (err: Error|null, result: protos.Result|undefined) {
-                if (err) reject(err);
-                resolve(result?.value?.toString());
-            });
-        })
-    }
-
-    private async _endorse(signedProposal: protos.IProposedTransaction): Promise<protos.PreparedTransaction> {
-        const service = protos.Gateway.create(this.rpcSimple.bind(this), false, false);
-        return new Promise((resolve, reject) => {
-            service.endorse(signedProposal, function (err: Error|null, result: protos.PreparedTransaction|undefined) {
-                if (err) reject(err);
-                resolve(result);
-            });
-        })
-    }
-
-    private async _submit(preparedTransaction: protos.PreparedTransaction): Promise<protos.Event> {
-        const service = protos.Gateway.create(this.rpcStream.bind(this), false, false);
-        return new Promise((resolve, reject) => {
-            service.submit(preparedTransaction, function (err: Error|null, result: protos.Event|undefined) {
-                if (err) reject(err);
-                resolve(result);
-            });
-        })
-    }
-
 
 }
 
