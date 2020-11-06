@@ -173,9 +173,10 @@ func (proposal *Proposal) newProposedTransaction() (*gateway.ProposedTransaction
 		return nil, err
 	}
 
-	return &gateway.ProposedTransaction{
+	proposedTransaction := &gateway.ProposedTransaction{
 		Proposal: signedProposal,
-	}, nil
+	}
+	return proposedTransaction, nil
 }
 
 func (proposal *Proposal) newSignedProposal() (*peer.SignedProposal, error) {
