@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/hyperledger/fabric-gateway/pkg/connection"
+	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test/mock"
 	proto "github.com/hyperledger/fabric-gateway/protos"
 	"google.golang.org/grpc"
@@ -25,9 +26,25 @@ func WithClient(client proto.GatewayClient) ConnectOption {
 	}
 }
 
-func AssertNewTestGateway(t *testing.T, client proto.GatewayClient) *Gateway {
+// WithSign uses the supplied signing implementation for the Gateway.
+func WithSign(sign identity.Sign) ConnectOption {
+	return func(gateway *Gateway) error {
+		gateway.sign = sign
+		return nil
+	}
+}
+
+// WithIdentity uses the supplied identity for the Gateway.
+func WithIdentity(id identity.Identity) ConnectOption {
+	return func(gateway *Gateway) error {
+		gateway.id = id
+		return nil
+	}
+}
+
+func AssertNewTestGateway(t *testing.T, options ...ConnectOption) *Gateway {
 	id, sign := GetTestCredentials()
-	gateway, err := Connect(id, sign, WithClient(client))
+	gateway, err := Connect(id, sign, options...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +145,7 @@ func TestGateway(t *testing.T) {
 	t.Run("GetNetwork returns correctly named Network", func(t *testing.T) {
 		networkName := "network"
 		mockClient := mock.NewGatewayClient()
-		gateway := AssertNewTestGateway(t, mockClient)
+		gateway := AssertNewTestGateway(t, WithClient(mockClient))
 
 		network := gateway.GetNetwork(networkName)
 

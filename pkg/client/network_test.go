@@ -10,11 +10,10 @@ import (
 	"testing"
 
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test/mock"
-	proto "github.com/hyperledger/fabric-gateway/protos"
 )
 
-func AssertNewTestNetwork(t *testing.T, client proto.GatewayClient, networkName string) *Network {
-	gateway := AssertNewTestGateway(t, client)
+func AssertNewTestNetwork(t *testing.T, networkName string, options ...ConnectOption) *Network {
+	gateway := AssertNewTestGateway(t, options...)
 	return gateway.GetNetwork(networkName)
 }
 
@@ -22,7 +21,7 @@ func TestNetwork(t *testing.T) {
 	t.Run("GetContract returns correctly named Contract", func(t *testing.T) {
 		contractName := "contract"
 		mockClient := mock.NewGatewayClient()
-		network := AssertNewTestNetwork(t, mockClient, "network")
+		network := AssertNewTestNetwork(t, "network", WithClient(mockClient))
 
 		contract := network.GetContract(contractName)
 
