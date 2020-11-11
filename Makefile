@@ -34,11 +34,12 @@ include docker-env.mk
 build: build-protos build-go build-node
 
 build-protos:
+	protoc --version
 	rm -rf fabric-protos
 	git clone https://github.com/hyperledger/fabric-protos.git
-	protoc -I. -Ifabric-protos -I/usr/local/include/google/protobuf --go_out=paths=source_relative:. --go-grpc_out=require_unimplemented_servers=false,paths=source_relative:. protos/gateway.proto
+	protoc -I. -I./fabric-protos --go_out=paths=source_relative:. --go-grpc_out=require_unimplemented_servers=false,paths=source_relative:. protos/gateway.proto
 
-build-go:
+build-go: build-protos
 	go build -o bin/gateway cmd/gateway/*.go
 
 build-node: build-protos

@@ -18,7 +18,11 @@ RUN apk add --no-cache \
 	gcc \
 	git \
 	make \
-	musl-dev
+	musl-dev \
+	grpc \
+	protobuf-dev
+RUN go get -u google.golang.org/protobuf/cmd/protoc-gen-go \
+           google.golang.org/grpc/cmd/protoc-gen-go-grpc
 ADD . $GOPATH/src/github.com/hyperledger/fabric-gateway
 WORKDIR $GOPATH/src/github.com/hyperledger/fabric-gateway
 
