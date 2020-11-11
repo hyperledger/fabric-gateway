@@ -11,7 +11,7 @@ syntax = "proto3";
 
 option go_package = "github.com/hyperledger/fabric-gateway/gateway";
 option java_multiple_files = true;
-option java_package = "org.hyperledger.fabric-gateway.gateway";
+option java_package = "org.hyperledger.fabric.gateway";
 option java_outer_classname = "GatewayProto";
 
 package protos;

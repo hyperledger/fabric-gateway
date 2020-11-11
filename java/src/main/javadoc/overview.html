@@ -1,0 +1,53 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+  <head>
+    <title>API Overview</title>
+  </head>
+  <body>
+	<p>
+	The Fabric Gateway SDK allows applications to interact with a Fabric blockchain network. 
+	It provides a simple API to submit transactions to a ledger or query the contents of a ledger with minimal code.
+	 The Gateway SDK implements the Fabric programming model as described in the
+	 <a href="https://hyperledger-fabric.readthedocs.io/en/latest/developapps/developing_applications.html">Developing Applications</a>
+	 chapter of the Fabric documentation.</p>
+	 <p>The following shows a complete code sample of how to connect to a fabric network,
+	 submit a transaction and query the ledger state using an instantiated smart contract (fabcar sample).
+	 </p>
+
+    <pre><code>
+    public static void main(String[] args) throws IOException {
+        // Load an existing wallet holding identities used to access the network.
+        Path walletDirectory = Paths.get("wallet");
+        Wallet wallet = Wallets.newFileSystemWallet(walletDirectory);
+
+        // Path to a common connection profile describing the network.
+        Path networkConfigFile = Paths.get("connection.json");
+
+        // Configure the gateway connection used to access the network.
+        Gateway.Builder builder = Gateway.createBuilder()
+                .identity(wallet, "user1")
+                .networkConfig(networkConfigFile);
+
+        // Create a gateway connection
+        try (Gateway gateway = builder.connect()) {
+
+            // Obtain a smart contract deployed on the network.
+            Network network = gateway.getNetwork("mychannel");
+            Contract contract = network.getContract("fabcar");
+
+            // Submit transactions that store state to the ledger.
+            byte[] createCarResult = contract.createTransaction("createCar")
+                    .submit("CAR10", "VW", "Polo", "Grey", "Mary");
+            System.out.println(new String(createCarResult, StandardCharsets.UTF_8));
+
+            // Evaluate transactions that query state from the ledger.
+            byte[] queryAllCarsResult = contract.evaluateTransaction("queryAllCars");
+            System.out.println(new String(queryAllCarsResult, StandardCharsets.UTF_8));
+
+        } catch (ContractException | TimeoutException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    </code></pre>
+  </body>
+</html>
