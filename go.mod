@@ -31,8 +31,7 @@ require (
 	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/sykesm/zap-logfmt v0.0.3 // indirect
 	go.uber.org/zap v1.15.0 // indirect
-	golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975 // indirect
-	golang.org/x/sys v0.0.0-20190916202348-b4ddaad3f8a3 // indirect
+	golang.org/x/tools v0.0.0-20201110201400-7099162a900a // indirect
 	google.golang.org/grpc v1.30.0
 	google.golang.org/protobuf v1.23.0
 	gopkg.in/yaml.v2 v2.2.8

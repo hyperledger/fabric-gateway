@@ -12,21 +12,24 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Contract represents a chaincode smart contract.
+// Contract represents a chaincode smart contract in a network. The Contract can be used to submit and evaluate
+// transaction functions on the smart contract, and to listen for chaincode events emitted by the smart contract.
 type Contract struct {
 	network *Network
 	name    string
 }
 
-// EvaluateTransaction will evaluate a transaction function and return its results. The transaction function 'name'
-// will be evaluated on the endorsing peers but the responses will not be sent to the ordering service and hence will
-// not be committed to the ledger. This can be used for querying the world state.
+// EvaluateTransaction will evaluate a transaction function and return its results. A transaction proposal will be
+// evaluated on endorsing peers but the transaction will not be sent to the ordering service and so will not be
+// committed to the ledger. This can be used for querying the world state.
 func (contract *Contract) EvaluateTransaction(name string, args ...string) ([]byte, error) {
 	byteArgs := stringsAsBytes(args)
 	return contract.Evaluate(name, WithArguments(byteArgs...))
 }
 
-// Evaluate a transaction and return its result.
+// Evaluate a transaction function and return its result. This method provides greater control over the transaction
+// proposal content and the endorsing peers on which it is evaluated. This allows transaction functions to be evaluated
+// where the proposal must include transient data, or that will access ledger data with key-based endorsement policies.
 func (contract *Contract) Evaluate(name string, options ...ProposalOption) ([]byte, error) {
 	proposal, err := contract.NewProposal(name, options...)
 	if err != nil {
@@ -36,14 +39,18 @@ func (contract *Contract) Evaluate(name string, options ...ProposalOption) ([]by
 	return proposal.Evaluate()
 }
 
-// SubmitTransaction will submit a transaction to the ledger. The transaction function 'name' will be evaluated on the
-// endorsing peers and then submitted to the ordering service for committing to the ledger.
+// SubmitTransaction will submit a transaction to the ledger and return its result only after it is committed to the
+// ledger. The transaction function will be evaluated on endorsing peers and then submitted to the ordering service to
+// be committed to the ledger.
 func (contract *Contract) SubmitTransaction(name string, args ...string) ([]byte, error) {
 	byteArgs := stringsAsBytes(args)
 	return contract.SubmitSync(name, WithArguments(byteArgs...))
 }
 
-// SubmitSync submits a transaction and returns its result only after it has been committed to the ledger.
+// SubmitSync submits a transaction to the ledger and returns its result only after it has been committed to the ledger.
+// This method provides greater control over the transaction proposal content and the endorsing peers on which it is
+// evaluated. This allows transaction functions to be submitted where the proposal must include transient data, or that
+// will access ledger data with key-based endorsement policies.
 func (contract *Contract) SubmitSync(transactionName string, options ...ProposalOption) ([]byte, error) {
 	result, commit, err := contract.SubmitAsync(transactionName, options...)
 	if err != nil {
@@ -57,8 +64,8 @@ func (contract *Contract) SubmitSync(transactionName string, options ...Proposal
 	return result, nil
 }
 
-// SubmitAsync submits a transaction and returns its result immediately after successfully sending the the orderer,
-// along with a channel that can be used to receive notification when it has been committed to the ledger.
+// SubmitAsync submits a transaction to the ledger and returns its result immediately after successfully sending to the
+// orderer, along with a channel that can be used to receive notification when it has been committed to the ledger.
 func (contract *Contract) SubmitAsync(transactionName string, options ...ProposalOption) ([]byte, chan error, error) {
 	proposal, err := contract.NewProposal(transactionName, options...)
 	if err != nil {

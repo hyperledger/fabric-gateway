@@ -57,17 +57,3 @@ func Serialize(id Identity) ([]byte, error) {
 	}
 	return proto.Marshal(serializedIdentity)
 }
-
-// Deserialize SerializedIdentity protobuf message bytes to an Identity
-func Deserialize(message []byte) (Identity, error) {
-	serializedIdentity := &msp.SerializedIdentity{}
-	if err := proto.Unmarshal(message, serializedIdentity); err != nil {
-		return nil, err
-	}
-
-	result := &X509Identity{
-		mspID:       serializedIdentity.Mspid,
-		certificate: serializedIdentity.IdBytes,
-	}
-	return result, nil
-}

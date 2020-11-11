@@ -10,8 +10,24 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
+	"github.com/hyperledger/fabric-protos-go/msp"
 )
+
+// Deserialize SerializedIdentity protobuf message bytes to an Identity
+func Deserialize(message []byte) (Identity, error) {
+	serializedIdentity := &msp.SerializedIdentity{}
+	if err := proto.Unmarshal(message, serializedIdentity); err != nil {
+		return nil, err
+	}
+
+	result := &X509Identity{
+		mspID:       serializedIdentity.Mspid,
+		certificate: serializedIdentity.IdBytes,
+	}
+	return result, nil
+}
 
 func TestIdentity(t *testing.T) {
 	const mspID = "mspID"
@@ -68,7 +84,7 @@ func TestIdentity(t *testing.T) {
 	})
 
 	t.Run("Deserialize fails on bad message", func(t *testing.T) {
-		if identity, err := Deserialize([]byte("BAD_SERIALIZED_IDENTITY")); err == nil {
+		if identity, err := Deserialize([]byte("BAD_SERIALIZED_IDENTITY")); nil == err {
 			t.Fatalf("Expected an error, got identity: %v", identity)
 		}
 	})
