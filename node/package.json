@@ -7,7 +7,9 @@
     "node": "^10.13.0 || ^12.13.0 || ^14.15.0"
   },
   "scripts": {
-    "compile": "tsc",
+    "proto-gen": "pbjs -t static-module $(find ../fabric-protos -name *.proto -type f) ../protos/gateway.proto -o src/protos/protos.js --keep-case",
+    "proto-types": "pbts -o src/protos/protos.d.ts src/protos/protos.js",
+    "compile": "npm run proto-gen; npm run proto-types; tsc",
     "test": "jest"
   },
   "author": "",

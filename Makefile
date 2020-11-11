@@ -31,17 +31,22 @@ GO_TAGS ?=
 
 include docker-env.mk
 
-build: build-go build-node
+build: build-protos build-go build-node
+
+build-protos:
+	rm -rf fabric-protos
+	git clone https://github.com/hyperledger/fabric-protos.git
+	protoc -I. -Ifabric-protos -I/usr/local/include/google/protobuf --go_out=paths=source_relative:. --go-grpc_out=require_unimplemented_servers=false,paths=source_relative:. protos/gateway.proto
 
 build-go:
 	go build -o bin/gateway cmd/gateway/*.go
 
-build-node:
+build-node: build-protos
 	cd $(node_dir); npm install; npm run compile
 
 unit-test: unit-test-go unit-test-node
 
-unit-test-go:
+unit-test-go: build-protos
 	go test -coverprofile=$(base_dir)/cover.out $(base_dir)/pkg/... $(base_dir)/cmd/gateway
 
 unit-test-node: build-node
@@ -53,7 +58,7 @@ lint:
 scenario-test-go: docker
 	cd $(scenario_dir)/go; godog $(scenario_dir)/features/
 
-scenario-test-node: build-node docker
+scenario-test-node: docker build-node
 	cd $(scenario_dir)/node; npm install; npm test
 
 scenario-test: scenario-test-go scenario-test-node
@@ -62,7 +67,7 @@ test: unit-test scenario-test
 
 all: test
 
-docker: build-go
+docker: build-protos build-go
 	@echo "Building Docker image $(DOCKER_NS)/fabric-gateway"
 	@mkdir -p $(@D)
 	$(DBUILD) -f images/gateway/Dockerfile \
