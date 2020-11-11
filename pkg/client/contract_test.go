@@ -23,8 +23,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-func AssertNewTestContract(t *testing.T, client gateway.GatewayClient, contractName string) *Contract {
-	network := AssertNewTestNetwork(t, client, "network")
+func AssertNewTestContract(t *testing.T, contractName string, options ...ConnectOption) *Contract {
+	network := AssertNewTestNetwork(t, "network", options...)
 	return network.GetContract(contractName)
 }
 
@@ -52,7 +52,7 @@ func TestContract(t *testing.T) {
 			mockClient.MockEvaluate = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.Result, error) {
 				return nil, errors.New(expectedError)
 			}
-			contract := AssertNewTestContract(t, mockClient, "contract")
+			contract := AssertNewTestContract(t, "contract", WithClient(mockClient))
 
 			_, err := contract.EvaluateTransaction("transaction")
 
@@ -70,7 +70,7 @@ func TestContract(t *testing.T) {
 				}
 				return value, nil
 			}
-			contract := AssertNewTestContract(t, mockClient, "contract")
+			contract := AssertNewTestContract(t, "contract", WithClient(mockClient))
 
 			actual, err := contract.EvaluateTransaction("transaction")
 			if err != nil {
@@ -100,7 +100,7 @@ func TestContract(t *testing.T) {
 				value := &gateway.Result{}
 				return value, nil
 			}
-			contract := AssertNewTestContract(t, mockClient, "contract")
+			contract := AssertNewTestContract(t, "contract", WithClient(mockClient))
 
 			_, err := contract.EvaluateTransaction("transaction")
 			if err != nil {
@@ -131,7 +131,7 @@ func TestContract(t *testing.T) {
 				value := &gateway.Result{}
 				return value, nil
 			}
-			contract := AssertNewTestContract(t, mockClient, "contract")
+			contract := AssertNewTestContract(t, "contract", WithClient(mockClient))
 
 			_, err := contract.EvaluateTransaction("transaction")
 			if err != nil {
@@ -162,7 +162,7 @@ func TestContract(t *testing.T) {
 				value := &gateway.Result{}
 				return value, nil
 			}
-			contract := AssertNewTestContract(t, mockClient, "contract")
+			contract := AssertNewTestContract(t, "contract", WithClient(mockClient))
 
 			expected := "TRANSACTION_NAME"
 			_, err := contract.EvaluateTransaction(expected)
@@ -194,7 +194,7 @@ func TestContract(t *testing.T) {
 				value := &gateway.Result{}
 				return value, nil
 			}
-			contract := AssertNewTestContract(t, mockClient, "contract")
+			contract := AssertNewTestContract(t, "contract", WithClient(mockClient))
 
 			expected := []string{"one", "two", "three"}
 			_, err := contract.EvaluateTransaction("transaction", expected...)
@@ -216,7 +216,7 @@ func TestContract(t *testing.T) {
 			mockClient.MockEndorse = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.PreparedTransaction, error) {
 				return nil, errors.New(expectedError)
 			}
-			contract := AssertNewTestContract(t, mockClient, "contract")
+			contract := AssertNewTestContract(t, "contract", WithClient(mockClient))
 
 			_, err := contract.SubmitTransaction("transaction")
 
@@ -240,7 +240,7 @@ func TestContract(t *testing.T) {
 			mockClient.MockSubmit = func(ctx context.Context, in *gateway.PreparedTransaction, opts ...grpc.CallOption) (gateway.Gateway_SubmitClient, error) {
 				return nil, errors.New(expectedError)
 			}
-			contract := AssertNewTestContract(t, mockClient, "contract")
+			contract := AssertNewTestContract(t, "contract", WithClient(mockClient))
 
 			_, err := contract.SubmitTransaction("transaction")
 
@@ -268,7 +268,7 @@ func TestContract(t *testing.T) {
 				}
 				return submitClient, nil
 			}
-			contract := AssertNewTestContract(t, mockClient, "contract")
+			contract := AssertNewTestContract(t, "contract", WithClient(mockClient))
 
 			_, err := contract.SubmitTransaction("transaction")
 
@@ -296,7 +296,7 @@ func TestContract(t *testing.T) {
 				}
 				return submitClient, nil
 			}
-			contract := AssertNewTestContract(t, mockClient, "contract")
+			contract := AssertNewTestContract(t, "contract", WithClient(mockClient))
 
 			actual, err := contract.SubmitTransaction("transaction")
 			if err != nil {
