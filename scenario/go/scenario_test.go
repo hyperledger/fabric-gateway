@@ -415,8 +415,7 @@ func setArguments(argsJSON string) error {
 		return err
 	}
 
-	byteArgs := stringsAsBytes(args)
-	transaction.options = append(transaction.options, client.WithArguments(byteArgs...))
+	transaction.options = append(transaction.options, client.WithStringArguments(args...))
 
 	return nil
 }
@@ -495,14 +494,4 @@ func jsonEqual(a, b []byte) (bool, error) {
 		return false, err
 	}
 	return reflect.DeepEqual(j2, j), nil
-}
-
-func stringsAsBytes(strings []string) [][]byte {
-	results := make([][]byte, len(strings))
-
-	for i, v := range strings {
-		results[i] = []byte(v)
-	}
-
-	return results
 }

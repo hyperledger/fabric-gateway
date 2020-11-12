@@ -62,7 +62,7 @@ func TestGateway(t *testing.T) {
 	})
 
 	t.Run("Connect Gateway using existing gRPC client connection", func(t *testing.T) {
-		clientConnection := &grpc.ClientConn{}
+		var clientConnection grpc.ClientConnInterface
 		gateway, err := Connect(id, sign, WithClientConnection(clientConnection))
 		if err != nil {
 			t.Fatal(err)
@@ -87,7 +87,7 @@ func TestGateway(t *testing.T) {
 	})
 
 	t.Run("Close Gateway using existing gRPC client connection does not close connection", func(t *testing.T) {
-		var clientConnection *grpc.ClientConn
+		var clientConnection grpc.ClientConnInterface
 		gateway, err := Connect(id, sign, WithClientConnection(clientConnection))
 		if err != nil {
 			t.Fatal(err)
