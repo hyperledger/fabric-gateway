@@ -90,7 +90,7 @@ func WithEndpoint(endpoint *connection.Endpoint) ConnectOption {
 
 // WithClientConnection uses a previously configured or shared gRPC client connection to a Fabric Gateway. The client
 // connection will not be closed when the Gateway is closed.
-func WithClientConnection(clientConnection *grpc.ClientConn) ConnectOption {
+func WithClientConnection(clientConnection grpc.ClientConnInterface) ConnectOption {
 	return func(gateway *Gateway) error {
 		gateway.closer = nil
 		gateway.client = proto.NewGatewayClient(clientConnection)

@@ -41,10 +41,10 @@ func (contract *Contract) Evaluate(name string, options ...ProposalOption) ([]by
 
 // SubmitTransaction will submit a transaction to the ledger and return its result only after it is committed to the
 // ledger. The transaction function will be evaluated on endorsing peers and then submitted to the ordering service to
-// be committed to the ledger.
+// be committed to the ledger. This method is equivalent to:
+//   SubmitSync(name, client.WithStringArguments(args...))
 func (contract *Contract) SubmitTransaction(name string, args ...string) ([]byte, error) {
-	byteArgs := stringsAsBytes(args)
-	return contract.SubmitSync(name, WithArguments(byteArgs...))
+	return contract.SubmitSync(name, WithStringArguments(args...))
 }
 
 // SubmitSync submits a transaction to the ledger and returns its result only after it has been committed to the ledger.
@@ -129,14 +129,4 @@ func (contract *Contract) NewSignedTransaction(bytes []byte, signature []byte) (
 	transaction.setSignature(signature)
 
 	return transaction, nil
-}
-
-func stringsAsBytes(strings []string) [][]byte {
-	results := make([][]byte, 0, len(strings))
-
-	for _, v := range strings {
-		results = append(results, []byte(v))
-	}
-
-	return results
 }
