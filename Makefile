@@ -8,6 +8,7 @@ base_dir := $(PWD)
 
 go_dir := $(base_dir)/pkg
 node_dir := $(base_dir)/node
+java_dir := $(base_dir)/java
 scenario_dir := $(base_dir)/scenario
 
 ALPINE_VER ?= 3.12
@@ -37,6 +38,8 @@ build-protos:
 	protoc --version
 	rm -rf fabric-protos
 	git clone https://github.com/hyperledger/fabric-protos.git
+	mkdir fabric-protos/gateway
+	cp protos/gateway.proto fabric-protos/gateway
 	protoc -I. -I./fabric-protos --go_out=paths=source_relative:. --go-grpc_out=require_unimplemented_servers=false,paths=source_relative:. protos/gateway.proto
 
 build-go: build-protos
@@ -45,13 +48,16 @@ build-go: build-protos
 build-node: build-protos
 	cd $(node_dir); npm install; npm run compile
 
-unit-test: unit-test-go unit-test-node
+unit-test: unit-test-go unit-test-node unit-test-java
 
 unit-test-go: build-protos
 	go test -coverprofile=$(base_dir)/cover.out $(base_dir)/pkg/... $(base_dir)/cmd/gateway
 
 unit-test-node: build-node
 	cd $(node_dir); npm test
+
+unit-test-java: build-protos
+	cd $(java_dir); mvn test
 
 lint:
 	golint $(base_dir)/pkg/... $(base_dir)/cmd/gateway

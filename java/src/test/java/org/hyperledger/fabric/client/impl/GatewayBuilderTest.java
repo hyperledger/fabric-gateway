@@ -66,20 +66,20 @@ public class GatewayBuilderTest {
 //                .hasMessageContaining(unsupportedIdentity.getClass().getName());
 //    }
 
-    @Test
-    public void testBuilderWithoutIdentity() throws IOException {
-        assertThatThrownBy(() -> builder.identity(null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Identity must not be null");
-    }
-
-    @Test
-    public void testBuilderWithIdentity() throws IOException {
-        builder.identity(identity)
-                .networkConfig(GATEWAY_URL);
-        try (Gateway gateway = builder.connect()) {
-            assertThat(gateway.getIdentity()).isEqualTo(identity);
-        }
-    }
+//    @Test
+//    public void testBuilderWithoutIdentity() throws IOException {
+//        assertThatThrownBy(() -> builder.identity(null))
+//                .isInstanceOf(IllegalArgumentException.class)
+//                .hasMessageContaining("Identity must not be null");
+//    }
+//
+//    @Test
+//    public void testBuilderWithIdentity() throws IOException {
+//        builder.identity(identity)
+//                .networkConfig(GATEWAY_URL);
+//        try (Gateway gateway = builder.connect()) {
+//            assertThat(gateway.getIdentity()).isEqualTo(identity);
+//        }
+//    }
 
 }
