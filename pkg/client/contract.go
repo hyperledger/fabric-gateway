@@ -123,6 +123,8 @@ func (contract *Contract) NewSignedTransaction(bytes []byte, signature []byte) (
 
 	transaction := &Transaction{
 		client:              contract.network.gateway.client,
+		sign:                contract.network.gateway.sign,
+		hash:                contract.network.gateway.hash,
 		preparedTransaction: preparedTransaction,
 	}
 

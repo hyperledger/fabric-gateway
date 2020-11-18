@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/discovery"
@@ -99,7 +100,7 @@ func NewRegistry(config Config) (*registry, error) {
 		return nil, err
 	}
 
-	signingIdentity, err := newSigningIdentity(id, signer)
+	signingIdentity, err := newSigningIdentity(id, signer, hash.SHA256)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +135,7 @@ func NewRegistry(config Config) (*registry, error) {
 	url := fmt.Sprintf("%s:%d", host, port)
 	discoveryClient := reg.peers[url].discoveryClient
 
-	reg.discoverer = newChannelDiscovery(discoveryClient, signer, authInfo, reg)
+	reg.discoverer = newChannelDiscovery(discoveryClient, signer, hash.SHA256, authInfo, reg)
 	return reg, nil
 }
 

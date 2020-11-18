@@ -19,6 +19,7 @@ import (
 	"io"
 
 	"github.com/hyperledger/fabric-gateway/pkg/connection"
+	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	proto "github.com/hyperledger/fabric-gateway/protos"
 	"github.com/pkg/errors"
@@ -29,6 +30,7 @@ import (
 type Gateway struct {
 	id     identity.Identity
 	sign   identity.Sign
+	hash   hash.Hash
 	client proto.GatewayClient
 	closer io.Closer
 }
@@ -39,6 +41,7 @@ func Connect(id identity.Identity, sign identity.Sign, options ...ConnectOption)
 	gateway := &Gateway{
 		id:   id,
 		sign: sign,
+		hash: hash.SHA256,
 	}
 
 	if err := gateway.applyConnectOptions(options); err != nil {

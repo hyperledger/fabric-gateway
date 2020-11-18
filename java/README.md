@@ -24,12 +24,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeoutException;
 
-import org.hyperledger.fabric.gateway.Contract;
-import org.hyperledger.fabric.gateway.ContractException;
-import org.hyperledger.fabric.gateway.Gateway;
-import org.hyperledger.fabric.gateway.Network;
-import org.hyperledger.fabric.gateway.Wallet;
-import org.hyperledger.fabric.gateway.Wallets;
+import Contract;
+import ContractException;
+import Gateway;
+import Network;
+import org.hyperledger.fabric.client.gateway.Wallet;
+import org.hyperledger.fabric.client.gateway.Wallets;
 
 class Sample {
     public static void main(String[] args) throws IOException {

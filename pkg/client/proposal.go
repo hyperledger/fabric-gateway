@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	gateway "github.com/hyperledger/fabric-gateway/protos"
 	"github.com/hyperledger/fabric-protos-go/common"
@@ -40,6 +41,7 @@ func (builder *proposalBuilder) build() (*Proposal, error) {
 	proposal := &Proposal{
 		client:        builder.contract.network.gateway.client,
 		sign:          builder.contract.network.gateway.sign,
+		hash:          builder.contract.network.gateway.hash,
 		transactionID: transactionID,
 		bytes:         proposalBytes,
 	}
@@ -121,6 +123,7 @@ func WithTransient(transient map[string][]byte) ProposalOption {
 type Proposal struct {
 	client        gateway.GatewayClient
 	sign          identity.Sign
+	hash          hash.Hash
 	transactionID string
 	bytes         []byte
 	signature     []byte
@@ -133,7 +136,7 @@ func (proposal *Proposal) Bytes() ([]byte, error) {
 
 // Hash the proposal to obtain a digest to be signed.
 func (proposal *Proposal) Hash() ([]byte, error) {
-	return identity.Hash(proposal.bytes)
+	return proposal.hash(proposal.bytes)
 }
 
 // TransactionID for the proposal.
@@ -159,6 +162,7 @@ func (proposal *Proposal) Endorse() (*Transaction, error) {
 	result := &Transaction{
 		client:              proposal.client,
 		sign:                proposal.sign,
+		hash:                proposal.hash,
 		preparedTransaction: preparedTransaction,
 	}
 	return result, nil
