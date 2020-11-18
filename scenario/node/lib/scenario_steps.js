@@ -9,12 +9,13 @@ SPDX-License-Identifier: Apache-2.0
 const { Given, When, Then, BeforeAll, AfterAll, After } = require('cucumber');
 const { execFileSync, spawnSync, spawn } = require('child_process');
 const fs = require('fs');
+const path = require('path');
 const { Gateway, Signer } = require('fabric-gateway');
 const chai = require('chai');
 const expect = chai.expect;
 
-const fixturesDir = __dirname + '/../../fixtures';
-const dockerComposeDir = fixturesDir + '/docker-compose';
+const fixturesDir = path.resolve(__dirname, '..', '..', 'fixtures');
+const dockerComposeDir = path.join(fixturesDir, 'docker-compose');
 const dockerComposeFile = 'docker-compose-tls.yaml';
 
 const TIMEOUTS = {
@@ -33,6 +34,10 @@ const tlsOptions = [
   '--cafile',
   '/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem'
 ];
+
+const mspToOrgMap = {
+  "Org1MSP": "org1.example.com"
+};
 
 BeforeAll(() => {
   this.fabricRunning = false;
@@ -91,10 +96,6 @@ Given('I have created and joined all channels from the tls connection profile', 
     this.channelsJoined = true;
     await new Promise(r => setTimeout(r, 10000));
   }
-});
-
-Given('I have a gateway for {word}', (mspid) => {
-  // no-op, gateway started by docker-compose
 });
 
 Given(/I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organizations on channel (\w+) with endorsement policy ([^ ]+) and arguments(.+)/, { timeout: TIMEOUTS.LONG_STEP }, async (ccType, ccName, version, channelName, policyType, argsJSON) => {
@@ -171,25 +172,27 @@ Given(/I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organizat
   await new Promise(r => setTimeout(r, 10000));
 });
 
-Given('I have a gateway as user {word} using the tls connection profile', async (user) => {
-	if(!this.gateway) {
-		const mspid = "Org1MSP";
-		const certPath = fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem"
-		const keyPath = fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/key.pem"
-    const cert = fs.readFileSync(certPath);
-    const key = fs.readFileSync(keyPath);
+Given('I create a gateway for user {word} in MSP {word}', async (user, mspId) => {
+  const org = mspToOrgMap[mspId];
+  const credentialsPath = path.join(fixturesDir, 'crypto-material', 'crypto-config', 'peerOrganizations', `${org}`,
+    'users', `${user}@${org}`, 'msp');
 
-    const signer = new Signer(mspid, cert, key);
-    const options = {
-      url: 'localhost:7053',
-      signer: signer
-    }
-    this.gateway = await Gateway.connect(options);
-}
+  const certPath = path.join(credentialsPath, 'signcerts', `${user}@${org}-cert.pem`);
+  const certificate = await fs.promises.readFile(certPath);
+
+  const keyPath = path.join(credentialsPath, 'keystore', 'key.pem');
+  const privateKey = await fs.promises.readFile(keyPath);
+
+  this.signer = new Signer(mspId, certificate, privateKey);
+  delete this.gateway;
 });
 
-Given('I connect the gateway', () => {
-  // no op
+Given('I connect the gateway to {word}', async (address) => {
+  const options = {
+    url: address,
+    signer: this.signer
+  }
+  this.gateway = await Gateway.connect(options);
 });
 
 Given('I use the {word} network', (channelName) => {

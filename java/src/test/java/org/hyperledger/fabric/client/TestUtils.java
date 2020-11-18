@@ -45,7 +45,7 @@ public final class TestUtils {
         Identity id = new X509Identity("msp1", credentials.getCertificate());
         Signer signer = Signers.newPrivateKeySigner((ECPrivateKey) credentials.getPrivateKey());
         builder.identity(id)
-                .networkConfig("localhost:7053")
+                .endpoint("localhost:7053")
                 .signer(signer);
         return builder;
     }

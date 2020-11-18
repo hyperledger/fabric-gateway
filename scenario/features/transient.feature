@@ -3,18 +3,17 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-Feature: Configure Fabric using SDK and submit/evaluate using a network Gateway
+Feature: Transient data
 	Background:
 		Given I have deployed a tls Fabric network
         And I have created and joined all channels from the tls connection profile
-        And I have a gateway for Org1MSP
         And I deploy node chaincode named fabcar at version 1.0.0 for all organizations on channel mychannel with endorsement policy 1AdminOr2Other and arguments ["initLedger"]
+        And I create a gateway for user User1 in MSP Org1MSP
+        And I connect the gateway to localhost:7053
+        And I use the mychannel network
+        And I use the fabcar contract
 
- 	Scenario: Using a Gateway I can send transient data to instantiated node chaincode
-		Given I have a gateway as user User1 using the tls connection profile
-		And I connect the gateway
-		And I use the mychannel network
-		And I use the fabcar contract
+ 	Scenario: Evaluate transaction with transient data on Node chaincode
 		When I prepare to evaluate an echoTransient transaction
 		And I set transient data on the transaction to
 			| key1 | value1 |

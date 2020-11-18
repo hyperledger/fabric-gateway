@@ -26,7 +26,7 @@ public final class GatewayImpl implements Gateway {
         private Signer signer;
 
         @Override
-        public Builder networkConfig(final String url) throws IOException {
+        public Builder endpoint(final String url) {
             this.url = url;
             return this;
         }

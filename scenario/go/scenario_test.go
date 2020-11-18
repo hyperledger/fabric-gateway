@@ -13,6 +13,8 @@ import (
 	"os/exec"
 	"reflect"
 	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cucumber/godog"
@@ -37,6 +39,80 @@ const (
 	Submit
 )
 
+var _mspToOrgMap map[string]string
+
+func GetOrgForMSP(mspID string) string {
+	if nil == _mspToOrgMap {
+		_mspToOrgMap = make(map[string]string)
+		_mspToOrgMap["Org1MSP"] = "org1.example.com"
+	}
+
+	return _mspToOrgMap[mspID]
+}
+
+type GatewayConnection struct {
+	ID       identity.Identity
+	Sign     identity.Sign
+	Endpoint connection.Endpoint
+}
+
+func NewGatewayConnection(user string, mspID string) (*GatewayConnection, error) {
+	org := GetOrgForMSP(mspID)
+
+	credentialsDir := fixturesDir + "/crypto-material/crypto-config/peerOrganizations/" + org + "/users/" +
+		user + "@" + org + "/msp"
+	certPath := credentialsDir + "/signcerts/" + user + "@" + org + "-cert.pem"
+	keyPath := credentialsDir + "/keystore/key.pem"
+
+	id, err := newIdentity(mspID, certPath)
+	if err != nil {
+		return nil, err
+	}
+
+	sign, err := newSign(keyPath)
+	if err != nil {
+		return nil, err
+	}
+
+	connection := &GatewayConnection{
+		ID:   id,
+		Sign: sign,
+	}
+	return connection, nil
+}
+
+func (connection *GatewayConnection) Connect() (*client.Gateway, error) {
+	return client.Connect(connection.ID, connection.Sign, client.WithEndpoint(&connection.Endpoint))
+}
+
+func newIdentity(mspID string, certPath string) (*identity.X509Identity, error) {
+	certificatePEM, err := ioutil.ReadFile(certPath)
+	if err != nil {
+		return nil, err
+	}
+
+	certificate, err := identity.CertificateFromPEM(certificatePEM)
+	if err != nil {
+		return nil, err
+	}
+
+	return identity.NewX509Identity(mspID, certificate)
+}
+
+func newSign(keyPath string) (identity.Sign, error) {
+	privateKeyPEM, err := ioutil.ReadFile(keyPath)
+	if err != nil {
+		return nil, err
+	}
+
+	privateKey, err := identity.PrivateKeyFromPEM(privateKeyPEM)
+	if err != nil {
+		return nil, err
+	}
+
+	return identity.NewPrivateKeySign(privateKey)
+}
+
 type Transaction struct {
 	txType  TransactionType
 	name    string
@@ -47,7 +123,8 @@ var fabricRunning bool = false
 var channelsJoined bool = false
 var runningChaincodes = make(map[string]bool)
 var gatewayProcess *exec.Cmd
-var gw *client.Gateway
+var gatewayConnection *GatewayConnection
+var gateway *client.Gateway
 var network *client.Network
 var contract *client.Contract
 var transaction *Transaction
@@ -60,10 +137,9 @@ func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 }
 
 func InitializeScenario(s *godog.ScenarioContext) {
-	s.Step(`^I connect the gateway$`, iConnectTheGateway)
+	s.Step(`^I create a gateway for user (\S+) in MSP (\S+)`, createGateway)
+	s.Step(`^I connect the gateway to (\S+)$`, connectGateway)
 	s.Step(`^I deploy (\S+) chaincode named (\S+) at version (\S+) for all organizations on channel (\S+) with endorsement policy (\S+) and arguments (.+)$`, deployChaincode)
-	s.Step(`^I have a gateway for (\S+)$`, startGateway)
-	s.Step(`^I have a gateway as user (\S+) using the tls connection profile$`, haveGateway)
 	s.Step(`^I have created and joined all channels from the tls connection profile$`, createAndJoinChannels)
 	s.Step(`^I have deployed a (\S+) Fabric network$`, haveFabricNetwork)
 	s.Step(`^I prepare to submit an? (\S+) transaction$`, prepareSubmit)
@@ -112,11 +188,6 @@ func stopFabric() error {
 	return nil
 }
 
-func startGateway(mspid string) error {
-	// no-op - gateway started by docker-compose
-	return nil
-}
-
 func createCryptoMaterial() error {
 	cmd := exec.Command("./generate.sh")
 	cmd.Dir = fixturesDir
@@ -125,10 +196,6 @@ func createCryptoMaterial() error {
 		return err
 	}
 	fmt.Println(string(out))
-	return nil
-}
-
-func iConnectTheGateway() error {
 	return nil
 }
 
@@ -260,50 +327,36 @@ func deployChaincode(ccType, ccName, version, channelName, policyType, argsJSON 
 	return nil
 }
 
-func haveGateway(userName string) error {
-	if gw == nil {
-		pemsDir := fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp"
-		mspid := "Org1MSP"
-		certPath := pemsDir + "/signcerts/User1@org1.example.com-cert.pem"
-		keyPath := pemsDir + "/keystore/key.pem"
-
-		certificatePEM, err := ioutil.ReadFile(certPath)
-		if err != nil {
-			return err
-		}
-
-		privateKeyPEM, err := ioutil.ReadFile(keyPath)
-		if err != nil {
-			return err
-		}
-
-		certificate, err := identity.CertificateFromPEM(certificatePEM)
-		if err != nil {
-			return err
-		}
-
-		id, err := identity.NewX509Identity(mspid, certificate)
-		if err != nil {
-			return err
-		}
-
-		privateKey, err := identity.PrivateKeyFromPEM(privateKeyPEM)
-		if err != nil {
-			return err
-		}
-
-		sign, err := identity.NewPrivateKeySign(privateKey)
-		if err != nil {
-			return err
-		}
-
-		endpoint := &connection.Endpoint{
-			Host: "localhost",
-			Port: 7053,
-		}
-
-		gw, err = client.Connect(id, sign, client.WithEndpoint(endpoint))
+func createGateway(user string, mspID string) error {
+	connection, err := NewGatewayConnection(user, mspID)
+	if err != nil {
+		return err
 	}
+
+	gatewayConnection = connection
+	gateway = nil
+	return nil
+}
+
+func connectGateway(address string) error {
+	hostPort := strings.Split(address, ":")
+	if len(hostPort) != 2 {
+		return errors.Errorf("Invalid endpoint: %s", address)
+	}
+
+	gatewayConnection.Endpoint.Host = hostPort[0]
+	port, err := strconv.ParseUint(hostPort[1], 10, 16)
+	if err != nil {
+		return err
+	}
+	gatewayConnection.Endpoint.Port = uint16(port)
+
+	gw, err := gatewayConnection.Connect()
+	if err != nil {
+		return err
+	}
+
+	gateway = gw
 	return nil
 }
 
@@ -470,7 +523,7 @@ func useContract(contractName string) error {
 }
 
 func useNetwork(channelName string) error {
-	network = gw.GetNetwork(channelName)
+	network = gateway.GetNetwork(channelName)
 	return nil
 }
 
