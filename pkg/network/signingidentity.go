@@ -1,6 +1,7 @@
 package network
 
 import (
+	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 )
 
@@ -9,11 +10,12 @@ import (
 type signingIdentity struct {
 	serializedID []byte
 	sign         identity.Sign
+	hash         hash.Hash
 }
 
 // newSigningIdentity creates an implementation ot the Fabric protoutil.Signer interface from an identity and signing
 // function
-func newSigningIdentity(id identity.Identity, sign identity.Sign) (*signingIdentity, error) {
+func newSigningIdentity(id identity.Identity, sign identity.Sign, hash hash.Hash) (*signingIdentity, error) {
 	serializedID, err := identity.Serialize(id)
 	if err != nil {
 		return nil, err
@@ -22,12 +24,13 @@ func newSigningIdentity(id identity.Identity, sign identity.Sign) (*signingIdent
 	result := &signingIdentity{
 		serializedID: serializedID,
 		sign:         sign,
+		hash:         hash,
 	}
 	return result, nil
 }
 
 func (signingID *signingIdentity) Sign(message []byte) ([]byte, error) {
-	digest, err := identity.Hash(message)
+	digest, err := signingID.hash(message)
 	if err != nil {
 		return nil, err
 	}

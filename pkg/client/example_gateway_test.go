@@ -36,10 +36,10 @@ func Example() {
 }
 
 func Identity() *identity.X509Identity {
-	certPEM, err := ioutil.ReadFile("certificate.pem")
+	certificatePEM, err := ioutil.ReadFile("certificate.pem")
 	PanicOnError(err)
 
-	certificate, err := identity.CertificateFromPEM(certPEM)
+	certificate, err := identity.CertificateFromPEM(certificatePEM)
 	PanicOnError(err)
 
 	id, err := identity.NewX509Identity("mspID", certificate)
@@ -61,7 +61,7 @@ func Sign() identity.Sign {
 	return sign
 }
 
-func PanicOnError(err interface{}) {
+func PanicOnError(err error) {
 	if err != nil {
 		panic(err)
 	}

@@ -38,12 +38,13 @@ import javax.json.JsonString;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.docstring.DocString;
 import io.cucumber.java8.En;
-import org.hyperledger.fabric.gateway.Contract;
-import org.hyperledger.fabric.gateway.Gateway;
-import org.hyperledger.fabric.gateway.Identities;
-import org.hyperledger.fabric.gateway.Identity;
-import org.hyperledger.fabric.gateway.Network;
-import org.hyperledger.fabric.gateway.Transaction;
+import org.hyperledger.fabric.client.Contract;
+import org.hyperledger.fabric.client.Gateway;
+import org.hyperledger.fabric.client.identity.Identities;
+import org.hyperledger.fabric.client.identity.Identity;
+import org.hyperledger.fabric.client.Network;
+import org.hyperledger.fabric.client.Transaction;
+import org.hyperledger.fabric.client.identity.X509Identity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -410,7 +411,7 @@ public class ScenarioSteps implements En {
         Path privateKeyPath = credentialPath.resolve(Paths.get("keystore", "key.pem"));
         PrivateKey privateKey = getPrivateKey(privateKeyPath);
 
-        return Identities.newX509Identity("Org1MSP", certificate, privateKey);
+        return new X509Identity("Org1MSP", certificate);
     }
 
     private static X509Certificate readX509Certificate(final Path certificatePath)

@@ -13,7 +13,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go/msp"
 )
 
-// Identity represents a client identity.
+// Identity represents a client identity used to interact with a Fabric network.
 type Identity interface {
 	MspID() string       // ID of the Membership Service Provider to which this identity belongs.
 	Credentials() []byte // Implementation-specific credentials.

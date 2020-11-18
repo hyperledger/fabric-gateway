@@ -14,9 +14,9 @@ type Network struct {
 }
 
 // GetContract returns a Contract representing the named smart contract.
-func (nw *Network) GetContract(name string) *Contract {
+func (network *Network) GetContract(name string) *Contract {
 	return &Contract{
-		network: nw,
+		network: network,
 		name:    name,
 	}
 }

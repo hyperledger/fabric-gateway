@@ -6,11 +6,10 @@
 
 package scenario;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import org.hyperledger.fabric.gateway.Transaction;
+import org.hyperledger.fabric.client.Transaction;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

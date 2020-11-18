@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-protos-go/discovery"
 	"github.com/hyperledger/fabric-protos-go/gossip"
@@ -21,12 +22,19 @@ import (
 type channelDiscovery struct {
 	client   discovery.DiscoveryClient
 	sign     identity.Sign
+	hash     hash.Hash
 	authInfo *discovery.AuthInfo
 	registry *registry
 }
 
-func newChannelDiscovery(client discovery.DiscoveryClient, sign identity.Sign, authInfo *discovery.AuthInfo, registry *registry) *channelDiscovery {
-	return &channelDiscovery{client, sign, authInfo, registry}
+func newChannelDiscovery(client discovery.DiscoveryClient, sign identity.Sign, hash hash.Hash, authInfo *discovery.AuthInfo, registry *registry) *channelDiscovery {
+	return &channelDiscovery{
+		client:   client,
+		sign:     sign,
+		hash:     hash,
+		authInfo: authInfo,
+		registry: registry,
+	}
 }
 
 func (cd *channelDiscovery) invokeDiscovery(request *discovery.Request) (*discovery.Response, error) {
@@ -35,7 +43,7 @@ func (cd *channelDiscovery) invokeDiscovery(request *discovery.Request) (*discov
 		return nil, errors.Wrap(err, "Failed to marshal discovery request: ")
 	}
 
-	digest, err := identity.Hash(payload)
+	digest, err := cd.hash(payload)
 	if err != nil {
 		return nil, err
 	}
