@@ -37,10 +37,9 @@ type Gateway struct {
 
 // Connect to a Fabric Gateway using a client identity, signing implementation, and additional options, which must
 // include gRPC client connection details.
-func Connect(id identity.Identity, sign identity.Sign, options ...ConnectOption) (*Gateway, error) {
+func Connect(id identity.Identity, options ...ConnectOption) (*Gateway, error) {
 	gateway := &Gateway{
 		id:   id,
-		sign: sign,
 		hash: hash.SHA256,
 	}
 
@@ -48,8 +47,15 @@ func Connect(id identity.Identity, sign identity.Sign, options ...ConnectOption)
 		return nil, err
 	}
 
-	if err := gateway.validate(); err != nil {
-		return nil, err
+	// No sign implementation is required if only offline signing is used
+	if nil == gateway.sign {
+		gateway.sign = func(digest []byte) ([]byte, error) {
+			return nil, errors.New("No sign implementation supplied")
+		}
+	}
+
+	if nil == gateway.client {
+		return nil, errors.New("No connection details supplied")
 	}
 
 	return gateway, nil
@@ -65,16 +71,16 @@ func (gateway *Gateway) applyConnectOptions(options []ConnectOption) error {
 	return nil
 }
 
-func (gateway *Gateway) validate() error {
-	if nil == gateway.client {
-		return errors.New("No connection details supplied")
-	}
-
-	return nil
-}
-
 // ConnectOption implements an option that can be used when connecting a Gateway.
 type ConnectOption = func(gateway *Gateway) error
+
+// WithSign uses the supplied signing implementation for the Gateway.
+func WithSign(sign identity.Sign) ConnectOption {
+	return func(gateway *Gateway) error {
+		gateway.sign = sign
+		return nil
+	}
+}
 
 // WithEndpoint specifies a Fabric Gateway endpoint to which a gRPC client connection will be established. The client
 // connection will be closed when the Gateway is closed.

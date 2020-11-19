@@ -26,14 +26,6 @@ func WithClient(client proto.GatewayClient) ConnectOption {
 	}
 }
 
-// WithSign uses the supplied signing implementation for the Gateway.
-func WithSign(sign identity.Sign) ConnectOption {
-	return func(gateway *Gateway) error {
-		gateway.sign = sign
-		return nil
-	}
-}
-
 // WithIdentity uses the supplied identity for the Gateway.
 func WithIdentity(id identity.Identity) ConnectOption {
 	return func(gateway *Gateway) error {
@@ -44,7 +36,8 @@ func WithIdentity(id identity.Identity) ConnectOption {
 
 func AssertNewTestGateway(t *testing.T, options ...ConnectOption) *Gateway {
 	id, sign := GetTestCredentials()
-	gateway, err := Connect(id, sign, options...)
+	options = append([]ConnectOption{WithSign(sign)}, options...)
+	gateway, err := Connect(id, options...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,14 +49,14 @@ func TestGateway(t *testing.T) {
 	id, sign := GetTestCredentials()
 
 	t.Run("Connect Gateway with no endpoint returns error", func(t *testing.T) {
-		if _, err := Connect(id, sign); nil == err {
+		if _, err := Connect(id, WithSign(sign)); nil == err {
 			t.Fatal("Expected error, got nil")
 		}
 	})
 
 	t.Run("Connect Gateway using existing gRPC client connection", func(t *testing.T) {
 		var clientConnection grpc.ClientConnInterface
-		gateway, err := Connect(id, sign, WithClientConnection(clientConnection))
+		gateway, err := Connect(id, WithSign(sign), WithClientConnection(clientConnection))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -77,7 +70,7 @@ func TestGateway(t *testing.T) {
 			Host: "example.org",
 			Port: 7,
 		}
-		gateway, err := Connect(id, sign, WithEndpoint(endpoint))
+		gateway, err := Connect(id, WithSign(sign), WithEndpoint(endpoint))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -88,7 +81,7 @@ func TestGateway(t *testing.T) {
 
 	t.Run("Close Gateway using existing gRPC client connection does not close connection", func(t *testing.T) {
 		var clientConnection grpc.ClientConnInterface
-		gateway, err := Connect(id, sign, WithClientConnection(clientConnection))
+		gateway, err := Connect(id, WithSign(sign), WithClientConnection(clientConnection))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -111,7 +104,7 @@ func TestGateway(t *testing.T) {
 			Host: "example.org",
 			Port: 7,
 		}
-		gateway, err := Connect(id, sign, WithEndpoint(endpoint))
+		gateway, err := Connect(id, WithSign(sign), WithEndpoint(endpoint))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -136,7 +129,7 @@ func TestGateway(t *testing.T) {
 		badOption := func(gateway *Gateway) error {
 			return expectedErr
 		}
-		_, actualErr := Connect(id, sign, badOption)
+		_, actualErr := Connect(id, badOption)
 		if !strings.Contains(actualErr.Error(), expectedErr.Error()) {
 			t.Fatalf("Expected error message to contain %s, got %v", expectedErr.Error(), actualErr)
 		}
