@@ -16,6 +16,7 @@ import java.security.InvalidKeyException;
 import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.ECPrivateKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,6 +45,8 @@ import org.hyperledger.fabric.client.identity.Identities;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.Network;
 import org.hyperledger.fabric.client.Transaction;
+import org.hyperledger.fabric.client.identity.Signer;
+import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Identity;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,6 +59,12 @@ public class ScenarioSteps implements En {
     private static final String DOCKER_COMPOSE_TLS_FILE = "docker-compose-tls.yaml";
     private static final Path DOCKER_COMPOSE_DIR = Paths.get("..", "scenario", "fixtures", "docker-compose")
             .toAbsolutePath();
+    private static final Map<String, String> MSP_ID_TO_ORG_MAP;
+    static {
+        Map<String, String> mspIdToOrgMap = new HashMap<>();
+        mspIdToOrgMap.put("Org1MSP", "org1.example.com");
+        MSP_ID_TO_ORG_MAP = Collections.unmodifiableMap(mspIdToOrgMap);
+    }
 
     private String fabricNetworkType;
     private Gateway.Builder gatewayBuilder;
@@ -69,7 +78,6 @@ public class ScenarioSteps implements En {
             if (gateway != null) {
                 gateway.close();
             }
-
         });
 
         Given("I have deployed a {word} Fabric network", (String tlsType) -> {
@@ -125,18 +133,6 @@ public class ScenarioSteps implements En {
                 channelsJoined = true;
             }
         });
-
-        Given("I have a gateway for {word}", (String mspid) -> {
-            // no-op, gateway started by docker-compose
-        });
-
-        Given("I have a gateway as user {word} using the {word} connection profile",
-                (String userName, String tlsType) -> {
-                    prepareGateway(tlsType);
-                    gatewayBuilder.identity(newOrg1UserIdentity());
-                });
-
-        Given("I connect the gateway", () -> gateway = gatewayBuilder.connect());
 
         Given("I deploy {word} chaincode named {word} at version {word} for all organizations on channel {word} with endorsement policy {} and arguments {}",
                 (String ccType, String ccName, String version, String channelName, String policyType,
@@ -229,9 +225,23 @@ public class ScenarioSteps implements En {
                     Thread.sleep(60000);
                 });
 
-        Given("I use the {word} network", (String networkName) -> network = gateway.getNetwork(networkName));
+        Given("I create a gateway for user {word} in MSP {word}", (String user, String mspId) -> {
+            gatewayBuilder = Gateway.createBuilder()
+                    .identity(newIdentity(user, mspId))
+                    .signer(newSigner(user, mspId));
+        });
 
-        Given("I use the {word} contract", (String contractName) -> contract = network.getContract(contractName));
+        Given("I connect the gateway to {word}", (String address) -> {
+            gateway = gatewayBuilder.endpoint(address).connect();
+        });
+
+        Given("I use the {word} network", (String networkName) -> {
+            network = gateway.getNetwork(networkName);
+        });
+
+        Given("I use the {word} contract", (String contractName) -> {
+            contract = network.getContract(contractName);
+        });
 
         When("I prepare a(n) {word} transaction", (String transactionName) -> {
             Transaction transaction = contract.createTransaction(transactionName);
@@ -396,22 +406,38 @@ public class ScenarioSteps implements En {
         exec(fixtures, "./generate.sh");
     }
 
-    private void prepareGateway(String tlsType) throws IOException {
-        gatewayBuilder = Gateway.createBuilder();
-        gatewayBuilder.networkConfig(GATEWAY_URL);
-    }
-
-    private static Identity newOrg1UserIdentity() throws IOException, CertificateException, InvalidKeyException {
-        Path credentialPath = Paths.get("..", "scenario", "fixtures", "crypto-material", "crypto-config",
-                "peerOrganizations", "org1.example.com", "users", "User1@org1.example.com", "msp");
-
-        Path certificatePath = credentialPath.resolve(Paths.get("signcerts", "User1@org1.example.com-cert.pem"));
+    private static Identity newIdentity(String user, String mspId) throws IOException, CertificateException, InvalidKeyException {
+        String org = getOrgForMspId(mspId);
+        Path credentialPath = getCredentialPath(user, org);
+        Path certificatePath = credentialPath.resolve(Paths.get("signcerts", user + "@" + org + "-cert.pem"));
         X509Certificate certificate = readX509Certificate(certificatePath);
 
+        return new X509Identity(mspId, certificate);
+    }
+
+    private static Signer newSigner(String user, String mspId) throws IOException, CertificateException, InvalidKeyException {
+        String org = getOrgForMspId(mspId);
+        Path credentialPath = getCredentialPath(user, org);
         Path privateKeyPath = credentialPath.resolve(Paths.get("keystore", "key.pem"));
         PrivateKey privateKey = getPrivateKey(privateKeyPath);
 
-        return new X509Identity("Org1MSP", certificate);
+        if (privateKey instanceof ECPrivateKey) {
+            return Signers.newPrivateKeySigner((ECPrivateKey) privateKey);
+        }
+        throw new RuntimeException("Unexpected private key type: " + privateKey.getClass().getSimpleName());
+    }
+
+    private static String getOrgForMspId(String mspId) {
+        String org = MSP_ID_TO_ORG_MAP.get(mspId);
+        if (null == org) {
+            throw new IllegalArgumentException("Unknown MSP ID: " + mspId);
+        }
+        return org;
+    }
+
+    private static Path getCredentialPath(String user, String org) {
+        return Paths.get("..", "scenario", "fixtures", "crypto-material", "crypto-config",
+                "peerOrganizations", org, "users", user + "@" + org, "msp");
     }
 
     private static X509Certificate readX509Certificate(final Path certificatePath)

@@ -84,13 +84,11 @@ public interface Gateway extends AutoCloseable {
      */
     interface Builder {
         /**
-         * Specifies the path to the common connection profile.
-         * @param url The url of the gateway.
+         * Specifies the Gateway endpoint address in the form {@code "host:post"}.
+         * @param url Endpoint address.
          * @return The builder instance, allowing multiple configuration options to be chained.
-         * @throws IOException if the config file does not exist, or is not JSON or YAML format,
-         * or contains invalid information.
          */
-        Builder networkConfig(String url) throws IOException;
+        Builder endpoint(String url);
 
         /**
          * Specifies the identity that is to be used to connect to the network. All operations
