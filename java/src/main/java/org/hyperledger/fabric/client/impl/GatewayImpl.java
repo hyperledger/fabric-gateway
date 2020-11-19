@@ -6,16 +6,14 @@
 
 package org.hyperledger.fabric.client.impl;
 
-import java.io.IOException;
 import java.util.function.Function;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.Gateway;
 import org.hyperledger.fabric.client.Network;
+import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
-import org.hyperledger.fabric.client.identity.X509Identity;
 
 public final class GatewayImpl implements Gateway {
     private static final Log LOG = LogFactory.getLog(Gateway.class);
@@ -57,17 +55,13 @@ public final class GatewayImpl implements Gateway {
     private GatewayImpl(final Builder builder) {
         this.url = builder.url;
         this.identity = builder.identity;
-        this.signer = builder.signer;
+        // No signer implementation is required if only offline signing is used
+        this.signer = builder.signer != null ? builder.signer : (byte[] digest) -> {
+            throw new IllegalStateException("No signing implementation supplied");
+        };
 
-        validate();
-    }
-
-    private void validate() {
         if (null == this.identity) {
             throw new IllegalStateException("No client identity supplied");
-        }
-        if (null == this.signer) {
-            throw new IllegalStateException("No signing implementation supplied");
         }
     }
 

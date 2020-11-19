@@ -51,9 +51,8 @@ func GetOrgForMSP(mspID string) string {
 }
 
 type GatewayConnection struct {
-	ID       identity.Identity
-	Sign     identity.Sign
-	Endpoint connection.Endpoint
+	ID      identity.Identity
+	options []client.ConnectOption
 }
 
 func NewGatewayConnection(user string, mspID string) (*GatewayConnection, error) {
@@ -75,14 +74,19 @@ func NewGatewayConnection(user string, mspID string) (*GatewayConnection, error)
 	}
 
 	connection := &GatewayConnection{
-		ID:   id,
-		Sign: sign,
+		ID: id,
 	}
+	connection.AddOptions(client.WithSign(sign))
+
 	return connection, nil
 }
 
+func (connection *GatewayConnection) AddOptions(options ...client.ConnectOption) {
+	connection.options = append(connection.options, options...)
+}
+
 func (connection *GatewayConnection) Connect() (*client.Gateway, error) {
-	return client.Connect(connection.ID, connection.Sign, client.WithEndpoint(&connection.Endpoint))
+	return client.Connect(connection.ID, connection.options...)
 }
 
 func newIdentity(mspID string, certPath string) (*identity.X509Identity, error) {
@@ -117,6 +121,10 @@ type Transaction struct {
 	txType  TransactionType
 	name    string
 	options []client.ProposalOption
+}
+
+func (transaction *Transaction) AddOptions(options ...client.ProposalOption) {
+	transaction.options = append(transaction.options, options...)
 }
 
 var fabricRunning bool = false
@@ -344,12 +352,17 @@ func connectGateway(address string) error {
 		return errors.Errorf("Invalid endpoint: %s", address)
 	}
 
-	gatewayConnection.Endpoint.Host = hostPort[0]
+	host := hostPort[0]
 	port, err := strconv.ParseUint(hostPort[1], 10, 16)
 	if err != nil {
 		return err
 	}
-	gatewayConnection.Endpoint.Port = uint16(port)
+
+	endpoint := &connection.Endpoint{
+		Host: host,
+		Port: uint16(port),
+	}
+	gatewayConnection.AddOptions(client.WithEndpoint(endpoint))
 
 	gw, err := gatewayConnection.Connect()
 	if err != nil {
@@ -468,7 +481,7 @@ func setArguments(argsJSON string) error {
 		return err
 	}
 
-	transaction.options = append(transaction.options, client.WithStringArguments(args...))
+	transaction.AddOptions(client.WithStringArguments(args...))
 
 	return nil
 }
@@ -489,7 +502,7 @@ func setTransientData(table *messages.PickleStepArgument_PickleTable) error {
 		transient[row.Cells[0].Value] = []byte(row.Cells[1].Value)
 	}
 
-	transaction.options = append(transaction.options, client.WithTransient(transient))
+	transaction.AddOptions(client.WithTransient(transient))
 	return nil
 }
 

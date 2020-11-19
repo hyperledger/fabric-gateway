@@ -110,4 +110,17 @@ func TestSign(t *testing.T) {
 			t.Fatalf("Expected signature: %v\nGot: %v", expected, actual)
 		}
 	})
+
+	t.Run("Default error implementation is used if nil signing implementation supplied", func(t *testing.T) {
+		mockClient := mock.NewGatewayClient()
+		mockClient.MockEvaluate = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.Result, error) {
+			return &gateway.Result{}, nil
+		}
+
+		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(nil))
+
+		if _, err := contract.EvaluateTransaction("transaction"); nil == err {
+			t.Fatal("Expected signing error but got nil")
+		}
+	})
 }

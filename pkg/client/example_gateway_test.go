@@ -23,7 +23,7 @@ func Example() {
 		Port: 1337,
 	}
 
-	gateway, err := client.Connect(id, sign, client.WithEndpoint(endpoint))
+	gateway, err := client.Connect(id, client.WithSign(sign), client.WithEndpoint(endpoint))
 	PanicOnError(err)
 
 	network := gateway.GetNetwork("channelName")
