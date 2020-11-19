@@ -134,19 +134,12 @@ public class ScenarioSteps implements En {
             }
         });
 
-        Given("I deploy {word} chaincode named {word} at version {word} for all organizations on channel {word} with endorsement policy {} and arguments {}",
-                (String ccType, String ccName, String version, String channelName, String policyType,
-                        String argsJson) -> {
+        Given("I deploy {word} chaincode named {word} at version {word} for all organizations on channel {word} with endorsement policy {}",
+                (String ccType, String ccName, String version, String channelName, String policyType) -> {
                     String mangledName = ccName + version + channelName;
                     if (runningChaincodes.contains(mangledName)) {
                         return;
                     }
-
-                    JsonArray functionAndArgs = parseJsonArray(argsJson);
-                    String transactionName = functionAndArgs.getString(0);
-                    JsonArray args = Json.createArrayBuilder(functionAndArgs).remove(0).build();
-                    String initArg = Json.createObjectBuilder().add("function", transactionName).add("Args", args)
-                            .build().toString();
 
                     final List<String> tlsOptions;
                     if (fabricNetworkType.equals("tls")) {

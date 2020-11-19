@@ -147,7 +147,7 @@ func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I create a gateway for user (\S+) in MSP (\S+)`, createGateway)
 	s.Step(`^I connect the gateway to (\S+)$`, connectGateway)
-	s.Step(`^I deploy (\S+) chaincode named (\S+) at version (\S+) for all organizations on channel (\S+) with endorsement policy (\S+) and arguments (.+)$`, deployChaincode)
+	s.Step(`^I deploy (\S+) chaincode named (\S+) at version (\S+) for all organizations on channel (\S+) with endorsement policy (\S+)$`, deployChaincode)
 	s.Step(`^I have created and joined all channels from the tls connection profile$`, createAndJoinChannels)
 	s.Step(`^I have deployed a (\S+) Fabric network$`, haveFabricNetwork)
 	s.Step(`^I prepare to submit an? (\S+) transaction$`, prepareSubmit)
@@ -207,23 +207,12 @@ func createCryptoMaterial() error {
 	return nil
 }
 
-func deployChaincode(ccType, ccName, version, channelName, policyType, argsJSON string) error {
+func deployChaincode(ccType, ccName, version, channelName, policyType string) error {
 	mangledName := ccName + version + channelName
 	if _, ok := runningChaincodes[mangledName]; ok {
 		// already exists
 		return nil
 	}
-
-	// var args []string
-	// err := json.Unmarshal([]byte(argsJSON), &args)
-	// if err != nil {
-	// 	return err
-	// }
-	// init := map[string]interface{}{
-	// 	"function": args[0],
-	// 	"Args":     args[1:],
-	// }
-	// initArg, err := json.Marshal(init)
 
 	ccPath := "/opt/gopath/src/github.com/chaincode/" + ccType + "/" + ccName
 	ccLabel := ccName + "v" + version
