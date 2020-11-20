@@ -6,6 +6,7 @@
 
 package org.hyperledger.fabric.client;
 
+import io.grpc.Channel;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.impl.GatewayImpl;
@@ -87,6 +88,8 @@ public interface Gateway extends AutoCloseable {
          * @return The builder instance, allowing multiple configuration options to be chained.
          */
         Builder endpoint(String url);
+
+        Builder connection(Channel grpcChannel);
 
         /**
          * Specifies the identity that is to be used to connect to the network. All operations

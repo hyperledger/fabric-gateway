@@ -1,47 +1,63 @@
 /*
- * Copyright 2019 IBM All Rights Reserved.
+ * Copyright 2020 IBM All Rights Reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 package org.hyperledger.fabric.client.impl;
 
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
+import java.util.Iterator;
 
+import org.hyperledger.fabric.client.Commit;
 import org.hyperledger.fabric.client.ContractException;
 import org.hyperledger.fabric.client.Transaction;
+import org.hyperledger.fabric.gateway.Event;
+import org.hyperledger.fabric.gateway.GatewayGrpc;
+import org.hyperledger.fabric.gateway.PreparedTransaction;
 
-public final class TransactionImpl implements Transaction {
-    private final ContractImpl contract;
-    private final String name;
-    private final NetworkImpl network = null;
-    private final GatewayImpl gateway = null;
-    private Map<String, byte[]> transientData = null;
+public class TransactionImpl implements Transaction {
+    private GatewayGrpc.GatewayBlockingStub gatewayService;
 
-    TransactionImpl(final ContractImpl contract, final String name) {
-        this.contract = contract;
-        this.name = name;
+    @Override
+    public byte[] getResult() {
+        return new byte[0];
     }
 
     @Override
-    public String getName() {
-        return name;
+    public byte[] getBytes() {
+        return new byte[0];
     }
 
     @Override
-    public Transaction setTransient(final Map<String, byte[]> transientData) {
-        this.transientData = transientData;
-        return this;
+    public byte[] getHash() {
+        return new byte[0];
     }
 
     @Override
-    public byte[] submit(final String... args) throws ContractException, TimeoutException, InterruptedException {
-        return "".getBytes();
+    public Commit submitAsync() {
+        Iterator<Event> eventIter = submit();
+        final byte[] result = getResult(); // Get result on current thread, not in Future
+
+        return () -> {
+            while (eventIter.hasNext()) {
+                Event event = eventIter.next();
+                throw new ContractException("Failed to commit: " + event.getValue().toStringUtf8());
+            }
+            return result;
+        };
     }
 
     @Override
-    public byte[] evaluate(final String... args) throws ContractException {
-        return "".getBytes();
+    public byte[] submitSync() throws ContractException {
+        return submitAsync().call();
+    }
+
+    private Iterator<Event> submit() {
+        PreparedTransaction transaction = toPreparedTransaction();
+        return gatewayService.submit(transaction);
+    }
+
+    private PreparedTransaction toPreparedTransaction() {
+        return null;
     }
 }

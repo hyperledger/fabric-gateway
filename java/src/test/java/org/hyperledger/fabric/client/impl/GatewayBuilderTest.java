@@ -27,7 +27,7 @@ public class GatewayBuilderTest {
     private Gateway.Builder builder;
 
     @BeforeEach
-    public void setup() throws IOException {
+    public void beforeEach() throws IOException {
         builder = Gateway.createBuilder();
     }
 

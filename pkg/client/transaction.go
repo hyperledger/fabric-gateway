@@ -42,7 +42,7 @@ func (transaction *Transaction) Bytes() ([]byte, error) {
 	return transactionBytes, nil
 }
 
-// Hash the transaction to obtain a digest to be signed.
+// Hash the transaction payload to obtain a digest to be signed.
 func (transaction *Transaction) Hash() ([]byte, error) {
 	return transaction.hash(transaction.preparedTransaction.Envelope.Payload)
 }

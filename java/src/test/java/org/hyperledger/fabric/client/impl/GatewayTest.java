@@ -26,18 +26,10 @@ public class GatewayTest {
     }
 
     @Test
-    public void testGetNetworkFromConfig() {
+    public void getNetwork_returns_correctly_named_network() {
         try (Gateway gateway = builder.connect()) {
             Network network = gateway.getNetwork("mychannel");
             assertThat(network.getName()).isEqualTo("mychannel");
-        }
-    }
-
-    @Test
-    public void testGetAssumedNetwork() {
-        try (Gateway gateway = builder.connect()) {
-            Network network = gateway.getNetwork("assumed");
-            assertThat(network.getName()).isEqualTo("assumed");
         }
     }
 

@@ -35,41 +35,19 @@ public class NetworkTest {
     }
 
     @Test
-    public void testGetChannel() {
+    public void getChannel_returns_correctly_named_channel() {
         assertThat(network.getName()).isEqualTo("ch1");
     }
 
     @Test
-    public void testGetGateway() {
+    public void getGateway_returns_Gateway_that_created_this_Network() {
         Gateway gw = network.getGateway();
         assertThat(gw).isSameAs(gateway);
     }
 
     @Test
-    public void testGetContract() {
+    public void getContract_returns_a_Contract() {
         Contract contract = network.getContract("contract1");
-        assertThat(contract).isInstanceOf(ContractImpl.class);
+        assertThat(contract).isInstanceOf(Contract.class);
     }
-
-    @Test
-    public void testGetContractEmptyId() {
-        assertThatThrownBy(() -> network.getContract(""))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("getContract: chaincodeId must be a non-empty string");
-    }
-
-    @Test
-    public void testGetContractNullId() {
-        assertThatThrownBy(() -> network.getContract(null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("getContract: chaincodeId must be a non-empty string");
-    }
-
-    @Test
-    public void testGetContractNullName() {
-        assertThatThrownBy(() -> network.getContract("id", null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("getContract: name must not be null");
-    }
-
 }

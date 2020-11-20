@@ -41,10 +41,10 @@ import io.cucumber.docstring.DocString;
 import io.cucumber.java8.En;
 import org.hyperledger.fabric.client.Contract;
 import org.hyperledger.fabric.client.Gateway;
+import org.hyperledger.fabric.client.Network;
+import org.hyperledger.fabric.client.Proposal;
 import org.hyperledger.fabric.client.identity.Identities;
 import org.hyperledger.fabric.client.identity.Identity;
-import org.hyperledger.fabric.client.Network;
-import org.hyperledger.fabric.client.Transaction;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Identity;
@@ -237,13 +237,13 @@ public class ScenarioSteps implements En {
         });
 
         When("I prepare a(n) {word} transaction", (String transactionName) -> {
-            Transaction transaction = contract.createTransaction(transactionName);
-            transactionInvocation = TransactionInvocation.expectSuccess(transaction);
+            Proposal proposal = contract.newProposal(transactionName);
+            transactionInvocation = TransactionInvocation.expectSuccess(proposal);
         });
 
         When("I prepare a(n) {word} transaction that I expect to fail", (String transactionName) -> {
-            Transaction transaction = contract.createTransaction(transactionName);
-            transactionInvocation = TransactionInvocation.expectFail(transaction);
+            Proposal proposal = contract.newProposal(transactionName);
+            transactionInvocation = TransactionInvocation.expectFail(proposal);
         });
 
         When("^I (submit|evaluate) the transaction with arguments (.+)$", (String action, String argsJson) -> {
@@ -256,11 +256,11 @@ public class ScenarioSteps implements En {
         });
 
         When("^I prepare to (evaluate|submit) an? ([^ ]+) transaction$", (String action, String transactionName) -> {
-            Transaction transaction = contract.createTransaction(transactionName);
+            Proposal proposal = contract.newProposal(transactionName);
             if (action.equals("submit")) {
-                transactionInvocation = TransactionInvocation.prepareToSubmit(transaction);
+                transactionInvocation = TransactionInvocation.prepareToSubmit(proposal);
             } else {
-                transactionInvocation = TransactionInvocation.prepareToEvaluate(transaction);
+                transactionInvocation = TransactionInvocation.prepareToEvaluate(proposal);
             }
         });
 
