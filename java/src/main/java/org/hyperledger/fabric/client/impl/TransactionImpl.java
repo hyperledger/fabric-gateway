@@ -9,14 +9,10 @@ package org.hyperledger.fabric.client.impl;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.hyperledger.fabric.client.ContractException;
 import org.hyperledger.fabric.client.Transaction;
 
 public final class TransactionImpl implements Transaction {
-    private static final Log LOG = LogFactory.getLog(TransactionImpl.class);
-
     private final ContractImpl contract;
     private final String name;
     private final NetworkImpl network = null;

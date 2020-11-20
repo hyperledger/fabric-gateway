@@ -98,7 +98,7 @@ Given('I have created and joined all channels from the tls connection profile', 
   }
 });
 
-Given(/I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organizations on channel (\w+) with endorsement policy ([^ ]+) and arguments(.+)/, { timeout: TIMEOUTS.LONG_STEP }, async (ccType, ccName, version, channelName, policyType, argsJSON) => {
+Given(/I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organizations on channel (\w+) with endorsement policy ([^ ]+)/, { timeout: TIMEOUTS.LONG_STEP }, async (ccType, ccName, version, channelName, policyType) => {
   const mangledName = ccName + version + channelName;
   if (this.runningChaincodes[mangledName]) {
     return;

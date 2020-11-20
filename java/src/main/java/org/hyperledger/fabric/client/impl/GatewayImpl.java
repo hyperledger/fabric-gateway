@@ -8,16 +8,12 @@ package org.hyperledger.fabric.client.impl;
 
 import java.util.function.Function;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.hyperledger.fabric.client.Gateway;
 import org.hyperledger.fabric.client.Network;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 
 public final class GatewayImpl implements Gateway {
-    private static final Log LOG = LogFactory.getLog(Gateway.class);
-
     public static final class Builder implements Gateway.Builder {
         private String url;
         private Identity identity;
