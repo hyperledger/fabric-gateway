@@ -23,8 +23,7 @@ type Contract struct {
 // evaluated on endorsing peers but the transaction will not be sent to the ordering service and so will not be
 // committed to the ledger. This can be used for querying the world state.
 func (contract *Contract) EvaluateTransaction(name string, args ...string) ([]byte, error) {
-	byteArgs := stringsAsBytes(args)
-	return contract.Evaluate(name, WithArguments(byteArgs...))
+	return contract.Evaluate(name, WithStringArguments(args...))
 }
 
 // Evaluate a transaction function and return its result. This method provides greater control over the transaction

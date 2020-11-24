@@ -68,6 +68,9 @@ scenario-test-go: docker
 scenario-test-node: docker build-node
 	cd $(scenario_dir)/node; npm install; npm test
 
+scenario-test-java: docker
+	cd $(java_dir); mvn verify
+
 scenario-test: scenario-test-go scenario-test-node
 
 test: unit-test scenario-test

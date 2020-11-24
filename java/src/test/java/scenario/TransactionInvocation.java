@@ -9,43 +9,43 @@ package scenario;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import org.hyperledger.fabric.client.Transaction;
+import org.hyperledger.fabric.client.Proposal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class TransactionInvocation {
-    private final Transaction transaction;
+    private final Proposal proposal;
     private final boolean expectSuccess;
     private String response;
     private Throwable error;
     private String action = null;
     private String[] args = null;
 
-    public static TransactionInvocation expectFail(Transaction transaction) {
-        return new TransactionInvocation(transaction, false);
+    public static TransactionInvocation expectFail(Proposal proposal) {
+        return new TransactionInvocation(proposal, false);
     }
 
-    public static TransactionInvocation expectSuccess(Transaction transaction) {
-        return new TransactionInvocation(transaction, true);
+    public static TransactionInvocation expectSuccess(Proposal proposal) {
+        return new TransactionInvocation(proposal, true);
     }
 
-    private TransactionInvocation(Transaction transaction, boolean expectSuccess) {
-        this.transaction = transaction;
+    private TransactionInvocation(Proposal proposal, boolean expectSuccess) {
+        this.proposal = proposal;
         this.expectSuccess = expectSuccess;
     }
 
     public void setTransient(Map<String, byte[]> transientData) {
-        transaction.setTransient(transientData);
+        proposal.setTransient(transientData);
     }
 
-    public static TransactionInvocation prepareToSubmit(Transaction transaction) {
-        TransactionInvocation ti = new TransactionInvocation(transaction, true);
+    public static TransactionInvocation prepareToSubmit(Proposal proposal) {
+        TransactionInvocation ti = new TransactionInvocation(proposal, true);
         ti.action = "submit";
         return ti;
     }
 
-    public static TransactionInvocation prepareToEvaluate(Transaction transaction) {
-        TransactionInvocation ti = new TransactionInvocation(transaction, true);
+    public static TransactionInvocation prepareToEvaluate(Proposal proposal) {
+        TransactionInvocation ti = new TransactionInvocation(proposal, true);
         ti.action = "evaluate";
         return ti;
     }
@@ -63,11 +63,11 @@ public final class TransactionInvocation {
     }
 
     public void submit(String... args) {
-        invoke(() -> transaction.submit(args));
+        invoke(() -> proposal.addArguments(args).endorse().submitSync());
     }
 
     public void evaluate(String... args) {
-        invoke(() -> transaction.evaluate(args));
+        invoke(() -> proposal.addArguments(args).evaluate());
     }
 
     private void invoke(Callable<byte[]> invocationFn) {

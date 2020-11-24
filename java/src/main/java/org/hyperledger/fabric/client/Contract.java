@@ -6,6 +6,7 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -19,23 +20,9 @@ import java.util.concurrent.TimeoutException;
  *     <li>Evaluate transactions that query state from the ledger using {@link #evaluateTransaction(String, String...)}.</li>
  * </ul>
  *
- * <p>If more control over transaction invocation is required, such as including transient data, {@link #createTransaction(String)}
- * can be used to build a transaction request that is submitted to or evaluated by the smart contract.</p>
- *
  * @see <a href="https://hyperledger-fabric.readthedocs.io/en/release-2.2/developapps/application.html#construct-request">Developing Fabric Applications - Construct request</a>
  */
 public interface Contract {
-    /**
-     * Create an object representing a specific invocation of a transaction
-     * function implemented by this contract, and provides more control over
-     * the transaction invocation. A new transaction object <strong>must</strong>
-     * be created for each transaction invocation.
-     *
-     * @param name Transaction function name.
-     * @return A transaction object.
-     */
-    Transaction createTransaction(String name);
-
     /**
      * Submit a transaction to the ledger. The transaction function {@code name}
      * will be evaluated on the endorsing peers and then submitted to the ordering service
@@ -51,7 +38,7 @@ public interface Contract {
      * @throws InterruptedException if the current thread is interrupted while waiting.
      * @throws GatewayRuntimeException if an underlying infrastructure failure occurs.
      *
-     * @see <a href="https://hyperledger-fabric.readthedocs.io/en/release-1.4/developapps/application.html#submit-transaction">Developing Fabric Applications - Submit transaction</a>
+     * @see <a href="https://hyperledger-fabric.readthedocs.io/en/release-2.2/developapps/application.html#submit-transaction">Developing Fabric Applications - Submit transaction</a>
      */
     byte[] submitTransaction(String name, String... args) throws ContractException, TimeoutException, InterruptedException;
 
@@ -70,4 +57,9 @@ public interface Contract {
      */
     byte[] evaluateTransaction(String name, String... args) throws ContractException;
 
+    Proposal newProposal(String transactionName);
+    Proposal newSignedProposal(byte[] proposalBytes, byte[] signature);
+    Transaction newSignedTransaction(byte[] transactionBytes, byte[] signature);
+    String getChaincodeId();
+    Optional<String> getContractName();
 }

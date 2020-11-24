@@ -21,19 +21,12 @@ public final class NetworkImpl implements Network {
 
     @Override
     public Contract getContract(final String chaincodeId, final String name) {
-        if (chaincodeId == null || chaincodeId.isEmpty()) {
-            throw new IllegalArgumentException("getContract: chaincodeId must be a non-empty string");
-        }
-        if (name == null) {
-            throw new IllegalArgumentException("getContract: name must not be null");
-        }
-
         return new ContractImpl(this, chaincodeId, name);
     }
 
     @Override
     public Contract getContract(final String chaincodeId) {
-        return getContract(chaincodeId, "");
+        return new ContractImpl(this, chaincodeId);
     }
 
     @Override
