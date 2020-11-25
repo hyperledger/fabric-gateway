@@ -58,3 +58,17 @@ jobs:
     env:
       # TODO: update this variable name in the Makefile
       JENKINS_URL: true
+
+- job: ScenarioTestJava
+  pool:
+    vmImage: ubuntu-20.04
+  dependsOn: []
+  timeoutInMinutes: 60
+  steps:
+    - template: install_deps.yml
+    - checkout: self
+    - script: make scenario-test-java
+      displayName: Run Java SDK scenario tests
+      env:
+        # TODO: update this variable name in the Makefile
+        JENKINS_URL: true

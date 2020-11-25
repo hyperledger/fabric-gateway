@@ -71,7 +71,7 @@ scenario-test-node: docker build-node
 scenario-test-java: docker
 	cd $(java_dir); mvn verify
 
-scenario-test: scenario-test-go scenario-test-node
+scenario-test: scenario-test-go scenario-test-node scenario-test-java
 
 test: unit-test scenario-test
 

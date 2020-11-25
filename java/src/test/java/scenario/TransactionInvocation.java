@@ -89,6 +89,9 @@ public final class TransactionInvocation {
     }
 
     private void setError(Throwable error) {
+        if(expectSuccess) {
+            error.printStackTrace();
+        }
         assertThat(expectSuccess)
                 .withFailMessage("Error received for transaction that was expected to succeed: %s", error)
                 .isFalse();

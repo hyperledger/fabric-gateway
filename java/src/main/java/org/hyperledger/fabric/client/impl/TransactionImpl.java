@@ -6,20 +6,33 @@
 
 package org.hyperledger.fabric.client.impl;
 
+import java.security.GeneralSecurityException;
 import java.util.Iterator;
 
-import org.hyperledger.fabric.client.Commit;
-import org.hyperledger.fabric.client.ContractException;
-import org.hyperledger.fabric.client.Transaction;
+import com.google.protobuf.ByteString;
+import org.hyperledger.fabric.client.*;
 import org.hyperledger.fabric.gateway.Event;
 import org.hyperledger.fabric.gateway.GatewayGrpc;
 import org.hyperledger.fabric.gateway.PreparedTransaction;
+import org.hyperledger.fabric.gateway.Result;
+import org.hyperledger.fabric.protos.common.Common;
 
 public class TransactionImpl implements Transaction {
     private GatewayGrpc.GatewayBlockingStub gatewayService;
+    private GatewayImpl gateway;
+    private PreparedTransaction preparedTransaction;
+
+    TransactionImpl(GatewayImpl gateway, PreparedTransaction preparedTransaction) {
+        this.gateway = gateway;
+        this.preparedTransaction = preparedTransaction;
+    }
 
     @Override
     public byte[] getResult() {
+        Result result = preparedTransaction.getResponse();
+        if(result != null && result.getValue() != null) {
+            return result.getValue().toByteArray();
+        }
         return new byte[0];
     }
 
@@ -41,7 +54,7 @@ public class TransactionImpl implements Transaction {
         return () -> {
             while (eventIter.hasNext()) {
                 Event event = eventIter.next();
-                throw new ContractException("Failed to commit: " + event.getValue().toStringUtf8());
+                //throw new ContractException("Failed to commit: " + event.getValue().toStringUtf8());
             }
             return result;
         };
@@ -54,10 +67,21 @@ public class TransactionImpl implements Transaction {
 
     private Iterator<Event> submit() {
         PreparedTransaction transaction = toPreparedTransaction();
-        return gatewayService.submit(transaction);
+        return gateway.getStub().submit(transaction);
     }
 
     private PreparedTransaction toPreparedTransaction() {
-        return null;
+        try {
+            // sign the payload
+            Common.Envelope envelope = preparedTransaction.getEnvelope();
+            byte[] hash = Hash.sha256(envelope.getPayload().toByteArray());
+            byte[] signature = gateway.getSigner().sign(hash);
+            PreparedTransaction signedTransaction = PreparedTransaction.newBuilder(preparedTransaction)
+                    .setEnvelope(Common.Envelope.newBuilder(envelope).setSignature(ByteString.copyFrom(signature)).build())
+                    .build();
+            return signedTransaction;
+        } catch (GeneralSecurityException e) {
+            throw new GatewayRuntimeException(e);
+        }
     }
 }
