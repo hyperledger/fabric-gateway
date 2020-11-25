@@ -8,6 +8,7 @@ package scenario;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 import org.hyperledger.fabric.client.Proposal;
 
@@ -18,8 +19,8 @@ public final class TransactionInvocation {
     private final boolean expectSuccess;
     private String response;
     private Throwable error;
-    private String action = null;
-    private String[] args = null;
+    private Consumer<String[]> action;
+    private String[] args = new String[0];
 
     public static TransactionInvocation expectFail(Proposal proposal) {
         return new TransactionInvocation(proposal, false);
@@ -35,19 +36,19 @@ public final class TransactionInvocation {
     }
 
     public void setTransient(Map<String, byte[]> transientData) {
-        proposal.setTransient(transientData);
+        proposal.putAllTransient(transientData);
     }
 
     public static TransactionInvocation prepareToSubmit(Proposal proposal) {
-        TransactionInvocation ti = new TransactionInvocation(proposal, true);
-        ti.action = "submit";
-        return ti;
+        TransactionInvocation invocation = new TransactionInvocation(proposal, true);
+        invocation.action = invocation::submit;
+        return invocation;
     }
 
     public static TransactionInvocation prepareToEvaluate(Proposal proposal) {
-        TransactionInvocation ti = new TransactionInvocation(proposal, true);
-        ti.action = "evaluate";
-        return ti;
+        TransactionInvocation invocation = new TransactionInvocation(proposal, true);
+        invocation.action = invocation::evaluate;
+        return invocation;
     }
 
     public void setArgs(String[] args) {
@@ -55,11 +56,7 @@ public final class TransactionInvocation {
     }
 
     public void invokeTxn() {
-        if (action.equals("submit")) {
-            submit(args);
-        } else if (action.equals("evaluate")) {
-            evaluate(args);
-        }
+        action.accept(args);
     }
 
     public void submit(String... args) {
