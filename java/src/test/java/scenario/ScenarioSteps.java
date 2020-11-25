@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -275,8 +276,8 @@ public class ScenarioSteps implements En {
 
         When("I set transient data on the transaction to", (DataTable data) -> {
             Map<String, String> table = data.asMap(String.class, String.class);
-            Map<String, byte[]> transientMap = new HashMap<>();
-            table.forEach((k, v) -> transientMap.put(k, v.getBytes(StandardCharsets.UTF_8)));
+            Map<String, byte[]> transientMap = table.entrySet().stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8)));
             transactionInvocation.setTransient(transientMap);
         });
 

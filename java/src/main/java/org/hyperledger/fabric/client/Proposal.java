@@ -14,7 +14,8 @@ public interface Proposal {
     byte[] getHash();
     Proposal addArguments(byte[]... args);
     Proposal addArguments(String... args);
-    Proposal setTransient(Map<String, byte[]> transientData);
+    Proposal putAllTransient(Map<String, byte[]> transientData);
+    Proposal putTransient(String key, byte[] value);
     byte[] evaluate();
     Transaction endorse();
 }

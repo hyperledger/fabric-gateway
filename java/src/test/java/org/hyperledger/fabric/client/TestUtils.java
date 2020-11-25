@@ -22,13 +22,14 @@ import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Credentials;
 import org.hyperledger.fabric.client.identity.X509Identity;
 import org.hyperledger.fabric.client.impl.GatewayImpl;
+import org.mockito.Mock;
 //import org.hyperledger.fabric.protos.peer.ProposalResponsePackage;
 
 
 public final class TestUtils {
     private static final TestUtils INSTANCE = new TestUtils();
-    private static final String TEST_FILE_PREFIX = "fgj-test-";
-    private static final String UNUSED_FILE_PREFIX = "fgj-unused-";
+    private static final String TEST_FILE_PREFIX = "fgw-test-";
+    private static final String UNUSED_FILE_PREFIX = "fgw-unused-";
 
     private final AtomicLong currentTransactionId = new AtomicLong();
 

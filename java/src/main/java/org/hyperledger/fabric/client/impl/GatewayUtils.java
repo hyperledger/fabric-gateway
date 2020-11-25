@@ -6,9 +6,11 @@
 
 package org.hyperledger.fabric.client.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -31,6 +33,18 @@ public final class GatewayUtils {
     public static void copy(final InputStream input, final OutputStream output) throws IOException {
         for (int b; (b = input.read()) >= 0; ) { // checkstyle:ignore-line:InnerAssignment
             output.write(b);
+        }
+    }
+
+    public static byte[] concat(byte[]... bytes) {
+        int length = Arrays.stream(bytes).mapToInt(b -> b.length).sum();
+        try (ByteArrayOutputStream byteOut = new ByteArrayOutputStream(length)) {
+            for (byte[] b : bytes) {
+                byteOut.write(b);
+            }
+            return byteOut.toByteArray();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 }

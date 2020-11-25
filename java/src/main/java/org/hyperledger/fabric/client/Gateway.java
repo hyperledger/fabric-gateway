@@ -44,18 +44,6 @@ public interface Gateway extends AutoCloseable {
     Network getNetwork(String networkName);
 
     /**
-     * Get the client identity associated with the Gateway connection.
-     * @return A client identity.
-     */
-    Identity getIdentity();
-
-    /**
-     * Get the signing implementation associated with the Gateway connection.
-     * @return A signing implementation
-     */
-    Signer getSigner();
-
-    /**
      * Creates a gateway builder which is used to configure the gateway options
      * prior to connecting to the Fabric network.
      *
