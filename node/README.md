@@ -1,4 +1,4 @@
-# Hyperledger Fabric Gateway Client SDK for Java
+# Hyperledger Fabric Gateway Client SDK for Node
 
 
 The Fabric Gateway SDK allows applications to interact with a Fabric blockchain network.  It provides a simple API to submit transactions to a ledger or query the contents of a ledger with minimal code.
@@ -9,29 +9,21 @@ The Gateway SDK implements the Fabric programming model as described in the [Dev
 
 The following shows a complete code sample of how to connect to a fabric network, submit a transaction and query the ledger state using an instantiated smart contract (fabcar sample).
 
-```java
+```javascript
 
 ```
 
 ### API documentation
 
-Full Javadoc documentation will be published.
+Full JSdoc documentation will be published.
 
-### Maven
+### Installation
 
-Add the following dependency to your project's `pom.xml` file:
-
-```xml
 tbd
-```
 
-### Gradle
+`npm install fabric-gateway`
 
-Add the following dependency to your project's `build.gradle` file:
 
-```groovy
-tbd
-```
 
 ### Compatibility
 
