@@ -14,7 +14,6 @@ import com.google.protobuf.ByteString;
 import org.bouncycastle.util.encoders.Hex;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.protos.common.Common;
-import org.hyperledger.fabric.protos.msp.Identities;
 
 class TransactionContext {
     private static final int NONCE_LENGTH = 24;
@@ -26,7 +25,7 @@ class TransactionContext {
 
     public TransactionContext(Identity identity, Function<byte[], byte[]> hasher) {
         this.hasher = hasher;
-        serializedIdentity = serializeIdentity(identity);
+        serializedIdentity = GatewayUtils.serializeIdentity(identity);
         nonce = generateNonce();
     }
 
@@ -34,14 +33,6 @@ class TransactionContext {
         byte[] values = new byte[NONCE_LENGTH];
         RANDOM.nextBytes(values);
         return values;
-    }
-
-    private static byte[] serializeIdentity(Identity identity) {
-        return Identities.SerializedIdentity.newBuilder()
-                .setMspid(identity.getMspId())
-                .setIdBytes(ByteString.copyFrom(identity.getCredentials()))
-                .build()
-                .toByteArray();
     }
 
     public String getTransactionId() {

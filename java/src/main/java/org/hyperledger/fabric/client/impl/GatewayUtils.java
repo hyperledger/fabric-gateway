@@ -14,6 +14,10 @@ import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import com.google.protobuf.ByteString;
+import org.hyperledger.fabric.client.identity.Identity;
+import org.hyperledger.fabric.protos.msp.Identities;
+
 /**
  * Utility functions.
  */
@@ -46,5 +50,13 @@ public final class GatewayUtils {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public static byte[] serializeIdentity(Identity identity) {
+        return Identities.SerializedIdentity.newBuilder()
+                .setMspid(identity.getMspId())
+                .setIdBytes(ByteString.copyFrom(identity.getCredentials()))
+                .build()
+                .toByteArray();
     }
 }
