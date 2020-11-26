@@ -8,6 +8,7 @@ package org.hyperledger.fabric.client;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
@@ -15,6 +16,7 @@ import java.security.interfaces.ECPrivateKey;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.grpc.ManagedChannel;
+import io.grpc.Server;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import org.hyperledger.fabric.client.identity.Identity;
@@ -23,6 +25,8 @@ import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Credentials;
 import org.hyperledger.fabric.client.identity.X509Identity;
 import org.hyperledger.fabric.client.impl.GatewayImpl;
+import org.hyperledger.fabric.gateway.GatewayGrpc;
+import org.mockito.Mockito;
 
 public final class TestUtils {
     private static final TestUtils INSTANCE = new TestUtils();
@@ -31,31 +35,36 @@ public final class TestUtils {
 
     private final AtomicLong currentTransactionId = new AtomicLong();
 
-    private String serverName = InProcessServerBuilder.generateName();
-    private InProcessServerBuilder serverBuilder = InProcessServerBuilder
-            .forName(serverName).directExecutor();
-    private ManagedChannel channel = InProcessChannelBuilder
-            .forName(serverName).directExecutor().build();
-
-
     public static TestUtils getInstance() {
         return INSTANCE;
     }
 
-    private TestUtils() {
+    private TestUtils() { }
+
+    public ManagedChannel newChannelForService(GatewayGrpc.GatewayImplBase service) {
+        String serverName = InProcessServerBuilder.generateName();
+        Server server = InProcessServerBuilder.forName(serverName).directExecutor().addService(service).build();
+
         try {
-            serverBuilder.addService(new MockGatewayService()).build().start();
+            server.start();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new UncheckedIOException(e);
         }
+
+        return InProcessChannelBuilder.forName(serverName).directExecutor().build();
     }
 
-    public GatewayImpl.Builder newGatewayBuilder() throws IOException {
+    public GatewayGrpc.GatewayImplBase newMockService() {
+        return Mockito.spy(new StubGatewayService());
+    }
+
+    public GatewayImpl.Builder newGatewayBuilder() {
         X509Credentials credentials = new X509Credentials();
 
         GatewayImpl.Builder builder = (GatewayImpl.Builder)Gateway.createBuilder();
         Identity id = new X509Identity("msp1", credentials.getCertificate());
         Signer signer = Signers.newPrivateKeySigner((ECPrivateKey) credentials.getPrivateKey());
+        ManagedChannel channel = newChannelForService(newMockService());
         builder.identity(id)
                 .connection(channel)
                 .signer(signer);

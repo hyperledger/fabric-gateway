@@ -17,52 +17,52 @@ import org.hyperledger.fabric.protos.peer.ProposalPackage;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
+public class StubGatewayService extends GatewayGrpc.GatewayImplBase {
     @Override
     public void endorse(ProposedTransaction request, StreamObserver<PreparedTransaction> responseObserver) {
-        responseObserver.onNext(createMockTransaction(request));
+        responseObserver.onNext(newTransaction(request));
         responseObserver.onCompleted();
     }
 
     @Override
     public void submit(PreparedTransaction request, StreamObserver<Event> responseObserver) {
-        responseObserver.onNext(createMockEvent());
-        responseObserver.onNext(createMockEvent());
+        responseObserver.onNext(newEvent());
+        responseObserver.onNext(newEvent());
         responseObserver.onCompleted();
     }
 
     @Override
     public void evaluate(ProposedTransaction request, StreamObserver<Result> responseObserver) {
-        ByteString resultPayload = createMockPayload(request);
-        responseObserver.onNext(createMockResult(resultPayload));
+        ByteString resultPayload = newPayload(request);
+        responseObserver.onNext(newResult(resultPayload));
         responseObserver.onCompleted();
     }
 
-    private PreparedTransaction createMockTransaction(ProposedTransaction request) {
-        ByteString payload = createMockPayload(request);
+    private PreparedTransaction newTransaction(ProposedTransaction request) {
+        ByteString payload = newPayload(request);
         Common.Envelope envelope = Common.Envelope.newBuilder()
                 .setPayload(payload)
-                .setSignature(ByteString.copyFromUtf8("mock signature"))
+                .setSignature(ByteString.copyFromUtf8("SIGNATURE"))
                 .build();
         return PreparedTransaction.newBuilder()
                 .setEnvelope(envelope)
-                .setResponse(createMockResult(payload))
+                .setResponse(newResult(payload))
                 .build();
     }
 
-    private Event createMockEvent() {
+    private Event newEvent() {
         return Event.newBuilder()
-                .setValue(ByteString.copyFromUtf8("mock event"))
+                .setValue(ByteString.copyFromUtf8("EVENT"))
                 .build();
     }
 
-    private Result createMockResult(ByteString value) {
+    private Result newResult(ByteString value) {
         return Result.newBuilder()
                 .setValue(value)
                 .build();
     }
 
-    private ByteString createMockPayload(ProposedTransaction request) {
+    private ByteString newPayload(ProposedTransaction request) {
         // create a mock payload string by concatenating the chaincode id, tx name and arguments from the request
         try {
             ProposalPackage.Proposal proposal = ProposalPackage.Proposal.parseFrom(request.getProposal().getProposalBytes());

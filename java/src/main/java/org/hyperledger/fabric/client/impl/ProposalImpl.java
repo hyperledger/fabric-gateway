@@ -93,7 +93,7 @@ public class ProposalImpl implements Proposal {
     public byte[] evaluate() {
         ProposedTransaction proposedTransaction = createProposedTransaction();
 
-        Result result = gateway.getClient().evaluate(proposedTransaction);
+        Result result = gateway.getService().evaluate(proposedTransaction);
         if (result != null && result.getValue() != null) {
             return result.getValue().toByteArray();
         }
@@ -104,7 +104,7 @@ public class ProposalImpl implements Proposal {
     @Override
     public Transaction endorse() {
         ProposedTransaction proposedTransaction = createProposedTransaction();
-        PreparedTransaction preparedTransaction = gateway.getClient().endorse(proposedTransaction);
+        PreparedTransaction preparedTransaction = gateway.getService().endorse(proposedTransaction);
         return new TransactionImpl(gateway, preparedTransaction);
     }
 

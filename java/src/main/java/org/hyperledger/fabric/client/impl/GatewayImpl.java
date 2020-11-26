@@ -7,39 +7,48 @@
 package org.hyperledger.fabric.client.impl;
 
 import java.security.GeneralSecurityException;
-import java.util.function.Function;
+import java.util.concurrent.TimeUnit;
 
 import io.grpc.Channel;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import org.hyperledger.fabric.client.Gateway;
 import org.hyperledger.fabric.client.GatewayRuntimeException;
 import org.hyperledger.fabric.client.Network;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
+import org.hyperledger.fabric.gateway.GatewayGrpc;
 
 public final class GatewayImpl implements Gateway {
-    private static final Signer UNDEFINED_SIGNER = (byte[] digest) -> {
-        throw new UnsupportedOperationException("No signing implementation supplied");
-    };
-
     public static final class Builder implements Gateway.Builder {
-        private GatewayClient client;
+        private static final Signer UNDEFINED_SIGNER = (byte[] digest) -> {
+            throw new UnsupportedOperationException("No signing implementation supplied");
+        };
+        private static final Runnable NO_OP_CLOSER = () -> {};
+
+        private GatewayGrpc.GatewayBlockingStub service;
+        private Runnable channelCloser = NO_OP_CLOSER;
         private Identity identity;
         private Signer signer = UNDEFINED_SIGNER; // No signer implementation is required if only offline signing is used
 
         @Override
-        public Builder endpoint(final String url) { // TODO: Maybe should be abstracted out to Endpoint class
-            this.client = GatewayClientImpl.fromEndpoint(url);
+        public Builder endpoint(final String target) { // TODO: Maybe should be abstracted out to Endpoint class
+            ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+            service = GatewayGrpc.newBlockingStub(channel);
+            channelCloser = () -> {
+                try {
+                    channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    // Ignore
+                }
+            };
             return this;
         }
 
         @Override
         public Gateway.Builder connection(final Channel grpcChannel) {
-            this.client = GatewayClientImpl.fromChannel(grpcChannel);
-            return this;
-        }
-
-        public Gateway.Builder client(final GatewayClient client) {
-            this.client = client;
+            this.service = GatewayGrpc.newBlockingStub(grpcChannel);
+            this.channelCloser = NO_OP_CLOSER;
             return this;
         }
 
@@ -61,27 +70,28 @@ public final class GatewayImpl implements Gateway {
         }
     }
 
-    private final GatewayClient client;
+    private final GatewayGrpc.GatewayBlockingStub service;
+    private final Runnable channelCloser;
     private final Identity identity;
     private final Signer signer;
-    private final Function<byte[], byte[]> hash = Hash::sha256;
 
     private GatewayImpl(final Builder builder) {
         this.identity = builder.identity;
         this.signer = builder.signer;
-        this.client = builder.client;
+        this.service = builder.service;
+        this.channelCloser = builder.channelCloser;
 
         if (null == this.identity) {
             throw new IllegalStateException("No client identity supplied");
         }
-        if (null == this.client) {
+        if (null == this.service) {
             throw new IllegalStateException("No connections details supplied");
         }
     }
 
     @Override
     public void close() {
-        client.close();
+        channelCloser.run();
     }
 
     @Override
@@ -102,10 +112,10 @@ public final class GatewayImpl implements Gateway {
     }
 
     public byte[] hash(byte[] message) {
-        return hash.apply(message);
+        return Hash.sha256(message);
     }
 
-    public GatewayClient getClient() {
-        return client;
+    public GatewayGrpc.GatewayBlockingStub getService() {
+        return service;
     }
 }
