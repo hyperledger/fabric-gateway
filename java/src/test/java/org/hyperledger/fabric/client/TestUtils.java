@@ -11,20 +11,18 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
-import java.security.GeneralSecurityException;
 import java.security.interfaces.ECPrivateKey;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.hyperledger.fabric.client.identity.Identities;
+import io.grpc.ManagedChannel;
+import io.grpc.inprocess.InProcessChannelBuilder;
+import io.grpc.inprocess.InProcessServerBuilder;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Credentials;
 import org.hyperledger.fabric.client.identity.X509Identity;
 import org.hyperledger.fabric.client.impl.GatewayImpl;
-import org.mockito.Mock;
-//import org.hyperledger.fabric.protos.peer.ProposalResponsePackage;
-
 
 public final class TestUtils {
     private static final TestUtils INSTANCE = new TestUtils();
@@ -33,11 +31,24 @@ public final class TestUtils {
 
     private final AtomicLong currentTransactionId = new AtomicLong();
 
+    private String serverName = InProcessServerBuilder.generateName();
+    private InProcessServerBuilder serverBuilder = InProcessServerBuilder
+            .forName(serverName).directExecutor();
+    private ManagedChannel channel = InProcessChannelBuilder
+            .forName(serverName).directExecutor().build();
+
+
     public static TestUtils getInstance() {
         return INSTANCE;
     }
 
-    private TestUtils() { }
+    private TestUtils() {
+        try {
+            serverBuilder.addService(new MockGatewayService()).build().start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public GatewayImpl.Builder newGatewayBuilder() throws IOException {
         X509Credentials credentials = new X509Credentials();
@@ -46,7 +57,7 @@ public final class TestUtils {
         Identity id = new X509Identity("msp1", credentials.getCertificate());
         Signer signer = Signers.newPrivateKeySigner((ECPrivateKey) credentials.getPrivateKey());
         builder.identity(id)
-                .endpoint("localhost:7053")
+                .connection(channel)
                 .signer(signer);
         return builder;
     }
