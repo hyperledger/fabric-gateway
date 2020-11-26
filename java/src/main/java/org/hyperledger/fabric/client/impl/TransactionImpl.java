@@ -74,7 +74,7 @@ public class TransactionImpl implements Transaction {
 
     private Iterator<Event> submit() {
         PreparedTransaction transaction = toPreparedTransaction();
-        return gateway.getClient().submit(transaction);
+        return gateway.getService().submit(transaction);
     }
 
     private PreparedTransaction toPreparedTransaction() {
