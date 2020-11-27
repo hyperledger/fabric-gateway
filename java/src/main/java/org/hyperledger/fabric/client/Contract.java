@@ -24,6 +24,19 @@ import java.util.concurrent.TimeoutException;
  */
 public interface Contract {
     /**
+     * Get the identifier of the chaincode that contains the smart contract.
+     * @return Chaincode ID.
+     */
+    String getChaincodeId();
+
+    /**
+     * Get the name of the smart contract within the chaincode. An empty value indicates that this Contract refers to
+     * the chaincode's default smart contract.
+     * @return An empty optional for the default smart contract; otherwise the contract name.
+     */
+    Optional<String> getContractName();
+
+    /**
      * Submit a transaction to the ledger. The transaction function {@code name}
      * will be evaluated on the endorsing peers and then submitted to the ordering service
      * for committing to the ledger.
@@ -60,6 +73,4 @@ public interface Contract {
     Proposal newProposal(String transactionName);
     Proposal newSignedProposal(byte[] proposalBytes, byte[] signature);
     Transaction newSignedTransaction(byte[] transactionBytes, byte[] signature);
-    String getChaincodeId();
-    Optional<String> getContractName();
 }

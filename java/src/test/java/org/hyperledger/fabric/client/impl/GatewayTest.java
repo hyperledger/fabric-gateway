@@ -42,7 +42,7 @@ public class GatewayTest {
 
     @Test
     void connect_with_no_identity_throws() {
-        Gateway.Builder builder = Gateway.createBuilder()
+        Gateway.Builder builder = Gateway.newInstance()
                 .endpoint("example.org:1337");
 
         assertThatThrownBy(() -> builder.connect())
@@ -51,7 +51,7 @@ public class GatewayTest {
 
     @Test
     void connect_with_no_connection_details_throws() {
-        Gateway.Builder builder = Gateway.createBuilder()
+        Gateway.Builder builder = Gateway.newInstance()
                 .identity(identity)
                 .signer(signer);
 
@@ -61,7 +61,7 @@ public class GatewayTest {
 
     @Test
     void uses_supplied_identity() {
-        gateway = Gateway.createBuilder()
+        gateway = Gateway.newInstance()
                 .identity(identity)
                 .endpoint("example.org:1337")
                 .connect();
@@ -74,7 +74,7 @@ public class GatewayTest {
     @Test
     void uses_supplied_signer() throws GeneralSecurityException {
         byte[] expected = "RESULT".getBytes();
-        gateway = Gateway.createBuilder()
+        gateway = Gateway.newInstance()
                 .identity(identity)
                 .signer((byte[] digest) -> expected)
                 .endpoint("example.org:1337")
@@ -87,7 +87,7 @@ public class GatewayTest {
 
     @Test
     void uses_invalid_signer_if_none_supplied() {
-        gateway = Gateway.createBuilder()
+        gateway = Gateway.newInstance()
                 .identity(identity)
                 .endpoint("example.org:1337")
                 .connect();
@@ -100,7 +100,7 @@ public class GatewayTest {
     void can_connect_using_gRPC_channel() {
         Channel channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
 
-        gateway = Gateway.createBuilder()
+        gateway = Gateway.newInstance()
                 .identity(identity)
                 .signer(signer)
                 .connection(channel)
@@ -112,7 +112,7 @@ public class GatewayTest {
     @Test
     void close_does_not_shutdown_supplied_gRPC_channel() {
         ManagedChannel channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
-        gateway = Gateway.createBuilder()
+        gateway = Gateway.newInstance()
                 .identity(identity)
                 .signer(signer)
                 .connection(channel)
@@ -126,7 +126,7 @@ public class GatewayTest {
 
     @Test
     void getNetwork_returns_correctly_named_network() {
-        gateway = Gateway.createBuilder()
+        gateway = Gateway.newInstance()
                 .identity(identity)
                 .signer(signer)
                 .endpoint("example.org:1337")

@@ -9,7 +9,8 @@ package org.hyperledger.fabric.client.identity;
 import java.security.GeneralSecurityException;
 
 /**
- * A signing implementation used to generate digital signatures.
+ * A signing implementation used to generate digital signatures. Standard implementations can be obtained using factory
+ * methods on the {@link Signers} class.
  */
 @FunctionalInterface
 public interface Signer {

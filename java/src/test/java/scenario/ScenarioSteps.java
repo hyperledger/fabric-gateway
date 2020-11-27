@@ -220,7 +220,7 @@ public class ScenarioSteps implements En {
                 });
 
         Given("I create a gateway for user {word} in MSP {word}", (String user, String mspId) -> {
-            gatewayBuilder = Gateway.createBuilder()
+            gatewayBuilder = Gateway.newInstance()
                     .identity(newIdentity(user, mspId))
                     .signer(newSigner(user, mspId));
         });
