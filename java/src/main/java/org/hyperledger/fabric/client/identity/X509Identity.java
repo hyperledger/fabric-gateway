@@ -11,17 +11,30 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * A client identity described by an X.509 certificate. The {@link Identities} class provides static methods to create
+ * an {@code X509Certificate} object from PEM-format data.
+ */
 public final class X509Identity implements Identity {
     private final String mspId;
     private final X509Certificate certificate;
     private final byte[] credentials;
 
+    /**
+     * Constructor.
+     * @param mspId A membership service provider identifier.
+     * @param certificate An X.509 certificate.
+     */
     public X509Identity(final String mspId, final X509Certificate certificate) {
         this.mspId = mspId;
         this.certificate = certificate;
         credentials = Identities.toPemString(certificate).getBytes(StandardCharsets.UTF_8);
     }
 
+    /**
+     * Get the certificate for this identity.
+     * @return An X.509 certificate.
+     */
     public X509Certificate getCertificate() {
         return certificate;
     }

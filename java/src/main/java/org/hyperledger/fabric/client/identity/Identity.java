@@ -7,7 +7,8 @@
 package org.hyperledger.fabric.client.identity;
 
 /**
- * Represents a client identity used to interact with a Fabric network.
+ * Represents a client identity used to interact with a Fabric network. The identity consists of an identifier for the
+ * organization to which the identity belongs, and implementation-specific credentials describing the identity.
  */
 public interface Identity {
     /**

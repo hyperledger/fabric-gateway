@@ -63,7 +63,7 @@ public final class TestUtils {
     }
 
     public GatewayImpl.Builder newGatewayBuilder() {
-        GatewayImpl.Builder builder = (GatewayImpl.Builder)Gateway.createBuilder();
+        GatewayImpl.Builder builder = (GatewayImpl.Builder)Gateway.newInstance();
         Identity id = new X509Identity("msp1", credentials.getCertificate());
         Signer signer = Signers.newPrivateKeySigner((ECPrivateKey) credentials.getPrivateKey());
         builder.identity(id)

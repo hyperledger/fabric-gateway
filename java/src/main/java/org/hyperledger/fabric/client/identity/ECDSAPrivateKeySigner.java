@@ -28,9 +28,6 @@ import org.bouncycastle.asn1.x9.ECNamedCurveTable;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-/**
- * A signing implementation used to generate digital signatures.
- */
 final class ECDSAPrivateKeySigner implements Signer {
     private static final Provider PROVIDER = new BouncyCastleProvider();
     private static final X9ECParameters CURVE = ECNamedCurveTable.getByName("P-256");

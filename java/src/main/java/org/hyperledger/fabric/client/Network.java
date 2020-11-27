@@ -6,13 +6,11 @@
 
 package org.hyperledger.fabric.client;
 
-
 /**
- * A Network object represents the set of peers in a Fabric network (channel).
- * Applications should get a Network instance from a Gateway using the
+ * The Network represents a Fabric network (channel). Network instances are obtained from a Gateway using the
  * {@link Gateway#getNetwork(String)} method.
  *
- * <p>The Network object provides the ability for applications to:</p>
+ * <p>The Network provides the ability for applications to:</p>
  * <ul>
  *     <li>Obtain a specific smart contract deployed to the network using {@link #getContract(String)}, in order to
  *     submit and evaluate transactions for that smart contract.</li>
