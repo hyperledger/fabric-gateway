@@ -28,21 +28,33 @@ public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
 
     @Override
     public void endorse(ProposedTransaction request, StreamObserver<PreparedTransaction> responseObserver) {
-        PreparedTransaction result = stub.endorse(request);
-        responseObserver.onNext(result);
-        responseObserver.onCompleted();
+        try {
+            PreparedTransaction result = stub.endorse(request);
+            responseObserver.onNext(result);
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(e);
+        }
     }
 
     @Override
     public void submit(PreparedTransaction request, StreamObserver<Event> responseObserver) {
-        stub.submit(request).forEach(responseObserver::onNext);
-        responseObserver.onCompleted();
+        try {
+            stub.submit(request).forEach(responseObserver::onNext);
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(e);
+        }
     }
 
     @Override
     public void evaluate(ProposedTransaction request, StreamObserver<Result> responseObserver) {
-        Result result = stub.evaluate(request);
-        responseObserver.onNext(result);
-        responseObserver.onCompleted();
+        try {
+            Result result = stub.evaluate(request);
+            responseObserver.onNext(result);
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(e);
+        }
     }
 }

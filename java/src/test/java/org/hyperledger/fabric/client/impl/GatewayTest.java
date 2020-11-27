@@ -8,6 +8,7 @@ package org.hyperledger.fabric.client.impl;
 
 import java.security.GeneralSecurityException;
 import java.security.interfaces.ECPrivateKey;
+import java.util.concurrent.TimeUnit;
 
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
@@ -42,7 +43,7 @@ public class GatewayTest {
     @Test
     void connect_with_no_identity_throws() {
         Gateway.Builder builder = Gateway.createBuilder()
-                .endpoint("localhost:1337");
+                .endpoint("example.org:1337");
 
         assertThatThrownBy(() -> builder.connect())
                 .isInstanceOf(IllegalStateException.class);
@@ -62,7 +63,7 @@ public class GatewayTest {
     void uses_supplied_identity() {
         gateway = Gateway.createBuilder()
                 .identity(identity)
-                .endpoint("localhost:1337")
+                .endpoint("example.org:1337")
                 .connect();
 
         Identity result = ((GatewayImpl) gateway).getIdentity();
@@ -76,7 +77,7 @@ public class GatewayTest {
         gateway = Gateway.createBuilder()
                 .identity(identity)
                 .signer((byte[] digest) -> expected)
-                .endpoint("localhost:1337")
+                .endpoint("example.org:1337")
                 .connect();
 
         byte[] actual = ((GatewayImpl) gateway).sign("DIGEST".getBytes());
@@ -88,7 +89,7 @@ public class GatewayTest {
     void uses_invalid_signer_if_none_supplied() {
         gateway = Gateway.createBuilder()
                 .identity(identity)
-                .endpoint("localhost:1337")
+                .endpoint("example.org:1337")
                 .connect();
 
         assertThatThrownBy(() -> ((GatewayImpl) gateway).sign("DIGEST".getBytes()))
@@ -97,7 +98,7 @@ public class GatewayTest {
 
     @Test
     void can_connect_using_gRPC_channel() {
-        Channel channel = ManagedChannelBuilder.forAddress("localhost", 1337).usePlaintext().build();
+        Channel channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
 
         gateway = Gateway.createBuilder()
                 .identity(identity)
@@ -110,7 +111,7 @@ public class GatewayTest {
 
     @Test
     void close_does_not_shutdown_supplied_gRPC_channel() {
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 1337).usePlaintext().build();
+        ManagedChannel channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
         gateway = Gateway.createBuilder()
                 .identity(identity)
                 .signer(signer)
@@ -120,6 +121,7 @@ public class GatewayTest {
         gateway.close();
 
         assertThat(channel.isShutdown()).isFalse();
+        GatewayUtils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
     }
 
     @Test
@@ -127,7 +129,7 @@ public class GatewayTest {
         gateway = Gateway.createBuilder()
                 .identity(identity)
                 .signer(signer)
-                .endpoint("localhost:1337")
+                .endpoint("example.org:1337")
                 .connect();
 
         Network network = gateway.getNetwork("CHANNEL_NAME");

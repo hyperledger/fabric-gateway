@@ -8,11 +8,14 @@ package org.hyperledger.fabric.client.impl;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import io.grpc.Channel;
+import io.grpc.ManagedChannel;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import org.hyperledger.fabric.client.Contract;
 import org.hyperledger.fabric.client.ContractException;
 import org.hyperledger.fabric.client.Gateway;
@@ -37,8 +40,10 @@ import org.mockito.Mockito;
 import org.mockito.MockitoSession;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 
 public class ContractTest {
@@ -47,6 +52,7 @@ public class ContractTest {
     private static final GatewayServiceStub STUB = new GatewayServiceStub();
 
     private GatewayServiceStub stub;
+    private ManagedChannel channel;
     private Gateway gateway;
     private Network network;
 
@@ -56,33 +62,6 @@ public class ContractTest {
     @Captor
     private ArgumentCaptor<PreparedTransaction> preparedTransactionCaptor;
 
-    private Chaincode.ChaincodeSpec getChaincodeSpec() throws InvalidProtocolBufferException {
-        ProposalPackage.Proposal proposal = getProposal();
-        ProposalPackage.ChaincodeProposalPayload chaincodeProposalPayload = ProposalPackage.ChaincodeProposalPayload.parseFrom(proposal.getPayload());
-        Chaincode.ChaincodeInvocationSpec chaincodeInvocationSpec = Chaincode.ChaincodeInvocationSpec.parseFrom(chaincodeProposalPayload.getInput());
-        return chaincodeInvocationSpec.getChaincodeSpec();
-    }
-
-    private ProposalPackage.Proposal getProposal() throws InvalidProtocolBufferException {
-        ProposedTransaction request = proposedTransactionCaptor.getValue();
-        return ProposalPackage.Proposal.parseFrom(request.getProposal().getProposalBytes());
-    }
-
-    private Common.SignatureHeader getSignatureHeader() throws InvalidProtocolBufferException {
-        Common.Header header = getHeader();
-        return Common.SignatureHeader.parseFrom(header.getSignatureHeader());
-    }
-
-    private Common.ChannelHeader getChannelHeader() throws InvalidProtocolBufferException {
-        Common.Header header = getHeader();
-        return Common.ChannelHeader.parseFrom(header.getChannelHeader());
-    }
-
-    private Common.Header getHeader() throws InvalidProtocolBufferException {
-        ProposalPackage.Proposal proposal = getProposal();
-        return Common.Header.parseFrom(proposal.getHeader());
-    }
-
     @BeforeEach
     void beforeEach() {
         mockitoSession = Mockito.mockitoSession()
@@ -91,7 +70,7 @@ public class ContractTest {
 
         stub = spy(STUB);
         MockGatewayService service = new MockGatewayService(stub);
-        Channel channel = utils.newChannelForService(service);
+        channel = utils.newChannelForService(service);
         gateway = builder.connection(channel).connect();
         network = gateway.getNetwork("NETWORK");
     }
@@ -99,11 +78,53 @@ public class ContractTest {
     @AfterEach
     void afterEach() {
         gateway.close();
+        GatewayUtils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
         mockitoSession.finishMocking();
     }
 
+    private ProposedTransaction captureEndorse() {
+        Mockito.verify(stub).endorse(proposedTransactionCaptor.capture());
+        return proposedTransactionCaptor.getValue();
+    }
+
+    private ProposedTransaction captureEvaluate() {
+        Mockito.verify(stub).evaluate(proposedTransactionCaptor.capture());
+        return proposedTransactionCaptor.getValue();
+    }
+
+    private PreparedTransaction captureSubmit() {
+        Mockito.verify(stub).submit(preparedTransactionCaptor.capture());
+        return preparedTransactionCaptor.getValue();
+    }
+
+    private Chaincode.ChaincodeSpec getChaincodeSpec(ProposedTransaction request) throws InvalidProtocolBufferException {
+        ProposalPackage.Proposal proposal = getProposal(request);
+        ProposalPackage.ChaincodeProposalPayload chaincodeProposalPayload = ProposalPackage.ChaincodeProposalPayload.parseFrom(proposal.getPayload());
+        Chaincode.ChaincodeInvocationSpec chaincodeInvocationSpec = Chaincode.ChaincodeInvocationSpec.parseFrom(chaincodeProposalPayload.getInput());
+        return chaincodeInvocationSpec.getChaincodeSpec();
+    }
+
+    private ProposalPackage.Proposal getProposal(ProposedTransaction request) throws InvalidProtocolBufferException {
+        return ProposalPackage.Proposal.parseFrom(request.getProposal().getProposalBytes());
+    }
+
+    private Common.SignatureHeader getSignatureHeader(ProposedTransaction request) throws InvalidProtocolBufferException {
+        Common.Header header = getHeader(request);
+        return Common.SignatureHeader.parseFrom(header.getSignatureHeader());
+    }
+
+    private Common.ChannelHeader getChannelHeader(ProposedTransaction request) throws InvalidProtocolBufferException {
+        Common.Header header = getHeader(request);
+        return Common.ChannelHeader.parseFrom(header.getChannelHeader());
+    }
+
+    private Common.Header getHeader(ProposedTransaction request) throws InvalidProtocolBufferException {
+        ProposalPackage.Proposal proposal = getProposal(request);
+        return Common.Header.parseFrom(proposal.getHeader());
+    }
+
     @Test
-    public void evaluateTransaction_returns_gateway_response() throws ContractException {
+    void evaluateTransaction_returns_gateway_response() throws ContractException {
         doReturn(utils.newResult("MY_RESULT"))
                 .when(stub).evaluate(any());
 
@@ -114,23 +135,23 @@ public class ContractTest {
     }
 
     @Test
-    public void evaluateTransaction_sends_chaincode_ID() throws ContractException, InvalidProtocolBufferException {
+    void evaluateTransaction_sends_chaincode_ID() throws ContractException, InvalidProtocolBufferException {
         Contract contract = network.getContract("MY_CHAINCODE_ID");
         contract.evaluateTransaction("TRANSACTION_NAME");
 
-        Mockito.verify(stub).evaluate(proposedTransactionCaptor.capture());
-        String actual = getChaincodeSpec().getChaincodeId().getName();
+        ProposedTransaction request = captureEvaluate();
+        String actual = getChaincodeSpec(request).getChaincodeId().getName();
 
         assertThat(actual).isEqualTo("MY_CHAINCODE_ID");
     }
 
     @Test
-    public void evaluateTransaction_sends_transaction_name_for_default_contract() throws ContractException, InvalidProtocolBufferException {
+    void evaluateTransaction_sends_transaction_name_for_default_contract() throws ContractException, InvalidProtocolBufferException {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.evaluateTransaction("MY_TRANSACTION_NAME");
 
-        Mockito.verify(stub).evaluate(proposedTransactionCaptor.capture());
-        List<String> chaincodeArgs = getChaincodeSpec().getInput().getArgsList().stream()
+        ProposedTransaction request = captureEvaluate();
+        List<String> chaincodeArgs = getChaincodeSpec(request).getInput().getArgsList().stream()
                 .map(ByteString::toStringUtf8)
                 .collect(Collectors.toList());
 
@@ -138,12 +159,12 @@ public class ContractTest {
     }
 
     @Test
-    public void evaluateTransaction_sends_transaction_name_for_specified_contract() throws ContractException, InvalidProtocolBufferException {
+    void evaluateTransaction_sends_transaction_name_for_specified_contract() throws ContractException, InvalidProtocolBufferException {
         Contract contract = network.getContract("CHAINCODE_ID", "MY_CONTRACT");
         contract.evaluateTransaction("MY_TRANSACTION_NAME");
 
-        Mockito.verify(stub).evaluate(proposedTransactionCaptor.capture());
-        List<String> chaincodeArgs = getChaincodeSpec().getInput().getArgsList().stream()
+        ProposedTransaction request = captureEvaluate();
+        List<String> chaincodeArgs = getChaincodeSpec(request).getInput().getArgsList().stream()
                 .map(ByteString::toStringUtf8)
                 .collect(Collectors.toList());
 
@@ -151,12 +172,12 @@ public class ContractTest {
     }
 
     @Test
-    public void evaluateTransaction_sends_transaction_arguments() throws ContractException, InvalidProtocolBufferException {
+    void evaluateTransaction_sends_transaction_arguments() throws ContractException, InvalidProtocolBufferException {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.evaluateTransaction("TRANSACTION_NAME", "one", "two", "three");
 
-        Mockito.verify(stub).evaluate(proposedTransactionCaptor.capture());
-        List<String> chaincodeArgs = getChaincodeSpec().getInput().getArgsList().stream()
+        ProposedTransaction request = captureEvaluate();
+        List<String> chaincodeArgs = getChaincodeSpec(request).getInput().getArgsList().stream()
                 .skip(1)
                 .map(ByteString::toStringUtf8)
                 .collect(Collectors.toList());
@@ -165,51 +186,61 @@ public class ContractTest {
     }
 
     @Test
-    public void evaluateTransaction_uses_signer() throws ContractException {
+    void evaluateTransaction_uses_signer() throws ContractException {
         Signer signer = (digest) -> "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
         gateway = builder.signer(signer).connect();
-
         network = gateway.getNetwork("NETWORK");
+
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.evaluateTransaction("TRANSACTION_NAME");
 
-        Mockito.verify(stub).evaluate(proposedTransactionCaptor.capture());
-        ProposedTransaction request = proposedTransactionCaptor.getValue();
+        ProposedTransaction request = captureEvaluate();
         String signature = request.getProposal().getSignature().toStringUtf8();
 
         assertThat(signature).isEqualTo("MY_SIGNATURE");
     }
 
     @Test
-    public void evaluateTransaction_uses_identity() throws ContractException, InvalidProtocolBufferException {
+    void evaluateTransaction_throws_on_connection_error() {
+        doThrow(new StatusRuntimeException(Status.UNAVAILABLE)).when(stub).evaluate(any());
+
+        Contract contract = network.getContract("CHAINCODE_ID");
+
+        assertThatThrownBy(() -> contract.evaluateTransaction("TRANSACTION_NAME"))
+                .isInstanceOf(StatusRuntimeException.class);
+    }
+
+    @Test
+    void evaluateTransaction_uses_identity() throws ContractException, InvalidProtocolBufferException {
         Identity identity = new X509Identity("MY_MSP_ID", utils.getCredentials().getCertificate());
         gateway = builder.identity(identity).connect();
-
         network = gateway.getNetwork("NETWORK");
+
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.evaluateTransaction("TRANSACTION_NAME");
 
-        Mockito.verify(stub).evaluate(proposedTransactionCaptor.capture());
-        ByteString serializedIdentity = getSignatureHeader().getCreator();
+        ProposedTransaction request = captureEvaluate();
+        ByteString serializedIdentity = getSignatureHeader(request).getCreator();
 
         byte[] expected = GatewayUtils.serializeIdentity(identity);
         assertThat(serializedIdentity.toByteArray()).isEqualTo(expected);
     }
 
     @Test
-    public void evaluateTransaction_sends_network_name() throws ContractException, InvalidProtocolBufferException {
+    void evaluateTransaction_sends_network_name() throws ContractException, InvalidProtocolBufferException {
         network = gateway.getNetwork("MY_NETWORK");
+
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.evaluateTransaction("TRANSACTION_NAME");
 
-        Mockito.verify(stub).evaluate(proposedTransactionCaptor.capture());
-        String networkName = getChannelHeader().getChannelId();
+        ProposedTransaction request = captureEvaluate();
+        String networkName = getChannelHeader(request).getChannelId();
 
         assertThat(networkName).isEqualTo("MY_NETWORK");
     }
 
     @Test
-    public void submitTransaction_returns_gateway_response() throws Exception {
+    void submitTransaction_returns_gateway_response() throws Exception {
         doReturn(utils.newPreparedTransaction("MY_RESULT", "SIGNATURE"))
                 .when(stub).endorse(any());
 
@@ -220,23 +251,23 @@ public class ContractTest {
     }
 
     @Test
-    public void submitTransaction_sends_chaincode_ID() throws Exception {
+    void submitTransaction_sends_chaincode_ID() throws Exception {
         Contract contract = network.getContract("MY_CHAINCODE_ID");
         contract.submitTransaction("TRANSACTION_NAME");
 
-        Mockito.verify(stub).endorse(proposedTransactionCaptor.capture());
-        String actual = getChaincodeSpec().getChaincodeId().getName();
+        ProposedTransaction request = captureEndorse();
+        String actual = getChaincodeSpec(request).getChaincodeId().getName();
 
         assertThat(actual).isEqualTo("MY_CHAINCODE_ID");
     }
 
     @Test
-    public void submitTransaction_sends_transaction_name_for_default_contract() throws Exception {
+    void submitTransaction_sends_transaction_name_for_default_contract() throws Exception {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.submitTransaction("MY_TRANSACTION_NAME");
 
-        Mockito.verify(stub).endorse(proposedTransactionCaptor.capture());
-        List<String> chaincodeArgs = getChaincodeSpec().getInput().getArgsList().stream()
+        ProposedTransaction request = captureEndorse();
+        List<String> chaincodeArgs = getChaincodeSpec(request).getInput().getArgsList().stream()
                 .map(ByteString::toStringUtf8)
                 .collect(Collectors.toList());
 
@@ -244,12 +275,12 @@ public class ContractTest {
     }
 
     @Test
-    public void submitTransaction_sends_transaction_name_for_specified_contract() throws Exception {
+    void submitTransaction_sends_transaction_name_for_specified_contract() throws Exception {
         Contract contract = network.getContract("CHAINCODE_ID", "MY_CONTRACT");
         contract.submitTransaction("MY_TRANSACTION_NAME");
 
-        Mockito.verify(stub).endorse(proposedTransactionCaptor.capture());
-        List<String> chaincodeArgs = getChaincodeSpec().getInput().getArgsList().stream()
+        ProposedTransaction request = captureEndorse();
+        List<String> chaincodeArgs = getChaincodeSpec(request).getInput().getArgsList().stream()
                 .map(ByteString::toStringUtf8)
                 .collect(Collectors.toList());
 
@@ -257,12 +288,12 @@ public class ContractTest {
     }
 
     @Test
-    public void submitTransaction_sends_transaction_arguments() throws Exception {
+    void submitTransaction_sends_transaction_arguments() throws Exception {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.submitTransaction("TRANSACTION_NAME", "one", "two", "three");
 
-        Mockito.verify(stub).endorse(proposedTransactionCaptor.capture());
-        List<String> chaincodeArgs = getChaincodeSpec().getInput().getArgsList().stream()
+        ProposedTransaction request = captureEndorse();
+        List<String> chaincodeArgs = getChaincodeSpec(request).getInput().getArgsList().stream()
                 .skip(1)
                 .map(ByteString::toStringUtf8)
                 .collect(Collectors.toList());
@@ -271,62 +302,81 @@ public class ContractTest {
     }
 
     @Test
-    public void submitTransaction_uses_signer_for_endorse() throws Exception {
+    void submitTransaction_uses_signer_for_endorse() throws Exception {
         Signer signer = (digest) -> "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
         gateway = builder.signer(signer).connect();
-
         network = gateway.getNetwork("NETWORK");
+
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.submitTransaction("TRANSACTION_NAME");
 
-        Mockito.verify(stub).endorse(proposedTransactionCaptor.capture());
-        ProposedTransaction request = proposedTransactionCaptor.getValue();
+        ProposedTransaction request = captureEndorse();
         String signature = request.getProposal().getSignature().toStringUtf8();
 
         assertThat(signature).isEqualTo("MY_SIGNATURE");
     }
 
     @Test
-    public void submitTransaction_uses_identity() throws Exception {
+    void submitTransaction_uses_identity() throws Exception {
         Identity identity = new X509Identity("MY_MSP_ID", utils.getCredentials().getCertificate());
         gateway = builder.identity(identity).connect();
-
         network = gateway.getNetwork("NETWORK");
+
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.submitTransaction("TRANSACTION_NAME");
 
-        Mockito.verify(stub).endorse(proposedTransactionCaptor.capture());
-        ByteString serializedIdentity = getSignatureHeader().getCreator();
+        ProposedTransaction request = captureEndorse();
+        ByteString serializedIdentity = getSignatureHeader(request).getCreator();
 
         byte[] expected = GatewayUtils.serializeIdentity(identity);
         assertThat(serializedIdentity.toByteArray()).isEqualTo(expected);
     }
 
     @Test
-    public void submitTransaction_sends_network_name() throws Exception {
+    void submitTransaction_sends_network_name() throws Exception {
         network = gateway.getNetwork("MY_NETWORK");
+
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.submitTransaction("TRANSACTION_NAME");
 
-        Mockito.verify(stub).endorse(proposedTransactionCaptor.capture());
-        String networkName = getChannelHeader().getChannelId();
+        ProposedTransaction request = captureEndorse();
+        String networkName = getChannelHeader(request).getChannelId();
 
         assertThat(networkName).isEqualTo("MY_NETWORK");
     }
 
     @Test
-    public void submitTransaction_uses_signer_for_submit() throws Exception {
+    void submitTransaction_uses_signer_for_submit() throws Exception {
         Signer signer = (digest) -> "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
         gateway = builder.signer(signer).connect();
-
         network = gateway.getNetwork("NETWORK");
+
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.submitTransaction("TRANSACTION_NAME");
 
-        Mockito.verify(stub).submit(preparedTransactionCaptor.capture());
-        PreparedTransaction request = preparedTransactionCaptor.getValue();
+        PreparedTransaction request = captureSubmit();
         String signature = request.getEnvelope().getSignature().toStringUtf8();
 
         assertThat(signature).isEqualTo("MY_SIGNATURE");
+    }
+
+    @Test
+    void submitTransaction_throws_on_endorse_connection_error() {
+        doThrow(new StatusRuntimeException(Status.UNAVAILABLE)).when(stub).endorse(any());
+
+        Contract contract = network.getContract("CHAINCODE_ID");
+
+        assertThatThrownBy(() -> contract.submitTransaction("TRANSACTION_NAME"))
+                .isInstanceOf(StatusRuntimeException.class);
+    }
+
+    @Test
+    void submitTransaction_throws_on_submit_connection_error() {
+        doThrow(new StatusRuntimeException(Status.UNAVAILABLE)).when(stub).submit(any());
+
+        Contract contract = network.getContract("CHAINCODE_ID");
+
+        assertThatThrownBy(() -> contract.submitTransaction("TRANSACTION_NAME"))
+                .isInstanceOf(StatusRuntimeException.class);
     }
 }

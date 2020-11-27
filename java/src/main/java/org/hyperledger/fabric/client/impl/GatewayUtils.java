@@ -12,9 +12,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.google.protobuf.ByteString;
+import io.grpc.ManagedChannel;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.protos.msp.Identities;
 
@@ -58,5 +60,17 @@ public final class GatewayUtils {
                 .setIdBytes(ByteString.copyFrom(identity.getCredentials()))
                 .build()
                 .toByteArray();
+    }
+
+    public static void shutdownChannel(ManagedChannel channel, long timeout, TimeUnit timeUnit) {
+        if (channel.isShutdown()) {
+            return;
+        }
+        channel.shutdownNow();
+        try {
+            channel.awaitTermination(timeout, timeUnit);
+        } catch (InterruptedException e) {
+            // Ignore
+        }
     }
 }

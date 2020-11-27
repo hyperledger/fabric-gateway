@@ -35,13 +35,7 @@ public final class GatewayImpl implements Gateway {
         public Builder endpoint(final String target) { // TODO: Maybe should be abstracted out to Endpoint class
             ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
             service = GatewayGrpc.newBlockingStub(channel);
-            channelCloser = () -> {
-                try {
-                    channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
-                    // Ignore
-                }
-            };
+            channelCloser = () -> GatewayUtils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
             return this;
         }
 
