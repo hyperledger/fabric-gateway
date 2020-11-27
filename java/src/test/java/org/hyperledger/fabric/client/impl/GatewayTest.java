@@ -10,6 +10,7 @@ import java.security.GeneralSecurityException;
 import java.security.interfaces.ECPrivateKey;
 
 import io.grpc.Channel;
+import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.hyperledger.fabric.client.Gateway;
 import org.hyperledger.fabric.client.Network;
@@ -105,7 +106,20 @@ public class GatewayTest {
                 .connect();
 
         assertThat(gateway).isNotNull();
+    }
 
+    @Test
+    void close_does_not_shutdown_supplied_gRPC_channel() {
+        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 1337).usePlaintext().build();
+        gateway = Gateway.createBuilder()
+                .identity(identity)
+                .signer(signer)
+                .connection(channel)
+                .connect();
+
+        gateway.close();
+
+        assertThat(channel.isShutdown()).isFalse();
     }
 
     @Test

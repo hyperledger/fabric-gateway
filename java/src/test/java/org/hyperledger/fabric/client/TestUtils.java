@@ -15,6 +15,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.security.interfaces.ECPrivateKey;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.Server;
 import io.grpc.inprocess.InProcessChannelBuilder;
@@ -26,7 +27,9 @@ import org.hyperledger.fabric.client.identity.X509Credentials;
 import org.hyperledger.fabric.client.identity.X509Identity;
 import org.hyperledger.fabric.client.impl.GatewayImpl;
 import org.hyperledger.fabric.gateway.GatewayGrpc;
-import org.mockito.Mockito;
+import org.hyperledger.fabric.gateway.PreparedTransaction;
+import org.hyperledger.fabric.gateway.Result;
+import org.hyperledger.fabric.protos.common.Common;
 
 public final class TestUtils {
     private static final TestUtils INSTANCE = new TestUtils();
@@ -34,12 +37,17 @@ public final class TestUtils {
     private static final String UNUSED_FILE_PREFIX = "fgw-unused-";
 
     private final AtomicLong currentTransactionId = new AtomicLong();
+    private final X509Credentials credentials = new X509Credentials();
 
     public static TestUtils getInstance() {
         return INSTANCE;
     }
 
     private TestUtils() { }
+
+    public X509Credentials getCredentials() {
+        return credentials;
+    }
 
     public ManagedChannel newChannelForService(GatewayGrpc.GatewayImplBase service) {
         String serverName = InProcessServerBuilder.generateName();
@@ -54,22 +62,34 @@ public final class TestUtils {
         return InProcessChannelBuilder.forName(serverName).directExecutor().build();
     }
 
-    public GatewayGrpc.GatewayImplBase newMockService() {
-        return Mockito.spy(new StubGatewayService());
-    }
-
     public GatewayImpl.Builder newGatewayBuilder() {
-        X509Credentials credentials = new X509Credentials();
-
         GatewayImpl.Builder builder = (GatewayImpl.Builder)Gateway.createBuilder();
         Identity id = new X509Identity("msp1", credentials.getCertificate());
         Signer signer = Signers.newPrivateKeySigner((ECPrivateKey) credentials.getPrivateKey());
-        ManagedChannel channel = newChannelForService(newMockService());
+        ManagedChannel channel = newChannelForService(new MockGatewayService());
         builder.identity(id)
                 .connection(channel)
                 .signer(signer);
         return builder;
     }
+
+    public Result newResult(String value) {
+        return Result.newBuilder()
+                .setValue(ByteString.copyFromUtf8(value))
+                .build();
+    }
+
+    public PreparedTransaction newPreparedTransaction(String payload, String signature) {
+        Common.Envelope envelope = Common.Envelope.newBuilder()
+                .setPayload(ByteString.copyFromUtf8(payload))
+                .setSignature(ByteString.copyFromUtf8("SIGNATURE"))
+                .build();
+        return PreparedTransaction.newBuilder()
+                .setEnvelope(envelope)
+                .setResponse(newResult(payload))
+                .build();
+    }
+
 
     private String newFakeTransactionId() {
         return Long.toHexString(currentTransactionId.incrementAndGet());

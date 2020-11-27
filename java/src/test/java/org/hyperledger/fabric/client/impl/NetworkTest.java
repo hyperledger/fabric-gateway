@@ -24,30 +24,33 @@ public class NetworkTest {
     private Network network;
 
     @BeforeEach
-    public void beforeEach() throws Exception {
+    void beforeEach() {
         gateway = testUtils.newGatewayBuilder().connect();
         network = gateway.getNetwork("ch1");
     }
 
     @AfterEach
-    public void afterEach() {
+    void afterEach() {
         gateway.close();
     }
 
     @Test
-    public void getChannel_returns_correctly_named_channel() {
-        assertThat(network.getName()).isEqualTo("ch1");
-    }
-
-    @Test
-    public void getGateway_returns_Gateway_that_created_this_Network() {
+    void getGateway_returns_Gateway_that_created_this_Network() {
         Gateway gw = network.getGateway();
         assertThat(gw).isSameAs(gateway);
     }
 
     @Test
-    public void getContract_returns_a_Contract() {
-        Contract contract = network.getContract("contract1");
-        assertThat(contract).isInstanceOf(Contract.class);
+    void getContract_using_only_chaincode_ID_returns_correctly_named_Contract() {
+        Contract contract = network.getContract("CHAINCODE_ID");
+        assertThat(contract.getChaincodeId()).isEqualTo("CHAINCODE_ID");
+        assertThat(contract.getContractName()).isEmpty();
+    }
+
+    @Test
+    void getContract_using_contract_name_returns_correctly_named_Contract() {
+        Contract contract = network.getContract("CHAINCODE_ID", "CONTRACT");
+        assertThat(contract.getChaincodeId()).isEqualTo("CHAINCODE_ID");
+        assertThat(contract.getContractName()).get().isEqualTo("CONTRACT");
     }
 }
