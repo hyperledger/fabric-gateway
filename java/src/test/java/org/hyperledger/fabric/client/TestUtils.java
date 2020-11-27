@@ -66,10 +66,9 @@ public final class TestUtils {
         GatewayImpl.Builder builder = (GatewayImpl.Builder)Gateway.createBuilder();
         Identity id = new X509Identity("msp1", credentials.getCertificate());
         Signer signer = Signers.newPrivateKeySigner((ECPrivateKey) credentials.getPrivateKey());
-        ManagedChannel channel = newChannelForService(new MockGatewayService());
         builder.identity(id)
-                .connection(channel)
-                .signer(signer);
+                .signer(signer)
+                .endpoint("example.org:1337");
         return builder;
     }
 
