@@ -4,27 +4,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.fabric.client.impl;
+package org.hyperledger.fabric.client;
 
 import java.util.Iterator;
 
 import com.google.protobuf.ByteString;
-import org.hyperledger.fabric.client.Commit;
-import org.hyperledger.fabric.client.ContractException;
-import org.hyperledger.fabric.client.Transaction;
 import org.hyperledger.fabric.gateway.Event;
+import org.hyperledger.fabric.gateway.GatewayGrpc;
 import org.hyperledger.fabric.gateway.PreparedTransaction;
 import org.hyperledger.fabric.gateway.Result;
 import org.hyperledger.fabric.protos.common.Common;
 
-public class TransactionImpl implements Transaction {
+class TransactionImpl implements Transaction {
     private static final byte[] EMPTY_RESULT = new byte[0];
 
-    private final GatewayImpl gateway;
+    private final GatewayGrpc.GatewayBlockingStub client;
+    private final SigningIdentity signingIdentity;
     private final PreparedTransaction preparedTransaction;
 
-    TransactionImpl(GatewayImpl gateway, PreparedTransaction preparedTransaction) {
-        this.gateway = gateway;
+
+    TransactionImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity, final PreparedTransaction preparedTransaction) {
+        this.client = client;
+        this.signingIdentity = signingIdentity;
         this.preparedTransaction = preparedTransaction;
     }
 
@@ -74,14 +75,14 @@ public class TransactionImpl implements Transaction {
 
     private Iterator<Event> submit() {
         PreparedTransaction transaction = toPreparedTransaction();
-        return gateway.getService().submit(transaction);
+        return client.submit(transaction);
     }
 
     private PreparedTransaction toPreparedTransaction() {
         // sign the payload
         Common.Envelope envelope = preparedTransaction.getEnvelope();
-        byte[] hash = gateway.hash(envelope.getPayload().toByteArray());
-        byte[] signature = gateway.sign(hash);
+        byte[] hash = signingIdentity.hash(envelope.getPayload().toByteArray());
+        byte[] signature = signingIdentity.sign(hash);
         PreparedTransaction signedTransaction = PreparedTransaction.newBuilder(preparedTransaction)
                 .setEnvelope(Common.Envelope.newBuilder(envelope).setSignature(ByteString.copyFrom(signature)).build())
                 .build();

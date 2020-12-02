@@ -6,11 +6,12 @@ SPDX-License-Identifier: Apache-2.0
 
 'use strict';
 
-const { Given, When, Then, BeforeAll, AfterAll, After } = require('cucumber');
+const { Given, When, Then, BeforeAll, AfterAll, After } = require('@cucumber/cucumber');
 const { execFileSync, spawnSync, spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { Gateway, Signer } = require('fabric-gateway');
+const crypto = require('crypto');
+const { connect, Signers } = require('fabric-gateway');
 const chai = require('chai');
 const expect = chai.expect;
 
@@ -179,20 +180,26 @@ Given('I create a gateway for user {word} in MSP {word}', async (user, mspId) =>
 
   const certPath = path.join(credentialsPath, 'signcerts', `${user}@${org}-cert.pem`);
   const certificate = await fs.promises.readFile(certPath);
+  this.identity = {
+    mspId,
+    credentials: certificate
+  };
 
   const keyPath = path.join(credentialsPath, 'keystore', 'key.pem');
-  const privateKey = await fs.promises.readFile(keyPath);
+  const privateKeyPem = await fs.promises.readFile(keyPath);
+  const privateKey = crypto.createPrivateKey(privateKeyPem);
+  this.signer = Signers.newECDSAPrivateKeySigner(privateKey);
 
-  this.signer = new Signer(mspId, certificate, privateKey);
   delete this.gateway;
 });
 
 Given('I connect the gateway to {word}', async (address) => {
   const options = {
     url: address,
-    signer: this.signer
+    signer: this.signer,
+    identity: this.identity
   }
-  this.gateway = await Gateway.connect(options);
+  this.gateway = await connect(options);
 });
 
 Given('I use the {word} network', (channelName) => {

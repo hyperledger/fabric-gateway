@@ -27,7 +27,7 @@ METADATA_VAR += CommitSHA=$(EXTRA_VERSION)
 METADATA_VAR += BaseDockerLabel=$(BASE_DOCKER_LABEL)
 METADATA_VAR += DockerNamespace=$(DOCKER_NS)
 
-GO_VER = 1.14.4
+GO_VER = 1.15.6
 GO_TAGS ?=
 
 include docker-env.mk
@@ -46,7 +46,7 @@ build-go: build-protos
 	go build -o bin/gateway cmd/gateway/*.go
 
 build-node: build-protos
-	cd $(node_dir); npm install; npm run compile
+	cd $(node_dir); npm install; npm run build
 
 unit-test: unit-test-go unit-test-node unit-test-java
 
@@ -66,7 +66,8 @@ scenario-test-go: docker
 	cd $(scenario_dir)/go; godog $(scenario_dir)/features/
 
 scenario-test-node: docker build-node
-	cd $(scenario_dir)/node; npm install; npm test
+	cd $(node_dir); mv $$(npm pack) fabric-gateway-dev.tgz
+	cd $(scenario_dir)/node; rm -f package-lock.json; npm install; npm test
 
 scenario-test-java: docker
 	cd $(java_dir); mvn verify

@@ -8,9 +8,6 @@ package identity
 
 import (
 	"crypto/x509"
-
-	"github.com/golang/protobuf/proto"
-	"github.com/hyperledger/fabric-protos-go/msp"
 )
 
 // Identity represents a client identity used to interact with a Fabric network.
@@ -47,13 +44,4 @@ func NewX509Identity(mspID string, certificate *x509.Certificate) (*X509Identity
 		certificate: certificatePEM,
 	}
 	return identity, nil
-}
-
-// Serialize an identity to protobuf SerializedIdentity message bytes
-func Serialize(id Identity) ([]byte, error) {
-	serializedIdentity := &msp.SerializedIdentity{
-		Mspid:   id.MspID(),
-		IdBytes: id.Credentials(),
-	}
-	return proto.Marshal(serializedIdentity)
 }

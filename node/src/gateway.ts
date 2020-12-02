@@ -4,39 +4,46 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import { Signer } from './signer'
-import { Network } from './network';
+import { Identity } from './identity/identity'
+import { Signer } from './identity/signer'
+import { Network, NetworkImpl } from './network';
 import { Client, ClientImpl } from './impl/client';
+import { SigningIdentity } from './signingidentity';
 
-
-export interface GatewayOptions {
+export interface ConnectOptions {
     url: string;
-    signer: Signer;
+    identity: Identity;
+    signer?: Signer;
 }
 
-export class Gateway {
-    readonly _signer: Signer;
-    private readonly url;
-    _client!: Client;
+export interface InternalConnectOptions extends ConnectOptions {
+    client?: Client;
+}
 
-    private constructor(options: GatewayOptions) {
-        this._signer = options.signer;
-        this.url = options.url;
+export async function connect(options: ConnectOptions): Promise<Gateway> {
+    const client = (options as InternalConnectOptions).client ?? new ClientImpl(options.url);
+    const signingIdentity = new SigningIdentity(options.identity, options.signer);
+    return new GatewayImpl(client, signingIdentity);
+}
+
+export interface Gateway {
+    getIdentity(): Identity;
+    getNetwork(channelName: string): Network;
+}
+
+class GatewayImpl {
+    readonly #client: Client;
+    readonly #signingIdentity: SigningIdentity;
+
+    constructor(client: Client, signingIdentity: SigningIdentity) {
+        this.#client = client;
+        this.#signingIdentity = signingIdentity;
     }
 
-    static async connect(options: GatewayOptions): Promise<Gateway> {
-        const gateway = new Gateway(options);
-        await gateway._connect();
-        return gateway;
+    getIdentity(): Identity {
+        return this.#signingIdentity.getIdentity();
     }
-
-    private async _connect() {
-        this._client = new ClientImpl(this.url);
-         
-        // might query available channels
-    }
-
-    getNetwork(networkName: string): Network {
-        return new Network(networkName, this);
+    getNetwork(channelName: string): Network {
+        return new NetworkImpl(this.#client, this.#signingIdentity, channelName);
     }
 }

@@ -32,7 +32,7 @@ func TestSign(t *testing.T) {
 			value := &gateway.Result{}
 			return value, nil
 		}
-		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
+		contract := AssertNewDefaultTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
 
 		if _, err := contract.EvaluateTransaction("transaction"); err != nil {
 			t.Fatal(err)
@@ -66,7 +66,7 @@ func TestSign(t *testing.T) {
 			}
 			return submitClient, nil
 		}
-		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
+		contract := AssertNewDefaultTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
 
 		if _, err := contract.SubmitTransaction("transaction"); err != nil {
 			t.Fatal(err)
@@ -100,7 +100,7 @@ func TestSign(t *testing.T) {
 			}
 			return submitClient, nil
 		}
-		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
+		contract := AssertNewDefaultTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
 
 		if _, err := contract.SubmitTransaction("transaction"); err != nil {
 			t.Fatal(err)
@@ -111,13 +111,19 @@ func TestSign(t *testing.T) {
 		}
 	})
 
-	t.Run("Default error implementation is used if nil signing implementation supplied", func(t *testing.T) {
+	t.Run("Default error implementation is used if no signing implementation supplied", func(t *testing.T) {
 		mockClient := mock.NewGatewayClient()
 		mockClient.MockEvaluate = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.Result, error) {
 			return &gateway.Result{}, nil
 		}
 
-		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(nil))
+		id, _ := GetTestCredentials()
+		gateway, err := Connect(id, WithClient(mockClient))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		contract := gateway.GetNetwork("network").GetDefaultContract("chaincode")
 
 		if _, err := contract.EvaluateTransaction("transaction"); nil == err {
 			t.Fatal("Expected signing error but got nil")

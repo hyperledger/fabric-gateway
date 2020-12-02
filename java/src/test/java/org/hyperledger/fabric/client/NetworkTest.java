@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.fabric.client.impl;
+package org.hyperledger.fabric.client;
 
 import org.hyperledger.fabric.client.Contract;
 import org.hyperledger.fabric.client.Gateway;
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class NetworkTest {
+public final class NetworkTest {
     private static final TestUtils testUtils = TestUtils.getInstance();
 
     private Gateway gateway;
@@ -24,19 +24,13 @@ public class NetworkTest {
 
     @BeforeEach
     void beforeEach() {
-        gateway = testUtils.newGatewayBuilder().connect();
+        gateway = testUtils.newGatewayBuilder().endpoint("example.org:1337").connect();
         network = gateway.getNetwork("ch1");
     }
 
     @AfterEach
     void afterEach() {
         gateway.close();
-    }
-
-    @Test
-    void getGateway_returns_Gateway_that_created_this_Network() {
-        Gateway gw = network.getGateway();
-        assertThat(gw).isSameAs(gateway);
     }
 
     @Test

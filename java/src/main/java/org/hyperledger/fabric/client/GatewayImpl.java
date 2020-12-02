@@ -4,29 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.fabric.client.impl;
+package org.hyperledger.fabric.client;
 
-import java.security.GeneralSecurityException;
 import java.util.concurrent.TimeUnit;
 
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import org.hyperledger.fabric.client.Gateway;
-import org.hyperledger.fabric.client.GatewayRuntimeException;
-import org.hyperledger.fabric.client.Network;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.gateway.GatewayGrpc;
 
-public final class GatewayImpl implements Gateway {
+final class GatewayImpl implements Gateway {
     public static final class Builder implements Gateway.Builder {
-        private static final Signer UNDEFINED_SIGNER = (byte[] digest) -> {
+        private static final Signer UNDEFINED_SIGNER = (digest) -> {
             throw new UnsupportedOperationException("No signing implementation supplied");
         };
         private static final Runnable NO_OP_CLOSER = () -> {};
 
-        private GatewayGrpc.GatewayBlockingStub service;
+        private GatewayGrpc.GatewayBlockingStub client;
         private Runnable channelCloser = NO_OP_CLOSER;
         private Identity identity;
         private Signer signer = UNDEFINED_SIGNER; // No signer implementation is required if only offline signing is used
@@ -34,14 +30,14 @@ public final class GatewayImpl implements Gateway {
         @Override
         public Builder endpoint(final String target) { // TODO: Maybe should be abstracted out to Endpoint class
             ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
-            service = GatewayGrpc.newBlockingStub(channel);
+            client = GatewayGrpc.newBlockingStub(channel);
             channelCloser = () -> GatewayUtils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
             return this;
         }
 
         @Override
         public Gateway.Builder connection(final Channel grpcChannel) {
-            this.service = GatewayGrpc.newBlockingStub(grpcChannel);
+            this.client = GatewayGrpc.newBlockingStub(grpcChannel);
             this.channelCloser = NO_OP_CLOSER;
             return this;
         }
@@ -60,27 +56,35 @@ public final class GatewayImpl implements Gateway {
 
         @Override
         public GatewayImpl connect() {
-            return new GatewayImpl(this);
+            try {
+                return new GatewayImpl(this);
+            } catch (Exception e) {
+                channelCloser.run(); // Ensure no orphaned gRPC channels
+                throw e;
+            }
         }
     }
 
-    private final GatewayGrpc.GatewayBlockingStub service;
+    private final GatewayGrpc.GatewayBlockingStub client;
     private final Runnable channelCloser;
-    private final Identity identity;
-    private final Signer signer;
+    private final SigningIdentity signingIdentity;
 
     private GatewayImpl(final Builder builder) {
-        this.identity = builder.identity;
-        this.signer = builder.signer;
-        this.service = builder.service;
-        this.channelCloser = builder.channelCloser;
-
-        if (null == this.identity) {
+        if (null == builder.identity) {
             throw new IllegalStateException("No client identity supplied");
         }
-        if (null == this.service) {
+        if (null == builder.client) {
             throw new IllegalStateException("No connections details supplied");
         }
+
+        this.signingIdentity = new SigningIdentity(builder.identity, builder.signer);
+        this.client = builder.client;
+        this.channelCloser = builder.channelCloser;
+    }
+
+    @Override
+    public Identity getIdentity() {
+        return this.signingIdentity.getIdentity();
     }
 
     @Override
@@ -90,26 +94,6 @@ public final class GatewayImpl implements Gateway {
 
     @Override
     public Network getNetwork(final String networkName) {
-        return new NetworkImpl(networkName, this);
-    }
-
-    public Identity getIdentity() {
-        return identity;
-    }
-
-    public byte[] sign(byte[] digest) {
-        try {
-            return signer.sign(digest);
-        } catch (GeneralSecurityException e) {
-            throw new GatewayRuntimeException(e);
-        }
-    }
-
-    public byte[] hash(byte[] message) {
-        return Hash.sha256(message);
-    }
-
-    public GatewayGrpc.GatewayBlockingStub getService() {
-        return service;
+        return new NetworkImpl(client, signingIdentity, networkName);
     }
 }

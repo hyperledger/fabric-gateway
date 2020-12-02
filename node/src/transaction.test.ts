@@ -4,29 +4,39 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import { Gateway } from './gateway';
-import { Signer } from './signer';
-import { Transaction } from './transaction';
-import { Client } from './impl/client';
-import { protos } from './protos/protos'
+import * as crypto from 'crypto';
 import * as fs from 'fs';
+import { connect, InternalConnectOptions } from './gateway';
+import { Identity } from './identity/identity';
+import { Signer } from './identity/signer';
+import * as Signers from './identity/signers';
+import { Client } from './impl/client';
+import { protos } from './protos/protos';
+import { Transaction } from './transaction';
 
 let txn: Transaction;
 let signer: Signer;
+let identity: Identity;
 
 beforeEach(async () => {
-    const mspid = 'Org1MSP';
+    const mspId = 'Org1MSP';
     const certPath = 'test/cert.pem';
     const keyPath = 'test/key.pem';
-    const cert = fs.readFileSync(certPath);
-    const key = fs.readFileSync(keyPath);
+    const certificate = fs.readFileSync(certPath);
+    const keyPem = fs.readFileSync(keyPath);
+    const privateKey = crypto.createPrivateKey(keyPem);
 
-    signer = new Signer(mspid, cert, key);
+    identity = {
+        mspId,
+        credentials: certificate,
+    };
+    signer = Signers.newECDSAPrivateKeySigner(privateKey);
     const options = {
         url: 'localhost:7053',
-        signer: signer
-    }
-    const gw = await Gateway.connect(options);
+        identity,
+        signer,
+    };
+    const gw = await connect(options);
     const nw = gw.getNetwork('mychannel');
     const contr = nw.getContract('mycontract');
     txn = contr.createTransaction('txn1');
@@ -46,16 +56,16 @@ test('setTransient', async () => {
 })
 
 test('create, sign and wrap proposal', async () => {
-    const proposal = txn['createProposal'](['arg1', 'arg2'], signer);
-    const signed = txn['signProposal'](proposal, signer);
-    const wrapped = txn['createProposedWrapper'](signed);
+    const proposal = txn['createProposal'](['arg1', 'arg2']);
+    const signed = txn['signProposal'](proposal);
+    txn['createProposedWrapper'](signed);
 })
 
 const MockClient = class implements Client {
-    async _evaluate(signedProposal: protos.IProposedTransaction): Promise<string> {
+    async _evaluate(signedProposal: protos.IProposedTransaction): Promise<string> { // eslint-disable-line @typescript-eslint/no-unused-vars
         return 'result1';
     }
-    async _endorse(signedProposal: protos.IProposedTransaction): Promise<protos.IPreparedTransaction> {
+    async _endorse(signedProposal: protos.IProposedTransaction): Promise<protos.IPreparedTransaction> { // eslint-disable-line @typescript-eslint/no-unused-vars
         return {
             envelope: {
                 payload: Buffer.from('payload1')
@@ -65,7 +75,7 @@ const MockClient = class implements Client {
             }
         };
     }
-    async _submit(preparedTransaction: protos.PreparedTransaction): Promise<protos.IEvent> {
+    async _submit(preparedTransaction: protos.PreparedTransaction): Promise<protos.IEvent> { // eslint-disable-line @typescript-eslint/no-unused-vars
         return {
         };
     }
@@ -73,12 +83,13 @@ const MockClient = class implements Client {
 }
 
 test('evaluate', async () => {
-    const options = {
+    const options: InternalConnectOptions = {
         url: 'localhost:7053',
-        signer: signer
+        identity,
+        signer,
+        client: new MockClient(),
     }
-    const gw = await Gateway.connect(options);
-    gw._client = new MockClient();
+    const gw = await connect(options);
     const nw = gw.getNetwork('mychannel');
     const contr = nw.getContract('mycontract');
     const tx = contr.createTransaction('txn2')
@@ -87,12 +98,13 @@ test('evaluate', async () => {
 })
 
 test('submit', async () => {
-    const options = {
+    const options: InternalConnectOptions = {
         url: 'localhost:7053',
-        signer: signer
+        identity,
+        signer,
+        client: new MockClient(),
     }
-    const gw = await Gateway.connect(options);
-    gw._client = new MockClient();
+    const gw = await connect(options);
     const nw = gw.getNetwork('mychannel');
     const contr = nw.getContract('mycontract');
     const tx = contr.createTransaction('txn2')

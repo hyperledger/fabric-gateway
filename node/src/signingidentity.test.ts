@@ -1,0 +1,120 @@
+/*
+ * Copyright 2020 IBM All Rights Reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { Identity } from 'identity/identity';
+import { Signer } from 'identity/signer';
+import { msp } from './protos/protos';
+import { SigningIdentity } from './signingidentity';
+
+describe('SigningIdentity', () => {
+    let identity: Identity;
+
+    beforeEach(() => {
+        identity = {
+            mspId: 'MSP_ID',
+            credentials: Uint8Array.from(Buffer.from('CREDENTIALS'))
+        };
+    });
+
+    describe('identity', () => {
+        it('changes to returned identity do not modify signing identity', () => {
+            const expectedMspId = identity.mspId;
+            const expectedCredentials = Uint8Array.from(identity.credentials); // Copy
+            const signingIdentity = new SigningIdentity(identity);
+    
+            const output = signingIdentity.getIdentity();
+            output.mspId = 'wrong';
+            output.credentials.fill(0);
+    
+            const actual = signingIdentity.getIdentity();
+            expect(actual.mspId).toBe(expectedMspId);
+            const actualCredentials = Uint8Array.from(actual.credentials); // Ensure it's really a Uint8Array
+            expect(actualCredentials).toEqual(expectedCredentials);
+        });
+    
+        it('changes to supplied identity do not modify signing identity', () => {
+            const expectedMspId = identity.mspId;
+            const expectedCredentials = Uint8Array.from(identity.credentials); // Copy
+    
+            const signingIdentity = new SigningIdentity(identity);
+            identity.mspId = 'wrong';
+            identity.credentials.fill(0);
+    
+            const actual = signingIdentity.getIdentity();
+            expect(actual.mspId).toBe(expectedMspId);
+            const actualCredentials = Uint8Array.from(actual.credentials); // Ensure it's really a Uint8Array
+            expect(actualCredentials).toEqual(expectedCredentials);
+        });
+    });
+
+    describe('creator', () => {
+        it('returns a valid SerializedIdentity protobuf', () => {
+            const signingIdentity = new SigningIdentity(identity);
+
+            const creator = signingIdentity.getCreator();
+
+            const actual = msp.SerializedIdentity.decode(creator);
+            expect(actual.mspid).toBe(identity.mspId);
+            const credentials = Uint8Array.from(actual.id_bytes); // Ensure it's really a Uint8Array
+            expect(credentials).toEqual(identity.credentials);
+        });
+
+        it('changes to returned creator do not modify signing identity', () => {
+            const signingIdentity = new SigningIdentity(identity);
+            const expected = Uint8Array.from(signingIdentity.getCreator()); // Ensure it's really a Uint8Array
+
+            const creator = signingIdentity.getCreator();
+            creator.fill(0);
+
+            const actual = Uint8Array.from(signingIdentity.getCreator()); // Ensure it's really a Uint8Array
+            expect(actual).toEqual(expected);
+        });
+    });
+
+    describe('signing', () => {
+        it('default signer throws', () => {
+            const signingIdentity = new SigningIdentity(identity);
+            const digest = Buffer.from('DIGEST');
+    
+            expect(() => signingIdentity.sign(digest))
+                .toThrowError();
+        });
+    
+        it('uses supplied signer', () => {
+            const expected = Uint8Array.from(Buffer.from('SIGNATURE'));
+            const signer: Signer = () => expected;
+            const digest = Buffer.from('DIGEST');
+            const signingIdentity = new SigningIdentity(identity, signer);
+    
+            const actual = signingIdentity.sign(digest);
+    
+            expect(actual).toEqual(expected);
+        });
+    });
+
+    describe('hashing', () => {
+        it('hashes of identical values are identical', () => {
+            const message = Buffer.from('MESSAGE');
+            const signingIdentity = new SigningIdentity(identity);
+    
+            const first = signingIdentity.hash(message);
+            const second = signingIdentity.hash(message);
+    
+            expect(first).toEqual(second);
+        });
+    
+        it('hashes of different values are different', () => {
+            const message1 = Buffer.from('FOO');
+            const message2 = Buffer.from('BAR');
+            const signingIdentity = new SigningIdentity(identity);
+    
+            const first = signingIdentity.hash(message1);
+            const second = signingIdentity.hash(message2);
+    
+            expect(first).not.toEqual(second);
+        });
+    });
+});

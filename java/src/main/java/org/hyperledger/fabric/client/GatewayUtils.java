@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.fabric.client.impl;
+package org.hyperledger.fabric.client;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,7 +23,7 @@ import org.hyperledger.fabric.protos.msp.Identities;
 /**
  * Utility functions.
  */
-public final class GatewayUtils {
+final class GatewayUtils {
     // Private constructor to prevent instantiation
     private GatewayUtils() { }
 

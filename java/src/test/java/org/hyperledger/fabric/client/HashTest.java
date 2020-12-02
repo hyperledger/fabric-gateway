@@ -4,15 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.fabric.client.impl;
+package org.hyperledger.fabric.client;
 
 import java.nio.charset.StandardCharsets;
 
+import org.hyperledger.fabric.client.Hash;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class HashTest {
+public final class HashTest {
     @Test
     void identical_messages_have_identical_hash() {
         byte[] message = "MESSAGE".getBytes(StandardCharsets.UTF_8);

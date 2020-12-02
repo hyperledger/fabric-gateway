@@ -25,7 +25,6 @@ import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Credentials;
 import org.hyperledger.fabric.client.identity.X509Identity;
-import org.hyperledger.fabric.client.impl.GatewayImpl;
 import org.hyperledger.fabric.gateway.GatewayGrpc;
 import org.hyperledger.fabric.gateway.PreparedTransaction;
 import org.hyperledger.fabric.gateway.Result;
@@ -62,13 +61,16 @@ public final class TestUtils {
         return InProcessChannelBuilder.forName(serverName).directExecutor().build();
     }
 
+    /**
+     * Get a Gateway builder configured with a valid identity and signer.
+     * @return A gateway builder implementation.
+     */
     public GatewayImpl.Builder newGatewayBuilder() {
         GatewayImpl.Builder builder = (GatewayImpl.Builder)Gateway.newInstance();
         Identity id = new X509Identity("msp1", credentials.getCertificate());
         Signer signer = Signers.newPrivateKeySigner((ECPrivateKey) credentials.getPrivateKey());
         builder.identity(id)
-                .signer(signer)
-                .endpoint("example.org:1337");
+                .signer(signer);
         return builder;
     }
 

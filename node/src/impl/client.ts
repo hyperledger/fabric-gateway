@@ -8,6 +8,8 @@ import * as grpc from '@grpc/grpc-js';
 import { ServiceClient } from '@grpc/grpc-js/build/src/make-client';
 import { protos } from '../protos/protos'
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export interface Client {
     _evaluate(signedProposal: protos.IProposedTransaction): Promise<string>;
     _endorse(signedProposal: protos.IProposedTransaction): Promise<protos.IPreparedTransaction>;
@@ -20,8 +22,8 @@ export class ClientImpl implements Client {
     constructor(url: string) {
         const SvcClient = grpc.makeGenericClientConstructor({}, "protos.Gateway", {})
         this.serviceClient = new SvcClient(
-          url,
-          grpc.credentials.createInsecure()
+            url,
+            grpc.credentials.createInsecure()
         )
     }
 
@@ -57,7 +59,7 @@ export class ClientImpl implements Client {
             // An error has occurred and the stream has been closed.
             callback(e, null);
         });
-        call.on('status', function (status: any) {
+        call.on('status', function () {
             // process status
         });
     }
@@ -67,7 +69,7 @@ export class ClientImpl implements Client {
         return new Promise((resolve, reject) => {
             service.evaluate(signedProposal, function (err: Error|null, result: protos.IResult|undefined) {
                 if (err) reject(err);
-                resolve(result?.value?.toString());
+                resolve(result?.value?.toString() ?? '');
             });
         })
     }
@@ -79,7 +81,7 @@ export class ClientImpl implements Client {
         return new Promise((resolve, reject) => {
             service.endorse(signedProposal, function (err: Error|null, result: protos.IPreparedTransaction|undefined) {
                 if (err) reject(err);
-                resolve(result);
+                resolve(result!);
             });
         })
     }
@@ -89,7 +91,7 @@ export class ClientImpl implements Client {
         return new Promise((resolve, reject) => {
             service.submit(preparedTransaction, function (err: Error|null, result: protos.IEvent|undefined) {
                 if (err) reject(err);
-                resolve(result);
+                resolve(result!);
             });
         })
     }
