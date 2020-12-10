@@ -66,8 +66,8 @@ scenario-test-go: docker
 	cd $(scenario_dir)/go; godog $(scenario_dir)/features/
 
 scenario-test-node: docker build-node
-	cd $(node_dir); mv $$(npm pack) fabric-gateway-dev.tgz
-	cd $(scenario_dir)/node; rm -f package-lock.json; npm install; npm test
+	cd $(node_dir); rm -f fabric-gateway-dev.tgz; mv $$(npm pack) fabric-gateway-dev.tgz
+	cd $(scenario_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; npm test
 
 scenario-test-java: docker
 	cd $(java_dir); mvn verify

@@ -23,11 +23,10 @@ public interface Transaction {
     byte[] getBytes();
 
     /**
-     * Get the hash of the serialized transaction. This may be used as the message digest from which to generate a
-     * digital signature.
+     * Get the digest of the serialized transaction. This is used to generate a digital signature.
      * @return A hash of the transaction.
      */
-    byte[] getHash();
+    byte[] getDigest();
 
     /**
      * Submit the transaction to the orderer to be committed to the ledger. This method returns immediately after the

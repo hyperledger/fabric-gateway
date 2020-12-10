@@ -50,7 +50,7 @@ class TransactionImpl implements Transaction {
     }
 
     @Override
-    public byte[] getHash() {
+    public byte[] getDigest() {
         return new byte[0];
     }
 

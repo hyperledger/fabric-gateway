@@ -24,13 +24,13 @@ type Proposal struct {
 	signature     []byte
 }
 
-// Bytes of the serialized proposal.
+// Bytes of the serialized proposal message.
 func (proposal *Proposal) Bytes() ([]byte, error) {
 	return proposal.bytes, nil
 }
 
-// Hash the proposal to obtain a digest to be signed.
-func (proposal *Proposal) Hash() ([]byte, error) {
+// Digest of the proposal. This is used to generate a digital signature.
+func (proposal *Proposal) Digest() ([]byte, error) {
 	return proposal.signingID.Hash(proposal.bytes)
 }
 
@@ -109,7 +109,7 @@ func (proposal *Proposal) signMessage() error {
 		return nil
 	}
 
-	digest, err := proposal.Hash()
+	digest, err := proposal.Digest()
 	if err != nil {
 		return err
 	}

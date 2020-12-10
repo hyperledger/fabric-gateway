@@ -1,25 +1,50 @@
 /*
-Copyright 2020 IBM All Rights Reserved.
+ * Copyright 2020 IBM All Rights Reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-SPDX-License-Identifier: Apache-2.0
-*/
-
+import { GatewayClient } from 'client';
 import * as crypto from 'crypto';
-import { Client } from 'impl/client';
 import { SigningIdentity } from 'signingidentity';
 import { common, google, protos } from './protos/protos';
 
 type TransientData = { [k: string]: Uint8Array; };
 
-export class Transaction {
-    readonly #client: Client;
+type Commit = Promise<Uint8Array>;
+
+export interface Transaction {
+    /**
+     * Get the serialized transaction message.
+     */
+    getBytes(): Uint8Array;
+
+    /**
+     * Get the digest of the transaction. This is used to generate a digital signature.
+     */
+    getDigest(): Uint8Array;
+
+    /**
+     * Get the transaction result. This is obtained during the endorsement process when the transaction proposal is
+     * run on endorsing peers.
+     */
+    getResult(): Uint8Array;
+
+    /**
+     * Submit the transaction to the orderer to be committed to the ledger.
+     */
+    submit(): Promise<Commit>;
+}
+
+export class OldTransaction {
+    readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
     readonly #channelName: string;
     readonly #chaincodeId: string;
     readonly #transactionName: string;
     #transientData: TransientData;
 
-    constructor(client: Client, signingIdentity: SigningIdentity, channelName: string, chaincodeId: string, transactionName: string) {
+    constructor(client: GatewayClient, signingIdentity: SigningIdentity, channelName: string, chaincodeId: string, transactionName: string) {
         this.#client = client;
         this.#signingIdentity = signingIdentity;
         this.#channelName = channelName;
@@ -37,23 +62,24 @@ export class Transaction {
         return this;
     }
 
-    async evaluate(...args: string[]): Promise<string> {
+    async evaluate(...args: string[]): Promise<Uint8Array> {
         const proposal = this.createProposal(args);
         const signedProposal = this.signProposal(proposal);
         const wrapper = this.createProposedWrapper(signedProposal);
-        return this.#client._evaluate(wrapper);
+        const result = await this.#client.evaluate(wrapper);
+        return result.value!; // TODO: Can this be null or undefined?
     }
 
-    async submit(...args: string[]): Promise<string> {
+    async submit(...args: string[]): Promise<Uint8Array> {
         const proposal = this.createProposal(args);
         const signedProposal = this.signProposal(proposal);
         const wrapper = this.createProposedWrapper(signedProposal);
-        const preparedTxn = await this.#client._endorse(wrapper);
+        const preparedTxn = await this.#client.endorse(wrapper);
         const envelope = preparedTxn.envelope!;
         const digest = this.#signingIdentity.hash(envelope.payload!);
         envelope.signature = this.#signingIdentity.sign(digest);
-        await this.#client._submit(preparedTxn);
-        return preparedTxn.response!.value!.toString();
+        await this.#client.submit(preparedTxn);
+        return preparedTxn.response!.value!; // TODO: Can this be null or undefined?
     }
 
     private createProposedWrapper(signedProposal: protos.ISignedProposal): protos.IProposedTransaction {

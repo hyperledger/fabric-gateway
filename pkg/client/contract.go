@@ -32,8 +32,8 @@ func (contract *Contract) EvaluateTransaction(name string, args ...string) ([]by
 // Evaluate a transaction function and return its result. This method provides greater control over the transaction
 // proposal content and the endorsing peers on which it is evaluated. This allows transaction functions to be evaluated
 // where the proposal must include transient data, or that will access ledger data with key-based endorsement policies.
-func (contract *Contract) Evaluate(name string, options ...ProposalOption) ([]byte, error) {
-	proposal, err := contract.NewProposal(name, options...)
+func (contract *Contract) Evaluate(transactionName string, options ...ProposalOption) ([]byte, error) {
+	proposal, err := contract.NewProposal(transactionName, options...)
 	if err != nil {
 		return nil, err
 	}

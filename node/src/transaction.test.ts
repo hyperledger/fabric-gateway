@@ -1,114 +1,88 @@
 /*
-Copyright 2020 IBM All Rights Reserved.
+ * Copyright 2020 IBM All Rights Reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-SPDX-License-Identifier: Apache-2.0
-*/
-
-import * as crypto from 'crypto';
-import * as fs from 'fs';
-import { connect, InternalConnectOptions } from './gateway';
+import { GatewayClient } from './client';
+import { Contract } from './contract';
+import { connect, Gateway, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
-import { Signer } from './identity/signer';
-import * as Signers from './identity/signers';
-import { Client } from './impl/client';
+import { Network } from './network';
 import { protos } from './protos/protos';
-import { Transaction } from './transaction';
 
-let txn: Transaction;
-let signer: Signer;
-let identity: Identity;
-
-beforeEach(async () => {
-    const mspId = 'Org1MSP';
-    const certPath = 'test/cert.pem';
-    const keyPath = 'test/key.pem';
-    const certificate = fs.readFileSync(certPath);
-    const keyPem = fs.readFileSync(keyPath);
-    const privateKey = crypto.createPrivateKey(keyPem);
-
-    identity = {
-        mspId,
-        credentials: certificate,
-    };
-    signer = Signers.newECDSAPrivateKeySigner(privateKey);
-    const options = {
-        url: 'localhost:7053',
-        identity,
-        signer,
-    };
-    const gw = await connect(options);
-    const nw = gw.getNetwork('mychannel');
-    const contr = nw.getContract('mycontract');
-    txn = contr.createTransaction('txn1');
-})
-
-
-test('getName', async () => {
-    const name = txn.getName();
-    expect(name).toEqual('txn1');
-})
-
-test('setTransient', async () => {
-    const transient = {
-        name1: Buffer.from('value1')
-    };
-    txn.setTransient(transient);
-})
-
-test('create, sign and wrap proposal', async () => {
-    const proposal = txn['createProposal'](['arg1', 'arg2']);
-    const signed = txn['signProposal'](proposal);
-    txn['createProposedWrapper'](signed);
-})
-
-const MockClient = class implements Client {
-    async _evaluate(signedProposal: protos.IProposedTransaction): Promise<string> { // eslint-disable-line @typescript-eslint/no-unused-vars
-        return 'result1';
-    }
-    async _endorse(signedProposal: protos.IProposedTransaction): Promise<protos.IPreparedTransaction> { // eslint-disable-line @typescript-eslint/no-unused-vars
-        return {
-            envelope: {
-                payload: Buffer.from('payload1')
-            },
-            response: {
-                value: Buffer.from('result2')
-            }
-        };
-    }
-    async _submit(preparedTransaction: protos.PreparedTransaction): Promise<protos.IEvent> { // eslint-disable-line @typescript-eslint/no-unused-vars
-        return {
-        };
-    }
-
+interface MockGatewayClient extends GatewayClient {
+    endorse: jest.Mock<Promise<protos.IPreparedTransaction>, protos.IProposedTransaction[]>,
+    evaluate: jest.Mock<Promise<protos.IResult>, protos.IProposedTransaction[]>,
+    submit: jest.Mock<Promise<protos.IEvent>, protos.IPreparedTransaction[]>,
 }
 
-test('evaluate', async () => {
-    const options: InternalConnectOptions = {
-        url: 'localhost:7053',
-        identity,
-        signer,
-        client: new MockClient(),
-    }
-    const gw = await connect(options);
-    const nw = gw.getNetwork('mychannel');
-    const contr = nw.getContract('mycontract');
-    const tx = contr.createTransaction('txn2')
-    const result = await tx.evaluate('arg1', 'arg2');
-    expect(result).toEqual('result1');
-})
+function newMockGatewayClient(): MockGatewayClient {
+    return {
+        endorse: jest.fn(),
+        evaluate: jest.fn(),
+        submit: jest.fn(),
+    };
+}
 
-test('submit', async () => {
-    const options: InternalConnectOptions = {
-        url: 'localhost:7053',
-        identity,
-        signer,
-        client: new MockClient(),
-    }
-    const gw = await connect(options);
-    const nw = gw.getNetwork('mychannel');
-    const contr = nw.getContract('mycontract');
-    const tx = contr.createTransaction('txn2')
-    const result = await tx.submit('arg1', 'arg2');
-    expect(result).toEqual('result2');
-})
+describe('Transaction', () => {
+    const expectedResult = 'TX_RESULT';
 
+    let client: MockGatewayClient;
+    let identity: Identity;
+    let signer: jest.Mock<Uint8Array, Uint8Array[]>;
+    let gateway: Gateway;
+    let network: Network;
+    let contract: Contract;
+
+    beforeEach(async () => {
+        client = newMockGatewayClient();
+        client.endorse.mockResolvedValue({
+            envelope: {
+                payload: Buffer.from('PAYLOAD'),
+            },
+            response: {
+                value: Buffer.from(expectedResult),
+            },
+        });
+
+        identity = {
+            mspId: 'MSP_ID',
+            credentials: Buffer.from('CERTIFICATE'),
+        }
+        signer = jest.fn().mockReturnValue('SIGNATURE');
+
+        const options: InternalConnectOptions = {
+            identity,
+            signer,
+            gatewayClient: client,
+        };
+        gateway = await connect(options);
+        network = gateway.getNetwork('CHANNEL_NAME');
+        contract = network.getContract('CHAINCODE_ID');
+    });
+
+    it('throws on submit error', async () => {
+        client.submit.mockRejectedValue(new Error('ERROR_MESSAGE'));
+
+        expect(contract.submitTransaction('TRANSACTION_NAME'))
+            .rejects.toThrow('ERROR_MESSAGE');
+    });
+
+    it('returns result', async () => {
+        const result = await contract.submitTransaction('TRANSACTION_NAME');
+
+        const actual = Buffer.from(result).toString();
+        expect(actual).toBe(expectedResult);
+    });
+
+    it('uses signer', async () => {
+        signer.mockReturnValue(Buffer.from('MY_SIGNATURE'));
+
+        await contract.submitTransaction('TRANSACTION_NAME');
+
+        const preparedTransaction = client.submit.mock.calls[0][0];
+        const signature = Buffer.from(preparedTransaction.envelope?.signature ?? '').toString();
+        expect(signature).toBe('MY_SIGNATURE');
+    });
+});

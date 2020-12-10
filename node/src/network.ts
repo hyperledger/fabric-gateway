@@ -1,12 +1,12 @@
 /*
-Copyright 2020 IBM All Rights Reserved.
+ * Copyright 2020 IBM All Rights Reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-SPDX-License-Identifier: Apache-2.0
-*/
-
-import { Contract, ContractImpl } from "./contract"
-import { Client } from "impl/client";
+import { GatewayClient } from "client";
 import { SigningIdentity } from "signingidentity";
+import { Contract, ContractImpl } from "./contract";
 
 export interface Network {
     getName(): string;
@@ -14,11 +14,11 @@ export interface Network {
 }
 
 export class NetworkImpl implements Network {
-    readonly #client: Client;
+    readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
     readonly #channelName: string;
 
-    constructor(client: Client, signingIdentity: SigningIdentity, channelName: string) {
+    constructor(client: GatewayClient, signingIdentity: SigningIdentity, channelName: string) {
         this.#client = client;
         this.#signingIdentity = signingIdentity;
         this.#channelName = channelName;

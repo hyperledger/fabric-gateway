@@ -9,9 +9,10 @@
   },
   "scripts": {
     "clean": "rimraf dist src/protos",
-    "proto-gen": "node -e 'require(\"fs\").mkdirSync(\"src/protos\", { recursive: true })'; pbjs -t static-module $(find ../fabric-protos -name *.proto -type f) ../protos/gateway.proto -o src/protos/protos.js --keep-case",
+    "proto-prepare": "node -e 'require(\"fs\").mkdirSync(\"src/protos\", { recursive: true })'",
+    "proto-gen": "pbjs -t static-module -w commonjs --keep-case -o src/protos/protos.js ../protos/gateway.proto $(find ../fabric-protos -name *.proto -type f -print)",
     "proto-types": "pbts -o src/protos/protos.d.ts src/protos/protos.js",
-    "build": "npm-run-all clean proto-gen proto-types compile lint copy-non-ts-source",
+    "build": "npm-run-all clean proto-prepare proto-gen proto-types compile lint copy-non-ts-source",
     "copy-non-ts-source": "node -e 'require(\"fs-extra\").copy(\"src\", \"dist\", { filter: (src, dest) => !src.endsWith(\".ts\") || src.endsWith(\".d.ts\") })'",
     "compile": "tsc",
     "lint": "eslint . --ext .ts",
