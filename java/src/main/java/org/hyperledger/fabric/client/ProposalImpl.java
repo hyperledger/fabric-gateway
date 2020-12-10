@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.fabric.client.impl;
+package org.hyperledger.fabric.client;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -12,9 +12,7 @@ import java.util.Map;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
-import org.hyperledger.fabric.client.Contract;
-import org.hyperledger.fabric.client.Proposal;
-import org.hyperledger.fabric.client.Transaction;
+import org.hyperledger.fabric.gateway.GatewayGrpc;
 import org.hyperledger.fabric.gateway.PreparedTransaction;
 import org.hyperledger.fabric.gateway.ProposedTransaction;
 import org.hyperledger.fabric.gateway.Result;
@@ -22,28 +20,25 @@ import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.peer.Chaincode;
 import org.hyperledger.fabric.protos.peer.ProposalPackage;
 
-public class ProposalImpl implements Proposal {
-    private final Contract contract;
-    private final NetworkImpl network;
-    private final GatewayImpl gateway;
-    private final String transactionName;
+class ProposalImpl implements Proposal {
+    private final GatewayGrpc.GatewayBlockingStub client;
+    private final SigningIdentity signingIdentity;
+    private final String channelName;
+    private final String chaincodeId;
     private final Chaincode.ChaincodeInput.Builder inputBuilder = Chaincode.ChaincodeInput.newBuilder();
     private final ProposalPackage.ChaincodeProposalPayload.Builder payloadBuilder = ProposalPackage.ChaincodeProposalPayload.newBuilder();
     private final TransactionContext context;
 
-    ProposalImpl(ContractImpl contract, String transactionName) {
-        this.contract = contract;
-        this.transactionName = transactionName;
+    ProposalImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity,
+                 final String channelName, final String chaincodeId, final String transactionName) {
+        this.client = client;
+        this.signingIdentity = signingIdentity;
+        this.channelName = channelName;
+        this.chaincodeId = chaincodeId;
 
-        network = contract.getNetwork();
-        gateway = network.getGateway();
+        context = new TransactionContext(signingIdentity);
 
-        context = new TransactionContext(gateway.getIdentity(), gateway::hash);
-
-        String qualifiedTxName = contract.getContractName()
-                .map(contractName -> contractName + ":" + transactionName)
-                .orElse(transactionName);
-        inputBuilder.addArgs(ByteString.copyFrom(qualifiedTxName, StandardCharsets.UTF_8));
+        inputBuilder.addArgs(ByteString.copyFrom(transactionName, StandardCharsets.UTF_8));
     }
 
     @Override
@@ -93,7 +88,7 @@ public class ProposalImpl implements Proposal {
     public byte[] evaluate() {
         ProposedTransaction proposedTransaction = createProposedTransaction();
 
-        Result result = gateway.getService().evaluate(proposedTransaction);
+        Result result = client.evaluate(proposedTransaction);
         if (result != null && result.getValue() != null) {
             return result.getValue().toByteArray();
         }
@@ -104,8 +99,8 @@ public class ProposalImpl implements Proposal {
     @Override
     public Transaction endorse() {
         ProposedTransaction proposedTransaction = createProposedTransaction();
-        PreparedTransaction preparedTransaction = gateway.getService().endorse(proposedTransaction);
-        return new TransactionImpl(gateway, preparedTransaction);
+        PreparedTransaction preparedTransaction = client.endorse(proposedTransaction);
+        return new TransactionImpl(client, signingIdentity, preparedTransaction);
     }
 
     private ProposedTransaction createProposedTransaction() {
@@ -118,7 +113,7 @@ public class ProposalImpl implements Proposal {
     }
 
     private ProposalPackage.Proposal createProposal() {
-        Chaincode.ChaincodeID chaincodeID = Chaincode.ChaincodeID.newBuilder().setName(contract.getChaincodeId()).build();
+        Chaincode.ChaincodeID chaincodeID = Chaincode.ChaincodeID.newBuilder().setName(chaincodeId).build();
         ProposalPackage.ChaincodeHeaderExtension chaincodeHeaderExtension = ProposalPackage.ChaincodeHeaderExtension.newBuilder()
                 .setChaincodeId(chaincodeID)
                 .build();
@@ -126,7 +121,7 @@ public class ProposalImpl implements Proposal {
                 .setType(Common.HeaderType.ENDORSER_TRANSACTION.getNumber())
                 .setTxId(getTransactionId())
                 .setTimestamp(Timestamp.newBuilder().setSeconds(Instant.now().getEpochSecond()).build())
-                .setChannelId(network.getName())
+                .setChannelId(channelName)
                 .setExtension(chaincodeHeaderExtension.toByteString())
                 .setEpoch(0)
                 .build();
@@ -151,10 +146,10 @@ public class ProposalImpl implements Proposal {
         return proposal;
     }
 
-    private ProposalPackage.SignedProposal signProposal(ProposalPackage.Proposal proposal) {
+    private ProposalPackage.SignedProposal signProposal(final ProposalPackage.Proposal proposal) {
         ByteString payload = proposal.toByteString();
-        byte[] hash = gateway.hash(payload.toByteArray());
-        byte[] signature = gateway.sign(hash);
+        byte[] hash = signingIdentity.hash(payload.toByteArray());
+        byte[] signature = signingIdentity.sign(hash);
         ProposalPackage.SignedProposal signedProposal = ProposalPackage.SignedProposal.newBuilder()
                 .setProposalBytes(payload)
                 .setSignature(ByteString.copyFrom(signature))

@@ -15,8 +15,11 @@ import (
 // Contract represents a chaincode smart contract in a network. The Contract can be used to submit and evaluate
 // transaction functions on the smart contract, and to listen for chaincode events emitted by the smart contract.
 type Contract struct {
-	network *Network
-	name    string
+	client       gateway.GatewayClient
+	signingID    *signingIdentity
+	channelName  string
+	chaincodeID  string
+	contractName string
 }
 
 // EvaluateTransaction will evaluate a transaction function and return its results. A transaction proposal will be
@@ -89,8 +92,11 @@ func (contract *Contract) SubmitAsync(transactionName string, options ...Proposa
 // NewProposal creates a proposal that can be sent to peers for endorsement. Supports off-line signing transaction flow.
 func (contract *Contract) NewProposal(transactionName string, options ...ProposalOption) (*Proposal, error) {
 	builder := &proposalBuilder{
-		contract: contract,
-		name:     transactionName,
+		client:          contract.client,
+		signingID:       contract.signingID,
+		channelName:     contract.channelName,
+		chaincodeID:     contract.chaincodeID,
+		transactionName: contract.qualifiedTransactionName(transactionName),
 	}
 
 	for _, option := range options {
@@ -105,7 +111,7 @@ func (contract *Contract) NewProposal(transactionName string, options ...Proposa
 // NewSignedProposal creates a transaction proposal with signature, which can be sent to peers for endorsement.
 func (contract *Contract) NewSignedProposal(bytes []byte, signature []byte) (*Proposal, error) {
 	proposal := &Proposal{
-		client:    contract.network.gateway.client,
+		client:    contract.client,
 		bytes:     bytes,
 		signature: signature,
 	}
@@ -121,13 +127,19 @@ func (contract *Contract) NewSignedTransaction(bytes []byte, signature []byte) (
 	}
 
 	transaction := &Transaction{
-		client:              contract.network.gateway.client,
-		sign:                contract.network.gateway.sign,
-		hash:                contract.network.gateway.hash,
+		client:              contract.client,
+		signingID:           contract.signingID,
 		preparedTransaction: preparedTransaction,
 	}
 
 	transaction.setSignature(signature)
 
 	return transaction, nil
+}
+
+func (contract *Contract) qualifiedTransactionName(name string) string {
+	if len(contract.contractName) > 0 {
+		return contract.contractName + ":" + name
+	}
+	return name
 }

@@ -10,120 +10,15 @@ import (
 	"context"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/hyperledger/fabric-gateway/pkg/hash"
-	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	gateway "github.com/hyperledger/fabric-gateway/protos"
-	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/peer"
-	"github.com/hyperledger/fabric/protoutil"
 	"github.com/pkg/errors"
 )
-
-type proposalBuilder struct {
-	contract  *Contract
-	name      string
-	transient map[string][]byte
-	args      [][]byte
-}
-
-func (builder *proposalBuilder) build() (*Proposal, error) {
-	proposalProto, transactionID, err := builder.newProposalProto()
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to create Proposal protobuf")
-	}
-
-	proposalBytes, err := proto.Marshal(proposalProto)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to marshall Proposal protobuf")
-	}
-
-	proposal := &Proposal{
-		client:        builder.contract.network.gateway.client,
-		sign:          builder.contract.network.gateway.sign,
-		hash:          builder.contract.network.gateway.hash,
-		transactionID: transactionID,
-		bytes:         proposalBytes,
-	}
-	return proposal, nil
-}
-
-func (builder *proposalBuilder) newProposalProto() (*peer.Proposal, string, error) {
-	invocationSpec := &peer.ChaincodeInvocationSpec{
-		ChaincodeSpec: &peer.ChaincodeSpec{
-			Type:        peer.ChaincodeSpec_NODE,
-			ChaincodeId: &peer.ChaincodeID{Name: builder.contract.name},
-			Input:       &peer.ChaincodeInput{Args: builder.chaincodeArgs()},
-		},
-	}
-
-	creator, err := identity.Serialize(builder.contract.network.gateway.id)
-	if err != nil {
-		return nil, "", errors.Wrap(err, "Failed to serialize identity: ")
-	}
-
-	result, transactionID, err := protoutil.CreateChaincodeProposalWithTransient(
-		common.HeaderType_ENDORSER_TRANSACTION,
-		builder.contract.network.name,
-		invocationSpec,
-		creator,
-		builder.transient,
-	)
-	if err != nil {
-		return nil, "", errors.Wrap(err, "Failed to create chaincode proposal")
-	}
-
-	return result, transactionID, nil
-}
-
-func (builder *proposalBuilder) chaincodeArgs() [][]byte {
-	result := make([][]byte, len(builder.args)+1)
-
-	result[0] = []byte(builder.name)
-	copy(result[1:], builder.args)
-
-	return result
-}
-
-// ProposalOption implements an option for a transaction proposal.
-type ProposalOption = func(builder *proposalBuilder) error
-
-// WithArguments appends to the transaction function arguments associated with a transaction proposal.
-func WithArguments(args ...[]byte) ProposalOption {
-	return func(builder *proposalBuilder) error {
-		builder.args = append(builder.args, args...)
-		return nil
-	}
-}
-
-// WithStringArguments appends to the transaction function arguments associated with a transaction proposal.
-func WithStringArguments(args ...string) ProposalOption {
-	return WithArguments(stringsAsBytes(args)...)
-}
-
-func stringsAsBytes(strings []string) [][]byte {
-	results := make([][]byte, 0, len(strings))
-
-	for _, v := range strings {
-		results = append(results, []byte(v))
-	}
-
-	return results
-}
-
-// WithTransient specifies the transient data associated with a transaction proposal.
-func WithTransient(transient map[string][]byte) ProposalOption {
-	return func(builder *proposalBuilder) error {
-		builder.transient = transient
-		return nil
-	}
-}
 
 // Proposal represents a transaction proposal that can be sent to peers for endorsement or evaluated as a query.
 type Proposal struct {
 	client        gateway.GatewayClient
-	sign          identity.Sign
-	hash          hash.Hash
+	signingID     *signingIdentity
 	transactionID string
 	bytes         []byte
 	signature     []byte
@@ -136,7 +31,7 @@ func (proposal *Proposal) Bytes() ([]byte, error) {
 
 // Hash the proposal to obtain a digest to be signed.
 func (proposal *Proposal) Hash() ([]byte, error) {
-	return proposal.hash(proposal.bytes)
+	return proposal.signingID.Hash(proposal.bytes)
 }
 
 // TransactionID for the proposal.
@@ -161,8 +56,7 @@ func (proposal *Proposal) Endorse() (*Transaction, error) {
 
 	result := &Transaction{
 		client:              proposal.client,
-		sign:                proposal.sign,
-		hash:                proposal.hash,
+		signingID:           proposal.signingID,
 		preparedTransaction: preparedTransaction,
 	}
 	return result, nil
@@ -220,7 +114,7 @@ func (proposal *Proposal) signMessage() error {
 		return err
 	}
 
-	proposal.signature, err = proposal.sign(digest)
+	proposal.signature, err = proposal.signingID.Sign(digest)
 	if err != nil {
 		return err
 	}

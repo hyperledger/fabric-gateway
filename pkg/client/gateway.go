@@ -19,7 +19,6 @@ import (
 	"io"
 
 	"github.com/hyperledger/fabric-gateway/pkg/connection"
-	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	proto "github.com/hyperledger/fabric-gateway/protos"
 	"github.com/pkg/errors"
@@ -28,30 +27,24 @@ import (
 
 // Gateway representing the connection of a specific client identity to a Fabric Gateway.
 type Gateway struct {
-	id     identity.Identity
-	sign   identity.Sign
-	hash   hash.Hash
-	client proto.GatewayClient
-	closer io.Closer
+	signingID *signingIdentity
+	client    proto.GatewayClient
+	closer    io.Closer
+}
+
+func undefinedSign(digest []byte) ([]byte, error) {
+	return nil, errors.New("No sign implementation supplied")
 }
 
 // Connect to a Fabric Gateway using a client identity, signing implementation, and additional options, which must
 // include gRPC client connection details.
 func Connect(id identity.Identity, options ...ConnectOption) (*Gateway, error) {
 	gateway := &Gateway{
-		id:   id,
-		hash: hash.SHA256,
+		signingID: newSigningIdentity(id, undefinedSign),
 	}
 
 	if err := gateway.applyConnectOptions(options); err != nil {
 		return nil, err
-	}
-
-	// No sign implementation is required if only offline signing is used
-	if nil == gateway.sign {
-		gateway.sign = func(digest []byte) ([]byte, error) {
-			return nil, errors.New("No sign implementation supplied")
-		}
 	}
 
 	if nil == gateway.client {
@@ -77,7 +70,7 @@ type ConnectOption = func(gateway *Gateway) error
 // WithSign uses the supplied signing implementation for the Gateway.
 func WithSign(sign identity.Sign) ConnectOption {
 	return func(gateway *Gateway) error {
-		gateway.sign = sign
+		gateway.signingID.sign = sign
 		return nil
 	}
 }
@@ -116,10 +109,16 @@ func (gateway *Gateway) Close() error {
 	return nil
 }
 
+// Identity used by this Gateway
+func (gateway *Gateway) Identity() identity.Identity {
+	return gateway.signingID.id
+}
+
 // GetNetwork returns a Network representing the named Fabric channel.
 func (gateway *Gateway) GetNetwork(name string) *Network {
 	return &Network{
-		gateway: gateway,
-		name:    name,
+		client:    gateway.client,
+		signingID: gateway.signingID,
+		name:      name,
 	}
 }

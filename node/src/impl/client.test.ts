@@ -8,6 +8,9 @@ import * as grpc from '@grpc/grpc-js';
 import { ClientImpl } from './client';
 import { protos } from '../protos/protos'
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 function createMockProposal(): protos.IProposedTransaction {
     return {
         proposal: {
@@ -43,11 +46,11 @@ function createMockServiceClient(err: Error | null, response: Uint8Array | null)
             argument: any,
             metadata: grpc.Metadata,
             options?: grpc.CallOptions | undefined): any => {
-                return {
-                    on: (action: string, handler: Function) => {
-                        handler(action === 'error' ? err : response);
-                    }
+            return {
+                on: (action: string, handler: (arg: Error | Uint8Array | null) => void) => {
+                    return handler(action === 'error' ? err : response);
                 }
+            }
         }
     }
 }

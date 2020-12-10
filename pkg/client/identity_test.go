@@ -12,12 +12,13 @@ import (
 	"io"
 	"testing"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test/mock"
 	gateway "github.com/hyperledger/fabric-gateway/protos"
 	"github.com/hyperledger/fabric-protos-go/common"
-	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/hyperledger/fabric-protos-go/msp"
 	"google.golang.org/grpc"
 )
 
@@ -37,7 +38,11 @@ func TestIdentity(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	creator, err := identity.Serialize(id)
+	serializedIdentity := &msp.SerializedIdentity{
+		Mspid:   id.MspID(),
+		IdBytes: id.Credentials(),
+	}
+	creator, err := proto.Marshal(serializedIdentity)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,17 +51,7 @@ func TestIdentity(t *testing.T) {
 		var actual []byte
 		mockClient := mock.NewGatewayClient()
 		mockClient.MockEvaluate = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.Result, error) {
-			proposal := &peer.Proposal{}
-			AssertUnmarshall(t, in.Proposal.ProposalBytes, proposal)
-
-			header := &common.Header{}
-			AssertUnmarshall(t, proposal.Header, header)
-
-			signatureHeader := &common.SignatureHeader{}
-			AssertUnmarshall(t, header.SignatureHeader, signatureHeader)
-
-			actual = signatureHeader.Creator
-
+			actual = test.AssertUnmarshallSignatureHeader(t, in).Creator
 			value := &gateway.Result{}
 			return value, nil
 		}
@@ -75,17 +70,7 @@ func TestIdentity(t *testing.T) {
 		var actual []byte
 		mockClient := mock.NewGatewayClient()
 		mockClient.MockEndorse = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.PreparedTransaction, error) {
-			proposal := &peer.Proposal{}
-			AssertUnmarshall(t, in.Proposal.ProposalBytes, proposal)
-
-			header := &common.Header{}
-			AssertUnmarshall(t, proposal.Header, header)
-
-			signatureHeader := &common.SignatureHeader{}
-			AssertUnmarshall(t, header.SignatureHeader, signatureHeader)
-
-			actual = signatureHeader.Creator
-
+			actual = test.AssertUnmarshallSignatureHeader(t, in).Creator
 			preparedTransaction := &gateway.PreparedTransaction{
 				Envelope: &common.Envelope{},
 				Response: &gateway.Result{},

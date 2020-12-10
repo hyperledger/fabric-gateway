@@ -9,7 +9,6 @@ package org.hyperledger.fabric.client;
 import io.grpc.Channel;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
-import org.hyperledger.fabric.client.impl.GatewayImpl;
 
 /**
  * The Gateway provides the connection point for an application to access the Fabric network as a specific user. It is
@@ -50,10 +49,16 @@ public interface Gateway extends AutoCloseable {
     }
 
     /**
+     * Returns the identity used to interact with Fabric.
+     * @return A client identity.
+     */
+    Identity getIdentity();
+
+    /**
      * Returns an object representing a network.
      *
      * @param networkName The name of the network (channel name)
-     * @return {@link Network}
+     * @return A network.
      * @throws GatewayRuntimeException if a configuration or infrastructure error causes a failure.
      */
     Network getNetwork(String networkName);

@@ -1,0 +1,29 @@
+env:
+    node: true
+    es6: true
+    jest: true
+root: true
+ignorePatterns:
+    - src/protos/
+extends:
+    - eslint:recommended
+rules:
+    indent:
+        - error
+        - 4
+overrides:
+    - files:
+          - "**/*.ts"
+      parser: "@typescript-eslint/parser"
+      parserOptions:
+          sourceType: module
+          ecmaFeatures:
+              impliedStrict: true
+      plugins:
+          - "@typescript-eslint"
+      extends:
+          - eslint:recommended
+          - plugin:@typescript-eslint/eslint-recommended
+          - plugin:@typescript-eslint/recommended
+      rules:
+          "@typescript-eslint/no-non-null-assertion": off

@@ -4,7 +4,6 @@
         "https://checkstyle.org/dtds/configuration_1_3.dtd">
 
 <module name="Checker">
-    <property name="basedir" value="${basedir}"/>
     <property name="severity" value="error"/>
 
     <property name="fileExtensions" value="java, properties, xml"/>
@@ -16,10 +15,10 @@
     </module>
 
     <!-- Only public (API, SPI) classes must have Javadoc -->
-    <module name="SuppressionSingleFilter">
-        <property name="checks" value=".*Javadoc.*"/>
-        <property name="files" value="src/main/java/org/hyperledger/fabric/gateway/impl/"/>
-    </module>
+<!--    <module name="SuppressionSingleFilter">-->
+<!--        <property name="checks" value=".*Javadoc.*"/>-->
+<!--        <property name="files" value="src/main/java/org/hyperledger/fabric/client/impl"/>-->
+<!--    </module>-->
 
     <!-- Checks that a package-info.java file exists for each package.     -->
     <!-- See https://checkstyle.org/config_javadoc.html#JavadocPackage -->

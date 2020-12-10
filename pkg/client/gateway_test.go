@@ -29,7 +29,7 @@ func WithClient(client proto.GatewayClient) ConnectOption {
 // WithIdentity uses the supplied identity for the Gateway.
 func WithIdentity(id identity.Identity) ConnectOption {
 	return func(gateway *Gateway) error {
-		gateway.id = id
+		gateway.signingID.id = id
 		return nil
 	}
 }
@@ -147,6 +147,17 @@ func TestGateway(t *testing.T) {
 		}
 		if network.name != networkName {
 			t.Fatalf("Expected a network named %s, got %s", networkName, network.name)
+		}
+	})
+
+	t.Run("Identity returns connecting identity", func(t *testing.T) {
+		mockClient := mock.NewGatewayClient()
+		gateway := AssertNewTestGateway(t, WithIdentity(id), WithClient(mockClient))
+
+		result := gateway.Identity()
+
+		if result != id {
+			t.Fatalf("Expected identity %v, got %v", id, result)
 		}
 	})
 }

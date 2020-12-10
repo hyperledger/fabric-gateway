@@ -19,5 +19,6 @@ public interface Commit extends Callable<byte[]> {
      * @throws ContractException if the commit fails or timeout waiting for the commit is exceeded.
      */
     @Override
+    // checkstyle:ignore-next-line:TodoComment
     byte[] call() throws ContractException; // TODO: Differentiate failure condition by exception type
 }

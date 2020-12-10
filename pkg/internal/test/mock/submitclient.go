@@ -8,6 +8,7 @@ package mock
 
 import (
 	"errors"
+	"io"
 
 	proto "github.com/hyperledger/fabric-gateway/protos"
 )
@@ -26,6 +27,24 @@ func NewSubmitClient() *SubmitClient {
 		},
 		ClientStream: *NewClientStream(),
 	}
+}
+
+// NewFailSubmitClient creates a mock that returns the supplied commit error
+func NewFailSubmitClient(err error) *SubmitClient {
+	submitClient := NewSubmitClient()
+	submitClient.MockRecv = func() (*proto.Event, error) {
+		return nil, err
+	}
+	return submitClient
+}
+
+// NewSuccessSubmitClient creates a mock that returns a successful commit
+func NewSuccessSubmitClient() *SubmitClient {
+	submitClient := NewSubmitClient()
+	submitClient.MockRecv = func() (*proto.Event, error) {
+		return nil, io.EOF
+	}
+	return submitClient
 }
 
 // Recv mock implementation

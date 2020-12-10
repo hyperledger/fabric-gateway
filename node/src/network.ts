@@ -4,24 +4,32 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import { Gateway } from "./gateway";
-import { Contract } from "./contract"
+import { Contract, ContractImpl } from "./contract"
+import { Client } from "impl/client";
+import { SigningIdentity } from "signingidentity";
 
-export class Network {
-    private readonly name: string;
-    readonly _gateway: Gateway;
+export interface Network {
+    getName(): string;
+    getContract(chaincodeId: string, name?: string): Contract;
+}
 
-    constructor(name: string, gateway: Gateway) {
-        this.name = name;
-        this._gateway = gateway;
+export class NetworkImpl implements Network {
+    readonly #client: Client;
+    readonly #signingIdentity: SigningIdentity;
+    readonly #channelName: string;
+
+    constructor(client: Client, signingIdentity: SigningIdentity, channelName: string) {
+        this.#client = client;
+        this.#signingIdentity = signingIdentity;
+        this.#channelName = channelName;
     }
 
-    getName() {
-        return this.name;
+    getName(): string {
+        return this.#channelName;
     }
 
-    getContract(contractName: string) {
-        return new Contract(contractName, this);
+    getContract(chaincodeId: string, contractName?: string): Contract {
+        return new ContractImpl(this.#client, this.#signingIdentity, this.#channelName, chaincodeId, contractName);
     }
 
 }

@@ -15,7 +15,8 @@ import java.security.GeneralSecurityException;
 @FunctionalInterface
 public interface Signer {
     /**
-     * Signs the supplied message digest.
+     * Signs the supplied message digest. The digest is typically a hash of the message.
+     * @param digest A message digest.
      * @return A digital signature.
      */
     byte[] sign(byte[] digest) throws GeneralSecurityException;

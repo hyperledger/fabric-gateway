@@ -4,17 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.fabric.client.impl;
+package org.hyperledger.fabric.client;
 
-import java.security.GeneralSecurityException;
 import java.security.interfaces.ECPrivateKey;
 import java.util.concurrent.TimeUnit;
 
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import org.hyperledger.fabric.client.Gateway;
-import org.hyperledger.fabric.client.Network;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
@@ -26,17 +23,21 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class GatewayTest {
+public final class GatewayTest {
     private static final X509Credentials credentials = new X509Credentials();
     private static final Identity identity = new X509Identity("MSP_ID", credentials.getCertificate());
     private static final Signer signer = Signers.newPrivateKeySigner((ECPrivateKey) credentials.getPrivateKey());
 
     private Gateway gateway;
+    private ManagedChannel channel;
 
     @AfterEach
     void afterEach() {
         if (gateway != null) {
             gateway.close();
+        }
+        if (channel != null) {
+            GatewayUtils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
         }
     }
 
@@ -66,39 +67,14 @@ public class GatewayTest {
                 .endpoint("example.org:1337")
                 .connect();
 
-        Identity result = ((GatewayImpl) gateway).getIdentity();
+        Identity result = gateway.getIdentity();
 
         assertThat(result).isEqualTo(identity);
     }
 
     @Test
-    void uses_supplied_signer() throws GeneralSecurityException {
-        byte[] expected = "RESULT".getBytes();
-        gateway = Gateway.newInstance()
-                .identity(identity)
-                .signer((byte[] digest) -> expected)
-                .endpoint("example.org:1337")
-                .connect();
-
-        byte[] actual = ((GatewayImpl) gateway).sign("DIGEST".getBytes());
-
-        assertThat(actual).isEqualTo(expected);
-    }
-
-    @Test
-    void uses_invalid_signer_if_none_supplied() {
-        gateway = Gateway.newInstance()
-                .identity(identity)
-                .endpoint("example.org:1337")
-                .connect();
-
-        assertThatThrownBy(() -> ((GatewayImpl) gateway).sign("DIGEST".getBytes()))
-                .isInstanceOf(UnsupportedOperationException.class);
-    }
-
-    @Test
     void can_connect_using_gRPC_channel() {
-        Channel channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
+        channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
 
         gateway = Gateway.newInstance()
                 .identity(identity)
@@ -111,7 +87,7 @@ public class GatewayTest {
 
     @Test
     void close_does_not_shutdown_supplied_gRPC_channel() {
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
+        channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
         gateway = Gateway.newInstance()
                 .identity(identity)
                 .signer(signer)
@@ -121,7 +97,6 @@ public class GatewayTest {
         gateway.close();
 
         assertThat(channel.isShutdown()).isFalse();
-        GatewayUtils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
     }
 
     @Test

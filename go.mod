@@ -1,6 +1,6 @@
 module github.com/hyperledger/fabric-gateway
 
-go 1.14
+go 1.15
 
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible // indirect

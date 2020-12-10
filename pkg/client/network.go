@@ -6,17 +6,28 @@ SPDX-License-Identifier: Apache-2.0
 
 package client
 
+import proto "github.com/hyperledger/fabric-gateway/protos"
+
 // Network represents a blockchain network, or Fabric channel. The Network can be used to access deployed smart
 // contracts, and to listen for events emitted when blocks are committed to the ledger.
 type Network struct {
-	gateway *Gateway
-	name    string
+	client    proto.GatewayClient
+	signingID *signingIdentity
+	name      string
 }
 
-// GetContract returns a Contract representing the named smart contract.
-func (network *Network) GetContract(name string) *Contract {
+// GetContract returns a Contract representing the default smart contract for the named chaincode.
+func (network *Network) GetContract(chaincodeID string) *Contract {
+	return network.GetContractWithName(chaincodeID, "")
+}
+
+// GetContractWithName returns a Contract representing a smart contract within a named chaincode.
+func (network *Network) GetContractWithName(chaincodeID string, contractName string) *Contract {
 	return &Contract{
-		network: network,
-		name:    name,
+		client:       network.client,
+		signingID:    network.signingID,
+		channelName:  network.name,
+		chaincodeID:  chaincodeID,
+		contractName: contractName,
 	}
 }

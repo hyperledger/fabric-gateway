@@ -4,30 +4,34 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import { Gateway } from './gateway';
 import { Contract } from './contract';
+import { connect } from './gateway';
+import { Identity } from './identity/identity';
+import { Signer } from './identity/signer';
 import { Transaction } from './transaction';
-import { Signer } from './signer';
 
-jest.mock('./signer');
 jest.mock('./transaction');
 
 let contract: Contract;
 
 beforeEach(async () => {
-    const signer = new Signer('org1', Buffer.from(''), Buffer.from(''));
-    const gw = await Gateway.connect({url: 'test:2001', signer: signer});
+    const identity: Identity = {
+        mspId: 'MSP_ID',
+        credentials: Buffer.from('CERTIFICATE'),
+    }
+    const signer: Signer = () => Uint8Array.of();
+    const gw = await connect({ url: 'test:2001', identity, signer });
     const nw = gw.getNetwork('mychannel');
     contract = nw.getContract('mycontract');
 
 })
 
 test('evaluateTransaction', async () => {
-    const result = await contract.evaluateTransaction('txn1', 'arg1', 'arg2');
+    await contract.evaluateTransaction('txn1', 'arg1', 'arg2');
 })
 
 test('submitTransaction', async () => {
-    const result = await contract.submitTransaction('txn1', 'arg1', 'arg2');
+    await contract.submitTransaction('txn1', 'arg1', 'arg2');
 })
 
 test('createTransaction', () => {

@@ -4,22 +4,25 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import { Gateway } from './gateway';
-import { Network } from './network';
-import { Signer } from './signer';
+import { Network } from 'network';
+import { connect, Gateway } from './gateway';
+import { Identity } from './identity/identity';
+import { Signer } from './identity/signer';
 
-jest.mock('./signer');
-  
+const identity: Identity = {
+    mspId: 'MSP_ID',
+    credentials: Buffer.from('CERTIFICATE'),
+}
+const signer: Signer = () => Uint8Array.of();
+
 test('connect to gateway', async () => {
-    const signer = new Signer("org1", Buffer.from(''), Buffer.from(''));
-    const gw = await Gateway.connect({url: 'test:2001', signer: signer});
-    expect(gw).toBeInstanceOf(Gateway);
+    const gw: Gateway = await connect({url: 'test:2001', identity, signer});
+    expect(gw).toBeDefined();
 })
 
 test('getNetwork', async () => {
-    const signer = new Signer('org1', Buffer.from(''), Buffer.from(''));
-    const gw = await Gateway.connect({url: 'test:2001', signer: signer});
-    const nw = gw.getNetwork('mychannel');
-    expect(nw).toBeInstanceOf(Network);
+    const gw = await connect({url: 'test:2001', identity, signer});
+    const nw: Network = gw.getNetwork('mychannel');
+    expect(nw).toBeDefined();
     expect(nw.getName()).toBe('mychannel')
 })

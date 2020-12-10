@@ -13,8 +13,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/hyperledger/fabric-gateway/pkg/hash"
-	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	gateway "github.com/hyperledger/fabric-gateway/protos"
 	"github.com/pkg/errors"
 )
@@ -22,8 +20,7 @@ import (
 // Transaction represents an endorsed transaction that can be submitted to the orderer for commit to the ledger.
 type Transaction struct {
 	client              gateway.GatewayClient
-	sign                identity.Sign
-	hash                hash.Hash
+	signingID           *signingIdentity
 	preparedTransaction *gateway.PreparedTransaction
 }
 
@@ -44,7 +41,7 @@ func (transaction *Transaction) Bytes() ([]byte, error) {
 
 // Hash the transaction payload to obtain a digest to be signed.
 func (transaction *Transaction) Hash() ([]byte, error) {
-	return transaction.hash(transaction.preparedTransaction.Envelope.Payload)
+	return transaction.signingID.Hash(transaction.preparedTransaction.Envelope.Payload)
 }
 
 // Submit the transaction to the orderer for commit to the ledger.
@@ -91,7 +88,7 @@ func (transaction *Transaction) signMessage() error {
 		return err
 	}
 
-	signature, err := transaction.sign(digest)
+	signature, err := transaction.signingID.Sign(digest)
 	if err != nil {
 		return err
 	}

@@ -18,18 +18,40 @@ func AssertNewTestNetwork(t *testing.T, networkName string, options ...ConnectOp
 }
 
 func TestNetwork(t *testing.T) {
-	t.Run("GetContract returns correctly named Contract", func(t *testing.T) {
-		contractName := "contract"
+	t.Run("GetDefaultContract returns correctly named Contract", func(t *testing.T) {
+		chaincodeID := "chaincode"
 		mockClient := mock.NewGatewayClient()
 		network := AssertNewTestNetwork(t, "network", WithClient(mockClient))
 
-		contract := network.GetContract(contractName)
+		contract := network.GetContract(chaincodeID)
 
 		if nil == contract {
 			t.Fatal("Expected network, got nil")
 		}
-		if contract.name != contractName {
-			t.Fatalf("Expected a network named %s, got %s", contractName, contract.name)
+		if contract.chaincodeID != chaincodeID {
+			t.Fatalf("Expected a network with chaincode ID %s, got %s", chaincodeID, contract.chaincodeID)
+		}
+		if len(contract.contractName) > 0 {
+			t.Fatalf("Expected a network with empty contract name, got %s", contract.contractName)
+		}
+	})
+
+	t.Run("GetDefaultContract returns correctly named Contract", func(t *testing.T) {
+		chaincodeID := "chaincode"
+		contractName := "contract"
+		mockClient := mock.NewGatewayClient()
+		network := AssertNewTestNetwork(t, "network", WithClient(mockClient))
+
+		contract := network.GetContractWithName(chaincodeID, contractName)
+
+		if nil == contract {
+			t.Fatal("Expected network, got nil")
+		}
+		if contract.chaincodeID != chaincodeID {
+			t.Fatalf("Expected a network with chaincode ID %s, got %s", chaincodeID, contract.chaincodeID)
+		}
+		if contract.contractName != contractName {
+			t.Fatalf("Expected a network with contract name %s, got %s", contractName, contract.contractName)
 		}
 	})
 }

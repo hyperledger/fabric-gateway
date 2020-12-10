@@ -37,12 +37,6 @@ public interface Network {
     Contract getContract(String chaincodeId, String name);
 
     /**
-     * Get a reference to the owning Gateway connection.
-     * @return The owning gateway.
-     */
-    Gateway getGateway();
-
-    /**
      * Get the name of the network channel.
      * @return The network name.
      */

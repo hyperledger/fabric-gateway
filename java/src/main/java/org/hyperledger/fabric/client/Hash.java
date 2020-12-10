@@ -4,13 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.fabric.client.impl;
+package org.hyperledger.fabric.client;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public final class Hash {
-    public static byte[] sha256(byte[] message) {
+final class Hash {
+    private Hash() { }
+
+    public static byte[] sha256(final byte[] message) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             return digest.digest(message);

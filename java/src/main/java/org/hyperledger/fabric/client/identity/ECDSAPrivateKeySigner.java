@@ -37,10 +37,10 @@ final class ECDSAPrivateKeySigner implements Signer {
     private final ECPrivateKey privateKey;
 
     private static final class ECSignature {
-        public final ASN1Integer r;
-        public final ASN1Integer s;
+        public final ASN1Integer r; // checkstyle:ignore-line:VisibilityModifier
+        public final ASN1Integer s; // checkstyle:ignore-line:VisibilityModifier
 
-        public ECSignature(final ASN1Integer r, final ASN1Integer s) {
+        ECSignature(final ASN1Integer r, final ASN1Integer s) {
             this.r = r;
             this.s = s;
         }

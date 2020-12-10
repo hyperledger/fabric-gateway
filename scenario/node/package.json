@@ -6,15 +6,16 @@
     "node": "^10.13.0 || ^12.13.0"
   },
   "scripts": {
-    "test": "cucumber-js -f node_modules/cucumber-pretty --require 'lib/**/*.js' ../features"
+    "clean": "rimraf node_modules",
+    "test": "cucumber-js --require 'lib/**/*.js' ../features"
   },
   "private": true,
   "author": "",
   "license": "Apache-2.0",
   "devDependencies": {
+    "@cucumber/cucumber": "^7.0.0-rc.0",
     "chai": "^4.2.0",
-    "cucumber": "^6.0.5",
-    "cucumber-pretty": "^6.0.0",
-    "fabric-gateway": "file:../../node"
+    "fabric-gateway": "file:../../node/fabric-gateway-dev.tgz",
+    "rimraf": "^3.0.2"
   }
 }

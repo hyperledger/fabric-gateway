@@ -4,50 +4,55 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import { Contract } from './contract';
 import * as crypto from 'crypto';
-import { Signer } from './signer';
-import { protos, common, google } from './protos/protos'
+import { Client } from 'impl/client';
+import { SigningIdentity } from 'signingidentity';
+import { common, google, protos } from './protos/protos';
 
-type Map = { [k: string]: Uint8Array; };
+type TransientData = { [k: string]: Uint8Array; };
 
 export class Transaction {
-    private readonly name: string;
-    private readonly contract: Contract;
-    private transientMap: Map;
+    readonly #client: Client;
+    readonly #signingIdentity: SigningIdentity;
+    readonly #channelName: string;
+    readonly #chaincodeId: string;
+    readonly #transactionName: string;
+    #transientData: TransientData;
 
-    constructor(name: string, contract: Contract) {
-        this.name = name;
-        this.contract = contract;
-        this.transientMap = {};
+    constructor(client: Client, signingIdentity: SigningIdentity, channelName: string, chaincodeId: string, transactionName: string) {
+        this.#client = client;
+        this.#signingIdentity = signingIdentity;
+        this.#channelName = channelName;
+        this.#chaincodeId = chaincodeId;
+        this.#transactionName = transactionName;
+        this.#transientData = {};
     }
 
-    getName() {
-        return this.name;
+    getName(): string {
+        return this.#transactionName;
     }
 
-    setTransient(transientMap: Map) {
-        this.transientMap = transientMap;
+    setTransient(transientMap: TransientData): this {
+        this.#transientData = transientMap;
         return this;
     }
 
-    async evaluate(...args: string[]) {
-        const gw = this.contract._network._gateway;
-        const proposal = this.createProposal(args, gw._signer);
-        const signedProposal = this.signProposal(proposal, gw._signer);
+    async evaluate(...args: string[]): Promise<string> {
+        const proposal = this.createProposal(args);
+        const signedProposal = this.signProposal(proposal);
         const wrapper = this.createProposedWrapper(signedProposal);
-        return gw._client._evaluate(wrapper);
+        return this.#client._evaluate(wrapper);
     }
 
-    async submit(...args: string[]) {
-        const gw = this.contract._network._gateway;
-        const proposal = this.createProposal(args, gw._signer);
-        const signedProposal = this.signProposal(proposal, gw._signer);
+    async submit(...args: string[]): Promise<string> {
+        const proposal = this.createProposal(args);
+        const signedProposal = this.signProposal(proposal);
         const wrapper = this.createProposedWrapper(signedProposal);
-        const preparedTxn = await gw._client._endorse(wrapper);
+        const preparedTxn = await this.#client._endorse(wrapper);
         const envelope = preparedTxn.envelope!;
-        envelope.signature = gw._signer.sign(envelope.payload!);
-        await gw._client._submit(preparedTxn);
+        const digest = this.#signingIdentity.hash(envelope.payload!);
+        envelope.signature = this.#signingIdentity.sign(digest);
+        await this.#client._submit(preparedTxn);
         return preparedTxn.response!.value!.toString();
     }
 
@@ -57,13 +62,11 @@ export class Transaction {
         };
     }
 
-    private createProposal(args: string[], signer: Signer): protos.IProposal {
-        const creator = signer.serialize();
+    private createProposal(args: string[]): protos.IProposal {
+        const creator = this.#signingIdentity.getCreator();
         const nonce = crypto.randomBytes(24);
-        const hash = crypto.createHash('sha256');
-        hash.update(nonce);
-        hash.update(creator);
-        const txid = hash.digest('hex');
+        const txHash = this.#signingIdentity.hash(Buffer.concat([nonce, creator]));
+        const txid = Buffer.from(txHash).toString('hex');
 
         const hdr = {
             channel_header: common.ChannelHeader.encode({
@@ -72,16 +75,16 @@ export class Transaction {
                 timestamp: google.protobuf.Timestamp.create({
                     seconds: Date.now() / 1000
                 }),
-                channel_id: this.contract._network.getName(),
+                channel_id: this.#channelName,
                 extension: protos.ChaincodeHeaderExtension.encode({
                     chaincode_id: protos.ChaincodeID.create({
-                        name: this.contract.getName()
+                        name: this.#chaincodeId
                     })
                 }).finish(),
                 epoch: 0
             }).finish(),
             signature_header: common.SignatureHeader.encode({
-                creator: signer.serialize(),
+                creator,
                 nonce: nonce
             }).finish()
         }
@@ -93,7 +96,7 @@ export class Transaction {
             chaincode_spec: protos.ChaincodeSpec.create({
                 type: 2,
                 chaincode_id: protos.ChaincodeID.create({
-                    name: this.contract.getName()
+                    name: this.#chaincodeId
                 }),
                 input: protos.ChaincodeInput.create({
                     args: allArgs
@@ -105,21 +108,20 @@ export class Transaction {
             header: common.Header.encode(hdr).finish(),
             payload: protos.ChaincodeProposalPayload.encode({
                 input: ccis,
-                TransientMap: this.transientMap
+                TransientMap: this.#transientData
             }).finish()
         }
 
         return proposal;
     }
 
-    private signProposal(proposal: protos.IProposal, signer: Signer): protos.ISignedProposal {
+    private signProposal(proposal: protos.IProposal): protos.ISignedProposal {
         const payload = protos.Proposal.encode(proposal).finish();
-        const signature = signer.sign(payload);
+        const digest = this.#signingIdentity.hash(payload);
+        const signature = this.#signingIdentity.sign(digest);
         return {
             proposal_bytes: payload,
             signature: signature
         };
     }
-
 }
-
