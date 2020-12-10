@@ -10,7 +10,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 final class Hash {
-    public static byte[] sha256(byte[] message) {
+    private Hash() { }
+
+    public static byte[] sha256(final byte[] message) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             return digest.digest(message);

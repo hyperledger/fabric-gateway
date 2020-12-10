@@ -10,14 +10,14 @@ import (
 	"testing"
 )
 
-func AssertNewDefaultTestContract(t *testing.T, chaincodeID string, options ...ConnectOption) *Contract {
+func AssertNewTestContract(t *testing.T, chaincodeID string, options ...ConnectOption) *Contract {
 	network := AssertNewTestNetwork(t, "network", options...)
-	return network.GetDefaultContract(chaincodeID)
+	return network.GetContract(chaincodeID)
 }
 
-func AssertNewTestContract(t *testing.T, chaincodeID string, contractName string, options ...ConnectOption) *Contract {
+func AssertNewTestContractWithName(t *testing.T, chaincodeID string, contractName string, options ...ConnectOption) *Contract {
 	network := AssertNewTestNetwork(t, "network", options...)
-	return network.GetContract(chaincodeID, contractName)
+	return network.GetContractWithName(chaincodeID, contractName)
 }
 
 func bytesAsStrings(bytes [][]byte) []string {

@@ -27,7 +27,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		mockClient.MockEvaluate = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.Result, error) {
 			return nil, errors.New(expectedError)
 		}
-		contract := AssertNewDefaultTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.EvaluateTransaction("transaction")
 
@@ -45,7 +45,7 @@ func TestEvaluateTransaction(t *testing.T) {
 			}
 			return value, nil
 		}
-		contract := AssertNewDefaultTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		actual, err := contract.EvaluateTransaction("transaction")
 		if err != nil {
@@ -65,7 +65,7 @@ func TestEvaluateTransaction(t *testing.T) {
 			value := &gateway.Result{}
 			return value, nil
 		}
-		contract := AssertNewDefaultTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.EvaluateTransaction("transaction")
 		if err != nil {
@@ -86,7 +86,7 @@ func TestEvaluateTransaction(t *testing.T) {
 			value := &gateway.Result{}
 			return value, nil
 		}
-		contract := AssertNewDefaultTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.EvaluateTransaction("transaction")
 		if err != nil {
@@ -107,7 +107,7 @@ func TestEvaluateTransaction(t *testing.T) {
 			value := &gateway.Result{}
 			return value, nil
 		}
-		contract := AssertNewDefaultTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		expected := "TRANSACTION_NAME"
 		_, err := contract.EvaluateTransaction(expected)
@@ -129,7 +129,7 @@ func TestEvaluateTransaction(t *testing.T) {
 			value := &gateway.Result{}
 			return value, nil
 		}
-		contract := AssertNewTestContract(t, "chaincode", "CONTRACT_NAME", WithClient(mockClient))
+		contract := AssertNewTestContractWithName(t, "chaincode", "CONTRACT_NAME", WithClient(mockClient))
 
 		_, err := contract.EvaluateTransaction("TRANSACTION_NAME")
 		if err != nil {
@@ -151,7 +151,7 @@ func TestEvaluateTransaction(t *testing.T) {
 			value := &gateway.Result{}
 			return value, nil
 		}
-		contract := AssertNewDefaultTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		expected := []string{"one", "two", "three"}
 		_, err := contract.EvaluateTransaction("transaction", expected...)

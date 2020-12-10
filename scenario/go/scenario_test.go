@@ -520,7 +520,7 @@ func transactionInvokeFn(txType TransactionType) (func(string, ...client.Proposa
 }
 
 func useContract(contractName string) error {
-	contract = network.GetDefaultContract(contractName)
+	contract = network.GetContract(contractName)
 	return nil
 }
 

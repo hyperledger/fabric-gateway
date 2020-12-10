@@ -29,7 +29,8 @@ class ProposalImpl implements Proposal {
     private final ProposalPackage.ChaincodeProposalPayload.Builder payloadBuilder = ProposalPackage.ChaincodeProposalPayload.newBuilder();
     private final TransactionContext context;
 
-    ProposalImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity, final String channelName, final String chaincodeId, final String transactionName) {
+    ProposalImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity,
+                 final String channelName, final String chaincodeId, final String transactionName) {
         this.client = client;
         this.signingIdentity = signingIdentity;
         this.channelName = channelName;
@@ -145,7 +146,7 @@ class ProposalImpl implements Proposal {
         return proposal;
     }
 
-    private ProposalPackage.SignedProposal signProposal(ProposalPackage.Proposal proposal) {
+    private ProposalPackage.SignedProposal signProposal(final ProposalPackage.Proposal proposal) {
         ByteString payload = proposal.toByteString();
         byte[] hash = signingIdentity.hash(payload.toByteArray());
         byte[] signature = signingIdentity.sign(hash);

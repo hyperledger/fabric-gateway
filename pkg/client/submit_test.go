@@ -37,7 +37,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.MockEndorse = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.PreparedTransaction, error) {
 			return nil, errors.New(expectedError)
 		}
-		contract := AssertNewDefaultTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
 
@@ -55,7 +55,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.MockSubmit = func(ctx context.Context, in *gateway.PreparedTransaction, opts ...grpc.CallOption) (gateway.Gateway_SubmitClient, error) {
 			return nil, errors.New(expectedError)
 		}
-		contract := AssertNewDefaultTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
 
@@ -73,7 +73,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.MockSubmit = func(ctx context.Context, in *gateway.PreparedTransaction, opts ...grpc.CallOption) (gateway.Gateway_SubmitClient, error) {
 			return mock.NewFailSubmitClient(errors.New(expectedError)), nil
 		}
-		contract := AssertNewDefaultTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
 
@@ -92,7 +92,7 @@ func TestSubmitTransaction(t *testing.T) {
 			return mock.NewSuccessSubmitClient(), nil
 		}
 
-		contract := AssertNewDefaultTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		actual, err := contract.SubmitTransaction("transaction")
 		if err != nil {
@@ -114,7 +114,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.MockSubmit = func(ctx context.Context, in *gateway.PreparedTransaction, opts ...grpc.CallOption) (gateway.Gateway_SubmitClient, error) {
 			return mock.NewSuccessSubmitClient(), nil
 		}
-		contract := AssertNewDefaultTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
 		if err != nil {
@@ -137,7 +137,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.MockSubmit = func(ctx context.Context, in *gateway.PreparedTransaction, opts ...grpc.CallOption) (gateway.Gateway_SubmitClient, error) {
 			return mock.NewSuccessSubmitClient(), nil
 		}
-		contract := AssertNewDefaultTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
 		if err != nil {
@@ -160,7 +160,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.MockSubmit = func(ctx context.Context, in *gateway.PreparedTransaction, opts ...grpc.CallOption) (gateway.Gateway_SubmitClient, error) {
 			return mock.NewSuccessSubmitClient(), nil
 		}
-		contract := AssertNewDefaultTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		expected := "TRANSACTION_NAME"
 		_, err := contract.SubmitTransaction(expected)
@@ -184,7 +184,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.MockSubmit = func(ctx context.Context, in *gateway.PreparedTransaction, opts ...grpc.CallOption) (gateway.Gateway_SubmitClient, error) {
 			return mock.NewSuccessSubmitClient(), nil
 		}
-		contract := AssertNewTestContract(t, "chaincode", "CONTRACT_NAME", WithClient(mockClient))
+		contract := AssertNewTestContractWithName(t, "chaincode", "CONTRACT_NAME", WithClient(mockClient))
 
 		_, err := contract.SubmitTransaction("TRANSACTION_NAME")
 		if err != nil {
@@ -208,7 +208,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.MockSubmit = func(ctx context.Context, in *gateway.PreparedTransaction, opts ...grpc.CallOption) (gateway.Gateway_SubmitClient, error) {
 			return mock.NewSuccessSubmitClient(), nil
 		}
-		contract := AssertNewDefaultTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		expected := []string{"one", "two", "three"}
 		_, err := contract.SubmitTransaction("transaction", expected...)

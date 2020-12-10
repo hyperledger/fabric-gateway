@@ -21,7 +21,8 @@ final class ContractImpl implements Contract {
         this(client, signingIdentity, channelName, chaincodeId, null);
     }
 
-    ContractImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity, final String channelName, final String chaincodeId, final String contractName) {
+    ContractImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity,
+                 final String channelName, final String chaincodeId, final String contractName) {
         this.client = client;
         this.signingIdentity = signingIdentity;
         this.channelName = channelName;

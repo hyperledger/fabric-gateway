@@ -1,7 +1,7 @@
 /*
- *  Copyright 2020 IBM All Rights Reserved.
+ * Copyright 2020 IBM All Rights Reserved.
  *
- *  SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 package org.hyperledger.fabric.client;
@@ -22,7 +22,7 @@ class TransactionContext {
     private final String transactionId;
     private final Common.SignatureHeader signatureHeader;
 
-    public TransactionContext(final SigningIdentity signingIdentity) {
+    TransactionContext(final SigningIdentity signingIdentity) {
         this.signingIdentity = signingIdentity;
         nonce = newNonce();
 

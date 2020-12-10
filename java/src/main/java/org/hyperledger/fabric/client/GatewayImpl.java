@@ -20,7 +20,8 @@ final class GatewayImpl implements Gateway {
         private static final Signer UNDEFINED_SIGNER = (digest) -> {
             throw new UnsupportedOperationException("No signing implementation supplied");
         };
-        private static final Runnable NO_OP_CLOSER = () -> {};
+        private static final Runnable NO_OP_CLOSER = () -> { };
+        private static final TimePeriod CHANNEL_CLOSE_TIMEOUT = new TimePeriod(5, TimeUnit.SECONDS);
 
         private GatewayGrpc.GatewayBlockingStub client;
         private Runnable channelCloser = NO_OP_CLOSER;
@@ -28,10 +29,11 @@ final class GatewayImpl implements Gateway {
         private Signer signer = UNDEFINED_SIGNER; // No signer implementation is required if only offline signing is used
 
         @Override
+        // checkstyle:ignore-next-line:TodoComment
         public Builder endpoint(final String target) { // TODO: Maybe should be abstracted out to Endpoint class
             ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
             client = GatewayGrpc.newBlockingStub(channel);
-            channelCloser = () -> GatewayUtils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
+            channelCloser = () -> GatewayUtils.shutdownChannel(channel, CHANNEL_CLOSE_TIMEOUT.getTime(), CHANNEL_CLOSE_TIMEOUT.getTimeUnit());
             return this;
         }
 

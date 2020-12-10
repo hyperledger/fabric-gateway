@@ -42,7 +42,7 @@ final class GatewayUtils {
         }
     }
 
-    public static byte[] concat(byte[]... bytes) {
+    public static byte[] concat(final byte[]... bytes) {
         int length = Arrays.stream(bytes).mapToInt(b -> b.length).sum();
         try (ByteArrayOutputStream byteOut = new ByteArrayOutputStream(length)) {
             for (byte[] b : bytes) {
@@ -54,7 +54,7 @@ final class GatewayUtils {
         }
     }
 
-    public static byte[] serializeIdentity(Identity identity) {
+    public static byte[] serializeIdentity(final Identity identity) {
         return Identities.SerializedIdentity.newBuilder()
                 .setMspid(identity.getMspId())
                 .setIdBytes(ByteString.copyFrom(identity.getCredentials()))
@@ -62,7 +62,7 @@ final class GatewayUtils {
                 .toByteArray();
     }
 
-    public static void shutdownChannel(ManagedChannel channel, long timeout, TimeUnit timeUnit) {
+    public static void shutdownChannel(final ManagedChannel channel, final long timeout, final TimeUnit timeUnit) {
         if (channel.isShutdown()) {
             return;
         }

@@ -70,7 +70,26 @@ public interface Contract {
      */
     byte[] evaluateTransaction(String name, String... args) throws ContractException;
 
+    /**
+     * Build a new transaction proposal.
+     * @param transactionName The name of the transaction to be invoked.
+     * @return A proposal builder.
+     */
     Proposal newProposal(String transactionName);
+
+    /**
+     * Create a signed proposal.
+     * @param proposalBytes The proposal.
+     * @param signature A digital signature.
+     * @return A signed proposal.
+     */
     Proposal newSignedProposal(byte[] proposalBytes, byte[] signature);
+
+    /**
+     * Create a signed transaction.
+     * @param transactionBytes The transaction.
+     * @param signature A digital signature.
+     * @return A signed transaction.
+     */
     Transaction newSignedTransaction(byte[] transactionBytes, byte[] signature);
 }

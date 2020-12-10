@@ -32,7 +32,7 @@ func TestSign(t *testing.T) {
 			value := &gateway.Result{}
 			return value, nil
 		}
-		contract := AssertNewDefaultTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
+		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
 
 		if _, err := contract.EvaluateTransaction("transaction"); err != nil {
 			t.Fatal(err)
@@ -66,7 +66,7 @@ func TestSign(t *testing.T) {
 			}
 			return submitClient, nil
 		}
-		contract := AssertNewDefaultTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
+		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
 
 		if _, err := contract.SubmitTransaction("transaction"); err != nil {
 			t.Fatal(err)
@@ -100,7 +100,7 @@ func TestSign(t *testing.T) {
 			}
 			return submitClient, nil
 		}
-		contract := AssertNewDefaultTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
+		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
 
 		if _, err := contract.SubmitTransaction("transaction"); err != nil {
 			t.Fatal(err)
@@ -123,7 +123,7 @@ func TestSign(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		contract := gateway.GetNetwork("network").GetDefaultContract("chaincode")
+		contract := gateway.GetNetwork("network").GetContract("chaincode")
 
 		if _, err := contract.EvaluateTransaction("transaction"); nil == err {
 			t.Fatal("Expected signing error but got nil")

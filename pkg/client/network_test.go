@@ -23,7 +23,7 @@ func TestNetwork(t *testing.T) {
 		mockClient := mock.NewGatewayClient()
 		network := AssertNewTestNetwork(t, "network", WithClient(mockClient))
 
-		contract := network.GetDefaultContract(chaincodeID)
+		contract := network.GetContract(chaincodeID)
 
 		if nil == contract {
 			t.Fatal("Expected network, got nil")
@@ -42,7 +42,7 @@ func TestNetwork(t *testing.T) {
 		mockClient := mock.NewGatewayClient()
 		network := AssertNewTestNetwork(t, "network", WithClient(mockClient))
 
-		contract := network.GetContract(chaincodeID, contractName)
+		contract := network.GetContractWithName(chaincodeID, contractName)
 
 		if nil == contract {
 			t.Fatal("Expected network, got nil")

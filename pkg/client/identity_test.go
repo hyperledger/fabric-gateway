@@ -55,7 +55,7 @@ func TestIdentity(t *testing.T) {
 			value := &gateway.Result{}
 			return value, nil
 		}
-		contract := AssertNewDefaultTestContract(t, "contract", WithClient(mockClient), WithIdentity(id))
+		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithIdentity(id))
 
 		if _, err := contract.EvaluateTransaction("transaction"); err != nil {
 			t.Fatal(err)
@@ -84,7 +84,7 @@ func TestIdentity(t *testing.T) {
 			}
 			return submitClient, nil
 		}
-		contract := AssertNewDefaultTestContract(t, "contract", WithClient(mockClient), WithIdentity(id))
+		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithIdentity(id))
 
 		if _, err := contract.SubmitTransaction("transaction"); err != nil {
 			t.Fatal(err)

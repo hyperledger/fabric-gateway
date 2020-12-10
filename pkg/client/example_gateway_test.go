@@ -27,7 +27,7 @@ func Example() {
 	PanicOnError(err)
 
 	network := gateway.GetNetwork("channelName")
-	contract := network.GetDefaultContract("chaincodeName")
+	contract := network.GetContract("chaincodeName")
 
 	result, err := contract.SubmitTransaction("transactionName", "arg1", "arg2")
 	PanicOnError(err)

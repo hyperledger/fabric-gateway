@@ -16,13 +16,13 @@ type Network struct {
 	name      string
 }
 
-// GetDefaultContract returns a Contract representing the default smart contract for the named chaincode.
-func (network *Network) GetDefaultContract(chaincodeID string) *Contract {
-	return network.GetContract(chaincodeID, "")
+// GetContract returns a Contract representing the default smart contract for the named chaincode.
+func (network *Network) GetContract(chaincodeID string) *Contract {
+	return network.GetContractWithName(chaincodeID, "")
 }
 
-// GetContract returns a Contract representing a smart contract within a named chaincode.
-func (network *Network) GetContract(chaincodeID string, contractName string) *Contract {
+// GetContractWithName returns a Contract representing a smart contract within a named chaincode.
+func (network *Network) GetContractWithName(chaincodeID string, contractName string) *Contract {
 	return &Contract{
 		client:       network.client,
 		signingID:    network.signingID,

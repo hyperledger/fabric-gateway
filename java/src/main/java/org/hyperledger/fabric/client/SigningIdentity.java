@@ -28,11 +28,11 @@ final class SigningIdentity {
         return identity;
     }
 
-    public byte[] hash(byte[] message) {
+    public byte[] hash(final byte[] message) {
         return hash.apply(message);
     }
 
-    public byte[] sign(byte[] digest) {
+    public byte[] sign(final byte[] digest) {
         try {
             return signer.sign(digest);
         } catch (GeneralSecurityException e) {
