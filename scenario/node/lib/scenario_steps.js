@@ -6,14 +6,16 @@ SPDX-License-Identifier: Apache-2.0
 
 'use strict';
 
-const { Given, When, Then, BeforeAll, AfterAll, After } = require('@cucumber/cucumber');
-const { execFileSync, spawnSync, spawn } = require('child_process');
+const { Given, When, Then, BeforeAll, AfterAll, setDefaultTimeout } = require('@cucumber/cucumber');
+const { execFileSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { connect, Signers } = require('fabric-gateway');
 const chai = require('chai');
 const expect = chai.expect;
+
+setDefaultTimeout(30 * 1000);
 
 const fixturesDir = path.resolve(__dirname, '..', '..', 'fixtures');
 const dockerComposeDir = path.join(fixturesDir, 'docker-compose');
@@ -211,34 +213,41 @@ Given('I use the {word} contract', (contractName) => {
 });
 
 When(/I prepare to (evaluate|submit) an? ([^ ]+) transaction/, (action, txnName) => {
-  this.txn = this.contract.createTransaction(txnName);
-  if(action === 'evaluate') {
-    this.txn = this.contract.prepareToEvaluate(txnName);
-  } else {
-    this.txn = this.contract.prepareToSubmit(txnName);
-  }
+  this.txn = {
+    type: action,
+    name: txnName,
+    options: {},
+  };
 });
 
 When(/I set the transaction arguments? to (.+)/, (jsonArgs) => {
   const args = JSON.parse(jsonArgs);
-  this.txn.setArgs(...args);
+  this.txn.options.arguments = args;
 });
 
 When('I set transient data on the transaction to', (dataTable) => {
   const hash = dataTable.rowsHash();
   const transient = {};
   Object.keys(hash).forEach(key => { transient[key] = Buffer.from(hash[key]) });
-  this.txn.setTransient(transient);
+  this.txn.options.transientData = transient;
 });
 
 When('I invoke the transaction', async () => {
-  this.txnResult = await this.txn.invoke();
+  const proposal = this.contract.newProposal(this.txn.name, this.txn.options);
+  if (this.txn.type === 'evaluate') {
+    this.txn.result = await proposal.evaluate();
+  } else if (this.txn.type === 'submit') {
+    const transaction = await proposal.endorse();
+    this.txn.result = await transaction.submit();
+  } else {
+    throw new Error(`Unknown transaction type: ${this.txn.type}`);
+  }
 });
 
 Then('the response should be JSON matching', (docString) => {
-  const resultText = new TextDecoder().decode(this.txnResult);
-  const response = JSON.parse(resultText);
-  const expected = JSON.parse(docString);
+  const resultText = new TextDecoder().decode(this.txn.result);
+  const response = parseJson(resultText);
+  const expected = parseJson(docString);
   expect(response).to.eql(expected);
 });
 
@@ -255,3 +264,11 @@ function dockerCommandWithTLS(...args) {
   return dockerCommand(...allArgs);
 }
 
+function parseJson(json) {
+  try {
+    return JSON.parse(json);
+  } catch (err) {
+    err.message = err.message + ': ' + json;
+    throw err;
+  }
+}

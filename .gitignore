@@ -5,5 +5,3 @@ cover.out
 fabric-protos/
 protos/gateway.pb.go
 protos/gateway_grpc.pb.go
-node/src/protos/protos.js
-node/src/protos/protos.d.ts

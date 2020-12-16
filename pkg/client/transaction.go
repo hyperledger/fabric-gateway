@@ -46,7 +46,7 @@ func (transaction *Transaction) Digest() ([]byte, error) {
 
 // Submit the transaction to the orderer for commit to the ledger.
 func (transaction *Transaction) Submit() (chan error, error) {
-	if err := transaction.signMessage(); err != nil {
+	if err := transaction.sign(); err != nil {
 		return nil, err
 	}
 
@@ -78,8 +78,8 @@ func (transaction *Transaction) Submit() (chan error, error) {
 	return commit, nil
 }
 
-func (transaction *Transaction) signMessage() error {
-	if transaction.preparedTransaction.Envelope.Signature != nil {
+func (transaction *Transaction) sign() error {
+	if transaction.isSigned() {
 		return nil
 	}
 
@@ -96,6 +96,10 @@ func (transaction *Transaction) signMessage() error {
 	transaction.setSignature(signature)
 
 	return nil
+}
+
+func (transaction *Transaction) isSigned() bool {
+	return len(transaction.preparedTransaction.Envelope.Signature) > 0
 }
 
 func (transaction *Transaction) setSignature(signature []byte) {

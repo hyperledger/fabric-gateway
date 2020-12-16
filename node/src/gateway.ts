@@ -75,7 +75,11 @@ class GatewayImpl {
     }
 
     getNetwork(channelName: string): Network {
-        return new NetworkImpl(this.#client, this.#signingIdentity, channelName);
+        return new NetworkImpl({
+            client: this.#client,
+            signingIdentity: this.#signingIdentity,
+            channelName
+        });
     }
 
     close(): void {

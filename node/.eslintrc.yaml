@@ -5,6 +5,7 @@ env:
 root: true
 ignorePatterns:
     - src/protos/
+    - dist/
 extends:
     - eslint:recommended
 rules:
