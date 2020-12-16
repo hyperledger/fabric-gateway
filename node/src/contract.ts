@@ -1,31 +1,40 @@
 /*
  * Copyright 2020 IBM All Rights Reserved.
  *
- *SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Client } from "impl/client";
+import { GatewayClient } from "client";
 import { SigningIdentity } from "signingidentity";
-import { Transaction } from "./transaction";
+import { OldTransaction } from "./transaction";
 
 export interface Contract {
     getChaincodeId(): string;
     getContractName(): string | undefined;
-    evaluateTransaction(name: string, ...args: Array<string|Uint8Array>): Promise<string>; // TODO: wrong return type
-    submitTransaction(name: string, ...args: Array<string|Uint8Array>): Promise<string>; // TODO: wrong return type
-    createTransaction(transactionName: string): Transaction; // TODO: refactor to align with Go and Java
-    prepareToEvaluate(transactionName: string): EvaluateTransaction; // TODO: refactor to align with Go and Java
-    prepareToSubmit(transactionName: string): SubmitTransaction; // TODO: refactor to align with Go and Java
+    evaluateTransaction(name: string, ...args: Array<string|Uint8Array>): Promise<Uint8Array>;
+    submitTransaction(name: string, ...args: Array<string|Uint8Array>): Promise<Uint8Array>;
+
+    // evaluate(/* ProposalOptions */): Promise<Uint8Array>;
+    // submit(/* ProposalOptions */): Promise<Uint8Array>;
+
+    // newProposal(/* ProposalOptions */): Proposal;
+    // newSignedProposal(bytes: Uint8Array, signature: Uint8Array): Proposal;
+    // newSignedTransaction(bytes: Uint8Array, signature: Uint8Array): Transaction;
+
+    // TODO: Remove
+    createTransaction(transactionName: string): OldTransaction;
+    prepareToEvaluate(transactionName: string): EvaluateTransaction;
+    prepareToSubmit(transactionName: string): SubmitTransaction;
 }
 
 export class ContractImpl implements Contract {
-    readonly #client: Client;
+    readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
     readonly #channelName: string;
     readonly #chaincodeId: string;
     readonly #contractName?: string;
 
-    constructor(client: Client, signingIdentity: SigningIdentity, channelName: string, chaincodeId: string, contractName?: string) {
+    constructor(client: GatewayClient, signingIdentity: SigningIdentity, channelName: string, chaincodeId: string, contractName?: string) {
         this.#client = client;
         this.#signingIdentity = signingIdentity;
         this.#channelName = channelName;
@@ -41,15 +50,15 @@ export class ContractImpl implements Contract {
         return this.#contractName;
     }
 
-    createTransaction(transactionName: string): Transaction {
-        return new Transaction(this.#client, this.#signingIdentity, this.#channelName, this.#chaincodeId, this.getQualifiedTransactionName(transactionName));
+    createTransaction(transactionName: string): OldTransaction {
+        return new OldTransaction(this.#client, this.#signingIdentity, this.#channelName, this.#chaincodeId, this.getQualifiedTransactionName(transactionName));
     }
 
-    async evaluateTransaction(name: string, ...args: string[]): Promise<string> {
+    async evaluateTransaction(name: string, ...args: string[]): Promise<Uint8Array> {
         return this.createTransaction(name).evaluate(...args);
     }
 
-    async submitTransaction(name: string, ...args: string[]): Promise<string> {
+    async submitTransaction(name: string, ...args: string[]): Promise<Uint8Array> {
         return this.createTransaction(name).submit(...args);
     }
 
@@ -66,10 +75,10 @@ export class ContractImpl implements Contract {
     }
 }
 
-class EvaluateTransaction extends Transaction {
+class EvaluateTransaction extends OldTransaction {
     private args: string[];
 
-    constructor(client: Client, signingIdentity: SigningIdentity, channelName: string, chaincodeId: string, transactionName: string) {
+    constructor(client: GatewayClient, signingIdentity: SigningIdentity, channelName: string, chaincodeId: string, transactionName: string) {
         super(client, signingIdentity, channelName, chaincodeId, transactionName);
         this.args = [];
     }
@@ -84,10 +93,10 @@ class EvaluateTransaction extends Transaction {
     }
 }
 
-class SubmitTransaction extends Transaction {
+class SubmitTransaction extends OldTransaction {
     private args: string[];
 
-    constructor(client: Client, signingIdentity: SigningIdentity, channelName: string, chaincodeId: string, transactionName: string) {
+    constructor(client: GatewayClient, signingIdentity: SigningIdentity, channelName: string, chaincodeId: string, transactionName: string) {
         super(client, signingIdentity, channelName, chaincodeId, transactionName);
         this.args = [];
     }

@@ -3,10 +3,9 @@
   "version": "0.0.1",
   "description": "Scenario test for Fabric Gateway",
   "engines": {
-    "node": "^10.13.0 || ^12.13.0"
+    "node": "^12.13.0 || ^14.15.0"
   },
   "scripts": {
-    "clean": "rimraf node_modules",
     "test": "cucumber-js --require 'lib/**/*.js' ../features"
   },
   "private": true,

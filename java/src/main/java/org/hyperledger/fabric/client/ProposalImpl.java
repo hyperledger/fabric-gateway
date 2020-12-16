@@ -52,7 +52,7 @@ class ProposalImpl implements Proposal {
     }
 
     @Override
-    public byte[] getHash() {
+    public byte[] getDigest() {
         return new byte[0];
     }
 

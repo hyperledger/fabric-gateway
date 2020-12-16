@@ -39,8 +39,8 @@ func (transaction *Transaction) Bytes() ([]byte, error) {
 	return transactionBytes, nil
 }
 
-// Hash the transaction payload to obtain a digest to be signed.
-func (transaction *Transaction) Hash() ([]byte, error) {
+// Digest of the transaction. This is used to generate a digital signature.
+func (transaction *Transaction) Digest() ([]byte, error) {
 	return transaction.signingID.Hash(transaction.preparedTransaction.Envelope.Payload)
 }
 
@@ -83,7 +83,7 @@ func (transaction *Transaction) signMessage() error {
 		return nil
 	}
 
-	digest, err := transaction.Hash()
+	digest, err := transaction.Digest()
 	if err != nil {
 		return err
 	}

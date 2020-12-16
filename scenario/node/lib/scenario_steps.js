@@ -227,7 +227,7 @@ When(/I set the transaction arguments? to (.+)/, (jsonArgs) => {
 When('I set transient data on the transaction to', (dataTable) => {
   const hash = dataTable.rowsHash();
   const transient = {};
-  Object.keys(hash).map(key => { transient[key] = Buffer.from(hash[key]) });
+  Object.keys(hash).forEach(key => { transient[key] = Buffer.from(hash[key]) });
   this.txn.setTransient(transient);
 });
 
@@ -236,7 +236,8 @@ When('I invoke the transaction', async () => {
 });
 
 Then('the response should be JSON matching', (docString) => {
-  const response = JSON.parse(this.txnResult);
+  const resultText = new TextDecoder().decode(this.txnResult);
+  const response = JSON.parse(resultText);
   const expected = JSON.parse(docString);
   expect(response).to.eql(expected);
 });

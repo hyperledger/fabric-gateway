@@ -22,11 +22,10 @@ public interface Proposal {
     byte[] getBytes();
 
     /**
-     * Get the hash of the serialized proposal. This may be used as the message digest from which to generate a digital
-     * signature.
+     * Get the digest of the serialized proposal. This is used to generate a digital signature.
      * @return A hash of the proposal.
      */
-    byte[] getHash();
+    byte[] getDigest();
 
     /**
      * Add transactions arguments to the proposal. These extend any previously added arguments.
