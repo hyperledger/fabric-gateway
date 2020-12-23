@@ -130,7 +130,7 @@ describe('Offline sign', () => {
     });
 
     describe('serialization', () => {
-        it('keeps same transaction ID', async () => {
+        it('proposal keeps same transaction ID', async () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
             const expected = unsignedProposal.getTransactionId();
 
@@ -140,12 +140,24 @@ describe('Offline sign', () => {
             expect(actual).toBe(expected);
         });
 
-        it('keeps same digest', async () => {
+        it('proposal keeps same digest', async () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
             const expected = unsignedProposal.getDigest();
 
             const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const actual = signedProposal.getDigest();
+    
+            expect(actual).toEqual(expected);
+        });
+
+        it('transaction keeps same digest', async () => {
+            const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
+            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const unsignedTransaction = await signedProposal.endorse();
+            const expected = unsignedTransaction.getDigest();
+
+            const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), expected);
+            const actual = signedTransaction.getDigest();
     
             expect(actual).toEqual(expected);
         });
