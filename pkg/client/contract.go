@@ -110,8 +110,10 @@ func (contract *Contract) NewProposal(transactionName string, options ...Proposa
 
 // NewSignedProposal creates a transaction proposal with signature, which can be sent to peers for endorsement.
 func (contract *Contract) NewSignedProposal(bytes []byte, signature []byte) (*Proposal, error) {
-	var proposedTransactionProto *gateway.ProposedTransaction
-	proto.Unmarshal(bytes, proposedTransactionProto)
+	proposedTransactionProto := &gateway.ProposedTransaction{}
+	if err := proto.Unmarshal(bytes, proposedTransactionProto); err != nil {
+		return nil, errors.Wrap(err, "Failed to deserialize proposal")
+	}
 
 	proposal := &Proposal{
 		client:              contract.client,
@@ -126,8 +128,8 @@ func (contract *Contract) NewSignedProposal(bytes []byte, signature []byte) (*Pr
 // NewSignedTransaction creates an endorsed transaction with signature, which can be submitted to the orderer for commit
 // to the ledger.
 func (contract *Contract) NewSignedTransaction(bytes []byte, signature []byte) (*Transaction, error) {
-	var preparedTransaction *gateway.PreparedTransaction
-	if err := proto.Unmarshal(bytes, &gateway.PreparedTransaction{}); err != nil {
+	preparedTransaction := &gateway.PreparedTransaction{}
+	if err := proto.Unmarshal(bytes, preparedTransaction); err != nil {
 		return nil, errors.Wrap(err, "Failed to deserialize transaction")
 	}
 
