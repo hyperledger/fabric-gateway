@@ -10,46 +10,43 @@ import (
 	"context"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	gateway "github.com/hyperledger/fabric-gateway/protos"
-	"github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/pkg/errors"
 )
 
 // Proposal represents a transaction proposal that can be sent to peers for endorsement or evaluated as a query.
 type Proposal struct {
-	client        gateway.GatewayClient
-	signingID     *signingIdentity
-	transactionID string
-	bytes         []byte
-	signature     []byte
+	client              gateway.GatewayClient
+	signingID           *signingIdentity
+	proposedTransaction *gateway.ProposedTransaction
 }
 
 // Bytes of the serialized proposal message.
 func (proposal *Proposal) Bytes() ([]byte, error) {
-	return proposal.bytes, nil
+	return proto.Marshal(proposal.proposedTransaction)
 }
 
 // Digest of the proposal. This is used to generate a digital signature.
 func (proposal *Proposal) Digest() ([]byte, error) {
-	return proposal.signingID.Hash(proposal.bytes)
+	return proposal.signingID.Hash(proposal.proposedTransaction.Proposal.ProposalBytes)
 }
 
 // TransactionID for the proposal.
 func (proposal *Proposal) TransactionID() string {
-	return proposal.transactionID
+	return proposal.proposedTransaction.TxId
 }
 
 // Endorse the proposal to obtain an endorsed transaction for submission to the orderer.
 func (proposal *Proposal) Endorse() (*Transaction, error) {
-	txProposal, err := proposal.newProposedTransaction()
-	if err != nil {
+	if err := proposal.sign(); err != nil {
 		return nil, err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
-	preparedTransaction, err := proposal.client.Endorse(ctx, txProposal)
+	preparedTransaction, err := proposal.client.Endorse(ctx, proposal.proposedTransaction)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to endorse proposal")
 	}
@@ -64,15 +61,14 @@ func (proposal *Proposal) Endorse() (*Transaction, error) {
 
 // Evaluate the proposal to obtain a transaction result. This is effectively a query.
 func (proposal *Proposal) Evaluate() ([]byte, error) {
-	txProposal, err := proposal.newProposedTransaction()
-	if err != nil {
+	if err := proposal.sign(); err != nil {
 		return nil, err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
-	result, err := proposal.client.Evaluate(ctx, txProposal)
+	result, err := proposal.client.Evaluate(ctx, proposal.proposedTransaction)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to evaluate transaction")
 	}
@@ -80,32 +76,12 @@ func (proposal *Proposal) Evaluate() ([]byte, error) {
 	return result.Value, nil
 }
 
-func (proposal *Proposal) newProposedTransaction() (*gateway.ProposedTransaction, error) {
-	signedProposal, err := proposal.newSignedProposal()
-	if err != nil {
-		return nil, err
-	}
-
-	proposedTransaction := &gateway.ProposedTransaction{
-		Proposal: signedProposal,
-	}
-	return proposedTransaction, nil
-}
-
-func (proposal *Proposal) newSignedProposal() (*peer.SignedProposal, error) {
-	if err := proposal.sign(); err != nil {
-		return nil, err
-	}
-
-	signedProposal := &peer.SignedProposal{
-		ProposalBytes: proposal.bytes,
-		Signature:     proposal.signature,
-	}
-	return signedProposal, nil
+func (proposal *Proposal) setSignature(signature []byte) {
+	proposal.proposedTransaction.Proposal.Signature = signature
 }
 
 func (proposal *Proposal) isSigned() bool {
-	return len(proposal.signature) > 0
+	return len(proposal.proposedTransaction.Proposal.Signature) > 0
 }
 
 func (proposal *Proposal) sign() error {
@@ -118,10 +94,12 @@ func (proposal *Proposal) sign() error {
 		return err
 	}
 
-	proposal.signature, err = proposal.signingID.Sign(digest)
+	signature, err := proposal.signingID.Sign(digest)
 	if err != nil {
 		return err
 	}
+
+	proposal.setSignature(signature)
 
 	return nil
 }

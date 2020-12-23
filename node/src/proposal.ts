@@ -41,20 +41,17 @@ export interface Proposal {
 export interface ProposalImplOptions {
     readonly client: GatewayClient;
     readonly signingIdentity: SigningIdentity;
-    readonly transactionId: string;
     readonly proposedTransaction: protos.IProposedTransaction;
 }
 
 export class ProposalImpl implements Proposal {
     readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
-    readonly #transactionId: string;
     readonly #proposedTransaction: protos.IProposedTransaction;
 
     constructor(options: ProposalImplOptions) {
         this.#client = options.client;
         this.#signingIdentity = options.signingIdentity;
-        this.#transactionId = options.transactionId;
         this.#proposedTransaction = options.proposedTransaction;
     }
 
@@ -67,7 +64,7 @@ export class ProposalImpl implements Proposal {
     }
 
     getTransactionId(): string {
-        return this.#transactionId;
+        return this.#proposedTransaction.txId!;
     }
 
     async evaluate(): Promise<Uint8Array> {

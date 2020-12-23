@@ -108,6 +108,8 @@ class ProposalImpl implements Proposal {
         ProposalPackage.SignedProposal signedProposal = signProposal(proposal);
         ProposedTransaction proposedTransaction = ProposedTransaction.newBuilder()
                 .setProposal(signedProposal)
+                .setTxId(getTransactionId())
+                .setChannelId(channelName)
                 .build();
         return proposedTransaction;
     }

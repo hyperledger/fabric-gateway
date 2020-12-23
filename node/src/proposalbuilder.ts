@@ -37,11 +37,12 @@ export class ProposalBuilder {
         return new ProposalImpl({
             client: this.#options.client,
             signingIdentity: this.#options.signingIdentity,
-            transactionId: this.#transactionContext.getTransactionId(),
             proposedTransaction: {
                 proposal: {
                     proposal_bytes: protos.Proposal.encode(this.newProposal()).finish(),
                 },
+                txId: this.#transactionContext.getTransactionId(),
+                channelId: this.#options.channelName,
             },
         });
     }

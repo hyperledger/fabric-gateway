@@ -36,11 +36,20 @@ func (builder *proposalBuilder) build() (*Proposal, error) {
 		return nil, errors.Wrap(err, "Failed to marshall Proposal protobuf")
 	}
 
+	signedProposalProto := &peer.SignedProposal{
+		ProposalBytes: proposalBytes,
+	}
+
+	proposedTransactionProto := &gateway.ProposedTransaction{
+		Proposal:  signedProposalProto,
+		TxId:      transactionID,
+		ChannelId: builder.channelName,
+	}
+
 	proposal := &Proposal{
-		client:        builder.client,
-		signingID:     builder.signingID,
-		transactionID: transactionID,
-		bytes:         proposalBytes,
+		client:              builder.client,
+		signingID:           builder.signingID,
+		proposedTransaction: proposedTransactionProto,
 	}
 	return proposal, nil
 }

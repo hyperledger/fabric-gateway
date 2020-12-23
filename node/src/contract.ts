@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Proposal, ProposalImpl } from "./proposal";
-import { common, protos } from "./protos/protos";
 import { GatewayClient } from "./client";
+import { Proposal, ProposalImpl } from "./proposal";
 import { ProposalBuilder, ProposalOptions } from "./proposalbuilder";
+import { protos } from "./protos/protos";
 import { SigningIdentity } from "./signingidentity";
 import { Transaction, TransactionImpl } from "./transaction";
 
@@ -178,16 +178,11 @@ export class ContractImpl implements Contract {
 
     newSignedProposal(bytes: Uint8Array, signature: Uint8Array): Proposal {
         const proposedTransaction = protos.ProposedTransaction.decode(bytes);
-        const proposal = protos.Proposal.decode(proposedTransaction.proposal!.proposal_bytes!);
-        const header = common.Header.decode(proposal.header);
-        const channelHeader = common.ChannelHeader.decode(header.channel_header);
-        const transactionId = channelHeader.tx_id;
 
         const result = new ProposalImpl({
             client: this.#client,
             signingIdentity: this.#signingIdentity,
             proposedTransaction,
-            transactionId,
         });
         result.setSignature(signature);
 
