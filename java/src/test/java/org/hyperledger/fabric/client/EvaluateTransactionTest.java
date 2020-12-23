@@ -157,7 +157,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_network_name() throws ContractException, InvalidProtocolBufferException {
+    void sends_network_name_in_proposal() throws ContractException, InvalidProtocolBufferException {
         network = gateway.getNetwork("MY_NETWORK");
 
         Contract contract = network.getContract("CHAINCODE_ID");
@@ -167,5 +167,32 @@ public final class EvaluateTransactionTest {
         String networkName = mocker.getChannelHeader(request).getChannelId();
 
         assertThat(networkName).isEqualTo("MY_NETWORK");
+    }
+
+    @Test
+    void sends_network_name_in_proposed_transaction() throws ContractException, InvalidProtocolBufferException {
+        network = gateway.getNetwork("MY_NETWORK");
+
+        Contract contract = network.getContract("CHAINCODE_ID");
+        contract.evaluateTransaction("TRANSACTION_NAME");
+
+        ProposedTransaction request = mocker.captureEvaluate();
+        String networkName = request.getChannelId();
+
+        assertThat(networkName).isEqualTo("MY_NETWORK");
+    }
+
+    @Test
+    void sends_transaction_ID_in_proposed_transaction() throws ContractException, InvalidProtocolBufferException {
+        network = gateway.getNetwork("MY_NETWORK");
+
+        Contract contract = network.getContract("CHAINCODE_ID");
+        contract.evaluateTransaction("TRANSACTION_NAME");
+
+        ProposedTransaction request = mocker.captureEvaluate();
+        String expected = mocker.getChannelHeader(request).getTxId();
+        String actual = request.getTxId();
+
+        assertThat(actual).isEqualTo(expected);
     }
 }

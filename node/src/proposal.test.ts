@@ -116,14 +116,11 @@ describe('Proposal', () => {
         it('includes channel name in proposal', async () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
     
-            expect(client.evaluate).toHaveBeenCalled();
-    
             const proposedTransaction = client.evaluate.mock.calls[0][0];
             const channelHeader = assertDecodeChannelHeader(proposedTransaction);
-    
             expect(channelHeader.channel_id).toBe(network.getName());
         });
-    
+
         it('includes chaincode ID in proposal', async () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
     
@@ -193,6 +190,21 @@ describe('Proposal', () => {
             }).finish();
             expect(signatureHeader.creator).toEqual(expected);
         });
+
+        it('includes channel name in proposed transaction', async () => {
+            await contract.evaluateTransaction('TRANSACTION_NAME');
+    
+            const proposedTransaction = client.evaluate.mock.calls[0][0];
+            expect(proposedTransaction.channelId).toBe(network.getName());
+        });
+
+        it('includes transaction ID in proposed transaction', async () => {
+            await contract.evaluateTransaction('TRANSACTION_NAME');
+    
+            const proposedTransaction = client.evaluate.mock.calls[0][0];
+            const expected = assertDecodeChannelHeader(proposedTransaction).tx_id;
+            expect(proposedTransaction.txId).toBe(expected);
+        });
     });
 
     describe('submit', () => {
@@ -219,10 +231,9 @@ describe('Proposal', () => {
     
             const proposedTransaction = client.endorse.mock.calls[0][0];
             const channelHeader = assertDecodeChannelHeader(proposedTransaction);
-    
             expect(channelHeader.channel_id).toBe(network.getName());
         });
-    
+
         it('includes chaincode ID in proposal', async () => {
             await contract.submitTransaction('TRANSACTION_NAME');
     
@@ -291,6 +302,21 @@ describe('Proposal', () => {
                 id_bytes: identity.credentials
             }).finish();
             expect(signatureHeader.creator).toEqual(expected);
+        });
+    
+        it('includes channel name in proposed transaction', async () => {
+            await contract.submitTransaction('TRANSACTION_NAME');
+    
+            const proposedTransaction = client.endorse.mock.calls[0][0];
+            expect(proposedTransaction.channelId).toBe(network.getName());
+        });
+
+        it('includes transaction ID in proposed transaction', async () => {
+            await contract.submitTransaction('TRANSACTION_NAME');
+    
+            const proposedTransaction = client.endorse.mock.calls[0][0];
+            const expected = assertDecodeChannelHeader(proposedTransaction).tx_id;
+            expect(proposedTransaction.txId).toBe(expected);
         });
     });
 });

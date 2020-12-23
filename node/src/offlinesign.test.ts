@@ -128,4 +128,26 @@ describe('Offline sign', () => {
             expect(actual).toBe(expected.toString());
         });
     });
+
+    describe('serialization', () => {
+        it('keeps same transaction ID', async () => {
+            const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
+            const expected = unsignedProposal.getTransactionId();
+
+            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const actual = signedProposal.getTransactionId();
+    
+            expect(actual).toBe(expected);
+        });
+
+        it('keeps same digest', async () => {
+            const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
+            const expected = unsignedProposal.getDigest();
+
+            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const actual = signedProposal.getDigest();
+    
+            expect(actual).toEqual(expected);
+        });
+    });
 });

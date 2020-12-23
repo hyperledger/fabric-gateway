@@ -164,4 +164,47 @@ func TestEvaluateTransaction(t *testing.T) {
 			t.Fatalf("Expected Args[1:] to be %s, got Args: %s", expected, args)
 		}
 	})
+
+	t.Run("Includes channel name in proposed transaction", func(t *testing.T) {
+		var actual string
+		mockClient := mock.NewGatewayClient()
+		mockClient.MockEvaluate = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.Result, error) {
+			actual = in.ChannelId
+			value := &gateway.Result{}
+			return value, nil
+		}
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+
+		_, err := contract.EvaluateTransaction("transaction")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expected := contract.channelName
+		if actual != expected {
+			t.Fatalf("Expected %s, got %s", expected, actual)
+		}
+	})
+
+	t.Run("Includes transaction ID in proposed transaction", func(t *testing.T) {
+		var actual string
+		var expected string
+		mockClient := mock.NewGatewayClient()
+		mockClient.MockEvaluate = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.Result, error) {
+			actual = in.TxId
+			expected = test.AssertUnmarshallChannelheader(t, in).TxId
+			value := &gateway.Result{}
+			return value, nil
+		}
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+
+		_, err := contract.EvaluateTransaction("transaction")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if actual != expected {
+			t.Fatalf("Expected %s, got %s", expected, actual)
+		}
+	})
 }

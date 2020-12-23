@@ -222,4 +222,50 @@ func TestSubmitTransaction(t *testing.T) {
 		}
 	})
 
+	t.Run("Includes channel name in proposed transaction", func(t *testing.T) {
+		var actual string
+		mockClient := mock.NewGatewayClient()
+		mockClient.MockEndorse = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.PreparedTransaction, error) {
+			actual = in.ChannelId
+			return newPreparedTransaction("TRANSACTION_RESULT"), nil
+		}
+		mockClient.MockSubmit = func(ctx context.Context, in *gateway.PreparedTransaction, opts ...grpc.CallOption) (gateway.Gateway_SubmitClient, error) {
+			return mock.NewSuccessSubmitClient(), nil
+		}
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+
+		_, err := contract.SubmitTransaction("transaction")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expected := contract.channelName
+		if actual != expected {
+			t.Fatalf("Expected %s, got %s", expected, actual)
+		}
+	})
+
+	t.Run("Includes transaction ID in proposed transaction", func(t *testing.T) {
+		var actual string
+		var expected string
+		mockClient := mock.NewGatewayClient()
+		mockClient.MockEndorse = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.PreparedTransaction, error) {
+			actual = in.TxId
+			expected = test.AssertUnmarshallChannelheader(t, in).TxId
+			return newPreparedTransaction("TRANSACTION_RESULT"), nil
+		}
+		mockClient.MockSubmit = func(ctx context.Context, in *gateway.PreparedTransaction, opts ...grpc.CallOption) (gateway.Gateway_SubmitClient, error) {
+			return mock.NewSuccessSubmitClient(), nil
+		}
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+
+		_, err := contract.SubmitTransaction("transaction")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if actual != expected {
+			t.Fatalf("Expected %s, got %s", expected, actual)
+		}
+	})
 }

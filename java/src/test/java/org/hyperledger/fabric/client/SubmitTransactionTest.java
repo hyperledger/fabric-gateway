@@ -147,7 +147,7 @@ public final class SubmitTransactionTest {
     }
 
     @Test
-    void sends_network_name() throws Exception {
+    void sends_network_name_in_proposal() throws Exception {
         network = gateway.getNetwork("MY_NETWORK");
 
         Contract contract = network.getContract("CHAINCODE_ID");
@@ -157,6 +157,33 @@ public final class SubmitTransactionTest {
         String networkName = mocker.getChannelHeader(request).getChannelId();
 
         assertThat(networkName).isEqualTo("MY_NETWORK");
+    }
+
+    @Test
+    void sends_network_name_in_proposed_transaction() throws Exception {
+        network = gateway.getNetwork("MY_NETWORK");
+
+        Contract contract = network.getContract("CHAINCODE_ID");
+        contract.submitTransaction("TRANSACTION_NAME");
+
+        ProposedTransaction request = mocker.captureEndorse();
+        String networkName = request.getChannelId();
+
+        assertThat(networkName).isEqualTo("MY_NETWORK");
+    }
+
+    @Test
+    void sends_transaction_ID_in_proposed_transaction() throws Exception {
+        network = gateway.getNetwork("MY_NETWORK");
+
+        Contract contract = network.getContract("CHAINCODE_ID");
+        contract.submitTransaction("TRANSACTION_NAME");
+
+        ProposedTransaction request = mocker.captureEndorse();
+        String expected = mocker.getChannelHeader(request).getTxId();
+        String actual = request.getTxId();
+
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test

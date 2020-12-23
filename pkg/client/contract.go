@@ -110,11 +110,16 @@ func (contract *Contract) NewProposal(transactionName string, options ...Proposa
 
 // NewSignedProposal creates a transaction proposal with signature, which can be sent to peers for endorsement.
 func (contract *Contract) NewSignedProposal(bytes []byte, signature []byte) (*Proposal, error) {
+	var proposedTransactionProto *gateway.ProposedTransaction
+	proto.Unmarshal(bytes, proposedTransactionProto)
+
 	proposal := &Proposal{
-		client:    contract.client,
-		bytes:     bytes,
-		signature: signature,
+		client:              contract.client,
+		signingID:           contract.signingID,
+		proposedTransaction: proposedTransactionProto,
 	}
+	proposal.setSignature(signature)
+
 	return proposal, nil
 }
 

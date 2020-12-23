@@ -33,14 +33,17 @@ message Result {
 // The signed proposal ready for endorsement plus any processing options
 message ProposedTransaction {
     SignedProposal proposal = 1;
+    string txId = 2;
+    string channelId = 3;
 }
 
 // The set of transaction responses from the endorsing peers for signing by the client
 // before submitting to ordering service (via gateway)
 message PreparedTransaction {
-    string txId = 1;
+    common.Envelope envelope = 1;
     Result response = 2;
-    common.Envelope envelope = 3;
+    string txId = 3;
+    string channelId = 4;
 }
 
 message Event {
