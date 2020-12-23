@@ -93,7 +93,7 @@ func (proposal *Proposal) newProposedTransaction() (*gateway.ProposedTransaction
 }
 
 func (proposal *Proposal) newSignedProposal() (*peer.SignedProposal, error) {
-	if err := proposal.signMessage(); err != nil {
+	if err := proposal.sign(); err != nil {
 		return nil, err
 	}
 
@@ -104,8 +104,12 @@ func (proposal *Proposal) newSignedProposal() (*peer.SignedProposal, error) {
 	return signedProposal, nil
 }
 
-func (proposal *Proposal) signMessage() error {
-	if proposal.signature != nil {
+func (proposal *Proposal) isSigned() bool {
+	return len(proposal.signature) > 0
+}
+
+func (proposal *Proposal) sign() error {
+	if proposal.isSigned() {
 		return nil
 	}
 
