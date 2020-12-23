@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Network } from 'network';
+import { Network } from './network';
 import { connect, ConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GatewayClient } from "client";
-import { SigningIdentity } from "signingidentity";
+import { GatewayClient } from "./client";
+import { SigningIdentity } from "./signingidentity";
 import { Contract, ContractImpl } from "./contract";
 
 export interface Network {

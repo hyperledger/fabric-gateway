@@ -65,7 +65,7 @@ describe('Transaction', () => {
     it('throws on submit error', async () => {
         client.submit.mockRejectedValue(new Error('ERROR_MESSAGE'));
 
-        expect(contract.submitTransaction('TRANSACTION_NAME'))
+        await expect(contract.submitTransaction('TRANSACTION_NAME'))
             .rejects.toThrow('ERROR_MESSAGE');
     });
 
