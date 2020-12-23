@@ -4,11 +4,42 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Proposal } from "proposal";
+import { Proposal, ProposalImpl } from "./proposal";
+import { common, protos } from "./protos/protos";
 import { GatewayClient } from "./client";
 import { ProposalBuilder, ProposalOptions } from "./proposalbuilder";
 import { SigningIdentity } from "./signingidentity";
+import { Transaction, TransactionImpl } from "./transaction";
 
+/**
+ * Represents a smart contract, and allows:
+ * - Transactions to be evaluated to query ledger state.
+ * - Transactions to be submitted to update ledger state.
+ * 
+ * By default, proposal and transaction messages will be signed using the signing implementation specified when
+ * connecting the Gateway. In cases where an external client holds the signing credentials, a signing implementation
+ * can be omitted when connecting the Gateway and off-line signing can be carried out by:
+ * 1. Returning the serialized proposal or transaction message along with its digest to the client for them to
+ * generate a signature.
+ * 1. On receipt of the serialized message and signature from the client, creating a signed proposal or transaction
+ * using the Contract's `newSignedProposal()` or `newSignedTransaction()` methods respectively.
+ * 
+ * @example Off-line signing of proposal
+ *
+ * const unsignedProposal = contract.newProposal('transactionName');
+ * const proposalBytes = unsignedProposal.getBytes();
+ * const proposalDigest = unsignedProposal.getDigest();
+ * // Generate signature from digest
+ * const signedProposal = contract.newSignedProposal(proposalBytes, proposalSignature);
+ *
+ * @example Off-line signing of transaction
+ *
+ * const unsignedTransaction = await proposal.endorse();
+ * const transactionBytes = unsignedTransaction.getBytes();
+ * const transactionDigest = unsignedTransaction.getDigest();
+ * // Generate signature from digest
+ * const signedTransaction = contract.newSignedTransaction(transactionBytes, transactionSignature);
+ */
 export interface Contract {
     /**
      * Get the ID of the chaincode that contains this contract.
@@ -62,15 +93,28 @@ export interface Contract {
     submitSync(transactionName: string, options?: ProposalOptions): Promise<Uint8Array>;
 
     /**
-     * Create a proposal that can be sent to peers for endorsement. Supports off-line signing transaction flow.
+     * Create a proposal that can be sent to peers for endorsement. Supports off-line signing flow.
      * @param transactionName Name of the transaction to invoke.
      * @param options Transaction invocation options.
      * @returns A transaction proposal.
      */
     newProposal(transactionName: string, options?: ProposalOptions): Proposal;
 
-    // newSignedProposal(bytes: Uint8Array, signature: Uint8Array): Proposal;
-    // newSignedTransaction(bytes: Uint8Array, signature: Uint8Array): Transaction;
+    /**
+     * Create a proposal with the specified digital signature. Supports off-line signing flow.
+     * @param bytes Serialized proposal.
+     * @param signature Digital signature.
+     * @returns A signed proposal.
+     */
+    newSignedProposal(bytes: Uint8Array, signature: Uint8Array): Proposal;
+
+    /**
+     * Create a transaction with the specified digital signature. Supports off-line signing flow.
+     * @param bytes Serialized proposal.
+     * @param signature Digital signature.
+     * @returns A signed transaction.
+     */
+    newSignedTransaction(bytes: Uint8Array, signature: Uint8Array): Transaction;
 }
 
 export interface ContractOptions {
@@ -104,11 +148,11 @@ export class ContractImpl implements Contract {
         return this.#contractName;
     }
 
-    async evaluateTransaction(name: string, ...args: string[]): Promise<Uint8Array> {
+    async evaluateTransaction(name: string, ...args: Array<string|Uint8Array>): Promise<Uint8Array> {
         return this.evaluate(name, { arguments: args });
     }
 
-    async submitTransaction(name: string, ...args: string[]): Promise<Uint8Array> {
+    async submitTransaction(name: string, ...args: Array<string|Uint8Array>): Promise<Uint8Array> {
         return this.submitSync(name, { arguments: args });
     }
 
@@ -130,6 +174,37 @@ export class ContractImpl implements Contract {
             transactionName: this.getQualifiedTransactionName(transactionName),
             options,
         }).build();
+    }
+
+    newSignedProposal(bytes: Uint8Array, signature: Uint8Array): Proposal {
+        const proposedTransaction = protos.ProposedTransaction.decode(bytes);
+        const proposal = protos.Proposal.decode(proposedTransaction.proposal!.proposal_bytes!);
+        const header = common.Header.decode(proposal.header);
+        const channelHeader = common.ChannelHeader.decode(header.channel_header);
+        const transactionId = channelHeader.tx_id;
+
+        const result = new ProposalImpl({
+            client: this.#client,
+            signingIdentity: this.#signingIdentity,
+            proposedTransaction,
+            transactionId,
+        });
+        result.setSignature(signature);
+
+        return result;
+    }
+
+    newSignedTransaction(bytes: Uint8Array, signature: Uint8Array): Transaction {
+        const preparedTransaction = protos.PreparedTransaction.decode(bytes);
+
+        const result = new TransactionImpl({
+            client: this.#client,
+            signingIdentity: this.#signingIdentity,
+            preparedTransaction,
+        });
+        result.setSignature(signature);
+
+        return result;
     }
 
     private getQualifiedTransactionName(transactionName: string) {

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GatewayClient } from 'client';
-import { SigningIdentity } from 'signingidentity';
+import { GatewayClient } from './client';
+import { SigningIdentity } from './signingidentity';
 import { protos } from './protos/protos';
 
 export interface Transaction {
@@ -61,19 +61,26 @@ export class TransactionImpl implements Transaction {
     }
 
     async submit(): Promise<Uint8Array> {
-        if (!this.isSigned()) {
-            this.sign();
-        }
+        this.sign();
         await this.#client.submit(this.#preparedTransaction); // TODO: need to return before the commit
         return this.getResult();
+    }
+
+    setSignature(signature: Uint8Array): void {
+        this.#preparedTransaction.envelope!.signature = signature;
+    }
+
+    private sign(): void {
+        if (this.isSigned()) {
+            return;
+        }
+
+        const signature = this.#signingIdentity.sign(this.getDigest());
+        this.setSignature(signature);
     }
 
     private isSigned(): boolean {
         const signatureLength = this.#preparedTransaction.envelope!.signature?.length ?? 0;
         return signatureLength > 0;
-    }
-
-    private sign(): void {
-        this.#preparedTransaction.envelope!.signature = this.#signingIdentity.sign(this.getDigest());
     }
 }

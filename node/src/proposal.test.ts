@@ -150,10 +150,20 @@ describe('Proposal', () => {
             expect(argStrings[0]).toBe('MY_CONTRACT:MY_TRANSACTION');
         });
     
-        it('includes arguments in proposal', async () => {
+        it('includes string arguments in proposal', async () => {
             const expected = ['one', 'two', 'three'];
     
             await contract.evaluateTransaction('TRANSACTION_NAME', ...expected);
+    
+            const argStrings = assertDecodeArgsAsStrings(client.evaluate.mock.calls[0][0]);
+            expect(argStrings.slice(1)).toStrictEqual(expected);
+        });
+
+        it('includes bytes arguments in proposal', async () => {
+            const expected = ['one', 'two', 'three'];
+            const args = expected.map(arg => Buffer.from(arg));
+    
+            await contract.evaluateTransaction('TRANSACTION_NAME', ...args);
     
             const argStrings = assertDecodeArgsAsStrings(client.evaluate.mock.calls[0][0]);
             expect(argStrings.slice(1)).toStrictEqual(expected);
@@ -239,10 +249,20 @@ describe('Proposal', () => {
             expect(argStrings[0]).toBe('MY_CONTRACT:MY_TRANSACTION');
         });
     
-        it('includes arguments in proposal', async () => {
+        it('includes string arguments in proposal', async () => {
             const expected = ['one', 'two', 'three'];
     
             await contract.submitTransaction('TRANSACTION_NAME', ...expected);
+    
+            const argStrings = assertDecodeArgsAsStrings(client.endorse.mock.calls[0][0]);
+            expect(argStrings.slice(1)).toStrictEqual(expected);
+        });
+
+        it('includes bytes arguments in proposal', async () => {
+            const expected = ['one', 'two', 'three'];
+            const args = expected.map(arg => Buffer.from(arg));
+    
+            await contract.submitTransaction('TRANSACTION_NAME', ...args);
     
             const argStrings = assertDecodeArgsAsStrings(client.endorse.mock.calls[0][0]);
             expect(argStrings.slice(1)).toStrictEqual(expected);

@@ -59,7 +59,7 @@ export class ProposalImpl implements Proposal {
     }
 
     getBytes(): Uint8Array {
-        return new Uint8Array(this.#proposedTransaction.proposal!.proposal_bytes!);
+        return protos.ProposedTransaction.encode(this.#proposedTransaction).finish();
     }
 
     getDigest(): Uint8Array {
@@ -71,17 +71,13 @@ export class ProposalImpl implements Proposal {
     }
 
     async evaluate(): Promise<Uint8Array> {
-        if (!this.isSigned()) {
-            this.sign();
-        }
+        this.sign();
         const result = await this.#client.evaluate(this.#proposedTransaction);
         return result.value || new Uint8Array(0);
     }
 
     async endorse(): Promise<Transaction> {
-        if (!this.isSigned()) {
-            this.sign();
-        }
+        this.sign();
         const preparedTransaction = await this.#client.endorse(this.#proposedTransaction);
 
         return new TransactionImpl({
@@ -91,12 +87,21 @@ export class ProposalImpl implements Proposal {
         });
     }
 
-    private isSigned(): boolean {
-        const signatureLength = this.#proposedTransaction.proposal!.signature?.length ?? 0;
-        return signatureLength > 0;
+    setSignature(signature: Uint8Array): void {
+        this.#proposedTransaction.proposal!.signature = signature;
     }
 
     private sign(): void {
-        this.#proposedTransaction.proposal!.signature = this.#signingIdentity.sign(this.getDigest());
+        if (this.isSigned()) {
+            return;
+        }
+
+        const signature = this.#signingIdentity.sign(this.getDigest());
+        this.setSignature(signature);
+    }
+
+    private isSigned(): boolean {
+        const signatureLength = this.#proposedTransaction.proposal!.signature?.length ?? 0;
+        return signatureLength > 0;
     }
 }
