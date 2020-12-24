@@ -80,10 +80,9 @@ public final class TestUtils {
                 .build();
     }
 
-    public PreparedTransaction newPreparedTransaction(String payload, String signature) {
+    public PreparedTransaction newPreparedTransaction(String payload) {
         Common.Envelope envelope = Common.Envelope.newBuilder()
                 .setPayload(ByteString.copyFromUtf8(payload))
-                .setSignature(ByteString.copyFromUtf8("SIGNATURE"))
                 .build();
         return PreparedTransaction.newBuilder()
                 .setEnvelope(envelope)

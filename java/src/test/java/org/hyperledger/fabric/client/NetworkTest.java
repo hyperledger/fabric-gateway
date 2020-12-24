@@ -6,10 +6,6 @@
 
 package org.hyperledger.fabric.client;
 
-import org.hyperledger.fabric.client.Contract;
-import org.hyperledger.fabric.client.Gateway;
-import org.hyperledger.fabric.client.Network;
-import org.hyperledger.fabric.client.TestUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -56,7 +56,6 @@ public class ScenarioSteps implements En {
     private static final long EVENT_TIMEOUT_SECONDS = 30;
     private static final Set<String> runningChaincodes = new HashSet<>();
     private static boolean channelsJoined = false;
-    private static final String GATEWAY_URL = "localhost:7053";
     private static final String DOCKER_COMPOSE_TLS_FILE = "docker-compose-tls.yaml";
     private static final Path DOCKER_COMPOSE_DIR = Paths.get("..", "scenario", "fixtures", "docker-compose")
             .toAbsolutePath();
@@ -238,13 +237,13 @@ public class ScenarioSteps implements En {
         });
 
         When("I prepare a(n) {word} transaction", (String transactionName) -> {
-            Proposal proposal = contract.newProposal(transactionName);
-            transactionInvocation = TransactionInvocation.expectSuccess(proposal);
+            Proposal.Builder builder = contract.newProposal(transactionName);
+            transactionInvocation = TransactionInvocation.expectSuccess(builder);
         });
 
         When("I prepare a(n) {word} transaction that I expect to fail", (String transactionName) -> {
-            Proposal proposal = contract.newProposal(transactionName);
-            transactionInvocation = TransactionInvocation.expectFail(proposal);
+            Proposal.Builder builder = contract.newProposal(transactionName);
+            transactionInvocation = TransactionInvocation.expectFail(builder);
         });
 
         When("^I (submit|evaluate) the transaction with arguments (.+)$", (String action, String argsJson) -> {
@@ -257,11 +256,11 @@ public class ScenarioSteps implements En {
         });
 
         When("^I prepare to (evaluate|submit) an? ([^ ]+) transaction$", (String action, String transactionName) -> {
-            Proposal proposal = contract.newProposal(transactionName);
+            Proposal.Builder builder = contract.newProposal(transactionName);
             if (action.equals("submit")) {
-                transactionInvocation = TransactionInvocation.prepareToSubmit(proposal);
+                transactionInvocation = TransactionInvocation.prepareToSubmit(builder);
             } else {
-                transactionInvocation = TransactionInvocation.prepareToEvaluate(proposal);
+                transactionInvocation = TransactionInvocation.prepareToEvaluate(builder);
             }
         });
 
@@ -321,7 +320,7 @@ public class ScenarioSteps implements En {
     /**
      * Remove and return the first element matching the given predicate. All other
      * elements remain on the queue.
-     * 
+     *
      * @param queue A queue.
      * @param match Filter used to match queue elements.
      * @return The first matching element or null if no matches are found.

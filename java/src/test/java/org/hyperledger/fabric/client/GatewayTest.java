@@ -9,7 +9,6 @@ package org.hyperledger.fabric.client;
 import java.security.interfaces.ECPrivateKey;
 import java.util.concurrent.TimeUnit;
 
-import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.hyperledger.fabric.client.identity.Identity;

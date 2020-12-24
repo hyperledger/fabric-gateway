@@ -15,38 +15,38 @@ import org.hyperledger.fabric.client.Proposal;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class TransactionInvocation {
-    private final Proposal proposal;
+    private final Proposal.Builder proposalBuilder;
     private final boolean expectSuccess;
     private String response;
     private Throwable error;
     private Consumer<String[]> action;
     private String[] args = new String[0];
 
-    public static TransactionInvocation expectFail(Proposal proposal) {
-        return new TransactionInvocation(proposal, false);
+    public static TransactionInvocation expectFail(Proposal.Builder proposalBuilder) {
+        return new TransactionInvocation(proposalBuilder, false);
     }
 
-    public static TransactionInvocation expectSuccess(Proposal proposal) {
-        return new TransactionInvocation(proposal, true);
+    public static TransactionInvocation expectSuccess(Proposal.Builder proposalBuilder) {
+        return new TransactionInvocation(proposalBuilder, true);
     }
 
-    private TransactionInvocation(Proposal proposal, boolean expectSuccess) {
-        this.proposal = proposal;
+    private TransactionInvocation(Proposal.Builder proposalBuilder, boolean expectSuccess) {
+        this.proposalBuilder = proposalBuilder;
         this.expectSuccess = expectSuccess;
     }
 
     public void setTransient(Map<String, byte[]> transientData) {
-        proposal.putAllTransient(transientData);
+        proposalBuilder.putAllTransient(transientData);
     }
 
-    public static TransactionInvocation prepareToSubmit(Proposal proposal) {
-        TransactionInvocation invocation = new TransactionInvocation(proposal, true);
+    public static TransactionInvocation prepareToSubmit(Proposal.Builder proposalBuilder) {
+        TransactionInvocation invocation = new TransactionInvocation(proposalBuilder, true);
         invocation.action = invocation::submit;
         return invocation;
     }
 
-    public static TransactionInvocation prepareToEvaluate(Proposal proposal) {
-        TransactionInvocation invocation = new TransactionInvocation(proposal, true);
+    public static TransactionInvocation prepareToEvaluate(Proposal.Builder proposalBuilder) {
+        TransactionInvocation invocation = new TransactionInvocation(proposalBuilder, true);
         invocation.action = invocation::evaluate;
         return invocation;
     }
@@ -60,11 +60,11 @@ public final class TransactionInvocation {
     }
 
     public void submit(String... args) {
-        invoke(() -> proposal.addArguments(args).endorse().submitSync());
+        invoke(() -> proposalBuilder.addArguments(args).build().endorse().submitSync());
     }
 
     public void evaluate(String... args) {
-        invoke(() -> proposal.addArguments(args).evaluate());
+        invoke(() -> proposalBuilder.addArguments(args).build().evaluate());
     }
 
     private void invoke(Callable<byte[]> invocationFn) {
