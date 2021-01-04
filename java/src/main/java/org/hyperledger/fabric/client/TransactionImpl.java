@@ -12,15 +12,12 @@ import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.gateway.Event;
 import org.hyperledger.fabric.gateway.GatewayGrpc;
 import org.hyperledger.fabric.gateway.PreparedTransaction;
-import org.hyperledger.fabric.gateway.Result;
 import org.hyperledger.fabric.protos.common.Common;
 
 class TransactionImpl implements Transaction {
-    private static final byte[] EMPTY_RESULT = new byte[0];
-
     private final GatewayGrpc.GatewayBlockingStub client;
     private final SigningIdentity signingIdentity;
-    private final PreparedTransaction preparedTransaction;
+    private PreparedTransaction preparedTransaction;
 
 
     TransactionImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity, final PreparedTransaction preparedTransaction) {
@@ -31,27 +28,20 @@ class TransactionImpl implements Transaction {
 
     @Override
     public byte[] getResult() {
-        Result result = preparedTransaction.getResponse();
-        if (null == result) {
-            return EMPTY_RESULT;
-        }
-
-        ByteString value = result.getValue();
-        if (null == value) {
-            return EMPTY_RESULT;
-        }
-
-        return value.toByteArray();
+        return preparedTransaction.getResponse()
+                .getValue()
+                .toByteArray();
     }
 
     @Override
     public byte[] getBytes() {
-        return new byte[0];
+        return preparedTransaction.toByteArray();
     }
 
     @Override
     public byte[] getDigest() {
-        return new byte[0];
+        byte[] message = preparedTransaction.getEnvelope().getPayload().toByteArray();
+        return signingIdentity.hash(message);
     }
 
     @Override
@@ -74,18 +64,31 @@ class TransactionImpl implements Transaction {
     }
 
     private Iterator<Event> submit() {
-        PreparedTransaction transaction = toPreparedTransaction();
-        return client.submit(transaction);
+        sign();
+        return client.submit(preparedTransaction);
     }
 
-    private PreparedTransaction toPreparedTransaction() {
-        // sign the payload
-        Common.Envelope envelope = preparedTransaction.getEnvelope();
-        byte[] hash = signingIdentity.hash(envelope.getPayload().toByteArray());
-        byte[] signature = signingIdentity.sign(hash);
-        PreparedTransaction signedTransaction = PreparedTransaction.newBuilder(preparedTransaction)
-                .setEnvelope(Common.Envelope.newBuilder(envelope).setSignature(ByteString.copyFrom(signature)).build())
+    void setSignature(final byte[] signature) {
+        Common.Envelope envelope = preparedTransaction.getEnvelope().toBuilder()
+                .setSignature(ByteString.copyFrom(signature))
                 .build();
-        return signedTransaction;
+
+        preparedTransaction = preparedTransaction.toBuilder()
+                .setEnvelope(envelope)
+                .build();
+    }
+
+    private void sign() {
+        if (isSigned()) {
+            return;
+        }
+
+        byte[] digest = getDigest();
+        byte[] signature = signingIdentity.sign(digest);
+        setSignature(signature);
+    }
+
+    private boolean isSigned() {
+        return !preparedTransaction.getEnvelope().getSignature().isEmpty();
     }
 }

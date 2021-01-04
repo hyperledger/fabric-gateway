@@ -8,7 +8,6 @@ package org.hyperledger.fabric.client;
 
 import java.nio.charset.StandardCharsets;
 
-import org.hyperledger.fabric.client.Hash;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

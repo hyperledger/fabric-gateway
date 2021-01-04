@@ -53,7 +53,7 @@ public final class SubmitTransactionTest {
 
     @Test
     void returns_gateway_response() throws Exception {
-        doReturn(utils.newPreparedTransaction("MY_RESULT", "SIGNATURE"))
+        doReturn(utils.newPreparedTransaction("MY_RESULT"))
                 .when(stub).endorse(any());
 
         Contract contract = network.getContract("CHAINCODE_ID");

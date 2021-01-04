@@ -149,7 +149,7 @@
             <extension>
                 <groupId>kr.motd.maven</groupId>
                 <artifactId>os-maven-plugin</artifactId>
-                <version>1.4.1.Final</version>
+                <version>1.6.2</version>
             </extension>
         </extensions>
         <pluginManagement><!-- lock down plugins versions to avoid using Maven
@@ -311,8 +311,8 @@
                 <configuration>
                     <protocArtifact>com.google.protobuf:protoc:3.14.0:exe:${os.detected.classifier}</protocArtifact>
                     <pluginId>grpc-java</pluginId>
-                    <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.33.1:exe:${os.detected.classifier}</pluginArtifact>
-                    <protoSourceRoot>${basedir}/../fabric-protos</protoSourceRoot>
+                    <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.34.1:exe:${os.detected.classifier}</pluginArtifact>
+                    <protoSourceRoot>${project.basedir}/../fabric-protos</protoSourceRoot>
                 </configuration>
                 <executions>
                     <execution>

@@ -9,6 +9,8 @@ package org.hyperledger.fabric.client;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+
 /**
  * Represents a smart contract instance in a network.
  * Applications should get a Contract instance from a Network using the
@@ -75,7 +77,7 @@ public interface Contract {
      * @param transactionName The name of the transaction to be invoked.
      * @return A proposal builder.
      */
-    Proposal newProposal(String transactionName);
+    Proposal.Builder newProposal(String transactionName);
 
     /**
      * Create a signed proposal.
@@ -83,7 +85,7 @@ public interface Contract {
      * @param signature A digital signature.
      * @return A signed proposal.
      */
-    Proposal newSignedProposal(byte[] proposalBytes, byte[] signature);
+    Proposal newSignedProposal(byte[] proposalBytes, byte[] signature) throws InvalidProtocolBufferException;
 
     /**
      * Create a signed transaction.
@@ -91,5 +93,5 @@ public interface Contract {
      * @param signature A digital signature.
      * @return A signed transaction.
      */
-    Transaction newSignedTransaction(byte[] transactionBytes, byte[] signature);
+    Transaction newSignedTransaction(byte[] transactionBytes, byte[] signature) throws InvalidProtocolBufferException;
 }

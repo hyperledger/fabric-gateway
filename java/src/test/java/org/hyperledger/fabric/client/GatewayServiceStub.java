@@ -23,7 +23,7 @@ public class GatewayServiceStub {
     private static final TestUtils utils = TestUtils.getInstance();
 
     public PreparedTransaction endorse(final ProposedTransaction request) {
-        return utils.newPreparedTransaction("PAYLOAD", "SIGNATURE");
+        return utils.newPreparedTransaction("PAYLOAD");
     }
 
     public Stream<Event> submit(final PreparedTransaction request) {
