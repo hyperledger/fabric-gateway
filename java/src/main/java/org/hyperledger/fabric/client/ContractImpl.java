@@ -34,6 +34,14 @@ final class ContractImpl implements Contract {
     }
 
     @Override
+    public byte[] submitTransaction(final String name) throws ContractException {
+        return newProposal(name)
+                .build()
+                .endorse()
+                .submitSync();
+    }
+
+    @Override
     public byte[] submitTransaction(final String name, final String... args) throws ContractException {
         return newProposal(name)
                 .addArguments(args)
@@ -43,7 +51,31 @@ final class ContractImpl implements Contract {
     }
 
     @Override
+    public byte[] submitTransaction(final String name, final byte[]... args) throws ContractException {
+        return newProposal(name)
+                .addArguments(args)
+                .build()
+                .endorse()
+                .submitSync();
+    }
+
+    @Override
+    public byte[] evaluateTransaction(final String name) {
+        return newProposal(name)
+                .build()
+                .evaluate();
+    }
+
+    @Override
     public byte[] evaluateTransaction(final String name, final String... args) {
+        return newProposal(name)
+                .addArguments(args)
+                .build()
+                .evaluate();
+    }
+
+    @Override
+    public byte[] evaluateTransaction(final String name, final byte[]... args) {
         return newProposal(name)
                 .addArguments(args)
                 .build()

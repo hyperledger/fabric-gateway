@@ -45,7 +45,7 @@ public final class GatewayTest {
         Gateway.Builder builder = Gateway.newInstance()
                 .endpoint("example.org:1337");
 
-        assertThatThrownBy(() -> builder.connect())
+        assertThatThrownBy(builder::connect)
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -55,7 +55,7 @@ public final class GatewayTest {
                 .identity(identity)
                 .signer(signer);
 
-        assertThatThrownBy(() -> builder.connect())
+        assertThatThrownBy(builder::connect)
                 .isInstanceOf(IllegalStateException.class);
     }
 

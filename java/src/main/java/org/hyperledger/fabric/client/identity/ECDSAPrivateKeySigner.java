@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1Primitive;
@@ -89,7 +90,7 @@ final class ECDSAPrivateKeySigner implements Signer {
 
             ASN1Sequence asn1Sequence = (ASN1Sequence) asn1;
             List<ASN1Integer>  signatureParts = StreamSupport.stream(asn1Sequence.spliterator(), false)
-                    .map(asn1Encodable -> asn1Encodable.toASN1Primitive())
+                    .map(ASN1Encodable::toASN1Primitive)
                     .filter(asn1Primitive -> asn1Primitive instanceof ASN1Integer)
                     .map(asn1Primitive -> (ASN1Integer) asn1Primitive)
                     .collect(Collectors.toList());

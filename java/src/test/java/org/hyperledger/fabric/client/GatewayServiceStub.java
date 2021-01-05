@@ -49,8 +49,7 @@ public class GatewayServiceStub {
             Chaincode.ChaincodeInvocationSpec chaincodeInvocationSpec = Chaincode.ChaincodeInvocationSpec.parseFrom(chaincodeProposalPayload.getInput());
             String chaincodeId = chaincodeInvocationSpec.getChaincodeSpec().getChaincodeId().getName();
             List<ByteString> args = chaincodeInvocationSpec.getChaincodeSpec().getInput().getArgsList();
-            String payload = chaincodeId + args.stream().map(arg -> arg.toStringUtf8()).collect(Collectors.joining());
-            return payload;
+            return chaincodeId + args.stream().map(ByteString::toStringUtf8).collect(Collectors.joining());
         } catch (InvalidProtocolBufferException ex) {
             return ex.getMessage();
         }
