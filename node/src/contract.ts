@@ -12,9 +12,12 @@ import { SigningIdentity } from "./signingidentity";
 import { Transaction, TransactionImpl } from "./transaction";
 
 /**
- * Represents a smart contract, and allows:
- * - Transactions to be evaluated to query ledger state.
- * - Transactions to be submitted to update ledger state.
+ * Represents a smart contract, and allows applications to:
+ * - Evaluate transactions that query state from the ledger using `evaluateTransaction()`.
+ * - Submit transactions that store state to the ledger using `submitTransaction()`.
+ * 
+ * For more complex transaction invocations, such as including transient data, transactions can be evaluated or
+ * submitted using `evaluate()` or `submitSync()` respectively.
  * 
  * By default, proposal and transaction messages will be signed using the signing implementation specified when
  * connecting the Gateway. In cases where an external client holds the signing credentials, a signing implementation
@@ -24,6 +27,20 @@ import { Transaction, TransactionImpl } from "./transaction";
  * 1. On receipt of the serialized message and signature from the client, creating a signed proposal or transaction
  * using the Contract's `newSignedProposal()` or `newSignedTransaction()` methods respectively.
  * 
+ * @example Evaluate transaction
+ * 
+ * const result = await contract.evaluate('transactionName', {
+ *     arguments: ['one', 'two'],
+ *     // Specify additional proposal options, such as transient data
+ * });
+ * 
+ * @example Submit transaction
+ * 
+ * const result = await contract.submitSync('transactionName', {
+ *     arguments: ['one', 'two'],
+ *     // Specify additional proposal options, such as transient data
+ * });
+ *
  * @example Off-line signing of proposal
  *
  * const unsignedProposal = contract.newProposal('transactionName');
