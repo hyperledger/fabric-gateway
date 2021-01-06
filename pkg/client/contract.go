@@ -12,8 +12,24 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Contract represents a chaincode smart contract in a network. The Contract can be used to submit and evaluate
-// transaction functions on the smart contract, and to listen for chaincode events emitted by the smart contract.
+// Contract represents a smart contract, and allows applications to:
+//
+// - Evaluate transactions that query state from the ledger using the EvaluateTransaction() method.
+//
+// - Submit transactions that store state to the ledger using the SubmitTransaction() method.
+//
+// For more complex transaction invocations, such as including transient data, transactions can be evaluated or
+// submitted using the Evaluate() or SubmitSync() methods respectively.
+//
+// By default, proposal and transaction messages will be signed using the signing implementation specified when
+// connecting the Gateway. In cases where an external client holds the signing credentials, a signing implementation
+// can be omitted when connecting the Gateway and off-line signing can be carried out by:
+//
+// 1. Returning the serialized proposal or transaction message along with its digest to the client for them to
+// generate a signature.
+//
+// 2. On receipt of the serialized message and signature from the client, creating a signed proposal or transaction
+// using the Contract's NewSignedProposal() or NewSignedTransaction() methods respectively.
 type Contract struct {
 	client       gateway.GatewayClient
 	signingID    *signingIdentity
