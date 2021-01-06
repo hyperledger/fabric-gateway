@@ -9,6 +9,7 @@ package org.hyperledger.fabric.client;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -100,7 +101,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_transaction_arguments() throws ContractException, InvalidProtocolBufferException {
+    void sends_transaction_string_arguments() throws ContractException, InvalidProtocolBufferException {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.evaluateTransaction("TRANSACTION_NAME", "one", "two", "three");
 
@@ -111,6 +112,23 @@ public final class EvaluateTransactionTest {
                 .collect(Collectors.toList());
 
         assertThat(chaincodeArgs).containsExactly("one", "two", "three");
+    }
+
+    @Test
+    void sends_transaction_byte_array_arguments() throws ContractException, InvalidProtocolBufferException {
+        byte[][] arguments = Stream.of("one", "two", "three")
+                .map(s -> s.getBytes(StandardCharsets.UTF_8))
+                .toArray(byte[][]::new);
+        Contract contract = network.getContract("CHAINCODE_ID");
+        contract.evaluateTransaction("TRANSACTION_NAME", arguments);
+
+        ProposedTransaction request = mocker.captureEvaluate();
+        byte[][] chaincodeArgs = mocker.getChaincodeSpec(request).getInput().getArgsList().stream()
+                .skip(1)
+                .map(ByteString::toByteArray)
+                .toArray(byte[][]::new);
+
+        assertThat(chaincodeArgs).isDeepEqualTo(arguments);
     }
 
     @Test
@@ -170,7 +188,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_network_name_in_proposed_transaction() throws ContractException, InvalidProtocolBufferException {
+    void sends_network_name_in_proposed_transaction() throws ContractException {
         network = gateway.getNetwork("MY_NETWORK");
 
         Contract contract = network.getContract("CHAINCODE_ID");

@@ -16,28 +16,30 @@
 
     <pre><code>
     public static void main(String[] args) throws IOException {
-        // Load an existing wallet holding identities used to access the network.
-        Path walletDirectory = Paths.get("wallet");
-        Wallet wallet = Wallets.newFileSystemWallet(walletDirectory);
+        // Create client identity and signing implementation based on X.509 certificate and private key
+        Identity identity = new X509Identity("mspId", certificate);
+        Signer signer = Signers.newPrivateKeySigner(privateKey);
 
-        // Path to a common connection profile describing the network.
-        Path networkConfigFile = Paths.get("connection.json");
+        // Create gRPC channel used for the gateway connection
+        Channel grpcChannel = ManagedChannelBuilder.forAddress("example.org", 1337)
+                .usePlaintext()
+                .build();
 
-        // Configure the gateway connection used to access the network.
-        Gateway.Builder builder = Gateway.createBuilder()
-                .identity(wallet, "user1")
-                .networkConfig(networkConfigFile);
+        // Configure gateway connection used to access the network.
+        Gateway.Builder builder = Gateway.newInstance()
+                .identity(identity)
+                .signer(signer)
+                .connection(grpcChannel);
 
-        // Create a gateway connection
+        // Create gateway connection
         try (Gateway gateway = builder.connect()) {
 
-            // Obtain a smart contract deployed on the network.
+            // Obtain smart contract deployed on the network.
             Network network = gateway.getNetwork("mychannel");
             Contract contract = network.getContract("fabcar");
 
             // Submit transactions that store state to the ledger.
-            byte[] createCarResult = contract.createTransaction("createCar")
-                    .submit("CAR10", "VW", "Polo", "Grey", "Mary");
+            byte[] createCarResult = contract.submitTransaction("createCar", "VW", "Polo", "Grey", "Mary");
             System.out.println(new String(createCarResult, StandardCharsets.UTF_8));
 
             // Evaluate transactions that query state from the ledger.

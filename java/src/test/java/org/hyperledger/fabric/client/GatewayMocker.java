@@ -28,7 +28,7 @@ public final class GatewayMocker implements AutoCloseable {
 
     private final GatewayServiceStub stub;
     private final ManagedChannel channel;
-    private final Gateway.Builder builder = utils.newGatewayBuilder();
+    private final Gateway.Builder builder;
 
     private final MockitoSession mockitoSession;
     @Captor
@@ -37,6 +37,11 @@ public final class GatewayMocker implements AutoCloseable {
     private ArgumentCaptor<PreparedTransaction> preparedTransactionCaptor;
 
     public GatewayMocker() {
+        this(utils.newGatewayBuilder());
+    }
+
+    public GatewayMocker(final Gateway.Builder builder) {
+        this.builder = builder;
         mockitoSession = Mockito.mockitoSession()
                 .initMocks(this)
                 .startMocking();
