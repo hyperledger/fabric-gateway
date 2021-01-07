@@ -15,10 +15,9 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"fmt"
 	"math/big"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 func NewECDSAPrivateKey() (*ecdsa.PrivateKey, error) {
@@ -42,7 +41,7 @@ func NewCertificate(privateKey crypto.PrivateKey) (*x509.Certificate, error) {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to generate serial number")
+		return nil, fmt.Errorf("Failed to generate serial number: %w", err)
 	}
 
 	notBefore := time.Now()
@@ -65,7 +64,7 @@ func NewCertificate(privateKey crypto.PrivateKey) (*x509.Certificate, error) {
 
 	certificateBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, publicKey(privateKey), privateKey)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to generate certificate")
+		return nil, fmt.Errorf("Failed to generate certificate: %w", err)
 	}
 
 	return x509.ParseCertificate(certificateBytes)

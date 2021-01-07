@@ -16,13 +16,12 @@ import (
 	ab "github.com/hyperledger/fabric-protos-go/orderer"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/hyperledger/fabric/protoutil"
-	"github.com/pkg/errors"
 )
 
 func (reg *registry) ListenForTxEvents(channel string, txid string, done chan<- bool) error {
 	envelope, err := createDeliverEnvelope(channel, reg.signer)
 	if err != nil {
-		return errors.Wrap(err, "failed to create deliver env")
+		return fmt.Errorf("Failed to create deliver env: %w", err)
 	}
 	eventCh := make(chan *peer.FilteredTransaction)
 
@@ -82,7 +81,7 @@ func createDeliverEnvelope(
 		// tlsCertHash,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error signing envelope: ")
+		return nil, fmt.Errorf("Error signing envelope: %w", err)
 	}
 
 	return env, nil
@@ -95,18 +94,18 @@ func listenForTxEvent(deliverClient peer.DeliverClient, txid string, envelope *c
 
 	df, err := deliverClient.DeliverFiltered(ctx)
 	if err != nil {
-		return errors.Wrap(err, "failed to register for events")
+		return fmt.Errorf("Failed to register for events: %w", err)
 	}
 	defer df.CloseSend()
 	err = df.Send(envelope)
 	if err != nil {
-		return errors.Wrap(err, "error sending deliver seek info envelope")
+		return fmt.Errorf("Error sending deliver seek info envelope: %w", err)
 	}
 
 	for {
 		resp, err := df.Recv()
 		if err != nil {
-			return errors.Wrap(err, "error receiving from deliver filtered ")
+			return fmt.Errorf("error receiving from deliver filtered: %w", err)
 		}
 		switch r := resp.Type.(type) {
 		case *peer.DeliverResponse_FilteredBlock:
@@ -118,9 +117,9 @@ func listenForTxEvent(deliverClient peer.DeliverClient, txid string, envelope *c
 				}
 			}
 		case *peer.DeliverResponse_Status:
-			return errors.Errorf("deliver completed with status (%s) before txid received", r.Status)
+			return fmt.Errorf("deliver completed with status (%s) before txid received", r.Status)
 		default:
-			return errors.Errorf("received unexpected response type (%T)", r)
+			return fmt.Errorf("received unexpected response type (%T)", r)
 		}
 	}
 }

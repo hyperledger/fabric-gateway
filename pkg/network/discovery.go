@@ -8,8 +8,8 @@ package network
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"github.com/hyperledger/fabric-protos-go/peer"
 	"strconv"
 	"strings"
 
@@ -18,7 +18,7 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-protos-go/discovery"
 	"github.com/hyperledger/fabric-protos-go/gossip"
-	"github.com/pkg/errors"
+	"github.com/hyperledger/fabric-protos-go/peer"
 )
 
 type channelDiscovery struct {
@@ -42,7 +42,7 @@ func newChannelDiscovery(client discovery.DiscoveryClient, sign identity.Sign, h
 func (cd *channelDiscovery) invokeDiscovery(request *discovery.Request) (*discovery.Response, error) {
 	payload, err := proto.Marshal(request)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to marshal discovery request: ")
+		return nil, fmt.Errorf("Failed to marshal discovery request: %w", err)
 	}
 
 	digest, err := cd.hash(payload)
@@ -52,7 +52,7 @@ func (cd *channelDiscovery) invokeDiscovery(request *discovery.Request) (*discov
 
 	signature, err := cd.sign(digest)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to sign discovery request: ")
+		return nil, fmt.Errorf("Failed to sign discovery request: %w", err)
 	}
 
 	response, err := cd.client.Discover(
@@ -63,7 +63,7 @@ func (cd *channelDiscovery) invokeDiscovery(request *discovery.Request) (*discov
 		},
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "Discovery failed: ")
+		return nil, fmt.Errorf("Discovery failed: %w", err)
 	}
 
 	return response, nil
@@ -195,8 +195,8 @@ func (cd *channelDiscovery) discoverEndorsers(channel string, chaincode string) 
 		for group, quantity := range layout {
 			endorsers := e[group].Peers
 			fmt.Printf("group: %s, quantity: %d, available: %d\n", group, quantity, len(endorsers))
-			p_g := endorsers[0:quantity]
-			r = append(r, p_g...)
+			peerGroup := endorsers[0:quantity]
+			r = append(r, peerGroup...)
 		}
 
 		for _, peer := range r {

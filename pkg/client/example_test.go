@@ -25,7 +25,7 @@ func Example() ([]byte, error) {
 		return nil, err
 	}
 
-	// The gRPC client connection should be shared all Gateway connections to this endpoint
+	// The gRPC client connection should be shared by all Gateway connections to this endpoint
 	clientConnection, err := grpc.Dial("gateway.example.org:1337", grpc.WithInsecure())
 	if err != nil {
 		return nil, err

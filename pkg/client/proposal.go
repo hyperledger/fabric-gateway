@@ -8,11 +8,11 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/golang/protobuf/proto"
 	gateway "github.com/hyperledger/fabric-gateway/protos"
-	"github.com/pkg/errors"
 )
 
 // Proposal represents a transaction proposal that can be sent to peers for endorsement or evaluated as a query.
@@ -48,7 +48,7 @@ func (proposal *Proposal) Endorse() (*Transaction, error) {
 
 	preparedTransaction, err := proposal.client.Endorse(ctx, proposal.proposedTransaction)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to endorse proposal")
+		return nil, fmt.Errorf("Failed to endorse proposal: %w", err)
 	}
 
 	result := &Transaction{
@@ -70,7 +70,7 @@ func (proposal *Proposal) Evaluate() ([]byte, error) {
 
 	result, err := proposal.client.Evaluate(ctx, proposal.proposedTransaction)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to evaluate transaction")
+		return nil, fmt.Errorf("Failed to evaluate transaction: %w", err)
 	}
 
 	return result.Value, nil

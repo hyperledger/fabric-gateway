@@ -29,11 +29,11 @@ func (gs *Server) Evaluate(ctx context.Context, proposedTransaction *pb.Proposed
 	endorsers := gs.registry.GetEndorsers(channel, chaincodeID)
 	fmt.Printf("Evaluate: #endorsers=%d\n", len(endorsers))
 	if len(endorsers) == 0 {
-		return nil, fmt.Errorf("no endorsing peers found for channel: %s", channel)
+		return nil, fmt.Errorf("No endorsing peers found for channel: %s", proposedTransaction.ChannelId)
 	}
 	response, err := endorsers[0].ProcessProposal(ctx, signedProposal) // choose suitable peer
 	if err != nil {
-		return nil, fmt.Errorf("failed to evaluate transaction: %w", err)
+		return nil, fmt.Errorf("Failed to evaluate transaction: %w", err)
 	}
 
 	return getValueFromResponse(response)
@@ -45,7 +45,7 @@ func (gs *Server) Endorse(ctx context.Context, proposedTransaction *pb.ProposedT
 	signedProposal := proposedTransaction.Proposal
 	var proposal peer.Proposal
 	if err := proto.Unmarshal(signedProposal.ProposalBytes, &proposal); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal signed proposal: %w", err)
+		return nil, fmt.Errorf("Failed to unmarshal signed proposal: %w", err)
 	}
 	channel, chaincodeID, err := getChannelAndChaincodeFromSignedProposal(proposedTransaction.Proposal)
 	if err != nil {
@@ -58,26 +58,26 @@ func (gs *Server) Endorse(ctx context.Context, proposedTransaction *pb.ProposedT
 	for i := 0; i < len(endorsers); i++ {
 		response, err := endorsers[i].ProcessProposal(ctx, signedProposal)
 		if err != nil {
-			return nil, fmt.Errorf("failed to process proposal: %w", err)
+			return nil, fmt.Errorf("Failed to process proposal: %w", err)
 		}
 		responses = append(responses, response)
 	}
 
 	env, err := createUnsignedTx(&proposal, responses...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to assemble transaction: %w", err)
+		return nil, fmt.Errorf("Failed to assemble transaction: %w", err)
 	}
 
 	retVal, err := getValueFromResponse(responses[0])
 	if err != nil {
-		return nil, fmt.Errorf("failed to extract value from reponse payload: %w", err)
+		return nil, fmt.Errorf("Failed to extract value from reponse payload: %w", err)
 	}
 
 	preparedTxn := &pb.PreparedTransaction{
 		TxId:      proposedTransaction.TxId,
 		ChannelId: proposedTransaction.ChannelId,
-		Response: retVal,
-		Envelope: env,
+		Response:  retVal,
+		Envelope:  env,
 	}
 	return preparedTxn, nil
 }
@@ -95,15 +95,15 @@ func (gs *Server) Submit(txn *pb.PreparedTransaction, cs pb.Gateway_SubmitServer
 	go gs.registry.ListenForTxEvents("mychannel", txn.TxId, done)
 
 	if err := orderers[0].Send(txn.Envelope); err != nil {
-		return fmt.Errorf("failed to send envelope to orderer: %w", err)
+		return fmt.Errorf("Failed to send envelope to orderer: %w", err)
 	}
 
 	oresp, err := orderers[0].Recv()
 	if err == io.EOF {
-		return fmt.Errorf("failed to to get response from orderer: %w", err)
+		return fmt.Errorf("Failed to to get response from orderer: %w", err)
 	}
 	if err != nil {
-		return fmt.Errorf("failed to to get response from orderer: %w", err)
+		return fmt.Errorf("Failed to to get response from orderer: %w", err)
 	}
 	if oresp == nil {
 		return fmt.Errorf("received nil response from orderer")

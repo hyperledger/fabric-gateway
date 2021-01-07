@@ -16,12 +16,13 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
+	"errors"
+	"fmt"
 	"io"
 
 	"github.com/hyperledger/fabric-gateway/pkg/connection"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	proto "github.com/hyperledger/fabric-gateway/protos"
-	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 )
 
@@ -81,7 +82,7 @@ func WithEndpoint(endpoint *connection.Endpoint) ConnectOption {
 	return func(gateway *Gateway) error {
 		clientConnection, err := endpoint.Dial()
 		if err != nil {
-			return errors.Wrap(err, "Failed to establish Gateway connection")
+			return fmt.Errorf("Failed to establish Gateway connection: %w", err)
 		}
 
 		gateway.closer = clientConnection

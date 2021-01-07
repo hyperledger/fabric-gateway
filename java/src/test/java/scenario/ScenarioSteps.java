@@ -19,6 +19,7 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPrivateKey;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -59,17 +60,31 @@ public class ScenarioSteps implements En {
     private static final String DOCKER_COMPOSE_TLS_FILE = "docker-compose-tls.yaml";
     private static final Path DOCKER_COMPOSE_DIR = Paths.get("..", "scenario", "fixtures", "docker-compose")
             .toAbsolutePath();
+
     private static final Map<String, String> MSP_ID_TO_ORG_MAP;
-    private static final Map<String, Boolean> runningPeers = new HashMap<>();
     static {
         Map<String, String> mspIdToOrgMap = new HashMap<>();
         mspIdToOrgMap.put("Org1MSP", "org1.example.com");
         MSP_ID_TO_ORG_MAP = Collections.unmodifiableMap(mspIdToOrgMap);
+    }
+
+    private static final Map<String, Boolean> runningPeers = new HashMap<>();
+    static {
         runningPeers.put("peer0.org1.example.com", true);
         runningPeers.put("peer1.org1.example.com", true);
         runningPeers.put("peer0.org2.example.com", true);
         runningPeers.put("peer1.org2.example.com", true);
         runningPeers.put("peer0.org3.example.com", true);
+    }
+
+    private static final Collection<OrgConfig> ORG_CONFIGS;
+    static {
+        List<OrgConfig> orgConfigs = Arrays.asList(
+                new OrgConfig("org1_cli", "/etc/hyperledger/configtx/Org1MSPanchors.tx", "peer0.org1.example.com:7051", "peer1.org1.example.com:9051"),
+                new OrgConfig("org2_cli", "/etc/hyperledger/configtx/Org2MSPanchors.tx", "peer0.org2.example.com:8051", "peer1.org2.example.com:10051"),
+                new OrgConfig("org3_cli", "/etc/hyperledger/configtx/Org3MSPanchors.tx", "peer0.org3.example.com:11051")
+        );
+        ORG_CONFIGS = Collections.unmodifiableCollection(orgConfigs);
     }
 
     private String fabricNetworkType;
@@ -80,21 +95,16 @@ public class ScenarioSteps implements En {
     private TransactionInvocation transactionInvocation;
 
     private static final class OrgConfig {
-        String cli;
-        String anchortx;
-        String[] peers;
-        OrgConfig(String cli, String anchortx, String[] peers) {
+        final String cli;
+        final String anchortx;
+        final Set<String> peers;
+        OrgConfig(String cli, String anchortx, String... peers) {
             this.cli = cli;
             this.anchortx = anchortx;
-            this.peers = peers;
+            Set<String> peerSet = new HashSet<>(Arrays.asList(peers));
+            this.peers = Collections.unmodifiableSet(peerSet);
         }
     }
-
-    private OrgConfig[] orgs = new OrgConfig[] {
-        new OrgConfig("org1_cli", "/etc/hyperledger/configtx/Org1MSPanchors.tx", new String[]{"peer0.org1.example.com:7051", "peer1.org1.example.com:9051"}),
-        new OrgConfig("org2_cli", "/etc/hyperledger/configtx/Org2MSPanchors.tx", new String[]{"peer0.org2.example.com:8051", "peer1.org2.example.com:10051"}),
-        new OrgConfig("org3_cli", "/etc/hyperledger/configtx/Org3MSPanchors.tx", new String[]{"peer0.org3.example.com:11051"})
-    };
 
     public ScenarioSteps() throws IOException {
         After(() -> {
@@ -128,7 +138,7 @@ public class ScenarioSteps implements En {
                 createChannelCommand.addAll(tlsOptions);
                 exec(createChannelCommand);
 
-                for (OrgConfig org : orgs) {
+                for (OrgConfig org : ORG_CONFIGS) {
                     for (String peer : org.peers) {
                         String env = "CORE_PEER_ADDRESS=" + peer;
                         List<String> joinChannelCommand = new ArrayList<>();
@@ -176,7 +186,7 @@ public class ScenarioSteps implements En {
                     String ccLabel = ccName + "v" + version;
                     String ccPackage = ccName + ".tar.gz";
 
-                    for (OrgConfig org : orgs) {
+                    for (OrgConfig org : ORG_CONFIGS) {
                         exec("docker", "exec", org.cli, "peer", "lifecycle", "chaincode", "package", ccPackage, "--lang",
                                 ccType, "--label", ccLabel, "--path", ccPath);
 
@@ -245,25 +255,6 @@ public class ScenarioSteps implements En {
             contract = network.getContract(contractName);
         });
 
-        When("I prepare a(n) {word} transaction", (String transactionName) -> {
-            Proposal.Builder builder = contract.newProposal(transactionName);
-            transactionInvocation = TransactionInvocation.expectSuccess(builder);
-        });
-
-        When("I prepare a(n) {word} transaction that I expect to fail", (String transactionName) -> {
-            Proposal.Builder builder = contract.newProposal(transactionName);
-            transactionInvocation = TransactionInvocation.expectFail(builder);
-        });
-
-        When("^I (submit|evaluate) the transaction with arguments (.+)$", (String action, String argsJson) -> {
-            String[] args = newStringArray(parseJsonArray(argsJson));
-            if (action.equals("submit")) {
-                transactionInvocation.submit(args);
-            } else {
-                transactionInvocation.evaluate(args);
-            }
-        });
-
         When("^I prepare to (evaluate|submit) an? ([^ ]+) transaction$", (String action, String transactionName) -> {
             Proposal.Builder builder = contract.newProposal(transactionName);
             if (action.equals("submit")) {
@@ -275,15 +266,12 @@ public class ScenarioSteps implements En {
 
         When("^I set the transaction arguments? to (.+)$", (String argsJson) -> {
             String[] args = newStringArray(parseJsonArray(argsJson));
-            transactionInvocation.setArgs(args);
+            transactionInvocation.setArguments(args);
         });
 
         When("I invoke the transaction", () -> {
-            transactionInvocation.invokePass();
-        });
-
-        When("I invoke the transaction which I expect to fail", () -> {
-            transactionInvocation.invokeFail();
+            transactionInvocation.invoke();
+            transactionInvocation.getResponse();
         });
 
         When("I set transient data on the transaction to", (DataTable data) -> {
@@ -293,22 +281,6 @@ public class ScenarioSteps implements En {
             transactionInvocation.setTransient(transientMap);
         });
 
-        Then("a response should be received", () -> transactionInvocation.getResponse());
-
-        Then("the response should equal {}",
-                (String expected) -> assertThat(transactionInvocation.getResponse()).isEqualTo(expected));
-
-        Then("the response should be JSON matching", (DocString expected) -> {
-            try (JsonReader expectedReader = createJsonReader(expected.getContent());
-                    JsonReader actualReader = createJsonReader(transactionInvocation.getResponse())) {
-                JsonObject expectedObject = expectedReader.readObject();
-                JsonObject actualObject = actualReader.readObject();
-                assertThat(actualObject).isEqualTo(expectedObject);
-            }
-        });
-
-        Then("the error message should contain {string}",
-                (String expected) -> assertThat(transactionInvocation.getError().getMessage()).contains(expected));
 
         When("I stop the peer named {}", (String peer) -> {
             exec("docker", "stop", peer);
@@ -320,6 +292,27 @@ public class ScenarioSteps implements En {
             runningPeers.put(peer, true);
             Thread.sleep(20000);
         });
+
+        Then("the transaction invocation should fail", () -> {
+            transactionInvocation.invoke();
+            transactionInvocation.getError();
+        });
+
+        Then("the response should be JSON matching", (DocString expected) -> {
+            try (JsonReader expectedReader = createJsonReader(expected.getContent());
+                    JsonReader actualReader = createJsonReader(transactionInvocation.getResponse())) {
+                JsonObject expectedObject = expectedReader.readObject();
+                JsonObject actualObject = actualReader.readObject();
+                assertThat(actualObject).isEqualTo(expectedObject);
+            }
+        });
+
+        Then("the response should be {string}", (String expected) -> {
+            assertThat(transactionInvocation.getResponse()).isEqualTo(expected);
+        });
+
+        Then("the error message should contain {string}",
+                (String expected) -> assertThat(transactionInvocation.getError().getMessage()).contains(expected));
     }
 
     private static void startAllPeers() throws InterruptedException, IOException {
