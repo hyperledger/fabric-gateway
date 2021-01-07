@@ -242,14 +242,9 @@ func (reg *registry) addMSP(mspid string, cert []byte) {
 	}
 }
 
-func (reg *registry) GetEndorsers(channel string) []peer.EndorserClient {
+func (reg *registry) GetEndorsers(channel string, chaincode string) []peer.EndorserClient {
 	reg.discoverChannel(channel)
-	// at the moment this returns all endorsing peers in a channel
-	// eventually this should return a chaincode specific set
-	endorsers := make([]peer.EndorserClient, 0)
-	for p := range reg.channels[channel].peers {
-		endorsers = append(endorsers, reg.peers[p].endorserClient)
-	}
+	endorsers, _ := reg.discoverer.discoverEndorsers(channel, chaincode)
 	return endorsers
 }
 

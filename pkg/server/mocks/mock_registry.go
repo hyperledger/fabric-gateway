@@ -41,7 +41,7 @@ func NewMockRegistry() *mockRegistry {
 	}
 }
 
-func (mr *mockRegistry) GetEndorsers(channel string) []peer.EndorserClient {
+func (mr *mockRegistry) GetEndorsers(channel string, chaincode string) []peer.EndorserClient {
 	return mr.endorsers
 }
 

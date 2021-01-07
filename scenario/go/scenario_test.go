@@ -22,17 +22,49 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/connection"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	"github.com/pkg/errors"
 )
 
 const (
 	fixturesDir       = "../fixtures"
 	dockerComposeFile = "docker-compose-tls.yaml"
 	dockerComposeDir  = fixturesDir + "/docker-compose"
-	gatewayDir        = "../../bin"
+	//signaturePolicy = `OR("Org3MSP.member",AND("Org1MSP.member","Org2MSP.member"))`
+	//signaturePolicy = `OutOf(2, "Org1MSP.member", "Org2MSP.member", "Org3MSP.member")`
 )
 
 type TransactionType int
+
+type orgConfig struct {
+	cli string
+	anchortx string
+	peers []string
+}
+
+var orgs = []orgConfig{
+	{
+		cli:      "org1_cli",
+		anchortx: "/etc/hyperledger/configtx/Org1MSPanchors.tx",
+		peers:    []string{"peer0.org1.example.com:7051", "peer1.org1.example.com:9051"},
+	},
+	{
+		cli:      "org2_cli",
+		anchortx: "/etc/hyperledger/configtx/Org2MSPanchors.tx",
+		peers:    []string{"peer0.org2.example.com:8051", "peer1.org2.example.com:10051"},
+	},
+	{
+		cli:      "org3_cli",
+		anchortx: "/etc/hyperledger/configtx/Org3MSPanchors.tx",
+		peers:    []string{"peer0.org3.example.com:11051"},
+	},
+}
+
+var runningPeers = map[string]bool{
+	"peer0.org1.example.com": true,
+	"peer1.org1.example.com": true,
+	"peer0.org2.example.com": true,
+	"peer1.org2.example.com": true,
+	"peer0.org3.example.com": true,
+}
 
 const (
 	Evaluate TransactionType = iota
@@ -147,17 +179,20 @@ func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I create a gateway for user (\S+) in MSP (\S+)`, createGateway)
 	s.Step(`^I connect the gateway to (\S+)$`, connectGateway)
-	s.Step(`^I deploy (\S+) chaincode named (\S+) at version (\S+) for all organizations on channel (\S+) with endorsement policy (\S+)$`, deployChaincode)
+	s.Step(`^I deploy (\S+) chaincode named (\S+) at version (\S+) for all organizations on channel (\S+) with endorsement policy (.+)$`, deployChaincode)
 	s.Step(`^I have created and joined all channels from the tls connection profile$`, createAndJoinChannels)
 	s.Step(`^I have deployed a (\S+) Fabric network$`, haveFabricNetwork)
-	s.Step(`^I prepare to submit an? (\S+) transaction$`, prepareSubmit)
-	s.Step(`^I prepare to evaluate an? (\S+) transaction$`, prepareEvaluate)
+	s.Step(`^I prepare to (submit|evaluate) an? (\S+) transaction$`, prepareSubmit)
 	s.Step(`^I set the transaction arguments? to (.+)$`, setArguments)
 	s.Step(`^I set transient data on the transaction to$`, setTransientData)
 	s.Step(`^I invoke the transaction$`, invokeTransaction)
+	s.Step(`^I invoke the transaction which I expect to fail$`, invokeTransactionFail)
 	s.Step(`^I use the (\S+) contract$`, useContract)
 	s.Step(`^I use the (\S+) network$`, useNetwork)
+	s.Step(`^the response should equal (.+)$`, theResponseShouldEqual)
 	s.Step(`^the response should be JSON matching$`, theResponseShouldBeJSONMatching)
+	s.Step(`^I stop the peer named (\S+)$`, stopPeer)
+	s.Step(`^I start the peer named (\S+)$`, startPeer)
 }
 
 func startFabric() error {
@@ -207,112 +242,88 @@ func createCryptoMaterial() error {
 	return nil
 }
 
-func deployChaincode(ccType, ccName, version, channelName, policyType string) error {
+func deployChaincode(ccType, ccName, version, channelName, signaturePolicy string) error {
 	mangledName := ccName + version + channelName
 	if _, ok := runningChaincodes[mangledName]; ok {
 		// already exists
 		return nil
 	}
 
-	ccPath := "/opt/gopath/src/github.com/chaincode/" + ccType + "/" + ccName
+	ccPath := "github.com/chaincode/" + ccType + "/" + ccName
+	if ccType != "golang" {
+		ccPath = "/opt/gopath/src/" + ccPath
+	}
 	ccLabel := ccName + "v" + version
 	ccPackage := ccName + ".tar.gz"
 
-	// org1
-	_, err := dockerCommand(
-		"exec", "org1_cli", "peer", "lifecycle", "chaincode", "package", ccPackage,
-		"--lang", ccType,
-		"--label", ccLabel,
-		"--path", ccPath,
-	)
-	if err != nil {
-		return err
-	}
+	for _, org := range orgs {
+		_, err := dockerCommand(
+			"exec", org.cli, "peer", "lifecycle", "chaincode", "package", ccPackage,
+			"--lang", ccType,
+			"--label", ccLabel,
+			"--path", ccPath,
+		)
+		if err != nil {
+			return err
+		}
 
-	_, err = dockerCommand(
-		"exec", "org1_cli", "peer", "lifecycle", "chaincode", "install", ccPackage,
-	)
-	if err != nil {
-		return err
-	}
+		for _, peer := range org.peers {
+			env := "CORE_PEER_ADDRESS=" + peer
+			_, err = dockerCommand(
+				"exec", "-e", env, org.cli, "peer", "lifecycle", "chaincode", "install", ccPackage,
+			)
+			if err != nil {
+				return err
+			}
+		}
 
-	out, err := dockerCommand(
-		"exec", "org1_cli", "peer", "lifecycle", "chaincode", "queryinstalled",
-	)
-	if err != nil {
-		return err
-	}
+		out, err := dockerCommand(
+			"exec", org.cli, "peer", "lifecycle", "chaincode", "queryinstalled",
+		)
+		if err != nil {
+			return err
+		}
 
-	pattern := regexp.MustCompile(".*Package ID: (.*), Label: " + ccLabel + ".*")
-	match := pattern.FindStringSubmatch(out)
-	if len(match) != 2 {
-		return errors.New("Cannot find installed chaincode for Org1")
-	}
-	packageID := match[1]
+		pattern := regexp.MustCompile(".*Package ID: (.*), Label: " + ccLabel + ".*")
+		match := pattern.FindStringSubmatch(out)
+		if len(match) != 2 {
+			return fmt.Errorf("cannot find installed chaincode for Org1")
+		}
+		packageID := match[1]
 
-	_, err = dockerCommandWithTLS(
-		"exec", "org1_cli", "peer", "lifecycle", "chaincode",
-		"approveformyorg", "--package-id", packageID, "--channelID", channelName, "--name", ccName,
-		"--version", version, "--signature-policy", `AND("Org1MSP.member","Org2MSP.member")`,
-		"--sequence", "1", "--waitForEvent",
-	)
-	if err != nil {
-		return err
-	}
-
-	// org2
-	_, err = dockerCommand(
-		"exec", "org2_cli", "peer", "lifecycle", "chaincode", "package", ccPackage,
-		"--lang", ccType,
-		"--label", ccLabel,
-		"--path", ccPath,
-	)
-	if err != nil {
-		return err
-	}
-
-	_, err = dockerCommand(
-		"exec", "org2_cli", "peer", "lifecycle", "chaincode", "install", ccPackage,
-	)
-	if err != nil {
-		return err
-	}
-
-	out, err = dockerCommand(
-		"exec", "org2_cli", "peer", "lifecycle", "chaincode", "queryinstalled",
-	)
-	if err != nil {
-		return err
-	}
-
-	pattern = regexp.MustCompile(".*Package ID: (.*), Label: " + ccLabel + ".*")
-	match = pattern.FindStringSubmatch(out)
-	if len(match) != 2 {
-		return errors.New("Cannot find installed chaincode for Org2")
-	}
-	packageID = match[1]
-
-	_, err = dockerCommandWithTLS(
-		"exec", "org2_cli", "peer", "lifecycle", "chaincode",
-		"approveformyorg", "--package-id", packageID, "--channelID", channelName, "--name", ccName,
-		"--version", version, "--signature-policy", `AND("Org1MSP.member","Org2MSP.member")`,
-		"--sequence", "1", "--waitForEvent",
-	)
-	if err != nil {
-		return err
+		_, err = dockerCommandWithTLS(
+			"exec", org.cli, "peer", "lifecycle", "chaincode", "approveformyorg",
+			"--package-id", packageID,
+			"--channelID", channelName,
+			"--name", ccName,
+			"--version", version,
+			"--signature-policy", signaturePolicy,
+			"--sequence", "1",
+			"--waitForEvent",
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	// commit
-	_, err = dockerCommandWithTLS(
-		"exec", "org1_cli", "peer", "lifecycle", "chaincode",
-		"commit", "--channelID", channelName, "--name", ccName, "--version", version,
-		"--signature-policy", "AND(\"Org1MSP.member\",\"Org2MSP.member\")", "--sequence", "1",
-		"--waitForEvent", "--peerAddresses", "peer0.org1.example.com:7051", "--peerAddresses",
-		"peer0.org2.example.com:8051",
+	_, err := dockerCommandWithTLS(
+		"exec", "org1_cli", "peer", "lifecycle", "chaincode", "commit",
+		"--channelID", channelName,
+		"--name", ccName,
+		"--version", version,
+		"--signature-policy", signaturePolicy,
+		"--sequence", "1",
+		"--waitForEvent",
+		"--peerAddresses", "peer0.org1.example.com:7051",
+		"--peerAddresses", "peer0.org2.example.com:8051",
+		//"--peerAddresses", "peer0.org3.example.com:11051",
 		"--tlsRootCertFiles",
 		"/etc/hyperledger/configtx/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
 		"--tlsRootCertFiles",
 		"/etc/hyperledger/configtx/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt",
+		//"--tlsRootCertFiles",
+		//"/etc/hyperledger/configtx/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt",
 	)
 	if err != nil {
 		return err
@@ -338,7 +349,7 @@ func createGateway(user string, mspID string) error {
 func connectGateway(address string) error {
 	hostPort := strings.Split(address, ":")
 	if len(hostPort) != 2 {
-		return errors.Errorf("Invalid endpoint: %s", address)
+		return fmt.Errorf("invalid endpoint: %s", address)
 	}
 
 	host := hostPort[0]
@@ -363,6 +374,7 @@ func connectGateway(address string) error {
 }
 
 func createAndJoinChannels() error {
+	startAllPeers()
 	if !channelsJoined {
 		_, err := dockerCommandWithTLS(
 			"exec", "org1_cli", "peer", "channel", "create",
@@ -375,40 +387,26 @@ func createAndJoinChannels() error {
 			return err
 		}
 
-		_, err = dockerCommandWithTLS(
-			"exec", "org1_cli", "peer", "channel", "join",
-			"-b", "/etc/hyperledger/configtx/mychannel.block",
-		)
-		if err != nil {
-			return err
-		}
-
-		_, err = dockerCommandWithTLS(
-			"exec", "org2_cli", "peer", "channel", "join",
-			"-b", "/etc/hyperledger/configtx/mychannel.block",
-		)
-		if err != nil {
-			return err
-		}
-
-		_, err = dockerCommandWithTLS(
-			"exec", "org1_cli", "peer", "channel", "update",
-			"-o", "orderer.example.com:7050",
-			"-c", "mychannel",
-			"-f", "/etc/hyperledger/configtx/Org1MSPanchors.tx",
-		)
-		if err != nil {
-			return err
-		}
-
-		_, err = dockerCommandWithTLS(
-			"exec", "org2_cli", "peer", "channel", "update",
-			"-o", "orderer.example.com:7050",
-			"-c", "mychannel",
-			"-f", "/etc/hyperledger/configtx/Org2MSPanchors.tx",
-		)
-		if err != nil {
-			return err
+		for _, org := range orgs {
+			for _, peer := range org.peers {
+				env := "CORE_PEER_ADDRESS=" + peer
+				_, err = dockerCommandWithTLS(
+					"exec", "-e", env, org.cli, "peer", "channel", "join",
+					"-b", "/etc/hyperledger/configtx/mychannel.block",
+				)
+				if err != nil {
+					return err
+				}
+			}
+			_, err = dockerCommandWithTLS(
+				"exec", org.cli, "peer", "channel", "update",
+				"-o", "orderer.example.com:7050",
+				"-c", "mychannel",
+				"-f", org.anchortx,
+			)
+			if err != nil {
+				return err
+			}
 		}
 
 		channelsJoined = true
@@ -418,10 +416,49 @@ func createAndJoinChannels() error {
 	return nil
 }
 
+func stopPeer(peer string) error {
+	_, err := dockerCommand(
+		"stop", peer,
+	)
+	if err != nil {
+		return err
+	}
+	runningPeers[peer] = false
+	return nil
+}
+
+func startPeer(peer string) error {
+	_, err := dockerCommand(
+		"start", peer,
+	)
+	if err != nil {
+		return err
+	}
+	runningPeers[peer] = true
+	time.Sleep(20 * time.Second)
+	return nil
+}
+
+func startAllPeers() error {
+	for peer, running := range runningPeers {
+		if !running {
+			_, err := dockerCommand(
+				"start", peer,
+			)
+			if err != nil {
+				return err
+			}
+			runningPeers[peer] = true
+		}
+	}
+	time.Sleep(20 * time.Second)
+	return nil
+}
+
 func dockerCommandWithTLS(args ...string) (string, error) {
 	tlsOptions := []string{
 		"--tls",
-		"true",
+		//"true",
 		"--cafile",
 		"/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem",
 	}
@@ -435,7 +472,7 @@ func dockerCommand(args ...string) (string, error) {
 	out, err := cmd.CombinedOutput()
 	fmt.Println(string(out))
 	if err != nil {
-		return "", errors.Wrap(err, string(out))
+		return "", fmt.Errorf("%s: %w", string(out), err)
 	}
 
 	return string(out), nil
@@ -448,17 +485,14 @@ func haveFabricNetwork(tlsType string) error {
 	return nil
 }
 
-func prepareSubmit(txnName string) error {
-	transaction = &Transaction{
-		txType: Submit,
-		name:   txnName,
+func prepareSubmit(action string, txnName string) error {
+	txnType := Submit
+	if action == "evaluate" {
+		txnType = Evaluate
 	}
-	return nil
-}
 
-func prepareEvaluate(txnName string) error {
 	transaction = &Transaction{
-		txType: Evaluate,
+		txType: txnType,
 		name:   txnName,
 	}
 	return nil
@@ -508,6 +542,19 @@ func invokeTransaction() error {
 	return nil
 }
 
+func invokeTransactionFail() error {
+	invoke, err := transactionInvokeFn(transaction.txType)
+	if err != nil {
+		return err
+	}
+
+	transactionResult, err = invoke(transaction.name, transaction.options...)
+	if err == nil {
+		return fmt.Errorf("transaction invocation was expected to fail, but it didn't")
+	}
+	return nil
+}
+
 func transactionInvokeFn(txType TransactionType) (func(string, ...client.ProposalOption) ([]byte, error), error) {
 	switch txType {
 	case Submit:
@@ -515,7 +562,7 @@ func transactionInvokeFn(txType TransactionType) (func(string, ...client.Proposa
 	case Evaluate:
 		return contract.Evaluate, nil
 	default:
-		return nil, errors.Errorf("Unknown transaction type: %v", txType)
+		return nil, fmt.Errorf("unknown transaction type: %v", txType)
 	}
 }
 
@@ -529,13 +576,20 @@ func useNetwork(channelName string) error {
 	return nil
 }
 
+func theResponseShouldEqual(expected string) error {
+	if expected != string(transactionResult) {
+		return fmt.Errorf("transaction response doesn't match expected value")
+	}
+	return nil
+}
+
 func theResponseShouldBeJSONMatching(arg *messages.PickleStepArgument_PickleDocString) error {
 	same, err := jsonEqual([]byte(arg.GetContent()), transactionResult)
 	if err != nil {
 		return err
 	}
 	if !same {
-		return errors.New("Transaction response doesn't match expected value")
+		return fmt.Errorf("transaction response doesn't match expected value")
 	}
 	return nil
 }

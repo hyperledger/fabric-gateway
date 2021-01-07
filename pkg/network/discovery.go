@@ -8,6 +8,8 @@ package network
 
 import (
 	"context"
+	"fmt"
+	"github.com/hyperledger/fabric-protos-go/peer"
 	"strconv"
 	"strings"
 
@@ -147,4 +149,69 @@ func (cd *channelDiscovery) discoverPeers(channel string) error {
 	}
 
 	return err
+}
+
+func (cd *channelDiscovery) discoverEndorsers(channel string, chaincode string) ([]peer.EndorserClient, error) {
+	endorsers := make([]peer.EndorserClient, 0)
+	request := &discovery.Request{
+		Authentication: cd.authInfo,
+		Queries: []*discovery.Query{
+			{
+				Channel: channel,
+				Query: &discovery.Query_CcQuery{
+					CcQuery: &discovery.ChaincodeQuery{
+						Interests: []*discovery.ChaincodeInterest{{
+							Chaincodes: []*discovery.ChaincodeCall{{
+								Name: chaincode,
+							}},
+						}},
+					},
+				},
+			},
+		},
+	}
+
+	response, err := cd.invokeDiscovery(request)
+	if err != nil {
+		return nil, err
+	}
+
+	derr := response.Results[0].GetError()
+	if derr != nil {
+		return nil, errors.New(derr.Content)
+	}
+
+	// only one chaincode atm
+	descriptor := response.Results[0].GetCcQueryRes().GetContent()[0]
+
+	e := descriptor.EndorsersByGroups
+
+	fmt.Printf("Number of Layouts: %d\n", len(descriptor.Layouts))
+	// choose first layout
+	for i, l := range descriptor.Layouts {
+		fmt.Printf("layout: %d\n", i)
+		layout := l.QuantitiesByGroup
+		r := make([]*discovery.Peer, 0)
+		for group, quantity := range layout {
+			endorsers := e[group].Peers
+			fmt.Printf("group: %s, quantity: %d, available: %d\n", group, quantity, len(endorsers))
+			p_g := endorsers[0:quantity]
+			r = append(r, p_g...)
+		}
+
+		for _, peer := range r {
+			var msg = &gossip.GossipMessage{}
+			proto.Unmarshal(peer.MembershipInfo.Payload, msg)
+			ep := msg.GetAliveMsg().Membership.Endpoint
+			parts := strings.Split(ep, ":")
+			host := parts[0]
+			port, _ := strconv.Atoi(parts[1])
+			url := fmt.Sprintf("%s:%d", host, port)
+			if endorser, ok := cd.registry.peers[url]; ok {
+				endorsers = append(endorsers, endorser.endorserClient)
+			}
+			fmt.Printf("host: %s, port: %d\n", host, port)
+		}
+	}
+	return endorsers, err
 }

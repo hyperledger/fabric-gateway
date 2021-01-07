@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public final class TransactionInvocation {
     private final Proposal.Builder proposalBuilder;
-    private final boolean expectSuccess;
+    private boolean expectSuccess;
     private String response;
     private Throwable error;
     private Consumer<String[]> action;
@@ -56,6 +56,16 @@ public final class TransactionInvocation {
     }
 
     public void invokeTxn() {
+        action.accept(args);
+    }
+
+    public void invokeFail() {
+        expectSuccess = false;
+        action.accept(args);
+    }
+
+    public void invokePass() {
+        expectSuccess = true;
         action.accept(args);
     }
 
