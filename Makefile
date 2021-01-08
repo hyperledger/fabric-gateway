@@ -62,14 +62,17 @@ unit-test-java: build-protos
 lint:
 	golint $(base_dir)/pkg/... $(base_dir)/cmd/gateway
 
-scenario-test-go: docker
+vendor-chaincode:
+	cd $(scenario_dir)/fixtures/chaincode/golang/echo; GO111MODULE=on go mod vendor
+
+scenario-test-go: docker vendor-chaincode
 	cd $(scenario_dir)/go; godog $(scenario_dir)/features/
 
-scenario-test-node: docker build-node
+scenario-test-node: docker build-node vendor-chaincode
 	cd $(node_dir); rm -f fabric-gateway-dev.tgz; mv $$(npm pack) fabric-gateway-dev.tgz
 	cd $(scenario_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; npm test
 
-scenario-test-java: docker
+scenario-test-java: docker vendor-chaincode
 	cd $(java_dir); mvn verify
 
 scenario-test: scenario-test-go scenario-test-node scenario-test-java
@@ -81,7 +84,7 @@ all: test
 docker: build-protos build-go
 	@echo "Building Docker image $(DOCKER_NS)/fabric-gateway"
 	@mkdir -p $(@D)
-	$(DBUILD) -f images/gateway/Dockerfile \
+	$(DBUILD) --rm -f images/gateway/Dockerfile \
 		--build-arg GO_VER=$(GO_VER) \
 		--build-arg ALPINE_VER=$(ALPINE_VER) \
 		--build-arg GO_TAGS=${GO_TAGS} \

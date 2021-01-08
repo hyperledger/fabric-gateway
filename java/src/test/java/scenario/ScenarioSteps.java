@@ -60,10 +60,16 @@ public class ScenarioSteps implements En {
     private static final Path DOCKER_COMPOSE_DIR = Paths.get("..", "scenario", "fixtures", "docker-compose")
             .toAbsolutePath();
     private static final Map<String, String> MSP_ID_TO_ORG_MAP;
+    private static final Map<String, Boolean> runningPeers = new HashMap<>();
     static {
         Map<String, String> mspIdToOrgMap = new HashMap<>();
         mspIdToOrgMap.put("Org1MSP", "org1.example.com");
         MSP_ID_TO_ORG_MAP = Collections.unmodifiableMap(mspIdToOrgMap);
+        runningPeers.put("peer0.org1.example.com", true);
+        runningPeers.put("peer1.org1.example.com", true);
+        runningPeers.put("peer0.org2.example.com", true);
+        runningPeers.put("peer1.org2.example.com", true);
+        runningPeers.put("peer0.org3.example.com", true);
     }
 
     private String fabricNetworkType;
@@ -72,6 +78,23 @@ public class ScenarioSteps implements En {
     private Network network;
     private Contract contract;
     private TransactionInvocation transactionInvocation;
+
+    private static final class OrgConfig {
+        String cli;
+        String anchortx;
+        String[] peers;
+        OrgConfig(String cli, String anchortx, String[] peers) {
+            this.cli = cli;
+            this.anchortx = anchortx;
+            this.peers = peers;
+        }
+    }
+
+    private OrgConfig[] orgs = new OrgConfig[] {
+        new OrgConfig("org1_cli", "/etc/hyperledger/configtx/Org1MSPanchors.tx", new String[]{"peer0.org1.example.com:7051", "peer1.org1.example.com:9051"}),
+        new OrgConfig("org2_cli", "/etc/hyperledger/configtx/Org2MSPanchors.tx", new String[]{"peer0.org2.example.com:8051", "peer1.org2.example.com:10051"}),
+        new OrgConfig("org3_cli", "/etc/hyperledger/configtx/Org3MSPanchors.tx", new String[]{"peer0.org3.example.com:11051"})
+    };
 
     public ScenarioSteps() throws IOException {
         After(() -> {
@@ -87,6 +110,7 @@ public class ScenarioSteps implements En {
 
         Given("I have created and joined all channels from the {word} connection profile", (String tlsType) -> {
             // TODO this only does mychannel
+            startAllPeers();
             if (!channelsJoined) {
                 final List<String> tlsOptions;
                 if (tlsType.equals("tls")) {
@@ -104,38 +128,29 @@ public class ScenarioSteps implements En {
                 createChannelCommand.addAll(tlsOptions);
                 exec(createChannelCommand);
 
-                List<String> org1JoinChannelCommand = new ArrayList<>();
-                Collections.addAll(org1JoinChannelCommand, "docker", "exec", "org1_cli", "peer", "channel", "join",
-                        "-b", "/etc/hyperledger/configtx/mychannel.block");
-                org1JoinChannelCommand.addAll(tlsOptions);
-                exec(org1JoinChannelCommand);
+                for (OrgConfig org : orgs) {
+                    for (String peer : org.peers) {
+                        String env = "CORE_PEER_ADDRESS=" + peer;
+                        List<String> joinChannelCommand = new ArrayList<>();
+                        Collections.addAll(joinChannelCommand, "docker", "exec", "-e", env, org.cli, "peer", "channel", "join",
+                                "-b", "/etc/hyperledger/configtx/mychannel.block");
+                        joinChannelCommand.addAll(tlsOptions);
+                        exec(joinChannelCommand);
+                    }
 
-                List<String> org2JoinChannelCommand = new ArrayList<>();
-                Collections.addAll(org2JoinChannelCommand, "docker", "exec", "org2_cli", "peer", "channel", "join",
-                        "-b", "/etc/hyperledger/configtx/mychannel.block");
-                org2JoinChannelCommand.addAll(tlsOptions);
-                exec(org2JoinChannelCommand);
-
-                List<String> org1AnchorPeersCommand = new ArrayList<>();
-                Collections.addAll(org1AnchorPeersCommand, "docker", "exec", "org1_cli", "peer", "channel", "update",
-                        "-o", "orderer.example.com:7050", "-c", "mychannel", "-f",
-                        "/etc/hyperledger/configtx/Org1MSPanchors.tx");
-                org1AnchorPeersCommand.addAll(tlsOptions);
-                exec(org1AnchorPeersCommand);
-
-                List<String> org2AnchorPeersCommand = new ArrayList<>();
-                Collections.addAll(org2AnchorPeersCommand, "docker", "exec", "org2_cli", "peer", "channel", "update",
-                        "-o", "orderer.example.com:7050", "-c", "mychannel", "-f",
-                        "/etc/hyperledger/configtx/Org2MSPanchors.tx");
-                org2AnchorPeersCommand.addAll(tlsOptions);
-                exec(org2AnchorPeersCommand);
+                    List<String> anchorPeersCommand = new ArrayList<>();
+                    Collections.addAll(anchorPeersCommand, "docker", "exec", org.cli, "peer", "channel", "update",
+                            "-o", "orderer.example.com:7050", "-c", "mychannel", "-f", org.anchortx);
+                    anchorPeersCommand.addAll(tlsOptions);
+                    exec(anchorPeersCommand);
+                }
 
                 channelsJoined = true;
             }
         });
 
         Given("I deploy {word} chaincode named {word} at version {word} for all organizations on channel {word} with endorsement policy {}",
-                (String ccType, String ccName, String version, String channelName, String policyType) -> {
+                (String ccType, String ccName, String version, String channelName, String signaturePolicy) -> {
                     String mangledName = ccName + version + channelName;
                     if (runningChaincodes.contains(mangledName)) {
                         return;
@@ -149,65 +164,59 @@ public class ScenarioSteps implements En {
                         tlsOptions = Collections.emptyList();
                     }
 
-                    String ccPath = Paths.get(FileSystems.getDefault().getSeparator(), "opt", "gopath", "src",
-                            "github.com", "chaincode", ccType, ccName).toString();
+                    String ccPath;
+                    if (ccType == "golang") {
+                        ccPath = Paths.get(FileSystems.getDefault().getSeparator(),
+                                "github.com", "chaincode", ccType, ccName).toString();
+                    } else {
+                        ccPath = Paths.get(FileSystems.getDefault().getSeparator(), "opt", "gopath", "src",
+                                "github.com", "chaincode", ccType, ccName).toString();
+                    }
 
                     String ccLabel = ccName + "v" + version;
                     String ccPackage = ccName + ".tar.gz";
 
-                    // Org1
-                    exec("docker", "exec", "org1_cli", "peer", "lifecycle", "chaincode", "package", ccPackage, "--lang",
-                            ccType, "--label", ccLabel, "--path", ccPath);
+                    for (OrgConfig org : orgs) {
+                        exec("docker", "exec", org.cli, "peer", "lifecycle", "chaincode", "package", ccPackage, "--lang",
+                                ccType, "--label", ccLabel, "--path", ccPath);
 
-                    exec("docker", "exec", "org1_cli", "peer", "lifecycle", "chaincode", "install", ccPackage);
+                        for (String peer : org.peers) {
+                            String env = "CORE_PEER_ADDRESS=" + peer;
+                            exec("docker", "exec", "-e", env, org.cli, "peer", "lifecycle", "chaincode", "install", ccPackage);
+                        }
 
-                    String installed = exec("docker", "exec", "org1_cli", "peer", "lifecycle", "chaincode",
-                            "queryinstalled");
-                    Pattern regex = Pattern.compile(".*Package ID: (.*), Label: " + ccLabel + ".*");
-                    Matcher matcher = regex.matcher(installed);
-                    if (!matcher.matches()) {
-                        System.out.println(installed);
-                        throw new IllegalStateException("Cannot find installed chaincode for Org1: " + ccLabel);
+                        String installed = exec("docker", "exec", org.cli, "peer", "lifecycle", "chaincode",
+                                "queryinstalled");
+                        Pattern regex = Pattern.compile(".*Package ID: (.*), Label: " + ccLabel + ".*");
+                        Matcher matcher = regex.matcher(installed);
+                        if (!matcher.matches()) {
+                            System.out.println(installed);
+                            throw new IllegalStateException("Cannot find installed chaincode for Org1: " + ccLabel);
+                        }
+                        String packageId = matcher.group(1);
+
+                        List<String> approveCommand = new ArrayList<>();
+                        Collections.addAll(approveCommand, "docker", "exec", org.cli, "peer", "lifecycle", "chaincode",
+                                "approveformyorg", "--package-id", packageId, "--channelID", channelName, "--name", ccName,
+                                "--version", version, "--signature-policy", signaturePolicy,
+                                "--sequence", "1", "--waitForEvent");
+                        approveCommand.addAll(tlsOptions);
+                        exec(approveCommand);
                     }
-                    String packageId = matcher.group(1);
-
-                    List<String> approveCommand = new ArrayList<>();
-                    Collections.addAll(approveCommand, "docker", "exec", "org1_cli", "peer", "lifecycle", "chaincode",
-                            "approveformyorg", "--package-id", packageId, "--channelID", channelName, "--name", ccName,
-                            "--version", version, "--signature-policy", "AND(\"Org1MSP.member\",\"Org2MSP.member\")",
-                            "--sequence", "1", "--waitForEvent");
-                    approveCommand.addAll(tlsOptions);
-                    exec(approveCommand);
-
-                    // Org2
-                    exec("docker", "exec", "org2_cli", "peer", "lifecycle", "chaincode", "package", ccPackage, "--lang",
-                            ccType, "--label", ccLabel, "--path", ccPath);
-
-                    exec("docker", "exec", "org2_cli", "peer", "lifecycle", "chaincode", "install", ccPackage);
-
-                    installed = exec("docker", "exec", "org2_cli", "peer", "lifecycle", "chaincode", "queryinstalled");
-                    matcher = regex.matcher(installed);
-                    if (!matcher.matches()) {
-                        System.err.println(installed);
-                        throw new IllegalStateException("Cannot find installed chaincode for Org2: " + ccLabel);
-                    }
-                    packageId = matcher.group(1);
-
-                    approveCommand = new ArrayList<>();
-                    Collections.addAll(approveCommand, "docker", "exec", "org2_cli", "peer", "lifecycle", "chaincode",
-                            "approveformyorg", "--package-id", packageId, "--channelID", channelName, "--name", ccName,
-                            "--version", version, "--signature-policy", "AND(\"Org1MSP.member\",\"Org2MSP.member\")",
-                            "--sequence", "1", "--waitForEvent");
-                    approveCommand.addAll(tlsOptions);
-                    exec(approveCommand);
 
                     // commit
                     List<String> commitCommand = new ArrayList<>();
-                    Collections.addAll(commitCommand, "docker", "exec", "org1_cli", "peer", "lifecycle", "chaincode",
-                            "commit", "--channelID", channelName, "--name", ccName, "--version", version,
-                            "--signature-policy", "AND(\"Org1MSP.member\",\"Org2MSP.member\")", "--sequence", "1",
-                            "--waitForEvent", "--peerAddresses", "peer0.org1.example.com:7051", "--peerAddresses",
-                            "peer0.org2.example.com:8051", "--tlsRootCertFiles",
+                    Collections.addAll(commitCommand, "docker", "exec", "org1_cli", "peer", "lifecycle", "chaincode", "commit",
+                            "--channelID", channelName,
+                            "--name", ccName,
+                            "--version", version,
+                            "--signature-policy", signaturePolicy,
+                            "--sequence", "1",
+                            "--waitForEvent",
+                            "--peerAddresses", "peer0.org1.example.com:7051",
+                            "--peerAddresses",
+                            "peer0.org2.example.com:8051",
+                            "--tlsRootCertFiles",
                             "/etc/hyperledger/configtx/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
                             "--tlsRootCertFiles",
                             "/etc/hyperledger/configtx/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt");
@@ -270,7 +279,11 @@ public class ScenarioSteps implements En {
         });
 
         When("I invoke the transaction", () -> {
-            transactionInvocation.invokeTxn();
+            transactionInvocation.invokePass();
+        });
+
+        When("I invoke the transaction which I expect to fail", () -> {
+            transactionInvocation.invokeFail();
         });
 
         When("I set transient data on the transaction to", (DataTable data) -> {
@@ -282,7 +295,7 @@ public class ScenarioSteps implements En {
 
         Then("a response should be received", () -> transactionInvocation.getResponse());
 
-        Then("the response should match {}",
+        Then("the response should equal {}",
                 (String expected) -> assertThat(transactionInvocation.getResponse()).isEqualTo(expected));
 
         Then("the response should be JSON matching", (DocString expected) -> {
@@ -297,6 +310,26 @@ public class ScenarioSteps implements En {
         Then("the error message should contain {string}",
                 (String expected) -> assertThat(transactionInvocation.getError().getMessage()).contains(expected));
 
+        When("I stop the peer named {}", (String peer) -> {
+            exec("docker", "stop", peer);
+            runningPeers.put(peer, false);
+        });
+
+        When("I start the peer named {}", (String peer) -> {
+            exec("docker", "start", peer);
+            runningPeers.put(peer, true);
+            Thread.sleep(20000);
+        });
+    }
+
+    private static void startAllPeers() throws InterruptedException, IOException {
+        for (String peer : runningPeers.keySet()) {
+            if (runningPeers.get(peer) == false) {
+                exec("docker", "start", peer);
+                runningPeers.put(peer, true);
+            }
+        }
+        Thread.sleep(20000);
     }
 
     private static JsonArray parseJsonArray(String jsonString) {

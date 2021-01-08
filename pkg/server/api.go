@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/pkg/errors"
 
 	pb "github.com/hyperledger/fabric-gateway/protos"
 
@@ -23,13 +22,18 @@ import (
 // Evaluate will invoke the transaction function as specified in the SignedProposal
 func (gs *Server) Evaluate(ctx context.Context, proposedTransaction *pb.ProposedTransaction) (*pb.Result, error) {
 	signedProposal := proposedTransaction.Proposal
-	endorsers := gs.registry.GetEndorsers(proposedTransaction.ChannelId)
+	channel, chaincodeID, err := getChannelAndChaincodeFromSignedProposal(proposedTransaction.Proposal)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unpack channel header: %w", err)
+	}
+	endorsers := gs.registry.GetEndorsers(channel, chaincodeID)
+	fmt.Printf("Evaluate: #endorsers=%d\n", len(endorsers))
 	if len(endorsers) == 0 {
-		return nil, errors.New("No endorsing peers found for channel: " + proposedTransaction.ChannelId)
+		return nil, fmt.Errorf("no endorsing peers found for channel: %s", channel)
 	}
 	response, err := endorsers[0].ProcessProposal(ctx, signedProposal) // choose suitable peer
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to evaluate transaction: ")
+		return nil, fmt.Errorf("failed to evaluate transaction: %w", err)
 	}
 
 	return getValueFromResponse(response)
@@ -41,35 +45,39 @@ func (gs *Server) Endorse(ctx context.Context, proposedTransaction *pb.ProposedT
 	signedProposal := proposedTransaction.Proposal
 	var proposal peer.Proposal
 	if err := proto.Unmarshal(signedProposal.ProposalBytes, &proposal); err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal signed proposal")
+		return nil, fmt.Errorf("failed to unmarshal signed proposal: %w", err)
 	}
-	endorsers := gs.registry.GetEndorsers(proposedTransaction.ChannelId)
+	channel, chaincodeID, err := getChannelAndChaincodeFromSignedProposal(proposedTransaction.Proposal)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unpack channel header: %w", err)
+	}
+	endorsers := gs.registry.GetEndorsers(channel, chaincodeID)
 
 	var responses []*peer.ProposalResponse
 	// send to all the endorsers
 	for i := 0; i < len(endorsers); i++ {
 		response, err := endorsers[i].ProcessProposal(ctx, signedProposal)
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to process proposal: ")
+			return nil, fmt.Errorf("failed to process proposal: %w", err)
 		}
 		responses = append(responses, response)
 	}
 
 	env, err := createUnsignedTx(&proposal, responses...)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to assemble transaction: ")
+		return nil, fmt.Errorf("failed to assemble transaction: %w", err)
 	}
 
 	retVal, err := getValueFromResponse(responses[0])
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to extract value from reponse payload")
+		return nil, fmt.Errorf("failed to extract value from reponse payload: %w", err)
 	}
 
 	preparedTxn := &pb.PreparedTransaction{
 		TxId:      proposedTransaction.TxId,
 		ChannelId: proposedTransaction.ChannelId,
-		Response:  retVal,
-		Envelope:  env,
+		Response: retVal,
+		Envelope: env,
 	}
 	return preparedTxn, nil
 }
@@ -80,25 +88,25 @@ func (gs *Server) Submit(txn *pb.PreparedTransaction, cs pb.Gateway_SubmitServer
 	orderers := gs.registry.GetOrderers(txn.ChannelId)
 
 	if len(orderers) == 0 {
-		return errors.New("no orderers discovered")
+		return fmt.Errorf("no orderers discovered")
 	}
 
 	done := make(chan bool)
 	go gs.registry.ListenForTxEvents("mychannel", txn.TxId, done)
 
 	if err := orderers[0].Send(txn.Envelope); err != nil {
-		return errors.Wrap(err, "failed to send envelope to orderer")
+		return fmt.Errorf("failed to send envelope to orderer: %w", err)
 	}
 
 	oresp, err := orderers[0].Recv()
 	if err == io.EOF {
-		return errors.Wrap(err, "failed to to get response from orderer")
+		return fmt.Errorf("failed to to get response from orderer: %w", err)
 	}
 	if err != nil {
-		return errors.Wrap(err, "failed to to get response from orderer")
+		return fmt.Errorf("failed to to get response from orderer: %w", err)
 	}
 	if oresp == nil {
-		return errors.New("received nil response from orderer")
+		return fmt.Errorf("received nil response from orderer")
 	}
 
 	status := oresp.Info

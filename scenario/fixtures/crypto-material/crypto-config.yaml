@@ -31,7 +31,7 @@ PeerOrgs:
   - Name: Org1
     Domain: org1.example.com
     Template:
-      Count: 2
+      Count: 3 # Use 3rd one for the gateway id
     Users:
       Count: 2
     SANS:
@@ -44,6 +44,18 @@ PeerOrgs:
     Domain: org2.example.com
     Template:
       Count: 2
+    Users:
+      Count: 1
+    SANS:
+      - localhost
+      - "127.0.0.1"
+  # ---------------------------------------------------------------------------
+  # Org3
+  # ---------------------------------------------------------------------------
+  - Name: Org3
+    Domain: org3.example.com
+    Template:
+      Count: 1
     Users:
       Count: 1
     SANS:

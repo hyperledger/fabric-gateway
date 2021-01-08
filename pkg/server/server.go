@@ -18,7 +18,7 @@ type Server struct {
 
 // Registry represents the current network topology
 type Registry interface {
-	GetEndorsers(channel string) []peer.EndorserClient
+	GetEndorsers(channel string, chaincode string) []peer.EndorserClient
 	GetDeliverers(channel string) []peer.DeliverClient
 	GetOrderers(channel string) []orderer.AtomicBroadcast_BroadcastClient
 	ListenForTxEvents(channel string, txid string, done chan<- bool) error

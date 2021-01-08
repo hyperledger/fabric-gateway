@@ -243,6 +243,7 @@
                     <links>
                         <link>https://docs.oracle.com/javase/8/docs/api/</link>
                     </links>
+                    <source>8</source>
                 </configuration>
                 <executions>
                     <execution>

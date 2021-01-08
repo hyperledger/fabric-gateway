@@ -9,6 +9,8 @@ package server
 import (
 	"bytes"
 	"context"
+	"github.com/gogo/protobuf/proto"
+	"github.com/hyperledger/fabric-protos-go/common"
 	"testing"
 
 	"github.com/hyperledger/fabric-gateway/pkg/server/mocks"
@@ -18,9 +20,9 @@ import (
 )
 
 func TestEvaluate(t *testing.T) {
-	proposal := &peer.Proposal{
-		Header:  []byte{},
-		Payload: []byte{},
+	proposal, err := createProposal()
+	if err != nil {
+		t.Fatalf("Failed to create the proposal: %s", err)
 	}
 
 	signer := func(digest []byte) ([]byte, error) {
@@ -32,6 +34,9 @@ func TestEvaluate(t *testing.T) {
 	}
 
 	sp, err := server.signProposal(proposal, signer)
+	if err != nil {
+		t.Fatalf("Failed to sign the proposal: %s", err)
+	}
 
 	ptx := &pb.ProposedTransaction{
 		Proposal: sp,
@@ -49,9 +54,9 @@ func TestEvaluate(t *testing.T) {
 }
 
 func TestEndorse(t *testing.T) {
-	proposal := &peer.Proposal{
-		Header:  []byte{},
-		Payload: []byte{},
+	proposal, err := createProposal()
+	if err != nil {
+		t.Fatalf("Failed to create the proposal: %s", err)
 	}
 
 	signer := func(digest []byte) ([]byte, error) {
@@ -63,6 +68,9 @@ func TestEndorse(t *testing.T) {
 	}
 
 	sp, err := server.signProposal(proposal, signer)
+	if err != nil {
+		t.Fatalf("Failed to sign the proposal: %s", err)
+	}
 
 	ptx := &pb.ProposedTransaction{
 		Proposal: sp,
@@ -80,9 +88,9 @@ func TestEndorse(t *testing.T) {
 }
 
 func TestSubmit(t *testing.T) {
-	proposal := &peer.Proposal{
-		Header:  []byte{},
-		Payload: []byte{},
+	proposal, err := createProposal()
+	if err != nil {
+		t.Fatalf("Failed to create the proposal: %s", err)
 	}
 
 	signer := func(digest []byte) ([]byte, error) {
@@ -100,6 +108,9 @@ func TestSubmit(t *testing.T) {
 	}
 
 	preparedTx, err := server.Endorse(context.TODO(), ptx)
+	if err != nil {
+		t.Fatalf("Failed to sign the proposal: %s", err)
+	}
 
 	if err != nil {
 		t.Fatalf("Failed to prepare the transaction: %s", err)
@@ -118,4 +129,53 @@ func TestSubmit(t *testing.T) {
 	// if !bytes.Equal(result.Response.Value, []byte("MyResult")) {
 	// 	t.Fatalf("Incorrect value: %s", result.Response.Value)
 	// }
+}
+
+func createProposal() (*peer.Proposal, error){
+	invocationSpec := &peer.ChaincodeInvocationSpec{
+		ChaincodeSpec: &peer.ChaincodeSpec{
+			Type:        peer.ChaincodeSpec_NODE,
+			ChaincodeId: &peer.ChaincodeID{Name: "my_chaincode"},
+			Input:       &peer.ChaincodeInput{Args: nil},
+		},
+	}
+
+	invocationSpecBytes, err := proto.Marshal(invocationSpec)
+	if err != nil {
+		return nil, err
+	}
+
+	payload := &peer.ChaincodeProposalPayload{
+		Input: invocationSpecBytes,
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	channelHeader := &common.ChannelHeader {
+		ChannelId: "my_channel",
+	}
+
+	channelHeaderBytes, err := proto.Marshal(channelHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	header := &common.Header{
+		ChannelHeader: channelHeaderBytes,
+	}
+
+	headerBytes, err := proto.Marshal(header)
+	if err != nil {
+		return nil, err
+	}
+
+	proposal := &peer.Proposal{
+		Header: headerBytes,
+		Payload: payloadBytes,
+	}
+
+	return proposal, nil
 }
