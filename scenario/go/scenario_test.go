@@ -349,7 +349,7 @@ func createGateway(user string, mspID string) error {
 func connectGateway(address string) error {
 	hostPort := strings.Split(address, ":")
 	if len(hostPort) != 2 {
-		return fmt.Errorf("Invalid endpoint: %s", address)
+		return fmt.Errorf("invalid endpoint: %s", address)
 	}
 
 	host := hostPort[0]
@@ -549,7 +549,7 @@ func theTransactionShouldFail() error {
 	}
 
 	if transactionResult, err = invoke(transaction.name, transaction.options...); nil == err {
-		return fmt.Errorf("Transaction invocation was expected to fail, but it returned: %s", transactionResult)
+		return fmt.Errorf("transaction invocation was expected to fail, but it returned: %s", transactionResult)
 	}
 	return nil
 }
@@ -561,7 +561,7 @@ func transactionInvokeFn(txType TransactionType) (func(string, ...client.Proposa
 	case Evaluate:
 		return contract.Evaluate, nil
 	default:
-		return nil, fmt.Errorf("Unknown transaction type: %v", txType)
+		return nil, fmt.Errorf("unknown transaction type: %v", txType)
 	}
 }
 
@@ -600,7 +600,7 @@ func jsonEqual(a, b []byte) (bool, error) {
 func theResponseShouldBe(expected string) error {
 	actual := string(transactionResult)
 	if actual != expected {
-		return fmt.Errorf("Transaction response \"%s\" does not match expected value \"%s\"", actual, expected)
+		return fmt.Errorf("transaction response \"%s\" does not match expected value \"%s\"", actual, expected)
 	}
 	return nil
 }

@@ -82,7 +82,7 @@ func WithEndpoint(endpoint *connection.Endpoint) ConnectOption {
 	return func(gateway *Gateway) error {
 		clientConnection, err := endpoint.Dial()
 		if err != nil {
-			return fmt.Errorf("Failed to establish Gateway connection: %w", err)
+			return fmt.Errorf("failed to establish Gateway connection: %w", err)
 		}
 
 		gateway.closer = clientConnection

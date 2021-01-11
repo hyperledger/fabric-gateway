@@ -32,7 +32,7 @@ func (transaction *Transaction) Result() []byte {
 func (transaction *Transaction) Bytes() ([]byte, error) {
 	transactionBytes, err := proto.Marshal(transaction.preparedTransaction)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to marshall Proposal protobuf: %w", err)
+		return nil, fmt.Errorf("failed to marshall Proposal protobuf: %w", err)
 	}
 
 	return transactionBytes, nil
@@ -54,7 +54,7 @@ func (transaction *Transaction) Submit() (chan error, error) {
 	stream, err := transaction.client.Submit(ctx, transaction.preparedTransaction)
 	if err != nil {
 		cancel()
-		return nil, fmt.Errorf("Failed to submit transaction to the orderer: %w", err)
+		return nil, fmt.Errorf("failed to submit transaction to the orderer: %w", err)
 	}
 
 	commit := make(chan error)
@@ -67,7 +67,7 @@ func (transaction *Transaction) Submit() (chan error, error) {
 				return
 			}
 			if err != nil {
-				commit <- fmt.Errorf("Failed to receive event: %w", err)
+				commit <- fmt.Errorf("failed to receive event: %w", err)
 				return
 			}
 			fmt.Println(event)

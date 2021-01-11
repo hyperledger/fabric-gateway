@@ -6,7 +6,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
@@ -19,7 +18,7 @@ type SmartContract struct {
 // AddEntry adds a new entry to the world state with given details
 func (s *SmartContract) AddEntry(ctx contractapi.TransactionContextInterface, name string, value string) (string, error) {
 	if err := ctx.GetStub().PutState(name, []byte(value)); err != nil {
-		return "", errors.Wrap(err,"Failed to write to world state")
+		return "", fmt.Errorf("failed to write to world state: %w", err)
 	}
 
 	return value, nil
@@ -30,7 +29,7 @@ func (s *SmartContract) ReadEntry(ctx contractapi.TransactionContextInterface, n
 	bytes, err := ctx.GetStub().GetState(name)
 
 	if err != nil {
-		return "", errors.Wrap(err, "Failed to read from world state")
+		return "", fmt.Errorf("failed to read from world state: %w", err)
 	}
 
 	if bytes == nil {

@@ -41,7 +41,7 @@ func NewCertificate(privateKey crypto.PrivateKey) (*x509.Certificate, error) {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to generate serial number: %w", err)
+		return nil, fmt.Errorf("failed to generate serial number: %w", err)
 	}
 
 	notBefore := time.Now()
@@ -64,7 +64,7 @@ func NewCertificate(privateKey crypto.PrivateKey) (*x509.Certificate, error) {
 
 	certificateBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, publicKey(privateKey), privateKey)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to generate certificate: %w", err)
+		return nil, fmt.Errorf("failed to generate certificate: %w", err)
 	}
 
 	return x509.ParseCertificate(certificateBytes)

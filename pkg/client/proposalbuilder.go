@@ -29,12 +29,12 @@ type proposalBuilder struct {
 func (builder *proposalBuilder) build() (*Proposal, error) {
 	proposalProto, transactionID, err := builder.newProposalProto()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create Proposal protobuf: %w", err)
+		return nil, fmt.Errorf("failed to create Proposal protobuf: %w", err)
 	}
 
 	proposalBytes, err := proto.Marshal(proposalProto)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to marshall Proposal protobuf: %w", err)
+		return nil, fmt.Errorf("failed to marshall Proposal protobuf: %w", err)
 	}
 
 	signedProposalProto := &peer.SignedProposal{
@@ -66,7 +66,7 @@ func (builder *proposalBuilder) newProposalProto() (*peer.Proposal, string, erro
 
 	creator, err := builder.signingID.Creator()
 	if err != nil {
-		return nil, "", fmt.Errorf("Failed to serialize identity: %w", err)
+		return nil, "", fmt.Errorf("failed to serialize identity: %w", err)
 	}
 
 	result, transactionID, err := protoutil.CreateChaincodeProposalWithTransient(
@@ -77,7 +77,7 @@ func (builder *proposalBuilder) newProposalProto() (*peer.Proposal, string, erro
 		builder.transient,
 	)
 	if err != nil {
-		return nil, "", fmt.Errorf("Failed to create chaincode proposal: %w", err)
+		return nil, "", fmt.Errorf("failed to create chaincode proposal: %w", err)
 	}
 
 	return result, transactionID, nil

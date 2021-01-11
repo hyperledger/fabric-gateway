@@ -48,7 +48,7 @@ func (proposal *Proposal) Endorse() (*Transaction, error) {
 
 	preparedTransaction, err := proposal.client.Endorse(ctx, proposal.proposedTransaction)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to endorse proposal: %w", err)
+		return nil, fmt.Errorf("failed to endorse proposal: %w", err)
 	}
 
 	result := &Transaction{
@@ -70,7 +70,7 @@ func (proposal *Proposal) Evaluate() ([]byte, error) {
 
 	result, err := proposal.client.Evaluate(ctx, proposal.proposedTransaction)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to evaluate transaction: %w", err)
+		return nil, fmt.Errorf("failed to evaluate transaction: %w", err)
 	}
 
 	return result.Value, nil

@@ -21,7 +21,7 @@ import (
 func (reg *registry) ListenForTxEvents(channel string, txid string, done chan<- bool) error {
 	envelope, err := createDeliverEnvelope(channel, reg.signer)
 	if err != nil {
-		return fmt.Errorf("Failed to create deliver env: %w", err)
+		return fmt.Errorf("failed to create deliver env: %w", err)
 	}
 	eventCh := make(chan *peer.FilteredTransaction)
 
@@ -81,7 +81,7 @@ func createDeliverEnvelope(
 		// tlsCertHash,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Error signing envelope: %w", err)
+		return nil, fmt.Errorf("error signing envelope: %w", err)
 	}
 
 	return env, nil
@@ -94,12 +94,12 @@ func listenForTxEvent(deliverClient peer.DeliverClient, txid string, envelope *c
 
 	df, err := deliverClient.DeliverFiltered(ctx)
 	if err != nil {
-		return fmt.Errorf("Failed to register for events: %w", err)
+		return fmt.Errorf("failed to register for events: %w", err)
 	}
 	defer df.CloseSend()
 	err = df.Send(envelope)
 	if err != nil {
-		return fmt.Errorf("Error sending deliver seek info envelope: %w", err)
+		return fmt.Errorf("error sending deliver seek info envelope: %w", err)
 	}
 
 	for {

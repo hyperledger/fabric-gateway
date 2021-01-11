@@ -122,11 +122,11 @@ func NewRegistry(config Config) (*registry, error) {
 
 	clientTLSCert, err := tls.X509KeyPair(config.Certificate(), config.Key())
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create tls cert: %w", err)
+		return nil, fmt.Errorf("failed to create tls cert: %w", err)
 	}
 	clientID, err := signingIdentity.Serialize()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to serialize gateway id: %w", err)
+		return nil, fmt.Errorf("failed to serialize gateway id: %w", err)
 	}
 	authInfo := &discovery.AuthInfo{
 		ClientIdentity:    clientID,
@@ -154,7 +154,7 @@ func (reg *registry) addPeer(channel string, mspid string, host string, port uin
 		creds := credentials.NewClientTLSFromCert(certPool, host)
 		conn, err := grpc.Dial(translateURL(url), grpc.WithTransportCredentials(creds))
 		if err != nil {
-			return fmt.Errorf("Failed to connect to peer: %w", err)
+			return fmt.Errorf("failed to connect to peer: %w", err)
 		}
 		ec := peer.NewEndorserClient(conn)
 		// query channels for this peer
@@ -210,7 +210,7 @@ func (reg *registry) addOrderer(channel string, mspid string, host string, port 
 			if ok {
 				fmt.Println(rpcStatus.Message())
 			}
-			return fmt.Errorf("Failed to connect to orderer: %w", err)
+			return fmt.Errorf("failed to connect to orderer: %w", err)
 		}
 		reg.orderers[url] = ordererClient{
 			endpoint:        ep,
@@ -315,7 +315,7 @@ func (reg *registry) getChannels(target peer.EndorserClient) ([]string, error) {
 
 	creator, err := reg.signer.Serialize()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to serialize Signer: %w", err)
+		return nil, fmt.Errorf("failed to serialize Signer: %w", err)
 	}
 
 	proposal, _, err := protoutil.CreateChaincodeProposal(
@@ -325,12 +325,12 @@ func (reg *registry) getChannels(target peer.EndorserClient) ([]string, error) {
 		creator,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create chaincode proposal: %w", err)
+		return nil, fmt.Errorf("failed to create chaincode proposal: %w", err)
 	}
 
 	proposalBytes, err := proto.Marshal(proposal)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to marshal chaincode proposal: %w", err)
+		return nil, fmt.Errorf("failed to marshal chaincode proposal: %w", err)
 	}
 
 	signature, err := reg.signer.Sign(proposalBytes)

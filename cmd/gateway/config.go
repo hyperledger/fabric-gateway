@@ -56,13 +56,13 @@ func loadConfig() (*config, error) {
 		}
 		err = yaml.Unmarshal(cfg, &conf)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to parse gateway config: %w", err)
+			return nil, fmt.Errorf("failed to parse gateway config: %w", err)
 		}
 	}
 	// apply any env-var overrides
 	err := envconfig.Process("GATEWAY", &conf.Gateway)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to apply env-var overrides: %w", err)
+		return nil, fmt.Errorf("failed to apply env-var overrides: %w", err)
 	}
 
 	return conf, nil
