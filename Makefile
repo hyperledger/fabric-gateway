@@ -63,16 +63,16 @@ lint:
 	golint $(base_dir)/pkg/... $(base_dir)/cmd/gateway
 
 vendor-chaincode:
-	cd $(scenario_dir)/fixtures/chaincode/golang/echo; GO111MODULE=on go mod vendor
+	cd $(scenario_dir)/fixtures/chaincode/golang/basic; GO111MODULE=on go mod vendor
 
-scenario-test-go: docker vendor-chaincode
+scenario-test-go: vendor-chaincode docker
 	cd $(scenario_dir)/go; godog $(scenario_dir)/features/
 
-scenario-test-node: docker build-node vendor-chaincode
+scenario-test-node: vendor-chaincode docker build-node
 	cd $(node_dir); rm -f fabric-gateway-dev.tgz; mv $$(npm pack) fabric-gateway-dev.tgz
 	cd $(scenario_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; npm test
 
-scenario-test-java: docker vendor-chaincode
+scenario-test-java: vendor-chaincode docker
 	cd $(java_dir); mvn verify
 
 scenario-test: scenario-test-go scenario-test-node scenario-test-java

@@ -20,7 +20,7 @@ import (
 func (gs *Server) signProposal(proposal *peer.Proposal, sign identity.Sign) (*peer.SignedProposal, error) {
 	proposalBytes, err := proto.Marshal(proposal)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal chaincode proposal: %w", err)
+		return nil, fmt.Errorf("Failed to marshal chaincode proposal: %w", err)
 	}
 
 	signature, err := sign(proposalBytes)
@@ -116,7 +116,7 @@ func createUnsignedTx(
 	cap := &peer.ChaincodeActionPayload{ChaincodeProposalPayload: propPayloadBytes, Action: cea}
 	capBytes, err := proto.Marshal(cap)
 	if err != nil {
-		return nil, fmt.Errorf("error marshaling ChaincodeActionPayload: %w", err)
+		return nil, fmt.Errorf("Error marshaling ChaincodeActionPayload: %w", err)
 	}
 
 	// create a transaction
@@ -128,14 +128,14 @@ func createUnsignedTx(
 	// serialize the tx
 	txBytes, err := proto.Marshal(tx)
 	if err != nil {
-		return nil, fmt.Errorf("error marshaling Transaction: %w", err)
+		return nil, fmt.Errorf("Error marshaling Transaction: %w", err)
 	}
 
 	// create the payload
 	payl := &common.Payload{Header: hdr, Data: txBytes}
 	paylBytes, err := proto.Marshal(payl)
 	if err != nil {
-		return nil, fmt.Errorf("error marshaling Payload: %w", err)
+		return nil, fmt.Errorf("Error marshaling Payload: %w", err)
 	}
 
 	// here's the envelope
@@ -172,45 +172,40 @@ func getChannelAndChaincodeFromSignedProposal(signedProposal *peer.SignedProposa
 
 func unmarshalChannelHeader(bytes []byte) (*common.ChannelHeader, error) {
 	var channelHeader common.ChannelHeader
-	err := proto.Unmarshal(bytes, &channelHeader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal channel header: %w", err)
+	if err := proto.Unmarshal(bytes, &channelHeader); err != nil {
+		return nil, fmt.Errorf("Failed to unmarshal channel header: %w", err)
 	}
 	return &channelHeader, nil
 }
 
 func unmarshalProposalResponsePayload(prpBytes []byte) (*peer.ProposalResponsePayload, error) {
 	prp := &peer.ProposalResponsePayload{}
-	err := proto.Unmarshal(prpBytes, prp)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling ProposalResponsePayload: %w", err)
+	if err := proto.Unmarshal(prpBytes, prp); err != nil {
+		return nil, fmt.Errorf("Error unmarshaling ProposalResponsePayload: %w", err)
 	}
 	return prp, nil
 }
 
 func unmarshalChaincodeAction(caBytes []byte) (*peer.ChaincodeAction, error) {
 	chaincodeAction := &peer.ChaincodeAction{}
-	err := proto.Unmarshal(caBytes, chaincodeAction)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling ChaincodeAction: %w", err)
+	if err := proto.Unmarshal(caBytes, chaincodeAction); err != nil {
+		return nil, fmt.Errorf("Error unmarshaling ChaincodeAction: %w", err)
 	}
 	return chaincodeAction, nil
 }
 
 func unmarshalHeader(bytes []byte) (*common.Header, error) {
 	hdr := &common.Header{}
-	err := proto.Unmarshal(bytes, hdr)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling Header: %w", err)
+	if err := proto.Unmarshal(bytes, hdr); err != nil {
+		return nil, fmt.Errorf("Error unmarshaling Header: %w", err)
 	}
 	return hdr, nil
 }
 
 func unmarshalChaincodeProposalPayload(bytes []byte) (*peer.ChaincodeProposalPayload, error) {
 	cpp := &peer.ChaincodeProposalPayload{}
-	err := proto.Unmarshal(bytes, cpp)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling ChaincodeProposalPayload: %w", err)
+	if err := proto.Unmarshal(bytes, cpp); err != nil {
+		return nil, fmt.Errorf("Error unmarshaling ChaincodeProposalPayload: %w", err)
 	}
 	return cpp, nil
 }
@@ -227,7 +222,7 @@ func getBytesProposalPayloadForTx(
 	cppNoTransient := &peer.ChaincodeProposalPayload{Input: payload.Input, TransientMap: nil}
 	cppBytes, err := proto.Marshal(cppNoTransient)
 	if err != nil {
-		return nil, fmt.Errorf("error marshaling ChaincodeProposalPayload: %w", err)
+		return nil, fmt.Errorf("Error marshaling ChaincodeProposalPayload: %w", err)
 	}
 	return cppBytes, nil
 }

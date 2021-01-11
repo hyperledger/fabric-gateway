@@ -28,7 +28,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
  * using {@link #newProposal(String)}. Once built, the proposal can either be evaluated, or can be sent for endorsement
  * and the resulting transaction object can be submitted to the orderer to be committed to the ledger.
  *
- * <h3>Evaluate transaction flow</h3>
+ * <h2>Evaluate transaction flow</h2>
  * <pre><code>
  *     byte[] result = contract.newProposal("transactionName")
  *             .addArguments("one", "two")
@@ -37,7 +37,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
  *             .evaluate();
  * </code></pre>
  *
- * <h3>Submit transaction flow</h3>
+ * <h2>Submit transaction flow</h2>
  * <pre><code>
  *     byte[] result = contract.newProposal("transactionName")
  *             .addArguments("one", "two")
@@ -182,6 +182,7 @@ public interface Contract {
      * @param proposalBytes The proposal.
      * @param signature A digital signature.
      * @return A signed proposal.
+     * @throws InvalidProtocolBufferException if the supplied proposal bytes are not a valid proposal.
      */
     Proposal newSignedProposal(byte[] proposalBytes, byte[] signature) throws InvalidProtocolBufferException;
 
@@ -190,6 +191,7 @@ public interface Contract {
      * @param transactionBytes The transaction.
      * @param signature A digital signature.
      * @return A signed transaction.
+     * @throws InvalidProtocolBufferException if the supplied transaction bytes are not a valid transaction.
      */
     Transaction newSignedTransaction(byte[] transactionBytes, byte[] signature) throws InvalidProtocolBufferException;
 }

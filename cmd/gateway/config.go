@@ -7,11 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 
 	"github.com/kelseyhightower/envconfig"
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -52,17 +52,17 @@ func loadConfig() (*config, error) {
 	if cfgFile != "" {
 		cfg, err := ioutil.ReadFile(cfgFile + "/gateway.yaml")
 		if err != nil {
-			errors.Wrap(err, "No config yaml found at location: "+cfgFile)
+			return nil, err
 		}
 		err = yaml.Unmarshal(cfg, &conf)
 		if err != nil {
-			errors.Wrap(err, "failed to parse gateway config")
+			return nil, fmt.Errorf("Failed to parse gateway config: %w", err)
 		}
 	}
 	// apply any env-var overrides
 	err := envconfig.Process("GATEWAY", &conf.Gateway)
 	if err != nil {
-		errors.Wrap(err, "Failed to apply env-var overrides")
+		return nil, fmt.Errorf("Failed to apply env-var overrides: %w", err)
 	}
 
 	return conf, nil

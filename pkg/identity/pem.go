@@ -5,7 +5,7 @@ import (
 	"crypto"
 	"crypto/x509"
 	"encoding/pem"
-	"fmt"
+	"errors"
 )
 
 // CertificateToPEM converts an X.509 certificate to PEM encoded ASN.1 DER data.
@@ -21,7 +21,7 @@ func CertificateToPEM(certificate *x509.Certificate) ([]byte, error) {
 func CertificateFromPEM(certificatePEM []byte) (*x509.Certificate, error) {
 	block, _ := pem.Decode(certificatePEM)
 	if block == nil {
-		return nil, fmt.Errorf("Failed to parse certificate PEM")
+		return nil, errors.New("Failed to parse certificate PEM")
 	}
 
 	return x509.ParseCertificate(block.Bytes)
@@ -31,7 +31,7 @@ func CertificateFromPEM(certificatePEM []byte) (*x509.Certificate, error) {
 func PrivateKeyFromPEM(privateKeyPEM []byte) (crypto.PrivateKey, error) {
 	block, _ := pem.Decode(privateKeyPEM)
 	if block == nil {
-		return nil, fmt.Errorf("Failed to parse private key PEM")
+		return nil, errors.New("Failed to parse private key PEM")
 	}
 
 	privateKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)

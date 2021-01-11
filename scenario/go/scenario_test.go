@@ -35,9 +35,9 @@ const (
 type TransactionType int
 
 type orgConfig struct {
-	cli string
+	cli      string
 	anchortx string
-	peers []string
+	peers    []string
 }
 
 var orgs = []orgConfig{
@@ -186,13 +186,13 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I set the transaction arguments? to (.+)$`, setArguments)
 	s.Step(`^I set transient data on the transaction to$`, setTransientData)
 	s.Step(`^I invoke the transaction$`, invokeTransaction)
-	s.Step(`^I invoke the transaction which I expect to fail$`, invokeTransactionFail)
 	s.Step(`^I use the (\S+) contract$`, useContract)
 	s.Step(`^I use the (\S+) network$`, useNetwork)
-	s.Step(`^the response should equal (.+)$`, theResponseShouldEqual)
 	s.Step(`^the response should be JSON matching$`, theResponseShouldBeJSONMatching)
 	s.Step(`^I stop the peer named (\S+)$`, stopPeer)
 	s.Step(`^I start the peer named (\S+)$`, startPeer)
+	s.Step(`^the response should be "(.*)"$`, theResponseShouldBe)
+	s.Step(`^the transaction invocation should fail$`, theTransactionShouldFail)
 }
 
 func startFabric() error {
@@ -349,7 +349,7 @@ func createGateway(user string, mspID string) error {
 func connectGateway(address string) error {
 	hostPort := strings.Split(address, ":")
 	if len(hostPort) != 2 {
-		return fmt.Errorf("invalid endpoint: %s", address)
+		return fmt.Errorf("Invalid endpoint: %s", address)
 	}
 
 	host := hostPort[0]
@@ -472,7 +472,7 @@ func dockerCommand(args ...string) (string, error) {
 	out, err := cmd.CombinedOutput()
 	fmt.Println(string(out))
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", string(out), err)
+		return "", fmt.Errorf("%w: %s", err, string(out))
 	}
 
 	return string(out), nil
@@ -542,15 +542,14 @@ func invokeTransaction() error {
 	return nil
 }
 
-func invokeTransactionFail() error {
+func theTransactionShouldFail() error {
 	invoke, err := transactionInvokeFn(transaction.txType)
 	if err != nil {
 		return err
 	}
 
-	transactionResult, err = invoke(transaction.name, transaction.options...)
-	if err == nil {
-		return fmt.Errorf("transaction invocation was expected to fail, but it didn't")
+	if transactionResult, err = invoke(transaction.name, transaction.options...); nil == err {
+		return fmt.Errorf("Transaction invocation was expected to fail, but it returned: %s", transactionResult)
 	}
 	return nil
 }
@@ -562,7 +561,7 @@ func transactionInvokeFn(txType TransactionType) (func(string, ...client.Proposa
 	case Evaluate:
 		return contract.Evaluate, nil
 	default:
-		return nil, fmt.Errorf("unknown transaction type: %v", txType)
+		return nil, fmt.Errorf("Unknown transaction type: %v", txType)
 	}
 }
 
@@ -573,13 +572,6 @@ func useContract(contractName string) error {
 
 func useNetwork(channelName string) error {
 	network = gateway.GetNetwork(channelName)
-	return nil
-}
-
-func theResponseShouldEqual(expected string) error {
-	if expected != string(transactionResult) {
-		return fmt.Errorf("transaction response doesn't match expected value")
-	}
 	return nil
 }
 
@@ -603,4 +595,12 @@ func jsonEqual(a, b []byte) (bool, error) {
 		return false, err
 	}
 	return reflect.DeepEqual(j2, j), nil
+}
+
+func theResponseShouldBe(expected string) error {
+	actual := string(transactionResult)
+	if actual != expected {
+		return fmt.Errorf("Transaction response \"%s\" does not match expected value \"%s\"", actual, expected)
+	}
+	return nil
 }

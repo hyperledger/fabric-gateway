@@ -14,7 +14,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	gateway "github.com/hyperledger/fabric-gateway/protos"
-	"github.com/pkg/errors"
 )
 
 // Transaction represents an endorsed transaction that can be submitted to the orderer for commit to the ledger.
@@ -33,7 +32,7 @@ func (transaction *Transaction) Result() []byte {
 func (transaction *Transaction) Bytes() ([]byte, error) {
 	transactionBytes, err := proto.Marshal(transaction.preparedTransaction)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to marshall Proposal protobuf")
+		return nil, fmt.Errorf("Failed to marshall Proposal protobuf: %w", err)
 	}
 
 	return transactionBytes, nil
@@ -55,7 +54,7 @@ func (transaction *Transaction) Submit() (chan error, error) {
 	stream, err := transaction.client.Submit(ctx, transaction.preparedTransaction)
 	if err != nil {
 		cancel()
-		return nil, errors.Wrap(err, "Failed to submit transaction to the orderer")
+		return nil, fmt.Errorf("Failed to submit transaction to the orderer: %w", err)
 	}
 
 	commit := make(chan error)
@@ -68,7 +67,7 @@ func (transaction *Transaction) Submit() (chan error, error) {
 				return
 			}
 			if err != nil {
-				commit <- errors.Wrap(err, "Failed to receive event")
+				commit <- fmt.Errorf("Failed to receive event: %w", err)
 				return
 			}
 			fmt.Println(event)
