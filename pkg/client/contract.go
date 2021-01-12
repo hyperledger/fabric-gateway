@@ -129,7 +129,7 @@ func (contract *Contract) NewProposal(transactionName string, options ...Proposa
 func (contract *Contract) NewSignedProposal(bytes []byte, signature []byte) (*Proposal, error) {
 	proposedTransactionProto := &gateway.ProposedTransaction{}
 	if err := proto.Unmarshal(bytes, proposedTransactionProto); err != nil {
-		return nil, fmt.Errorf("Failed to deserialize proposal: %w", err)
+		return nil, fmt.Errorf("failed to deserialize proposal: %w", err)
 	}
 
 	proposal := &Proposal{
@@ -147,7 +147,7 @@ func (contract *Contract) NewSignedProposal(bytes []byte, signature []byte) (*Pr
 func (contract *Contract) NewSignedTransaction(bytes []byte, signature []byte) (*Transaction, error) {
 	preparedTransaction := &gateway.PreparedTransaction{}
 	if err := proto.Unmarshal(bytes, preparedTransaction); err != nil {
-		return nil, fmt.Errorf("Failed to deserialize transaction: %w", err)
+		return nil, fmt.Errorf("failed to deserialize transaction: %w", err)
 	}
 
 	transaction := &Transaction{

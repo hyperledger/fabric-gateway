@@ -39,7 +39,7 @@ func (s *SmartContract) Echo(ctx contractapi.TransactionContextInterface, arg st
 func (s *SmartContract) EchoTransient(ctx contractapi.TransactionContextInterface) (map[string]string, error) {
 	transient, err := ctx.GetStub().GetTransient()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get transient data: %w", err)
+		return nil, fmt.Errorf("failed to get transient data: %w", err)
 	}
 
 	return toStringValues(transient), nil
@@ -48,7 +48,7 @@ func (s *SmartContract) EchoTransient(ctx contractapi.TransactionContextInterfac
 // Put a value for a given ledger key and return the value
 func (s *SmartContract) Put(ctx contractapi.TransactionContextInterface, key string, value string) (string, error) {
 	if err := ctx.GetStub().PutState(key, []byte(value)); err != nil {
-		return "", fmt.Errorf("Failed to put state to ledger: %w", err)
+		return "", fmt.Errorf("failed to put state to ledger: %w", err)
 	}
 
 	return value, nil
@@ -58,7 +58,7 @@ func (s *SmartContract) Put(ctx contractapi.TransactionContextInterface, key str
 func (s *SmartContract) Get(ctx contractapi.TransactionContextInterface, key string) (string, error) {
 	value, err := ctx.GetStub().GetState(key)
 	if err != nil {
-		return "", fmt.Errorf("Failed to get state from ledger: %w", err)
+		return "", fmt.Errorf("failed to get state from ledger: %w", err)
 	}
 
 	return string(value), nil

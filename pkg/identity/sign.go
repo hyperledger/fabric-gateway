@@ -24,7 +24,7 @@ func NewPrivateKeySign(privateKey crypto.PrivateKey) (Sign, error) {
 	case *ecdsa.PrivateKey:
 		return ecdsaPrivateKeySign(key), nil
 	default:
-		return nil, fmt.Errorf("Unsupported key type: %T", privateKey)
+		return nil, fmt.Errorf("unsupported key type: %T", privateKey)
 	}
 }
 
