@@ -243,6 +243,11 @@ public class ScenarioSteps implements En {
                     .signer(newSigner(user, mspId));
         });
 
+        Given("I create a gateway without signer for user {word} in MSP {word}", (String user, String mspId) -> {
+            gatewayBuilder = Gateway.newInstance()
+                    .identity(newIdentity(user, mspId));
+        });
+
         Given("I connect the gateway to {word}", (String address) -> {
             gateway = gatewayBuilder.endpoint(address).connect();
         });
@@ -256,17 +261,20 @@ public class ScenarioSteps implements En {
         });
 
         When("^I prepare to (evaluate|submit) an? ([^ ]+) transaction$", (String action, String transactionName) -> {
-            Proposal.Builder builder = contract.newProposal(transactionName);
             if (action.equals("submit")) {
-                transactionInvocation = TransactionInvocation.prepareToSubmit(builder);
+                transactionInvocation = TransactionInvocation.prepareToSubmit(contract, transactionName);
             } else {
-                transactionInvocation = TransactionInvocation.prepareToEvaluate(builder);
+                transactionInvocation = TransactionInvocation.prepareToEvaluate(contract, transactionName);
             }
         });
 
         When("^I set the transaction arguments? to (.+)$", (String argsJson) -> {
             String[] args = newStringArray(parseJsonArray(argsJson));
             transactionInvocation.setArguments(args);
+        });
+
+        Given("I do off-line signing as user {word} in MSP {word}", (String user, String mspId) -> {
+            transactionInvocation.setOfflineSigner(newSigner(user, mspId));
         });
 
         When("I invoke the transaction", () -> {

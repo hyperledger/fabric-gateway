@@ -1,8 +1,8 @@
 /*
-Copyright 2020 IBM All Rights Reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
+ * Copyright 2020 IBM All Rights Reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 'use strict';
 
@@ -68,19 +68,23 @@ const runningPeers = {
     'peer0.org3.example.com': true
 };
 
-BeforeAll(() => {
-    this.fabricRunning = false;
-    this.channelsJoined = false;
-    this.runningChaincodes = {};
+let fabricRunning;
+let channelsJoined;
+let runningChaincodes;
+
+BeforeAll(function() {
+    fabricRunning = false;
+    channelsJoined = false;
+    runningChaincodes = {};
 });
 
-AfterAll(() => {
+AfterAll(function() {
     const out = spawnSync('docker-compose', ['-f', dockerComposeFile, '-p', 'node', 'down'], { cwd: dockerComposeDir })
     console.log(out.output.toString());
 })
 
 Given('I have deployed a {word} Fabric network', { timeout: TIMEOUTS.LONG_STEP }, async (type) => {
-    if (!this.fabricRunning) {
+    if (!fabricRunning) {
         // generate crypto material
         let out = execFileSync('./generate.sh', { cwd: fixturesDir })
         console.log(out.toString());
@@ -88,14 +92,14 @@ Given('I have deployed a {word} Fabric network', { timeout: TIMEOUTS.LONG_STEP }
         out = spawnSync('docker-compose', ['-f', dockerComposeFile, '-p', 'node', 'up', '-d'], { cwd: dockerComposeDir })
         console.log(out.output.toString());
 
-        this.fabricRunning = true;
-        await new Promise(r => setTimeout(r, 20000));
+        fabricRunning = true;
+        await sleep(20000);
     }
 });
 
-Given('I have created and joined all channels from the tls connection profile', { timeout: TIMEOUTS.LONG_STEP }, async () => {
+Given('I have created and joined all channels from the tls connection profile', { timeout: TIMEOUTS.LONG_STEP }, async function() {
     await startAllPeers();
-    if (!this.channelsJoined) {
+    if (!channelsJoined) {
         dockerCommandWithTLS(
             'exec', 'org1_cli', 'peer', 'channel', 'create',
             '-o', 'orderer.example.com:7050',
@@ -103,7 +107,7 @@ Given('I have created and joined all channels from the tls connection profile', 
             '-f', '/etc/hyperledger/configtx/channel.tx',
             '--outputBlock', '/etc/hyperledger/configtx/mychannel.block');
 
-        orgs.forEach(org => {
+        orgs.forEach(function(org) {
             org.peers.forEach(peer => {
                 const env = 'CORE_PEER_ADDRESS=' + peer;
                 dockerCommandWithTLS(
@@ -117,14 +121,14 @@ Given('I have created and joined all channels from the tls connection profile', 
                 '-f', org.anchortx);
         });
 
-        this.channelsJoined = true;
-        await new Promise(r => setTimeout(r, 10000));
+        channelsJoined = true;
+        await sleep(10000);
     }
 });
 
-Given(/^I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organizations on channel (\w+) with endorsement policy (.+)$/, { timeout: TIMEOUTS.LONG_STEP }, async (ccType, ccName, version, channelName, signaturePolicy) => {
+Given(/^I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organizations on channel (\w+) with endorsement policy (.+)$/, { timeout: TIMEOUTS.LONG_STEP }, async function(ccType, ccName, version, channelName, signaturePolicy) {
     const mangledName = ccName + version + channelName;
-    if (this.runningChaincodes[mangledName]) {
+    if (runningChaincodes[mangledName]) {
         return;
     }
 
@@ -135,14 +139,14 @@ Given(/^I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organiza
     const ccLabel = ccName + 'v' + version
     const ccPackage = ccName + '.tar.gz'
 
-    orgs.forEach(org => {
+    orgs.forEach(function(org) {
         dockerCommand(
             'exec', org.cli, 'peer', 'lifecycle', 'chaincode', 'package', ccPackage,
             '--lang', ccType,
             '--label', ccLabel,
             '--path', ccPath);
 
-        org.peers.forEach(peer => {
+        org.peers.forEach(function(peer) {
             const env = 'CORE_PEER_ADDRESS=' + peer;
             dockerCommand('exec', "-e", env, org.cli, 'peer', 'lifecycle', 'chaincode', 'install', ccPackage);
         });
@@ -179,31 +183,22 @@ Given(/^I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organiza
         '--tlsRootCertFiles',
         '/etc/hyperledger/configtx/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt');
 
-    this.runningChaincodes[mangledName] = true;
-    await new Promise(r => setTimeout(r, 10000));
+    runningChaincodes[mangledName] = true;
+    await sleep(10000);
 });
 
-Given('I create a gateway for user {word} in MSP {word}', async (user, mspId) => {
-    const org = mspToOrgMap[mspId];
-    const credentialsPath = path.join(fixturesDir, 'crypto-material', 'crypto-config', 'peerOrganizations', `${org}`,
-        'users', `${user}@${org}`, 'msp');
-
-    const certPath = path.join(credentialsPath, 'signcerts', `${user}@${org}-cert.pem`);
-    const certificate = await fs.promises.readFile(certPath);
-    this.identity = {
-        mspId,
-        credentials: certificate
-    };
-
-    const keyPath = path.join(credentialsPath, 'keystore', 'key.pem');
-    const privateKeyPem = await fs.promises.readFile(keyPath);
-    const privateKey = crypto.createPrivateKey(privateKeyPem);
-    this.signer = Signers.newECDSAPrivateKeySigner(privateKey);
-
+Given('I create a gateway for user {word} in MSP {word}', async function(user, mspId) {
+    this.identity = await newIdentity(user, mspId);
+    this.signer = await newSigner(user, mspId);
     delete this.gateway;
 });
 
-Given('I connect the gateway to {word}', async (address) => {
+Given('I create a gateway without signer for user {word} in MSP {word}', async function(user, mspId) {
+    this.identity = await newIdentity(user, mspId);
+    delete this.gateway;
+});
+
+Given('I connect the gateway to {word}', async function(address) {
     const options = {
         url: address,
         signer: this.signer,
@@ -212,70 +207,74 @@ Given('I connect the gateway to {word}', async (address) => {
     this.gateway = await connect(options);
 });
 
-Given('I use the {word} network', (channelName) => {
+Given('I use the {word} network', function (channelName) {
     this.network = this.gateway.getNetwork(channelName);
 });
 
-Given('I use the {word} contract', (contractName) => {
+Given('I use the {word} contract', function(contractName) {
     this.contract = this.network.getContract(contractName);
 });
 
-When(/I prepare to (evaluate|submit) an? ([^ ]+) transaction/, (action, txnName) => {
+When(/I prepare to (evaluate|submit) an? ([^ ]+) transaction/, function(action, txnName) {
     this.txn = {
-        invoke: getInvoke(action),
         name: txnName,
         options: {},
+        contract: this.contract,
     };
+    const invoke = getInvoke(action);
+    this.txn.invoke = () => invoke(this.txn);
 });
 
-When(/I set the transaction arguments? to (.+)/, (jsonArgs) => {
+When(/I set the transaction arguments? to (.+)/, function(jsonArgs) {
     const args = JSON.parse(jsonArgs);
     this.txn.options.arguments = args;
 });
 
-When('I set transient data on the transaction to', (dataTable) => {
+When('I set transient data on the transaction to', function(dataTable) {
     const hash = dataTable.rowsHash();
     const transient = {};
     Object.keys(hash).forEach(key => { transient[key] = Buffer.from(hash[key]) });
     this.txn.options.transientData = transient;
 });
 
-When('I invoke the transaction', async () => {
-    const proposal = this.contract.newProposal(this.txn.name, this.txn.options);
-    this.txn.result = await this.txn.invoke(proposal);
+When('I do off-line signing as user {word} in MSP {word}', async function(user, mspId) {
+    this.txn.offlineSigner = await newSigner(user, mspId);
+})
+
+When('I invoke the transaction', async function() {
+    this.txn.result = await this.txn.invoke();
 });
 
-Then('the transaction invocation should fail', async () => {
+Then('the transaction invocation should fail', async function() {
     try {
-        const proposal = this.contract.newProposal(this.txn.name, this.txn.options);
-        this.txn.result = await this.txn.invoke(proposal);
+        this.txn.result = await this.txn.invoke();
     } catch (err) {
         return;
     }
     throw new Error(`Transaction invocation was expected to fail, but it returned: ${this.txn.result}`);
 });
 
-Then('the response should be JSON matching', (docString) => {
+Then('the response should be JSON matching', function(docString) {
     const resultText = new TextDecoder().decode(this.txn.result);
     const actual = parseJson(resultText);
     const expected = parseJson(docString);
     expect(actual).to.eql(expected);
 });
 
-Then('the response should be {string}', (expected) => {
+Then('the response should be {string}', function(expected) {
     const actual = new TextDecoder().decode(this.txn.result);
     expect(actual).to.equal(expected);
 });
 
-When(/I stop the peer named (.+)/, peer => {
+When(/I stop the peer named (.+)/, function(peer) {
     dockerCommand('stop', peer);
     runningPeers[peer] = false;
 });
 
-When(/I start the peer named (.+)/, async peer => {
+When(/I start the peer named (.+)/, async function(peer) {
     dockerCommand('start', peer);
     runningPeers[peer] = true;
-    await new Promise(r => setTimeout(r, 20000));
+    await sleep(20000);
 });
 
 function dockerCommand(...args) {
@@ -307,7 +306,7 @@ async function startAllPeers() {
             runningPeers[peer] = true;
         }
     }
-    await new Promise(r => setTimeout(r, 20000));
+    await sleep(20000);
 }
 
 function getInvoke(action) {
@@ -319,11 +318,67 @@ function getInvoke(action) {
     throw new Error(`Unknown transaction action: ${this.txn.action}`)
 }
 
-async function evaluate(proposal) {
+async function evaluate(tx) {
+    let proposal = tx.contract.newProposal(tx.name, tx.options);
+    if (tx.offlineSigner) {
+        proposal = offlineSign(proposal, tx.offlineSigner, tx.contract.newSignedProposal.bind(tx.contract));
+    }
+
     return await proposal.evaluate();
 }
 
-async function submit(proposal) {
-    const transaction = await proposal.endorse();
+async function submit(tx) {
+    let proposal = tx.contract.newProposal(tx.name, tx.options);
+    if (tx.offlineSigner) {
+        proposal = offlineSign(proposal, tx.offlineSigner, tx.contract.newSignedProposal.bind(tx.contract));
+    }
+    
+    let transaction = await proposal.endorse();
+    if (tx.offlineSigner) {
+        transaction = offlineSign(transaction, tx.offlineSigner, tx.contract.newSignedTransaction.bind(tx.contract));
+    }
+
     return await transaction.submit();
+}
+
+function offlineSign(signable, sign, newInstance) {
+    const signature = sign(signable.getDigest());
+    return newInstance(signable.getBytes(), signature);
+}
+
+async function newIdentity(user, mspId) {
+    const certificate = await readCertificate(user, mspId);
+    return {
+        mspId,
+        credentials: certificate
+    };
+}
+
+async function readCertificate(user, mspId) {
+    const org = mspToOrgMap[mspId];
+    const credentialsPath = getCredentialsPath(user, mspId);
+    const certPath = path.join(credentialsPath, 'signcerts', `${user}@${org}-cert.pem`);
+    return await fs.promises.readFile(certPath);
+}
+
+async function newSigner(user, mspId) {
+    const privateKey = await readPrivateKey(user, mspId);
+    return Signers.newECDSAPrivateKeySigner(privateKey);
+}
+
+async function readPrivateKey(user, mspId) {
+    const credentialsPath = getCredentialsPath(user, mspId);
+    const keyPath = path.join(credentialsPath, 'keystore', 'key.pem');
+    const privateKeyPem = await fs.promises.readFile(keyPath);
+    return crypto.createPrivateKey(privateKeyPem);
+}
+
+function getCredentialsPath(user, mspId) {
+    const org = mspToOrgMap[mspId];
+    return path.join(fixturesDir, 'crypto-material', 'crypto-config', 'peerOrganizations', `${org}`,
+        'users', `${user}@${org}`, 'msp');
+}
+
+async function sleep(ms) {
+    await new Promise(resolve => setTimeout(resolve, ms));
 }

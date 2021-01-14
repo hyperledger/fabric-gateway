@@ -88,29 +88,45 @@ type GatewayConnection struct {
 }
 
 func NewGatewayConnection(user string, mspID string) (*GatewayConnection, error) {
-	org := GetOrgForMSP(mspID)
-
-	credentialsDir := fixturesDir + "/crypto-material/crypto-config/peerOrganizations/" + org + "/users/" +
-		user + "@" + org + "/msp"
-	certPath := credentialsDir + "/signcerts/" + user + "@" + org + "-cert.pem"
-	keyPath := credentialsDir + "/keystore/key.pem"
-
-	id, err := newIdentity(mspID, certPath)
+	id, err := newIdentity(mspID, CertificatePath(user, mspID))
 	if err != nil {
 		return nil, err
 	}
 
-	sign, err := newSign(keyPath)
-	if err != nil {
-		return nil, err
-	}
-
-	connection := &GatewayConnection{
+	connection := GatewayConnection{
 		ID: id,
 	}
+	return &connection, nil
+}
+
+func NewGatewayConnectionWithSigner(user string, mspID string) (*GatewayConnection, error) {
+	connection, err := NewGatewayConnection(user, mspID)
+	if err != nil {
+		return nil, err
+	}
+
+	sign, err := NewSign(PrivateKeyPath(user, mspID))
+	if err != nil {
+		return nil, err
+	}
+
 	connection.AddOptions(client.WithSign(sign))
 
 	return connection, nil
+}
+
+func CertificatePath(user string, mspID string) string {
+	org := GetOrgForMSP(mspID)
+	return credentialsDirectory(user, org) + "/signcerts/" + user + "@" + org + "-cert.pem"
+}
+
+func PrivateKeyPath(user string, mspID string) string {
+	return credentialsDirectory(user, GetOrgForMSP(mspID)) + "/keystore/key.pem"
+}
+
+func credentialsDirectory(user string, org string) string {
+	return fixturesDir + "/crypto-material/crypto-config/peerOrganizations/" + org + "/users/" +
+		user + "@" + org + "/msp"
 }
 
 func (connection *GatewayConnection) AddOptions(options ...client.ConnectOption) {
@@ -135,7 +151,7 @@ func newIdentity(mspID string, certPath string) (*identity.X509Identity, error) 
 	return identity.NewX509Identity(mspID, certificate)
 }
 
-func newSign(keyPath string) (identity.Sign, error) {
+func NewSign(keyPath string) (identity.Sign, error) {
 	privateKeyPEM, err := ioutil.ReadFile(keyPath)
 	if err != nil {
 		return nil, err
@@ -150,9 +166,11 @@ func newSign(keyPath string) (identity.Sign, error) {
 }
 
 type Transaction struct {
-	txType  TransactionType
-	name    string
-	options []client.ProposalOption
+	txType      TransactionType
+	name        string
+	options     []client.ProposalOption
+	offlineSign identity.Sign
+	result      []byte
 }
 
 func (transaction *Transaction) AddOptions(options ...client.ProposalOption) {
@@ -168,7 +186,6 @@ var gateway *client.Gateway
 var network *client.Network
 var contract *client.Contract
 var transaction *Transaction
-var transactionResult []byte
 
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctx.AfterSuite(func() {
@@ -177,7 +194,8 @@ func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 }
 
 func InitializeScenario(s *godog.ScenarioContext) {
-	s.Step(`^I create a gateway for user (\S+) in MSP (\S+)`, createGateway)
+	s.Step(`^I create a gateway for user (\S+) in MSP (\S+)$`, createGateway)
+	s.Step(`^I create a gateway without signer for user (\S+) in MSP (\S+)$`, createGatewayWithoutSigner)
 	s.Step(`^I connect the gateway to (\S+)$`, connectGateway)
 	s.Step(`^I deploy (\S+) chaincode named (\S+) at version (\S+) for all organizations on channel (\S+) with endorsement policy (.+)$`, deployChaincode)
 	s.Step(`^I have created and joined all channels from the tls connection profile$`, createAndJoinChannels)
@@ -185,6 +203,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I prepare to (submit|evaluate) an? (\S+) transaction$`, prepareSubmit)
 	s.Step(`^I set the transaction arguments? to (.+)$`, setArguments)
 	s.Step(`^I set transient data on the transaction to$`, setTransientData)
+	s.Step(`^I do off-line signing as user (\S+) in MSP (\S+)$`, useOfflineSigner)
 	s.Step(`^I invoke the transaction$`, invokeTransaction)
 	s.Step(`^I use the (\S+) contract$`, useContract)
 	s.Step(`^I use the (\S+) network$`, useNetwork)
@@ -336,6 +355,17 @@ func deployChaincode(ccType, ccName, version, channelName, signaturePolicy strin
 }
 
 func createGateway(user string, mspID string) error {
+	connection, err := NewGatewayConnectionWithSigner(user, mspID)
+	if err != nil {
+		return err
+	}
+
+	gatewayConnection = connection
+	gateway = nil
+	return nil
+}
+
+func createGatewayWithoutSigner(user string, mspID string) error {
 	connection, err := NewGatewayConnection(user, mspID)
 	if err != nil {
 		return err
@@ -509,6 +539,18 @@ func setArguments(argsJSON string) error {
 	return nil
 }
 
+func useOfflineSigner(user string, mspID string) error {
+	keyPath := PrivateKeyPath(user, mspID)
+	offlineSign, err := NewSign(keyPath)
+	if err != nil {
+		return err
+	}
+
+	transaction.offlineSign = offlineSign
+
+	return nil
+}
+
 func unmarshalArgs(argsJSON string) ([]string, error) {
 	var args []string
 	err := json.Unmarshal([]byte(argsJSON), &args)
@@ -530,12 +572,8 @@ func setTransientData(table *messages.PickleStepArgument_PickleTable) error {
 }
 
 func invokeTransaction() error {
-	invoke, err := transactionInvokeFn(transaction.txType)
-	if err != nil {
-		return err
-	}
-
-	transactionResult, err = invoke(transaction.name, transaction.options...)
+	var err error
+	transaction.result, err = transactionInvokeFn(transaction.txType)()
 	if err != nil {
 		return err
 	}
@@ -543,26 +581,127 @@ func invokeTransaction() error {
 }
 
 func theTransactionShouldFail() error {
-	invoke, err := transactionInvokeFn(transaction.txType)
-	if err != nil {
-		return err
-	}
-
-	if transactionResult, err = invoke(transaction.name, transaction.options...); nil == err {
-		return fmt.Errorf("transaction invocation was expected to fail, but it returned: %s", transactionResult)
+	var err error
+	transaction.result, err = transactionInvokeFn(transaction.txType)()
+	if nil == err {
+		return fmt.Errorf("transaction invocation was expected to fail, but it returned: %s", transaction.result)
 	}
 	return nil
 }
 
-func transactionInvokeFn(txType TransactionType) (func(string, ...client.ProposalOption) ([]byte, error), error) {
+func transactionInvokeFn(txType TransactionType) func() ([]byte, error) {
 	switch txType {
 	case Submit:
-		return contract.SubmitSync, nil
+		return invokeSubmit
 	case Evaluate:
-		return contract.Evaluate, nil
+		return invokeEvaluate
 	default:
-		return nil, fmt.Errorf("unknown transaction type: %v", txType)
+		panic(fmt.Sprintf("unknown transaction type: %v", txType))
 	}
+}
+
+type Signable interface {
+	Digest() ([]byte, error)
+	Bytes() ([]byte, error)
+}
+
+func invokeEvaluate() ([]byte, error) {
+	proposal, err := contract.NewProposal(transaction.name, transaction.options...)
+	if err != nil {
+		return nil, err
+	}
+
+	proposal, err = offlineSignProposal(proposal)
+	if err != nil {
+		return nil, err
+	}
+
+	return proposal.Evaluate()
+}
+
+func invokeSubmit() ([]byte, error) {
+	proposal, err := contract.NewProposal(transaction.name, transaction.options...)
+	if err != nil {
+		return nil, err
+	}
+
+	proposal, err = offlineSignProposal(proposal)
+	if err != nil {
+		return nil, err
+	}
+
+	clientTransaction, err := proposal.Endorse()
+	if err != nil {
+		return nil, err
+	}
+
+	clientTransaction, err = offlineSignTransaction(clientTransaction)
+	if err != nil {
+		return nil, err
+	}
+
+	commit, err := clientTransaction.Submit()
+
+	if err = <-commit; err != nil {
+		return nil, err
+	}
+
+	return clientTransaction.Result(), nil
+}
+
+func offlineSignProposal(proposal *client.Proposal) (*client.Proposal, error) {
+	if nil == transaction.offlineSign {
+		return proposal, nil
+	}
+
+	bytes, signature, err := bytesAndSignature(proposal)
+	if err != nil {
+		return nil, err
+	}
+
+	proposal, err = contract.NewSignedProposal(bytes, signature)
+	if err != nil {
+		return nil, err
+	}
+
+	return proposal, nil
+}
+
+func offlineSignTransaction(clientTransaction *client.Transaction) (*client.Transaction, error) {
+	if nil == transaction.offlineSign {
+		return clientTransaction, nil
+	}
+
+	bytes, signature, err := bytesAndSignature(clientTransaction)
+	if err != nil {
+		return nil, err
+	}
+
+	clientTransaction, err = contract.NewSignedTransaction(bytes, signature)
+	if err != nil {
+		return nil, err
+	}
+
+	return clientTransaction, nil
+}
+
+func bytesAndSignature(signable Signable) ([]byte, []byte, error) {
+	digest, err := signable.Digest()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	bytes, err := signable.Bytes()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	signature, err := transaction.offlineSign(digest)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return bytes, signature, nil
 }
 
 func useContract(contractName string) error {
@@ -576,7 +715,7 @@ func useNetwork(channelName string) error {
 }
 
 func theResponseShouldBeJSONMatching(arg *messages.PickleStepArgument_PickleDocString) error {
-	same, err := jsonEqual([]byte(arg.GetContent()), transactionResult)
+	same, err := jsonEqual([]byte(arg.GetContent()), transaction.result)
 	if err != nil {
 		return err
 	}
@@ -598,7 +737,7 @@ func jsonEqual(a, b []byte) (bool, error) {
 }
 
 func theResponseShouldBe(expected string) error {
-	actual := string(transactionResult)
+	actual := string(transaction.result)
 	if actual != expected {
 		return fmt.Errorf("transaction response \"%s\" does not match expected value \"%s\"", actual, expected)
 	}
