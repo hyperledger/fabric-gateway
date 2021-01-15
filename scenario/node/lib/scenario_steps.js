@@ -11,7 +11,7 @@ const { execFileSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { connect, Signers } = require('fabric-gateway');
+const { connect, signers } = require('fabric-gateway');
 const chai = require('chai');
 const expect = chai.expect;
 
@@ -321,7 +321,7 @@ function getInvoke(action) {
 async function evaluate(tx) {
     let proposal = tx.contract.newProposal(tx.name, tx.options);
     if (tx.offlineSigner) {
-        proposal = offlineSign(proposal, tx.offlineSigner, tx.contract.newSignedProposal.bind(tx.contract));
+        proposal = await offlineSign(proposal, tx.offlineSigner, tx.contract.newSignedProposal.bind(tx.contract));
     }
 
     return await proposal.evaluate();
@@ -330,19 +330,19 @@ async function evaluate(tx) {
 async function submit(tx) {
     let proposal = tx.contract.newProposal(tx.name, tx.options);
     if (tx.offlineSigner) {
-        proposal = offlineSign(proposal, tx.offlineSigner, tx.contract.newSignedProposal.bind(tx.contract));
+        proposal = await offlineSign(proposal, tx.offlineSigner, tx.contract.newSignedProposal.bind(tx.contract));
     }
     
     let transaction = await proposal.endorse();
     if (tx.offlineSigner) {
-        transaction = offlineSign(transaction, tx.offlineSigner, tx.contract.newSignedTransaction.bind(tx.contract));
+        transaction = await offlineSign(transaction, tx.offlineSigner, tx.contract.newSignedTransaction.bind(tx.contract));
     }
 
     return await transaction.submit();
 }
 
-function offlineSign(signable, sign, newInstance) {
-    const signature = sign(signable.getDigest());
+async function offlineSign(signable, sign, newInstance) {
+    const signature = await sign(signable.getDigest());
     return newInstance(signable.getBytes(), signature);
 }
 
@@ -363,7 +363,7 @@ async function readCertificate(user, mspId) {
 
 async function newSigner(user, mspId) {
     const privateKey = await readPrivateKey(user, mspId);
-    return Signers.newECDSAPrivateKeySigner(privateKey);
+    return signers.newECDSAPrivateKeySigner(privateKey);
 }
 
 async function readPrivateKey(user, mspId) {

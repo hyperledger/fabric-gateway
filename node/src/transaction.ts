@@ -61,7 +61,7 @@ export class TransactionImpl implements Transaction {
     }
 
     async submit(): Promise<Uint8Array> {
-        this.sign();
+        await this.sign();
         await this.#client.submit(this.#preparedTransaction); // TODO: need to return before the commit
         return this.getResult();
     }
@@ -70,12 +70,12 @@ export class TransactionImpl implements Transaction {
         this.#preparedTransaction.envelope!.signature = signature;
     }
 
-    private sign(): void {
+    private async sign(): Promise<void> {
         if (this.isSigned()) {
             return;
         }
 
-        const signature = this.#signingIdentity.sign(this.getDigest());
+        const signature = await this.#signingIdentity.sign(this.getDigest());
         this.setSignature(signature);
     }
 
