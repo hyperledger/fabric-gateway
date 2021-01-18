@@ -30,7 +30,7 @@ describe('Transaction', () => {
 
     let client: MockGatewayClient;
     let identity: Identity;
-    let signer: jest.Mock<Uint8Array, Uint8Array[]>;
+    let signer: jest.Mock<Promise<Uint8Array>, Uint8Array[]>;
     let gateway: Gateway;
     let network: Network;
     let contract: Contract;
@@ -50,7 +50,7 @@ describe('Transaction', () => {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
         }
-        signer = jest.fn().mockReturnValue('SIGNATURE');
+        signer = jest.fn().mockResolvedValue('SIGNATURE');
 
         const options: InternalConnectOptions = {
             identity,
@@ -77,7 +77,7 @@ describe('Transaction', () => {
     });
 
     it('uses signer', async () => {
-        signer.mockReturnValue(Buffer.from('MY_SIGNATURE'));
+        signer.mockResolvedValue(Buffer.from('MY_SIGNATURE'));
 
         await contract.submitTransaction('TRANSACTION_NAME');
 

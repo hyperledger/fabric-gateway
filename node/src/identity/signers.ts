@@ -17,7 +17,7 @@ export function newECDSAPrivateKeySigner(privateKey: crypto.KeyObject): Signer {
     const key = KEYUTIL.getKey(privateKeyPem.toString()) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
     const keyPair = p256Curve.keyFromPrivate(key.prvKeyHex, 'hex'); // TODO: key.prvKeyHex is an undocumented internal
 
-    return (digest) => {
+    return async (digest) => {
         const signature = p256Curve.sign(digest, keyPair, { canonical: true });
         return signature.toDER();
     }

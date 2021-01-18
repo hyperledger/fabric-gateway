@@ -75,21 +75,22 @@ describe('SigningIdentity', () => {
     });
 
     describe('signing', () => {
-        it('default signer throws', () => {
+        it('default signer throws', async () => {
             const signingIdentity = new SigningIdentity(identity);
             const digest = Buffer.from('DIGEST');
     
-            expect(() => signingIdentity.sign(digest))
+            await expect(() => signingIdentity.sign(digest))
+                .rejects
                 .toThrowError();
         });
     
-        it('uses supplied signer', () => {
+        it('uses supplied signer', async () => {
             const expected = Uint8Array.from(Buffer.from('SIGNATURE'));
-            const signer: Signer = () => expected;
+            const signer: Signer = async () => expected;
             const digest = Buffer.from('DIGEST');
             const signingIdentity = new SigningIdentity(identity, signer);
     
-            const actual = signingIdentity.sign(digest);
+            const actual = await signingIdentity.sign(digest);
     
             expect(actual).toEqual(expected);
         });

@@ -5,7 +5,7 @@
  */
 
 export { Signer } from './identity/signer';
-export * as Signers from './identity/signers';
+export * as signers from './identity/signers';
 export { Identity } from './identity/identity';
 export { connect, ConnectOptions, Gateway } from './gateway';
 export { Network } from './network';

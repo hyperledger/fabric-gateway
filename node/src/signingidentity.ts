@@ -47,7 +47,7 @@ export class SigningIdentity {
         return crypto.createHash('sha256').update(message).digest();
     }
 
-    sign(digest: Uint8Array): Uint8Array {
+    async sign(digest: Uint8Array): Promise<Uint8Array> {
         return this.#sign(digest);
     }
 }

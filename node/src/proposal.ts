@@ -68,13 +68,13 @@ export class ProposalImpl implements Proposal {
     }
 
     async evaluate(): Promise<Uint8Array> {
-        this.sign();
+        await this.sign();
         const result = await this.#client.evaluate(this.#proposedTransaction);
         return result.value || new Uint8Array(0);
     }
 
     async endorse(): Promise<Transaction> {
-        this.sign();
+        await this.sign();
         const preparedTransaction = await this.#client.endorse(this.#proposedTransaction);
 
         return new TransactionImpl({
@@ -88,12 +88,12 @@ export class ProposalImpl implements Proposal {
         this.#proposedTransaction.proposal!.signature = signature;
     }
 
-    private sign(): void {
+    private async sign(): Promise<void> {
         if (this.isSigned()) {
             return;
         }
 
-        const signature = this.#signingIdentity.sign(this.getDigest());
+        const signature = await this.#signingIdentity.sign(this.getDigest());
         this.setSignature(signature);
     }
 
