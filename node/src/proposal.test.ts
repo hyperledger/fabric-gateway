@@ -102,8 +102,7 @@ describe('Proposal', () => {
         it('throws on evaluate error', async () => {
             client.evaluate.mockRejectedValue(new Error('ERROR_MESSAGE'));
     
-            await expect(contract.evaluateTransaction('TRANSACTION_NAME'))
-                .rejects.toThrow('ERROR_MESSAGE');
+            await expect(contract.evaluateTransaction('TRANSACTION_NAME')).rejects.toThrow('ERROR_MESSAGE');
         });
     
         it('returns result', async () => {
@@ -222,8 +221,7 @@ describe('Proposal', () => {
         it('throws on endorse error', async () => {
             client.endorse.mockRejectedValue(new Error('ERROR_MESSAGE'));
     
-            await expect(contract.submitTransaction('TRANSACTION_NAME'))
-                .rejects.toThrow('ERROR_MESSAGE');
+            await expect(contract.submitTransaction('TRANSACTION_NAME')).rejects.toThrow('ERROR_MESSAGE');
         });
     
         it('includes channel name in proposal', async () => {
