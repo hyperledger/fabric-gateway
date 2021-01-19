@@ -66,8 +66,7 @@ describe('Offline sign', () => {
         it('throws with no signer and no explicit signing', async () => {
             const proposal = contract.newProposal('TRANSACTION_NAME');
 
-            await expect(proposal.evaluate())
-                .rejects.toThrow();
+            await expect(proposal.evaluate()).rejects.toThrow();
         });
     
         it('uses offline signature', async () => {
@@ -87,8 +86,7 @@ describe('Offline sign', () => {
         it('throws with no signer and no explicit signing', async () => {
             const proposal = contract.newProposal('TRANSACTION_NAME');
 
-            await expect(proposal.endorse())
-                .rejects.toThrow();
+            await expect(proposal.endorse()).rejects.toThrow();
         });
     
         it('uses offline signature', async () => {
@@ -110,8 +108,7 @@ describe('Offline sign', () => {
             const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const transaction = await signedProposal.endorse();
 
-            expect(transaction.submit())
-                .rejects.toThrow();
+            await expect(transaction.submit()).rejects.toThrow();
         });
     
         it('uses offline signature', async () => {

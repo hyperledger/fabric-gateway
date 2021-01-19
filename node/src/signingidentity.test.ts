@@ -79,9 +79,7 @@ describe('SigningIdentity', () => {
             const signingIdentity = new SigningIdentity(identity);
             const digest = Buffer.from('DIGEST');
     
-            await expect(() => signingIdentity.sign(digest))
-                .rejects
-                .toThrowError();
+            await expect(signingIdentity.sign(digest)).rejects.toThrowError();
         });
     
         it('uses supplied signer', async () => {
