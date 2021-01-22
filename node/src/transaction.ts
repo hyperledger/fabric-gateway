@@ -6,7 +6,8 @@
 
 import { GatewayClient } from './client';
 import { SigningIdentity } from './signingidentity';
-import { protos } from './protos/protos';
+import { common, protos } from './protos/protos';
+import * as util from 'util';
 
 export interface Transaction {
     /**
@@ -41,11 +42,18 @@ export class TransactionImpl implements Transaction {
     readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
     readonly #preparedTransaction: protos.IPreparedTransaction;
+    readonly #envelope: common.IEnvelope;
 
     constructor(options: TransactionImplOptions) {
         this.#client = options.client;
         this.#signingIdentity = options.signingIdentity;
         this.#preparedTransaction = options.preparedTransaction;
+
+        const envelope = options.preparedTransaction.envelope;
+        if (!envelope) {
+            throw new Error(`Envelope not defined: ${util.inspect(options.preparedTransaction)}`);
+        }
+        this.#envelope = envelope;
     }
 
     getBytes(): Uint8Array {
@@ -53,7 +61,11 @@ export class TransactionImpl implements Transaction {
     }
 
     getDigest(): Uint8Array {
-        return this.#signingIdentity.hash(this.#preparedTransaction.envelope!.payload!);
+        const payload = this.#envelope.payload;
+        if (!payload) {
+            throw new Error(`Payload not defined: ${util.inspect(this.#envelope)}`);
+        }
+        return this.#signingIdentity.hash(payload);
     }
 
     getResult(): Uint8Array {
@@ -67,7 +79,7 @@ export class TransactionImpl implements Transaction {
     }
 
     setSignature(signature: Uint8Array): void {
-        this.#preparedTransaction.envelope!.signature = signature;
+        this.#envelope.signature = signature;
     }
 
     private async sign(): Promise<void> {
@@ -80,7 +92,7 @@ export class TransactionImpl implements Transaction {
     }
 
     private isSigned(): boolean {
-        const signatureLength = this.#preparedTransaction.envelope!.signature?.length ?? 0;
+        const signatureLength = this.#envelope.signature?.length ?? 0;
         return signatureLength > 0;
     }
 }

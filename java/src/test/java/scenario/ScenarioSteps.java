@@ -85,7 +85,6 @@ public class ScenarioSteps {
         ORG_CONFIGS = Collections.unmodifiableCollection(orgConfigs);
     }
 
-    private String fabricNetworkType;
     private Gateway.Builder gatewayBuilder;
     private Gateway gateway;
     private Network network;
@@ -112,24 +111,17 @@ public class ScenarioSteps {
         }
     }
 
-    @Given("I have deployed a {word} Fabric network")
-    public void deployFabricNetwork(String tlsType) {
-        // tlsType is either "tls" or "non-tls"
-        fabricNetworkType = tlsType;
+    @Given("I have deployed a Fabric network")
+    public void deployFabricNetwork() {
     }
 
-    @Given("I have created and joined all channels from the {word} connection profile")
-    public void createAndJoinAllChannels(String tlsType) throws IOException, InterruptedException {
+    @Given("I have created and joined all channels")
+    public void createAndJoinAllChannels() throws IOException, InterruptedException {
         // TODO this only does mychannel
         startAllPeers();
         if (!channelsJoined) {
-            final List<String> tlsOptions;
-            if ("tls".equals(tlsType)) {
-                tlsOptions = Arrays.asList("--tls", "true", "--cafile",
-                        "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem");
-            } else {
-                tlsOptions = Collections.emptyList();
-            }
+            final List<String> tlsOptions = Arrays.asList("--tls", "true", "--cafile",
+                    "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem");
 
             List<String> createChannelCommand = new ArrayList<>();
             Collections.addAll(createChannelCommand, "docker", "exec", "org1_cli", "peer", "channel", "create",
@@ -167,13 +159,8 @@ public class ScenarioSteps {
             return;
         }
 
-        final List<String> tlsOptions;
-        if (fabricNetworkType.equals("tls")) {
-            tlsOptions = Arrays.asList("--tls", "true", "--cafile",
-                    "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem");
-        } else {
-            tlsOptions = Collections.emptyList();
-        }
+        final List<String> tlsOptions = Arrays.asList("--tls", "true", "--cafile",
+                "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem");
 
         String ccPath = Paths.get(FileSystems.getDefault().getSeparator(), "opt", "gopath", "src",
                 "github.com", "chaincode", ccType, ccName).toString();
@@ -333,11 +320,18 @@ public class ScenarioSteps {
     }
 
     private static void startAllPeers() throws InterruptedException, IOException {
-        for (String peer : runningPeers.keySet()) {
-            if (!runningPeers.get(peer)) {
-                exec("docker", "start", peer);
-                runningPeers.put(peer, true);
-            }
+        Set<String> stoppedPeers = runningPeers.entrySet().stream()
+                .filter(entry -> !entry.getValue())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+
+        if (stoppedPeers.isEmpty()) {
+            return;
+        }
+
+        for (String peer : stoppedPeers) {
+            exec("docker", "start", peer);
+            runningPeers.put(peer, true);
         }
         Thread.sleep(20000);
     }

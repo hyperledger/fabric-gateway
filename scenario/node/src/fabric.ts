@@ -72,8 +72,8 @@ async function sleep(ms: number): Promise<void> {
 }
 
 export class Fabric {
-    private fabricRunning: boolean = false;
-    private channelsJoined: boolean = false;
+    private fabricRunning = false;
+    private channelsJoined = false;
     private readonly runningChaincodes: { [chaincodeId: string]: boolean } = {};
     private readonly runningPeers: { [peerName: string]: boolean };
 

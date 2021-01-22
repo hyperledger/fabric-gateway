@@ -21,7 +21,7 @@ const TIMEOUTS = {
     SHORT_INC: 5 * 1000
 };
 
-function parseJson(json: string): any {
+function parseJson(json: string): unknown {
     try {
         return JSON.parse(json);
     } catch (err) {
@@ -44,19 +44,19 @@ After(function(this: CustomWorld): void {
     this.close();
 });
 
-Given('I have deployed a {word} Fabric network', { timeout: TIMEOUTS.LONG_STEP }, async function(this: CustomWorld, type: string): Promise<void> {
+Given('I have deployed a Fabric network', { timeout: TIMEOUTS.LONG_STEP }, async function(this: CustomWorld): Promise<void> {
     await fabric.deployNetwork();
 });
 
-Given('I have created and joined all channels from the tls connection profile', { timeout: TIMEOUTS.LONG_STEP }, async function(this: CustomWorld): Promise<void> {
+Given('I have created and joined all channels', { timeout: TIMEOUTS.LONG_STEP }, async function(this: CustomWorld): Promise<void> {
     await fabric.createChannels();
 });
 
 Given(/^I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organizations on channel (\w+) with endorsement policy (.+)$/,
-        { timeout: TIMEOUTS.LONG_STEP },
-        async function(this: CustomWorld, ccType: string, ccName: string, version: string, channelName: string, signaturePolicy: string): Promise<void> {
-    await fabric.deployChaincode(ccType, ccName, version, channelName, signaturePolicy);
-});
+    { timeout: TIMEOUTS.LONG_STEP },
+    async function(this: CustomWorld, ccType: string, ccName: string, version: string, channelName: string, signaturePolicy: string): Promise<void> {
+        await fabric.deployChaincode(ccType, ccName, version, channelName, signaturePolicy);
+    });
 
 Given('I create a gateway for user {word} in MSP {word}', async function(this: CustomWorld, user: string, mspId: string): Promise<void> {
     await this.createGateway(user, mspId);

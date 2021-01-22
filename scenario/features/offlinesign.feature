@@ -5,8 +5,8 @@
 #
 Feature: Off-line signing
     Background:
-        Given I have deployed a tls Fabric network
-        And I have created and joined all channels from the tls connection profile
+        Given I have deployed a Fabric network
+        And I have created and joined all channels
         And I deploy golang chaincode named basic at version 1.0.0 for all organizations on channel mychannel with endorsement policy AND("Org1MSP.member","Org2MSP.member")
         And I create a gateway without signer for user User1 in MSP Org1MSP
         And I connect the gateway to localhost:7053
