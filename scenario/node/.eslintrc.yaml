@@ -1,10 +1,8 @@
 env:
     node: true
     es6: true
-    jest: true
 root: true
 ignorePatterns:
-    - src/protos/
     - dist/
 extends:
     - eslint:recommended

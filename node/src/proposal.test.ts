@@ -27,8 +27,8 @@ function newMockGatewayClient(): MockGatewayClient {
 
 function assertDecodeProposal(proposedTransaction: protos.IProposedTransaction): protos.Proposal {
     expect(proposedTransaction.proposal).toBeDefined();
-    expect(proposedTransaction.proposal!.proposal_bytes).toBeDefined();
-    return protos.Proposal.decode(proposedTransaction.proposal!.proposal_bytes!);
+    expect(proposedTransaction.proposal!.proposal_bytes).toBeDefined(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+    return protos.Proposal.decode(proposedTransaction.proposal!.proposal_bytes!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
 }
 
 function assertDecodeChaincodeSpec(proposedTransaction: protos.IProposedTransaction): protos.IChaincodeSpec {
@@ -36,17 +36,17 @@ function assertDecodeChaincodeSpec(proposedTransaction: protos.IProposedTransact
     const payload = protos.ChaincodeProposalPayload.decode(proposal.payload);
     const invocationSpec = protos.ChaincodeInvocationSpec.decode(payload.input);
     expect(invocationSpec.chaincode_spec).toBeDefined();
-    return invocationSpec.chaincode_spec!;
+    return invocationSpec.chaincode_spec!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
 }
 
 function assertDecodeArgsAsStrings(proposedTransaction: protos.IProposedTransaction): string[] {
     const chaincodeSpec = assertDecodeChaincodeSpec(proposedTransaction);
     expect(chaincodeSpec.input).toBeDefined();
 
-    const args = chaincodeSpec.input!.args;
-    expect(chaincodeSpec.input!.args).toBeDefined();
+    const args = chaincodeSpec.input!.args; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+    expect(args).toBeDefined();
 
-    return args!.map(arg => Buffer.from(arg).toString());
+    return args!.map(arg => Buffer.from(arg).toString()); // eslint-disable-line @typescript-eslint/no-non-null-assertion
 }
 
 function assertDecodeHeader(proposedTransaction: protos.IProposedTransaction): common.Header {
@@ -125,7 +125,7 @@ describe('Proposal', () => {
     
             const chaincodeSpec = assertDecodeChaincodeSpec(client.evaluate.mock.calls[0][0]);
             expect(chaincodeSpec.chaincode_id).toBeDefined();
-            expect(chaincodeSpec.chaincode_id!.name).toBe(contract.getChaincodeId());
+            expect(chaincodeSpec.chaincode_id!.name).toBe(contract.getChaincodeId()); // eslint-disable-line @typescript-eslint/no-non-null-assertion
         });
     
         it('includes transaction name in proposal for default smart contract', async () => {
@@ -237,7 +237,7 @@ describe('Proposal', () => {
     
             const chaincodeSpec = assertDecodeChaincodeSpec(client.endorse.mock.calls[0][0]);
             expect(chaincodeSpec.chaincode_id).toBeDefined();
-            expect(chaincodeSpec.chaincode_id!.name).toBe(contract.getChaincodeId());
+            expect(chaincodeSpec.chaincode_id!.name).toBe(contract.getChaincodeId()); // eslint-disable-line @typescript-eslint/no-non-null-assertion
         });
     
         it('includes transaction name in proposal for default smart contract', async () => {

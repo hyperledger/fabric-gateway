@@ -31,7 +31,10 @@ class GatewayClientImpl implements GatewayClient {
                 if (err) {
                     return reject(err);
                 }
-                return resolve(value!);
+                if (!value) {
+                    return reject('No result returned');
+                }
+                return resolve(value);
             })
         });
     }
@@ -42,7 +45,10 @@ class GatewayClientImpl implements GatewayClient {
                 if (err) {
                     return reject(err);
                 }
-                return resolve(value!);
+                if (!value) {
+                    return reject('No result returned');
+                }
+                return resolve(value);
             })
         });
     }

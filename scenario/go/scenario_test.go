@@ -198,8 +198,8 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I create a gateway without signer for user (\S+) in MSP (\S+)$`, createGatewayWithoutSigner)
 	s.Step(`^I connect the gateway to (\S+)$`, connectGateway)
 	s.Step(`^I deploy (\S+) chaincode named (\S+) at version (\S+) for all organizations on channel (\S+) with endorsement policy (.+)$`, deployChaincode)
-	s.Step(`^I have created and joined all channels from the tls connection profile$`, createAndJoinChannels)
-	s.Step(`^I have deployed a (\S+) Fabric network$`, haveFabricNetwork)
+	s.Step(`^I have created and joined all channels$`, createAndJoinChannels)
+	s.Step(`^I have deployed a Fabric network$`, haveFabricNetwork)
 	s.Step(`^I prepare to (submit|evaluate) an? (\S+) transaction$`, prepareSubmit)
 	s.Step(`^I set the transaction arguments? to (.+)$`, setArguments)
 	s.Step(`^I set transient data on the transaction to$`, setTransientData)
@@ -470,18 +470,20 @@ func startPeer(peer string) error {
 }
 
 func startAllPeers() error {
+	startedPeers := false
 	for peer, running := range runningPeers {
 		if !running {
-			_, err := dockerCommand(
-				"start", peer,
-			)
-			if err != nil {
+			if _, err := dockerCommand("start", peer); err != nil {
 				return err
 			}
 			runningPeers[peer] = true
+			startedPeers = true
 		}
 	}
-	time.Sleep(20 * time.Second)
+
+	if startedPeers {
+		time.Sleep(20 * time.Second)
+	}
 	return nil
 }
 
@@ -508,7 +510,7 @@ func dockerCommand(args ...string) (string, error) {
 	return string(out), nil
 }
 
-func haveFabricNetwork(tlsType string) error {
+func haveFabricNetwork() error {
 	if !fabricRunning {
 		return startFabric()
 	}

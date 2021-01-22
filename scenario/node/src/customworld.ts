@@ -45,6 +45,14 @@ function getCredentialsPath(user: string, mspId: string): string {
         'users', `${user}@${org}`, 'msp');
 }
 
+
+function assertDefined<T>(value: T | null | undefined, property: string): T {
+    if (null == value) {
+        throw new Error(`Bad step sequence: ${property} not defined`);
+    }
+    return value;
+}
+
 export class CustomWorld {
     private identity?: Identity;
     private signer?: Signer;
@@ -65,62 +73,82 @@ export class CustomWorld {
     }
 
     useNetwork(channelName: string): void {
-        this.network = this.gateway!.getNetwork(channelName);
+        this.network = this.getGateway().getNetwork(channelName);
     }
 
     useContract(contractName: string): void {
-        this.contract = this.network!.getContract(contractName);
+        this.contract = this.getNetwork().getContract(contractName);
     }
 
     async connect(address: string): Promise<void> {
         const options: ConnectOptions = {
             url: address,
             signer: this.signer,
-            identity: this.identity!
-        }
+            identity: this.getIdentity(),
+        };
         this.gateway = await connect(options);
     }
 
     prepareTransaction(action: string, transactionName: string): void {
-        this.transaction = new TransactionInvocation(action, this.contract!, transactionName);
+        this.transaction = new TransactionInvocation(action, this.getContract(), transactionName);
     }
 
     setArguments(jsonArgs: string): void {
         const args = JSON.parse(jsonArgs);
-        this.transaction!.options.arguments = args;
+        this.getTransaction().options.arguments = args;
     }
 
-    setTransientData(dataTable: DataTable) {
+    setTransientData(dataTable: DataTable): void {
         const hash = dataTable.rowsHash();
         const transient: { [key: string]: Buffer } = {};
         for (const key in hash) {
             transient[key] = Buffer.from(hash[key]);
         }
-        this.transaction!.options.transientData = transient;
+        this.getTransaction().options.transientData = transient;
     }
 
-    close() {
+    close(): void {
         this.gateway?.close();
         delete this.gateway;
     }
 
     async setOfflineSigner(user: string, mspId: string): Promise<void> {
         const signer = await newSigner(user, mspId);
-        this.transaction!.setOfflineSigner(signer);
+        this.getTransaction().setOfflineSigner(signer);
     }
 
     async invokeTransaction(): Promise<void> {
-        await this.transaction!.invokeTransaction();
-        this.transaction!.getResult();
+        await this.getTransaction().invokeTransaction();
+        this.getTransaction().getResult();
     }
 
     async assertTransactionFails(): Promise<void> {
-        await this.transaction!.invokeTransaction();
-        this.transaction!.getError();
+        await this.getTransaction().invokeTransaction();
+        this.getTransaction().getError();
     }
 
     getResult(): string {
-        return this.transaction!.getResult();
+        return this.getTransaction().getResult();
+    }
+
+    private getGateway(): Gateway {
+        return assertDefined(this.gateway, 'gateway');
+    }
+
+    private getNetwork(): Network {
+        return assertDefined(this.network, 'network');
+    }
+
+    private getContract(): Contract {
+        return assertDefined(this.contract, 'contract');
+    }
+
+    private getTransaction(): TransactionInvocation {
+        return assertDefined(this.transaction, 'transaction');
+    }
+
+    private getIdentity(): Identity {
+        return assertDefined(this.identity, 'identity');
     }
 }
 
