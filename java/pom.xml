@@ -280,18 +280,42 @@
                 <groupId>org.xolstice.maven.plugins</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
                 <version>0.6.1</version>
-                <configuration>
-                    <protocArtifact>com.google.protobuf:protoc:3.14.0:exe:${os.detected.classifier}</protocArtifact>
-                    <pluginId>grpc-java</pluginId>
-                    <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.34.1:exe:${os.detected.classifier}</pluginArtifact>
-                    <protoSourceRoot>${project.basedir}/../fabric-protos</protoSourceRoot>
-                </configuration>
                 <executions>
                     <execution>
+                        <id>gateway-protos</id>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>compile</goal>
                             <goal>compile-custom</goal>
                         </goals>
+                        <configuration>
+                            <protocArtifact>com.google.protobuf:protoc:3.14.0:exe:${os.detected.classifier}</protocArtifact>
+                            <pluginId>grpc-java</pluginId>
+                            <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.34.1:exe:${os.detected.classifier}</pluginArtifact>
+                            <protoSourceRoot>${project.basedir}/../protos</protoSourceRoot>
+                            <additionalProtoPathElements>
+                                <additionalProtoPathElement>${project.basedir}/../fabric-protos</additionalProtoPathElement>
+                            </additionalProtoPathElements>
+                            <clearOutputDirectory>true</clearOutputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>fabric-protos</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>compile-custom</goal>
+                        </goals>
+                        <configuration>
+                            <protocArtifact>com.google.protobuf:protoc:3.14.0:exe:${os.detected.classifier}</protocArtifact>
+                            <pluginId>grpc-java</pluginId>
+                            <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.34.1:exe:${os.detected.classifier}</pluginArtifact>
+                            <protoSourceRoot>${project.basedir}/../fabric-protos</protoSourceRoot>
+                            <additionalProtoPathElements>
+                                <additionalProtoPathElement>${project.basedir}/../protos</additionalProtoPathElement>
+                            </additionalProtoPathElements>
+                            <clearOutputDirectory>false</clearOutputDirectory>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

@@ -10,7 +10,7 @@
     "scripts": {
         "clean": "rm -rf dist src/protos",
         "proto-prepare": "mkdir -p src/protos",
-        "proto-gen": "pbjs -t static-module -w commonjs --keep-case -o src/protos/protos.js $(find ../fabric-protos -name *.proto -type f -print)",
+        "proto-gen": "pbjs -t static-module -w commonjs --keep-case -o src/protos/protos.js ../protos/gateway.proto $(find ../fabric-protos -name *.proto -type f -print)",
         "proto-types": "pbts -o src/protos/protos.d.ts src/protos/protos.js",
         "build": "npm-run-all clean proto-prepare proto-gen proto-types compile lint copy-non-ts-source",
         "copy-non-ts-source": "rsync -rv --prune-empty-dirs --include='*.d.ts' --exclude='*.ts' src/ dist",
