@@ -9,9 +9,9 @@ package org.hyperledger.fabric.client;
 import java.util.Optional;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.hyperledger.fabric.gateway.GatewayGrpc;
-import org.hyperledger.fabric.gateway.PreparedTransaction;
-import org.hyperledger.fabric.gateway.ProposedTransaction;
+import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
+import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
+import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 
 final class ContractImpl implements Contract {
     private final GatewayGrpc.GatewayBlockingStub client;

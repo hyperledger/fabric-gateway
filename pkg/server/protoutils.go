@@ -12,7 +12,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	pb "github.com/hyperledger/fabric-gateway/protos"
+	pb "github.com/hyperledger/fabric-gateway/protos/gateway"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/peer"
 )

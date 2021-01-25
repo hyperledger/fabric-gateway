@@ -12,10 +12,10 @@ import java.util.stream.Stream;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.hyperledger.fabric.gateway.Event;
-import org.hyperledger.fabric.gateway.PreparedTransaction;
-import org.hyperledger.fabric.gateway.ProposedTransaction;
-import org.hyperledger.fabric.gateway.Result;
+import org.hyperledger.fabric.protos.gateway.Event;
+import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
+import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
+import org.hyperledger.fabric.protos.gateway.Result;
 import org.hyperledger.fabric.protos.peer.Chaincode;
 import org.hyperledger.fabric.protos.peer.ProposalPackage;
 

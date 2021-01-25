@@ -18,7 +18,7 @@ import io.grpc.StatusRuntimeException;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.X509Identity;
-import org.hyperledger.fabric.gateway.ProposedTransaction;
+import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

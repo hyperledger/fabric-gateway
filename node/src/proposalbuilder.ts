@@ -41,8 +41,8 @@ export class ProposalBuilder {
                 proposal: {
                     proposal_bytes: protos.Proposal.encode(this.newProposal()).finish(),
                 },
-                txId: this.#transactionContext.getTransactionId(),
-                channelId: this.#options.channelName,
+                tx_id: this.#transactionContext.getTransactionId(),
+                channel_id: this.#options.channelName,
             },
         });
     }

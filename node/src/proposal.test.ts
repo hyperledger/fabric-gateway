@@ -194,7 +194,7 @@ describe('Proposal', () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
     
             const proposedTransaction = client.evaluate.mock.calls[0][0];
-            expect(proposedTransaction.channelId).toBe(network.getName());
+            expect(proposedTransaction.channel_id).toBe(network.getName());
         });
 
         it('includes transaction ID in proposed transaction', async () => {
@@ -202,7 +202,7 @@ describe('Proposal', () => {
     
             const proposedTransaction = client.evaluate.mock.calls[0][0];
             const expected = assertDecodeChannelHeader(proposedTransaction).tx_id;
-            expect(proposedTransaction.txId).toBe(expected);
+            expect(proposedTransaction.tx_id).toBe(expected);
         });
     });
 
@@ -306,7 +306,7 @@ describe('Proposal', () => {
             await contract.submitTransaction('TRANSACTION_NAME');
     
             const proposedTransaction = client.endorse.mock.calls[0][0];
-            expect(proposedTransaction.channelId).toBe(network.getName());
+            expect(proposedTransaction.channel_id).toBe(network.getName());
         });
 
         it('includes transaction ID in proposed transaction', async () => {
@@ -314,7 +314,7 @@ describe('Proposal', () => {
     
             const proposedTransaction = client.endorse.mock.calls[0][0];
             const expected = assertDecodeChannelHeader(proposedTransaction).tx_id;
-            expect(proposedTransaction.txId).toBe(expected);
+            expect(proposedTransaction.tx_id).toBe(expected);
         });
     });
 });

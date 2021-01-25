@@ -13,7 +13,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
-import org.hyperledger.fabric.gateway.GatewayGrpc;
+import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 
 final class GatewayImpl implements Gateway {
     public static final class Builder implements Gateway.Builder {

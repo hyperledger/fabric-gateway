@@ -12,8 +12,8 @@ import java.util.Map;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
-import org.hyperledger.fabric.gateway.GatewayGrpc;
-import org.hyperledger.fabric.gateway.ProposedTransaction;
+import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
+import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.peer.Chaincode;
 import org.hyperledger.fabric.protos.peer.ProposalPackage;

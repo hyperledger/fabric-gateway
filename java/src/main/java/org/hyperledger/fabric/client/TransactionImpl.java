@@ -9,9 +9,9 @@ package org.hyperledger.fabric.client;
 import java.util.Iterator;
 
 import com.google.protobuf.ByteString;
-import org.hyperledger.fabric.gateway.Event;
-import org.hyperledger.fabric.gateway.GatewayGrpc;
-import org.hyperledger.fabric.gateway.PreparedTransaction;
+import org.hyperledger.fabric.protos.gateway.Event;
+import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
+import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
 import org.hyperledger.fabric.protos.common.Common;
 
 class TransactionImpl implements Transaction {

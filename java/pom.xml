@@ -235,7 +235,7 @@
                 <version>3.2.0</version>
                 <configuration>
                     <excludePackageNames>
-                        org.hyperledger.fabric.client.impl:org.hyperledger.fabric.gateway:org.hyperledger.fabric.protos.*
+                        org.hyperledger.fabric.client.impl:org.hyperledger.fabric.protos.*
                     </excludePackageNames>
                     <show>public</show>
                     <doctitle>Hyperledger Fabric Gateway SDK for Java</doctitle>
@@ -402,7 +402,7 @@
                         <version>3.2.0</version>
                         <configuration>
                             <excludePackageNames>
-                                org.hyperledger.fabric.gateway.impl
+                                org.hyperledger.fabric.protos.gateway.impl
                             </excludePackageNames>
                             <show>public</show>
                             <doctitle>Hyperledger Fabric Gateway SDK for Java</doctitle>

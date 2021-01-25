@@ -34,13 +34,20 @@ include docker-env.mk
 
 build: build-protos build-go build-node
 
-build-protos:
-	protoc --version
-	rm -rf fabric-protos
+fabric_protos_commit = 583e2aebe6867e93bd156b32889d39ee62382037
+pb_files = protos/gateway/gateway.pb.go protos/gateway/gateway_grpc.pb.go
+
+.PHONEY: build-protos
+build-protos: $(pb_files)
+
+fabric-protos:
 	git clone https://github.com/hyperledger/fabric-protos.git
-	mkdir fabric-protos/gateway
-	cp protos/gateway.proto fabric-protos/gateway
-	protoc -I. -I./fabric-protos --go_out=paths=source_relative:. --go-grpc_out=require_unimplemented_servers=false,paths=source_relative:. protos/gateway.proto
+	cd fabric-protos && git checkout "$(fabric_protos_commit)"
+
+$(pb_files): fabric-protos
+	protoc --version
+	mkdir -p protos
+	protoc -I./fabric-protos --go_out=paths=source_relative:./protos --go-grpc_out=require_unimplemented_servers=false,paths=source_relative:./protos fabric-protos/gateway/gateway.proto
 
 build-go: build-protos
 	go build -o bin/gateway cmd/gateway/*.go
@@ -92,3 +99,11 @@ docker: build-protos build-go
 	docker tag $(DOCKER_NS)/fabric-gateway $(DOCKER_NS)/fabric-gateway:$(BASE_VERSION)
 	docker tag $(DOCKER_NS)/fabric-gateway $(DOCKER_NS)/fabric-gateway:$(TWO_DIGIT_VERSION)
 	docker tag $(DOCKER_NS)/fabric-gateway $(DOCKER_NS)/fabric-gateway:$(DOCKER_TAG)
+
+.PHONEY: clean
+clean: clean-protos
+
+.PHONEY: clean-protos
+clean-protos:
+	-rm -rf fabric-protos
+	-rm $(pb_files)

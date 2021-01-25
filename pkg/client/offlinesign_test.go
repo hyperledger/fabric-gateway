@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test/mock"
-	gateway "github.com/hyperledger/fabric-gateway/protos"
+	gateway "github.com/hyperledger/fabric-gateway/protos/gateway"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"google.golang.org/grpc"
 )

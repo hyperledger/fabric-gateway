@@ -6,7 +6,7 @@
 
 package org.hyperledger.fabric.client;
 
-import org.hyperledger.fabric.gateway.GatewayGrpc;
+import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 
 final class NetworkImpl implements Network {
     private final GatewayGrpc.GatewayBlockingStub client;

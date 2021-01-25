@@ -13,7 +13,7 @@ import (
 
 	"github.com/hyperledger/fabric-gateway/pkg/network"
 	"github.com/hyperledger/fabric-gateway/pkg/server"
-	pb "github.com/hyperledger/fabric-gateway/protos"
+	pb "github.com/hyperledger/fabric-gateway/protos/gateway"
 	"google.golang.org/grpc"
 )
 
