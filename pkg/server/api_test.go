@@ -14,7 +14,7 @@ import (
 	"testing"
 
 	"github.com/hyperledger/fabric-gateway/pkg/server/mocks"
-	pb "github.com/hyperledger/fabric-gateway/protos"
+	pb "github.com/hyperledger/fabric-gateway/protos/gateway"
 
 	"github.com/hyperledger/fabric-protos-go/peer"
 )

@@ -3,6 +3,5 @@
 bin/
 cover.out
 fabric-protos/
-protos/gateway.pb.go
-protos/gateway_grpc.pb.go
+protos/
 vendor/

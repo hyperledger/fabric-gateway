@@ -10,7 +10,7 @@ import (
 	"context"
 	"errors"
 
-	proto "github.com/hyperledger/fabric-gateway/protos"
+	proto "github.com/hyperledger/fabric-gateway/protos/gateway"
 	"google.golang.org/grpc"
 )
 

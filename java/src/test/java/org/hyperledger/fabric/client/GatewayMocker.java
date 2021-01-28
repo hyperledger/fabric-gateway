@@ -10,8 +10,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.ManagedChannel;
-import org.hyperledger.fabric.gateway.PreparedTransaction;
-import org.hyperledger.fabric.gateway.ProposedTransaction;
+import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
+import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.peer.Chaincode;
 import org.hyperledger.fabric.protos.peer.ProposalPackage;

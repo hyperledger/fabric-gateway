@@ -10,7 +10,7 @@ import (
 	"errors"
 	"io"
 
-	proto "github.com/hyperledger/fabric-gateway/protos"
+	proto "github.com/hyperledger/fabric-gateway/protos/gateway"
 )
 
 // SubmitClient mock implementation whose method implementations can be overridden by assigning to properties

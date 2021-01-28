@@ -10,7 +10,7 @@ import (
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
-	gateway "github.com/hyperledger/fabric-gateway/protos"
+	gateway "github.com/hyperledger/fabric-gateway/protos/gateway"
 )
 
 // Contract represents a smart contract, and allows applications to:

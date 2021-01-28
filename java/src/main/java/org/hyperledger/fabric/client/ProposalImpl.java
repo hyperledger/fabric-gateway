@@ -7,9 +7,9 @@
 package org.hyperledger.fabric.client;
 
 import com.google.protobuf.ByteString;
-import org.hyperledger.fabric.gateway.GatewayGrpc;
-import org.hyperledger.fabric.gateway.PreparedTransaction;
-import org.hyperledger.fabric.gateway.ProposedTransaction;
+import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
+import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
+import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 import org.hyperledger.fabric.protos.peer.ProposalPackage;
 
 final class ProposalImpl implements Proposal {

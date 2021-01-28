@@ -7,11 +7,11 @@
 package org.hyperledger.fabric.client;
 
 import io.grpc.stub.StreamObserver;
-import org.hyperledger.fabric.gateway.Event;
-import org.hyperledger.fabric.gateway.GatewayGrpc;
-import org.hyperledger.fabric.gateway.PreparedTransaction;
-import org.hyperledger.fabric.gateway.ProposedTransaction;
-import org.hyperledger.fabric.gateway.Result;
+import org.hyperledger.fabric.protos.gateway.Event;
+import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
+import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
+import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
+import org.hyperledger.fabric.protos.gateway.Result;
 
 public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
     private static final GatewayServiceStub DEFAULT_STUB = new GatewayServiceStub();

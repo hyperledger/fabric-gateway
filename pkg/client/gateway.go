@@ -22,7 +22,7 @@ import (
 
 	"github.com/hyperledger/fabric-gateway/pkg/connection"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	proto "github.com/hyperledger/fabric-gateway/protos"
+	proto "github.com/hyperledger/fabric-gateway/protos/gateway"
 	"google.golang.org/grpc"
 )
 

@@ -76,7 +76,7 @@ export class ProposalImpl implements Proposal {
     }
 
     getTransactionId(): string {
-        const transactionId = this.#proposedTransaction.txId;
+        const transactionId = this.#proposedTransaction.tx_id;
         if (typeof transactionId !== 'string') {
             throw new Error(`Transaction ID not defined: ${util.inspect(this.#proposedTransaction)}`);
         }

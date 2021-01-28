@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	gateway "github.com/hyperledger/fabric-gateway/protos"
+	gateway "github.com/hyperledger/fabric-gateway/protos/gateway"
 )
 
 // Proposal represents a transaction proposal that can be sent to peers for endorsement or evaluated as a query.
