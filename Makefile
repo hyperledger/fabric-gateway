@@ -88,7 +88,7 @@ test: unit-test scenario-test
 
 all: test
 
-docker: build-protos build-go
+docker: build-protos build-go clean_vols
 	@echo "Building Docker image $(DOCKER_NS)/fabric-gateway"
 	@mkdir -p $(@D)
 	$(DBUILD) --rm -f images/gateway/Dockerfile \
@@ -107,3 +107,14 @@ clean: clean-protos
 clean-protos:
 	-rm -rf fabric-protos
 	-rm $(pb_files)
+
+clean_vols:
+	pwd
+	sudo rm -f scenario/fixtures/crypto-material/channel.tx
+	sudo rm -f scenario/fixtures/crypto-material/core.yaml
+	sudo rm -f scenario/fixtures/crypto-material/genesis.block
+	sudo rm -f scenario/fixtures/crypto-material/mychannel.block
+	sudo rm -rf scenario/fixtures/crypto-material/crypto-config  
+	sudo rm -f scenario/fixtures/crypto-material/Org1MSPanchors.tx
+	sudo rm -f scenario/fixtures/crypto-material/Org2MSPanchors.tx
+	sudo rm -f scenario/fixtures/crypto-material/Org3MSPanchors.tx

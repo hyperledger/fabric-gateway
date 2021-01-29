@@ -6,7 +6,11 @@ rm -f crypto-material/channel.tx
 rm -f crypto-material/core.yaml
 rm -f crypto-material/genesis.block
 rm -f crypto-material/mychannel.block
-rm -rf crypto-material/crypto-config  
+sudo rm -rf crypto-material/crypto-config  
+sudo rm -f crypto-material/Org1MSPanchors.tx
+sudo rm -f crypto-material/Org2MSPanchors.tx
+sudo rm -f crypto-material/Org3MSPanchors.tx
+
 
 cd docker-compose
 
