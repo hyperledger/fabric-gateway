@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	gateway "github.com/hyperledger/fabric-gateway/protos/gateway"
+	"github.com/hyperledger/fabric-protos-go/gateway"
 )
 
 // Transaction represents an endorsed transaction that can be submitted to the orderer for commit to the ledger.

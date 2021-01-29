@@ -14,7 +14,7 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/connection"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test/mock"
-	proto "github.com/hyperledger/fabric-gateway/protos/gateway"
+	proto "github.com/hyperledger/fabric-protos-go/gateway"
 	"google.golang.org/grpc"
 )
 
@@ -55,7 +55,7 @@ func TestGateway(t *testing.T) {
 	})
 
 	t.Run("Connect Gateway using existing gRPC client connection", func(t *testing.T) {
-		var clientConnection grpc.ClientConnInterface
+		var clientConnection *grpc.ClientConn
 		gateway, err := Connect(id, WithSign(sign), WithClientConnection(clientConnection))
 		if err != nil {
 			t.Fatal(err)
@@ -80,7 +80,7 @@ func TestGateway(t *testing.T) {
 	})
 
 	t.Run("Close Gateway using existing gRPC client connection does not close connection", func(t *testing.T) {
-		var clientConnection grpc.ClientConnInterface
+		var clientConnection *grpc.ClientConn
 		gateway, err := Connect(id, WithSign(sign), WithClientConnection(clientConnection))
 		if err != nil {
 			t.Fatal(err)

@@ -20,6 +20,7 @@ import (
 	"time"
 )
 
+// NewECDSAPrivateKey generates a new private key for testing
 func NewECDSAPrivateKey() (*ecdsa.PrivateKey, error) {
 	return ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 }
@@ -37,6 +38,7 @@ func publicKey(priv crypto.PrivateKey) crypto.PublicKey {
 	}
 }
 
+// NewCertificate generates a new certificate from a private key for testing
 func NewCertificate(privateKey crypto.PrivateKey) (*x509.Certificate, error) {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)

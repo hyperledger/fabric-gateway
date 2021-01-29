@@ -9,12 +9,13 @@ package server
 import (
 	"bytes"
 	"context"
-	"github.com/gogo/protobuf/proto"
-	"github.com/hyperledger/fabric-protos-go/common"
 	"testing"
 
+	"github.com/gogo/protobuf/proto"
+	"github.com/hyperledger/fabric-protos-go/common"
+
 	"github.com/hyperledger/fabric-gateway/pkg/server/mocks"
-	pb "github.com/hyperledger/fabric-gateway/protos/gateway"
+	pb "github.com/hyperledger/fabric-protos-go/gateway"
 
 	"github.com/hyperledger/fabric-protos-go/peer"
 )
@@ -131,7 +132,7 @@ func TestSubmit(t *testing.T) {
 	// }
 }
 
-func createProposal() (*peer.Proposal, error){
+func createProposal() (*peer.Proposal, error) {
 	invocationSpec := &peer.ChaincodeInvocationSpec{
 		ChaincodeSpec: &peer.ChaincodeSpec{
 			Type:        peer.ChaincodeSpec_NODE,
@@ -154,7 +155,7 @@ func createProposal() (*peer.Proposal, error){
 		return nil, err
 	}
 
-	channelHeader := &common.ChannelHeader {
+	channelHeader := &common.ChannelHeader{
 		ChannelId: "my_channel",
 	}
 
@@ -173,7 +174,7 @@ func createProposal() (*peer.Proposal, error){
 	}
 
 	proposal := &peer.Proposal{
-		Header: headerBytes,
+		Header:  headerBytes,
 		Payload: payloadBytes,
 	}
 

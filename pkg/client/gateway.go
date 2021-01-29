@@ -22,7 +22,7 @@ import (
 
 	"github.com/hyperledger/fabric-gateway/pkg/connection"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	proto "github.com/hyperledger/fabric-gateway/protos/gateway"
+	proto "github.com/hyperledger/fabric-protos-go/gateway"
 	"google.golang.org/grpc"
 )
 
@@ -34,7 +34,7 @@ type Gateway struct {
 }
 
 func undefinedSign(digest []byte) ([]byte, error) {
-	return nil, errors.New("No sign implementation supplied")
+	return nil, errors.New("no sign implementation supplied")
 }
 
 // Connect to a Fabric Gateway using a client identity, signing implementation, and additional options, which must
@@ -49,7 +49,7 @@ func Connect(id identity.Identity, options ...ConnectOption) (*Gateway, error) {
 	}
 
 	if nil == gateway.client {
-		return nil, errors.New("No connection details supplied")
+		return nil, errors.New("no connection details supplied")
 	}
 
 	return gateway, nil
@@ -93,7 +93,7 @@ func WithEndpoint(endpoint *connection.Endpoint) ConnectOption {
 
 // WithClientConnection uses a previously configured or shared gRPC client connection to a Fabric Gateway. The client
 // connection will not be closed when the Gateway is closed.
-func WithClientConnection(clientConnection grpc.ClientConnInterface) ConnectOption {
+func WithClientConnection(clientConnection *grpc.ClientConn) ConnectOption {
 	return func(gateway *Gateway) error {
 		gateway.closer = nil
 		gateway.client = proto.NewGatewayClient(clientConnection)

@@ -16,8 +16,8 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test/mock"
-	gateway "github.com/hyperledger/fabric-gateway/protos/gateway"
 	"github.com/hyperledger/fabric-protos-go/common"
+	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/msp"
 	"google.golang.org/grpc"
 )
@@ -61,7 +61,7 @@ func TestIdentity(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if bytes.Compare(actual, creator) != 0 {
+		if !bytes.Equal(actual, creator) {
 			t.Fatalf("Expected identity: %v\nGot: %v", creator, actual)
 		}
 	})
@@ -90,7 +90,7 @@ func TestIdentity(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if bytes.Compare(actual, creator) != 0 {
+		if !bytes.Equal(actual, creator) {
 			t.Fatalf("Expected identity: %v\nGot: %v", creator, actual)
 		}
 	})

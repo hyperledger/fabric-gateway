@@ -10,17 +10,19 @@ import (
 	"testing"
 
 	"github.com/gogo/protobuf/proto"
-	gateway "github.com/hyperledger/fabric-gateway/protos/gateway"
 	"github.com/hyperledger/fabric-protos-go/common"
+	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
 )
 
+// AssertUnmarshall ensures that a protobuf is umarshalled without error
 func AssertUnmarshall(t *testing.T, b []byte, m proto.Message) {
 	if err := proto.Unmarshal(b, m); err != nil {
 		t.Fatal(err)
 	}
 }
 
+// AssertUnmarshallInvocationSpec ensures that a ChaincodeInvocationSpec protobuf is umarshalled without error
 func AssertUnmarshallInvocationSpec(t *testing.T, proposedTransaction *gateway.ProposedTransaction) *peer.ChaincodeInvocationSpec {
 	proposal := &peer.Proposal{}
 	AssertUnmarshall(t, proposedTransaction.Proposal.ProposalBytes, proposal)
@@ -34,6 +36,7 @@ func AssertUnmarshallInvocationSpec(t *testing.T, proposedTransaction *gateway.P
 	return input
 }
 
+// AssertUnmarshallChannelheader ensures that a ChannelHeader protobuf is umarshalled without error
 func AssertUnmarshallChannelheader(t *testing.T, proposedTransaction *gateway.ProposedTransaction) *common.ChannelHeader {
 	header := AssertUnmarshallHeader(t, proposedTransaction)
 
@@ -43,6 +46,7 @@ func AssertUnmarshallChannelheader(t *testing.T, proposedTransaction *gateway.Pr
 	return channelHeader
 }
 
+// AssertUnmarshallHeader ensures that a Header protobuf is umarshalled without error
 func AssertUnmarshallHeader(t *testing.T, proposedTransaction *gateway.ProposedTransaction) *common.Header {
 	proposal := &peer.Proposal{}
 	AssertUnmarshall(t, proposedTransaction.Proposal.ProposalBytes, proposal)
@@ -53,6 +57,7 @@ func AssertUnmarshallHeader(t *testing.T, proposedTransaction *gateway.ProposedT
 	return header
 }
 
+// AssertUnmarshallSignatureHeader ensures that a SignatureHeader protobuf is umarshalled without error
 func AssertUnmarshallSignatureHeader(t *testing.T, proposedTransaction *gateway.ProposedTransaction) *common.SignatureHeader {
 	header := AssertUnmarshallHeader(t, proposedTransaction)
 
