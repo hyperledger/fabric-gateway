@@ -180,7 +180,6 @@ func (transaction *Transaction) AddOptions(options ...client.ProposalOption) {
 var fabricRunning bool = false
 var channelsJoined bool = false
 var runningChaincodes = make(map[string]bool)
-var gatewayProcess *exec.Cmd
 var gatewayConnection *GatewayConnection
 var gateway *client.Gateway
 var network *client.Network
@@ -643,6 +642,9 @@ func invokeSubmit() ([]byte, error) {
 	}
 
 	commit, err := clientTransaction.Submit()
+	if err != nil {
+		return nil, err
+	}
 
 	if err = <-commit; err != nil {
 		return nil, err

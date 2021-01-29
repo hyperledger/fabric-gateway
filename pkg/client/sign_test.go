@@ -13,8 +13,8 @@ import (
 	"testing"
 
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test/mock"
-	gateway "github.com/hyperledger/fabric-gateway/protos/gateway"
 	"github.com/hyperledger/fabric-protos-go/common"
+	"github.com/hyperledger/fabric-protos-go/gateway"
 	"google.golang.org/grpc"
 )
 
@@ -38,7 +38,7 @@ func TestSign(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if bytes.Compare(actual, expected) != 0 {
+		if !bytes.Equal(actual, expected) {
 			t.Fatalf("Expected signature: %v\nGot: %v", expected, actual)
 		}
 	})
@@ -72,7 +72,7 @@ func TestSign(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if bytes.Compare(actual, expected) != 0 {
+		if !bytes.Equal(actual, expected) {
 			t.Fatalf("Expected signature: %v\nGot: %v", expected, actual)
 		}
 	})
@@ -106,7 +106,7 @@ func TestSign(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if bytes.Compare(actual, expected) != 0 {
+		if !bytes.Equal(actual, expected) {
 			t.Fatalf("Expected signature: %v\nGot: %v", expected, actual)
 		}
 	})

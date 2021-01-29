@@ -11,20 +11,21 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
-	pb "github.com/hyperledger/fabric-gateway/protos/gateway"
 	"github.com/hyperledger/fabric-protos-go/common"
+	pb "github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/orderer"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
-type mockRegistry struct {
+type MockRegistry struct {
 	endorsers []peer.EndorserClient
 	orderers  []orderer.AtomicBroadcast_BroadcastClient
 }
 
-func NewMockRegistry() *mockRegistry {
+// NewMockRegistry creates a mock registry implementation
+func NewMockRegistry() *MockRegistry {
 	endorser1 := &mockEndorserClient{
 		response: CreateProposalResponse("MyResult", nil),
 	}
@@ -35,25 +36,29 @@ func NewMockRegistry() *mockRegistry {
 	orderers := make([]orderer.AtomicBroadcast_BroadcastClient, 0)
 	orderers = append(orderers, orderer1)
 
-	return &mockRegistry{
+	return &MockRegistry{
 		endorsers,
 		orderers,
 	}
 }
 
-func (mr *mockRegistry) GetEndorsers(channel string, chaincode string) []peer.EndorserClient {
+// GetEndorsers mock implementation
+func (mr *MockRegistry) GetEndorsers(channel string, chaincode string) []peer.EndorserClient {
 	return mr.endorsers
 }
 
-func (mr *mockRegistry) GetDeliverers(channel string) []peer.DeliverClient {
+// GetDeliverers mock implementation
+func (mr *MockRegistry) GetDeliverers(channel string) []peer.DeliverClient {
 	return nil
 }
 
-func (mr *mockRegistry) GetOrderers(channel string) []orderer.AtomicBroadcast_BroadcastClient {
+// GetOrderers mock implementation
+func (mr *MockRegistry) GetOrderers(channel string) []orderer.AtomicBroadcast_BroadcastClient {
 	return mr.orderers
 }
 
-func (mr *mockRegistry) ListenForTxEvents(channel string, txid string, done chan<- bool) error {
+// ListenForTxEvents mock implementation
+func (mr *MockRegistry) ListenForTxEvents(channel string, txid string, done chan<- bool) error {
 	return nil
 }
 
@@ -73,6 +78,7 @@ func marshal(msg proto.Message, t *testing.T) []byte {
 	return buf
 }
 
+// CreateProposalResponse returns a fake proposal response for a given response value
 func CreateProposalResponse(value string, t *testing.T) *peer.ProposalResponse {
 	response := &peer.Response{
 		Status:  200,
@@ -91,37 +97,45 @@ func CreateProposalResponse(value string, t *testing.T) *peer.ProposalResponse {
 	}
 }
 
-type mockSubmitServer struct {
+type MockSubmitServer struct {
 }
 
-func NewMockSubmitServer() *mockSubmitServer {
-	return &mockSubmitServer{}
+// NewMockSubmitServer creates a mock server for testing
+func NewMockSubmitServer() *MockSubmitServer {
+	return &MockSubmitServer{}
 }
 
-func (mcs *mockSubmitServer) Send(*pb.Event) error {
+// Send mock implementation
+func (mcs *MockSubmitServer) Send(*pb.Event) error {
 	return nil
 }
 
-func (mcs *mockSubmitServer) SetHeader(metadata.MD) error {
+// SetHeader mock implementation
+func (mcs *MockSubmitServer) SetHeader(metadata.MD) error {
 	return nil
 }
 
-func (mcs *mockSubmitServer) SendHeader(metadata.MD) error {
+// SendHeader mock implementation
+func (mcs *MockSubmitServer) SendHeader(metadata.MD) error {
 	return nil
 }
 
-func (mcs *mockSubmitServer) SetTrailer(metadata.MD) {
+// SetTrailer mock implementation
+func (mcs *MockSubmitServer) SetTrailer(metadata.MD) {
 }
 
-func (mcs *mockSubmitServer) Context() context.Context {
+// Context mock implementation
+func (mcs *MockSubmitServer) Context() context.Context {
 	return nil
 }
 
-func (mcs *mockSubmitServer) SendMsg(m interface{}) error {
+// SendMsg mock implementation
+func (mcs *MockSubmitServer) SendMsg(m interface{}) error {
 	return nil
 }
 
-func (mcs *mockSubmitServer) RecvMsg(m interface{}) error {
+// RecvMsg mock implementation
+func (mcs *MockSubmitServer) RecvMsg(m interface{}) error {
 	return nil
 }
 

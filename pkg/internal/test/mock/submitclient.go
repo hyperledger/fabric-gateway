@@ -10,7 +10,7 @@ import (
 	"errors"
 	"io"
 
-	proto "github.com/hyperledger/fabric-gateway/protos/gateway"
+	proto "github.com/hyperledger/fabric-protos-go/gateway"
 )
 
 // SubmitClient mock implementation whose method implementations can be overridden by assigning to properties
@@ -23,7 +23,7 @@ type SubmitClient struct {
 func NewSubmitClient() *SubmitClient {
 	return &SubmitClient{
 		MockRecv: func() (*proto.Event, error) {
-			return nil, errors.New("Not implemented")
+			return nil, errors.New("not implemented")
 		},
 		ClientStream: *NewClientStream(),
 	}

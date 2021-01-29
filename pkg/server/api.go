@@ -14,7 +14,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	pb "github.com/hyperledger/fabric-gateway/protos/gateway"
+	pb "github.com/hyperledger/fabric-protos-go/gateway"
 
 	"github.com/hyperledger/fabric-protos-go/peer"
 )
