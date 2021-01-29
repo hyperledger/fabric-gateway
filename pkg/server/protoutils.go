@@ -12,8 +12,8 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	pb "github.com/hyperledger/fabric-gateway/protos/gateway"
 	"github.com/hyperledger/fabric-protos-go/common"
+	pb "github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
 )
 

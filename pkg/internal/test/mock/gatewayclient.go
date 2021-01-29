@@ -10,7 +10,7 @@ import (
 	"context"
 	"errors"
 
-	proto "github.com/hyperledger/fabric-gateway/protos/gateway"
+	proto "github.com/hyperledger/fabric-protos-go/gateway"
 	"google.golang.org/grpc"
 )
 
@@ -25,13 +25,13 @@ type GatewayClient struct {
 func NewGatewayClient() *GatewayClient {
 	return &GatewayClient{
 		MockEndorse: func(ctx context.Context, in *proto.ProposedTransaction, opts ...grpc.CallOption) (*proto.PreparedTransaction, error) {
-			return nil, errors.New("Not implemented")
+			return nil, errors.New("not implemented")
 		},
 		MockSubmit: func(ctx context.Context, in *proto.PreparedTransaction, opts ...grpc.CallOption) (proto.Gateway_SubmitClient, error) {
-			return nil, errors.New("Not implemented")
+			return nil, errors.New("not implemented")
 		},
 		MockEvaluate: func(ctx context.Context, in *proto.ProposedTransaction, opts ...grpc.CallOption) (*proto.Result, error) {
-			return nil, errors.New("Not implemented")
+			return nil, errors.New("not implemented")
 		},
 	}
 }

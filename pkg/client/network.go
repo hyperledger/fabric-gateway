@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 package client
 
-import proto "github.com/hyperledger/fabric-gateway/protos/gateway"
+import proto "github.com/hyperledger/fabric-protos-go/gateway"
 
 // Network represents a blockchain network, or Fabric channel. The Network can be used to access deployed smart
 // contracts, and to listen for events emitted when blocks are committed to the ledger.

@@ -27,22 +27,22 @@ type ClientStream struct {
 func NewClientStream() *ClientStream {
 	return &ClientStream{
 		MockHeader: func() (metadata.MD, error) {
-			return nil, errors.New("Not implemented")
+			return nil, errors.New("not implemented")
 		},
 		MockTrailer: func() metadata.MD {
 			return nil
 		},
 		MockCloseSend: func() error {
-			return errors.New("Not implemented")
+			return errors.New("not implemented")
 		},
 		MockContext: func() context.Context {
 			return nil
 		},
 		MockSendMsg: func(m interface{}) error {
-			return errors.New("Not implemented")
+			return errors.New("not implemented")
 		},
 		MockRecvMsg: func(m interface{}) error {
-			return errors.New("Not implemented")
+			return errors.New("not implemented")
 		},
 	}
 }

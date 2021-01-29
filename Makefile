@@ -49,7 +49,7 @@ $(pb_files): fabric-protos
 	mkdir -p protos
 	protoc -I./fabric-protos --go_out=paths=source_relative:./protos --go-grpc_out=require_unimplemented_servers=false,paths=source_relative:./protos fabric-protos/gateway/gateway.proto
 
-build-go: build-protos
+build-go:
 	go build -o bin/gateway cmd/gateway/*.go
 
 build-node: build-protos
@@ -57,7 +57,7 @@ build-node: build-protos
 
 unit-test: unit-test-go unit-test-node unit-test-java
 
-unit-test-go: build-protos
+unit-test-go: lint staticcheck
 	go test -coverprofile=$(base_dir)/cover.out $(base_dir)/pkg/... $(base_dir)/cmd/gateway
 
 unit-test-node: build-node
@@ -67,7 +67,10 @@ unit-test-java: build-protos
 	cd $(java_dir); mvn test
 
 lint:
-	golint $(base_dir)/pkg/... $(base_dir)/cmd/gateway
+	golint -set_exit_status $(base_dir)/pkg/client/... $(base_dir)/pkg/internal/... $(base_dir)/cmd/... $(scenario_dir)/go
+
+staticcheck:
+	staticcheck $(base_dir)/pkg/client/... $(base_dir)/pkg/internal/... $(base_dir)/cmd/... $(scenario_dir)/go
 
 vendor-chaincode:
 	cd $(scenario_dir)/fixtures/chaincode/golang/basic; GO111MODULE=on go mod vendor

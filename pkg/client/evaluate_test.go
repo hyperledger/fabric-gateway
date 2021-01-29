@@ -16,7 +16,7 @@ import (
 
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test/mock"
-	gateway "github.com/hyperledger/fabric-gateway/protos/gateway"
+	"github.com/hyperledger/fabric-protos-go/gateway"
 	"google.golang.org/grpc"
 )
 
@@ -52,7 +52,7 @@ func TestEvaluateTransaction(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if bytes.Compare(actual, expected) != 0 {
+		if !bytes.Equal(actual, expected) {
 			t.Fatalf("Expected %s, got %s", expected, actual)
 		}
 	})
