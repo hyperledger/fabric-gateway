@@ -9,9 +9,10 @@ package client
 import (
 	"bytes"
 	"context"
+	"io"
 	"testing"
 
-	"github.com/hyperledger/fabric-gateway/pkg/internal/test/mock"
+	"github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"google.golang.org/grpc"
@@ -37,12 +38,24 @@ func TestOfflineSign(t *testing.T) {
 		}
 	}
 
+	newMockSubmitClient := func(controller *gomock.Controller) *MockGateway_SubmitClient {
+		mock := NewMockGateway_SubmitClient(controller)
+		mock.EXPECT().Recv().
+			Return(nil, io.EOF).
+			AnyTimes()
+		return mock
+	}
+
 	t.Run("Evaluate", func(t *testing.T) {
 		t.Run("Returns error with signer and no explicit signing", func(t *testing.T) {
-			mockClient := mock.NewGatewayClient()
-			mockClient.MockEvaluate = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.Result, error) {
-				return &gateway.Result{}, nil
-			}
+			mockController := gomock.NewController(t)
+			defer mockController.Finish()
+
+			mockClient := NewMockGatewayClient(mockController)
+			mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
+				Return(&gateway.Result{}, nil).
+				AnyTimes()
+
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			proposal, err := contract.NewProposal("transaction")
@@ -58,11 +71,17 @@ func TestOfflineSign(t *testing.T) {
 		t.Run("Uses off-line signature", func(t *testing.T) {
 			expected := []byte("SIGNATURE")
 			var actual []byte
-			mockClient := mock.NewGatewayClient()
-			mockClient.MockEvaluate = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.Result, error) {
-				actual = in.Proposal.Signature
-				return &gateway.Result{}, nil
-			}
+			mockController := gomock.NewController(t)
+			defer mockController.Finish()
+
+			mockClient := NewMockGatewayClient(mockController)
+			mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
+				Do(func(_ context.Context, in *gateway.ProposedTransaction, _ ...grpc.CallOption) {
+					actual = in.Proposal.Signature
+				}).
+				Return(&gateway.Result{}, nil).
+				Times(1)
+
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
@@ -92,10 +111,14 @@ func TestOfflineSign(t *testing.T) {
 
 	t.Run("Endorse", func(t *testing.T) {
 		t.Run("Returns error with signer and no explicit signing", func(t *testing.T) {
-			mockClient := mock.NewGatewayClient()
-			mockClient.MockEndorse = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.PreparedTransaction, error) {
-				return newPreparedTransaction("result"), nil
-			}
+			mockController := gomock.NewController(t)
+			defer mockController.Finish()
+
+			mockClient := NewMockGatewayClient(mockController)
+			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+				Return(newPreparedTransaction("result"), nil).
+				AnyTimes()
+
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			proposal, err := contract.NewProposal("transaction")
@@ -111,11 +134,17 @@ func TestOfflineSign(t *testing.T) {
 		t.Run("Uses off-line signature", func(t *testing.T) {
 			expected := []byte("SIGNATURE")
 			var actual []byte
-			mockClient := mock.NewGatewayClient()
-			mockClient.MockEndorse = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.PreparedTransaction, error) {
-				actual = in.Proposal.Signature
-				return newPreparedTransaction("result"), nil
-			}
+			mockController := gomock.NewController(t)
+			defer mockController.Finish()
+
+			mockClient := NewMockGatewayClient(mockController)
+			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+				Do(func(_ context.Context, in *gateway.ProposedTransaction, _ ...grpc.CallOption) {
+					actual = in.Proposal.Signature
+				}).
+				Return(newPreparedTransaction("result"), nil).
+				Times(1)
+
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
@@ -145,13 +174,17 @@ func TestOfflineSign(t *testing.T) {
 
 	t.Run("Submit", func(t *testing.T) {
 		t.Run("Returns error with signer and no explicit signing", func(t *testing.T) {
-			mockClient := mock.NewGatewayClient()
-			mockClient.MockEndorse = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.PreparedTransaction, error) {
-				return newPreparedTransaction("result"), nil
-			}
-			mockClient.MockSubmit = func(ctx context.Context, in *gateway.PreparedTransaction, opts ...grpc.CallOption) (gateway.Gateway_SubmitClient, error) {
-				return mock.NewSuccessSubmitClient(), nil
-			}
+			mockController := gomock.NewController(t)
+			defer mockController.Finish()
+
+			mockClient := NewMockGatewayClient(mockController)
+			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+				Return(newPreparedTransaction("result"), nil).
+				AnyTimes()
+			mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+				Return(newMockSubmitClient(mockController), nil).
+				AnyTimes()
+
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
@@ -182,14 +215,19 @@ func TestOfflineSign(t *testing.T) {
 		t.Run("Uses off-line signature", func(t *testing.T) {
 			expected := []byte("SIGNATURE")
 			var actual []byte
-			mockClient := mock.NewGatewayClient()
-			mockClient.MockEndorse = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.PreparedTransaction, error) {
-				return newPreparedTransaction("result"), nil
-			}
-			mockClient.MockSubmit = func(ctx context.Context, in *gateway.PreparedTransaction, opts ...grpc.CallOption) (gateway.Gateway_SubmitClient, error) {
-				actual = in.Envelope.Signature
-				return mock.NewSuccessSubmitClient(), nil
-			}
+			mockController := gomock.NewController(t)
+			defer mockController.Finish()
+
+			mockClient := NewMockGatewayClient(mockController)
+			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+				Return(newPreparedTransaction("result"), nil)
+			mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+				Do(func(_ context.Context, in *gateway.PreparedTransaction, _ ...grpc.CallOption) {
+					actual = in.Envelope.Signature
+				}).
+				Return(newMockSubmitClient(mockController), nil).
+				Times(1)
+
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
@@ -233,7 +271,10 @@ func TestOfflineSign(t *testing.T) {
 
 		t.Run("Serialization", func(t *testing.T) {
 			t.Run("Proposal keeps same digest", func(t *testing.T) {
-				mockClient := mock.NewGatewayClient()
+				mockController := gomock.NewController(t)
+				defer mockController.Finish()
+
+				mockClient := NewMockGatewayClient(mockController)
 				contract := newContractWithNoSign(t, WithClient(mockClient))
 
 				unsignedProposal, err := contract.NewProposal("transaction")
@@ -267,7 +308,10 @@ func TestOfflineSign(t *testing.T) {
 			})
 
 			t.Run("Proposal keeps same transaction ID", func(t *testing.T) {
-				mockClient := mock.NewGatewayClient()
+				mockController := gomock.NewController(t)
+				defer mockController.Finish()
+
+				mockClient := NewMockGatewayClient(mockController)
 				contract := newContractWithNoSign(t, WithClient(mockClient))
 
 				unsignedProposal, err := contract.NewProposal("transaction")
@@ -295,10 +339,14 @@ func TestOfflineSign(t *testing.T) {
 			})
 
 			t.Run("Transaction keeps same digest", func(t *testing.T) {
-				mockClient := mock.NewGatewayClient()
-				mockClient.MockEndorse = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.PreparedTransaction, error) {
-					return newPreparedTransaction("result"), nil
-				}
+				mockController := gomock.NewController(t)
+				defer mockController.Finish()
+
+				mockClient := NewMockGatewayClient(mockController)
+				mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+					Return(newPreparedTransaction("result"), nil).
+					Times(1)
+
 				contract := newContractWithNoSign(t, WithClient(mockClient))
 
 				unsignedProposal, err := contract.NewProposal("transaction")

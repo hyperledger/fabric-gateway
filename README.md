@@ -57,6 +57,8 @@ In order to build these components, the following needs to be installed and avai
   - `go get -u golang.org/x/lint/golint`
   - `go get -u golang.org/x/tools/cmd/goimports`
   - `go get google.golang.org/grpc google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc`
+  - `go get honnef.co/go/tools/cmd/staticcheck`
+  - `go get github.com/golang/mock/mockgen`
 
 #### Build using make
 
@@ -72,6 +74,11 @@ The following Makefile targets are available
 - `make scenario-test-java` - run the scenario tests for Java SDK
 - `make scenario-test` - run the scenario tests for all SDKs
 - `make test` - run all unit and scenario tests
+- `make generate` - generate mock implementations used by unit tests
+
+Note that immediately after creating a fresh copy of this repository, auto-generated test mocks will not be preset so
+Go code will show errors. Running the `unit-test` make target will generate the required mock implementations, and they
+can also be generated explicitly by running `make generate`.
 
 #### Scenario tests
 

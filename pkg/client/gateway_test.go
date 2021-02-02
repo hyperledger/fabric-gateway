@@ -11,12 +11,15 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-gateway/pkg/connection"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	"github.com/hyperledger/fabric-gateway/pkg/internal/test/mock"
 	proto "github.com/hyperledger/fabric-protos-go/gateway"
 	"google.golang.org/grpc"
 )
+
+//go:generate mockgen -destination ./closer_mock_test.go -package ${GOPACKAGE} io Closer
+//go:generate mockgen -destination ./gateway_mock_test.go -package ${GOPACKAGE} github.com/hyperledger/fabric-protos-go/gateway GatewayClient,Gateway_SubmitClient
 
 // WithClient uses the supplied client for the Gateway. Allows a stub implementation to be used for testing.
 func WithClient(client proto.GatewayClient) ConnectOption {
@@ -93,12 +96,11 @@ func TestGateway(t *testing.T) {
 	})
 
 	t.Run("Close Gateway using endpoint closes connection", func(t *testing.T) {
-		closeCallCount := 0
-		mockCloser := mock.NewCloser()
-		mockCloser.MockClose = func() error {
-			closeCallCount++
-			return nil
-		}
+		mockController := gomock.NewController(t)
+		defer mockController.Finish()
+
+		mockCloser := NewMockCloser(mockController)
+		mockCloser.EXPECT().Close().MinTimes(1)
 
 		endpoint := &connection.Endpoint{
 			Host: "example.org",
@@ -118,10 +120,6 @@ func TestGateway(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-
-		if closeCallCount < 1 {
-			t.Fatal("Close() not called")
-		}
 	})
 
 	t.Run("Connect Gateway with failing option returns error", func(t *testing.T) {
@@ -137,7 +135,10 @@ func TestGateway(t *testing.T) {
 
 	t.Run("GetNetwork returns correctly named Network", func(t *testing.T) {
 		networkName := "network"
-		mockClient := mock.NewGatewayClient()
+		mockController := gomock.NewController(t)
+		defer mockController.Finish()
+
+		mockClient := NewMockGatewayClient(mockController)
 		gateway := AssertNewTestGateway(t, WithClient(mockClient))
 
 		network := gateway.GetNetwork(networkName)
@@ -151,7 +152,10 @@ func TestGateway(t *testing.T) {
 	})
 
 	t.Run("Identity returns connecting identity", func(t *testing.T) {
-		mockClient := mock.NewGatewayClient()
+		mockController := gomock.NewController(t)
+		defer mockController.Finish()
+
+		mockClient := NewMockGatewayClient(mockController)
 		gateway := AssertNewTestGateway(t, WithIdentity(id), WithClient(mockClient))
 
 		result := gateway.Identity()
