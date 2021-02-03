@@ -55,7 +55,7 @@ build-go:
 build-node: build-protos
 	cd $(node_dir); npm install; npm run build
 
-unit-test: unit-test-go unit-test-node unit-test-java
+unit-test: generate unit-test-go unit-test-node unit-test-java
 
 unit-test-go: lint staticcheck
 	go test -coverprofile=$(base_dir)/cover.out $(base_dir)/pkg/... $(base_dir)/cmd/gateway
@@ -71,6 +71,9 @@ lint:
 
 staticcheck:
 	staticcheck $(base_dir)/pkg/client/... $(base_dir)/pkg/internal/... $(base_dir)/cmd/... $(scenario_dir)/go
+
+generate:
+	go generate ./pkg/...
 
 vendor-chaincode:
 	cd $(scenario_dir)/fixtures/chaincode/golang/basic; GO111MODULE=on go mod vendor
@@ -104,9 +107,12 @@ docker: build-protos build-go
 	docker tag $(DOCKER_NS)/fabric-gateway $(DOCKER_NS)/fabric-gateway:$(DOCKER_TAG)
 
 .PHONEY: clean
-clean: clean-protos
+clean: clean-protos clean-generated
 
 .PHONEY: clean-protos
 clean-protos:
 	-rm -rf fabric-protos
 	-rm $(pb_files)
+
+clean-generated:
+	find ./pkg -name '*_mock_test.go' -delete

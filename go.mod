@@ -8,6 +8,7 @@ require (
 	github.com/cucumber/godog v0.10.0
 	github.com/cucumber/messages-go/v10 v10.0.3
 	github.com/gogo/protobuf v1.3.1
+	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.3
 	github.com/hyperledger/fabric v2.1.1+incompatible
 	github.com/hyperledger/fabric-amcl v0.0.0-20200424173818-327c9e2cf77a // indirect
@@ -22,7 +23,6 @@ require (
 	github.com/sykesm/zap-logfmt v0.0.4 // indirect
 	go.uber.org/zap v1.16.0 // indirect
 	google.golang.org/grpc v1.34.0
-	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.4.0
 	honnef.co/go/tools v0.1.1 // indirect
 )

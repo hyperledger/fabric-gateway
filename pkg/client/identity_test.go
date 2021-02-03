@@ -12,10 +12,10 @@ import (
 	"io"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
-	"github.com/hyperledger/fabric-gateway/pkg/internal/test/mock"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/msp"
@@ -49,12 +49,17 @@ func TestIdentity(t *testing.T) {
 
 	t.Run("Evaluate uses client identity for proposals", func(t *testing.T) {
 		var actual []byte
-		mockClient := mock.NewGatewayClient()
-		mockClient.MockEvaluate = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.Result, error) {
-			actual = test.AssertUnmarshallSignatureHeader(t, in).Creator
-			value := &gateway.Result{}
-			return value, nil
-		}
+		mockController := gomock.NewController(t)
+		defer mockController.Finish()
+
+		mockClient := NewMockGatewayClient(mockController)
+		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, in *gateway.ProposedTransaction, _ ...grpc.CallOption) {
+				actual = test.AssertUnmarshallSignatureHeader(t, in).Creator
+			}).
+			Return(&gateway.Result{}, nil).
+			Times(1)
+
 		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithIdentity(id))
 
 		if _, err := contract.EvaluateTransaction("transaction"); err != nil {
@@ -68,22 +73,24 @@ func TestIdentity(t *testing.T) {
 
 	t.Run("Submit uses client identity for proposals", func(t *testing.T) {
 		var actual []byte
-		mockClient := mock.NewGatewayClient()
-		mockClient.MockEndorse = func(ctx context.Context, in *gateway.ProposedTransaction, opts ...grpc.CallOption) (*gateway.PreparedTransaction, error) {
-			actual = test.AssertUnmarshallSignatureHeader(t, in).Creator
-			preparedTransaction := &gateway.PreparedTransaction{
-				Envelope: &common.Envelope{},
-				Response: &gateway.Result{},
-			}
-			return preparedTransaction, nil
+		mockController := gomock.NewController(t)
+		defer mockController.Finish()
+
+		mockClient := NewMockGatewayClient(mockController)
+		preparedTransaction := gateway.PreparedTransaction{
+			Envelope: &common.Envelope{},
+			Response: &gateway.Result{},
 		}
-		mockClient.MockSubmit = func(ctx context.Context, in *gateway.PreparedTransaction, opts ...grpc.CallOption) (gateway.Gateway_SubmitClient, error) {
-			submitClient := mock.NewSubmitClient()
-			submitClient.MockRecv = func() (*gateway.Event, error) {
-				return nil, io.EOF
-			}
-			return submitClient, nil
-		}
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, in *gateway.ProposedTransaction, _ ...grpc.CallOption) {
+				actual = test.AssertUnmarshallSignatureHeader(t, in).Creator
+			}).
+			Return(&preparedTransaction, nil).
+			Times(1)
+		mockSubmitClient := NewMockGateway_SubmitClient(mockController)
+		mockSubmitClient.EXPECT().Recv().Return(nil, io.EOF)
+		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).Return(mockSubmitClient, nil)
+
 		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithIdentity(id))
 
 		if _, err := contract.SubmitTransaction("transaction"); err != nil {

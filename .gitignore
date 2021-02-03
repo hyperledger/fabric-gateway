@@ -5,3 +5,4 @@ cover.out
 fabric-protos/
 protos/
 vendor/
+**/*_mock_test.go

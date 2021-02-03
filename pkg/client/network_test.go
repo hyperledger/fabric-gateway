@@ -9,7 +9,7 @@ package client
 import (
 	"testing"
 
-	"github.com/hyperledger/fabric-gateway/pkg/internal/test/mock"
+	"github.com/golang/mock/gomock"
 )
 
 func AssertNewTestNetwork(t *testing.T, networkName string, options ...ConnectOption) *Network {
@@ -20,7 +20,10 @@ func AssertNewTestNetwork(t *testing.T, networkName string, options ...ConnectOp
 func TestNetwork(t *testing.T) {
 	t.Run("GetContract returns correctly named Contract", func(t *testing.T) {
 		chaincodeID := "chaincode"
-		mockClient := mock.NewGatewayClient()
+		mockController := gomock.NewController(t)
+		defer mockController.Finish()
+
+		mockClient := NewMockGatewayClient(mockController)
 		network := AssertNewTestNetwork(t, "network", WithClient(mockClient))
 
 		contract := network.GetContract(chaincodeID)
@@ -39,7 +42,10 @@ func TestNetwork(t *testing.T) {
 	t.Run("GetContractWithName returns correctly named Contract", func(t *testing.T) {
 		chaincodeID := "chaincode"
 		contractName := "contract"
-		mockClient := mock.NewGatewayClient()
+		mockController := gomock.NewController(t)
+		defer mockController.Finish()
+
+		mockClient := NewMockGatewayClient(mockController)
 		network := AssertNewTestNetwork(t, "network", WithClient(mockClient))
 
 		contract := network.GetContractWithName(chaincodeID, contractName)
