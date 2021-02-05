@@ -6,6 +6,7 @@
 
 package org.hyperledger.fabric.client.identity;
 
+import java.security.PrivateKey;
 import java.security.interfaces.ECPrivateKey;
 
 /**
@@ -18,8 +19,12 @@ public final class Signers {
      * @param privateKey A private key.
      * @return A signer implementation.
      */
-    public static Signer newPrivateKeySigner(final ECPrivateKey privateKey) {
-        return new ECDSAPrivateKeySigner(privateKey);
+    public static Signer newPrivateKeySigner(final PrivateKey privateKey) {
+        if (privateKey instanceof ECPrivateKey) {
+            return new ECPrivateKeySigner((ECPrivateKey) privateKey);
+        } else {
+            throw new IllegalArgumentException("Unsupported private key type: " + privateKey.getClass().getTypeName());
+        }
     }
 
     // Private constructor to prevent instantiation

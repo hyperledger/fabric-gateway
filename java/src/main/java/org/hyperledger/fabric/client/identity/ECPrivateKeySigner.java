@@ -29,7 +29,7 @@ import org.bouncycastle.asn1.x9.ECNamedCurveTable;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-final class ECDSAPrivateKeySigner implements Signer {
+final class ECPrivateKeySigner implements Signer {
     private static final Provider PROVIDER = new BouncyCastleProvider();
     private static final X9ECParameters CURVE = ECNamedCurveTable.getByName("P-256");
     private static final BigInteger HALF_CURVE_N = CURVE.getN().divide(BigInteger.valueOf(2));
@@ -60,7 +60,7 @@ final class ECDSAPrivateKeySigner implements Signer {
         }
     }
 
-    ECDSAPrivateKeySigner(final ECPrivateKey privateKey) {
+    ECPrivateKeySigner(final ECPrivateKey privateKey) {
         this.privateKey = privateKey;
     }
 
@@ -85,11 +85,11 @@ final class ECDSAPrivateKeySigner implements Signer {
             ASN1Primitive asn1 = asnInputStream.readObject();
 
             if (!(asn1 instanceof ASN1Sequence)) {
-                throw new GeneralSecurityException("Invalid signature type: " + asn1.getClass().getSimpleName());
+                throw new GeneralSecurityException("Invalid signature type: " + asn1.getClass().getTypeName());
             }
 
             ASN1Sequence asn1Sequence = (ASN1Sequence) asn1;
-            List<ASN1Integer>  signatureParts = StreamSupport.stream(asn1Sequence.spliterator(), false)
+            List<ASN1Integer> signatureParts = StreamSupport.stream(asn1Sequence.spliterator(), false)
                     .map(ASN1Encodable::toASN1Primitive)
                     .filter(asn1Primitive -> asn1Primitive instanceof ASN1Integer)
                     .map(asn1Primitive -> (ASN1Integer) asn1Primitive)

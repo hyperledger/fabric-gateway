@@ -29,7 +29,7 @@ async function readCertificate(user: string, mspId: string): Promise<Buffer> {
 
 async function newSigner(user: string, mspId: string): Promise<Signer> {
     const privateKey = await readPrivateKey(user, mspId);
-    return signers.newECDSAPrivateKeySigner(privateKey);
+    return signers.newPrivateKeySigner(privateKey);
 }
 
 async function readPrivateKey(user: string, mspId: string): Promise<crypto.KeyObject> {
