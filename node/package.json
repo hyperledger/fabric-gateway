@@ -22,15 +22,14 @@
     "license": "Apache-2.0",
     "dependencies": {
         "@grpc/grpc-js": "^1.2.2",
+        "asn1.js": "^5.4.1",
         "elliptic": "^6.5.3",
-        "jsrsasign": "^10.1.4",
         "protobufjs": "^6.10.2"
     },
     "devDependencies": {
         "@tsconfig/node12": "^1.0.7",
         "@types/elliptic": "^6.4.12",
         "@types/jest": "^26.0.16",
-        "@types/jsrsasign": "^8.0.8",
         "@types/node": "^12.19.8",
         "@typescript-eslint/eslint-plugin": "^4.11.0",
         "@typescript-eslint/parser": "^4.11.0",
