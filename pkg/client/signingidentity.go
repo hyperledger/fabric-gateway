@@ -7,6 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
+	"errors"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
@@ -19,10 +21,12 @@ type signingIdentity struct {
 	hash hash.Hash
 }
 
-func newSigningIdentity(id identity.Identity, sign identity.Sign) *signingIdentity {
+func newSigningIdentity(id identity.Identity) *signingIdentity {
 	return &signingIdentity{
-		id:   id,
-		sign: sign,
+		id: id,
+		sign: func(digest []byte) ([]byte, error) {
+			return nil, errors.New("no sign implementation supplied")
+		},
 		hash: hash.SHA256,
 	}
 }

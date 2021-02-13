@@ -7,6 +7,9 @@
 package org.hyperledger.fabric.client;
 
 import io.grpc.Channel;
+
+import java.util.function.Function;
+
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 
@@ -106,6 +109,13 @@ public interface Gateway extends AutoCloseable {
          * @return The builder instance, allowing multiple configuration options to be chained.
          */
         Builder signer(Signer signer);
+
+        /**
+         * Specify the hashing implementation used to generate digests of messages sent to the Fabric network.
+         * @param hash A hashing function.
+         * @return The builder instance, allowing multiple configuration options to be chained.
+         */
+        Builder hash(Function<byte[], byte[]> hash);
 
         /**
          * Connects to the gateway using the specified options.

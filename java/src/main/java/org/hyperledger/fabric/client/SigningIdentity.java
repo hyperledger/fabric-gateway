@@ -14,12 +14,13 @@ import org.hyperledger.fabric.client.identity.Signer;
 
 final class SigningIdentity {
     private final Identity identity;
+    private final Function<byte[], byte[]> hash;
     private final Signer signer;
-    private final Function<byte[], byte[]> hash = Hash::sha256;
     private final byte[] creator;
 
-    SigningIdentity(final Identity identity, final Signer signer) {
+    SigningIdentity(final Identity identity, final Function<byte[], byte[]> hash, final Signer signer) {
         this.identity = identity;
+        this.hash = hash;
         this.signer = signer;
         this.creator = GatewayUtils.serializeIdentity(identity);
     }

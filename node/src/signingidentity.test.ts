@@ -23,26 +23,26 @@ describe('SigningIdentity', () => {
         it('changes to returned identity do not modify signing identity', () => {
             const expectedMspId = identity.mspId;
             const expectedCredentials = Uint8Array.from(identity.credentials); // Copy
-            const signingIdentity = new SigningIdentity(identity);
-    
+            const signingIdentity = new SigningIdentity({ identity });
+
             const output = signingIdentity.getIdentity();
             output.mspId = 'wrong';
             output.credentials.fill(0);
-    
+
             const actual = signingIdentity.getIdentity();
             expect(actual.mspId).toBe(expectedMspId);
             const actualCredentials = Uint8Array.from(actual.credentials); // Ensure it's really a Uint8Array
             expect(actualCredentials).toEqual(expectedCredentials);
         });
-    
+
         it('changes to supplied identity do not modify signing identity', () => {
             const expectedMspId = identity.mspId;
             const expectedCredentials = Uint8Array.from(identity.credentials); // Copy
-    
-            const signingIdentity = new SigningIdentity(identity);
+
+            const signingIdentity = new SigningIdentity({ identity });
             identity.mspId = 'wrong';
             identity.credentials.fill(0);
-    
+
             const actual = signingIdentity.getIdentity();
             expect(actual.mspId).toBe(expectedMspId);
             const actualCredentials = Uint8Array.from(actual.credentials); // Ensure it's really a Uint8Array
@@ -52,7 +52,7 @@ describe('SigningIdentity', () => {
 
     describe('creator', () => {
         it('returns a valid SerializedIdentity protobuf', () => {
-            const signingIdentity = new SigningIdentity(identity);
+            const signingIdentity = new SigningIdentity({ identity });
 
             const creator = signingIdentity.getCreator();
 
@@ -63,7 +63,7 @@ describe('SigningIdentity', () => {
         });
 
         it('changes to returned creator do not modify signing identity', () => {
-            const signingIdentity = new SigningIdentity(identity);
+            const signingIdentity = new SigningIdentity({ identity });
             const expected = Uint8Array.from(signingIdentity.getCreator()); // Ensure it's really a Uint8Array
 
             const creator = signingIdentity.getCreator();
@@ -76,20 +76,20 @@ describe('SigningIdentity', () => {
 
     describe('signing', () => {
         it('default signer throws', async () => {
-            const signingIdentity = new SigningIdentity(identity);
+            const signingIdentity = new SigningIdentity({ identity });
             const digest = Buffer.from('DIGEST');
-    
+
             await expect(signingIdentity.sign(digest)).rejects.toThrowError();
         });
-    
+
         it('uses supplied signer', async () => {
             const expected = Uint8Array.from(Buffer.from('SIGNATURE'));
             const signer: Signer = async () => expected;
             const digest = Buffer.from('DIGEST');
-            const signingIdentity = new SigningIdentity(identity, signer);
-    
+            const signingIdentity = new SigningIdentity({ identity, signer });
+
             const actual = await signingIdentity.sign(digest);
-    
+
             expect(actual).toEqual(expected);
         });
     });
@@ -97,22 +97,22 @@ describe('SigningIdentity', () => {
     describe('hashing', () => {
         it('hashes of identical values are identical', () => {
             const message = Buffer.from('MESSAGE');
-            const signingIdentity = new SigningIdentity(identity);
-    
+            const signingIdentity = new SigningIdentity({ identity });
+
             const first = signingIdentity.hash(message);
             const second = signingIdentity.hash(message);
-    
+
             expect(first).toEqual(second);
         });
-    
+
         it('hashes of different values are different', () => {
             const message1 = Buffer.from('FOO');
             const message2 = Buffer.from('BAR');
-            const signingIdentity = new SigningIdentity(identity);
-    
+            const signingIdentity = new SigningIdentity({ identity });
+
             const first = signingIdentity.hash(message1);
             const second = signingIdentity.hash(message2);
-    
+
             expect(first).not.toEqual(second);
         });
     });

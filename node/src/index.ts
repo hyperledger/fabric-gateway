@@ -6,6 +6,8 @@
 
 export { Contract } from './contract';
 export { connect, ConnectOptions, Gateway } from './gateway';
+export { Hash } from './hash/hash';
+export * as hash from './hash/hashes';
 export { Identity } from './identity/identity';
 export { Signer } from './identity/signer';
 export * as signers from './identity/signers';
@@ -13,4 +15,3 @@ export { Network } from './network';
 export { Proposal } from './proposal';
 export { ProposalOptions } from './proposalbuilder';
 export { Transaction } from './transaction';
-

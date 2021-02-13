@@ -20,8 +20,7 @@ import (
 
 func TestOfflineSign(t *testing.T) {
 	newContractWithNoSign := func(t *testing.T, options ...ConnectOption) *Contract {
-		id, _ := GetTestCredentials()
-		gateway, err := Connect(id, options...)
+		gateway, err := Connect(TestCredentials.identity, options...)
 		if err != nil {
 			t.Fatal(err)
 		}

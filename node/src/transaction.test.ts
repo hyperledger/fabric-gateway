@@ -31,6 +31,7 @@ describe('Transaction', () => {
     let client: MockGatewayClient;
     let identity: Identity;
     let signer: jest.Mock<Promise<Uint8Array>, Uint8Array[]>;
+    let hash: jest.Mock<Uint8Array, Uint8Array[]>;
     let gateway: Gateway;
     let network: Network;
     let contract: Contract;
@@ -51,10 +52,12 @@ describe('Transaction', () => {
             credentials: Buffer.from('CERTIFICATE'),
         }
         signer = jest.fn().mockResolvedValue('SIGNATURE');
+        hash = jest.fn().mockReturnValue('DIGEST');
 
         const options: InternalConnectOptions = {
             identity,
             signer,
+            hash,
             gatewayClient: client,
         };
         gateway = await connect(options);
@@ -83,5 +86,17 @@ describe('Transaction', () => {
         const preparedTransaction = client.submit.mock.calls[0][0];
         const signature = Buffer.from(preparedTransaction.envelope?.signature ?? '').toString();
         expect(signature).toBe('MY_SIGNATURE');
+    });
+
+    it('uses hash', async () => {
+        hash.mockReturnValue(Buffer.from('MY_DIGEST'));
+
+        await contract.submitTransaction('TRANSACTION_NAME');
+
+        expect(signer).toHaveBeenCalledTimes(2); // endorse and submit
+        signer.mock.calls.forEach(call => {
+            const digest = call[0].toString();
+            expect(digest).toBe('MY_DIGEST');
+        });
     });
 });

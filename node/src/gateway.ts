@@ -5,6 +5,7 @@
  */
 
 import * as grpc from '@grpc/grpc-js';
+import { Hash } from 'hash/hash';
 import { GatewayClient, newGatewayClient } from './client';
 import { Identity } from './identity/identity';
 import { Signer } from './identity/signer';
@@ -16,6 +17,7 @@ export interface ConnectOptions {
     client?: grpc.Client;
     identity: Identity;
     signer?: Signer;
+    hash?: Hash;
 }
 
 export interface InternalConnectOptions extends ConnectOptions {
@@ -32,11 +34,11 @@ export async function connect(options: ConnectOptions): Promise<Gateway> {
     if (!options.identity) {
         throw new Error('No identity supplied');
     }
-    const signingIdentity = new SigningIdentity(options.identity, options.signer);
+    const signingIdentity = new SigningIdentity(options);
 
     const gatewayClient = (options as InternalConnectOptions).gatewayClient;
     if (gatewayClient) {
-        return new GatewayImpl(gatewayClient, signingIdentity, noOpCloser); 
+        return new GatewayImpl(gatewayClient, signingIdentity, noOpCloser);
     }
 
     if (options.client) {

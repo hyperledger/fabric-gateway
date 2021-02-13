@@ -12,39 +12,35 @@ import (
 )
 
 type testCredentials struct {
-	id   identity.Identity
-	sign identity.Sign
+	identity identity.Identity
+	sign     identity.Sign
 }
 
-var _testCredentials *testCredentials
+var TestCredentials testCredentials
 
-func GetTestCredentials() (identity.Identity, identity.Sign) {
-	if nil == _testCredentials {
-		privateKey, err := test.NewECDSAPrivateKey()
-		if err != nil {
-			panic(err)
-		}
-
-		certificate, err := test.NewCertificate(privateKey)
-		if err != nil {
-			panic(err)
-		}
-
-		id, err := identity.NewX509Identity("mspID", certificate)
-		if err != nil {
-			panic(err)
-		}
-
-		sign, err := identity.NewPrivateKeySign(privateKey)
-		if err != nil {
-			panic(err)
-		}
-
-		_testCredentials = &testCredentials{
-			id:   id,
-			sign: sign,
-		}
+func init() {
+	privateKey, err := test.NewECDSAPrivateKey()
+	if err != nil {
+		panic(err)
 	}
 
-	return _testCredentials.id, _testCredentials.sign
+	certificate, err := test.NewCertificate(privateKey)
+	if err != nil {
+		panic(err)
+	}
+
+	id, err := identity.NewX509Identity("mspID", certificate)
+	if err != nil {
+		panic(err)
+	}
+
+	sign, err := identity.NewPrivateKeySign(privateKey)
+	if err != nil {
+		panic(err)
+	}
+
+	TestCredentials = testCredentials{
+		identity: id,
+		sign:     sign,
+	}
 }

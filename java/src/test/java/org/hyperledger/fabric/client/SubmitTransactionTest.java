@@ -7,7 +7,10 @@
 package org.hyperledger.fabric.client;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -217,6 +220,25 @@ public final class SubmitTransactionTest {
             String signature = request.getEnvelope().getSignature().toStringUtf8();
 
             assertThat(signature).isEqualTo("MY_SIGNATURE");
+        }
+    }
+
+    @Test
+    void uses_hash() throws Exception {
+        List<String> actual = new ArrayList<>();
+        Function<byte[], byte[]> hash = (message) -> "MY_DIGEST".getBytes(StandardCharsets.UTF_8);
+        Signer signer = (digest) -> {
+            actual.add(new String(digest, StandardCharsets.UTF_8));
+            return "SIGNATURE".getBytes(StandardCharsets.UTF_8);
+        };
+
+        try (Gateway gateway = mocker.getGatewayBuilder().hash(hash).signer(signer).connect()) {
+            network = gateway.getNetwork("NETWORK");
+
+            Contract contract = network.getContract("CHAINCODE_ID");
+            contract.submitTransaction("TRANSACTION_NAME");
+
+            assertThat(actual).hasSameElementsAs(Arrays.asList("MY_DIGEST", "MY_DIGEST"));
         }
     }
 
