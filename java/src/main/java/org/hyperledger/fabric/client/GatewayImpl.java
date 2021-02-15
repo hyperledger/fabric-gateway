@@ -7,6 +7,7 @@
 package org.hyperledger.fabric.client;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
@@ -27,6 +28,7 @@ final class GatewayImpl implements Gateway {
         private Runnable channelCloser = NO_OP_CLOSER;
         private Identity identity;
         private Signer signer = UNDEFINED_SIGNER; // No signer implementation is required if only offline signing is used
+        private Function<byte[], byte[]> hash = Hash::sha256;
 
         @Override
         // checkstyle:ignore-next-line:TodoComment
@@ -57,6 +59,12 @@ final class GatewayImpl implements Gateway {
         }
 
         @Override
+        public Builder hash(final Function<byte[], byte[]> hash) {
+            this.hash = hash;
+            return this;
+        }
+
+        @Override
         public GatewayImpl connect() {
             try {
                 return new GatewayImpl(this);
@@ -79,7 +87,7 @@ final class GatewayImpl implements Gateway {
             throw new IllegalStateException("No connections details supplied");
         }
 
-        this.signingIdentity = new SigningIdentity(builder.identity, builder.signer);
+        this.signingIdentity = new SigningIdentity(builder.identity, builder.hash, builder.signer);
         this.client = builder.client;
         this.channelCloser = builder.channelCloser;
     }

@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as crypto from 'crypto';
+import { Hash } from './hash/hash';
+import { sha256 } from './hash/hashes';
 import { Identity } from './identity/identity';
 import { Signer } from './identity/signer';
 import { msp } from './protos/protos';
@@ -13,23 +14,31 @@ const undefinedSigner: Signer = () => {
     throw new Error('No signing implementation');
 }
 
+export interface SigningIdentityOptions {
+    identity: Identity;
+    signer?: Signer;
+    hash?: Hash;
+}
+
 export class SigningIdentity {
     readonly #identity: Identity;
     readonly #creator: Uint8Array;
+    readonly #hash: Hash;
     readonly #sign: Signer;
 
-    constructor(identity: Identity, signer?: Signer) {
+    constructor(options: SigningIdentityOptions) {
         this.#identity = {
-            mspId: identity.mspId,
-            credentials: Uint8Array.from(identity.credentials)
+            mspId: options.identity.mspId,
+            credentials: Uint8Array.from(options.identity.credentials)
         };
 
         this.#creator = msp.SerializedIdentity.encode({
-            mspid: identity.mspId,
-            id_bytes: identity.credentials
+            mspid: options.identity.mspId,
+            id_bytes: options.identity.credentials
         }).finish();
 
-        this.#sign = signer || undefinedSigner;
+        this.#hash = options.hash || sha256;
+        this.#sign = options.signer || undefinedSigner;
     }
 
     getIdentity(): Identity {
@@ -44,7 +53,7 @@ export class SigningIdentity {
     }
 
     hash(message: Uint8Array): Uint8Array {
-        return crypto.createHash('sha256').update(message).digest();
+        return this.#hash(message);
     }
 
     async sign(digest: Uint8Array): Promise<Uint8Array> {

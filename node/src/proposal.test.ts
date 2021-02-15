@@ -68,6 +68,7 @@ describe('Proposal', () => {
     let client: MockGatewayClient;
     let identity: Identity;
     let signer: jest.Mock<Promise<Uint8Array>, Uint8Array[]>;
+    let hash: jest.Mock<Uint8Array, Uint8Array[]>;
     let gateway: Gateway;
     let network: Network;
     let contract: Contract;
@@ -79,10 +80,12 @@ describe('Proposal', () => {
             credentials: Buffer.from('CERTIFICATE'),
         }
         signer = jest.fn().mockReturnValue('SIGNATURE');
+        hash = jest.fn().mockReturnValue('DIGEST');
 
         const options: InternalConnectOptions = {
             identity,
             signer,
+            hash,
             gatewayClient: client,
         };
         gateway = await connect(options);
@@ -101,20 +104,20 @@ describe('Proposal', () => {
 
         it('throws on evaluate error', async () => {
             client.evaluate.mockRejectedValue(new Error('ERROR_MESSAGE'));
-    
+
             await expect(contract.evaluateTransaction('TRANSACTION_NAME')).rejects.toThrow('ERROR_MESSAGE');
         });
-    
+
         it('returns result', async () => {
             const result = await contract.evaluateTransaction('TRANSACTION_NAME');
-    
+
             const actual = Buffer.from(result).toString();
             expect(actual).toBe(expectedResult);
         });
-    
+
         it('includes channel name in proposal', async () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
-    
+
             const proposedTransaction = client.evaluate.mock.calls[0][0];
             const channelHeader = assertDecodeChannelHeader(proposedTransaction);
             expect(channelHeader.channel_id).toBe(network.getName());
@@ -122,35 +125,35 @@ describe('Proposal', () => {
 
         it('includes chaincode ID in proposal', async () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
-    
+
             const chaincodeSpec = assertDecodeChaincodeSpec(client.evaluate.mock.calls[0][0]);
             expect(chaincodeSpec.chaincode_id).toBeDefined();
             expect(chaincodeSpec.chaincode_id!.name).toBe(contract.getChaincodeId()); // eslint-disable-line @typescript-eslint/no-non-null-assertion
         });
-    
+
         it('includes transaction name in proposal for default smart contract', async () => {
             contract = network.getContract('CHAINCODE_ID');
-    
+
             await contract.evaluateTransaction('MY_TRANSACTION');
-    
+
             const argStrings = assertDecodeArgsAsStrings(client.evaluate.mock.calls[0][0]);
             expect(argStrings[0]).toBe('MY_TRANSACTION');
         });
-    
+
         it('includes transaction name in proposal for default smart contract', async () => {
             contract = network.getContract('CHAINCODE_ID', 'MY_CONTRACT');
-    
+
             await contract.evaluateTransaction('MY_TRANSACTION');
-    
+
             const argStrings = assertDecodeArgsAsStrings(client.evaluate.mock.calls[0][0]);
             expect(argStrings[0]).toBe('MY_CONTRACT:MY_TRANSACTION');
         });
-    
+
         it('includes string arguments in proposal', async () => {
             const expected = ['one', 'two', 'three'];
-    
+
             await contract.evaluateTransaction('TRANSACTION_NAME', ...expected);
-    
+
             const argStrings = assertDecodeArgsAsStrings(client.evaluate.mock.calls[0][0]);
             expect(argStrings.slice(1)).toStrictEqual(expected);
         });
@@ -158,9 +161,9 @@ describe('Proposal', () => {
         it('includes bytes arguments in proposal', async () => {
             const expected = ['one', 'two', 'three'];
             const args = expected.map(arg => Buffer.from(arg));
-    
+
             await contract.evaluateTransaction('TRANSACTION_NAME', ...args);
-    
+
             const argStrings = assertDecodeArgsAsStrings(client.evaluate.mock.calls[0][0]);
             expect(argStrings.slice(1)).toStrictEqual(expected);
         });
@@ -169,17 +172,27 @@ describe('Proposal', () => {
             signer.mockResolvedValue(Buffer.from('MY_SIGNATURE'));
 
             await contract.evaluateTransaction('TRANSACTION_NAME');
-    
+
             const proposedTransaction = client.evaluate.mock.calls[0][0];
             const signature = Buffer.from(proposedTransaction.proposal?.signature ?? '').toString();
             expect(signature).toBe('MY_SIGNATURE');
+        });
+
+        it('uses hash', async () => {
+            hash.mockReturnValue(Buffer.from('MY_DIGEST'));
+
+            await contract.evaluateTransaction('TRANSACTION_NAME');
+
+            expect(signer).toHaveBeenCalled();
+            const digest = signer.mock.calls[0][0].toString();
+            expect(digest).toBe('MY_DIGEST');
         });
 
         it('uses identity', async () => {
             signer.mockResolvedValue(Buffer.from('MY_SIGNATURE'));
 
             await contract.evaluateTransaction('TRANSACTION_NAME');
-    
+
             const proposedTransaction = client.evaluate.mock.calls[0][0];
             const signatureHeader = assertDecodeSignatureHeader(proposedTransaction);
 
@@ -192,14 +205,14 @@ describe('Proposal', () => {
 
         it('includes channel name in proposed transaction', async () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
-    
+
             const proposedTransaction = client.evaluate.mock.calls[0][0];
             expect(proposedTransaction.channel_id).toBe(network.getName());
         });
 
         it('includes transaction ID in proposed transaction', async () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
-    
+
             const proposedTransaction = client.evaluate.mock.calls[0][0];
             const expected = assertDecodeChannelHeader(proposedTransaction).tx_id;
             expect(proposedTransaction.tx_id).toBe(expected);
@@ -220,13 +233,13 @@ describe('Proposal', () => {
 
         it('throws on endorse error', async () => {
             client.endorse.mockRejectedValue(new Error('ERROR_MESSAGE'));
-    
+
             await expect(contract.submitTransaction('TRANSACTION_NAME')).rejects.toThrow('ERROR_MESSAGE');
         });
-    
+
         it('includes channel name in proposal', async () => {
             await contract.submitTransaction('TRANSACTION_NAME');
-    
+
             const proposedTransaction = client.endorse.mock.calls[0][0];
             const channelHeader = assertDecodeChannelHeader(proposedTransaction);
             expect(channelHeader.channel_id).toBe(network.getName());
@@ -234,35 +247,35 @@ describe('Proposal', () => {
 
         it('includes chaincode ID in proposal', async () => {
             await contract.submitTransaction('TRANSACTION_NAME');
-    
+
             const chaincodeSpec = assertDecodeChaincodeSpec(client.endorse.mock.calls[0][0]);
             expect(chaincodeSpec.chaincode_id).toBeDefined();
             expect(chaincodeSpec.chaincode_id!.name).toBe(contract.getChaincodeId()); // eslint-disable-line @typescript-eslint/no-non-null-assertion
         });
-    
+
         it('includes transaction name in proposal for default smart contract', async () => {
             contract = network.getContract('CHAINCODE_ID');
-    
+
             await contract.submitTransaction('MY_TRANSACTION');
-    
+
             const argStrings = assertDecodeArgsAsStrings(client.endorse.mock.calls[0][0]);
             expect(argStrings[0]).toBe('MY_TRANSACTION');
         });
-    
+
         it('includes transaction name in proposal for default smart contract', async () => {
             contract = network.getContract('CHAINCODE_ID', 'MY_CONTRACT');
-    
+
             await contract.submitTransaction('MY_TRANSACTION');
-    
+
             const argStrings = assertDecodeArgsAsStrings(client.endorse.mock.calls[0][0]);
             expect(argStrings[0]).toBe('MY_CONTRACT:MY_TRANSACTION');
         });
-    
+
         it('includes string arguments in proposal', async () => {
             const expected = ['one', 'two', 'three'];
-    
+
             await contract.submitTransaction('TRANSACTION_NAME', ...expected);
-    
+
             const argStrings = assertDecodeArgsAsStrings(client.endorse.mock.calls[0][0]);
             expect(argStrings.slice(1)).toStrictEqual(expected);
         });
@@ -270,9 +283,9 @@ describe('Proposal', () => {
         it('includes bytes arguments in proposal', async () => {
             const expected = ['one', 'two', 'three'];
             const args = expected.map(arg => Buffer.from(arg));
-    
+
             await contract.submitTransaction('TRANSACTION_NAME', ...args);
-    
+
             const argStrings = assertDecodeArgsAsStrings(client.endorse.mock.calls[0][0]);
             expect(argStrings.slice(1)).toStrictEqual(expected);
         });
@@ -281,17 +294,27 @@ describe('Proposal', () => {
             signer.mockResolvedValue(Buffer.from('MY_SIGNATURE'));
 
             await contract.submitTransaction('TRANSACTION_NAME');
-    
+
             const proposedTransaction = client.endorse.mock.calls[0][0];
             const signature = Buffer.from(proposedTransaction.proposal?.signature ?? '').toString();
             expect(signature).toBe('MY_SIGNATURE');
+        });
+
+        it('uses hash', async () => {
+            hash.mockReturnValue(Buffer.from('MY_DIGEST'));
+
+            await contract.submitTransaction('TRANSACTION_NAME');
+
+            expect(signer).toHaveBeenCalled();
+            const digest = signer.mock.calls[0][0].toString();
+            expect(digest).toBe('MY_DIGEST');
         });
 
         it('uses identity', async () => {
             signer.mockResolvedValue(Buffer.from('MY_SIGNATURE'));
 
             await contract.submitTransaction('TRANSACTION_NAME');
-    
+
             const proposedTransaction = client.endorse.mock.calls[0][0];
             const signatureHeader = assertDecodeSignatureHeader(proposedTransaction);
 
@@ -301,17 +324,17 @@ describe('Proposal', () => {
             }).finish();
             expect(signatureHeader.creator).toEqual(expected);
         });
-    
+
         it('includes channel name in proposed transaction', async () => {
             await contract.submitTransaction('TRANSACTION_NAME');
-    
+
             const proposedTransaction = client.endorse.mock.calls[0][0];
             expect(proposedTransaction.channel_id).toBe(network.getName());
         });
 
         it('includes transaction ID in proposed transaction', async () => {
             await contract.submitTransaction('TRANSACTION_NAME');
-    
+
             const proposedTransaction = client.endorse.mock.calls[0][0];
             const expected = assertDecodeChannelHeader(proposedTransaction).tx_id;
             expect(proposedTransaction.tx_id).toBe(expected);

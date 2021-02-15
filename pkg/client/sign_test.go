@@ -129,8 +129,7 @@ func TestSign(t *testing.T) {
 			Return(&gateway.Result{}, nil).
 			AnyTimes()
 
-		id, _ := GetTestCredentials()
-		gateway, err := Connect(id, WithClient(mockClient))
+		gateway, err := Connect(TestCredentials.identity, WithClient(mockClient))
 		if err != nil {
 			t.Fatal(err)
 		}

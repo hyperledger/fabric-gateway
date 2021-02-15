@@ -38,9 +38,8 @@ func WithIdentity(id identity.Identity) ConnectOption {
 }
 
 func AssertNewTestGateway(t *testing.T, options ...ConnectOption) *Gateway {
-	id, sign := GetTestCredentials()
-	options = append([]ConnectOption{WithSign(sign)}, options...)
-	gateway, err := Connect(id, options...)
+	options = append([]ConnectOption{WithSign(TestCredentials.sign)}, options...)
+	gateway, err := Connect(TestCredentials.identity, options...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +48,8 @@ func AssertNewTestGateway(t *testing.T, options ...ConnectOption) *Gateway {
 }
 
 func TestGateway(t *testing.T) {
-	id, sign := GetTestCredentials()
+	id := TestCredentials.identity
+	sign := TestCredentials.sign
 
 	t.Run("Connect Gateway with no endpoint returns error", func(t *testing.T) {
 		if _, err := Connect(id, WithSign(sign)); nil == err {

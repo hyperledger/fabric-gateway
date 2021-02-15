@@ -21,6 +21,7 @@ import (
 	"io"
 
 	"github.com/hyperledger/fabric-gateway/pkg/connection"
+	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	proto "github.com/hyperledger/fabric-protos-go/gateway"
 	"google.golang.org/grpc"
@@ -33,15 +34,11 @@ type Gateway struct {
 	closer    io.Closer
 }
 
-func undefinedSign(digest []byte) ([]byte, error) {
-	return nil, errors.New("no sign implementation supplied")
-}
-
 // Connect to a Fabric Gateway using a client identity, signing implementation, and additional options, which must
 // include gRPC client connection details.
 func Connect(id identity.Identity, options ...ConnectOption) (*Gateway, error) {
 	gateway := &Gateway{
-		signingID: newSigningIdentity(id, undefinedSign),
+		signingID: newSigningIdentity(id),
 	}
 
 	if err := gateway.applyConnectOptions(options); err != nil {
@@ -72,6 +69,14 @@ type ConnectOption = func(gateway *Gateway) error
 func WithSign(sign identity.Sign) ConnectOption {
 	return func(gateway *Gateway) error {
 		gateway.signingID.sign = sign
+		return nil
+	}
+}
+
+// WithHash uses the supplied hashing implementation for the Gateway.
+func WithHash(hash hash.Hash) ConnectOption {
+	return func(gateway *Gateway) error {
+		gateway.signingID.hash = hash
 		return nil
 	}
 }
