@@ -41,7 +41,7 @@ public final class SubmitTransactionTest {
     private Network network;
 
     @BeforeEach
-    void beforeEach() {
+    void beforeEach() throws Exception {
         mocker = new GatewayMocker();
         stub = mocker.getServiceStubSpy();
 

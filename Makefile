@@ -11,8 +11,9 @@ node_dir := $(base_dir)/node
 java_dir := $(base_dir)/java
 scenario_dir := $(base_dir)/scenario
 
+PEER_VERSION = 2.4
 ALPINE_VER ?= 3.12
-BASE_VERSION = 2.2.0
+BASE_VERSION = 2.3.0
 # TWO_DIGIT_VERSION is derived, e.g. "2.0", especially useful as a local tag
 # for two digit references to most recent baseos and ccenv patch releases
 TWO_DIGIT_VERSION = $(shell echo $(BASE_VERSION) | cut -d '.' -f 1,2)
@@ -78,14 +79,14 @@ generate:
 vendor-chaincode:
 	cd $(scenario_dir)/fixtures/chaincode/golang/basic; GO111MODULE=on go mod vendor
 
-scenario-test-go: vendor-chaincode docker
+scenario-test-go: vendor-chaincode
 	cd $(scenario_dir)/go; godog $(scenario_dir)/features/
 
-scenario-test-node: vendor-chaincode docker build-node
+scenario-test-node: vendor-chaincode build-node
 	cd $(node_dir); rm -f fabric-gateway-dev.tgz; mv $$(npm pack) fabric-gateway-dev.tgz
 	cd $(scenario_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; npm test
 
-scenario-test-java: vendor-chaincode docker
+scenario-test-java: vendor-chaincode build-protos
 	cd $(java_dir); mvn verify
 
 scenario-test: scenario-test-go scenario-test-node scenario-test-java
@@ -105,6 +106,15 @@ docker: build-protos build-go
 	docker tag $(DOCKER_NS)/fabric-gateway $(DOCKER_NS)/fabric-gateway:$(BASE_VERSION)
 	docker tag $(DOCKER_NS)/fabric-gateway $(DOCKER_NS)/fabric-gateway:$(TWO_DIGIT_VERSION)
 	docker tag $(DOCKER_NS)/fabric-gateway $(DOCKER_NS)/fabric-gateway:$(DOCKER_TAG)
+
+pull-latest-peer:
+	docker pull hyperledger-fabric.jfrog.io/fabric-peer:amd64-latest
+	docker tag hyperledger-fabric.jfrog.io/fabric-peer:amd64-latest hyperledger/fabric-peer:$(PEER_VERSION)
+	# also need to retag the following images for the chaincode builder
+	for IMAGE in baseos ccenv javaenv nodeenv; do \
+		docker pull hyperledger/fabric-$$IMAGE:$(TWO_DIGIT_VERSION); \
+		docker tag hyperledger/fabric-$$IMAGE:$(TWO_DIGIT_VERSION) hyperledger/fabric-$$IMAGE:$(PEER_VERSION); \
+	done
 
 .PHONEY: clean
 clean: clean-protos clean-generated

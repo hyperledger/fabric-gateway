@@ -65,7 +65,7 @@ services:
 
   peer:
     container_name: peer
-    image: hyperledger/fabric-peer${DOCKER_IMG_TAG}
+    image: hyperledger/fabric-peer${PEER_IMG_TAG}
     environment:
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
       - CORE_PEER_ADDRESSAUTODETECT=true
@@ -100,19 +100,19 @@ services:
     volumes:
         - /var/run/:/host/var/run/
 
-  gateway:
-    container_name: gateway
-    image: hyperledger/fabric-gateway${DOCKER_IMG_TAG}
-    environment:
-      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
-
-      # TLS SETTINGS
-      - GATEWAY_TLS_ENABLED=false
-
-    working_dir: /opt/gopath/src/github.com/hyperledger/fabric-gateway
-    command: gateway
-    volumes:
-        - /var/run/:/host/var/run/
+#  gateway:
+#    container_name: gateway
+#    image: hyperledger/fabric-gateway${DOCKER_IMG_TAG}
+#    environment:
+#      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+#
+#      # TLS SETTINGS
+#      - GATEWAY_TLS_ENABLED=false
+#
+#    working_dir: /opt/gopath/src/github.com/hyperledger/fabric-gateway
+#    command: gateway
+#    volumes:
+#        - /var/run/:/host/var/run/
 
   clibase:
     extends:

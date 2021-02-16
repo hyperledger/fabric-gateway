@@ -40,7 +40,7 @@ public final class EvaluateTransactionTest {
     private Network network;
 
     @BeforeEach
-    void beforeEach() {
+    void beforeEach() throws Exception {
         mocker = new GatewayMocker();
         stub = mocker.getServiceStubSpy();
 
@@ -134,7 +134,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void uses_signer() throws ContractException {
+    void uses_signer() throws Exception {
         Signer signer = (digest) -> "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
         try (Gateway gateway = mocker.getGatewayBuilder().signer(signer).connect()) {
             network = gateway.getNetwork("NETWORK");
@@ -150,7 +150,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void uses_hash() throws ContractException {
+    void uses_hash() throws Exception {
         AtomicReference<String> actual = new AtomicReference<>();
         Function<byte[], byte[]> hash = (message) -> "MY_DIGEST".getBytes(StandardCharsets.UTF_8);
         Signer signer = (digest) -> {
@@ -179,7 +179,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void uses_identity() throws ContractException, InvalidProtocolBufferException {
+    void uses_identity() throws Exception {
         Identity identity = new X509Identity("MY_MSP_ID", utils.getCredentials().getCertificate());
         try (Gateway gateway = mocker.getGatewayBuilder().identity(identity).connect()) {
             network = gateway.getNetwork("NETWORK");

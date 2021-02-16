@@ -19,6 +19,7 @@ type Endpoint struct {
 	Host                string
 	Port                uint16
 	TLSRootCertificates []*x509.Certificate
+	ServerNameOverride  string
 }
 
 // Dial creates a gRPC client connection to the endpoint.
@@ -28,7 +29,7 @@ func (endpoint *Endpoint) Dial() (*grpc.ClientConn, error) {
 	}
 
 	tlsRootCAs := endpoint.tlsRootCAs()
-	transportCredentials := credentials.NewClientTLSFromCert(tlsRootCAs, "")
+	transportCredentials := credentials.NewClientTLSFromCert(tlsRootCAs, endpoint.ServerNameOverride)
 	return grpc.Dial(endpoint.String(), grpc.WithTransportCredentials(transportCredentials))
 }
 

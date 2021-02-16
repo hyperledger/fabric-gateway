@@ -74,6 +74,8 @@ func (transaction *Transaction) Submit() (chan error, error) {
 		}
 	}()
 
+	time.Sleep(2 * time.Second) // todo remove once 'wait for commit' has been implemented in the embedded gateway
+
 	return commit, nil
 }
 

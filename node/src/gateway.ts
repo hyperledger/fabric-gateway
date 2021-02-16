@@ -18,6 +18,8 @@ export interface ConnectOptions {
     identity: Identity;
     signer?: Signer;
     hash?: Hash;
+    tlsRootCertificates?: Buffer;
+    serverNameOverride?: string;
 }
 
 export interface InternalConnectOptions extends ConnectOptions {
@@ -47,7 +49,19 @@ export async function connect(options: ConnectOptions): Promise<Gateway> {
 
     if (typeof options.url === 'string') {
         const GrpcClient = grpc.makeGenericClientConstructor({}, '');
-        const grpcClient = new GrpcClient(options.url, grpc.credentials.createInsecure());
+        let credentials;
+        if (options.tlsRootCertificates && options.tlsRootCertificates.length > 0) {
+            credentials = grpc.credentials.createSsl(options.tlsRootCertificates);
+        } else {
+            credentials = grpc.credentials.createInsecure();
+        }
+        let grpcOptions: Record<string, unknown> = {};
+        if (options.serverNameOverride) {
+            grpcOptions = {
+                'grpc.ssl_target_name_override': options.serverNameOverride
+            };
+        }
+        const grpcClient = new GrpcClient(options.url, credentials, grpcOptions);
         const closer = () => grpcClient.close();
         return new GatewayImpl(newGatewayClient(grpcClient), signingIdentity, closer);
     }
