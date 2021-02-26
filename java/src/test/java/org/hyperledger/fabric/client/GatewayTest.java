@@ -6,11 +6,16 @@
 
 package org.hyperledger.fabric.client;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.interfaces.ECPrivateKey;
 import java.util.concurrent.TimeUnit;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
@@ -60,7 +65,7 @@ public final class GatewayTest {
     }
 
     @Test
-    void uses_supplied_identity() {
+    void uses_supplied_identity() throws Exception {
         gateway = Gateway.newInstance()
                 .identity(identity)
                 .endpoint("example.org:1337")
@@ -72,7 +77,28 @@ public final class GatewayTest {
     }
 
     @Test
-    void can_connect_using_gRPC_channel() {
+    void connect_non_tls() throws Exception {
+        gateway = Gateway.newInstance()
+                .identity(identity)
+                .endpoint("example.org:1337")
+                .connect();
+
+        assertThat(((GatewayImpl)gateway).getChannel().authority()).isEqualTo("example.org:1337");
+    }
+
+    @Test
+    void connect_tls() throws Exception {
+        gateway = Gateway.newInstance()
+                .identity(identity)
+                .endpoint("localhost:1337")
+                .tls(new ByteArrayInputStream(identity.getCredentials()), "example2.org")
+                .connect();
+
+        assertThat(((GatewayImpl)gateway).getChannel().authority()).isEqualTo("example2.org");
+    }
+
+    @Test
+    void can_connect_using_gRPC_channel() throws Exception {
         channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
 
         gateway = Gateway.newInstance()
@@ -85,7 +111,7 @@ public final class GatewayTest {
     }
 
     @Test
-    void close_does_not_shutdown_supplied_gRPC_channel() {
+    void close_does_not_shutdown_supplied_gRPC_channel() throws Exception {
         channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
         gateway = Gateway.newInstance()
                 .identity(identity)
@@ -99,7 +125,7 @@ public final class GatewayTest {
     }
 
     @Test
-    void getNetwork_returns_correctly_named_network() {
+    void getNetwork_returns_correctly_named_network() throws Exception {
         gateway = Gateway.newInstance()
                 .identity(identity)
                 .signer(signer)

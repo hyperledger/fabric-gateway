@@ -59,7 +59,10 @@ class GatewayClientImpl implements GatewayClient {
             // TODO: Fix this logic for async commit wait flow
             let result: protos.IEvent;
             stream.on('data', (data) => result = data); // Received by orderer
-            stream.on('end', () => resolve(result)); // Commit received (or error?)
+            stream.on('end', async () => {
+                await new Promise(resolve => setTimeout(resolve, 2000)); // TODO: remove this sleep once commit notification is done
+                return resolve(result);
+            }); // Commit received (or error?)
             stream.on('error', reject);
         });
     }

@@ -41,6 +41,16 @@ describe('Gateway', () => {
             await expect(connect(options)).resolves.toBeDefined();
         });
 
+        it('using TLS endpoint address', async () => {
+            const options: ConnectOptions = {
+                identity,
+                url: 'example.org:1337',
+                tlsRootCertificates: Buffer.from("pem"),
+                serverNameOverride: "localhost"
+            } as ConnectOptions;
+            await expect(connect(options)).resolves.toBeDefined();
+        });
+
         it('using gRPC client', async () => {
             const Client = grpc.makeGenericClientConstructor({}, '');
             const client = new Client('example.org:1337', grpc.credentials.createInsecure());

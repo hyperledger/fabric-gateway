@@ -121,4 +121,22 @@ func TestEndpoint(t *testing.T) {
 			t.Fatal("Client connection is nil")
 		}
 	})
+
+	t.Run("Dial TLS with ServerNameOverride", func(t *testing.T) {
+		caCerts := []*x509.Certificate{certificate}
+		endpoint := Endpoint{
+			Host:                "localhost",
+			Port:                7,
+			TLSRootCertificates: caCerts,
+			ServerNameOverride:  "example.org",
+		}
+
+		clientConnection, err := endpoint.Dial()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if nil == clientConnection {
+			t.Fatal("Client connection is nil")
+		}
+	})
 }

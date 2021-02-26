@@ -7,14 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package scenario
 
 import (
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"os/exec"
 	"reflect"
 	"regexp"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/cucumber/godog"
@@ -28,8 +28,6 @@ const (
 	fixturesDir       = "../fixtures"
 	dockerComposeFile = "docker-compose-tls.yaml"
 	dockerComposeDir  = fixturesDir + "/docker-compose"
-	//signaturePolicy = `OR("Org3MSP.member",AND("Org1MSP.member","Org2MSP.member"))`
-	//signaturePolicy = `OutOf(2, "Org1MSP.member", "Org2MSP.member", "Org3MSP.member")`
 )
 
 type TransactionType int
@@ -58,12 +56,50 @@ var orgs = []orgConfig{
 	},
 }
 
-var runningPeers = map[string]bool{
-	"peer0.org1.example.com": true,
-	"peer1.org1.example.com": true,
-	"peer0.org2.example.com": true,
-	"peer1.org2.example.com": true,
-	"peer0.org3.example.com": true,
+type connectionInfo struct {
+	host               string
+	port               uint16
+	serverNameOverride string
+	tlsRootCertPath    string
+	running            bool
+}
+
+var peerConnectionInfo = map[string]*connectionInfo{
+	"peer0.org1.example.com": {
+		host:               "localhost",
+		port:               7051,
+		serverNameOverride: "peer0.org1.example.com",
+		tlsRootCertPath:    fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
+		running:            true,
+	},
+	"peer1.org1.example.com": {
+		host:               "localhost",
+		port:               9051,
+		serverNameOverride: "peer1.org1.example.com",
+		tlsRootCertPath:    fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
+		running:            true,
+	},
+	"peer0.org2.example.com": {
+		host:               "localhost",
+		port:               8051,
+		serverNameOverride: "peer0.org2.example.com",
+		tlsRootCertPath:    fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
+		running:            true,
+	},
+	"peer1.org2.example.com": {
+		host:               "localhost",
+		port:               10051,
+		serverNameOverride: "peer1.org2.example.com",
+		tlsRootCertPath:    fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
+		running:            true,
+	},
+	"peer0.org3.example.com": {
+		host:               "localhost",
+		port:               11051,
+		serverNameOverride: "peer0.org3.example.com",
+		tlsRootCertPath:    fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
+		running:            true,
+	},
 }
 
 const (
@@ -177,14 +213,16 @@ func (transaction *Transaction) AddOptions(options ...client.ProposalOption) {
 	transaction.options = append(transaction.options, options...)
 }
 
-var fabricRunning bool = false
-var channelsJoined bool = false
-var runningChaincodes = make(map[string]bool)
-var gatewayConnection *GatewayConnection
-var gateway *client.Gateway
-var network *client.Network
-var contract *client.Contract
-var transaction *Transaction
+var (
+	fabricRunning     bool = false
+	channelsJoined    bool = false
+	runningChaincodes      = make(map[string]bool)
+	gatewayConnection *GatewayConnection
+	gateway           *client.Gateway
+	network           *client.Network
+	contract          *client.Contract
+	transaction       *Transaction
+)
 
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctx.AfterSuite(func() {
@@ -375,21 +413,23 @@ func createGatewayWithoutSigner(user string, mspID string) error {
 	return nil
 }
 
-func connectGateway(address string) error {
-	hostPort := strings.Split(address, ":")
-	if len(hostPort) != 2 {
-		return fmt.Errorf("invalid endpoint: %s", address)
+func connectGateway(peer string) error {
+	conn, ok := peerConnectionInfo[peer]
+	if !ok {
+		return fmt.Errorf("no connection info found for peer: %s", peer)
 	}
 
-	host := hostPort[0]
-	port, err := strconv.ParseUint(hostPort[1], 10, 16)
+	certificate, err := loadX509Cert(conn.tlsRootCertPath)
 	if err != nil {
 		return err
 	}
+	caCerts := []*x509.Certificate{certificate}
 
 	endpoint := &connection.Endpoint{
-		Host: host,
-		Port: uint16(port),
+		Host:                conn.host,
+		Port:                conn.port,
+		TLSRootCertificates: caCerts,
+		ServerNameOverride:  conn.serverNameOverride,
 	}
 	gatewayConnection.AddOptions(client.WithEndpoint(endpoint))
 
@@ -400,6 +440,21 @@ func connectGateway(address string) error {
 
 	gateway = gw
 	return nil
+}
+
+func loadX509Cert(certFile string) (*x509.Certificate, error) {
+	cf, e := ioutil.ReadFile(certFile)
+	if e != nil {
+		return nil, e
+	}
+
+	cpb, _ := pem.Decode(cf)
+	crt, e := x509.ParseCertificate(cpb.Bytes)
+
+	if e != nil {
+		return nil, e
+	}
+	return crt, nil
 }
 
 func createAndJoinChannels() error {
@@ -452,7 +507,7 @@ func stopPeer(peer string) error {
 	if err != nil {
 		return err
 	}
-	runningPeers[peer] = false
+	peerConnectionInfo[peer].running = false
 	return nil
 }
 
@@ -463,19 +518,19 @@ func startPeer(peer string) error {
 	if err != nil {
 		return err
 	}
-	runningPeers[peer] = true
+	peerConnectionInfo[peer].running = true
 	time.Sleep(20 * time.Second)
 	return nil
 }
 
 func startAllPeers() error {
 	startedPeers := false
-	for peer, running := range runningPeers {
-		if !running {
+	for peer, info := range peerConnectionInfo {
+		if !info.running {
 			if _, err := dockerCommand("start", peer); err != nil {
 				return err
 			}
-			runningPeers[peer] = true
+			peerConnectionInfo[peer].running = true
 			startedPeers = true
 		}
 	}

@@ -12,6 +12,47 @@ import * as path from 'path';
 import { fixturesDir, getOrgForMsp } from './fabric';
 import { TransactionInvocation } from './transactioninvocation';
 
+interface ConnectionInfo {
+    readonly url: string;
+    readonly serverNameOverride: string;
+    readonly tlsRootCertPath: string;
+    running : boolean;
+}
+
+const peerConnectionInfo: { [peer: string]: ConnectionInfo } = {
+    "peer0.org1.example.com": {
+        url:                "localhost:7051",
+        serverNameOverride: "peer0.org1.example.com",
+        tlsRootCertPath:    fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
+        running:            true,
+    },
+    "peer1.org1.example.com": {
+        url:                "localhost:9051",
+        serverNameOverride: "peer1.org1.example.com",
+        tlsRootCertPath:    fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt",
+        running:            true,
+    },
+    "peer0.org2.example.com": {
+        url:                "localhost:8051",
+        serverNameOverride: "peer0.org2.example.com",
+        tlsRootCertPath:    fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt",
+        running:            true,
+    },
+    "peer1.org2.example.com": {
+        url:                "localhost:10051",
+        serverNameOverride: "peer1.org2.example.com",
+        tlsRootCertPath:    fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls/ca.crt",
+        running:            true,
+    },
+    "peer0.org3.example.com": {
+        url:                "localhost:11051",
+        serverNameOverride: "peer0.org3.example.com",
+        tlsRootCertPath:    fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt",
+        running:            true,
+    }
+};
+
+
 async function newIdentity(user: string, mspId: string): Promise<Identity> {
     const certificate = await readCertificate(user, mspId);
     return {
@@ -81,10 +122,15 @@ export class CustomWorld {
     }
 
     async connect(address: string): Promise<void> {
+        // address is the name of the peer, lookup the connection info
+        const peer = peerConnectionInfo[address];
+        const tlsRootCert = fs.readFileSync(peer.tlsRootCertPath)
         const options: ConnectOptions = {
-            url: address,
+            url: peer.url,
             signer: this.signer,
             identity: this.getIdentity(),
+            tlsRootCertificates: tlsRootCert,
+            serverNameOverride: peer.serverNameOverride
         };
         this.gateway = await connect(options);
     }

@@ -28,7 +28,7 @@ public final class OfflineSignTest {
     private Contract contract;
 
     @BeforeEach
-    void beforeEach() {
+    void beforeEach() throws Exception {
         mocker = new GatewayMocker(newBuilderWithoutSigner());
         gateway = mocker.getGatewayBuilder().connect();
         Network network = gateway.getNetwork("NETWORK");

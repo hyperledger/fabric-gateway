@@ -1,9 +1,9 @@
 #
-# Copyright 2020 IBM All Rights Reserved.
+# Copyright 2021 IBM All Rights Reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-Feature: Discovery
+Feature: Basic
 	Background:
 		Given I have deployed a Fabric network
         And I have created and joined all channels
@@ -13,15 +13,20 @@ Feature: Discovery
         And I use the mychannel network
         And I use the basic contract
 
-    Scenario: Submit fails with insufficient endorsers
-        When I stop the peer named peer0.org3.example.com
-        And I prepare to submit an echo transaction
-        And I set the transaction arguments to ["conga"]
-        Then the transaction invocation should fail
-
-    Scenario: Submit succeeds with sufficient endorsers
-        When I prepare to submit an echo transaction
+    Scenario: Evaluate echo parameters
+        When I prepare to evaluate an echo transaction
         And I set the transaction arguments to ["conga"]
         And I invoke the transaction
         Then the response should be "conga"
 
+    Scenario: Submit a name/value pair
+        When I prepare to submit a put transaction
+        And I set the transaction arguments to ["foo", "bar"]
+        And I invoke the transaction
+        Then the response should be "bar"
+
+    Scenario: Evaluate (query) the updated value
+        When I prepare to evaluate a get transaction
+        And I set the transaction arguments to ["foo"]
+        And I invoke the transaction
+        Then the response should be "bar"

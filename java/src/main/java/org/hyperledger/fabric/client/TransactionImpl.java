@@ -63,9 +63,21 @@ class TransactionImpl implements Transaction {
         return submitAsync().call();
     }
 
+    private final int sleepTime = 2000;
+
     private Iterator<Event> submit() {
         sign();
-        return client.submit(preparedTransaction);
+        Iterator<Event> stream = client.submit(preparedTransaction);
+
+        //// TODO remove the following once commit notification has been implemented in the gateway
+        try {
+            Thread.sleep(sleepTime);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        /////
+
+        return stream;
     }
 
     void setSignature(final byte[] signature) {

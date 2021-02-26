@@ -19,7 +19,7 @@ public final class NetworkTest {
     private Network network;
 
     @BeforeEach
-    void beforeEach() {
+    void beforeEach() throws Exception {
         gateway = testUtils.newGatewayBuilder().endpoint("example.org:1337").connect();
         network = gateway.getNetwork("ch1");
     }

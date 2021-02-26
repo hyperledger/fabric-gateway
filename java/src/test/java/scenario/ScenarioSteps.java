@@ -1,12 +1,6 @@
 package scenario;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -56,26 +50,36 @@ public class ScenarioSteps {
     private static final Set<String> runningChaincodes = new HashSet<>();
     private static boolean channelsJoined = false;
     private static final String DOCKER_COMPOSE_TLS_FILE = "docker-compose-tls.yaml";
-    private static final Path DOCKER_COMPOSE_DIR = Paths.get("..", "scenario", "fixtures", "docker-compose")
+    private static final Path FIXTURES_DIR = Paths.get("..", "scenario", "fixtures").toAbsolutePath();
+    private static final Path DOCKER_COMPOSE_DIR = Paths.get(FIXTURES_DIR.toString(), "docker-compose")
             .toAbsolutePath();
 
     private static final Map<String, String> MSP_ID_TO_ORG_MAP;
+
     static {
         Map<String, String> mspIdToOrgMap = new HashMap<>();
         mspIdToOrgMap.put("Org1MSP", "org1.example.com");
         MSP_ID_TO_ORG_MAP = Collections.unmodifiableMap(mspIdToOrgMap);
     }
 
-    private static final Map<String, Boolean> runningPeers = new HashMap<>();
+    private static final Map<String, ConnectionInfo> peerConnectionInfo = new HashMap<>();
+
     static {
-        runningPeers.put("peer0.org1.example.com", true);
-        runningPeers.put("peer1.org1.example.com", true);
-        runningPeers.put("peer0.org2.example.com", true);
-        runningPeers.put("peer1.org2.example.com", true);
-        runningPeers.put("peer0.org3.example.com", true);
+        String certPathTemplate = FIXTURES_DIR + "/crypto-material/crypto-config/peerOrganizations/org$O.example.com/peers/peer$P.org$O.example.com/tls/ca.crt";
+        peerConnectionInfo.put("peer0.org1.example.com",
+                new ConnectionInfo("localhost:7051", "peer0.org1.example.com", certPathTemplate.replace("$P", "0").replace("$O", "1")));
+        peerConnectionInfo.put("peer1.org1.example.com",
+                new ConnectionInfo("localhost:9051", "peer1.org1.example.com", certPathTemplate.replace("$P", "1").replace("$O", "1")));
+        peerConnectionInfo.put("peer0.org2.example.com",
+                new ConnectionInfo("localhost:8051", "peer0.org2.example.com", certPathTemplate.replace("$P", "0").replace("$O", "2")));
+        peerConnectionInfo.put("peer1.org2.example.com",
+                new ConnectionInfo("localhost:10051", "peer1.org2.example.com", certPathTemplate.replace("$P", "1").replace("$O", "2")));
+        peerConnectionInfo.put("peer0.org3.example.com",
+                new ConnectionInfo("localhost:11051", "peer0.org3.example.com", certPathTemplate.replace("$P", "0").replace("$O", "3")));
     }
 
     private static final Collection<OrgConfig> ORG_CONFIGS;
+
     static {
         List<OrgConfig> orgConfigs = Arrays.asList(
                 new OrgConfig("org1_cli", "/etc/hyperledger/configtx/Org1MSPanchors.tx", "peer0.org1.example.com:7051", "peer1.org1.example.com:9051"),
@@ -101,6 +105,27 @@ public class ScenarioSteps {
             this.anchortx = anchortx;
             Set<String> peerSet = new HashSet<>(Arrays.asList(peers));
             this.peers = Collections.unmodifiableSet(peerSet);
+        }
+    }
+
+    private static final class ConnectionInfo {
+        final String url;
+        final String serverNameOverride;
+        final String tlsRootCertPath;
+        boolean running = true;
+
+        ConnectionInfo(String url, String serverNameOverride, String tlsRootCertPath) {
+            this.url = url;
+            this.serverNameOverride = serverNameOverride;
+            this.tlsRootCertPath = tlsRootCertPath;
+        }
+
+        void start() {
+            running = true;
+        }
+
+        void stop() {
+            running = false;
         }
     }
 
@@ -232,8 +257,9 @@ public class ScenarioSteps {
     }
 
     @Given("I connect the gateway to {word}")
-    public void connectGateway(String address) {
-        gateway = gatewayBuilder.endpoint(address).connect();
+    public void connectGateway(String name) throws Exception {
+        ConnectionInfo info = peerConnectionInfo.get(name);
+        gateway = gatewayBuilder.endpoint(info.url).tls(new FileInputStream(info.tlsRootCertPath), info.serverNameOverride).connect();
     }
 
     @Given("I use the {word} network")
@@ -283,13 +309,13 @@ public class ScenarioSteps {
     @When("I stop the peer named {}")
     public void stopPeer(String peer) throws IOException, InterruptedException {
         exec("docker", "stop", peer);
-        runningPeers.put(peer, false);
+        peerConnectionInfo.get(peer).stop();
     }
 
     @When("I start the peer named {}")
     public void startPeer(String peer) throws IOException, InterruptedException {
         exec("docker", "start", peer);
-        runningPeers.put(peer, true);
+        peerConnectionInfo.get(peer).stop();
         Thread.sleep(20000);
     }
 
@@ -302,7 +328,7 @@ public class ScenarioSteps {
     @Then("the response should be JSON matching")
     public void assertJsonResponse(DocString expected) {
         try (JsonReader expectedReader = createJsonReader(expected.getContent());
-                JsonReader actualReader = createJsonReader(transactionInvocation.getResponse())) {
+             JsonReader actualReader = createJsonReader(transactionInvocation.getResponse())) {
             JsonObject expectedObject = expectedReader.readObject();
             JsonObject actualObject = actualReader.readObject();
             assertThat(actualObject).isEqualTo(expectedObject);
@@ -320,8 +346,8 @@ public class ScenarioSteps {
     }
 
     private static void startAllPeers() throws InterruptedException, IOException {
-        Set<String> stoppedPeers = runningPeers.entrySet().stream()
-                .filter(entry -> !entry.getValue())
+        Set<String> stoppedPeers = peerConnectionInfo.entrySet().stream()
+                .filter(entry -> !entry.getValue().running)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
 
@@ -331,7 +357,7 @@ public class ScenarioSteps {
 
         for (String peer : stoppedPeers) {
             exec("docker", "start", peer);
-            runningPeers.put(peer, true);
+            peerConnectionInfo.get(peer).start();
         }
         Thread.sleep(20000);
     }
@@ -377,8 +403,8 @@ public class ScenarioSteps {
 
         // get STDERR for the process and print it
         try (InputStream errorStream = process.getErrorStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream))) {
-            for (String line; (line = reader.readLine()) != null;) {
+             BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream))) {
+            for (String line; (line = reader.readLine()) != null; ) {
                 System.err.println(line);
                 sb.append(line);
             }
@@ -386,8 +412,8 @@ public class ScenarioSteps {
 
         // get STDOUT for the process and print it
         try (InputStream inputStream = process.getInputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-            for (String line; (line = reader.readLine()) != null;) {
+             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            for (String line; (line = reader.readLine()) != null; ) {
                 System.out.println(line);
                 sb.append(line);
             }
