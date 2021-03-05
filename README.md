@@ -8,14 +8,37 @@ The Gateway SDKs implement the Fabric programming model as described in the
 [Developing Applications](https://hyperledger-fabric.readthedocs.io/en/latest/developapps/developing_applications.html)
 chapter of the Fabric documentation.
 
-## The Gateway server
+## Overview
 
-The Gateway server is a standalone process (written in Go) and exposes a simple gRPC interface to client applications.
-The server manages the lifecycle of transaction invocation on behalf of the client, minimising the network traffic passing
-between the client and the blockchain network as well as minimising the number of network ports that need to be opened.
+The original proposal is described in the [Fabric Gateway RFC](https://hyperledger.github.io/fabric-rfcs/text/0000-fabric-gateway.html).
+Adding a Gateway component to the Fabric Peer provides a single entry point to a Fabric network, and removes much of the transaction submission logic from the client application.
 
-A prebuilt docker image is available for the Gateway server.
+The Gateway component in the Fabric Peer exposes a simple gRPC interface to client applications and manages the lifecycle of transaction invocation on behalf of the client.
+This minimises the network traffic passing between the client and the blockchain network as well as minimising the number of network ports that need to be opened.
 
+The following diagram shows the high level interaction required to evaluate a transaction
+![Client creates and signs a proposal for the Gateway to evaluate](./doc/images/evaluate.png "Evaluate flow")
+
+Similarly the following diagram shows the high level interaction required to submit a transaction
+![Client creates and signs a proposal; Gateway endorses the proposal; Client creates and signs a transaction; Gateway submits the transaction to the orderer](./doc/images/submit.png "Submit flow")
+
+See the [gateway.proto file](https://github.com/hyperledger/fabric-protos/blob/master/gateway/gateway.proto) for full details of the gRPC interface.
+
+## Configuring the Gateway
+
+Enable the Gateway feature flag in `core.yaml` by adding the following:
+
+```
+peer:
+    gateway:
+        enabled: true
+```
+
+Alternatively, using [yq](https://mikefarah.gitbook.io/yq/):
+
+```
+docker run --rm -v "${PWD}":/workdir mikefarah/yq eval '.peer.gateway.enabled = true' --inplace core.yaml
+```
 ## Client SDKs
 
 Three SDKs are available to support the development of client applications that interact with the Fabric network via
@@ -64,7 +87,7 @@ In order to build these components, the following needs to be installed and avai
 
 The following Makefile targets are available
 - `make build-go` - compile the gateway server executable
-- `make docker` - create a docker image containing the gateway server
+- `make pull-latest-peer` - fetch the latest peer docker image containing the gateway server
 - `make unit-test-go` - run unit tests for the gateway server and Go SDK
 - `make unit-test-node` - run unit tests for the Node SDK
 - `make unit-test-java` - run unit tests for the Java SDK
