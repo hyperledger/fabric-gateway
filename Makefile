@@ -22,16 +22,8 @@ PKGNAME = github.com/hyperledger/fabric-gateway
 ARCH=$(shell go env GOARCH)
 MARCH=$(shell go env GOOS)-$(shell go env GOARCH)
 
-# defined in common/metadata/metadata.go
-METADATA_VAR = Version=$(BASE_VERSION)
-METADATA_VAR += CommitSHA=$(EXTRA_VERSION)
-METADATA_VAR += BaseDockerLabel=$(BASE_DOCKER_LABEL)
-METADATA_VAR += DockerNamespace=$(DOCKER_NS)
-
 GO_VER = 1.15.6
 GO_TAGS ?=
-
-include docker-env.mk
 
 build: build-protos build-go build-node
 
@@ -59,7 +51,7 @@ build-node: build-protos
 unit-test: generate unit-test-go unit-test-node unit-test-java
 
 unit-test-go: lint staticcheck
-	go test -coverprofile=$(base_dir)/cover.out $(base_dir)/pkg/... $(base_dir)/cmd/gateway
+	go test -coverprofile=$(base_dir)/cover.out $(base_dir)/pkg/...
 
 unit-test-node: build-node
 	cd $(node_dir); npm test
@@ -68,10 +60,10 @@ unit-test-java: build-protos
 	cd $(java_dir); mvn test
 
 lint:
-	golint -set_exit_status $(base_dir)/pkg/client/... $(base_dir)/pkg/internal/... $(base_dir)/cmd/... $(scenario_dir)/go
+	golint -set_exit_status $(base_dir)/pkg/... $(scenario_dir)/go
 
 staticcheck:
-	staticcheck $(base_dir)/pkg/client/... $(base_dir)/pkg/internal/... $(base_dir)/cmd/... $(scenario_dir)/go
+	staticcheck $(base_dir)/pkg/... $(scenario_dir)/go
 
 generate:
 	go generate ./pkg/...
@@ -94,18 +86,6 @@ scenario-test: scenario-test-go scenario-test-node scenario-test-java
 test: unit-test scenario-test
 
 all: test
-
-docker: build-protos build-go
-	@echo "Building Docker image $(DOCKER_NS)/fabric-gateway"
-	@mkdir -p $(@D)
-	$(DBUILD) --rm -f images/gateway/Dockerfile \
-		--build-arg GO_VER=$(GO_VER) \
-		--build-arg ALPINE_VER=$(ALPINE_VER) \
-		--build-arg GO_TAGS=${GO_TAGS} \
-		-t $(DOCKER_NS)/fabric-gateway ./$(BUILD_CONTEXT)
-	docker tag $(DOCKER_NS)/fabric-gateway $(DOCKER_NS)/fabric-gateway:$(BASE_VERSION)
-	docker tag $(DOCKER_NS)/fabric-gateway $(DOCKER_NS)/fabric-gateway:$(TWO_DIGIT_VERSION)
-	docker tag $(DOCKER_NS)/fabric-gateway $(DOCKER_NS)/fabric-gateway:$(DOCKER_TAG)
 
 pull-latest-peer:
 	docker pull hyperledger-fabric.jfrog.io/fabric-peer:amd64-latest
