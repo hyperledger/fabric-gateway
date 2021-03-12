@@ -11,7 +11,6 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/common"
-	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
 )
 
@@ -23,9 +22,9 @@ func AssertUnmarshall(t *testing.T, b []byte, m proto.Message) {
 }
 
 // AssertUnmarshallInvocationSpec ensures that a ChaincodeInvocationSpec protobuf is umarshalled without error
-func AssertUnmarshallInvocationSpec(t *testing.T, proposedTransaction *gateway.ProposedTransaction) *peer.ChaincodeInvocationSpec {
+func AssertUnmarshallInvocationSpec(t *testing.T, proposedTransaction *peer.SignedProposal) *peer.ChaincodeInvocationSpec {
 	proposal := &peer.Proposal{}
-	AssertUnmarshall(t, proposedTransaction.Proposal.ProposalBytes, proposal)
+	AssertUnmarshall(t, proposedTransaction.ProposalBytes, proposal)
 
 	payload := &peer.ChaincodeProposalPayload{}
 	AssertUnmarshall(t, proposal.Payload, payload)
@@ -37,7 +36,7 @@ func AssertUnmarshallInvocationSpec(t *testing.T, proposedTransaction *gateway.P
 }
 
 // AssertUnmarshallChannelheader ensures that a ChannelHeader protobuf is umarshalled without error
-func AssertUnmarshallChannelheader(t *testing.T, proposedTransaction *gateway.ProposedTransaction) *common.ChannelHeader {
+func AssertUnmarshallChannelheader(t *testing.T, proposedTransaction *peer.SignedProposal) *common.ChannelHeader {
 	header := AssertUnmarshallHeader(t, proposedTransaction)
 
 	channelHeader := &common.ChannelHeader{}
@@ -47,9 +46,9 @@ func AssertUnmarshallChannelheader(t *testing.T, proposedTransaction *gateway.Pr
 }
 
 // AssertUnmarshallHeader ensures that a Header protobuf is umarshalled without error
-func AssertUnmarshallHeader(t *testing.T, proposedTransaction *gateway.ProposedTransaction) *common.Header {
+func AssertUnmarshallHeader(t *testing.T, proposedTransaction *peer.SignedProposal) *common.Header {
 	proposal := &peer.Proposal{}
-	AssertUnmarshall(t, proposedTransaction.Proposal.ProposalBytes, proposal)
+	AssertUnmarshall(t, proposedTransaction.ProposalBytes, proposal)
 
 	header := &common.Header{}
 	AssertUnmarshall(t, proposal.Header, header)
@@ -58,7 +57,7 @@ func AssertUnmarshallHeader(t *testing.T, proposedTransaction *gateway.ProposedT
 }
 
 // AssertUnmarshallSignatureHeader ensures that a SignatureHeader protobuf is umarshalled without error
-func AssertUnmarshallSignatureHeader(t *testing.T, proposedTransaction *gateway.ProposedTransaction) *common.SignatureHeader {
+func AssertUnmarshallSignatureHeader(t *testing.T, proposedTransaction *peer.SignedProposal) *common.SignatureHeader {
 	header := AssertUnmarshallHeader(t, proposedTransaction)
 
 	signatureHeader := &common.SignatureHeader{}

@@ -9,12 +9,12 @@ import { Contract } from './contract';
 import { connect, Gateway, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { protos } from './protos/protos';
+import { gateway } from './protos/protos';
 
 interface MockGatewayClient extends GatewayClient {
-    endorse: jest.Mock<Promise<protos.IPreparedTransaction>, protos.IProposedTransaction[]>,
-    evaluate: jest.Mock<Promise<protos.IResult>, protos.IProposedTransaction[]>,
-    submit: jest.Mock<Promise<protos.IEvent>, protos.IPreparedTransaction[]>,
+    endorse: jest.Mock<Promise<gateway.IEndorseResponse>, gateway.IEndorseRequest[]>,
+    evaluate: jest.Mock<Promise<gateway.IEvaluateResponse>, gateway.IEvaluateRequest[]>,
+    submit: jest.Mock<Promise<gateway.ISubmitResponse>, gateway.ISubmitRequest[]>,
 }
 
 function newMockGatewayClient(): MockGatewayClient {
@@ -39,11 +39,11 @@ describe('Transaction', () => {
     beforeEach(async () => {
         client = newMockGatewayClient();
         client.endorse.mockResolvedValue({
-            envelope: {
+            prepared_transaction: {
                 payload: Buffer.from('PAYLOAD'),
             },
-            response: {
-                value: Buffer.from(expectedResult),
+            result: {
+                payload: Buffer.from(expectedResult),
             },
         });
 
@@ -83,8 +83,8 @@ describe('Transaction', () => {
 
         await contract.submitTransaction('TRANSACTION_NAME');
 
-        const preparedTransaction = client.submit.mock.calls[0][0];
-        const signature = Buffer.from(preparedTransaction.envelope?.signature ?? '').toString();
+        const submitRequest = client.submit.mock.calls[0][0];
+        const signature = Buffer.from(submitRequest.prepared_transaction?.signature ?? '').toString();
         expect(signature).toBe('MY_SIGNATURE');
     });
 

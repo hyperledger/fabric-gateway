@@ -25,9 +25,12 @@ import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Credentials;
 import org.hyperledger.fabric.client.identity.X509Identity;
+import org.hyperledger.fabric.protos.gateway.EndorseResponse;
+import org.hyperledger.fabric.protos.gateway.EvaluateResponse;
 import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
-import org.hyperledger.fabric.protos.gateway.Result;
+import org.hyperledger.fabric.protos.gateway.SubmitResponse;
+import org.hyperledger.fabric.protos.peer.ProposalResponsePackage.Response;
 import org.hyperledger.fabric.protos.common.Common;
 
 public final class TestUtils {
@@ -73,10 +76,29 @@ public final class TestUtils {
                 .signer(signer);
         return builder;
     }
-
-    public Result newResult(String value) {
-        return Result.newBuilder()
-                .setValue(ByteString.copyFromUtf8(value))
+    
+    public EndorseResponse newEndorseResponse(String value) {
+        PreparedTransaction preparedTransaction = newPreparedTransaction(value);
+        return EndorseResponse.newBuilder()
+                .setPreparedTransaction(preparedTransaction.getEnvelope())
+                .setResult(preparedTransaction.getResult())
+                .build();
+    }
+    
+    public SubmitResponse newSubmitResponse() {
+        return SubmitResponse.newBuilder()
+                .build();
+    }
+    
+    public EvaluateResponse newEvaluateResponse(String value) {
+        return EvaluateResponse.newBuilder()
+                .setResult(newResponse(value))
+                .build();
+    }
+    
+    public Response newResponse(String value) {
+        return Response.newBuilder()
+                .setPayload(ByteString.copyFromUtf8(value))
                 .build();
     }
 
@@ -85,8 +107,9 @@ public final class TestUtils {
                 .setPayload(ByteString.copyFromUtf8(payload))
                 .build();
         return PreparedTransaction.newBuilder()
+                .setTransactionId(newFakeTransactionId())
                 .setEnvelope(envelope)
-                .setResponse(newResult(payload))
+                .setResult(newResponse(payload))
                 .build();
     }
 

@@ -7,6 +7,10 @@
 package org.hyperledger.fabric.client;
 
 import com.google.protobuf.ByteString;
+
+import org.hyperledger.fabric.protos.gateway.EndorseRequest;
+import org.hyperledger.fabric.protos.gateway.EndorseResponse;
+import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
 import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
 import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
@@ -15,17 +19,20 @@ import org.hyperledger.fabric.protos.peer.ProposalPackage;
 final class ProposalImpl implements Proposal {
     private final GatewayGrpc.GatewayBlockingStub client;
     private final SigningIdentity signingIdentity;
+    private final String channelName;
     private ProposedTransaction proposedTransaction;
 
-    ProposalImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity, final ProposedTransaction proposedTransaction) {
+    ProposalImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity,
+            final String channelName, final ProposedTransaction proposedTransaction) {
         this.client = client;
         this.signingIdentity = signingIdentity;
+        this.channelName = channelName;
         this.proposedTransaction = proposedTransaction;
     }
 
     @Override
     public String getTransactionId() {
-        return proposedTransaction.getTxId();
+        return proposedTransaction.getTransactionId();
     }
 
     @Override
@@ -42,16 +49,33 @@ final class ProposalImpl implements Proposal {
     @Override
     public byte[] evaluate() {
         sign();
-        return client.evaluate(proposedTransaction)
-                .getValue()
+        final EvaluateRequest evaluateRequest = EvaluateRequest.newBuilder()
+                .setTransactionId(proposedTransaction.getTransactionId())
+                .setChannelId(channelName)
+                .setProposedTransaction(proposedTransaction.getProposal())
+                .build();
+        return client.evaluate(evaluateRequest)
+                .getResult()
+                .getPayload()
                 .toByteArray();
     }
 
     @Override
     public Transaction endorse() {
         sign();
-        PreparedTransaction preparedTransaction = client.endorse(proposedTransaction);
-        return new TransactionImpl(client, signingIdentity, preparedTransaction);
+        final EndorseRequest endorseRequest = EndorseRequest.newBuilder()
+                .setTransactionId(proposedTransaction.getTransactionId())
+                .setChannelId(channelName)
+                .setProposedTransaction(proposedTransaction.getProposal())
+                .build();
+        EndorseResponse endorseResponse = client.endorse(endorseRequest);
+
+        PreparedTransaction preparedTransaction = PreparedTransaction.newBuilder()
+                .setTransactionId(proposedTransaction.getTransactionId())
+                .setEnvelope(endorseResponse.getPreparedTransaction())
+                .setResult(endorseResponse.getResult())
+                .build();
+        return new TransactionImpl(client, signingIdentity, channelName, preparedTransaction);
     }
 
     void setSignature(final byte[] signature) {

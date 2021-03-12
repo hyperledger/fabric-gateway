@@ -9,27 +9,27 @@ package client
 import (
 	"bytes"
 	"context"
-	"io"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/gateway"
+	"github.com/hyperledger/fabric-protos-go/peer"
 	"google.golang.org/grpc"
 )
 
 func TestSign(t *testing.T) {
-	preparedTransaction := gateway.PreparedTransaction{
-		Envelope: &common.Envelope{},
-		Response: &gateway.Result{},
+	evaluateResponse := gateway.EvaluateResponse{
+		Result: &peer.Response{
+			Payload: nil,
+		},
 	}
 
-	newMockSubmitClient := func(controller *gomock.Controller) *MockGateway_SubmitClient {
-		mock := NewMockGateway_SubmitClient(controller)
-		mock.EXPECT().Recv().
-			Return(nil, io.EOF).
-			AnyTimes()
-		return mock
+	endorseResponse := gateway.EndorseResponse{
+		PreparedTransaction: &common.Envelope{},
+		Result: &peer.Response{
+			Payload: nil,
+		},
 	}
 
 	t.Run("Evaluate signs proposal using client signing implementation", func(t *testing.T) {
@@ -43,10 +43,10 @@ func TestSign(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.ProposedTransaction, _ ...grpc.CallOption) {
-				actual = in.Proposal.Signature
+			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
+				actual = in.ProposedTransaction.Signature
 			}).
-			Return(&gateway.Result{}, nil).
+			Return(&evaluateResponse, nil).
 			Times(1)
 
 		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
@@ -71,13 +71,13 @@ func TestSign(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.ProposedTransaction, _ ...grpc.CallOption) {
-				actual = in.Proposal.Signature
+			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
+				actual = in.ProposedTransaction.Signature
 			}).
-			Return(&preparedTransaction, nil).
+			Return(&endorseResponse, nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(newMockSubmitClient(mockController), nil)
+			Return(nil, nil)
 
 		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
 
@@ -101,12 +101,12 @@ func TestSign(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(&preparedTransaction, nil)
+			Return(&endorseResponse, nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.PreparedTransaction, _ ...grpc.CallOption) {
-				actual = in.Envelope.Signature
+			Do(func(_ context.Context, in *gateway.SubmitRequest, _ ...grpc.CallOption) {
+				actual = in.PreparedTransaction.Signature
 			}).
-			Return(newMockSubmitClient(mockController), nil).
+			Return(nil, nil).
 			Times(1)
 
 		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
@@ -126,7 +126,7 @@ func TestSign(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
-			Return(&gateway.Result{}, nil).
+			Return(&evaluateResponse, nil).
 			AnyTimes()
 
 		gateway, err := Connect(TestCredentials.identity, WithClient(mockClient))

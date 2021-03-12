@@ -7,7 +7,7 @@
 import { GatewayClient } from "./client";
 import { Proposal, ProposalImpl } from "./proposal";
 import { ProposalBuilder, ProposalOptions } from "./proposalbuilder";
-import { protos } from "./protos/protos";
+import { gateway } from "./protos/protos";
 import { SigningIdentity } from "./signingidentity";
 import { Transaction, TransactionImpl } from "./transaction";
 
@@ -194,11 +194,12 @@ export class ContractImpl implements Contract {
     }
 
     newSignedProposal(bytes: Uint8Array, signature: Uint8Array): Proposal {
-        const proposedTransaction = protos.ProposedTransaction.decode(bytes);
+        const proposedTransaction = gateway.ProposedTransaction.decode(bytes);
 
         const result = new ProposalImpl({
             client: this.#client,
             signingIdentity: this.#signingIdentity,
+            channelName: this.#channelName,
             proposedTransaction,
         });
         result.setSignature(signature);
@@ -207,11 +208,12 @@ export class ContractImpl implements Contract {
     }
 
     newSignedTransaction(bytes: Uint8Array, signature: Uint8Array): Transaction {
-        const preparedTransaction = protos.PreparedTransaction.decode(bytes);
+        const preparedTransaction = gateway.PreparedTransaction.decode(bytes);
 
         const result = new TransactionImpl({
             client: this.#client,
             signingIdentity: this.#signingIdentity,
+            channelName: this.#channelName,
             preparedTransaction,
         });
         result.setSignature(signature);

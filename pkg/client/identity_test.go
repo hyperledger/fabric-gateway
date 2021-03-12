@@ -9,7 +9,6 @@ package client
 import (
 	"bytes"
 	"context"
-	"io"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -19,6 +18,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/msp"
+	"github.com/hyperledger/fabric-protos-go/peer"
 	"google.golang.org/grpc"
 )
 
@@ -53,11 +53,16 @@ func TestIdentity(t *testing.T) {
 		defer mockController.Finish()
 
 		mockClient := NewMockGatewayClient(mockController)
+		evaluateResponse := gateway.EvaluateResponse{
+			Result: &peer.Response{
+				Payload: nil,
+			},
+		}
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.ProposedTransaction, _ ...grpc.CallOption) {
-				actual = test.AssertUnmarshallSignatureHeader(t, in).Creator
+			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
+				actual = test.AssertUnmarshallSignatureHeader(t, in.ProposedTransaction).Creator
 			}).
-			Return(&gateway.Result{}, nil).
+			Return(&evaluateResponse, nil).
 			Times(1)
 
 		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithIdentity(id))
@@ -77,19 +82,20 @@ func TestIdentity(t *testing.T) {
 		defer mockController.Finish()
 
 		mockClient := NewMockGatewayClient(mockController)
-		preparedTransaction := gateway.PreparedTransaction{
-			Envelope: &common.Envelope{},
-			Response: &gateway.Result{},
+		endorseResponse := gateway.EndorseResponse{
+			PreparedTransaction: &common.Envelope{},
+			Result: &peer.Response{
+				Payload: nil,
+			},
 		}
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.ProposedTransaction, _ ...grpc.CallOption) {
-				actual = test.AssertUnmarshallSignatureHeader(t, in).Creator
+			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
+				actual = test.AssertUnmarshallSignatureHeader(t, in.ProposedTransaction).Creator
 			}).
-			Return(&preparedTransaction, nil).
+			Return(&endorseResponse, nil).
 			Times(1)
-		mockSubmitClient := NewMockGateway_SubmitClient(mockController)
-		mockSubmitClient.EXPECT().Recv().Return(nil, io.EOF)
-		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).Return(mockSubmitClient, nil)
+		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+			Return(nil, nil)
 
 		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithIdentity(id))
 

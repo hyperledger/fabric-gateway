@@ -71,12 +71,8 @@ func (contract *Contract) SubmitTransaction(name string, args ...string) ([]byte
 // evaluated. This allows transaction functions to be submitted where the proposal must include transient data, or that
 // will access ledger data with key-based endorsement policies.
 func (contract *Contract) SubmitSync(transactionName string, options ...ProposalOption) ([]byte, error) {
-	result, commit, err := contract.SubmitAsync(transactionName, options...)
+	result, err := contract.SubmitAsync(transactionName, options...)
 	if err != nil {
-		return nil, err
-	}
-
-	if err = <-commit; err != nil {
 		return nil, err
 	}
 
@@ -85,25 +81,25 @@ func (contract *Contract) SubmitSync(transactionName string, options ...Proposal
 
 // SubmitAsync submits a transaction to the ledger and returns its result immediately after successfully sending to the
 // orderer, along with a channel that can be used to receive notification when it has been committed to the ledger.
-func (contract *Contract) SubmitAsync(transactionName string, options ...ProposalOption) ([]byte, chan error, error) {
+func (contract *Contract) SubmitAsync(transactionName string, options ...ProposalOption) ([]byte, error) {
 	proposal, err := contract.NewProposal(transactionName, options...)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	transaction, err := proposal.Endorse()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	result := transaction.Result()
 
-	commit, err := transaction.Submit()
+	_, err = transaction.Submit()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return result, commit, nil
+	return result, nil
 }
 
 // NewProposal creates a proposal that can be sent to peers for endorsement. Supports off-line signing transaction flow.
@@ -127,15 +123,16 @@ func (contract *Contract) NewProposal(transactionName string, options ...Proposa
 
 // NewSignedProposal creates a transaction proposal with signature, which can be sent to peers for endorsement.
 func (contract *Contract) NewSignedProposal(bytes []byte, signature []byte) (*Proposal, error) {
-	proposedTransactionProto := &gateway.ProposedTransaction{}
-	if err := proto.Unmarshal(bytes, proposedTransactionProto); err != nil {
+	proposedTransaction := &gateway.ProposedTransaction{}
+	if err := proto.Unmarshal(bytes, proposedTransaction); err != nil {
 		return nil, fmt.Errorf("failed to deserialize proposal: %w", err)
 	}
 
 	proposal := &Proposal{
 		client:              contract.client,
 		signingID:           contract.signingID,
-		proposedTransaction: proposedTransactionProto,
+		channelID:           contract.channelName,
+		proposedTransaction: proposedTransaction,
 	}
 	proposal.setSignature(signature)
 
@@ -153,9 +150,9 @@ func (contract *Contract) NewSignedTransaction(bytes []byte, signature []byte) (
 	transaction := &Transaction{
 		client:              contract.client,
 		signingID:           contract.signingID,
+		channelID:           contract.channelName,
 		preparedTransaction: preparedTransaction,
 	}
-
 	transaction.setSignature(signature)
 
 	return transaction, nil

@@ -696,12 +696,8 @@ func invokeSubmit() ([]byte, error) {
 		return nil, err
 	}
 
-	commit, err := clientTransaction.Submit()
+	_, err = clientTransaction.Submit()
 	if err != nil {
-		return nil, err
-	}
-
-	if err = <-commit; err != nil {
 		return nil, err
 	}
 

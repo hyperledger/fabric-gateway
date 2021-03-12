@@ -20,6 +20,7 @@ import io.grpc.StatusRuntimeException;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.X509Identity;
+import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
 import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +57,7 @@ public final class EvaluateTransactionTest {
 
     @Test
     void returns_gateway_response() throws ContractException {
-        doReturn(utils.newResult("MY_RESULT"))
+        doReturn(utils.newEvaluateResponse("MY_RESULT"))
                 .when(stub).evaluate(any());
 
         Contract contract = network.getContract("CHAINCODE_ID");
@@ -70,8 +71,8 @@ public final class EvaluateTransactionTest {
         Contract contract = network.getContract("MY_CHAINCODE_ID");
         contract.evaluateTransaction("TRANSACTION_NAME");
 
-        ProposedTransaction request = mocker.captureEvaluate();
-        String actual = mocker.getChaincodeSpec(request).getChaincodeId().getName();
+        EvaluateRequest request = mocker.captureEvaluate();
+        String actual = mocker.getChaincodeSpec(request.getProposedTransaction()).getChaincodeId().getName();
 
         assertThat(actual).isEqualTo("MY_CHAINCODE_ID");
     }
@@ -81,8 +82,8 @@ public final class EvaluateTransactionTest {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.evaluateTransaction("MY_TRANSACTION_NAME");
 
-        ProposedTransaction request = mocker.captureEvaluate();
-        List<String> chaincodeArgs = mocker.getChaincodeSpec(request).getInput().getArgsList().stream()
+        EvaluateRequest request = mocker.captureEvaluate();
+        List<String> chaincodeArgs = mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
                 .map(ByteString::toStringUtf8)
                 .collect(Collectors.toList());
 
@@ -94,8 +95,8 @@ public final class EvaluateTransactionTest {
         Contract contract = network.getContract("CHAINCODE_ID", "MY_CONTRACT");
         contract.evaluateTransaction("MY_TRANSACTION_NAME");
 
-        ProposedTransaction request = mocker.captureEvaluate();
-        List<String> chaincodeArgs = mocker.getChaincodeSpec(request).getInput().getArgsList().stream()
+        EvaluateRequest request = mocker.captureEvaluate();
+        List<String> chaincodeArgs = mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
                 .map(ByteString::toStringUtf8)
                 .collect(Collectors.toList());
 
@@ -107,8 +108,8 @@ public final class EvaluateTransactionTest {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.evaluateTransaction("TRANSACTION_NAME", "one", "two", "three");
 
-        ProposedTransaction request = mocker.captureEvaluate();
-        List<String> chaincodeArgs = mocker.getChaincodeSpec(request).getInput().getArgsList().stream()
+        EvaluateRequest request = mocker.captureEvaluate();
+        List<String> chaincodeArgs = mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
                 .skip(1)
                 .map(ByteString::toStringUtf8)
                 .collect(Collectors.toList());
@@ -124,8 +125,8 @@ public final class EvaluateTransactionTest {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.evaluateTransaction("TRANSACTION_NAME", arguments);
 
-        ProposedTransaction request = mocker.captureEvaluate();
-        byte[][] chaincodeArgs = mocker.getChaincodeSpec(request).getInput().getArgsList().stream()
+        EvaluateRequest request = mocker.captureEvaluate();
+        byte[][] chaincodeArgs = mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
                 .skip(1)
                 .map(ByteString::toByteArray)
                 .toArray(byte[][]::new);
@@ -142,8 +143,8 @@ public final class EvaluateTransactionTest {
             Contract contract = network.getContract("CHAINCODE_ID");
             contract.evaluateTransaction("TRANSACTION_NAME");
 
-            ProposedTransaction request = mocker.captureEvaluate();
-            String signature = request.getProposal().getSignature().toStringUtf8();
+            EvaluateRequest request = mocker.captureEvaluate();
+            String signature = request.getProposedTransaction().getSignature().toStringUtf8();
 
             assertThat(signature).isEqualTo("MY_SIGNATURE");
         }
@@ -187,8 +188,8 @@ public final class EvaluateTransactionTest {
             Contract contract = network.getContract("CHAINCODE_ID");
             contract.evaluateTransaction("TRANSACTION_NAME");
 
-            ProposedTransaction request = mocker.captureEvaluate();
-            ByteString serializedIdentity = mocker.getSignatureHeader(request).getCreator();
+            EvaluateRequest request = mocker.captureEvaluate();
+            ByteString serializedIdentity = mocker.getSignatureHeader(request.getProposedTransaction()).getCreator();
 
             byte[] expected = GatewayUtils.serializeIdentity(identity);
             assertThat(serializedIdentity.toByteArray()).isEqualTo(expected);
@@ -202,8 +203,8 @@ public final class EvaluateTransactionTest {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.evaluateTransaction("TRANSACTION_NAME");
 
-        ProposedTransaction request = mocker.captureEvaluate();
-        String networkName = mocker.getChannelHeader(request).getChannelId();
+        EvaluateRequest request = mocker.captureEvaluate();
+        String networkName = mocker.getChannelHeader(request.getProposedTransaction()).getChannelId();
 
         assertThat(networkName).isEqualTo("MY_NETWORK");
     }
@@ -215,7 +216,7 @@ public final class EvaluateTransactionTest {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.evaluateTransaction("TRANSACTION_NAME");
 
-        ProposedTransaction request = mocker.captureEvaluate();
+        EvaluateRequest request = mocker.captureEvaluate();
         String networkName = request.getChannelId();
 
         assertThat(networkName).isEqualTo("MY_NETWORK");
@@ -228,9 +229,9 @@ public final class EvaluateTransactionTest {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.evaluateTransaction("TRANSACTION_NAME");
 
-        ProposedTransaction request = mocker.captureEvaluate();
-        String expected = mocker.getChannelHeader(request).getTxId();
-        String actual = request.getTxId();
+        EvaluateRequest request = mocker.captureEvaluate();
+        String expected = mocker.getChannelHeader(request.getProposedTransaction()).getTxId();
+        String actual = request.getTransactionId();
 
         assertThat(actual).isEqualTo(expected);
     }
