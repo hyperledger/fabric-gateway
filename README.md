@@ -1,10 +1,10 @@
 # Hyperledger Fabric Gateway
 
-The Fabric Gateway is a core component of a Fabric blockchain network and coordinates the actions required to 
+The Fabric Gateway is a core component of a Fabric blockchain network and coordinates the actions required to
 submit transactions and query ledger state on behalf of client applications.  By using the Gateway, client applications
 only need to connect to a single endpoint in the Fabric network.
 
-The Gateway SDKs implement the Fabric programming model as described in the 
+The Gateway SDKs implement the Fabric programming model as described in the
 [Developing Applications](https://hyperledger-fabric.readthedocs.io/en/latest/developapps/developing_applications.html)
 chapter of the Fabric documentation.
 
@@ -22,7 +22,7 @@ The following diagram shows the high level interaction required to evaluate a tr
 Similarly the following diagram shows the high level interaction required to submit a transaction
 ![Client creates and signs a proposal; Gateway endorses the proposal; Client creates and signs a transaction; Gateway submits the transaction to the orderer](./doc/images/submit.png "Submit flow")
 
-See the [gateway.proto file](https://github.com/hyperledger/fabric-protos/blob/master/gateway/gateway.proto) for full details of the gRPC interface.
+See the [gateway.proto file](https://github.com/hyperledger/fabric-protos/blob/main/gateway/gateway.proto) for full details of the gRPC interface.
 
 ## Configuring the Gateway
 
@@ -109,4 +109,4 @@ The scenario tests create a Fabric network comprising two orgs (one peer in each
 of docker containers.  The clients connect to the gateway to submit transactions and query the ledger state.
 
 The tests are defined as feature files using the Cucumber BDD framework.  The same set of feature files
-is used across all three SDKs to ensure consistency of behaviour. 
+is used across all three SDKs to ensure consistency of behaviour.

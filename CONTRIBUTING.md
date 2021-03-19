@@ -20,7 +20,7 @@ If you want to begin contributing code, looking through our open issues is a goo
 
 ## Enhancements
 
-Make sure you have the support of the Hyperledger Fabric community before investing a lot of effort in project enhancements. For example, discuss your proposal on Rocket.Chat or open a JIRA issue for feedback before starting work. If it's a more substantial enhancement, you may be asked to follow [the formal request for comments (RFC) process](https://github.com/hyperledger/fabric-rfcs/blob/master/README.md).
+Make sure you have the support of the Hyperledger Fabric community before investing a lot of effort in project enhancements. For example, discuss your proposal on Rocket.Chat or open a JIRA issue for feedback before starting work. If it's a more substantial enhancement, you may be asked to follow [the formal request for comments (RFC) process](https://github.com/hyperledger/fabric-rfcs/blob/main/README.md).
 
 ## Code of Conduct Guidelines <a name="conduct"></a>
 
@@ -28,7 +28,7 @@ See our [Code of Conduct Guidelines](https://github.com/hyperledger/.github/blob
 
 ## Maintainers <a name="maintainers"></a>
 
-Should you have any questions or concerns, please reach out to one of the project's [Maintainers](../blob/master/MAINTAINERS.md).
+Should you have any questions or concerns, please reach out to one of the project's [Maintainers](../blob/main/MAINTAINERS.md).
 
 ## Hyperledger Fabric
 

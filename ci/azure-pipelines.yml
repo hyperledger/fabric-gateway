@@ -4,9 +4,9 @@
 
 name: $(SourceBranchName)-$(Date:yyyyMMdd)$(Rev:.rrr)
 trigger:
-- master
+- main
 pr:
-- master
+- main
 
 variables:
   GOPATH: $(Agent.BuildDirectory)/go
@@ -27,7 +27,7 @@ jobs:
 #   - script: bash <(curl https://codecov.io/bash) -t $CODECOV_UPLOAD_TOKEN
 #     env:
 #       CODECOV_UPLOAD_TOKEN: $(CODECOV_UPLOAD_TOKEN)
-#     displayName: Upload coverage to Codecov    
+#     displayName: Upload coverage to Codecov
 
 - job: ScenarioTestGo
   pool:
