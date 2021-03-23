@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"io"
 	"reflect"
 	"strings"
 	"testing"
@@ -19,32 +18,17 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/gateway"
+	"github.com/hyperledger/fabric-protos-go/peer"
 )
 
 func TestSubmitTransaction(t *testing.T) {
-	newPreparedTransaction := func(value string) *gateway.PreparedTransaction {
-		return &gateway.PreparedTransaction{
-			Envelope: &common.Envelope{},
-			Response: &gateway.Result{
-				Value: []byte(value),
+	newEndorseResponse := func(value string) *gateway.EndorseResponse {
+		return &gateway.EndorseResponse{
+			PreparedTransaction: &common.Envelope{},
+			Result: &peer.Response{
+				Payload: []byte(value),
 			},
 		}
-	}
-
-	newSuccessSubmitClient := func(controller *gomock.Controller) *MockGateway_SubmitClient {
-		mock := NewMockGateway_SubmitClient(controller)
-		mock.EXPECT().Recv().
-			Return(nil, io.EOF).
-			AnyTimes()
-		return mock
-	}
-
-	newFailSubmitClient := func(controller *gomock.Controller, err error) *MockGateway_SubmitClient {
-		mock := NewMockGateway_SubmitClient(controller)
-		mock.EXPECT().Recv().
-			Return(nil, err).
-			AnyTimes()
-		return mock
 	}
 
 	t.Run("Returns endorsement error", func(t *testing.T) {
@@ -72,7 +56,7 @@ func TestSubmitTransaction(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newPreparedTransaction("TRANSACTION_RESULT"), nil)
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, errors.New(expectedError))
 
@@ -92,9 +76,9 @@ func TestSubmitTransaction(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newPreparedTransaction("TRANSACTION_RESULT"), nil)
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(newFailSubmitClient(mockController, errors.New(expectedError)), nil)
+			Return(nil, errors.New(expectedError))
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
@@ -112,9 +96,9 @@ func TestSubmitTransaction(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newPreparedTransaction("TRANSACTION_RESULT"), nil)
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(newSuccessSubmitClient(mockController), nil)
+			Return(nil, nil)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
@@ -135,13 +119,13 @@ func TestSubmitTransaction(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.ProposedTransaction) {
-				actual = test.AssertUnmarshallChannelheader(t, in).ChannelId
+			Do(func(_ context.Context, in *gateway.EndorseRequest) {
+				actual = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).ChannelId
 			}).
-			Return(newPreparedTransaction("TRANSACTION_RESULT"), nil).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(newSuccessSubmitClient(mockController), nil)
+			Return(nil, nil)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
@@ -163,13 +147,13 @@ func TestSubmitTransaction(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.ProposedTransaction) {
-				actual = test.AssertUnmarshallInvocationSpec(t, in).ChaincodeSpec.ChaincodeId.Name
+			Do(func(_ context.Context, in *gateway.EndorseRequest) {
+				actual = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.ChaincodeId.Name
 			}).
-			Return(newPreparedTransaction("TRANSACTION_RESULT"), nil).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(newSuccessSubmitClient(mockController), nil)
+			Return(nil, nil)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
@@ -191,13 +175,13 @@ func TestSubmitTransaction(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.ProposedTransaction) {
-				args = test.AssertUnmarshallInvocationSpec(t, in).ChaincodeSpec.Input.Args
+			Do(func(_ context.Context, in *gateway.EndorseRequest) {
+				args = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
 			}).
-			Return(newPreparedTransaction("TRANSACTION_RESULT"), nil).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(newSuccessSubmitClient(mockController), nil)
+			Return(nil, nil)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
@@ -220,13 +204,13 @@ func TestSubmitTransaction(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.ProposedTransaction) {
-				args = test.AssertUnmarshallInvocationSpec(t, in).ChaincodeSpec.Input.Args
+			Do(func(_ context.Context, in *gateway.EndorseRequest) {
+				args = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
 			}).
-			Return(newPreparedTransaction("TRANSACTION_RESULT"), nil).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(newSuccessSubmitClient(mockController), nil)
+			Return(nil, nil)
 
 		contract := AssertNewTestContractWithName(t, "chaincode", "CONTRACT_NAME", WithClient(mockClient))
 
@@ -249,13 +233,13 @@ func TestSubmitTransaction(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.ProposedTransaction) {
-				args = test.AssertUnmarshallInvocationSpec(t, in).ChaincodeSpec.Input.Args
+			Do(func(_ context.Context, in *gateway.EndorseRequest) {
+				args = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
 			}).
-			Return(newPreparedTransaction("TRANSACTION_RESULT"), nil).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(newSuccessSubmitClient(mockController), nil)
+			Return(nil, nil)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
@@ -278,13 +262,13 @@ func TestSubmitTransaction(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.ProposedTransaction) {
+			Do(func(_ context.Context, in *gateway.EndorseRequest) {
 				actual = in.ChannelId
 			}).
-			Return(newPreparedTransaction("TRANSACTION_RESULT"), nil).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(newSuccessSubmitClient(mockController), nil)
+			Return(nil, nil)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
@@ -307,14 +291,14 @@ func TestSubmitTransaction(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.ProposedTransaction) {
-				actual = in.TxId
-				expected = test.AssertUnmarshallChannelheader(t, in).TxId
+			Do(func(_ context.Context, in *gateway.EndorseRequest) {
+				actual = in.TransactionId
+				expected = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).TxId
 			}).
-			Return(newPreparedTransaction("TRANSACTION_RESULT"), nil).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(newSuccessSubmitClient(mockController), nil)
+			Return(nil, nil)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
@@ -339,13 +323,13 @@ func TestSubmitTransaction(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.ProposedTransaction) {
-				actual = in.Proposal.Signature
+			Do(func(_ context.Context, in *gateway.EndorseRequest) {
+				actual = in.ProposedTransaction.Signature
 			}).
-			Return(newPreparedTransaction("TRANSACTION_RESULT"), nil).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(newSuccessSubmitClient(mockController), nil)
+			Return(nil, nil)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSign(sign))
 
@@ -370,12 +354,12 @@ func TestSubmitTransaction(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newPreparedTransaction("TRANSACTION_RESULT"), nil)
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.PreparedTransaction) {
-				actual = in.Envelope.Signature
+			Do(func(_ context.Context, in *gateway.SubmitRequest) {
+				actual = in.PreparedTransaction.Signature
 			}).
-			Return(newSuccessSubmitClient(mockController), nil).
+			Return(nil, nil).
 			Times(1)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSign(sign))
@@ -405,9 +389,9 @@ func TestSubmitTransaction(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(mockController)
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newPreparedTransaction("TRANSACTION_RESULT"), nil)
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(newSuccessSubmitClient(mockController), nil)
+			Return(nil, nil)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSign(sign), WithHash(hash))
 

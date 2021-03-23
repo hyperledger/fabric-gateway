@@ -6,6 +6,12 @@
 
 package org.hyperledger.fabric.client;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,23 +20,19 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.protobuf.ByteString;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.X509Identity;
-import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
-import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
+import org.hyperledger.fabric.protos.gateway.EndorseRequest;
+import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
+import com.google.protobuf.ByteString;
+
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 
 public final class SubmitTransactionTest {
     private static final TestUtils utils = TestUtils.getInstance();
@@ -57,7 +59,7 @@ public final class SubmitTransactionTest {
 
     @Test
     void returns_gateway_response() throws Exception {
-        doReturn(utils.newPreparedTransaction("MY_RESULT"))
+        doReturn(utils.newEndorseResponse("MY_RESULT"))
                 .when(stub).endorse(any());
 
         Contract contract = network.getContract("CHAINCODE_ID");
@@ -71,8 +73,8 @@ public final class SubmitTransactionTest {
         Contract contract = network.getContract("MY_CHAINCODE_ID");
         contract.submitTransaction("TRANSACTION_NAME");
 
-        ProposedTransaction request = mocker.captureEndorse();
-        String actual = mocker.getChaincodeSpec(request).getChaincodeId().getName();
+        EndorseRequest request = mocker.captureEndorse();
+        String actual = mocker.getChaincodeSpec(request.getProposedTransaction()).getChaincodeId().getName();
 
         assertThat(actual).isEqualTo("MY_CHAINCODE_ID");
     }
@@ -82,8 +84,8 @@ public final class SubmitTransactionTest {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.submitTransaction("MY_TRANSACTION_NAME");
 
-        ProposedTransaction request = mocker.captureEndorse();
-        List<String> chaincodeArgs = mocker.getChaincodeSpec(request).getInput().getArgsList().stream()
+        EndorseRequest request = mocker.captureEndorse();
+        List<String> chaincodeArgs = mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
                 .map(ByteString::toStringUtf8)
                 .collect(Collectors.toList());
 
@@ -95,8 +97,8 @@ public final class SubmitTransactionTest {
         Contract contract = network.getContract("CHAINCODE_ID", "MY_CONTRACT");
         contract.submitTransaction("MY_TRANSACTION_NAME");
 
-        ProposedTransaction request = mocker.captureEndorse();
-        List<String> chaincodeArgs = mocker.getChaincodeSpec(request).getInput().getArgsList().stream()
+        EndorseRequest request = mocker.captureEndorse();
+        List<String> chaincodeArgs = mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
                 .map(ByteString::toStringUtf8)
                 .collect(Collectors.toList());
 
@@ -108,8 +110,8 @@ public final class SubmitTransactionTest {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.submitTransaction("TRANSACTION_NAME", "one", "two", "three");
 
-        ProposedTransaction request = mocker.captureEndorse();
-        List<String> chaincodeArgs = mocker.getChaincodeSpec(request).getInput().getArgsList().stream()
+        EndorseRequest request = mocker.captureEndorse();
+        List<String> chaincodeArgs = mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
                 .skip(1)
                 .map(ByteString::toStringUtf8)
                 .collect(Collectors.toList());
@@ -125,8 +127,8 @@ public final class SubmitTransactionTest {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.submitTransaction("TRANSACTION_NAME", arguments);
 
-        ProposedTransaction request = mocker.captureEndorse();
-        byte[][] chaincodeArgs = mocker.getChaincodeSpec(request).getInput().getArgsList().stream()
+        EndorseRequest request = mocker.captureEndorse();
+        byte[][] chaincodeArgs = mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
                 .skip(1)
                 .map(ByteString::toByteArray)
                 .toArray(byte[][]::new);
@@ -143,8 +145,8 @@ public final class SubmitTransactionTest {
             Contract contract = network.getContract("CHAINCODE_ID");
             contract.submitTransaction("TRANSACTION_NAME");
 
-            ProposedTransaction request = mocker.captureEndorse();
-            String signature = request.getProposal().getSignature().toStringUtf8();
+            EndorseRequest request = mocker.captureEndorse();
+            String signature = request.getProposedTransaction().getSignature().toStringUtf8();
 
             assertThat(signature).isEqualTo("MY_SIGNATURE");
         }
@@ -159,8 +161,8 @@ public final class SubmitTransactionTest {
             Contract contract = network.getContract("CHAINCODE_ID");
             contract.submitTransaction("TRANSACTION_NAME");
 
-            ProposedTransaction request = mocker.captureEndorse();
-            ByteString serializedIdentity = mocker.getSignatureHeader(request).getCreator();
+            EndorseRequest request = mocker.captureEndorse();
+            ByteString serializedIdentity = mocker.getSignatureHeader(request.getProposedTransaction()).getCreator();
 
             byte[] expected = GatewayUtils.serializeIdentity(identity);
             assertThat(serializedIdentity.toByteArray()).isEqualTo(expected);
@@ -174,8 +176,8 @@ public final class SubmitTransactionTest {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.submitTransaction("TRANSACTION_NAME");
 
-        ProposedTransaction request = mocker.captureEndorse();
-        String networkName = mocker.getChannelHeader(request).getChannelId();
+        EndorseRequest request = mocker.captureEndorse();
+        String networkName = mocker.getChannelHeader(request.getProposedTransaction()).getChannelId();
 
         assertThat(networkName).isEqualTo("MY_NETWORK");
     }
@@ -187,7 +189,7 @@ public final class SubmitTransactionTest {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.submitTransaction("TRANSACTION_NAME");
 
-        ProposedTransaction request = mocker.captureEndorse();
+        EndorseRequest request = mocker.captureEndorse();
         String networkName = request.getChannelId();
 
         assertThat(networkName).isEqualTo("MY_NETWORK");
@@ -200,9 +202,9 @@ public final class SubmitTransactionTest {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.submitTransaction("TRANSACTION_NAME");
 
-        ProposedTransaction request = mocker.captureEndorse();
-        String expected = mocker.getChannelHeader(request).getTxId();
-        String actual = request.getTxId();
+        EndorseRequest request = mocker.captureEndorse();
+        String expected = mocker.getChannelHeader(request.getProposedTransaction()).getTxId();
+        String actual = request.getTransactionId();
 
         assertThat(actual).isEqualTo(expected);
     }
@@ -216,8 +218,8 @@ public final class SubmitTransactionTest {
             Contract contract = network.getContract("CHAINCODE_ID");
             contract.submitTransaction("TRANSACTION_NAME");
 
-            PreparedTransaction request = mocker.captureSubmit();
-            String signature = request.getEnvelope().getSignature().toStringUtf8();
+            SubmitRequest request = mocker.captureSubmit();
+            String signature = request.getPreparedTransaction().getSignature().toStringUtf8();
 
             assertThat(signature).isEqualTo("MY_SIGNATURE");
         }

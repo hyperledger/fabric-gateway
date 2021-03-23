@@ -6,30 +6,31 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.Iterator;
-
-import com.google.protobuf.ByteString;
-import org.hyperledger.fabric.protos.gateway.Event;
+import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
-import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.gateway.SubmitRequest;
+
+import com.google.protobuf.ByteString;
 
 class TransactionImpl implements Transaction {
     private final GatewayGrpc.GatewayBlockingStub client;
     private final SigningIdentity signingIdentity;
+    private final String channelName;
     private PreparedTransaction preparedTransaction;
 
-
-    TransactionImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity, final PreparedTransaction preparedTransaction) {
+    TransactionImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity,
+            final String channelName, final PreparedTransaction preparedTransaction) {
         this.client = client;
         this.signingIdentity = signingIdentity;
+        this.channelName = channelName;
         this.preparedTransaction = preparedTransaction;
     }
 
     @Override
     public byte[] getResult() {
-        return preparedTransaction.getResponse()
-                .getValue()
+        return preparedTransaction.getResult()
+                .getPayload()
                 .toByteArray();
     }
 
@@ -46,14 +47,10 @@ class TransactionImpl implements Transaction {
 
     @Override
     public Commit submitAsync() {
-        Iterator<Event> eventIter = submit();
+        submit();
         final byte[] result = getResult(); // Get result on current thread, not in Future
 
         return () -> {
-            while (eventIter.hasNext()) {
-                Event event = eventIter.next();
-                //throw new ContractException("Failed to commit: " + event.getValue().toStringUtf8());
-            }
             return result;
         };
     }
@@ -65,9 +62,15 @@ class TransactionImpl implements Transaction {
 
     private final int sleepTime = 2000;
 
-    private Iterator<Event> submit() {
+    private void submit() {
         sign();
-        Iterator<Event> stream = client.submit(preparedTransaction);
+
+        SubmitRequest submitRequest = SubmitRequest.newBuilder()
+                .setTransactionId(preparedTransaction.getTransactionId())
+                .setChannelId(channelName)
+                .setPreparedTransaction(preparedTransaction.getEnvelope())
+                .build();
+        client.submit(submitRequest);
 
         //// TODO remove the following once commit notification has been implemented in the gateway
         try {
@@ -77,7 +80,7 @@ class TransactionImpl implements Transaction {
         }
         /////
 
-        return stream;
+        return;
     }
 
     void setSignature(final byte[] signature) {

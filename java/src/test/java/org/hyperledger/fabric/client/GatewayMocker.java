@@ -6,21 +6,26 @@
 
 package org.hyperledger.fabric.client;
 
+import static org.mockito.Mockito.spy;
+
 import java.util.concurrent.TimeUnit;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-import io.grpc.ManagedChannel;
-import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
-import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.gateway.EndorseRequest;
+import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
+import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
+import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.hyperledger.fabric.protos.peer.Chaincode;
 import org.hyperledger.fabric.protos.peer.ProposalPackage;
+import org.hyperledger.fabric.protos.peer.ProposalPackage.SignedProposal;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.mockito.MockitoSession;
 
-import static org.mockito.Mockito.spy;
+import com.google.protobuf.InvalidProtocolBufferException;
+
+import io.grpc.ManagedChannel;
 
 public final class GatewayMocker implements AutoCloseable {
     private static final TestUtils utils = TestUtils.getInstance();
@@ -32,9 +37,11 @@ public final class GatewayMocker implements AutoCloseable {
 
     private final MockitoSession mockitoSession;
     @Captor
-    private ArgumentCaptor<ProposedTransaction> proposedTransactionCaptor;
+    private ArgumentCaptor<EndorseRequest> endorseRequestCaptor;
     @Captor
-    private ArgumentCaptor<PreparedTransaction> preparedTransactionCaptor;
+    private ArgumentCaptor<EvaluateRequest> evaluateRequestCaptor;
+    @Captor
+    private ArgumentCaptor<SubmitRequest> submitRequestCaptor;
 
     public GatewayMocker() {
         this(utils.newGatewayBuilder());
@@ -65,44 +72,44 @@ public final class GatewayMocker implements AutoCloseable {
         return builder;
     }
 
-    public ProposedTransaction captureEndorse() {
-        Mockito.verify(stub).endorse(proposedTransactionCaptor.capture());
-        return proposedTransactionCaptor.getValue();
+    public EndorseRequest captureEndorse() {
+        Mockito.verify(stub).endorse(endorseRequestCaptor.capture());
+        return endorseRequestCaptor.getValue();
     }
 
-    public ProposedTransaction captureEvaluate() {
-        Mockito.verify(stub).evaluate(proposedTransactionCaptor.capture());
-        return proposedTransactionCaptor.getValue();
+    public EvaluateRequest captureEvaluate() {
+        Mockito.verify(stub).evaluate(evaluateRequestCaptor.capture());
+        return evaluateRequestCaptor.getValue();
     }
 
-    public PreparedTransaction captureSubmit() {
-        Mockito.verify(stub).submit(preparedTransactionCaptor.capture());
-        return preparedTransactionCaptor.getValue();
+    public SubmitRequest captureSubmit() {
+        Mockito.verify(stub).submit(submitRequestCaptor.capture());
+        return submitRequestCaptor.getValue();
     }
 
-    public Chaincode.ChaincodeSpec getChaincodeSpec(ProposedTransaction request) throws InvalidProtocolBufferException {
-        ProposalPackage.Proposal proposal = getProposal(request);
+    public Chaincode.ChaincodeSpec getChaincodeSpec(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
+        ProposalPackage.Proposal proposal = getProposal(proposedTransaction);
         ProposalPackage.ChaincodeProposalPayload chaincodeProposalPayload = ProposalPackage.ChaincodeProposalPayload.parseFrom(proposal.getPayload());
         Chaincode.ChaincodeInvocationSpec chaincodeInvocationSpec = Chaincode.ChaincodeInvocationSpec.parseFrom(chaincodeProposalPayload.getInput());
         return chaincodeInvocationSpec.getChaincodeSpec();
     }
 
-    public ProposalPackage.Proposal getProposal(ProposedTransaction request) throws InvalidProtocolBufferException {
-        return ProposalPackage.Proposal.parseFrom(request.getProposal().getProposalBytes());
+    public ProposalPackage.Proposal getProposal(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
+        return ProposalPackage.Proposal.parseFrom(proposedTransaction.getProposalBytes());
     }
 
-    public Common.SignatureHeader getSignatureHeader(ProposedTransaction request) throws InvalidProtocolBufferException {
-        Common.Header header = getHeader(request);
+    public Common.SignatureHeader getSignatureHeader(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
+        Common.Header header = getHeader(proposedTransaction);
         return Common.SignatureHeader.parseFrom(header.getSignatureHeader());
     }
 
-    public Common.ChannelHeader getChannelHeader(ProposedTransaction request) throws InvalidProtocolBufferException {
-        Common.Header header = getHeader(request);
+    public Common.ChannelHeader getChannelHeader(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
+        Common.Header header = getHeader(proposedTransaction);
         return Common.ChannelHeader.parseFrom(header.getChannelHeader());
     }
 
-    public Common.Header getHeader(ProposedTransaction request) throws InvalidProtocolBufferException {
-        ProposalPackage.Proposal proposal = getProposal(request);
+    public Common.Header getHeader(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
+        ProposalPackage.Proposal proposal = getProposal(proposedTransaction);
         return Common.Header.parseFrom(proposal.getHeader());
     }
 }

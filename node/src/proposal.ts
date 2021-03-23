@@ -5,7 +5,7 @@
  */
 
 import { GatewayClient } from './client';
-import { protos } from './protos/protos';
+import { common, gateway, protos } from './protos/protos';
 import { SigningIdentity } from './signingidentity';
 import { Transaction, TransactionImpl } from './transaction';
 import * as util from 'util';
@@ -42,18 +42,21 @@ export interface Proposal {
 export interface ProposalImplOptions {
     readonly client: GatewayClient;
     readonly signingIdentity: SigningIdentity;
-    readonly proposedTransaction: protos.IProposedTransaction;
+    readonly channelName: string;
+    readonly proposedTransaction: gateway.IProposedTransaction;
 }
 
 export class ProposalImpl implements Proposal {
     readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
-    readonly #proposedTransaction: protos.IProposedTransaction;
+    readonly #channelName: string;
+    readonly #proposedTransaction: gateway.IProposedTransaction;
     readonly #proposal: protos.ISignedProposal;
 
     constructor(options: ProposalImplOptions) {
         this.#client = options.client;
         this.#signingIdentity = options.signingIdentity;
+        this.#channelName = options.channelName;
         this.#proposedTransaction = options.proposedTransaction;
 
         const proposal = options.proposedTransaction.proposal;
@@ -64,7 +67,7 @@ export class ProposalImpl implements Proposal {
     }
 
     getBytes(): Uint8Array {
-        return protos.ProposedTransaction.encode(this.#proposedTransaction).finish();
+        return gateway.ProposedTransaction.encode(this.#proposedTransaction).finish();
     }
 
     getDigest(): Uint8Array {
@@ -76,7 +79,7 @@ export class ProposalImpl implements Proposal {
     }
 
     getTransactionId(): string {
-        const transactionId = this.#proposedTransaction.tx_id;
+        const transactionId = this.#proposedTransaction.transaction_id;
         if (typeof transactionId !== 'string') {
             throw new Error(`Transaction ID not defined: ${util.inspect(this.#proposedTransaction)}`);
         }
@@ -85,18 +88,21 @@ export class ProposalImpl implements Proposal {
 
     async evaluate(): Promise<Uint8Array> {
         await this.sign();
-        const result = await this.#client.evaluate(this.#proposedTransaction);
-        return result.value || new Uint8Array(0);
+        const evaluateResponse = await this.#client.evaluate(this.newEvaluateRequest());
+        const result = evaluateResponse.result;
+
+        return result?.payload || new Uint8Array(0);
     }
 
     async endorse(): Promise<Transaction> {
         await this.sign();
-        const preparedTransaction = await this.#client.endorse(this.#proposedTransaction);
+        const endorseResponse = await this.#client.endorse(this.newEndorseRequest());
 
         return new TransactionImpl({
             client: this.#client,
             signingIdentity: this.#signingIdentity,
-            preparedTransaction,
+            channelName: this.#channelName,
+            preparedTransaction: this.newPreparedTransaction(endorseResponse.prepared_transaction, endorseResponse.result)
         });
     }
 
@@ -116,5 +122,30 @@ export class ProposalImpl implements Proposal {
     private isSigned(): boolean {
         const signatureLength = this.#proposal.signature?.length ?? 0;
         return signatureLength > 0;
+    }
+
+    private newEvaluateRequest(): gateway.IEvaluateRequest {
+        return {
+            transaction_id: this.#proposedTransaction.transaction_id,
+            channel_id: this.#channelName,
+            proposed_transaction: this.#proposal,
+        };
+    }
+
+    private newEndorseRequest(): gateway.IEndorseRequest {
+        return {
+            transaction_id: this.#proposedTransaction.transaction_id,
+            channel_id: this.#channelName,
+            proposed_transaction: this.#proposal,
+        };
+    }
+
+    // TODO Do something about "| null | undefined"???
+    private newPreparedTransaction(envelope: common.IEnvelope | null | undefined, result: protos.IResponse | null | undefined): gateway.IPreparedTransaction {
+        return {
+            transaction_id: this.#proposedTransaction.transaction_id,
+            envelope,
+            result,
+        };
     }
 }

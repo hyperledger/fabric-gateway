@@ -9,12 +9,12 @@ import { Contract } from './contract';
 import { connect, Gateway, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { protos } from './protos/protos';
+import { gateway } from './protos/protos';
 
 interface MockGatewayClient extends GatewayClient {
-    endorse: jest.Mock<Promise<protos.IPreparedTransaction>, protos.IProposedTransaction[]>,
-    evaluate: jest.Mock<Promise<protos.IResult>, protos.IProposedTransaction[]>,
-    submit: jest.Mock<Promise<protos.IEvent>, protos.IPreparedTransaction[]>,
+    endorse: jest.Mock<Promise<gateway.IEndorseResponse>, gateway.IEndorseRequest[]>,
+    evaluate: jest.Mock<Promise<gateway.IEvaluateResponse>, gateway.IEvaluateRequest[]>,
+    submit: jest.Mock<Promise<gateway.ISubmitResponse>, gateway.ISubmitRequest[]>,
 }
 
 function newMockGatewayClient(): MockGatewayClient {
@@ -37,14 +37,16 @@ describe('Offline sign', () => {
     beforeEach(async () => {
         client = newMockGatewayClient();
         client.evaluate.mockResolvedValue({
-            value: Buffer.from(expectedResult),
+            result: {
+                payload: Buffer.from(expectedResult),
+            },
         });
         client.endorse.mockResolvedValue({
-            envelope: {
+            prepared_transaction: {
                 payload: Buffer.from('PAYLOAD'),
             },
-            response: {
-                value: Buffer.from(expectedResult),
+            result: {
+                payload: Buffer.from(expectedResult),
             },
         });
 
@@ -76,8 +78,8 @@ describe('Offline sign', () => {
             const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), expected);
             await signedProposal.evaluate();
     
-            const proposedTransaction = client.evaluate.mock.calls[0][0];
-            const actual = Buffer.from(proposedTransaction.proposal?.signature ?? '').toString();
+            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const actual = Buffer.from(evaluateRequest.proposed_transaction?.signature ?? '').toString();
             expect(actual).toBe(expected.toString());
         });
     });
@@ -96,8 +98,8 @@ describe('Offline sign', () => {
             const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), expected);
             await signedProposal.endorse();
     
-            const proposedTransaction = client.endorse.mock.calls[0][0];
-            const actual = Buffer.from(proposedTransaction.proposal?.signature ?? '').toString();
+            const endorseRequest = client.endorse.mock.calls[0][0];
+            const actual = Buffer.from(endorseRequest.proposed_transaction?.signature ?? '').toString();
             expect(actual).toBe(expected.toString());
         });
     });
@@ -120,8 +122,8 @@ describe('Offline sign', () => {
             const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), expected);
             await signedTransaction.submit();
     
-            const preparedTransaction = client.submit.mock.calls[0][0];
-            const actual = Buffer.from(preparedTransaction.envelope?.signature ?? '').toString();
+            const submitRequest = client.submit.mock.calls[0][0];
+            const actual = Buffer.from(submitRequest.prepared_transaction?.signature ?? '').toString();
             expect(actual).toBe(expected.toString());
         });
     });

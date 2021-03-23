@@ -6,19 +6,21 @@
 
 package org.hyperledger.fabric.client;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import java.nio.charset.StandardCharsets;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.X509Identity;
-import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
-import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
+import org.hyperledger.fabric.protos.gateway.EndorseRequest;
+import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
+import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 public final class OfflineSignTest {
     private static final TestUtils utils = TestUtils.getInstance();
@@ -64,8 +66,8 @@ public final class OfflineSignTest {
         Proposal signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), expected);
         signedProposal.evaluate();
 
-        ProposedTransaction request = mocker.captureEvaluate();
-        byte[] actual = request.getProposal().getSignature().toByteArray();
+        EvaluateRequest request = mocker.captureEvaluate();
+        byte[] actual = request.getProposedTransaction().getSignature().toByteArray();
 
         assertThat(actual).isEqualTo(expected);
     }
@@ -86,8 +88,8 @@ public final class OfflineSignTest {
         Proposal signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), expected);
         signedProposal.endorse();
 
-        ProposedTransaction request = mocker.captureEndorse();
-        byte[] actual = request.getProposal().getSignature().toByteArray();
+        EndorseRequest request = mocker.captureEndorse();
+        byte[] actual = request.getProposedTransaction().getSignature().toByteArray();
 
         assertThat(actual).isEqualTo(expected);
     }
@@ -112,8 +114,8 @@ public final class OfflineSignTest {
         Transaction signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), expected);
         signedTransaction.submitSync();
 
-        PreparedTransaction request = mocker.captureSubmit();
-        byte[] actual = request.getEnvelope().getSignature().toByteArray();
+        SubmitRequest request = mocker.captureSubmit();
+        byte[] actual = request.getPreparedTransaction().getSignature().toByteArray();
 
         assertThat(actual).isEqualTo(expected);
     }

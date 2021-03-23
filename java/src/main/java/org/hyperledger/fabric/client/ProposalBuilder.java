@@ -70,14 +70,13 @@ final class ProposalBuilder implements Proposal.Builder {
 
     @Override
     public Proposal build() {
-        return new ProposalImpl(client, signingIdentity, newProposedTransaction());
+        return new ProposalImpl(client, signingIdentity, channelName, newProposedTransaction());
     }
 
     private ProposedTransaction newProposedTransaction() {
         return ProposedTransaction.newBuilder()
                 .setProposal(newSignedProposal())
-                .setTxId(context.getTransactionId())
-                .setChannelId(channelName)
+                .setTransactionId(context.getTransactionId())
                 .build();
     }
 

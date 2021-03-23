@@ -6,12 +6,15 @@
 
 package org.hyperledger.fabric.client;
 
-import io.grpc.stub.StreamObserver;
-import org.hyperledger.fabric.protos.gateway.Event;
+import org.hyperledger.fabric.protos.gateway.EndorseRequest;
+import org.hyperledger.fabric.protos.gateway.EndorseResponse;
+import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
+import org.hyperledger.fabric.protos.gateway.EvaluateResponse;
 import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
-import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
-import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
-import org.hyperledger.fabric.protos.gateway.Result;
+import org.hyperledger.fabric.protos.gateway.SubmitRequest;
+import org.hyperledger.fabric.protos.gateway.SubmitResponse;
+
+import io.grpc.stub.StreamObserver;
 
 public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
     private static final GatewayServiceStub DEFAULT_STUB = new GatewayServiceStub();
@@ -27,10 +30,10 @@ public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
     }
 
     @Override
-    public void endorse(ProposedTransaction request, StreamObserver<PreparedTransaction> responseObserver) {
+    public void endorse(EndorseRequest request, StreamObserver<EndorseResponse> responseObserver) {
         try {
-            PreparedTransaction result = stub.endorse(request);
-            responseObserver.onNext(result);
+            EndorseResponse response = stub.endorse(request);
+            responseObserver.onNext(response);
             responseObserver.onCompleted();
         } catch (Exception e) {
             responseObserver.onError(e);
@@ -38,9 +41,10 @@ public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
     }
 
     @Override
-    public void submit(PreparedTransaction request, StreamObserver<Event> responseObserver) {
+    public void submit(SubmitRequest request, StreamObserver<SubmitResponse> responseObserver) {
         try {
-            stub.submit(request).forEach(responseObserver::onNext);
+            SubmitResponse response = stub.submit(request);
+            responseObserver.onNext(response);
             responseObserver.onCompleted();
         } catch (Exception e) {
             responseObserver.onError(e);
@@ -48,10 +52,10 @@ public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
     }
 
     @Override
-    public void evaluate(ProposedTransaction request, StreamObserver<Result> responseObserver) {
+    public void evaluate(EvaluateRequest request, StreamObserver<EvaluateResponse> responseObserver) {
         try {
-            Result result = stub.evaluate(request);
-            responseObserver.onNext(result);
+            EvaluateResponse response = stub.evaluate(request);
+            responseObserver.onNext(response);
             responseObserver.onCompleted();
         } catch (Exception e) {
             responseObserver.onError(e);

@@ -171,6 +171,12 @@ github.com/hyperledger/fabric-amcl v0.0.0-20200424173818-327c9e2cf77a h1:JAKZdGu
 github.com/hyperledger/fabric-amcl v0.0.0-20200424173818-327c9e2cf77a/go.mod h1:X+DIyUsaTmalOpmpQfIvFZjKHQedrURQ5t4YqquX7lE=
 github.com/hyperledger/fabric-protos-go v0.0.0-20210127161553-4f432a78f286 h1:cFLrvWUprlCbVixFkaeONNlUtbsjv3c20ujb4RJFBl8=
 github.com/hyperledger/fabric-protos-go v0.0.0-20210127161553-4f432a78f286/go.mod h1:xVYTjK4DtZRBxZ2D9aE4y6AbLaPwue2o/criQyQbVD0=
+github.com/hyperledger/fabric-protos-go v0.0.0-20210311171918-e08edaab0493 h1:jj4S9FWy0o0Re0XhMAPaL3d/ho3pqWcNH8duMcRxVNw=
+github.com/hyperledger/fabric-protos-go v0.0.0-20210311171918-e08edaab0493/go.mod h1:xVYTjK4DtZRBxZ2D9aE4y6AbLaPwue2o/criQyQbVD0=
+github.com/hyperledger/fabric-protos-go v0.0.0-20210316153620-d0b39a899b24 h1:a3fvPiP6GXnVlTtWMHDmIPt9P2/EQ2aiY6A9fTsqX/s=
+github.com/hyperledger/fabric-protos-go v0.0.0-20210316153620-d0b39a899b24/go.mod h1:xVYTjK4DtZRBxZ2D9aE4y6AbLaPwue2o/criQyQbVD0=
+github.com/hyperledger/fabric-protos-go v0.0.0-20210318103044-13fdee960194 h1:orJqC5I8O/pUGWBwlyxEFfJh7WdbvqNd4mLdLWyghIo=
+github.com/hyperledger/fabric-protos-go v0.0.0-20210318103044-13fdee960194/go.mod h1:xVYTjK4DtZRBxZ2D9aE4y6AbLaPwue2o/criQyQbVD0=
 github.com/jcmturner/gofork v1.0.0 h1:J7uCkflzTEhUZ64xqKnkDxq3kzc96ajM1Gli5ktUem8=
 github.com/jcmturner/gofork v1.0.0/go.mod h1:MK8+TM0La+2rjBD4jE12Kj1pCCxK7d2LK/UM3ncEo0o=
 github.com/jonboulle/clockwork v0.1.0/go.mod h1:Ii8DK3G1RaLaWxj9trq07+26W01tbo22gdxWY5EU2bo=

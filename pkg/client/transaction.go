@@ -9,7 +9,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -20,12 +19,13 @@ import (
 type Transaction struct {
 	client              gateway.GatewayClient
 	signingID           *signingIdentity
+	channelID           string
 	preparedTransaction *gateway.PreparedTransaction
 }
 
 // Result of the proposed transaction invocation.
 func (transaction *Transaction) Result() []byte {
-	return transaction.preparedTransaction.Response.Value
+	return transaction.preparedTransaction.Result.Payload
 }
 
 // Bytes of the serialized transaction.
@@ -44,39 +44,27 @@ func (transaction *Transaction) Digest() ([]byte, error) {
 }
 
 // Submit the transaction to the orderer for commit to the ledger.
-func (transaction *Transaction) Submit() (chan error, error) {
+func (transaction *Transaction) Submit() ([]byte, error) {
 	if err := transaction.sign(); err != nil {
 		return nil, err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+	defer cancel()
 
-	stream, err := transaction.client.Submit(ctx, transaction.preparedTransaction)
+	submitRequest := &gateway.SubmitRequest{
+		TransactionId:       transaction.preparedTransaction.TransactionId,
+		ChannelId:           transaction.channelID,
+		PreparedTransaction: transaction.preparedTransaction.Envelope,
+	}
+	_, err := transaction.client.Submit(ctx, submitRequest)
 	if err != nil {
-		cancel()
 		return nil, fmt.Errorf("failed to submit transaction to the orderer: %w", err)
 	}
 
-	commit := make(chan error)
-	go func() {
-		defer cancel()
-		for {
-			event, err := stream.Recv()
-			if err == io.EOF {
-				commit <- nil
-				return
-			}
-			if err != nil {
-				commit <- fmt.Errorf("failed to receive event: %w", err)
-				return
-			}
-			fmt.Println(event)
-		}
-	}()
-
 	time.Sleep(2 * time.Second) // todo remove once 'wait for commit' has been implemented in the embedded gateway
 
-	return commit, nil
+	return transaction.preparedTransaction.Result.Payload, nil
 }
 
 func (transaction *Transaction) sign() error {

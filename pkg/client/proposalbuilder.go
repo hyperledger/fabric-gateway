@@ -41,16 +41,16 @@ func (builder *proposalBuilder) build() (*Proposal, error) {
 		ProposalBytes: proposalBytes,
 	}
 
-	proposedTransactionProto := &gateway.ProposedTransaction{
-		Proposal:  signedProposalProto,
-		TxId:      transactionID,
-		ChannelId: builder.channelName,
+	proposedTransaction := &gateway.ProposedTransaction{
+		TransactionId: transactionID,
+		Proposal:      signedProposalProto,
 	}
 
 	proposal := &Proposal{
 		client:              builder.client,
 		signingID:           builder.signingID,
-		proposedTransaction: proposedTransactionProto,
+		channelID:           builder.channelName,
+		proposedTransaction: proposedTransaction,
 	}
 	return proposal, nil
 }

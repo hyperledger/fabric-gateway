@@ -19,12 +19,18 @@ import (
 type Proposal struct {
 	client              gateway.GatewayClient
 	signingID           *signingIdentity
+	channelID           string
 	proposedTransaction *gateway.ProposedTransaction
 }
 
 // Bytes of the serialized proposal message.
 func (proposal *Proposal) Bytes() ([]byte, error) {
-	return proto.Marshal(proposal.proposedTransaction)
+	transactionBytes, err := proto.Marshal(proposal.proposedTransaction)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshall Proposal protobuf: %w", err)
+	}
+
+	return transactionBytes, nil
 }
 
 // Digest of the proposal. This is used to generate a digital signature.
@@ -34,7 +40,7 @@ func (proposal *Proposal) Digest() ([]byte, error) {
 
 // TransactionID for the proposal.
 func (proposal *Proposal) TransactionID() string {
-	return proposal.proposedTransaction.TxId
+	return proposal.proposedTransaction.TransactionId
 }
 
 // Endorse the proposal to obtain an endorsed transaction for submission to the orderer.
@@ -46,14 +52,25 @@ func (proposal *Proposal) Endorse() (*Transaction, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
-	preparedTransaction, err := proposal.client.Endorse(ctx, proposal.proposedTransaction)
+	endorseRequest := &gateway.EndorseRequest{
+		TransactionId:       proposal.proposedTransaction.TransactionId,
+		ChannelId:           proposal.channelID,
+		ProposedTransaction: proposal.proposedTransaction.Proposal,
+	}
+	response, err := proposal.client.Endorse(ctx, endorseRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to endorse proposal: %w", err)
 	}
 
+	preparedTransaction := &gateway.PreparedTransaction{
+		TransactionId: proposal.proposedTransaction.TransactionId,
+		Envelope:      response.PreparedTransaction,
+		Result:        response.Result,
+	}
 	result := &Transaction{
 		client:              proposal.client,
 		signingID:           proposal.signingID,
+		channelID:           proposal.channelID,
 		preparedTransaction: preparedTransaction,
 	}
 	return result, nil
@@ -68,12 +85,17 @@ func (proposal *Proposal) Evaluate() ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
-	result, err := proposal.client.Evaluate(ctx, proposal.proposedTransaction)
+	evaluateRequest := &gateway.EvaluateRequest{
+		TransactionId:       proposal.proposedTransaction.TransactionId,
+		ChannelId:           proposal.channelID,
+		ProposedTransaction: proposal.proposedTransaction.Proposal,
+	}
+	response, err := proposal.client.Evaluate(ctx, evaluateRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to evaluate transaction: %w", err)
 	}
 
-	return result.Value, nil
+	return response.Result.Payload, nil
 }
 
 func (proposal *Proposal) setSignature(signature []byte) {

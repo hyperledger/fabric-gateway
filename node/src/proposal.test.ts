@@ -9,12 +9,12 @@ import { connect, Gateway, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
 import { GatewayClient } from './client';
-import { protos, common, msp } from './protos/protos';
+import { common, gateway, msp, protos } from './protos/protos';
 
 interface MockGatewayClient extends GatewayClient {
-    endorse: jest.Mock<Promise<protos.IPreparedTransaction>, protos.IProposedTransaction[]>,
-    evaluate: jest.Mock<Promise<protos.IResult>, protos.IProposedTransaction[]>,
-    submit: jest.Mock<Promise<protos.IEvent>, protos.IPreparedTransaction[]>,
+    endorse: jest.Mock<Promise<gateway.IEndorseResponse>, gateway.IEndorseRequest[]>,
+    evaluate: jest.Mock<Promise<gateway.IEvaluateResponse>, gateway.IEvaluateRequest[]>,
+    submit: jest.Mock<Promise<gateway.ISubmitResponse>, gateway.ISubmitRequest[]>,
 }
 
 function newMockGatewayClient(): MockGatewayClient {
@@ -25,22 +25,27 @@ function newMockGatewayClient(): MockGatewayClient {
     };
 }
 
-function assertDecodeProposal(proposedTransaction: protos.IProposedTransaction): protos.Proposal {
-    expect(proposedTransaction.proposal).toBeDefined();
-    expect(proposedTransaction.proposal!.proposal_bytes).toBeDefined(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
-    return protos.Proposal.decode(proposedTransaction.proposal!.proposal_bytes!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+function assertDecodeEvaluateRequest(request: gateway.IEvaluateRequest): protos.Proposal {
+    expect(request.proposed_transaction).toBeDefined();
+    expect(request.proposed_transaction!.proposal_bytes).toBeDefined(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+    return protos.Proposal.decode(request.proposed_transaction!.proposal_bytes!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
 }
 
-function assertDecodeChaincodeSpec(proposedTransaction: protos.IProposedTransaction): protos.IChaincodeSpec {
-    const proposal = assertDecodeProposal(proposedTransaction);
+function assertDecodeEndorseRequest(request: gateway.IEndorseRequest): protos.Proposal {
+    expect(request.proposed_transaction).toBeDefined();
+    expect(request.proposed_transaction!.proposal_bytes).toBeDefined(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+    return protos.Proposal.decode(request.proposed_transaction!.proposal_bytes!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+}
+
+function assertDecodeChaincodeSpec(proposal: protos.Proposal): protos.IChaincodeSpec {
     const payload = protos.ChaincodeProposalPayload.decode(proposal.payload);
     const invocationSpec = protos.ChaincodeInvocationSpec.decode(payload.input);
     expect(invocationSpec.chaincode_spec).toBeDefined();
     return invocationSpec.chaincode_spec!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
 }
 
-function assertDecodeArgsAsStrings(proposedTransaction: protos.IProposedTransaction): string[] {
-    const chaincodeSpec = assertDecodeChaincodeSpec(proposedTransaction);
+function assertDecodeArgsAsStrings(proposal: protos.Proposal): string[] {
+    const chaincodeSpec = assertDecodeChaincodeSpec(proposal);
     expect(chaincodeSpec.input).toBeDefined();
 
     const args = chaincodeSpec.input!.args; // eslint-disable-line @typescript-eslint/no-non-null-assertion
@@ -49,18 +54,17 @@ function assertDecodeArgsAsStrings(proposedTransaction: protos.IProposedTransact
     return args!.map(arg => Buffer.from(arg).toString()); // eslint-disable-line @typescript-eslint/no-non-null-assertion
 }
 
-function assertDecodeHeader(proposedTransaction: protos.IProposedTransaction): common.Header {
-    const proposal = assertDecodeProposal(proposedTransaction);
+function assertDecodeHeader(proposal: protos.Proposal): common.Header {
     return common.Header.decode(proposal.header);
 }
 
-function assertDecodeSignatureHeader(proposedTransaction: protos.IProposedTransaction): common.SignatureHeader {
-    const header = assertDecodeHeader(proposedTransaction);
+function assertDecodeSignatureHeader(proposal: protos.Proposal): common.SignatureHeader {
+    const header = assertDecodeHeader(proposal);
     return common.SignatureHeader.decode(header.signature_header);
 }
 
-function assertDecodeChannelHeader(proposedTransaction: protos.IProposedTransaction): common.ChannelHeader {
-    const header = assertDecodeHeader(proposedTransaction);
+function assertDecodeChannelHeader(proposal: protos.Proposal): common.ChannelHeader {
+    const header = assertDecodeHeader(proposal);
     return common.ChannelHeader.decode(header.channel_header);
 }
 
@@ -98,7 +102,9 @@ describe('Proposal', () => {
 
         beforeEach(() => {
             client.evaluate.mockResolvedValue({
-                value: Buffer.from(expectedResult),
+                result: {
+                    payload: Buffer.from(expectedResult),
+                },
             });
         });
 
@@ -118,15 +124,18 @@ describe('Proposal', () => {
         it('includes channel name in proposal', async () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
-            const proposedTransaction = client.evaluate.mock.calls[0][0];
-            const channelHeader = assertDecodeChannelHeader(proposedTransaction);
+            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const proposal = assertDecodeEvaluateRequest(evaluateRequest);
+            const channelHeader = assertDecodeChannelHeader(proposal);
             expect(channelHeader.channel_id).toBe(network.getName());
         });
 
         it('includes chaincode ID in proposal', async () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
-            const chaincodeSpec = assertDecodeChaincodeSpec(client.evaluate.mock.calls[0][0]);
+            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const proposal = assertDecodeEvaluateRequest(evaluateRequest);
+            const chaincodeSpec = assertDecodeChaincodeSpec(proposal);
             expect(chaincodeSpec.chaincode_id).toBeDefined();
             expect(chaincodeSpec.chaincode_id!.name).toBe(contract.getChaincodeId()); // eslint-disable-line @typescript-eslint/no-non-null-assertion
         });
@@ -136,7 +145,9 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('MY_TRANSACTION');
 
-            const argStrings = assertDecodeArgsAsStrings(client.evaluate.mock.calls[0][0]);
+            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const proposal = assertDecodeEvaluateRequest(evaluateRequest);
+            const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings[0]).toBe('MY_TRANSACTION');
         });
 
@@ -145,7 +156,9 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('MY_TRANSACTION');
 
-            const argStrings = assertDecodeArgsAsStrings(client.evaluate.mock.calls[0][0]);
+            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const proposal = assertDecodeEvaluateRequest(evaluateRequest);
+            const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings[0]).toBe('MY_CONTRACT:MY_TRANSACTION');
         });
 
@@ -154,7 +167,9 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('TRANSACTION_NAME', ...expected);
 
-            const argStrings = assertDecodeArgsAsStrings(client.evaluate.mock.calls[0][0]);
+            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const proposal = assertDecodeEvaluateRequest(evaluateRequest);
+            const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings.slice(1)).toStrictEqual(expected);
         });
 
@@ -164,7 +179,9 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('TRANSACTION_NAME', ...args);
 
-            const argStrings = assertDecodeArgsAsStrings(client.evaluate.mock.calls[0][0]);
+            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const proposal = assertDecodeEvaluateRequest(evaluateRequest);
+            const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings.slice(1)).toStrictEqual(expected);
         });
 
@@ -173,8 +190,8 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
-            const proposedTransaction = client.evaluate.mock.calls[0][0];
-            const signature = Buffer.from(proposedTransaction.proposal?.signature ?? '').toString();
+            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const signature = Buffer.from(evaluateRequest.proposed_transaction?.signature ?? '').toString();
             expect(signature).toBe('MY_SIGNATURE');
         });
 
@@ -193,8 +210,9 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
-            const proposedTransaction = client.evaluate.mock.calls[0][0];
-            const signatureHeader = assertDecodeSignatureHeader(proposedTransaction);
+            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const proposal = assertDecodeEvaluateRequest(evaluateRequest);
+            const signatureHeader = assertDecodeSignatureHeader(proposal);
 
             const expected = msp.SerializedIdentity.encode({
                 mspid: identity.mspId,
@@ -203,30 +221,31 @@ describe('Proposal', () => {
             expect(signatureHeader.creator).toEqual(expected);
         });
 
-        it('includes channel name in proposed transaction', async () => {
+        it('includes channel name in request', async () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
-            const proposedTransaction = client.evaluate.mock.calls[0][0];
-            expect(proposedTransaction.channel_id).toBe(network.getName());
+            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            expect(evaluateRequest.channel_id).toBe(network.getName());
         });
 
-        it('includes transaction ID in proposed transaction', async () => {
+        it('includes transaction ID in request', async () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
-            const proposedTransaction = client.evaluate.mock.calls[0][0];
-            const expected = assertDecodeChannelHeader(proposedTransaction).tx_id;
-            expect(proposedTransaction.tx_id).toBe(expected);
+            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const proposal = assertDecodeEvaluateRequest(evaluateRequest);
+            const expected = assertDecodeChannelHeader(proposal).tx_id;
+            expect(evaluateRequest.transaction_id).toBe(expected);
         });
     });
 
     describe('submit', () => {
         beforeEach(() => {
             client.endorse.mockResolvedValue({
-                envelope: {
+                prepared_transaction: {
                     payload: Buffer.from('PAYLOAD'),
                 },
-                response: {
-                    value: Buffer.from('TX_RESULT'),
+                result: {
+                    payload: Buffer.from('TX_RESULT'),
                 },
             });
         });
@@ -240,15 +259,18 @@ describe('Proposal', () => {
         it('includes channel name in proposal', async () => {
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            const proposedTransaction = client.endorse.mock.calls[0][0];
-            const channelHeader = assertDecodeChannelHeader(proposedTransaction);
+            const endorseRequest = client.endorse.mock.calls[0][0];
+            const proposal = assertDecodeEndorseRequest(endorseRequest);
+            const channelHeader = assertDecodeChannelHeader(proposal);
             expect(channelHeader.channel_id).toBe(network.getName());
         });
 
         it('includes chaincode ID in proposal', async () => {
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            const chaincodeSpec = assertDecodeChaincodeSpec(client.endorse.mock.calls[0][0]);
+            const endorseRequest = client.endorse.mock.calls[0][0];
+            const proposal = assertDecodeEndorseRequest(endorseRequest);
+            const chaincodeSpec = assertDecodeChaincodeSpec(proposal);
             expect(chaincodeSpec.chaincode_id).toBeDefined();
             expect(chaincodeSpec.chaincode_id!.name).toBe(contract.getChaincodeId()); // eslint-disable-line @typescript-eslint/no-non-null-assertion
         });
@@ -258,7 +280,9 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('MY_TRANSACTION');
 
-            const argStrings = assertDecodeArgsAsStrings(client.endorse.mock.calls[0][0]);
+            const endorseRequest = client.endorse.mock.calls[0][0];
+            const proposal = assertDecodeEndorseRequest(endorseRequest);
+            const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings[0]).toBe('MY_TRANSACTION');
         });
 
@@ -267,7 +291,9 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('MY_TRANSACTION');
 
-            const argStrings = assertDecodeArgsAsStrings(client.endorse.mock.calls[0][0]);
+            const endorseRequest = client.endorse.mock.calls[0][0];
+            const proposal = assertDecodeEndorseRequest(endorseRequest);
+            const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings[0]).toBe('MY_CONTRACT:MY_TRANSACTION');
         });
 
@@ -276,7 +302,9 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('TRANSACTION_NAME', ...expected);
 
-            const argStrings = assertDecodeArgsAsStrings(client.endorse.mock.calls[0][0]);
+            const endorseRequest = client.endorse.mock.calls[0][0];
+            const proposal = assertDecodeEndorseRequest(endorseRequest);
+            const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings.slice(1)).toStrictEqual(expected);
         });
 
@@ -286,7 +314,9 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('TRANSACTION_NAME', ...args);
 
-            const argStrings = assertDecodeArgsAsStrings(client.endorse.mock.calls[0][0]);
+            const endorseRequest = client.endorse.mock.calls[0][0];
+            const proposal = assertDecodeEndorseRequest(endorseRequest);
+            const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings.slice(1)).toStrictEqual(expected);
         });
 
@@ -295,8 +325,8 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            const proposedTransaction = client.endorse.mock.calls[0][0];
-            const signature = Buffer.from(proposedTransaction.proposal?.signature ?? '').toString();
+            const endorseRequest = client.endorse.mock.calls[0][0];
+            const signature = Buffer.from(endorseRequest.proposed_transaction?.signature ?? '').toString();
             expect(signature).toBe('MY_SIGNATURE');
         });
 
@@ -315,8 +345,9 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            const proposedTransaction = client.endorse.mock.calls[0][0];
-            const signatureHeader = assertDecodeSignatureHeader(proposedTransaction);
+            const endorseRequest = client.endorse.mock.calls[0][0];
+            const proposal = assertDecodeEndorseRequest(endorseRequest);
+            const signatureHeader = assertDecodeSignatureHeader(proposal);
 
             const expected = msp.SerializedIdentity.encode({
                 mspid: identity.mspId,
@@ -325,19 +356,20 @@ describe('Proposal', () => {
             expect(signatureHeader.creator).toEqual(expected);
         });
 
-        it('includes channel name in proposed transaction', async () => {
+        it('includes channel name in request', async () => {
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            const proposedTransaction = client.endorse.mock.calls[0][0];
-            expect(proposedTransaction.channel_id).toBe(network.getName());
+            const endorseRequest = client.endorse.mock.calls[0][0];
+            expect(endorseRequest.channel_id).toBe(network.getName());
         });
 
-        it('includes transaction ID in proposed transaction', async () => {
+        it('includes transaction ID in request', async () => {
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            const proposedTransaction = client.endorse.mock.calls[0][0];
-            const expected = assertDecodeChannelHeader(proposedTransaction).tx_id;
-            expect(proposedTransaction.tx_id).toBe(expected);
+            const endorseRequest = client.endorse.mock.calls[0][0];
+            const proposal = assertDecodeEndorseRequest(endorseRequest);
+            const expected = assertDecodeChannelHeader(proposal).tx_id;
+            expect(endorseRequest.transaction_id).toBe(expected);
         });
     });
 });

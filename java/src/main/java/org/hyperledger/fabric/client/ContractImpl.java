@@ -91,7 +91,7 @@ final class ContractImpl implements Contract {
     @Override
     public Proposal newSignedProposal(final byte[] proposalBytes, final byte[] signature) throws InvalidProtocolBufferException {
         ProposedTransaction proposedTransaction = ProposedTransaction.parseFrom(proposalBytes);
-        ProposalImpl proposal = new ProposalImpl(client, signingIdentity, proposedTransaction);
+        ProposalImpl proposal = new ProposalImpl(client, signingIdentity, channelName, proposedTransaction);
         proposal.setSignature(signature);
         return proposal;
     }
@@ -99,7 +99,7 @@ final class ContractImpl implements Contract {
     @Override
     public Transaction newSignedTransaction(final byte[] transactionBytes, final byte[] signature) throws InvalidProtocolBufferException {
         PreparedTransaction preparedTransaction = PreparedTransaction.parseFrom(transactionBytes);
-        TransactionImpl transaction = new TransactionImpl(client, signingIdentity, preparedTransaction);
+        TransactionImpl transaction = new TransactionImpl(client, signingIdentity, channelName, preparedTransaction);
         transaction.setSignature(signature);
         return transaction;
     }
