@@ -16,13 +16,7 @@ Adding a Gateway component to the Fabric Peer provides a single entry point to a
 The Gateway component in the Fabric Peer exposes a simple gRPC interface to client applications and manages the lifecycle of transaction invocation on behalf of the client.
 This minimises the network traffic passing between the client and the blockchain network as well as minimising the number of network ports that need to be opened.
 
-The following diagram shows the high level interaction required to evaluate a transaction
-![Client creates and signs a proposal for the Gateway to evaluate](./doc/images/evaluate.png "Evaluate flow")
-
-Similarly the following diagram shows the high level interaction required to submit a transaction
-![Client creates and signs a proposal; Gateway endorses the proposal; Client creates and signs a transaction; Gateway submits the transaction to the orderer](./doc/images/submit.png "Submit flow")
-
-See the [gateway.proto file](https://github.com/hyperledger/fabric-protos/blob/main/gateway/gateway.proto) for full details of the gRPC interface.
+See the [gateway.proto file](https://github.com/hyperledger/fabric-protos/blob/main/gateway/gateway.proto) for details of the gRPC interface.
 
 ## Configuring the Gateway
 
