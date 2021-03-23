@@ -17,7 +17,7 @@ variables:
 stages:
 - stage: Test
   jobs:
-  - job: UnitTest
+  - job: UnitTestGo
     pool:
       vmImage: ubuntu-20.04
     dependsOn: []
@@ -25,8 +25,28 @@ stages:
     steps:
     - template: install_deps.yml
     - checkout: self
-    - script: make unit-test
-      displayName: Run unit tests
+    - script: make generate unit-test-go
+      displayName: Run Go unit tests
+  - job: UnitTestNode
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+    - template: install_deps.yml
+    - checkout: self
+    - script: make unit-test-node
+      displayName: Run Node unit tests
+  - job: UnitTestJava
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+    - template: install_deps.yml
+    - checkout: self
+    - script: make unit-test-java
+      displayName: Run Java unit tests
   #   - script: bash <(curl https://codecov.io/bash) -t $CODECOV_UPLOAD_TOKEN
   #     env:
   #       CODECOV_UPLOAD_TOKEN: $(CODECOV_UPLOAD_TOKEN)

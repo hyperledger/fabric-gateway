@@ -32,6 +32,10 @@ func TestSign(t *testing.T) {
 		},
 	}
 
+	statusResponse := gateway.CommitStatusResponse{
+		Result: peer.TxValidationCode_VALID,
+	}
+
 	t.Run("Evaluate signs proposal using client signing implementation", func(t *testing.T) {
 		expected := []byte("SIGNATURE")
 		sign := func(digest []byte) ([]byte, error) {
@@ -78,6 +82,8 @@ func TestSign(t *testing.T) {
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
+		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
+			Return(&statusResponse, nil)
 
 		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
 
@@ -108,6 +114,8 @@ func TestSign(t *testing.T) {
 			}).
 			Return(nil, nil).
 			Times(1)
+		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
+			Return(&statusResponse, nil)
 
 		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
 

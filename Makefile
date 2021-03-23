@@ -51,7 +51,7 @@ build-node: build-protos
 unit-test: generate unit-test-go unit-test-node unit-test-java
 
 unit-test-go: lint staticcheck
-	go test -coverprofile=$(base_dir)/cover.out $(base_dir)/pkg/...
+	go test -timeout 10s -coverprofile=$(base_dir)/cover.out $(base_dir)/pkg/...
 
 unit-test-node: build-node
 	cd $(node_dir); npm test

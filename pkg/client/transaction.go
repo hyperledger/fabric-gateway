@@ -13,6 +13,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/gateway"
+	"github.com/hyperledger/fabric-protos-go/peer"
 )
 
 // Transaction represents an endorsed transaction that can be submitted to the orderer for commit to the ledger.
@@ -62,7 +63,18 @@ func (transaction *Transaction) Submit() ([]byte, error) {
 		return nil, fmt.Errorf("failed to submit transaction to the orderer: %w", err)
 	}
 
-	time.Sleep(2 * time.Second) // todo remove once 'wait for commit' has been implemented in the embedded gateway
+	statusRequest := &gateway.CommitStatusRequest{
+		ChannelId:     transaction.channelID,
+		TransactionId: transaction.preparedTransaction.TransactionId,
+	}
+	status, err := transaction.client.CommitStatus(ctx, statusRequest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to obtain transaction commit status: %w", err)
+	}
+
+	if status.Result != peer.TxValidationCode_VALID {
+		return nil, fmt.Errorf("transaction commit failed with status: %v", peer.TxValidationCode_name[int32(status.Result)])
+	}
 
 	return transaction.preparedTransaction.Result.Payload, nil
 }
