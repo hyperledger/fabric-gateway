@@ -94,15 +94,15 @@ stages:
         displayName: 'create user .npmrc file'
       - script: |
           npm config set registry https://registry.npmjs.org/
+          npm config set git-tag-version false
           npm config ls
-        displayName: 'set npmjs registry'
+        displayName: 'set npm config'
       - task: npmAuthenticate@0
         inputs:
           workingFile: '$(Agent.TempDirectory)/.npmrc'
           customEndpoint: 'npm'
       - script: |
-          npm config set git-tag-version false
-          npm version preminor --preid=dev.${BUILD_DATE}.${BUILD_NUMBER}
+          npm version prepatch --preid=dev.${BUILD_DATE}.${BUILD_NUMBER}
         displayName: 'set prerelease version'
         workingDirectory: $(Build.SourcesDirectory)/node
         env:
@@ -111,3 +111,4 @@ stages:
       - script: |
           npm publish --tag unstable --dry-run
         displayName: 'npm publish'
+        workingDirectory: $(Build.SourcesDirectory)/node
