@@ -37,6 +37,8 @@ stages:
     - checkout: self
     - script: make unit-test-node
       displayName: Run Node unit tests
+    - publish: $(System.DefaultWorkingDirectory)/node
+      artifact: NodeBuild
   - job: UnitTestJava
     pool:
       vmImage: ubuntu-20.04
@@ -105,6 +107,8 @@ stages:
       buildDate: $[format('{0:yyyyMMdd}', pipeline.startTime)]
       buildNumber: $[counter(format('{0:yyyyMMdd}', pipeline.startTime), 1)]
     steps:
+      - download: current
+        artifact: NodeBuild
       - task: NodeTool@0
         inputs:
           versionSpec: $(NODEVER)
@@ -124,11 +128,11 @@ stages:
       - script: |
           npm version prepatch --preid=dev.${BUILD_DATE}.${BUILD_NUMBER}
         displayName: 'set prerelease version'
-        workingDirectory: $(Build.SourcesDirectory)/node
+        workingDirectory: $(Pipeline.Workspace)/NodeBuild
         env:
           BUILD_DATE: $(buildDate)
           BUILD_NUMBER: $(buildNumber)
       - script: |
-          npm publish --tag unstable --dry-run
+          npm publish --tag unstable
         displayName: 'npm publish'
-        workingDirectory: $(Build.SourcesDirectory)/node
+        workingDirectory: $(Pipeline.Workspace)/NodeBuild
