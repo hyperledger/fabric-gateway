@@ -12,61 +12,102 @@ variables:
   GOPATH: $(Agent.BuildDirectory)/go
   PATH: $(Agent.BuildDirectory)/go/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
   GOVER: 1.15.6
+  NODEVER: 12.16.1
 
-jobs:
-- job: UnitTest
-  pool:
-    vmImage: ubuntu-20.04
-  dependsOn: []
-  timeoutInMinutes: 60
-  steps:
-  - template: install_deps.yml
-  - checkout: self
-  - script: make unit-test
-    displayName: Run unit tests
-#   - script: bash <(curl https://codecov.io/bash) -t $CODECOV_UPLOAD_TOKEN
-#     env:
-#       CODECOV_UPLOAD_TOKEN: $(CODECOV_UPLOAD_TOKEN)
-#     displayName: Upload coverage to Codecov
-
-- job: ScenarioTestGo
-  pool:
-    vmImage: ubuntu-20.04
-  dependsOn: []
-  timeoutInMinutes: 60
-  steps:
-  - template: install_deps.yml
-  - checkout: self
-  - script: make pull-latest-peer scenario-test-go
-    displayName: Run Go SDK scenario tests
-    env:
-      # TODO: update this variable name in the Makefile
-      JENKINS_URL: true
-
-- job: ScenarioTestNode
-  pool:
-    vmImage: ubuntu-20.04
-  dependsOn: []
-  timeoutInMinutes: 60
-  steps:
-  - template: install_deps.yml
-  - checkout: self
-  - script: make pull-latest-peer scenario-test-node
-    displayName: Run Node SDK scenario tests
-    env:
-      # TODO: update this variable name in the Makefile
-      JENKINS_URL: true
-
-- job: ScenarioTestJava
-  pool:
-    vmImage: ubuntu-20.04
-  dependsOn: []
-  timeoutInMinutes: 60
-  steps:
+stages:
+- stage: Test
+  jobs:
+  - job: UnitTest
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
     - template: install_deps.yml
     - checkout: self
-    - script: make pull-latest-peer scenario-test-java
-      displayName: Run Java SDK scenario tests
+    - script: make unit-test
+      displayName: Run unit tests
+  #   - script: bash <(curl https://codecov.io/bash) -t $CODECOV_UPLOAD_TOKEN
+  #     env:
+  #       CODECOV_UPLOAD_TOKEN: $(CODECOV_UPLOAD_TOKEN)
+  #     displayName: Upload coverage to Codecov
+
+  - job: ScenarioTestGo
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+    - template: install_deps.yml
+    - checkout: self
+    - script: make pull-latest-peer scenario-test-go
+      displayName: Run Go SDK scenario tests
       env:
         # TODO: update this variable name in the Makefile
         JENKINS_URL: true
+
+  - job: ScenarioTestNode
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+    - template: install_deps.yml
+    - checkout: self
+    - script: make pull-latest-peer scenario-test-node
+      displayName: Run Node SDK scenario tests
+      env:
+        # TODO: update this variable name in the Makefile
+        JENKINS_URL: true
+
+  - job: ScenarioTestJava
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+      - template: install_deps.yml
+      - checkout: self
+      - script: make pull-latest-peer scenario-test-java
+        displayName: Run Java SDK scenario tests
+        env:
+          # TODO: update this variable name in the Makefile
+          JENKINS_URL: true
+
+# TODO only run on the scheduled builds (run on merge builds while debugging)
+- stage: Publish
+  dependsOn: Test
+  condition: and(succeeded('Test'),eq(variables['Build.Reason'], 'IndividualCI'))
+  #condition: and(succeeded('Test'), eq(variables['Build.Reason'], 'Schedule'))
+  jobs:
+  - job: PublishNode
+    variables:
+      buildDate: $[format('{0:yyyyMMdd}', pipeline.startTime)]
+      buildNumber: $[counter(format('{0:yyyyMMdd}', pipeline.startTime), 1)]
+    steps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: $(NODEVER)
+      - script: |
+          touch $(Agent.TempDirectory)/.npmrc
+          echo '##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$(Agent.TempDirectory)/.npmrc'
+        displayName: 'create user .npmrc file'
+      - script: |
+          npm config set registry https://registry.npmjs.org/
+          npm config ls
+        displayName: 'set npmjs registry'
+      - task: npmAuthenticate@0
+        inputs:
+          workingFile: '$(Agent.TempDirectory)/.npmrc'
+          customEndpoint: 'npm'
+      - script: |
+          npm config set git-tag-version false
+          npm version preminor --preid=dev.${BUILD_DATE}.${BUILD_NUMBER}
+        displayName: 'set prerelease version'
+        workingDirectory: $(Build.SourcesDirectory)/node
+        env:
+          BUILD_DATE: $(buildDate)
+          BUILD_NUMBER: $(buildNumber)
+      - script: |
+          npm publish --tag unstable --dry-run
+        displayName: 'npm publish'
