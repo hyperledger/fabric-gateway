@@ -16,6 +16,9 @@ schedules:
         - main
 
 variables:
+  GATEWAY_VERSION: 0.1.0
+  BUILD_DATE: $[format('{0:yyyyMMdd}', pipeline.startTime)]
+  BUILD_NUMBER: $[counter(format('{0:yyyyMMdd}', pipeline.startTime), 1)]
   GOPATH: $(Agent.BuildDirectory)/go
   PATH: $(Agent.BuildDirectory)/go/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
   GOVER: 1.15.6
@@ -103,14 +106,13 @@ stages:
           # TODO: update this variable name in the Makefile
           JENKINS_URL: true
 
+# TODO only run on the scheduled builds (run on merge builds while debugging)
 - stage: Publish
   dependsOn: Test
-  condition: and(succeeded('Test'), eq(variables['Build.Reason'], 'Schedule'))
+  condition: and(succeeded('Test'),eq(variables['Build.Reason'], 'IndividualCI'))
+  #condition: and(succeeded('Test'), eq(variables['Build.Reason'], 'Schedule'))
   jobs:
   - job: PublishNode
-    variables:
-      buildDate: $[format('{0:yyyyMMdd}', pipeline.startTime)]
-      buildNumber: $[counter(format('{0:yyyyMMdd}', pipeline.startTime), 1)]
     steps:
       - download: current
         artifact: NodeBuild
@@ -125,19 +127,40 @@ stages:
           npm config set registry https://registry.npmjs.org/
           npm config set git-tag-version false
           npm config ls
-        displayName: 'set npm config'
+        displayName: set npm config
       - task: npmAuthenticate@0
         inputs:
           workingFile: '$(Agent.TempDirectory)/.npmrc'
           customEndpoint: 'npm'
-      - script: |
-          npm version prepatch --preid=dev.${BUILD_DATE}.${BUILD_NUMBER}
-        displayName: 'set prerelease version'
+      - script: npm version ${GATEWAY_VERSION}-dev.${BUILD_DATE}.${BUILD_NUMBER}
+        displayName: Set prerelease version
         workingDirectory: $(Pipeline.Workspace)/NodeBuild
         env:
-          BUILD_DATE: $(buildDate)
-          BUILD_NUMBER: $(buildNumber)
-      - script: |
-          npm publish --tag unstable
-        displayName: 'npm publish'
+          GATEWAY_VERSION: $(GATEWAY_VERSION)
+          BUILD_DATE: $(BUILD_DATE)
+          BUILD_NUMBER: $(BUILD_NUMBER)
+      - script: npm publish --tag unstable
+        displayName: npm publish
         workingDirectory: $(Pipeline.Workspace)/NodeBuild
+  - job: PublishJava
+    steps:
+      - task: MavenAuthenticate@0
+        inputs:
+          mavenServiceConnections: maven-artifactory
+      - script: make fabric-protos
+        displayName: Fetch fabric protos
+      - script: mvn versions:set -DnewVersion=${GATEWAY_VERSION}-${BUILD_DATE}-${BUILD_NUMBER}
+        displayName: Set prerelease version
+        workingDirectory: $(System.DefaultWorkingDirectory)/java
+        env:
+          GATEWAY_VERSION: $(GATEWAY_VERSION)
+          BUILD_DATE: $(BUILD_DATE)
+          BUILD_NUMBER: $(BUILD_NUMBER)
+      - script: |
+          mvn deploy
+        displayName: Deploy to artifactory
+        workingDirectory: $(System.DefaultWorkingDirectory)/java
+        # env:
+        #   MAVEN_OPTS: -DarchNemesis=true
+      - publish: $(System.DefaultWorkingDirectory)/java
+        artifact: JavaBuild
