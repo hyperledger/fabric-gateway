@@ -126,7 +126,7 @@ stages:
           workingFile: '$(Agent.TempDirectory)/.npmrc'
           customEndpoint: 'npm'
       - script: |
-          npm version prepatch --preid=dev.${BUILD_DATE}.${BUILD_NUMBER}
+          npm version prepatch --preid=dev-${BUILD_DATE}-${BUILD_NUMBER}
         displayName: 'set prerelease version'
         workingDirectory: $(Pipeline.Workspace)/NodeBuild
         env:
