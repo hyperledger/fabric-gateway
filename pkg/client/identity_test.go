@@ -88,6 +88,9 @@ func TestIdentity(t *testing.T) {
 				Payload: nil,
 			},
 		}
+		statusResponse := gateway.CommitStatusResponse{
+			Result: peer.TxValidationCode_VALID,
+		}
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
 				actual = test.AssertUnmarshallSignatureHeader(t, in.ProposedTransaction).Creator
@@ -96,6 +99,8 @@ func TestIdentity(t *testing.T) {
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
+		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
+			Return(&statusResponse, nil)
 
 		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithIdentity(id))
 

@@ -43,6 +43,10 @@ func TestOfflineSign(t *testing.T) {
 		}
 	}
 
+	statusResponse := gateway.CommitStatusResponse{
+		Result: peer.TxValidationCode_VALID,
+	}
+
 	t.Run("Evaluate", func(t *testing.T) {
 		t.Run("Returns error with signer and no explicit signing", func(t *testing.T) {
 			mockController := gomock.NewController(t)
@@ -224,6 +228,8 @@ func TestOfflineSign(t *testing.T) {
 				}).
 				Return(nil, nil).
 				Times(1)
+			mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
+				Return(&statusResponse, nil)
 
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
