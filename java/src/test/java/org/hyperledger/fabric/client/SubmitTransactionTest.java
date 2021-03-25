@@ -6,12 +6,6 @@
 
 package org.hyperledger.fabric.client;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,19 +14,25 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.protobuf.ByteString;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.X509Identity;
+import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
+import org.hyperledger.fabric.protos.peer.TransactionPackage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.google.protobuf.ByteString;
-
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 
 public final class SubmitTransactionTest {
     private static final TestUtils utils = TestUtils.getInstance();
@@ -262,5 +262,46 @@ public final class SubmitTransactionTest {
 
         assertThatThrownBy(() -> contract.submitTransaction("TRANSACTION_NAME"))
                 .isInstanceOf(StatusRuntimeException.class);
+    }
+
+    @Test
+    void throws_on_commit_failure() {
+        doReturn(utils.newCommitStatusResponse(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT))
+                .when(stub).commitStatus(any());
+
+        Contract contract = network.getContract("CHAINCODE_ID");
+
+        assertThatThrownBy(() -> contract.submitTransaction("TRANSACTION_NAME"))
+                .isInstanceOf(ContractException.class)
+                .hasMessageContaining(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT.name());
+    }
+
+    @Test
+    void sends_transaction_ID_in_commit_status_request() throws Exception {
+        network = gateway.getNetwork("MY_NETWORK");
+
+        Contract contract = network.getContract("CHAINCODE_ID");
+        contract.submitTransaction("TRANSACTION_NAME");
+
+        EndorseRequest endorseRequest = mocker.captureEndorse();
+        String expected = mocker.getChannelHeader(endorseRequest.getProposedTransaction()).getTxId();
+
+        CommitStatusRequest statusRequest = mocker.captureCommitStatus();
+        String actual = statusRequest.getTransactionId();
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void sends_network_name_in_commit_status_request() throws Exception {
+        network = gateway.getNetwork("MY_NETWORK");
+
+        Contract contract = network.getContract("CHAINCODE_ID");
+        contract.submitTransaction("TRANSACTION_NAME");
+
+        CommitStatusRequest request = mocker.captureCommitStatus();
+        String networkName = request.getChannelId();
+
+        assertThat(networkName).isEqualTo("MY_NETWORK");
     }
 }

@@ -6,12 +6,15 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.function.Supplier;
+
+import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
-
-import com.google.protobuf.ByteString;
+import org.hyperledger.fabric.protos.peer.TransactionPackage;
 
 class TransactionImpl implements Transaction {
     private final GatewayGrpc.GatewayBlockingStub client;
@@ -46,41 +49,42 @@ class TransactionImpl implements Transaction {
     }
 
     @Override
-    public Commit submitAsync() {
+    public String getTransactionId() {
+        return preparedTransaction.getTransactionId();
+    }
+
+    @Override
+    public Supplier<TransactionPackage.TxValidationCode> submitAsync() {
         submit();
-        final byte[] result = getResult(); // Get result on current thread, not in Future
 
         return () -> {
-            return result;
+            CommitStatusRequest statusRequest = CommitStatusRequest.newBuilder()
+                    .setChannelId(channelName)
+                    .setTransactionId(preparedTransaction.getTransactionId())
+                    .build();
+            return client.commitStatus(statusRequest).getResult();
         };
     }
 
     @Override
     public byte[] submitSync() throws ContractException {
-        return submitAsync().call();
-    }
+        TransactionPackage.TxValidationCode status = submitAsync().get();
+        if (!TransactionPackage.TxValidationCode.VALID.equals(status)) {
+            throw new ContractException("Commit of transaction " + getTransactionId() + " failed with status code "
+                    + status.getNumber() + " (" + status.name() + ")");
+        }
 
-    private final int sleepTime = 2000;
+        return getResult();
+    }
 
     private void submit() {
         sign();
-
         SubmitRequest submitRequest = SubmitRequest.newBuilder()
                 .setTransactionId(preparedTransaction.getTransactionId())
                 .setChannelId(channelName)
                 .setPreparedTransaction(preparedTransaction.getEnvelope())
                 .build();
         client.submit(submitRequest);
-
-        //// TODO remove the following once commit notification has been implemented in the gateway
-        try {
-            Thread.sleep(sleepTime);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        /////
-
-        return;
     }
 
     void setSignature(final byte[] signature) {

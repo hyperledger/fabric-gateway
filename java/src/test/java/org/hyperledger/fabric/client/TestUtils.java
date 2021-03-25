@@ -25,13 +25,15 @@ import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Credentials;
 import org.hyperledger.fabric.client.identity.X509Identity;
+import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
 import org.hyperledger.fabric.protos.gateway.EndorseResponse;
 import org.hyperledger.fabric.protos.gateway.EvaluateResponse;
 import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
 import org.hyperledger.fabric.protos.gateway.SubmitResponse;
 import org.hyperledger.fabric.protos.peer.ProposalResponsePackage.Response;
-import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.peer.TransactionPackage;
 
 public final class TestUtils {
     private static final TestUtils INSTANCE = new TestUtils();
@@ -113,6 +115,11 @@ public final class TestUtils {
                 .build();
     }
 
+    public CommitStatusResponse newCommitStatusResponse(TransactionPackage.TxValidationCode status) {
+        return CommitStatusResponse.newBuilder()
+                .setResult(status)
+                .build();
+    }
 
     private String newFakeTransactionId() {
         return Long.toHexString(currentTransactionId.incrementAndGet());
