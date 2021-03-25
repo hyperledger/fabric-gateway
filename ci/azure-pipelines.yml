@@ -161,6 +161,6 @@ stages:
         displayName: Deploy to artifactory
         workingDirectory: $(System.DefaultWorkingDirectory)/java
         env:
-          MAVEN_OPTS: -DskipTests
+          MAVEN_OPTS: -Dmaven.test.skip=true
       - publish: $(System.DefaultWorkingDirectory)/java
         artifact: JavaBuild
