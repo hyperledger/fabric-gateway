@@ -7,7 +7,7 @@
 import { GatewayClient } from "./client";
 import { Proposal, ProposalImpl } from "./proposal";
 import { ProposalBuilder, ProposalOptions } from "./proposalbuilder";
-import { gateway } from "./protos/protos";
+import { gateway, protos } from "./protos/protos";
 import { SigningIdentity } from "./signingidentity";
 import { Transaction, TransactionImpl } from "./transaction";
 
@@ -179,7 +179,12 @@ export class ContractImpl implements Contract {
 
     async submitSync(transactionName: string, options?: ProposalOptions): Promise<Uint8Array> {
         const transaction = await this.newProposal(transactionName, options).endorse();
-        return await transaction.submit();
+        const commit = await transaction.submit();
+        const status = await commit.getStatus();
+        if (status !== protos.TxValidationCode.VALID) {
+            throw new Error(`Transaction ${transaction.getTransactionId()} failed to commit with status code ${status} (${protos.TxValidationCode[status]})`)
+        }
+        return transaction.getResult();
     }
 
     newProposal(transactionName: string, options: ProposalOptions = {}): Proposal {

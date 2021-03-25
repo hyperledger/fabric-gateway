@@ -5,6 +5,7 @@
  */
 
 import { Contract, Proposal, ProposalOptions, Signer, Transaction } from 'fabric-gateway';
+import { protos } from 'fabric-gateway/dist/protos/protos';
 import { TextDecoder } from 'util';
 
 function asString(bytes?: Uint8Array): string {
@@ -79,7 +80,13 @@ export class TransactionInvocation {
         let transaction = await proposal.endorse();
         transaction = await this.sign(transaction, this.contract.newSignedTransaction);
     
-        return await transaction.submit();
+        const commit = await transaction.submit();
+        const status = await commit.getStatus();
+        if (status !== protos.TxValidationCode.VALID) {
+            throw new Error(`Transaction commit failed with status: ${status} (${protos.TxValidationCode[status]})`)
+        }
+
+        return transaction.getResult();
     }
 
     private async sign<T extends Proposal | Transaction>(signable: T, newInstance: (bytes: Uint8Array, signature: Uint8Array) => T): Promise<T> {

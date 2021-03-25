@@ -11,11 +11,13 @@ const servicePath = '/gateway.Gateway/';
 const evaluateMethod = servicePath + 'Evaluate';
 const endorseMethod = servicePath + 'Endorse';
 const submitMethod = servicePath + 'Submit';
+const commitStatusMethod = servicePath + 'CommitStatus';
 
 export interface GatewayClient {
     evaluate(request: gateway.IEvaluateRequest): Promise<gateway.IEvaluateResponse>;
     endorse(request: gateway.IEndorseRequest): Promise<gateway.IEndorseResponse>;
     submit(request: gateway.ISubmitRequest): Promise<gateway.ISubmitResponse>;
+    commitStatus(request: gateway.ICommitStatusRequest): Promise<gateway.ICommitStatusResponse>;
 }
 
 class GatewayClientImpl implements GatewayClient {
@@ -62,7 +64,20 @@ class GatewayClientImpl implements GatewayClient {
                 if (!value) {
                     return reject('No result returned');
                 }
-                await new Promise(resolve => setTimeout(resolve, 2000)); // TODO: remove this sleep once commit notification is done
+                return resolve(value);
+            })
+        });
+    }
+
+    async commitStatus(request: gateway.ICommitStatusRequest): Promise<gateway.ICommitStatusResponse> {
+        return new Promise((resolve, reject) => {
+            this.#client.makeUnaryRequest(commitStatusMethod, serializeCommitStatusRequest, deserializeCommitStatusResponse, request, async (err, value) => {
+                if (err) {
+                    return reject(err);
+                }
+                if (!value) {
+                    return reject('No result returned');
+                }
                 return resolve(value);
             })
         });
@@ -84,6 +99,11 @@ function serializeSubmitRequest(message: gateway.ISubmitRequest): Buffer {
     return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength); // Create a Buffer view to avoid copying
 }
 
+function serializeCommitStatusRequest(message: gateway.ICommitStatusRequest): Buffer {
+    const bytes = gateway.CommitStatusRequest.encode(message).finish();
+    return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength); // Create a Buffer view to avoid copying
+}
+
 function deserializeEvaluateResponse(bytes: Uint8Array): gateway.EvaluateResponse {
     return gateway.EvaluateResponse.decode(bytes);
 }
@@ -94,6 +114,10 @@ function deserializeEndorseResponse(bytes: Uint8Array): gateway.EndorseResponse 
 
 function deserializeSubmitResponse(bytes: Uint8Array): gateway.SubmitResponse {
     return gateway.SubmitResponse.decode(bytes);
+}
+
+function deserializeCommitStatusResponse(bytes: Uint8Array): gateway.CommitStatusResponse {
+    return gateway.CommitStatusResponse.decode(bytes);
 }
 
 export function newGatewayClient(client: grpc.Client): GatewayClient {

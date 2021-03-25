@@ -1,0 +1,45 @@
+/*
+ * Copyright 2021 IBM All Rights Reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { GatewayClient } from './client';
+import { gateway, protos } from './protos/protos';
+
+export interface Commit {
+    /**
+     * Get the committed transaction status code.
+     */
+    getStatus(): Promise<protos.TxValidationCode>;
+}
+
+export interface CommitImplOptions {
+    readonly client: GatewayClient;
+    readonly channelName: string;
+    readonly transactionId: string;
+}
+
+export class CommitImpl implements Commit {
+    readonly #client: GatewayClient;
+    readonly #channelName: string;
+    readonly #transactionId: string;
+
+    constructor(options: CommitImplOptions) {
+        this.#client = options.client;
+        this.#channelName = options.channelName;
+        this.#transactionId = options.transactionId;
+    }
+
+    async getStatus(): Promise<protos.TxValidationCode> {
+        const response = await this.#client.commitStatus(this.newCommitStatusRequest());
+        return response.result ?? protos.TxValidationCode.INVALID_OTHER_REASON;
+    }
+
+    private newCommitStatusRequest(): gateway.ICommitStatusRequest {
+        return {
+            channel_id: this.#channelName,
+            transaction_id: this.#transactionId,
+        }
+    }
+}

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export { Commit } from './commit';
 export { Contract } from './contract';
 export { connect, ConnectOptions, Gateway } from './gateway';
 export { Hash } from './hash/hash';
