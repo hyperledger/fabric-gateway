@@ -4,17 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GatewayClient } from './client';
 import { Contract } from './contract';
 import { connect, Gateway, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { GatewayClient } from './client';
 import { common, gateway, msp, protos } from './protos/protos';
 
 interface MockGatewayClient extends GatewayClient {
     endorse: jest.Mock<Promise<gateway.IEndorseResponse>, gateway.IEndorseRequest[]>,
     evaluate: jest.Mock<Promise<gateway.IEvaluateResponse>, gateway.IEvaluateRequest[]>,
     submit: jest.Mock<Promise<gateway.ISubmitResponse>, gateway.ISubmitRequest[]>,
+    commitStatus: jest.Mock<Promise<gateway.ICommitStatusResponse>, gateway.ICommitStatusRequest[]>,
 }
 
 function newMockGatewayClient(): MockGatewayClient {
@@ -22,6 +23,7 @@ function newMockGatewayClient(): MockGatewayClient {
         endorse: jest.fn(),
         evaluate: jest.fn(),
         submit: jest.fn(),
+        commitStatus: jest.fn(),
     };
 }
 
@@ -83,8 +85,8 @@ describe('Proposal', () => {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
         }
-        signer = jest.fn().mockReturnValue('SIGNATURE');
-        hash = jest.fn().mockReturnValue('DIGEST');
+        signer = jest.fn().mockReturnValue(Buffer.from('SIGNATURE'));
+        hash = jest.fn().mockReturnValue(Buffer.from('DIGEST'));
 
         const options: InternalConnectOptions = {
             identity,
@@ -247,6 +249,9 @@ describe('Proposal', () => {
                 result: {
                     payload: Buffer.from('TX_RESULT'),
                 },
+            });
+            client.commitStatus.mockResolvedValue({
+                result: protos.TxValidationCode.VALID,
             });
         });
 

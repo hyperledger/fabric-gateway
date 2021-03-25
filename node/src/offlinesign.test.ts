@@ -9,12 +9,13 @@ import { Contract } from './contract';
 import { connect, Gateway, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { gateway } from './protos/protos';
+import { gateway, protos } from './protos/protos';
 
 interface MockGatewayClient extends GatewayClient {
     endorse: jest.Mock<Promise<gateway.IEndorseResponse>, gateway.IEndorseRequest[]>,
     evaluate: jest.Mock<Promise<gateway.IEvaluateResponse>, gateway.IEvaluateRequest[]>,
     submit: jest.Mock<Promise<gateway.ISubmitResponse>, gateway.ISubmitRequest[]>,
+    commitStatus: jest.Mock<Promise<gateway.ICommitStatusResponse>, gateway.ICommitStatusRequest[]>,
 }
 
 function newMockGatewayClient(): MockGatewayClient {
@@ -22,6 +23,7 @@ function newMockGatewayClient(): MockGatewayClient {
         endorse: jest.fn(),
         evaluate: jest.fn(),
         submit: jest.fn(),
+        commitStatus: jest.fn(),
     };
 }
 
@@ -48,6 +50,9 @@ describe('Offline sign', () => {
             result: {
                 payload: Buffer.from(expectedResult),
             },
+        });
+        client.commitStatus.mockResolvedValue({
+            result: protos.TxValidationCode.VALID,
         });
 
         identity = {
@@ -157,6 +162,19 @@ describe('Offline sign', () => {
 
             const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), expected);
             const actual = signedTransaction.getDigest();
+    
+            expect(actual).toEqual(expected);
+        });
+
+        it('transaction keeps same transaction ID', async () => {
+            const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
+            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const unsignedTransaction = await signedProposal.endorse();
+            const digest = unsignedTransaction.getDigest();
+            const expected = unsignedTransaction.getTransactionId();
+
+            const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), digest);
+            const actual = signedTransaction.getTransactionId();
     
             expect(actual).toEqual(expected);
         });

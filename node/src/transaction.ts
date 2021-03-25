@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GatewayClient } from './client';
-import { SigningIdentity } from './signingidentity';
-import { common, gateway } from './protos/protos';
 import * as util from 'util';
+import { GatewayClient } from './client';
+import { Commit, CommitImpl } from './commit';
+import { common, gateway } from './protos/protos';
+import { SigningIdentity } from './signingidentity';
 
 export interface Transaction {
     /**
@@ -27,9 +28,14 @@ export interface Transaction {
     getResult(): Uint8Array;
 
     /**
+     * Get the transaction ID.
+     */
+     getTransactionId(): string;
+
+     /**
      * Submit the transaction to the orderer to be committed to the ledger.
      */
-    submit(): Promise<Uint8Array>;
+    submit(): Promise<Commit>;
 }
 
 export interface TransactionImplOptions {
@@ -75,10 +81,22 @@ export class TransactionImpl implements Transaction {
         return this.#preparedTransaction?.result?.payload || new Uint8Array(0);
     }
 
-    async submit(): Promise<Uint8Array> {
+    getTransactionId(): string {
+        const transactionId = this.#preparedTransaction.transaction_id;
+        if (typeof transactionId !== 'string') {
+            throw new Error(`Transaction ID not defined: ${util.inspect(this.#preparedTransaction)}`);
+        }
+        return transactionId;
+    }
+
+    async submit(): Promise<Commit> {
         await this.sign();
         await this.#client.submit(this.newSubmitRequest());
-        return this.getResult();
+        return new CommitImpl({
+            client: this.#client,
+            channelName: this.#channelName,
+            transactionId: this.getTransactionId(),
+        });
     }
 
     setSignature(signature: Uint8Array): void {
