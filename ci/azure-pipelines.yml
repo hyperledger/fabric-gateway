@@ -160,7 +160,7 @@ stages:
           mvn deploy
         displayName: Deploy to artifactory
         workingDirectory: $(System.DefaultWorkingDirectory)/java
-        # env:
-        #   MAVEN_OPTS: -DarchNemesis=true
+        env:
+          MAVEN_OPTS: -DskipTests
       - publish: $(System.DefaultWorkingDirectory)/java
         artifact: JavaBuild
