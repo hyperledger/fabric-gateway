@@ -8,6 +8,13 @@ trigger:
 pr:
 - main
 
+schedules:
+  - cron: "0 23 * * *"
+    displayName: "Nightly build"
+    branches:
+      include:
+        - main
+
 variables:
   GOPATH: $(Agent.BuildDirectory)/go
   PATH: $(Agent.BuildDirectory)/go/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
@@ -96,11 +103,9 @@ stages:
           # TODO: update this variable name in the Makefile
           JENKINS_URL: true
 
-# TODO only run on the scheduled builds (run on merge builds while debugging)
 - stage: Publish
   dependsOn: Test
-  condition: and(succeeded('Test'),eq(variables['Build.Reason'], 'IndividualCI'))
-  #condition: and(succeeded('Test'), eq(variables['Build.Reason'], 'Schedule'))
+  condition: and(succeeded('Test'), eq(variables['Build.Reason'], 'Schedule'))
   jobs:
   - job: PublishNode
     variables:
