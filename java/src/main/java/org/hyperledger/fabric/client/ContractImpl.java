@@ -34,29 +34,29 @@ final class ContractImpl implements Contract {
     }
 
     @Override
-    public byte[] submitTransaction(final String name) throws ContractException {
+    public byte[] submitTransaction(final String name) throws CommitException {
         return newProposal(name)
                 .build()
                 .endorse()
-                .submitSync();
+                .submit();
     }
 
     @Override
-    public byte[] submitTransaction(final String name, final String... args) throws ContractException {
+    public byte[] submitTransaction(final String name, final String... args) throws CommitException {
         return newProposal(name)
                 .addArguments(args)
                 .build()
                 .endorse()
-                .submitSync();
+                .submit();
     }
 
     @Override
-    public byte[] submitTransaction(final String name, final byte[]... args) throws ContractException {
+    public byte[] submitTransaction(final String name, final byte[]... args) throws CommitException {
         return newProposal(name)
                 .addArguments(args)
                 .build()
                 .endorse()
-                .submitSync();
+                .submit();
     }
 
     @Override

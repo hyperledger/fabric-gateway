@@ -55,7 +55,13 @@ class TransactionImpl implements Transaction {
 
     @Override
     public Supplier<TransactionPackage.TxValidationCode> submitAsync() {
-        submit();
+        sign();
+        SubmitRequest submitRequest = SubmitRequest.newBuilder()
+                .setTransactionId(preparedTransaction.getTransactionId())
+                .setChannelId(channelName)
+                .setPreparedTransaction(preparedTransaction.getEnvelope())
+                .build();
+        client.submit(submitRequest);
 
         return () -> {
             CommitStatusRequest statusRequest = CommitStatusRequest.newBuilder()
@@ -67,24 +73,13 @@ class TransactionImpl implements Transaction {
     }
 
     @Override
-    public byte[] submitSync() throws ContractException {
+    public byte[] submit() throws CommitException {
         TransactionPackage.TxValidationCode status = submitAsync().get();
-        if (!TransactionPackage.TxValidationCode.VALID.equals(status)) {
-            throw new ContractException("Commit of transaction " + getTransactionId() + " failed with status code "
-                    + status.getNumber() + " (" + status.name() + ")");
+        if (status != TransactionPackage.TxValidationCode.VALID) {
+            throw new CommitException(getTransactionId(), status);
         }
 
         return getResult();
-    }
-
-    private void submit() {
-        sign();
-        SubmitRequest submitRequest = SubmitRequest.newBuilder()
-                .setTransactionId(preparedTransaction.getTransactionId())
-                .setChannelId(channelName)
-                .setPreparedTransaction(preparedTransaction.getEnvelope())
-                .build();
-        client.submit(submitRequest);
     }
 
     void setSignature(final byte[] signature) {

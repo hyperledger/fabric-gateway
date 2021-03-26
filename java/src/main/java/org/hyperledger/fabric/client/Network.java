@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 IBM All Rights Reserved.
+ * Copyright 2020 IBM All Rights Reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -41,5 +41,4 @@ public interface Network {
      * @return The network name.
      */
     String getName();
-
 }

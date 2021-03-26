@@ -56,7 +56,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void returns_gateway_response() throws ContractException {
+    void returns_gateway_response() {
         doReturn(utils.newEvaluateResponse("MY_RESULT"))
                 .when(stub).evaluate(any());
 
@@ -67,7 +67,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_chaincode_ID() throws ContractException, InvalidProtocolBufferException {
+    void sends_chaincode_ID() throws InvalidProtocolBufferException {
         Contract contract = network.getContract("MY_CHAINCODE_ID");
         contract.evaluateTransaction("TRANSACTION_NAME");
 
@@ -78,7 +78,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_transaction_name_for_default_contract() throws ContractException, InvalidProtocolBufferException {
+    void sends_transaction_name_for_default_contract() throws InvalidProtocolBufferException {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.evaluateTransaction("MY_TRANSACTION_NAME");
 
@@ -91,7 +91,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_transaction_name_for_specified_contract() throws ContractException, InvalidProtocolBufferException {
+    void sends_transaction_name_for_specified_contract() throws InvalidProtocolBufferException {
         Contract contract = network.getContract("CHAINCODE_ID", "MY_CONTRACT");
         contract.evaluateTransaction("MY_TRANSACTION_NAME");
 
@@ -104,7 +104,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_transaction_string_arguments() throws ContractException, InvalidProtocolBufferException {
+    void sends_transaction_string_arguments() throws InvalidProtocolBufferException {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.evaluateTransaction("TRANSACTION_NAME", "one", "two", "three");
 
@@ -118,7 +118,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_transaction_byte_array_arguments() throws ContractException, InvalidProtocolBufferException {
+    void sends_transaction_byte_array_arguments() throws InvalidProtocolBufferException {
         byte[][] arguments = Stream.of("one", "two", "three")
                 .map(s -> s.getBytes(StandardCharsets.UTF_8))
                 .toArray(byte[][]::new);
@@ -197,7 +197,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_network_name_in_proposal() throws ContractException, InvalidProtocolBufferException {
+    void sends_network_name_in_proposal() throws InvalidProtocolBufferException {
         network = gateway.getNetwork("MY_NETWORK");
 
         Contract contract = network.getContract("CHAINCODE_ID");
@@ -210,7 +210,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_network_name_in_proposed_transaction() throws ContractException {
+    void sends_network_name_in_proposed_transaction() {
         network = gateway.getNetwork("MY_NETWORK");
 
         Contract contract = network.getContract("CHAINCODE_ID");
@@ -223,7 +223,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_transaction_ID_in_proposed_transaction() throws ContractException, InvalidProtocolBufferException {
+    void sends_transaction_ID_in_proposed_transaction() throws InvalidProtocolBufferException {
         network = gateway.getNetwork("MY_NETWORK");
 
         Contract contract = network.getContract("CHAINCODE_ID");
