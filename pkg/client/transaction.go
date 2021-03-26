@@ -13,7 +13,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/gateway"
-	"github.com/hyperledger/fabric-protos-go/peer"
 )
 
 // Transaction represents an endorsed transaction that can be submitted to the orderer for commit to the ledger.
@@ -44,8 +43,13 @@ func (transaction *Transaction) Digest() ([]byte, error) {
 	return transaction.signingID.Hash(transaction.preparedTransaction.Envelope.Payload)
 }
 
+// TransactionID of the transaction.
+func (transaction *Transaction) TransactionID() string {
+	return transaction.preparedTransaction.TransactionId
+}
+
 // Submit the transaction to the orderer for commit to the ledger.
-func (transaction *Transaction) Submit() ([]byte, error) {
+func (transaction *Transaction) Submit() (*Commit, error) {
 	if err := transaction.sign(); err != nil {
 		return nil, err
 	}
@@ -54,7 +58,7 @@ func (transaction *Transaction) Submit() ([]byte, error) {
 	defer cancel()
 
 	submitRequest := &gateway.SubmitRequest{
-		TransactionId:       transaction.preparedTransaction.TransactionId,
+		TransactionId:       transaction.TransactionID(),
 		ChannelId:           transaction.channelID,
 		PreparedTransaction: transaction.preparedTransaction.Envelope,
 	}
@@ -63,20 +67,12 @@ func (transaction *Transaction) Submit() ([]byte, error) {
 		return nil, fmt.Errorf("failed to submit transaction to the orderer: %w", err)
 	}
 
-	statusRequest := &gateway.CommitStatusRequest{
-		ChannelId:     transaction.channelID,
-		TransactionId: transaction.preparedTransaction.TransactionId,
+	commit := &Commit{
+		client:        transaction.client,
+		channelID:     transaction.channelID,
+		transactionID: transaction.TransactionID(),
 	}
-	status, err := transaction.client.CommitStatus(ctx, statusRequest)
-	if err != nil {
-		return nil, fmt.Errorf("failed to obtain transaction commit status: %w", err)
-	}
-
-	if status.Result != peer.TxValidationCode_VALID {
-		return nil, fmt.Errorf("transaction commit failed with status: %v", peer.TxValidationCode_name[int32(status.Result)])
-	}
-
-	return transaction.preparedTransaction.Result.Payload, nil
+	return commit, nil
 }
 
 func (transaction *Transaction) sign() error {

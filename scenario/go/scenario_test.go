@@ -22,6 +22,7 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/connection"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
+	"github.com/hyperledger/fabric-protos-go/peer"
 )
 
 const (
@@ -686,22 +687,32 @@ func invokeSubmit() ([]byte, error) {
 		return nil, err
 	}
 
-	clientTransaction, err := proposal.Endorse()
+	unsignedTransaction, err := proposal.Endorse()
 	if err != nil {
 		return nil, err
 	}
 
-	clientTransaction, err = offlineSignTransaction(clientTransaction)
+	signedTransaction, err := offlineSignTransaction(unsignedTransaction)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = clientTransaction.Submit()
+	result := signedTransaction.Result()
+
+	commit, err := signedTransaction.Submit()
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 
-	return clientTransaction.Result(), nil
+	status, err := commit.Status()
+	if err != nil {
+		return result, err
+	}
+	if status != peer.TxValidationCode_VALID {
+		return result, fmt.Errorf("commit failed with status %v (%v)", status, peer.TxValidationCode_name[int32(status)])
+	}
+
+	return result, nil
 }
 
 func offlineSignProposal(proposal *client.Proposal) (*client.Proposal, error) {

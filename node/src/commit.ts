@@ -7,11 +7,17 @@
 import { GatewayClient } from './client';
 import { gateway, protos } from './protos/protos';
 
+// Allows access to information to a transaction that is committed to the ledger.
 export interface Commit {
     /**
      * Get the committed transaction status code.
      */
     getStatus(): Promise<protos.TxValidationCode>;
+
+    /**
+     * Get the ID of the transaction.
+     */
+    getTransactionId(): string;
 }
 
 export interface CommitImplOptions {
@@ -34,6 +40,10 @@ export class CommitImpl implements Commit {
     async getStatus(): Promise<protos.TxValidationCode> {
         const response = await this.#client.commitStatus(this.newCommitStatusRequest());
         return response.result ?? protos.TxValidationCode.INVALID_OTHER_REASON;
+    }
+
+    getTransactionId(): string {
+        return this.#transactionId
     }
 
     private newCommitStatusRequest(): gateway.ICommitStatusRequest {

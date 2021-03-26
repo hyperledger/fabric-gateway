@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/gateway"
+	"github.com/hyperledger/fabric-protos-go/peer"
 )
 
 // Contract represents a smart contract, and allows applications to:
@@ -63,43 +64,52 @@ func (contract *Contract) Evaluate(transactionName string, options ...ProposalOp
 // be committed to the ledger. This method is equivalent to:
 //   SubmitSync(name, client.WithStringArguments(args...))
 func (contract *Contract) SubmitTransaction(name string, args ...string) ([]byte, error) {
-	return contract.SubmitSync(name, WithStringArguments(args...))
+	return contract.Submit(name, WithStringArguments(args...))
 }
 
-// SubmitSync submits a transaction to the ledger and returns its result only after it has been committed to the ledger.
-// This method provides greater control over the transaction proposal content and the endorsing peers on which it is
-// evaluated. This allows transaction functions to be submitted where the proposal must include transient data, or that
-// will access ledger data with key-based endorsement policies.
-func (contract *Contract) SubmitSync(transactionName string, options ...ProposalOption) ([]byte, error) {
-	result, err := contract.SubmitAsync(transactionName, options...)
+// Submit a transaction to the ledger and return its result only after it has been committed to the ledger. This method
+// provides greater control over the transaction proposal content and the endorsing peers on which it is evaluated. This
+// allows transaction functions to be submitted where the proposal must include transient data, or that will access
+// ledger data with key-based endorsement policies.
+func (contract *Contract) Submit(transactionName string, options ...ProposalOption) ([]byte, error) {
+	result, commit, err := contract.SubmitAsync(transactionName, options...)
 	if err != nil {
-		return nil, err
+		return result, err
+	}
+
+	status, err := commit.Status()
+	if err != nil {
+		return result, err
+	}
+
+	if status != peer.TxValidationCode_VALID {
+		return nil, fmt.Errorf("transaction commit failed with status: %v", peer.TxValidationCode_name[int32(status)])
 	}
 
 	return result, nil
 }
 
 // SubmitAsync submits a transaction to the ledger and returns its result immediately after successfully sending to the
-// orderer, along with a channel that can be used to receive notification when it has been committed to the ledger.
-func (contract *Contract) SubmitAsync(transactionName string, options ...ProposalOption) ([]byte, error) {
+// orderer, along with a Commit that can be used to wait for its status when it is committed to the ledger.
+func (contract *Contract) SubmitAsync(transactionName string, options ...ProposalOption) ([]byte, *Commit, error) {
 	proposal, err := contract.NewProposal(transactionName, options...)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	transaction, err := proposal.Endorse()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	result := transaction.Result()
 
-	_, err = transaction.Submit()
+	commit, err := transaction.Submit()
 	if err != nil {
-		return nil, err
+		return result, nil, err
 	}
 
-	return result, nil
+	return result, commit, nil
 }
 
 // NewProposal creates a proposal that can be sent to peers for endorsement. Supports off-line signing transaction flow.

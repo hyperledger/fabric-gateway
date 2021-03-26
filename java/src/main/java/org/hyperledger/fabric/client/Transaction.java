@@ -39,18 +39,18 @@ public interface Transaction {
     String getTransactionId();
 
     /**
+     * Submit the transaction to the orderer to be committed to the ledger. This method blocks until the transaction
+     * has been successfully committed to the ledger.
+     * @return A transaction result.
+     * @throws CommitException On commit failure.Ø
+     */
+    byte[] submit() throws CommitException;
+
+    /**
      * Submit the transaction to the orderer to be committed to the ledger. This method returns immediately after the
      * transaction is successfully delivered to the orderer. The returned Supplier may be used to subsequently wait
      * for the transaction to be committed to the ledger.
      * @return A commit handle.
      */
     Supplier<TransactionPackage.TxValidationCode> submitAsync();
-
-    /**
-     * Submit the transaction to the orderer to be committed to the ledger. This method blocks until the transaction
-     * has been successfully committed to the ledger.
-     * @return A transaction result.
-     * @throws ContractException On commit failure.
-     */
-    byte[] submitSync() throws ContractException;
 }

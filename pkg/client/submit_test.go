@@ -379,6 +379,69 @@ func TestSubmitTransaction(t *testing.T) {
 		}
 	})
 
+	t.Run("Includes channel name in commit status request", func(t *testing.T) {
+		var actual string
+		mockController := gomock.NewController(t)
+		defer mockController.Finish()
+
+		mockClient := NewMockGatewayClient(mockController)
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+			Return(nil, nil)
+		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, in *gateway.CommitStatusRequest) {
+				actual = in.ChannelId
+			}).
+			Return(&validStatusResponse, nil).
+			Times(1)
+
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+
+		_, err := contract.SubmitTransaction("transaction")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expected := contract.channelName
+		if actual != expected {
+			t.Fatalf("Expected %s, got %s", expected, actual)
+		}
+	})
+
+	t.Run("Includes transaction ID in commit status request", func(t *testing.T) {
+		var actual string
+		var expected string
+		mockController := gomock.NewController(t)
+		defer mockController.Finish()
+
+		mockClient := NewMockGatewayClient(mockController)
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, in *gateway.EndorseRequest) {
+				expected = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).TxId
+			}).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+			Return(nil, nil)
+		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, in *gateway.CommitStatusRequest) {
+				actual = in.TransactionId
+			}).
+			Return(&validStatusResponse, nil).
+			Times(1)
+
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+
+		_, err := contract.SubmitTransaction("transaction")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if actual != expected {
+			t.Fatalf("Expected %s, got %s", expected, actual)
+		}
+	})
+
 	t.Run("Uses signer for endorse", func(t *testing.T) {
 		var actual []byte
 		expected := []byte("MY_SIGNATURE")

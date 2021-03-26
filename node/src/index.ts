@@ -15,4 +15,5 @@ export * as signers from './identity/signers';
 export { Network } from './network';
 export { Proposal } from './proposal';
 export { ProposalOptions } from './proposalbuilder';
+export { SubmittedTransaction } from './submittedtransaction';
 export { Transaction } from './transaction';

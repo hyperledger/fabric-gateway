@@ -272,7 +272,7 @@ public final class SubmitTransactionTest {
         Contract contract = network.getContract("CHAINCODE_ID");
 
         assertThatThrownBy(() -> contract.submitTransaction("TRANSACTION_NAME"))
-                .isInstanceOf(ContractException.class)
+                .isInstanceOf(CommitException.class)
                 .hasMessageContaining(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT.name());
     }
 

@@ -26,7 +26,7 @@ func ExampleContract_evaluate() ([]byte, error) {
 func ExampleContract_submit() ([]byte, error) {
 	var contract *client.Contract
 
-	result, err := contract.SubmitSync(
+	result, err := contract.Submit(
 		"transactionName",
 		client.WithStringArguments("one", "two"),
 		// Specify additional proposal options, such as transient data

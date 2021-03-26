@@ -11,8 +11,8 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.hyperledger.fabric.client.CommitException;
 import org.hyperledger.fabric.client.Contract;
-import org.hyperledger.fabric.client.ContractException;
 import org.hyperledger.fabric.client.Proposal;
 import org.hyperledger.fabric.client.Transaction;
 import org.hyperledger.fabric.client.identity.Signer;
@@ -65,14 +65,14 @@ public final class TransactionInvocation {
         }
     }
 
-    private byte[] submit() throws ContractException, InvalidProtocolBufferException, GeneralSecurityException {
+    private byte[] submit() throws CommitException, InvalidProtocolBufferException, GeneralSecurityException {
         Proposal proposal = proposalBuilder.build();
         proposal = offlineSign(proposal);
 
         Transaction transaction = proposal.endorse();
         transaction = offlineSign(transaction);
 
-        return transaction.submitSync();
+        return transaction.submit();
     }
 
     private Proposal offlineSign(final Proposal proposal) throws GeneralSecurityException, InvalidProtocolBufferException {

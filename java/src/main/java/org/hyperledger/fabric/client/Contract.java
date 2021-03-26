@@ -100,13 +100,13 @@ public interface Contract {
      * committed to the ledger.
      * @param name Transaction function name.
      * @return Payload response from the transaction function.
-     * @throws ContractException if the transaction is rejected.
+     * @throws CommitException if the transaction fails to commit successfully.
      * @throws TimeoutException If the transaction was successfully submitted to the orderer but
      * timed out before a commit event was received from peers.
      * @throws InterruptedException if the current thread is interrupted while waiting.
      * @throws GatewayRuntimeException if an underlying infrastructure failure occurs.
      */
-    byte[] submitTransaction(String name) throws ContractException, TimeoutException, InterruptedException;
+    byte[] submitTransaction(String name) throws TimeoutException, InterruptedException, CommitException;
 
     /**
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
@@ -115,13 +115,13 @@ public interface Contract {
      * @param name Transaction function name.
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
-     * @throws ContractException if the transaction is rejected.
+     * @throws CommitException if the transaction fails to commit successfully.
      * @throws TimeoutException If the transaction was successfully submitted to the orderer but
      * timed out before a commit event was received from peers.
      * @throws InterruptedException if the current thread is interrupted while waiting.
      * @throws GatewayRuntimeException if an underlying infrastructure failure occurs.
      */
-    byte[] submitTransaction(String name, String... args) throws ContractException, TimeoutException, InterruptedException;
+    byte[] submitTransaction(String name, String... args) throws CommitException, TimeoutException, InterruptedException;
 
     /**
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
@@ -130,13 +130,13 @@ public interface Contract {
      * @param name Transaction function name.
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
-     * @throws ContractException if the transaction is rejected.
+     * @throws CommitException if the transaction fails to commit successfully.
      * @throws TimeoutException If the transaction was successfully submitted to the orderer but
      * timed out before a commit event was received from peers.
      * @throws InterruptedException if the current thread is interrupted while waiting.
      * @throws GatewayRuntimeException if an underlying infrastructure failure occurs.
      */
-    byte[] submitTransaction(String name, byte[]... args) throws ContractException, TimeoutException, InterruptedException;
+    byte[] submitTransaction(String name, byte[]... args) throws CommitException, TimeoutException, InterruptedException;
 
     /**
      * Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
@@ -144,20 +144,8 @@ public interface Contract {
      * This can be used for querying the world state.
      * @param name Transaction function name.
      * @return Payload response from the transaction function.
-     * @throws ContractException if no peers are reachable or an error response is returned.
      */
-    byte[] evaluateTransaction(String name) throws ContractException;
-
-    /**
-     * Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
-     * peers but the transaction will not be sent to the ordering service and so will not be committed to the ledger.
-     * This can be used for querying the world state.
-     * @param name Transaction function name.
-     * @param args Transaction function arguments.
-     * @return Payload response from the transaction function.
-     * @throws ContractException if no peers are reachable or an error response is returned.
-     */
-    byte[] evaluateTransaction(String name, String... args) throws ContractException;
+    byte[] evaluateTransaction(String name);
 
     /**
      * Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
@@ -166,9 +154,18 @@ public interface Contract {
      * @param name Transaction function name.
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
-     * @throws ContractException if no peers are reachable or an error response is returned.
      */
-    byte[] evaluateTransaction(String name, byte[]... args) throws ContractException;
+    byte[] evaluateTransaction(String name, String... args);
+
+    /**
+     * Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
+     * peers but the transaction will not be sent to the ordering service and so will not be committed to the ledger.
+     * This can be used for querying the world state.
+     * @param name Transaction function name.
+     * @param args Transaction function arguments.
+     * @return Payload response from the transaction function.
+     */
+    byte[] evaluateTransaction(String name, byte[]... args);
 
     /**
      * Build a new proposal that can be evaluated or sent to peers for endorsement.

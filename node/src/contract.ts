@@ -9,6 +9,7 @@ import { Proposal, ProposalImpl } from "./proposal";
 import { ProposalBuilder, ProposalOptions } from "./proposalbuilder";
 import { gateway, protos } from "./protos/protos";
 import { SigningIdentity } from "./signingidentity";
+import { SubmittedTransaction, SubmittedTransactionImpl } from './submittedtransaction';
 import { Transaction, TransactionImpl } from "./transaction";
 
 /**
@@ -107,7 +108,18 @@ export interface Contract {
      * @param options Transaction invocation options.
      * @returns the result returned by the transaction function.
      */
-    submitSync(transactionName: string, options?: ProposalOptions): Promise<Uint8Array>;
+    submit(transactionName: string, options?: ProposalOptions): Promise<Uint8Array>;
+
+    /**
+     * Submit a transaction to the ledger and return its result immediately after successfully sending to the orderer,
+     * along with a Commit that can be used to wait for its status when it is committed to the ledger. The transaction
+     * function will be evaluated on endorsing peers and then submitted to the ordering service to be committed to the
+     * ledger.
+     * @param transactionName Name of the transaction to invoke.
+     * @param options Transaction invocation options.
+     * @returns the result returned by the transaction function and a commit handle.
+     */
+    submitAsync(transactionName: string, options?: ProposalOptions): Promise<SubmittedTransaction>;
 
     /**
      * Create a proposal that can be sent to peers for endorsement. Supports off-line signing flow.
@@ -170,21 +182,32 @@ export class ContractImpl implements Contract {
     }
 
     async submitTransaction(name: string, ...args: Array<string|Uint8Array>): Promise<Uint8Array> {
-        return this.submitSync(name, { arguments: args });
+        return this.submit(name, { arguments: args });
     }
 
     async evaluate(transactionName: string, options?: ProposalOptions): Promise<Uint8Array> {
         return this.newProposal(transactionName, options).evaluate();
     }
 
-    async submitSync(transactionName: string, options?: ProposalOptions): Promise<Uint8Array> {
+    async submit(transactionName: string, options?: ProposalOptions): Promise<Uint8Array> {
+        const submitted = await this.submitAsync(transactionName, options);
+
+        const status = await submitted.getStatus();
+        if (status !== protos.TxValidationCode.VALID) {
+            throw new Error(`Transaction ${submitted.getTransactionId()} failed to commit with status code ${status} (${protos.TxValidationCode[status]})`)
+        }
+
+        return submitted.getResult();
+    }
+
+    async submitAsync(transactionName: string, options?: ProposalOptions): Promise<SubmittedTransaction> {
         const transaction = await this.newProposal(transactionName, options).endorse();
         const commit = await transaction.submit();
-        const status = await commit.getStatus();
-        if (status !== protos.TxValidationCode.VALID) {
-            throw new Error(`Transaction ${transaction.getTransactionId()} failed to commit with status code ${status} (${protos.TxValidationCode[status]})`)
-        }
-        return transaction.getResult();
+
+        return new SubmittedTransactionImpl({
+            commit,
+            result: transaction.getResult(),
+        });
     }
 
     newProposal(transactionName: string, options: ProposalOptions = {}): Proposal {

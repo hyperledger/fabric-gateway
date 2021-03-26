@@ -100,19 +100,23 @@ public final class OfflineSignTest {
         Proposal signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
         Transaction transaction = signedProposal.endorse();
 
-        assertThatThrownBy(transaction::submitSync)
+        assertThatThrownBy(() -> transaction.submit())
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
-    void submit_uses_offline_signature() throws InvalidProtocolBufferException, ContractException {
+    void submit_uses_offline_signature() throws InvalidProtocolBufferException {
         byte[] expected = "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
 
         Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
         Proposal signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
         Transaction unsignedTransaction = signedProposal.endorse();
         Transaction signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), expected);
-        signedTransaction.submitSync();
+        try {
+            signedTransaction.submit();
+        } catch (CommitException e) {
+            e.printStackTrace();
+        }
 
         SubmitRequest request = mocker.captureSubmit();
         byte[] actual = request.getPreparedTransaction().getSignature().toByteArray();
