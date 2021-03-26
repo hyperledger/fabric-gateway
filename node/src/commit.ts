@@ -7,10 +7,13 @@
 import { GatewayClient } from './client';
 import { gateway, protos } from './protos/protos';
 
-// Allows access to information to a transaction that is committed to the ledger.
+/**
+ * Allows access to information about a transaction that is committed to the ledger.
+ */
 export interface Commit {
     /**
-     * Get the committed transaction status code.
+     * Get the committed transaction status code. If the transaction has not yet committed, this method blocks until
+     * the commit occurs.
      */
     getStatus(): Promise<protos.TxValidationCode>;
 

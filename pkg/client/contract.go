@@ -90,7 +90,7 @@ func (contract *Contract) Submit(transactionName string, options ...ProposalOpti
 }
 
 // SubmitAsync submits a transaction to the ledger and returns its result immediately after successfully sending to the
-// orderer, along with a Commit that can be used to wait for its status when it is committed to the ledger.
+// orderer, along with a Commit that can be used to wait for it to be committed to the ledger.
 func (contract *Contract) SubmitAsync(transactionName string, options ...ProposalOption) ([]byte, *Commit, error) {
 	proposal, err := contract.NewProposal(transactionName, options...)
 	if err != nil {

@@ -22,7 +22,8 @@ type Commit struct {
 	transactionID string
 }
 
-// Status of the committed transaction.
+// Status of the committed transaction. If the transaction has not yet committed, this call blocks until the commit
+// occurs.
 func (commit *Commit) Status() (peer.TxValidationCode, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
