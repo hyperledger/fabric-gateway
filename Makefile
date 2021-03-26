@@ -65,6 +65,9 @@ lint:
 staticcheck:
 	staticcheck $(base_dir)/pkg/... $(scenario_dir)/go
 
+sample-network: vendor-chaincode
+	cd $(scenario_dir)/go; GATEWAY_NO_SHUTDOWN=TRUE godog $(scenario_dir)/features/basic.feature
+
 generate:
 	go generate ./pkg/...
 
