@@ -16,13 +16,21 @@ schedules:
         - main
 
 variables:
-  GATEWAY_VERSION: 0.1.0
-  BUILD_DATE: $[format('{0:yyyyMMdd}', pipeline.startTime)]
-  BUILD_NUMBER: $[counter(format('{0:yyyyMMdd}', pipeline.startTime), 1)]
-  GOPATH: $(Agent.BuildDirectory)/go
-  PATH: $(Agent.BuildDirectory)/go/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
-  GOVER: 1.15.6
-  NODEVER: 12.16.1
+  - group: JARSigningPublish
+  - name: GATEWAY_VERSION
+    value: 0.1.0
+  - name: BUILD_DATE
+    value: $[format('{0:yyyyMMdd}', pipeline.startTime)]
+  - name: BUILD_NUMBER
+    value: $[counter(format('{0:yyyyMMdd}', pipeline.startTime), 1)]
+  - name: GOPATH
+    value: $(Agent.BuildDirectory)/go
+  - name: PATH
+    value: $(Agent.BuildDirectory)/go/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+  - name: GOVER
+    value: 1.15.6
+  - name: NODEVER
+    value: 12.16.1
 
 stages:
 - stage: Test
@@ -144,6 +152,15 @@ stages:
         workingDirectory: $(Pipeline.Workspace)/NodeBuild
   - job: PublishJava
     steps:
+      - task: DownloadSecureFile@1
+        name: privateKey
+        displayName: Download private key
+        inputs:
+          secureFile: private-key.asc
+      - script: gpg --import ${PRIVATE_KEY}
+        displayName: Import private key
+        env:
+          PRIVATE_KEY: $(privateKey.secureFilePath)
       - task: MavenAuthenticate@0
         inputs:
           mavenServiceConnections: maven-artifactory
@@ -160,6 +177,6 @@ stages:
         displayName: Deploy to artifactory
         workingDirectory: $(System.DefaultWorkingDirectory)/java
         env:
-          MAVEN_OPTS: -Dmaven.test.skip=true
+          MAVEN_OPTS: -Dmaven.test.skip=true -Dgpg-keyname=$(JAR-Signing-Id) -Dgpg.passphrase=$(JAR-Signing-Password)
       - publish: $(System.DefaultWorkingDirectory)/java
         artifact: JavaBuild
