@@ -6,14 +6,14 @@
 
 package org.hyperledger.fabric.client;
 
-import static org.mockito.Mockito.spy;
-
 import java.util.concurrent.TimeUnit;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import io.grpc.ManagedChannel;
 import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
-import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.hyperledger.fabric.protos.peer.Chaincode;
 import org.hyperledger.fabric.protos.peer.ProposalPackage;
@@ -23,9 +23,7 @@ import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.mockito.MockitoSession;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
-import io.grpc.ManagedChannel;
+import static org.mockito.Mockito.spy;
 
 public final class GatewayMocker implements AutoCloseable {
     private static final TestUtils utils = TestUtils.getInstance();
@@ -42,6 +40,8 @@ public final class GatewayMocker implements AutoCloseable {
     private ArgumentCaptor<EvaluateRequest> evaluateRequestCaptor;
     @Captor
     private ArgumentCaptor<SubmitRequest> submitRequestCaptor;
+    @Captor
+    private ArgumentCaptor<CommitStatusRequest> commitStatusRequestCaptor;
 
     public GatewayMocker() {
         this(utils.newGatewayBuilder());
@@ -85,6 +85,11 @@ public final class GatewayMocker implements AutoCloseable {
     public SubmitRequest captureSubmit() {
         Mockito.verify(stub).submit(submitRequestCaptor.capture());
         return submitRequestCaptor.getValue();
+    }
+
+    public CommitStatusRequest captureCommitStatus() {
+        Mockito.verify(stub).commitStatus(commitStatusRequestCaptor.capture());
+        return commitStatusRequestCaptor.getValue();
     }
 
     public Chaincode.ChaincodeSpec getChaincodeSpec(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {

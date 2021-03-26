@@ -6,6 +6,8 @@
 
 package org.hyperledger.fabric.client;
 
+import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
+import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EndorseResponse;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
@@ -55,6 +57,17 @@ public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
     public void evaluate(EvaluateRequest request, StreamObserver<EvaluateResponse> responseObserver) {
         try {
             EvaluateResponse response = stub.evaluate(request);
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(e);
+        }
+    }
+
+    @Override
+    public void commitStatus(CommitStatusRequest request, StreamObserver<CommitStatusResponse> responseObserver) {
+        try {
+            CommitStatusResponse response = stub.commitStatus(request);
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         } catch (Exception e) {

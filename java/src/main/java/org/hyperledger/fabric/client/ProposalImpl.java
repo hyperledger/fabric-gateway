@@ -7,7 +7,6 @@
 package org.hyperledger.fabric.client;
 
 import com.google.protobuf.ByteString;
-
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EndorseResponse;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;

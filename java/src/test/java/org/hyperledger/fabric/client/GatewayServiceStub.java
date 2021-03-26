@@ -9,6 +9,10 @@ package org.hyperledger.fabric.client;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
+import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EndorseResponse;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
@@ -18,9 +22,7 @@ import org.hyperledger.fabric.protos.gateway.SubmitResponse;
 import org.hyperledger.fabric.protos.peer.Chaincode;
 import org.hyperledger.fabric.protos.peer.ProposalPackage;
 import org.hyperledger.fabric.protos.peer.ProposalPackage.SignedProposal;
-
-import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
+import org.hyperledger.fabric.protos.peer.TransactionPackage;
 
 public class GatewayServiceStub {
     private static final TestUtils utils = TestUtils.getInstance();
@@ -36,6 +38,10 @@ public class GatewayServiceStub {
     public EvaluateResponse evaluate(final EvaluateRequest request) {
         String payload = newPayload(request.getProposedTransaction());
         return utils.newEvaluateResponse(payload);
+    }
+
+    public CommitStatusResponse commitStatus(final CommitStatusRequest request) {
+        return utils.newCommitStatusResponse(TransactionPackage.TxValidationCode.VALID);
     }
 
     private String newPayload(SignedProposal requestProposal) {
