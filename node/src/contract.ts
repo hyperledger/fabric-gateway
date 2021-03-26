@@ -112,9 +112,8 @@ export interface Contract {
 
     /**
      * Submit a transaction to the ledger and return its result immediately after successfully sending to the orderer,
-     * along with a Commit that can be used to wait for its status when it is committed to the ledger. The transaction
-     * function will be evaluated on endorsing peers and then submitted to the ordering service to be committed to the
-     * ledger.
+     * along with a Commit that can be used to wait for it to be committed to the ledger. The transaction function will
+     * be evaluated on endorsing peers and then submitted to the ordering service to be committed to the ledger.
      * @param transactionName Name of the transaction to invoke.
      * @param options Transaction invocation options.
      * @returns the result returned by the transaction function and a commit handle.

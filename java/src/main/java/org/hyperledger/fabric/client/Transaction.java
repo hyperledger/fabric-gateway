@@ -42,7 +42,7 @@ public interface Transaction {
      * Submit the transaction to the orderer to be committed to the ledger. This method blocks until the transaction
      * has been successfully committed to the ledger.
      * @return A transaction result.
-     * @throws CommitException On commit failure.Ø
+     * @throws CommitException On commit failure.
      */
     byte[] submit() throws CommitException;
 
