@@ -149,15 +149,14 @@ stages:
           mavenServiceConnections: maven-artifactory
       - script: make fabric-protos
         displayName: Fetch fabric protos
-      - script: mvn versions:set -DnewVersion=${GATEWAY_VERSION}-${BUILD_DATE}-${BUILD_NUMBER}
+      - script: mvn --batch-mode versions:set -DnewVersion=${GATEWAY_VERSION}-dev-${BUILD_DATE}-${BUILD_NUMBER}
         displayName: Set prerelease version
         workingDirectory: $(System.DefaultWorkingDirectory)/java
         env:
           GATEWAY_VERSION: $(GATEWAY_VERSION)
           BUILD_DATE: $(BUILD_DATE)
           BUILD_NUMBER: $(BUILD_NUMBER)
-      - script: |
-          mvn deploy
+      - script: mvn --batch-mode -P release deploy
         displayName: Deploy to artifactory
         workingDirectory: $(System.DefaultWorkingDirectory)/java
         env:
