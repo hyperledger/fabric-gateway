@@ -1,0 +1,15 @@
+org.hyperledger.fabric.client
+org.hyperledger.fabric.client.identity
+org.hyperledger.fabric.protos.common
+org.hyperledger.fabric.protos.discovery
+org.hyperledger.fabric.protos.gateway
+org.hyperledger.fabric.protos.gossip
+org.hyperledger.fabric.protos.ledger.queryresult
+org.hyperledger.fabric.protos.ledger.rwset
+org.hyperledger.fabric.protos.ledger.rwset.kvrwset
+org.hyperledger.fabric.protos.msp
+org.hyperledger.fabric.protos.orderer
+org.hyperledger.fabric.protos.orderer.etcdraft
+org.hyperledger.fabric.protos.peer
+org.hyperledger.fabric.protos.peer.lifecycle
+org.hyperledger.fabric.protos.transientstore
