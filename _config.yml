@@ -1,7 +1,5 @@
 theme: minima
 title: "fabric-gateway"
-keep_files:
-  - main/api
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list
 # to override the default setting.
