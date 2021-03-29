@@ -1,0 +1,9 @@
+_site/*
+_site/assets/*
+!_site/**/
+_site/main/*
+!_site/main/**/
+!_site/main/api/**
+
+.sass-cache
+.jekyll-metadata
