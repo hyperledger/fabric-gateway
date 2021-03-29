@@ -12,6 +12,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"reflect"
 	"regexp"
@@ -227,7 +228,9 @@ var (
 
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctx.AfterSuite(func() {
-		stopFabric()
+		if os.Getenv("GATEWAY_NO_SHUTDOWN") != "TRUE" {
+			stopFabric()
+		}
 	})
 }
 
