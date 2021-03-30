@@ -2,8 +2,6 @@
 layout: home
 ---
 
-# Hyperledger Fabric Gateway
-
 The Fabric Gateway is a core component of a Fabric blockchain network and coordinates the actions required to
 submit transactions and query ledger state on behalf of client applications.  By using the Gateway, client applications
 only need to connect to a single endpoint in the Fabric network.
@@ -46,16 +44,28 @@ the Gateway.
 
 The Go SDK provides a high-level API for client applications written in Go.
 
-Read the [quickstart](pkg/client/README.md) guide and [Go API documentation](https://pkg.go.dev/github.com/hyperledger/fabric-gateway) for more details.
+See the following for more details:
+
+- [Quickstart guide](https://github.com/hyperledger/fabric-gateway/blob/main/pkg/client/README.md) 
+- [API documentation](https://pkg.go.dev/github.com/hyperledger/fabric-gateway/pkg/client)
+- [Sample](https://github.com/hyperledger/fabric-gateway/blob/main/samples/README.md)
 
 ### Node SDK
 
 The Node SDK provides a high-level API for client applications written in Javascript or Typescript.
 
-Read the [quickstart](node/README.md) guide for more details.
+See the following for more details:
+
+- [Quickstart guide](https://github.com/hyperledger/fabric-gateway/blob/main/node/README.md) 
+- [API documentation](https://hyperledger.github.io/fabric-gateway/main/api/node/)
+- [Sample](https://github.com/hyperledger/fabric-gateway/blob/main/samples/README.md)
 
 ### Java SDK
 
 The Java SDK provides a high-level API for client applications written in Java.
 
-Read the [quickstart](java/README.md) guide for more details.
+See the following for more details:
+
+- [Quickstart guide](https://github.com/hyperledger/fabric-gateway/blob/main/java/README.md) 
+- [API documentation](https://hyperledger.github.io/fabric-gateway/main/api/java/)
+- [Sample](https://github.com/hyperledger/fabric-gateway/blob/main/samples/README.md)
