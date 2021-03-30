@@ -7,25 +7,20 @@ The Gateway SDK implements the Fabric programming model as described in the [Dev
 
 ## How to use 
 
-The following shows a complete code sample of how to connect to a fabric network, submit a transaction and query the ledger state using an instantiated smart contract (fabcar sample).
-
-```javascript
-
-```
+Samples showing how to create a client application that updates and queries the ledger
+are available for each of the supported SDK languages here:
+https://github.com/hyperledger/fabric-gateway/tree/main/samples
 
 ### API documentation
 
-Full JSdoc documentation will be published.
+The Node Gateway SDK documentation is available here:
+https://hyperledger.github.io/fabric-gateway/main/api/node/
 
 ### Installation
 
-tbd
-
 `npm install fabric-gateway`
-
-
 
 ### Compatibility
 
-tbd
+This SDK requires Fabric 2.4 Tech Preview with a Gateway enabled Peer.
 

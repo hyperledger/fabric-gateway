@@ -7,33 +7,36 @@ The Gateway SDK implements the Fabric programming model as described in the [Dev
 
 ## How to use 
 
-The following shows a complete code sample of how to connect to a fabric network, submit a transaction and query the ledger state using an instantiated smart contract (fabcar sample).
-
-```java
-
-```
+Samples showing how to create a client application that updates and queries the ledger
+are available for each of the supported SDK languages here:
+https://github.com/hyperledger/fabric-gateway/tree/main/samples
 
 ### API documentation
 
-Full Javadoc documentation will be published.
+The Java Gateway SDK documentation is available here:
+https://hyperledger.github.io/fabric-gateway/main/api/java/
 
-### Maven
+### Installation with Maven
 
 Add the following dependency to your project's `pom.xml` file:
 
 ```xml
-tbd
-```
-
-### Gradle
-
-Add the following dependency to your project's `build.gradle` file:
-
-```groovy
-tbd
+<repositories>
+    <repository>
+        <id>nightly-repo</id>
+        <url>https://hyperledger-fabric.jfrog.io/artifactory/fabric-maven</url>
+    </repository>
+</repositories>
+<dependencies>
+    <dependency>
+        <groupId>org.hyperledger.fabric</groupId>
+        <artifactId>fabric-gateway</artifactId>
+        <version>0.1.0-dev-20210326-14</version>
+    </dependency>
+</dependencies>
 ```
 
 ### Compatibility
 
-tbd
+This SDK requires Fabric 2.4 Tech Preview with a Gateway enabled Peer.
 
