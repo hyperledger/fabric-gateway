@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"org.hyperledger.fabric.client"},{"l":"org.hyperledger.fabric.client.identity"}]
