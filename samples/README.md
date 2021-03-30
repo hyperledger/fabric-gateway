@@ -42,4 +42,7 @@ npm start
 
 ### Java
 
-TBD
+```
+cd <base-path>/fabric-gateway/samples/java
+mvn test
+```

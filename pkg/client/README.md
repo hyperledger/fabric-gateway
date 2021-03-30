@@ -7,23 +7,20 @@ The Gateway SDK implements the Fabric programming model as described in the [Dev
 
 ## How to use 
 
-The following shows a complete code sample of how to connect to a fabric network, submit a transaction and query the ledger state using an instantiated smart contract (fabcar sample).
-
-```go
-
-```
+Samples showing how to create a client application that updates and queries the ledger 
+are available for each of the supported SDK languages here:
+https://github.com/hyperledger/fabric-gateway/tree/main/samples
 
 ### API documentation
 
-Full godoc documentation will be published.
+The Go Gateway SDK documentation is available here:
+https://pkg.go.dev/github.com/hyperledger/fabric-gateway/pkg/client
 
 ### Installation
 
-tbd
-
-`go get github.com/hyperledger/fabric-gateway-client`
+`go get github.com/hyperledger/fabric-gateway`
 
 ### Compatibility
 
-tbd
+This SDK requires Fabric 2.4 Tech Preview with a Gateway enabled Peer.
 
