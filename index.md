@@ -10,6 +10,14 @@ The Gateway SDKs implement the Fabric programming model as described in the
 [Developing Applications](https://hyperledger-fabric.readthedocs.io/en/latest/developapps/developing_applications.html)
 chapter of the Fabric documentation.
 
+## Tech Preview
+
+❇️ There are [samples for Go, Node, and Java](https://github.com/hyperledger/fabric-gateway/blob/main/samples/README.md) which are a great place to start if you want to try out the Fabric Gateway tech preview.
+
+❇️ These include a Fabric network which includes a Peer with the Gateway feature enabled.
+
+❇️ Make sure you [install the pre-reqs](#pre-reqs) before you begin.
+
 ## Overview
 
 The original proposal is described in the [Fabric Gateway RFC](https://hyperledger.github.io/fabric-rfcs/text/0000-fabric-gateway.html).
@@ -22,7 +30,7 @@ See the [gateway.proto file](https://github.com/hyperledger/fabric-protos/blob/m
 
 ## Configuring the Gateway
 
-Enable the Gateway feature flag in `core.yaml` by adding the following:
+Currently the Gateway component in the Fabric Peer is disabled by default. Enable the Gateway feature flag in `core.yaml` by adding the following:
 
 ```
 peer:
@@ -48,7 +56,6 @@ See the following for more details:
 
 - [Quickstart guide](https://github.com/hyperledger/fabric-gateway/blob/main/pkg/client/README.md) 
 - [API documentation](https://pkg.go.dev/github.com/hyperledger/fabric-gateway/pkg/client)
-- [Sample](https://github.com/hyperledger/fabric-gateway/blob/main/samples/README.md)
 
 ### Node SDK
 
@@ -58,7 +65,6 @@ See the following for more details:
 
 - [Quickstart guide](https://github.com/hyperledger/fabric-gateway/blob/main/node/README.md) 
 - [API documentation](https://hyperledger.github.io/fabric-gateway/main/api/node/)
-- [Sample](https://github.com/hyperledger/fabric-gateway/blob/main/samples/README.md)
 
 ### Java SDK
 
@@ -68,4 +74,25 @@ See the following for more details:
 
 - [Quickstart guide](https://github.com/hyperledger/fabric-gateway/blob/main/java/README.md) 
 - [API documentation](https://hyperledger.github.io/fabric-gateway/main/api/java/)
-- [Sample](https://github.com/hyperledger/fabric-gateway/blob/main/samples/README.md)
+
+## Pre-reqs
+
+Install the following pre-reqs to develop client applications using the Gateway SDK:
+
+- Go v1.14 (required for sample Fabric network)
+- Node (optional for Node SDK)
+- Typescript (optional for Node SDK)
+- Java 11 (optional for Java SDK)
+- Docker (required for sample Fabric network)
+
+In addition, you will need the `godog` tool to use the sample Fabric network, which can be installed with:
+
+```
+GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.10.0
+```
+
+Make sure you can run `godog --version` after installing. If the command is not found, add the Go bin directory to your path using: 
+
+```
+export PATH=$PATH:$(go env GOPATH)/bin
+```
