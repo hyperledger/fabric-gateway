@@ -61,19 +61,15 @@ services:
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org1.example.com:7051
       - CORE_PEER_LOCALMSPID=Org1MSP
       - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/peer/msp
-
       - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
-      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb.org1.example.com:5984
-
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.org1.example.com:5984
       ## Enable TLS
       - CORE_PEER_TLS_ENABLED=true
       - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/peer/tls/server.key
       - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/peer/tls/server.crt
       - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/peer/tls/ca.crt
-
       # GATEWAY SETTINGS
       - CORE_PEER_GATEWAY_ENABLED=true
-
     ports:
       - 7051:7051
     volumes:
@@ -81,7 +77,17 @@ services:
         - ../crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/:/etc/hyperledger/peer
     depends_on:
       - orderer.example.com
-      - couchdb.org1.example.com
+      - couchdb0.org1.example.com
+
+  couchdb0.org1.example.com:
+    extends:
+        file: docker-compose-base.yaml
+        service: couchdb
+    container_name: couchdb0.org1.example.com
+    ports:
+      - 5984:5984
+    environment:
+      DB_URL: http://localhost:5984/member_db
 
   peer1.org1.example.com:
     extends:
@@ -97,16 +103,13 @@ services:
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org1.example.com:9051
       - CORE_PEER_LOCALMSPID=Org1MSP
       - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/peer/msp
-
       - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
-      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb.org1.example.com:5984
-
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb1.org1.example.com:5984
       ## Enable TLS
       - CORE_PEER_TLS_ENABLED=true
       - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/peer/tls/server.key
       - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/peer/tls/server.crt
       - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/peer/tls/ca.crt
-
     ports:
       - 9051:9051
     volumes:
@@ -114,7 +117,17 @@ services:
       - ../crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/:/etc/hyperledger/peer
     depends_on:
       - orderer.example.com
-      - couchdb.org1.example.com
+      - couchdb1.org1.example.com
+
+  couchdb1.org1.example.com:
+    extends:
+        file: docker-compose-base.yaml
+        service: couchdb
+    container_name: couchdb1.org1.example.com
+    ports:
+      - 6984:5984
+    environment:
+      DB_URL: http://localhost:5984/member_db
 
 #  gateway.org1.example.com:
 #    extends:
@@ -147,16 +160,6 @@ services:
 #    depends_on:
 #      - peer0.org1.example.com
 
-  couchdb.org1.example.com:
-    extends:
-        file: docker-compose-base.yaml
-        service: couchdb
-    container_name: couchdb.org1.example.com
-    ports:
-      - 5984:5984
-    environment:
-      DB_URL: http://localhost:5984/member_db
-
   peer0.org2.example.com:
     extends:
         file: docker-compose-base.yaml
@@ -172,19 +175,15 @@ services:
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org2.example.com:8051
       - CORE_PEER_LOCALMSPID=Org2MSP
       - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/peer/msp
-
       - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
-      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb.org2.example.com:5984
-
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.org2.example.com:5984
       ## Enable TLS
       - CORE_PEER_TLS_ENABLED=true
       - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/peer/tls/server.key
       - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/peer/tls/server.crt
       - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/peer/tls/ca.crt
-
       # GATEWAY SETTINGS
       - CORE_PEER_GATEWAY_ENABLED=true
-
     ports:
       - 8051:8051
     volumes:
@@ -192,14 +191,23 @@ services:
         - ../crypto-material/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/:/etc/hyperledger/peer
     depends_on:
       - orderer.example.com
-      - couchdb.org2.example.com
+      - couchdb0.org2.example.com
+
+  couchdb0.org2.example.com:
+    extends:
+        file: docker-compose-base.yaml
+        service: couchdb
+    container_name: couchdb0.org2.example.com
+    ports:
+      - 7984:5984
+    environment:
+      DB_URL: http://localhost:5984/member_db
 
   peer1.org2.example.com:
     extends:
       file: docker-compose-base.yaml
       service: peer
     container_name: peer1.org2.example.com
-
     environment:
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
       - CORE_PEER_ID=peer1.org2.example.com
@@ -209,16 +217,13 @@ services:
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org2.example.com:10051
       - CORE_PEER_LOCALMSPID=Org2MSP
       - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/peer/msp
-
       - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
-      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb.org2.example.com:5984
-
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb1.org2.example.com:5984
       ## Enable TLS
       - CORE_PEER_TLS_ENABLED=true
       - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/peer/tls/server.key
       - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/peer/tls/server.crt
       - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/peer/tls/ca.crt
-
     ports:
       - 10051:10051
     volumes:
@@ -226,15 +231,15 @@ services:
       - ../crypto-material/crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/:/etc/hyperledger/peer
     depends_on:
       - orderer.example.com
-      - couchdb.org2.example.com
+      - couchdb1.org2.example.com
 
-  couchdb.org2.example.com:
+  couchdb1.org2.example.com:
     extends:
         file: docker-compose-base.yaml
         service: couchdb
-    container_name: couchdb.org2.example.com
+    container_name: couchdb1.org2.example.com
     ports:
-      - 6984:5984
+      - 8984:5984
     environment:
       DB_URL: http://localhost:5984/member_db
 
@@ -243,7 +248,6 @@ services:
       file: docker-compose-base.yaml
       service: clibase
     container_name: org1_cli
-
     environment:
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
       - CORE_PEER_ID=cli
@@ -258,13 +262,12 @@ services:
       - /var/run/:/host/var/run/
     depends_on:
       - peer0.org1.example.com
-      
+
   org2_cli:
     extends:
       file: docker-compose-base.yaml
       service: clibase
     container_name: org2_cli
-
     environment:
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
       - CORE_PEER_ID=cli
@@ -294,31 +297,28 @@ services:
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org3.example.com:11051
       - CORE_PEER_LOCALMSPID=Org3MSP
       - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/peer/msp
-
       - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
-      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb.org3.example.com:5984
-
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.org3.example.com:5984
       ## Enable TLS
       - CORE_PEER_TLS_ENABLED=true
       - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/peer/tls/server.key
       - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/peer/tls/server.crt
       - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/peer/tls/ca.crt
-
     ports:
       - 11051:11051
     volumes:
       - /var/run/:/host/var/run/
       - ../crypto-material/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/:/etc/hyperledger/peer
     depends_on:
-      - couchdb.org3.example.com
+      - couchdb0.org3.example.com
 
-  couchdb.org3.example.com:
+  couchdb0.org3.example.com:
     extends:
       file: docker-compose-base.yaml
       service: couchdb
-    container_name: couchdb.org3.example.com
+    container_name: couchdb0.org3.example.com
     ports:
-      - 7984:5984
+      - 9984:5984
     environment:
       DB_URL: http://localhost:5984/member_db
 
@@ -327,7 +327,6 @@ services:
       file: docker-compose-base.yaml
       service: clibase
     container_name: org3_cli
-
     environment:
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
       - CORE_PEER_ID=cli
