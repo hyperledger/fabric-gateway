@@ -45,10 +45,13 @@ async function main() {
     try {
         const network = gateway.getNetwork('mychannel');
         const contract = network.getContract('basic');
-        let result = await contract.submitTransaction('put', 'timestamp', (new Date()).toISOString())
-        console.log('result = ', result.toString());
+        const currentTime = (new Date()).toISOString()
+        console.log('Submitting transaction to basic chaincode with value ' + currentTime + '...');
+        let result = await contract.submitTransaction('put', 'timestamp', currentTime)
+        console.log('Submit result = ', result.toString());
+        console.log('Evaluating query...');
         result = await contract.evaluateTransaction('get', 'timestamp');
-        console.log('result = ', result.toString());
+        console.log('Query result = ', result.toString());
     } finally {
         gateway.close();
     }
