@@ -55,17 +55,19 @@ func main() {
 
 	timestamp := time.Now()
 
+	fmt.Printf("Submitting transaction to basic chaincode with value '%s'...\n", timestamp.String())
 	result, err := contract.SubmitTransaction("put", "time", timestamp.String())
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("result = %s\n", string(result))
+	fmt.Printf("Submit result = %s\n\n", string(result))
 
+	fmt.Println("Evaluating query...")
 	result, err = contract.EvaluateTransaction("get", "time")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("result = %s\n", string(result))
+	fmt.Printf("Query result = %s\n\n", string(result))
 }
 
 // newIdentity creates a client identity for this Gateway connection using an X.509 certificate
