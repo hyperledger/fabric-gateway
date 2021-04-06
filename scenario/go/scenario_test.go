@@ -16,6 +16,7 @@ import (
 	"os/exec"
 	"reflect"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/cucumber/godog"
@@ -257,6 +258,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 
 func startFabric() error {
 	if !fabricRunning {
+		fmt.Println("startFabric")
 		err := createCryptoMaterial()
 		if err != nil {
 			return err
@@ -264,10 +266,12 @@ func startFabric() error {
 		cmd := exec.Command("docker-compose", "-f", dockerComposeFile, "-p", "node", "up", "-d")
 		cmd.Dir = dockerComposeDir
 		out, err := cmd.CombinedOutput()
+		if out != nil {
+			fmt.Println(string(out))
+		}
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(out))
 		fabricRunning = true
 		time.Sleep(20 * time.Second)
 	} else {
@@ -279,30 +283,37 @@ func startFabric() error {
 
 func stopFabric() error {
 	if fabricRunning {
+		fmt.Println("stopFabric")
 		cmd := exec.Command("docker-compose", "-f", dockerComposeFile, "-p", "node", "down")
 		cmd.Dir = dockerComposeDir
 		out, err := cmd.CombinedOutput()
+		if out != nil {
+			fmt.Println(string(out))
+		}
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(out))
 		fabricRunning = false
 	}
 	return nil
 }
 
 func createCryptoMaterial() error {
+	fmt.Println("createCryptoMaterial")
 	cmd := exec.Command("./generate.sh")
 	cmd.Dir = fixturesDir
 	out, err := cmd.CombinedOutput()
+	if out != nil {
+		fmt.Println(string(out))
+	}
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(out))
 	return nil
 }
 
 func deployChaincode(ccType, ccName, version, channelName, signaturePolicy string) error {
+	fmt.Println("deployChaincode")
 	mangledName := ccName + version + channelName
 	if _, ok := runningChaincodes[mangledName]; ok {
 		// already exists
@@ -462,6 +473,7 @@ func loadX509Cert(certFile string) (*x509.Certificate, error) {
 }
 
 func createAndJoinChannels() error {
+	fmt.Println("createAndJoinChannels")
 	startAllPeers()
 	if !channelsJoined {
 		_, err := dockerCommandWithTLS(
@@ -528,6 +540,7 @@ func startPeer(peer string) error {
 }
 
 func startAllPeers() error {
+	fmt.Println("startAllPeers")
 	startedPeers := false
 	for peer, info := range peerConnectionInfo {
 		if !info.running {
@@ -558,9 +571,12 @@ func dockerCommandWithTLS(args ...string) (string, error) {
 }
 
 func dockerCommand(args ...string) (string, error) {
+	fmt.Println("\033[1m", ">", "docker", strings.Join(args, " "), "\033[0m")
 	cmd := exec.Command("docker", args...)
 	out, err := cmd.CombinedOutput()
-	fmt.Println(string(out))
+	if out != nil {
+		fmt.Println(string(out))
+	}
 	if err != nil {
 		return "", fmt.Errorf("%w: %s", err, string(out))
 	}
