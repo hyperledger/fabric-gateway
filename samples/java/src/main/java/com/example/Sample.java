@@ -51,11 +51,13 @@ public class Sample
 
             String time = LocalDateTime.now().toString();
 
+            System.out.println("Submitting transaction to basic chaincode with value " + time + "...");
             byte[] result = contract.submitTransaction("put", "time", time);
-            System.out.println(new String(result));
+            System.out.println("Submit result = " + new String(result));
 
+            System.out.println("Evaluating query...");
             result = contract.evaluateTransaction("get", "time");
-            System.out.println(new String(result));
+            System.out.println("Query result = " + new String(result));
         }
     }
 }
