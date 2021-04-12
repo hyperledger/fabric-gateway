@@ -17,7 +17,7 @@ version: '2'
 services:
   clinopeer:
     container_name: cli
-    image: hyperledger/fabric-tools${DOCKER_IMG_TAG}
+    image: hyperledger/fabric-tools:${TOOLS_IMAGE_TAG}
     tty: true
     environment:
       - GOPATH=/opt/gopath
