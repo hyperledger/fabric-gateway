@@ -11,12 +11,14 @@ node_dir := $(base_dir)/node
 java_dir := $(base_dir)/java
 scenario_dir := $(base_dir)/scenario
 
-PEER_VERSION = 2.4
-ALPINE_VER ?= 3.12
-BASE_VERSION = 2.3.0
-# TWO_DIGIT_VERSION is derived, e.g. "2.0", especially useful as a local tag
-# for two digit references to most recent baseos and ccenv patch releases
-TWO_DIGIT_VERSION = $(shell echo $(BASE_VERSION) | cut -d '.' -f 1,2)
+# PEER_IMAGE_PULL is where to pull peer image from, it can be set by external env variable
+PEER_IMAGE_PULL ?= hyperledger-fabric.jfrog.io/fabric-peer:amd64-latest
+
+# PEER_IMAGE_TAG is what to tag the pulled peer image as, it will also be used in docker-compose to reference the image
+PEER_IMAGE_TAG ?= 2.4
+
+# TWO_DIGIT_VERSION specifies which chaincode images to pull, they will be tagged to be consistent with PEER_IMAGE_TAG
+TWO_DIGIT_VERSION ?= 2.3
 
 PKGNAME = github.com/hyperledger/fabric-gateway
 ARCH=$(shell go env GOARCH)
@@ -91,12 +93,12 @@ test: unit-test scenario-test
 all: test
 
 pull-latest-peer:
-	docker pull hyperledger-fabric.jfrog.io/fabric-peer:amd64-latest
-	docker tag hyperledger-fabric.jfrog.io/fabric-peer:amd64-latest hyperledger/fabric-peer:$(PEER_VERSION)
+	docker pull $(PEER_IMAGE_PULL)
+	docker tag $(PEER_IMAGE_PULL) hyperledger/fabric-peer:$(PEER_IMAGE_TAG)
 	# also need to retag the following images for the chaincode builder
 	for IMAGE in baseos ccenv javaenv nodeenv; do \
 		docker pull hyperledger/fabric-$$IMAGE:$(TWO_DIGIT_VERSION); \
-		docker tag hyperledger/fabric-$$IMAGE:$(TWO_DIGIT_VERSION) hyperledger/fabric-$$IMAGE:$(PEER_VERSION); \
+		docker tag hyperledger/fabric-$$IMAGE:$(TWO_DIGIT_VERSION) hyperledger/fabric-$$IMAGE:$(PEER_IMAGE_TAG); \
 	done
 
 .PHONEY: clean
