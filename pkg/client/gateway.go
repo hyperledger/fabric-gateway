@@ -17,10 +17,7 @@ package client
 
 import (
 	"errors"
-	"fmt"
-	"io"
 
-	"github.com/hyperledger/fabric-gateway/pkg/connection"
 	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	proto "github.com/hyperledger/fabric-protos-go/gateway"
@@ -31,11 +28,10 @@ import (
 type Gateway struct {
 	signingID *signingIdentity
 	client    proto.GatewayClient
-	closer    io.Closer
 }
 
 // Connect to a Fabric Gateway using a client identity, signing implementation, and additional options, which must
-// include gRPC client connection details.
+// include a gRPC client connection.
 func Connect(id identity.Identity, options ...ConnectOption) (*Gateway, error) {
 	gateway := &Gateway{
 		signingID: newSigningIdentity(id),
@@ -81,26 +77,10 @@ func WithHash(hash hash.Hash) ConnectOption {
 	}
 }
 
-// WithEndpoint specifies a Fabric Gateway endpoint to which a gRPC client connection will be established. The client
-// connection will be closed when the Gateway is closed.
-func WithEndpoint(endpoint *connection.Endpoint) ConnectOption {
-	return func(gateway *Gateway) error {
-		clientConnection, err := endpoint.Dial()
-		if err != nil {
-			return fmt.Errorf("failed to establish Gateway connection: %w", err)
-		}
-
-		gateway.closer = clientConnection
-		gateway.client = proto.NewGatewayClient(clientConnection)
-		return nil
-	}
-}
-
 // WithClientConnection uses a previously configured or shared gRPC client connection to a Fabric Gateway. The client
 // connection will not be closed when the Gateway is closed.
 func WithClientConnection(clientConnection *grpc.ClientConn) ConnectOption {
 	return func(gateway *Gateway) error {
-		gateway.closer = nil
 		gateway.client = proto.NewGatewayClient(clientConnection)
 		return nil
 	}
@@ -109,9 +89,6 @@ func WithClientConnection(clientConnection *grpc.ClientConn) ConnectOption {
 // Close a Gateway when it is no longer required. This releases all resources associated with Networks and Contracts
 // obtained using the Gateway, including removing event listeners.
 func (gateway *Gateway) Close() error {
-	if gateway.closer != nil {
-		return gateway.closer.Close()
-	}
 	return nil
 }
 

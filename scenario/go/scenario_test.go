@@ -16,13 +16,16 @@ import (
 	"os/exec"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	"github.com/cucumber/godog"
 	messages "github.com/cucumber/messages-go/v10"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
-	"github.com/hyperledger/fabric-gateway/pkg/connection"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-protos-go/peer"
 )
@@ -438,15 +441,19 @@ func connectGateway(peer string) error {
 	if err != nil {
 		return err
 	}
-	caCerts := []*x509.Certificate{certificate}
 
-	endpoint := &connection.Endpoint{
-		Host:                conn.host,
-		Port:                conn.port,
-		TLSRootCertificates: caCerts,
-		ServerNameOverride:  conn.serverNameOverride,
+	certPool := x509.NewCertPool()
+	certPool.AddCert(certificate)
+
+	url := conn.host + ":" + strconv.FormatUint(uint64(conn.port), 10)
+
+	transportCredentials := credentials.NewClientTLSFromCert(certPool, conn.serverNameOverride)
+	clientConn, err := grpc.Dial(url, grpc.WithTransportCredentials(transportCredentials))
+	if err != nil {
+		return err
 	}
-	gatewayConnection.AddOptions(client.WithEndpoint(endpoint))
+
+	gatewayConnection.AddOptions(client.WithClientConnection(clientConn))
 
 	gw, err := gatewayConnection.Connect()
 	if err != nil {

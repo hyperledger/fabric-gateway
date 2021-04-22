@@ -6,6 +6,8 @@
 
 package org.hyperledger.fabric.client;
 
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,10 +19,12 @@ public final class NetworkTest {
 
     private Gateway gateway;
     private Network network;
+    private ManagedChannel channel;
 
     @BeforeEach
     void beforeEach() throws Exception {
-        gateway = testUtils.newGatewayBuilder().endpoint("example.org:1337").connect();
+        channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
+        gateway = testUtils.newGatewayBuilder().connection(channel).connect();
         network = gateway.getNetwork("ch1");
     }
 

@@ -11,6 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fixturesDir, getOrgForMsp } from './fabric';
 import { TransactionInvocation } from './transactioninvocation';
+import * as grpc from '@grpc/grpc-js';
 
 interface ConnectionInfo {
     readonly url: string;
@@ -125,12 +126,19 @@ export class CustomWorld {
         // address is the name of the peer, lookup the connection info
         const peer = peerConnectionInfo[address];
         const tlsRootCert = fs.readFileSync(peer.tlsRootCertPath)
+        const GrpcClient = grpc.makeGenericClientConstructor({}, '');
+        const credentials = grpc.credentials.createSsl(tlsRootCert);
+        let grpcOptions: Record<string, unknown> = {};
+        if (peer.serverNameOverride) {
+            grpcOptions = {
+                'grpc.ssl_target_name_override': peer.serverNameOverride
+            };
+        }
+        const client = new GrpcClient(peer.url, credentials, grpcOptions);
         const options: ConnectOptions = {
-            url: peer.url,
             signer: this.signer,
             identity: this.getIdentity(),
-            tlsRootCertificates: tlsRootCert,
-            serverNameOverride: peer.serverNameOverride
+            client,
         };
         this.gateway = await connect(options);
     }

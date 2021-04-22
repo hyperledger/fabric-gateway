@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/hyperledger/fabric-gateway/pkg/connection"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	proto "github.com/hyperledger/fabric-protos-go/gateway"
 	"google.golang.org/grpc"
@@ -68,20 +67,6 @@ func TestGateway(t *testing.T) {
 		}
 	})
 
-	t.Run("Connect Gateway using endpoint", func(t *testing.T) {
-		endpoint := &connection.Endpoint{
-			Host: "example.org",
-			Port: 7,
-		}
-		gateway, err := Connect(id, WithSign(sign), WithEndpoint(endpoint))
-		if err != nil {
-			t.Fatal(err)
-		}
-		if nil == gateway {
-			t.Fatal("Expected gateway, got nil")
-		}
-	})
-
 	t.Run("Close Gateway using existing gRPC client connection does not close connection", func(t *testing.T) {
 		var clientConnection *grpc.ClientConn
 		gateway, err := Connect(id, WithSign(sign), WithClientConnection(clientConnection))
@@ -90,33 +75,6 @@ func TestGateway(t *testing.T) {
 		}
 
 		err = gateway.Close() // This would panic if clientConnection.Close() was called
-		if err != nil {
-			t.Fatal(err)
-		}
-	})
-
-	t.Run("Close Gateway using endpoint closes connection", func(t *testing.T) {
-		mockController := gomock.NewController(t)
-		defer mockController.Finish()
-
-		mockCloser := NewMockCloser(mockController)
-		mockCloser.EXPECT().Close().MinTimes(1)
-
-		endpoint := &connection.Endpoint{
-			Host: "example.org",
-			Port: 7,
-		}
-		gateway, err := Connect(id, WithSign(sign), WithEndpoint(endpoint))
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if nil == gateway.closer {
-			t.Fatal("Gateway closer is nil")
-		}
-		gateway.closer = mockCloser
-
-		err = gateway.Close()
 		if err != nil {
 			t.Fatal(err)
 		}

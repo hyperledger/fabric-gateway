@@ -13,13 +13,10 @@ import { Network, NetworkImpl } from './network';
 import { SigningIdentity } from './signingidentity';
 
 export interface ConnectOptions {
-    url?: string;
     client?: grpc.Client;
     identity: Identity;
     signer?: Signer;
     hash?: Hash;
-    tlsRootCertificates?: Buffer;
-    serverNameOverride?: string;
 }
 
 export interface InternalConnectOptions extends ConnectOptions {
@@ -45,25 +42,6 @@ export async function connect(options: ConnectOptions): Promise<Gateway> {
 
     if (options.client) {
         return new GatewayImpl(newGatewayClient(options.client), signingIdentity, noOpCloser);
-    }
-
-    if (typeof options.url === 'string') {
-        const GrpcClient = grpc.makeGenericClientConstructor({}, '');
-        let credentials;
-        if (options.tlsRootCertificates && options.tlsRootCertificates.length > 0) {
-            credentials = grpc.credentials.createSsl(options.tlsRootCertificates);
-        } else {
-            credentials = grpc.credentials.createInsecure();
-        }
-        let grpcOptions: Record<string, unknown> = {};
-        if (options.serverNameOverride) {
-            grpcOptions = {
-                'grpc.ssl_target_name_override': options.serverNameOverride
-            };
-        }
-        const grpcClient = new GrpcClient(options.url, credentials, grpcOptions);
-        const closer = () => grpcClient.close();
-        return new GatewayImpl(newGatewayClient(grpcClient), signingIdentity, closer);
     }
 
     throw new Error('No client connection supplied.')
