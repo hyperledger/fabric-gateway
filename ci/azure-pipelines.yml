@@ -33,7 +33,34 @@ variables:
     value: 12.16.1
 
 stages:
+- stage: Docs
+  jobs:
+  - job: GenerateNodeDocs
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+    - template: install_deps.yml
+    - checkout: self
+    - script: make generate-docs-node
+      displayName: Generate Node docs
+    - publish: $(System.DefaultWorkingDirectory)/node/apidocs
+      artifact: NodeDocs
+  - job: GenerateJavaDocs
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+    - template: install_deps.yml
+    - checkout: self
+    - script: make generate-docs-java
+      displayName: Generate Java docs
+    - publish: $(System.DefaultWorkingDirectory)/java/target/site/apidocs
+      artifact: JavaDocs
 - stage: Test
+  dependsOn: []
   jobs:
   - job: UnitTestGo
     pool:
@@ -120,6 +147,35 @@ stages:
   condition: and(succeeded('Test'),eq(variables['Build.Reason'], 'IndividualCI'))
   #condition: and(succeeded('Test'), eq(variables['Build.Reason'], 'Schedule'))
   jobs:
+  - job: PublishDocs
+    condition: succeeded('Docs')
+    steps:
+    - checkout: self
+    - script: |
+        git checkout gh-pages
+        git clean -xdf
+        rm -Rf main/api/
+        mkdir -p main/api/java main/api/node
+      displayName: 'Remove old api docs'
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        source: current
+        artifact: JavaDocs
+        path: $(Build.SourcesDirectory)/main/api/java
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        source: current
+        artifact: NodeDocs
+        path: $(Build.SourcesDirectory)/main/api/node
+    - publish: $(System.DefaultWorkingDirectory)
+      artifact: GhPages
+    - script: |
+        git config --global user.email "hlfdev.azp@gmail.com"
+        git config --global user.name "Hyperledger Bot"
+        git add -A
+        git commit -m "Publishing GitHub Pages [skip ci]"
+        git push https://$(GITHUB-PAT)@github.com/$(Build.Repository.Name).git gh-pages
+      displayName: 'Update gh-pages branch'
   - job: PublishNode
     steps:
       - download: current
