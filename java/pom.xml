@@ -240,7 +240,7 @@
                     <show>public</show>
                     <doctitle>Hyperledger Fabric Gateway SDK for Java</doctitle>
                     <nohelp>true</nohelp>
-                    <failOnError>true</failOnError>
+                    <failOnError>false</failOnError>
                     <links>
                         <link>https://docs.oracle.com/javase/8/docs/api/</link>
                     </links>

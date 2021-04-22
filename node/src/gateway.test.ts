@@ -10,12 +10,15 @@ import { Identity } from './identity/identity';
 
 describe('Gateway', () => {
     let identity: Identity;
+    let client: grpc.Client;
 
     beforeEach(() => {
         identity = {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
         }
+        const Client = grpc.makeGenericClientConstructor({}, '');
+        client = new Client('example.org:1337', grpc.credentials.createInsecure());
     });
 
     describe('connect', () => {
@@ -26,47 +29,28 @@ describe('Gateway', () => {
             await expect(connect(options)).rejects.toBeDefined();
         });
 
-        it('throws if no identity supplied', async () => {
-            const options: ConnectOptions = {
-                url: 'example.org:1337',
-            } as ConnectOptions;
-            await expect(connect(options)).rejects.toBeDefined();
-        });
-
-        it('using endpoint address', async () => {
-            const options: ConnectOptions = {
-                identity,
-                url: 'example.org:1337',
-            } as ConnectOptions;
-            await expect(connect(options)).resolves.toBeDefined();
-        });
-
-        it('using TLS endpoint address', async () => {
-            const options: ConnectOptions = {
-                identity,
-                url: 'example.org:1337',
-                tlsRootCertificates: Buffer.from("pem"),
-                serverNameOverride: "localhost"
-            } as ConnectOptions;
-            await expect(connect(options)).resolves.toBeDefined();
-        });
-
-        it('using gRPC client', async () => {
-            const Client = grpc.makeGenericClientConstructor({}, '');
-            const client = new Client('example.org:1337', grpc.credentials.createInsecure());
+        it('connect using gRPC client', async () => {
             const options: ConnectOptions = {
                 identity,
                 client,
             };
             await expect(connect(options)).resolves.toBeDefined();
         });
+
+        it('throws if no identity supplied', async () => {
+            const options: ConnectOptions = {
+                client,
+            } as ConnectOptions;
+            await expect(connect(options)).rejects.toBeDefined();
+        });
+
     });
 
     describe('getNetwork', () => {
         it('returns correctly named network', async () => {
             const options: ConnectOptions = {
                 identity,
-                url: 'example.org:1337',
+                client,
             };
             const gateway = await connect(options);
 
@@ -80,7 +64,7 @@ describe('Gateway', () => {
         it('returns supplied identity', async () => {
             const options: ConnectOptions = {
                 identity,
-                url: 'example.org:1337',
+                client,
             };
             const gateway = await connect(options);
 

@@ -22,6 +22,7 @@ import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Credentials;
 import org.hyperledger.fabric.client.identity.X509Identity;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,6 +35,11 @@ public final class GatewayTest {
 
     private Gateway gateway;
     private ManagedChannel channel;
+
+    @BeforeEach()
+    void beforeEach() {
+        channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
+    }
 
     @AfterEach
     void afterEach() {
@@ -48,7 +54,7 @@ public final class GatewayTest {
     @Test
     void connect_with_no_identity_throws() {
         Gateway.Builder builder = Gateway.newInstance()
-                .endpoint("example.org:1337");
+                .connection(channel);
 
         assertThatThrownBy(builder::connect)
                 .isInstanceOf(IllegalStateException.class);
@@ -68,7 +74,7 @@ public final class GatewayTest {
     void uses_supplied_identity() throws Exception {
         gateway = Gateway.newInstance()
                 .identity(identity)
-                .endpoint("example.org:1337")
+                .connection(channel)
                 .connect();
 
         Identity result = gateway.getIdentity();
@@ -77,30 +83,7 @@ public final class GatewayTest {
     }
 
     @Test
-    void connect_non_tls() throws Exception {
-        gateway = Gateway.newInstance()
-                .identity(identity)
-                .endpoint("example.org:1337")
-                .connect();
-
-        assertThat(((GatewayImpl)gateway).getChannel().authority()).isEqualTo("example.org:1337");
-    }
-
-    @Test
-    void connect_tls() throws Exception {
-        gateway = Gateway.newInstance()
-                .identity(identity)
-                .endpoint("localhost:1337")
-                .tls(new ByteArrayInputStream(identity.getCredentials()), "example2.org")
-                .connect();
-
-        assertThat(((GatewayImpl)gateway).getChannel().authority()).isEqualTo("example2.org");
-    }
-
-    @Test
     void can_connect_using_gRPC_channel() throws Exception {
-        channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
-
         gateway = Gateway.newInstance()
                 .identity(identity)
                 .signer(signer)
@@ -129,7 +112,7 @@ public final class GatewayTest {
         gateway = Gateway.newInstance()
                 .identity(identity)
                 .signer(signer)
-                .endpoint("example.org:1337")
+                .connection(channel)
                 .connect();
 
         Network network = gateway.getNetwork("CHANNEL_NAME");

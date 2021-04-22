@@ -7,18 +7,22 @@
 import { Network } from './network';
 import { connect, ConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
+import * as grpc from "@grpc/grpc-js";
 
 describe ('Network', () => {
     let network: Network;
+    let client: grpc.Client;
 
     beforeEach(async () => {
         const identity: Identity = {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
         }
+        const Client = grpc.makeGenericClientConstructor({}, '');
+        client = new Client('example.org:1337', grpc.credentials.createInsecure());
         const options: ConnectOptions = {
             identity,
-            url: 'example.org:1337',
+            client,
         };
 
         const gateway = await connect(options);

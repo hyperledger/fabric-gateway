@@ -8,7 +8,6 @@ package org.hyperledger.fabric.client;
 
 import io.grpc.Channel;
 
-import java.io.InputStream;
 import java.util.function.Function;
 
 import org.hyperledger.fabric.client.identity.Identity;
@@ -80,23 +79,6 @@ public interface Gateway extends AutoCloseable {
      * a call to {@link #connect()} to complete connection of the Gateway.
      */
     interface Builder {
-        /**
-         * Specifies the Gateway endpoint address in the form {@code "host:post"}. The connection to the specified
-         * endpoint will be closed when the Gateway instance is closed.
-         * @param url Endpoint address.
-         * @return The builder instance, allowing multiple configuration options to be chained.
-         */
-        Builder endpoint(String url);
-
-        /**
-         * Specifies the credentials required for making a TLS connection to the Gateway.
-         * @param tlsRootCerts An input stream from which to get the TLS root certificate(s).
-         * @param serverNameOverride For testing only. If set to a non empty string, it will override the
-         *                           virtual host name of authority (e.g. :authority header field) in requests.
-         * @return The builder instance, allowing multiple configuration options to be chained.
-         */
-        Builder tls(InputStream tlsRootCerts, String serverNameOverride);
-
         /**
          * Specifies an existing gRPC connection to be used by the Gateway. The connection will not be closed when the
          * Gateway instance is closed. This allows multiple Gateway instances to share a gRPC connection.

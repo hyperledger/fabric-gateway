@@ -35,6 +35,10 @@ import io.cucumber.java.After;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import org.hyperledger.fabric.client.Contract;
 import org.hyperledger.fabric.client.Gateway;
 import org.hyperledger.fabric.client.Network;
@@ -259,7 +263,12 @@ public class ScenarioSteps {
     @Given("I connect the gateway to {word}")
     public void connectGateway(String name) throws Exception {
         ConnectionInfo info = peerConnectionInfo.get(name);
-        gateway = gatewayBuilder.endpoint(info.url).tls(new FileInputStream(info.tlsRootCertPath), info.serverNameOverride).connect();
+        ManagedChannel channel = NettyChannelBuilder.forTarget(info.url)
+                .sslContext(GrpcSslContexts.forClient().trustManager(new FileInputStream(info.tlsRootCertPath)).build())
+                .overrideAuthority(info.serverNameOverride)
+                .build();
+
+        gateway = gatewayBuilder.connection(channel).connect();
     }
 
     @Given("I use the {word} network")
