@@ -247,6 +247,9 @@
                     </links>
                     <source>${javaVersion}</source>
                     <detectJavaApiLink>false</detectJavaApiLink>
+                    <additionalJOptions>
+                        <additionalJOption>--no-module-directories</additionalJOption>
+                    </additionalJOptions>
                 </configuration>
                 <executions>
                     <execution>
@@ -408,6 +411,9 @@
                             <doctitle>Hyperledger Fabric Gateway SDK for Java</doctitle>
                             <nohelp>true</nohelp>
                             <failOnError>true</failOnError>
+                            <additionalJOptions>
+                                <additionalJOption>--no-module-directories</additionalJOption>
+                            </additionalJOptions>
                         </configuration>
                         <executions>
                             <execution>
