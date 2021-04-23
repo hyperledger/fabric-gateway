@@ -18,6 +18,7 @@ public interface Signer {
      * Signs the supplied message digest. The digest is typically a hash of the message.
      * @param digest A message digest.
      * @return A digital signature.
+     * @throws GeneralSecurityException if a signing error occurs.
      */
     byte[] sign(byte[] digest) throws GeneralSecurityException;
 }

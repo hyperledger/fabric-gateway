@@ -113,6 +113,6 @@ public interface Gateway extends AutoCloseable {
          * Connects to the gateway using the specified options.
          * @return The connected {@link Gateway} object.
          */
-        Gateway connect() throws Exception;
+        Gateway connect();
     }
 }
