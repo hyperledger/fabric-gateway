@@ -148,7 +148,6 @@ stages:
   #condition: and(succeeded('Test'), eq(variables['Build.Reason'], 'Schedule'))
   jobs:
   - job: PublishDocs
-    condition: succeeded('Docs')
     steps:
     - checkout: self
     - script: |
