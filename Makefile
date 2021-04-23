@@ -88,6 +88,14 @@ scenario-test-java: vendor-chaincode build-protos
 
 scenario-test: scenario-test-go scenario-test-node scenario-test-java
 
+.PHONEY: generate-docs-node
+generate-docs-node: build-node
+	cd $(node_dir); npm run generate-apidoc
+
+.PHONEY: generate-docs-java
+generate-docs-java: build-protos
+	cd $(java_dir); mvn javadoc:javadoc
+
 test: unit-test scenario-test
 
 all: test

@@ -3,3 +3,4 @@ dist/
 coverage/
 *.tgz
 src/protos/
+apidocs/
