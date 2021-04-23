@@ -19,9 +19,9 @@ import com.google.protobuf.InvalidProtocolBufferException;
  * <p>The Contract allows applications to:</p>
  * <ul>
  *     <li>Evaluate transactions that query state from the ledger using {@link #evaluateTransaction(String, String...)}
- *     or {@link #evaluateTransaction(String, byte[]...)}.</li>
+ *     or {@link #evaluateTransaction(String, byte[][]) evaluateTransaction(String, byte[]...)}.</li>
  *     <li>Submit transactions that store state to the ledger using {@link #submitTransaction(String, String...)} or
- *     {@link #submitTransaction(String, byte[]...)}.</li>
+ *     {@link #submitTransaction(String, byte[][]) submitTransaction(String, byte[]...)}.</li>
  * </ul>
  *
  * For more complex transaction invocations, such as including transient data, the transaction proposal can be built

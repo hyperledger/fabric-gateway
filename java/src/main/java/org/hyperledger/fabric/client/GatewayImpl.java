@@ -49,7 +49,7 @@ final class GatewayImpl implements Gateway {
         }
 
         @Override
-        public GatewayImpl connect() throws Exception {
+        public GatewayImpl connect() {
             if (this.client == null) {
                 throw new IllegalStateException("No gRPC channel has been provided");
             }

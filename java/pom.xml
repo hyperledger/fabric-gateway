@@ -35,8 +35,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <javaVersion>8</javaVersion>
     </properties>
 
     <repositories>
@@ -159,6 +158,8 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.8.1</version>
                     <configuration>
+                        <source>${javaVersion}</source>
+                        <target>${javaVersion}</target>
                         <showDeprecation>true</showDeprecation>
                         <showWarnings>true</showWarnings>
                         <compilerArgs>
@@ -235,16 +236,17 @@
                 <version>3.2.0</version>
                 <configuration>
                     <excludePackageNames>
-                        org.hyperledger.fabric.client.impl:org.hyperledger.fabric.protos.*
+                        org.hyperledger.fabric.protos.*
                     </excludePackageNames>
                     <show>public</show>
                     <doctitle>Hyperledger Fabric Gateway SDK for Java</doctitle>
                     <nohelp>true</nohelp>
-                    <failOnError>false</failOnError>
+                    <failOnError>true</failOnError>
                     <links>
                         <link>https://docs.oracle.com/javase/8/docs/api/</link>
                     </links>
-                    <source>8</source>
+                    <source>${javaVersion}</source>
+                    <detectJavaApiLink>false</detectJavaApiLink>
                 </configuration>
                 <executions>
                     <execution>
@@ -258,7 +260,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>3.1.2</version>
                 <configuration>
                     <configLocation>checkstyle.xml</configLocation>
                     <encoding>UTF-8</encoding>
@@ -275,6 +277,13 @@
                         </goals>
                     </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>8.41.1</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>
