@@ -68,7 +68,7 @@ staticcheck:
 	staticcheck $(base_dir)/pkg/... $(scenario_dir)/go
 
 sample-network: pull-latest-peer vendor-chaincode
-	cd $(scenario_dir)/go; GATEWAY_NO_SHUTDOWN=TRUE godog $(scenario_dir)/features/basic.feature
+	cd $(scenario_dir)/go; GATEWAY_NO_SHUTDOWN=TRUE godog $(scenario_dir)/features/transactions.feature
 
 generate:
 	go generate ./pkg/...
