@@ -149,6 +149,8 @@ stages:
   #condition: and(succeeded('Test'), eq(variables['Build.Reason'], 'Schedule'))
   jobs:
   - job: PublishDocs
+    pool:
+      vmImage: ubuntu-20.04
     steps:
     - checkout: self
     - script: |
@@ -177,6 +179,8 @@ stages:
         git push https://$(GITHUB-PAT)@github.com/$(Build.Repository.Name).git gh-pages
       displayName: 'Update gh-pages branch'
   - job: PublishNode
+    pool:
+      vmImage: ubuntu-20.04
     steps:
       - download: current
         artifact: NodeBuild
@@ -207,6 +211,8 @@ stages:
         displayName: npm publish
         workingDirectory: $(Pipeline.Workspace)/NodeBuild
   - job: PublishJava
+    pool:
+      vmImage: ubuntu-20.04
     steps:
       - task: DownloadSecureFile@1
         name: privateKey
