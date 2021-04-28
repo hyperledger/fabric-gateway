@@ -16,6 +16,7 @@ schedules:
         - main
 
 variables:
+  - group: credentials
   - group: JARSigningPublish
   - name: GATEWAY_VERSION
     value: 0.1.0
