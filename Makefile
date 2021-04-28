@@ -10,6 +10,7 @@ go_dir := $(base_dir)/pkg
 node_dir := $(base_dir)/node
 java_dir := $(base_dir)/java
 scenario_dir := $(base_dir)/scenario
+samples_dir := $(base_dir)/samples
 
 # PEER_IMAGE_PULL is where to pull peer image from, it can be set by external env variable
 PEER_IMAGE_PULL ?= hyperledger-fabric.jfrog.io/fabric-peer:amd64-latest
@@ -69,6 +70,12 @@ staticcheck:
 
 sample-network: pull-latest-peer vendor-chaincode
 	cd $(scenario_dir)/go; GATEWAY_NO_SHUTDOWN=TRUE godog $(scenario_dir)/features/transactions.feature
+
+run-samples: sample-network
+	cd $(samples_dir)/go; go run sample.go
+	cd $(samples_dir)/node; npm install; npm run build; npm start
+	cd $(samples_dir)/java; mvn test
+	docker ps -aq | xargs docker rm -f; docker network prune --force
 
 generate:
 	go generate ./pkg/...

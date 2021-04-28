@@ -12,6 +12,8 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/hyperledger/fabric-protos-go/peer"
+
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"google.golang.org/grpc"
@@ -53,10 +55,11 @@ func main() {
 	network := gateway.GetNetwork("mychannel")
 	contract := network.GetContract("basic")
 
-	timestamp := time.Now()
+	timestamp := time.Now().String()
 
-	fmt.Printf("Submitting transaction to basic chaincode with value '%s'...\n", timestamp.String())
-	result, err := contract.SubmitTransaction("put", "time", timestamp.String())
+	// Submit a transaction, blocking until the transaction has been committed on the ledger.
+	fmt.Printf("Submitting transaction to basic chaincode with value '%s'...\n", timestamp)
+	result, err := contract.SubmitTransaction("put", "time", timestamp)
 	if err != nil {
 		panic(err)
 	}
@@ -68,6 +71,30 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("Query result = %s\n\n", string(result))
+
+	// Submit transaction asynchronously, allowing this thread to process the chaincode response (e.g. update a UI)
+	// without waiting for the commit notification
+	fmt.Printf("Submitting transaction asynchronously to basic chaincode with value %s...\n", timestamp)
+	result, commit, err := contract.SubmitAsync("put", client.WithStringArguments("async", timestamp))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Proposal result = %s\n", string(result))
+
+	// wait for transactions to commit before querying the value
+	status, err := commit.Status()
+	if err != nil {
+		panic(err)
+	}
+	if status != peer.TxValidationCode_VALID {
+		panic(fmt.Errorf("transaction commit failed with status code: %d", int32(status)))
+	}
+	// Committed.  Check the value:
+	result, err = contract.EvaluateTransaction("get", "async")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Transaction committed. Query result = %s\n", string(result))
 }
 
 // newIdentity creates a client identity for this Gateway connection using an X.509 certificate

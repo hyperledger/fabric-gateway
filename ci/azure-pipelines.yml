@@ -141,6 +141,17 @@ stages:
           # TODO: update this variable name in the Makefile
           JENKINS_URL: true
 
+  - job: Samples
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+      - template: install_deps.yml
+      - checkout: self
+      - script: make run-samples
+        displayName: Run SDK samples
+
 # TODO only run on the scheduled builds (run on merge builds while debugging)
 - stage: Publish
   dependsOn: Test
