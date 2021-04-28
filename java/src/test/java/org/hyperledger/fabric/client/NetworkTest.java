@@ -6,6 +6,8 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.concurrent.TimeUnit;
+
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.junit.jupiter.api.AfterEach;
@@ -31,6 +33,7 @@ public final class NetworkTest {
     @AfterEach
     void afterEach() {
         gateway.close();
+        GatewayUtils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
     }
 
     @Test

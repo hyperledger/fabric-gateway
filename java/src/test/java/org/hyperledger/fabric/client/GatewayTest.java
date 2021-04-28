@@ -46,9 +46,7 @@ public final class GatewayTest {
         if (gateway != null) {
             gateway.close();
         }
-        if (channel != null) {
-            GatewayUtils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
-        }
+        GatewayUtils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
     }
 
     @Test
