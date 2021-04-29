@@ -249,7 +249,10 @@ stages:
           GATEWAY_VERSION: $(GATEWAY_VERSION)
           BUILD_DATE: $(BUILD_DATE)
           BUILD_NUMBER: $(BUILD_NUMBER)
-      - script: mvn --batch-mode -P release deploy
+      - script: |
+          GPG_TTY=$(tty)
+          export GPG_TTY
+          mvn --batch-mode -P release deploy
         displayName: Deploy to artifactory
         workingDirectory: $(System.DefaultWorkingDirectory)/java
         env:
