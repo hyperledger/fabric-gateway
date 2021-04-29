@@ -15,7 +15,7 @@ interface MockGatewayClient extends GatewayClient {
     endorse: jest.Mock<Promise<gateway.IEndorseResponse>, gateway.IEndorseRequest[]>,
     evaluate: jest.Mock<Promise<gateway.IEvaluateResponse>, gateway.IEvaluateRequest[]>,
     submit: jest.Mock<Promise<gateway.ISubmitResponse>, gateway.ISubmitRequest[]>,
-    commitStatus: jest.Mock<Promise<gateway.ICommitStatusResponse>, gateway.ICommitStatusRequest[]>,
+    commitStatus: jest.Mock<Promise<gateway.ICommitStatusResponse>, gateway.ISignedCommitStatusRequest[]>,
 }
 
 function newMockGatewayClient(): MockGatewayClient {

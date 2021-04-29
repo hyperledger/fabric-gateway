@@ -4,12 +4,11 @@ Copyright IBM Corp. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import {connect, ConnectOptions, Identity, signers} from 'fabric-gateway';
-import path from 'path';
-import fs from 'fs';
-import crypto from 'crypto';
 import * as grpc from '@grpc/grpc-js';
-import { protos } from "fabric-protos";
+import crypto from 'crypto';
+import { connect, ConnectOptions, Contract, Identity, signers } from 'fabric-gateway';
+import fs from 'fs';
+import path from 'path';
 
 const mspId = 'Org1MSP'
 const cryptoPath = path.resolve(__dirname, '..', '..', '..', 'scenario', 'fixtures', 'crypto-material', 'crypto-config', 'peerOrganizations', 'org1.example.com');
@@ -19,61 +18,92 @@ const tlsCertPath = path.resolve(cryptoPath, 'peers', 'peer0.org1.example.com', 
 const peerEndpoint = 'localhost:7051'
 
 async function main() {
-    const privateKeyPem = await fs.promises.readFile(keyPath);
-    const privateKey = crypto.createPrivateKey(privateKeyPem);
-    const signer = signers.newPrivateKeySigner(privateKey);
+    // The gRPC client connection should be shared by all Gateway connections to this endpoint
+    const client = newGrpcConnection();
 
+    const options: ConnectOptions = {
+        client,
+        identity: await newIdentity(),
+        signer: await newSigner(),
+    };
+    const gateway = await connect(options);
+
+    try {
+        const network = gateway.getNetwork('mychannel');
+        const contract = network.getContract('basic');
+
+        await exampleSubmit(contract, 'put', 'timestamp', new Date().toISOString());
+        await exampleEvaluate(contract, 'get', 'timestamp');
+
+        console.log();
+
+        await exampleSubmitAsync(contract, 'put', 'async', new Date().toISOString())
+        await exampleEvaluate(contract, 'get', 'async');
+
+        console.log();
+    } finally {
+        gateway.close();
+        client.close()
+    }
+}
+
+async function exampleSubmit(contract: Contract, name: string, ...args: string[]) {
+    console.log(`Submitting "${name}" transaction with arguments:`, args);
+
+    // Submit a transaction, blocking until the transaction has been committed on the ledger.
+    const submitResult = await contract.submitTransaction(name, ...args);
+    console.log('Submit result:', submitResult.toString());
+}
+
+async function exampleSubmitAsync(contract: Contract, name: string, ...args: string[]) {
+    console.log(`Submitting "${name}" transaction asynchronously with arguments:`, args);
+
+	// Submit transaction asynchronously, blocking until the transaction has been sent to the orderer, and allowing
+	// this thread to process the chaincode response (e.g. update a UI) without waiting for the commit notification
+    const commit = await contract.submitAsync(name, { arguments: args });
+    const result = commit.getResult();
+    console.log('Proposal result:', result.toString());
+
+    console.log('Waiting for transaction commit');
+
+    const successful = await commit.isSuccessful();
+    if (!successful) {
+        const status = await commit.getStatus();
+        throw new Error(`Transaction ${commit.getTransactionId()} failed to commit with status code ${status}`)
+    }
+    console.log('Transaction committed successfully')
+}
+
+async function exampleEvaluate(contract: Contract, name: string, ...args: string[]) {
+    console.log(`Evaluating "${name}" query with arguments: ${args}`);
+
+    const result = await contract.evaluateTransaction('get', 'timestamp');
+    console.log('Query result:', result.toString());
+}
+
+function newGrpcConnection() {
+    const tlsRootCert = fs.readFileSync(tlsCertPath);
+    const tlsCredentials = grpc.credentials.createSsl(tlsRootCert);
+
+    const GrpcClient = grpc.makeGenericClientConstructor({}, '');
+    return new GrpcClient(peerEndpoint, tlsCredentials, {
+        'grpc.ssl_target_name_override': 'peer0.org1.example.com'
+    });
+}
+
+async function newIdentity() {
     const certificate = await fs.promises.readFile(certPath);
     const identity: Identity = {
         mspId: mspId,
         credentials: certificate
     };
+    return identity;
+}
 
-    const tlsRootCert = fs.readFileSync(tlsCertPath);
-    const grpcOptions: Partial<grpc.ChannelOptions> = {
-        'grpc.ssl_target_name_override': 'peer0.org1.example.com'
-    };
-    const GrpcClient = grpc.makeGenericClientConstructor({}, '');
-    const client = new GrpcClient(peerEndpoint, grpc.credentials.createSsl(tlsRootCert), grpcOptions)
-
-    const options: ConnectOptions = {
-        client: client,
-        signer: signer,
-        identity: identity,
-    };
-
-    const gateway = await connect(options);
-    try {
-        const network = gateway.getNetwork('mychannel');
-        const contract = network.getContract('basic');
-        const currentTime = (new Date()).toISOString()
-
-        // Submit a transaction, blocking until the transaction has been committed on the ledger.
-        console.log('Submitting transaction to basic chaincode with value ' + currentTime + '...');
-        let result = await contract.submitTransaction('put', 'timestamp', currentTime)
-        console.log('Submit result = ', result.toString());
-        console.log('Evaluating query...');
-        result = await contract.evaluateTransaction('get', 'timestamp');
-        console.log('Query result = ', result.toString());
-
-        // Submit transaction asynchronously, allowing this thread to process the chaincode response (e.g. update a UI)
-        // without waiting for the commit notification
-        console.log('Submitting transaction asynchronously to basic chaincode with value ' + currentTime + '...');
-        const submitted = await contract.submitAsync('put', { arguments: ['async', currentTime]});
-        result = submitted.getResult();
-        console.log('Proposal result = ', result.toString());
-
-        // wait for transactions to commit before querying the value
-        const status = await submitted.getStatus();
-        if (status !== protos.TxValidationCode.VALID) {
-            throw new Error(`Transaction ${submitted.getTransactionId()} failed to commit with status code ${status}`)
-        }
-        // Committed.  Check the value:
-        result = await contract.evaluateTransaction('get', 'async');
-        console.log('Transaction committed. Query result = ', result.toString());
-    } finally {
-        gateway.close();
-    }
+async function newSigner() {
+    const privateKeyPem = await fs.promises.readFile(keyPath);
+    const privateKey = crypto.createPrivateKey(privateKeyPem);
+    return signers.newPrivateKeySigner(privateKey);
 }
 
 main().catch(console.error);

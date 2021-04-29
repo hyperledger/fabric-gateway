@@ -1,6 +1,13 @@
 package scenario;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -36,7 +43,6 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import org.hyperledger.fabric.client.Contract;
@@ -284,9 +290,9 @@ public class ScenarioSteps {
     @When("^I prepare to (evaluate|submit) an? ([^ ]+) transaction$")
     public void prepareTransaction(String action, String transactionName) {
         if (action.equals("submit")) {
-            transactionInvocation = TransactionInvocation.prepareToSubmit(contract, transactionName);
+            transactionInvocation = TransactionInvocation.prepareToSubmit(network, contract, transactionName);
         } else {
-            transactionInvocation = TransactionInvocation.prepareToEvaluate(contract, transactionName);
+            transactionInvocation = TransactionInvocation.prepareToEvaluate(network, contract, transactionName);
         }
     }
 

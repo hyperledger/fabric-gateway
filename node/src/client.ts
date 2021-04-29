@@ -17,7 +17,7 @@ export interface GatewayClient {
     evaluate(request: gateway.IEvaluateRequest): Promise<gateway.IEvaluateResponse>;
     endorse(request: gateway.IEndorseRequest): Promise<gateway.IEndorseResponse>;
     submit(request: gateway.ISubmitRequest): Promise<gateway.ISubmitResponse>;
-    commitStatus(request: gateway.ICommitStatusRequest): Promise<gateway.ICommitStatusResponse>;
+    commitStatus(request: gateway.ISignedCommitStatusRequest): Promise<gateway.ICommitStatusResponse>;
 }
 
 class GatewayClientImpl implements GatewayClient {
@@ -69,9 +69,9 @@ class GatewayClientImpl implements GatewayClient {
         });
     }
 
-    async commitStatus(request: gateway.ICommitStatusRequest): Promise<gateway.ICommitStatusResponse> {
+    async commitStatus(request: gateway.ISignedCommitStatusRequest): Promise<gateway.ICommitStatusResponse> {
         return new Promise((resolve, reject) => {
-            this.#client.makeUnaryRequest(commitStatusMethod, serializeCommitStatusRequest, deserializeCommitStatusResponse, request, async (err, value) => {
+            this.#client.makeUnaryRequest(commitStatusMethod, serializeSignedCommitStatusRequest, deserializeCommitStatusResponse, request, async (err, value) => {
                 if (err) {
                     return reject(err);
                 }
@@ -99,8 +99,8 @@ function serializeSubmitRequest(message: gateway.ISubmitRequest): Buffer {
     return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength); // Create a Buffer view to avoid copying
 }
 
-function serializeCommitStatusRequest(message: gateway.ICommitStatusRequest): Buffer {
-    const bytes = gateway.CommitStatusRequest.encode(message).finish();
+function serializeSignedCommitStatusRequest(message: gateway.ISignedCommitStatusRequest): Buffer {
+    const bytes = gateway.SignedCommitStatusRequest.encode(message).finish();
     return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength); // Create a Buffer view to avoid copying
 }
 

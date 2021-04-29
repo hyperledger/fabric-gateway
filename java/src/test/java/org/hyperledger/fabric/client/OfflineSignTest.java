@@ -6,34 +6,35 @@
 
 package org.hyperledger.fabric.client;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import java.nio.charset.StandardCharsets;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.X509Identity;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
+import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.google.protobuf.InvalidProtocolBufferException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public final class OfflineSignTest {
     private static final TestUtils utils = TestUtils.getInstance();
 
     private GatewayMocker mocker;
     private Gateway gateway;
+    private Network network;
     private Contract contract;
 
     @BeforeEach
     void beforeEach() throws Exception {
         mocker = new GatewayMocker(newBuilderWithoutSigner());
         gateway = mocker.getGatewayBuilder().connect();
-        Network network = gateway.getNetwork("NETWORK");
+        network = gateway.getNetwork("NETWORK");
         contract = network.getContract("CHAINCODE_ID");
     }
 
@@ -100,22 +101,54 @@ public final class OfflineSignTest {
         Proposal signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
         Transaction transaction = signedProposal.endorse();
 
-        assertThatThrownBy(() -> transaction.submit())
+        assertThatThrownBy(() -> transaction.submitAsync())
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
-    void submit_uses_offline_signature() throws InvalidProtocolBufferException, CommitException {
+    void submit_uses_offline_signature() throws InvalidProtocolBufferException {
         byte[] expected = "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
 
         Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
         Proposal signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
         Transaction unsignedTransaction = signedProposal.endorse();
         Transaction signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), expected);
-        signedTransaction.submit();
+        signedTransaction.submitAsync();
 
         SubmitRequest request = mocker.captureSubmit();
         byte[] actual = request.getPreparedTransaction().getSignature().toByteArray();
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void commit_throws_with_no_signer_and_no_explicit_signing() throws InvalidProtocolBufferException {
+        Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
+        Proposal signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        Transaction transaction = signedProposal.endorse();
+        Transaction unsignedTransaction = signedProposal.endorse();
+        Transaction signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        Commit commit = signedTransaction.submitAsync();
+
+        assertThatThrownBy(() -> commit.getStatus())
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void commit_uses_offline_signature() throws InvalidProtocolBufferException {
+        byte[] expected = "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
+
+        Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
+        Proposal signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        Transaction transaction = signedProposal.endorse();
+        Transaction unsignedTransaction = signedProposal.endorse();
+        Transaction signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        Commit unsignedCommit = signedTransaction.submitAsync();
+        Commit signedCommit = network.newSignedCommit(unsignedCommit.getBytes(), expected);
+        signedCommit.getStatus();
+
+        SignedCommitStatusRequest request = mocker.captureCommitStatus();
+        byte[] actual = request.getSignature().toByteArray();
 
         assertThat(actual).isEqualTo(expected);
     }
@@ -143,6 +176,19 @@ public final class OfflineSignTest {
     }
 
     @Test
+    void signed_transaction_keeps_same_transaction_ID() throws InvalidProtocolBufferException {
+        Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
+        Proposal signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        Transaction unsignedTransaction = signedProposal.endorse();
+        String expected = unsignedTransaction.getTransactionId();
+
+        Transaction signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        String actual = signedTransaction.getTransactionId();
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
     void signed_transaction_keeps_same_digest() throws InvalidProtocolBufferException {
         Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
         Proposal signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
@@ -151,6 +197,36 @@ public final class OfflineSignTest {
 
         Transaction signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
         byte[] actual = signedTransaction.getDigest();
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void signed_commit_keeps_same_transaction_ID() throws InvalidProtocolBufferException {
+        Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
+        Proposal signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        Transaction unsignedTransaction = signedProposal.endorse();
+        Transaction signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        Commit unsignedCommit = signedTransaction.submitAsync();
+        String expected = unsignedCommit.getTransactionId();
+
+        Commit signedCommit = network.newSignedCommit(unsignedCommit.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        String actual = signedCommit.getTransactionId();
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void signed_commit_keeps_same_digest() throws InvalidProtocolBufferException {
+        Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
+        Proposal signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        Transaction unsignedTransaction = signedProposal.endorse();
+        Transaction signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        Commit unsignedCommit = signedTransaction.submitAsync();
+        byte[] expected = unsignedCommit.getDigest();
+
+        Commit signedCommit = network.newSignedCommit(unsignedCommit.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        byte[] actual = signedCommit.getDigest();
 
         assertThat(actual).isEqualTo(expected);
     }

@@ -12,8 +12,7 @@ require (
 	github.com/golang/protobuf v1.4.3
 	github.com/hyperledger/fabric v2.1.1+incompatible
 	github.com/hyperledger/fabric-amcl v0.0.0-20200424173818-327c9e2cf77a // indirect
-	github.com/hyperledger/fabric-protos-go v0.0.0-20210318103044-13fdee960194
-	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/hyperledger/fabric-protos-go v0.0.0-20210422135545-37e930696e2a
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/mitchellh/mapstructure v1.4.0 // indirect
 	github.com/onsi/ginkgo v1.14.2 // indirect
@@ -26,8 +25,7 @@ require (
 	golang.org/x/mod v0.4.1 // indirect
 	golang.org/x/sys v0.0.0-20210305230114-8fe3ee5dd75b // indirect
 	google.golang.org/grpc v1.36.0
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0 // indirect
 	google.golang.org/protobuf v1.25.0
-	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	honnef.co/go/tools v0.1.2 // indirect
 )

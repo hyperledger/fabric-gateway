@@ -11,12 +11,12 @@ import java.util.stream.Collectors;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EndorseResponse;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
 import org.hyperledger.fabric.protos.gateway.EvaluateResponse;
+import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitResponse;
 import org.hyperledger.fabric.protos.peer.Chaincode;
@@ -40,7 +40,7 @@ public class GatewayServiceStub {
         return utils.newEvaluateResponse(payload);
     }
 
-    public CommitStatusResponse commitStatus(final CommitStatusRequest request) {
+    public CommitStatusResponse commitStatus(final SignedCommitStatusRequest request) {
         return utils.newCommitStatusResponse(TransactionPackage.TxValidationCode.VALID);
     }
 

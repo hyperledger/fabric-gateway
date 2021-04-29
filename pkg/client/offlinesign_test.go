@@ -25,13 +25,17 @@ func TestOfflineSign(t *testing.T) {
 		},
 	}
 
-	newContractWithNoSign := func(t *testing.T, options ...ConnectOption) *Contract {
+	newNetworkWithNoSign := func(t *testing.T, options ...ConnectOption) *Network {
 		gateway, err := Connect(TestCredentials.identity, options...)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		return gateway.GetNetwork("network").GetContract("chaincode")
+		return gateway.GetNetwork("network")
+	}
+
+	newContractWithNoSign := func(t *testing.T, options ...ConnectOption) *Contract {
+		return newNetworkWithNoSign(t, options...).GetContract("chaincode")
 	}
 
 	newEndorseResponse := func(value string) *gateway.EndorseResponse {
@@ -43,8 +47,14 @@ func TestOfflineSign(t *testing.T) {
 		}
 	}
 
+	newCommitStatusResponse := func(value peer.TxValidationCode) *gateway.CommitStatusResponse {
+		return &gateway.CommitStatusResponse{
+			Result: value,
+		}
+	}
+
 	t.Run("Evaluate", func(t *testing.T) {
-		t.Run("Returns error with signer and no explicit signing", func(t *testing.T) {
+		t.Run("Returns error with no signer and no explicit signing", func(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
@@ -107,7 +117,7 @@ func TestOfflineSign(t *testing.T) {
 	})
 
 	t.Run("Endorse", func(t *testing.T) {
-		t.Run("Returns error with signer and no explicit signing", func(t *testing.T) {
+		t.Run("Returns error with no signer and no explicit signing", func(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
@@ -170,7 +180,7 @@ func TestOfflineSign(t *testing.T) {
 	})
 
 	t.Run("Submit", func(t *testing.T) {
-		t.Run("Returns error with signer and no explicit signing", func(t *testing.T) {
+		t.Run("Returns error with no signer and no explicit signing", func(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
@@ -265,131 +275,319 @@ func TestOfflineSign(t *testing.T) {
 				t.Fatalf("Expected %s, got %s", expected, actual)
 			}
 		})
+	})
 
-		t.Run("Serialization", func(t *testing.T) {
-			t.Run("Proposal keeps same digest", func(t *testing.T) {
-				mockController := gomock.NewController(t)
-				defer mockController.Finish()
+	t.Run("Commit", func(t *testing.T) {
+		t.Run("Returns error with no signer and no explicit signing", func(t *testing.T) {
+			mockController := gomock.NewController(t)
+			defer mockController.Finish()
 
-				mockClient := NewMockGatewayClient(mockController)
-				contract := newContractWithNoSign(t, WithClient(mockClient))
+			mockClient := NewMockGatewayClient(mockController)
+			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+				Return(newEndorseResponse("result"), nil).
+				AnyTimes()
+			mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+				Return(nil, nil).
+				AnyTimes()
+			mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
+				Return(nil, nil).
+				AnyTimes()
 
-				unsignedProposal, err := contract.NewProposal("transaction")
-				if err != nil {
-					t.Fatal(err)
-				}
+			contract := newContractWithNoSign(t, WithClient(mockClient))
 
-				expected, err := unsignedProposal.Digest()
-				if err != nil {
-					t.Fatal(err)
-				}
+			unsignedProposal, err := contract.NewProposal("transaction")
+			if err != nil {
+				t.Fatal(err)
+			}
 
-				proposalBytes, err := unsignedProposal.Bytes()
-				if err != nil {
-					t.Fatal(err)
-				}
+			proposalBytes, err := unsignedProposal.Bytes()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-				signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
-				if err != nil {
-					t.Fatal(err)
-				}
+			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
+			if err != nil {
+				t.Fatal(err)
+			}
 
-				actual, err := signedProposal.Digest()
-				if err != nil {
-					t.Fatal(err)
-				}
+			unsignedTransaction, err := signedProposal.Endorse()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-				if !bytes.Equal(actual, expected) {
-					t.Fatalf("Expected %s, got %s", expected, actual)
-				}
-			})
+			transactionBytes, err := unsignedTransaction.Bytes()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-			t.Run("Proposal keeps same transaction ID", func(t *testing.T) {
-				mockController := gomock.NewController(t)
-				defer mockController.Finish()
+			signedTransaction, err := contract.NewSignedTransaction(transactionBytes, []byte("signature"))
+			if err != nil {
+				t.Fatal(err)
+			}
 
-				mockClient := NewMockGatewayClient(mockController)
-				contract := newContractWithNoSign(t, WithClient(mockClient))
+			commit, err := signedTransaction.Submit()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-				unsignedProposal, err := contract.NewProposal("transaction")
-				if err != nil {
-					t.Fatal(err)
-				}
+			if _, err := commit.Status(); nil == err {
+				t.Fatal("Expected signing error but got nil")
+			}
+		})
 
-				expected := unsignedProposal.TransactionID()
+		t.Run("Uses off-line signature", func(t *testing.T) {
+			expected := []byte("SIGNATURE")
+			var actual []byte
+			mockController := gomock.NewController(t)
+			defer mockController.Finish()
 
-				proposalBytes, err := unsignedProposal.Bytes()
-				if err != nil {
-					t.Fatal(err)
-				}
+			mockClient := NewMockGatewayClient(mockController)
+			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+				Return(newEndorseResponse("result"), nil)
+			mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+				Return(nil, nil).
+				AnyTimes()
+			mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
+				Do(func(_ context.Context, in *gateway.SignedCommitStatusRequest, _ ...grpc.CallOption) {
+					actual = in.Signature
+				}).
+				Return(newCommitStatusResponse(peer.TxValidationCode_VALID), nil).
+				Times(1)
 
-				signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
-				if err != nil {
-					t.Fatal(err)
-				}
+			network := newNetworkWithNoSign(t, WithClient(mockClient))
+			contract := network.GetContract("chaincode")
 
-				actual := signedProposal.TransactionID()
+			unsignedProposal, err := contract.NewProposal("transaction")
+			if err != nil {
+				t.Fatal(err)
+			}
 
-				if actual != expected {
-					t.Fatalf("Expected %s, got %s", expected, actual)
-				}
-			})
+			proposalBytes, err := unsignedProposal.Bytes()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-			t.Run("Transaction keeps same digest", func(t *testing.T) {
-				mockController := gomock.NewController(t)
-				defer mockController.Finish()
+			signedProposal, err := contract.NewSignedProposal(proposalBytes, expected)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-				mockClient := NewMockGatewayClient(mockController)
-				mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-					Return(newEndorseResponse("result"), nil).
-					Times(1)
+			unsignedTransaction, err := signedProposal.Endorse()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-				contract := newContractWithNoSign(t, WithClient(mockClient))
+			transactionBytes, err := unsignedTransaction.Bytes()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-				unsignedProposal, err := contract.NewProposal("transaction")
-				if err != nil {
-					t.Fatal(err)
-				}
+			signedTransaction, err := contract.NewSignedTransaction(transactionBytes, expected)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-				proposalBytes, err := unsignedProposal.Bytes()
-				if err != nil {
-					t.Fatal(err)
-				}
+			unsignedCommit, err := signedTransaction.Submit()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-				signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
-				if err != nil {
-					t.Fatal(err)
-				}
+			commitBytes, err := unsignedCommit.Bytes()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-				unsignedTransaction, err := signedProposal.Endorse()
-				if err != nil {
-					t.Fatal(err)
-				}
+			signedCommit, err := network.NewSignedCommit(commitBytes, expected)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-				expected, err := unsignedTransaction.Digest()
-				if err != nil {
-					t.Fatal(err)
-				}
+			if _, err := signedCommit.Status(); err != nil {
+				t.Fatal(err)
+			}
 
-				transactionBytes, err := unsignedTransaction.Bytes()
-				if err != nil {
-					t.Fatal(err)
-				}
+			if !bytes.Equal(actual, expected) {
+				t.Fatalf("Expected %s, got %s", expected, actual)
+			}
+		})
+	})
 
-				signedTransaction, err := contract.NewSignedTransaction(transactionBytes, []byte("signature"))
-				if err != nil {
-					t.Fatal(err)
-				}
+	t.Run("Serialization", func(t *testing.T) {
+		t.Run("Proposal keeps same digest", func(t *testing.T) {
+			mockController := gomock.NewController(t)
+			defer mockController.Finish()
 
-				actual, err := signedTransaction.Digest()
-				if err != nil {
-					t.Fatal(err)
-				}
+			mockClient := NewMockGatewayClient(mockController)
+			contract := newContractWithNoSign(t, WithClient(mockClient))
 
-				if !bytes.Equal(actual, expected) {
-					t.Fatalf("Expected %s, got %s", expected, actual)
-				}
-			})
+			unsignedProposal, err := contract.NewProposal("transaction")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			proposalBytes, err := unsignedProposal.Bytes()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			expected := unsignedProposal.Digest()
+			actual := signedProposal.Digest()
+
+			if !bytes.Equal(actual, expected) {
+				t.Fatalf("Expected %s, got %s", expected, actual)
+			}
+		})
+
+		t.Run("Proposal keeps same transaction ID", func(t *testing.T) {
+			mockController := gomock.NewController(t)
+			defer mockController.Finish()
+
+			mockClient := NewMockGatewayClient(mockController)
+			contract := newContractWithNoSign(t, WithClient(mockClient))
+
+			unsignedProposal, err := contract.NewProposal("transaction")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			proposalBytes, err := unsignedProposal.Bytes()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			expected := unsignedProposal.TransactionID()
+			actual := signedProposal.TransactionID()
+
+			if actual != expected {
+				t.Fatalf("Expected %s, got %s", expected, actual)
+			}
+		})
+
+		t.Run("Transaction keeps same digest", func(t *testing.T) {
+			mockController := gomock.NewController(t)
+			defer mockController.Finish()
+
+			mockClient := NewMockGatewayClient(mockController)
+			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+				Return(newEndorseResponse("result"), nil).
+				Times(1)
+
+			contract := newContractWithNoSign(t, WithClient(mockClient))
+
+			unsignedProposal, err := contract.NewProposal("transaction")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			proposalBytes, err := unsignedProposal.Bytes()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			unsignedTransaction, err := signedProposal.Endorse()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			transactionBytes, err := unsignedTransaction.Bytes()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			signedTransaction, err := contract.NewSignedTransaction(transactionBytes, []byte("signature"))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			expected := unsignedTransaction.Digest()
+			actual := signedTransaction.Digest()
+
+			if !bytes.Equal(actual, expected) {
+				t.Fatalf("Expected %s, got %s", expected, actual)
+			}
+		})
+
+		t.Run("Commit keeps same digest", func(t *testing.T) {
+			mockController := gomock.NewController(t)
+			defer mockController.Finish()
+
+			mockClient := NewMockGatewayClient(mockController)
+			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+				Return(newEndorseResponse("result"), nil).
+				Times(1)
+			mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+				Return(nil, nil).
+				Times(1)
+
+			network := newNetworkWithNoSign(t, WithClient(mockClient))
+			contract := network.GetContract("chaincode")
+
+			unsignedProposal, err := contract.NewProposal("transaction")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			proposalBytes, err := unsignedProposal.Bytes()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			unsignedTransaction, err := signedProposal.Endorse()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			transactionBytes, err := unsignedTransaction.Bytes()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			signedTransaction, err := contract.NewSignedTransaction(transactionBytes, []byte("signature"))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			unsignedCommit, err := signedTransaction.Submit()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			commitBytes, err := unsignedCommit.Bytes()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			signedCommit, err := network.NewSignedCommit(commitBytes, []byte("signature"))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			expected := unsignedCommit.Digest()
+			actual := signedCommit.Digest()
+
+			if !bytes.Equal(actual, expected) {
+				t.Fatalf("Expected %s, got %s", expected, actual)
+			}
 		})
 	})
 }

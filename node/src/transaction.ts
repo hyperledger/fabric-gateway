@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { SubmittedTransaction, SubmittedTransactionImpl } from './submittedtransaction';
 import * as util from 'util';
 import { GatewayClient } from './client';
-import { Commit, CommitImpl } from './commit';
 import { common, gateway } from './protos/protos';
 import { SigningIdentity } from './signingidentity';
 
@@ -30,12 +30,12 @@ export interface Transaction {
     /**
      * Get the transaction ID.
      */
-     getTransactionId(): string;
+    getTransactionId(): string;
 
      /**
      * Submit the transaction to the orderer to be committed to the ledger.
      */
-    submit(): Promise<Commit>;
+    submit(): Promise<SubmittedTransaction>;
 }
 
 export interface TransactionImplOptions {
@@ -89,14 +89,17 @@ export class TransactionImpl implements Transaction {
         return transactionId;
     }
 
-    async submit(): Promise<Commit> {
+    async submit(): Promise<SubmittedTransaction> {
         await this.sign();
         await this.#client.submit(this.newSubmitRequest());
-        return new CommitImpl({
+
+        return new SubmittedTransactionImpl({
             client: this.#client,
-            channelName: this.#channelName,
+            signingIdentity: this.#signingIdentity,
             transactionId: this.getTransactionId(),
-        });
+            signedRequest: this.newSignedCommitStatusRequest(),
+            result: this.getResult(),
+        })
     }
 
     setSignature(signature: Uint8Array): void {
@@ -119,9 +122,23 @@ export class TransactionImpl implements Transaction {
 
     private newSubmitRequest(): gateway.ISubmitRequest {
         return {
-            transaction_id: this.#preparedTransaction.transaction_id,
+            transaction_id: this.getTransactionId(),
             channel_id: this.#channelName,
             prepared_transaction: this.#envelope,
         };
+    }
+
+    private newSignedCommitStatusRequest(): gateway.ISignedCommitStatusRequest {
+        return {
+            request: gateway.CommitStatusRequest.encode(this.newCommitStatusRequest()).finish(),
+        }
+    }
+
+    private newCommitStatusRequest(): gateway.ICommitStatusRequest {
+        return {
+            channel_id: this.#channelName,
+            transaction_id: this.getTransactionId(),
+            identity: this.#signingIdentity.getCreator(),
+        }
     }
 }

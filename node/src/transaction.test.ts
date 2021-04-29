@@ -15,7 +15,7 @@ interface MockGatewayClient extends GatewayClient {
     endorse: jest.Mock<Promise<gateway.IEndorseResponse>, gateway.IEndorseRequest[]>,
     evaluate: jest.Mock<Promise<gateway.IEvaluateResponse>, gateway.IEvaluateRequest[]>,
     submit: jest.Mock<Promise<gateway.ISubmitResponse>, gateway.ISubmitRequest[]>,
-    commitStatus: jest.Mock<Promise<gateway.ICommitStatusResponse>, gateway.ICommitStatusRequest[]>,
+    commitStatus: jest.Mock<Promise<gateway.ICommitStatusResponse>, gateway.ISignedCommitStatusRequest[]>,
 }
 
 function newMockGatewayClient(): MockGatewayClient {
@@ -92,7 +92,7 @@ describe('Transaction', () => {
         expect(actual).toBe(expectedResult);
     });
 
-    it('uses signer', async () => {
+    it('uses signer for submit', async () => {
         signer.mockResolvedValue(Buffer.from('MY_SIGNATURE'));
 
         await contract.submitTransaction('TRANSACTION_NAME');
@@ -102,15 +102,58 @@ describe('Transaction', () => {
         expect(signature).toBe('MY_SIGNATURE');
     });
 
+    it('uses signer for commit', async () => {
+        signer.mockResolvedValue(Buffer.from('MY_SIGNATURE'));
+
+        await contract.submitTransaction('TRANSACTION_NAME');
+
+        const statusRequest = client.commitStatus.mock.calls[0][0];
+        const signature = Buffer.from(statusRequest.signature ?? '').toString();
+        expect(signature).toBe('MY_SIGNATURE');
+    });
+
     it('uses hash', async () => {
         hash.mockReturnValue(Buffer.from('MY_DIGEST'));
 
         await contract.submitTransaction('TRANSACTION_NAME');
 
-        expect(signer).toHaveBeenCalledTimes(2); // endorse and submit
+        expect(signer).toHaveBeenCalledTimes(3); // endorse, submit and commit
         signer.mock.calls.forEach(call => {
             const digest = call[0].toString();
             expect(digest).toBe('MY_DIGEST');
         });
+    });
+
+    it('commit returns transaction validation code', async () => {
+        client.commitStatus.mockResolvedValue({
+            result: protos.TxValidationCode.MVCC_READ_CONFLICT,
+        });
+
+        const commit = await contract.submitAsync('TRANSACTION_NAME');
+        const status = await commit.getStatus();
+
+        await expect(status).toBe(protos.TxValidationCode.MVCC_READ_CONFLICT);
+    });
+
+    it('commit returns successful for successful transaction', async () => {
+        client.commitStatus.mockResolvedValue({
+            result: protos.TxValidationCode.VALID,
+        });
+
+        const commit = await contract.submitAsync('TRANSACTION_NAME');
+        const success = await commit.isSuccessful();
+
+        await expect(success).toBe(true);
+    });
+
+    it('commit returns unsuccessful for failed transaction', async () => {
+        client.commitStatus.mockResolvedValue({
+            result: protos.TxValidationCode.MVCC_READ_CONFLICT,
+        });
+
+        const commit = await contract.submitAsync('TRANSACTION_NAME');
+        const success = await commit.isSuccessful();
+
+        await expect(success).toBe(false);
     });
 });

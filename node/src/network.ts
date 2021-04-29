@@ -4,13 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GatewayClient } from "./client";
-import { SigningIdentity } from "./signingidentity";
-import { Contract, ContractImpl } from "./contract";
+import { GatewayClient } from './client';
+import { SigningIdentity } from './signingidentity';
+import { Contract, ContractImpl } from './contract';
+import { Commit, CommitImpl } from './commit';
+import { gateway } from './protos/protos';
 
 export interface Network {
     getName(): string;
     getContract(chaincodeId: string, name?: string): Contract;
+
+    /**
+     * Create a commit with the specified digital signature, which can be used to access information about a
+     * transaction that is committed to the ledger. Supports off-line signing flow.
+     * @param bytes Serialized commit status request.
+     * @param signature Digital signature.
+     * @returns A signed commit status request.
+     */
+     newSignedCommit(bytes: Uint8Array, signature: Uint8Array): Commit;
 }
 
 export interface NetworkOptions {
@@ -44,4 +55,18 @@ export class NetworkImpl implements Network {
         });
     }
 
+    newSignedCommit(bytes: Uint8Array, signature: Uint8Array): Commit {
+        const signedRequest = gateway.SignedCommitStatusRequest.decode(bytes);
+        const request = gateway.CommitStatusRequest.decode(signedRequest.request);
+
+        const result = new CommitImpl({
+            client: this.#client,
+            signingIdentity: this.#signingIdentity,
+            transactionId: request.transaction_id,
+            signedRequest: signedRequest,
+        });
+        result.setSignature(signature);
+
+        return result;
+    }
 }

@@ -22,6 +22,7 @@ import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.X509Identity;
 import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
+import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.hyperledger.fabric.protos.peer.TransactionPackage;
 import org.junit.jupiter.api.AfterEach;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -43,7 +45,7 @@ public final class SubmitTransactionTest {
     private Network network;
 
     @BeforeEach
-    void beforeEach() throws Exception {
+    void beforeEach() {
         mocker = new GatewayMocker();
         stub = mocker.getServiceStubSpy();
 
@@ -269,11 +271,16 @@ public final class SubmitTransactionTest {
         doReturn(utils.newCommitStatusResponse(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT))
                 .when(stub).commitStatus(any());
 
-        Contract contract = network.getContract("CHAINCODE_ID");
+        Transaction transaction = network.getContract("CHAINCODE_ID")
+                .newProposal("TRANSACTION_NAME")
+                .build()
+                .endorse();
 
-        assertThatThrownBy(() -> contract.submitTransaction("TRANSACTION_NAME"))
-                .isInstanceOf(CommitException.class)
-                .hasMessageContaining(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT.name());
+        CommitException e = catchThrowableOfType(() -> transaction.submit(), CommitException.class);
+
+        assertThat(e).hasMessageContaining(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT.name());
+        assertThat(e.getStatus()).isEqualTo(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT);
+        assertThat(e.getTransactionId()).isEqualTo(transaction.getTransactionId());
     }
 
     @Test
@@ -286,8 +293,9 @@ public final class SubmitTransactionTest {
         EndorseRequest endorseRequest = mocker.captureEndorse();
         String expected = mocker.getChannelHeader(endorseRequest.getProposedTransaction()).getTxId();
 
-        CommitStatusRequest statusRequest = mocker.captureCommitStatus();
-        String actual = statusRequest.getTransactionId();
+        SignedCommitStatusRequest signedRequest = mocker.captureCommitStatus();
+        CommitStatusRequest request = CommitStatusRequest.parseFrom(signedRequest.getRequest());
+        String actual = request.getTransactionId();
 
         assertThat(actual).isEqualTo(expected);
     }
@@ -299,9 +307,50 @@ public final class SubmitTransactionTest {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.submitTransaction("TRANSACTION_NAME");
 
-        CommitStatusRequest request = mocker.captureCommitStatus();
+        SignedCommitStatusRequest signedRequest = mocker.captureCommitStatus();
+        CommitStatusRequest request = CommitStatusRequest.parseFrom(signedRequest.getRequest());
         String networkName = request.getChannelId();
 
         assertThat(networkName).isEqualTo("MY_NETWORK");
+    }
+
+    @Test
+    void commit_returns_transaction_validation_code() {
+        doReturn(utils.newCommitStatusResponse(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT))
+                .when(stub).commitStatus(any());
+
+        Contract contract = network.getContract("CHAINCODE_ID");
+        Commit commit = contract.newProposal("TRANSACTION_NAME")
+                .build()
+                .endorse()
+                .submitAsync();
+
+        TransactionPackage.TxValidationCode status = commit.getStatus();
+        assertThat(status).isEqualTo(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT);
+    }
+
+    @Test
+    void commit_returns_successful_for_successful_transaction() {
+        Contract contract = network.getContract("CHAINCODE_ID");
+        Commit commit = contract.newProposal("TRANSACTION_NAME")
+                .build()
+                .endorse()
+                .submitAsync();
+
+        assertThat(commit.isSuccessful()).isTrue();
+    }
+
+    @Test
+    void commit_returns_unsuccessful_for_failed_transaction() {
+        doReturn(utils.newCommitStatusResponse(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT))
+                .when(stub).commitStatus(any());
+
+        Contract contract = network.getContract("CHAINCODE_ID");
+        Commit commit = contract.newProposal("TRANSACTION_NAME")
+                .build()
+                .endorse()
+                .submitAsync();
+
+        assertThat(commit.isSuccessful()).isFalse();
     }
 }

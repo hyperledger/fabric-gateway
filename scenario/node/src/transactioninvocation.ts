@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Contract, Proposal, ProposalOptions, Signer, Transaction } from 'fabric-gateway';
+import { Contract, Network, Proposal, ProposalOptions, Signer, Transaction } from 'fabric-gateway';
+import { Commit } from 'fabric-gateway/dist/commit';
 import { protos } from 'fabric-gateway/dist/protos/protos';
 import { TextDecoder } from 'util';
 
@@ -16,13 +17,15 @@ export class TransactionInvocation {
     readonly options: ProposalOptions = {};
 
     private readonly name: string;
+    private readonly network: Network;
     private readonly contract: Contract;
     private readonly invoke: () => Promise<Uint8Array>;
     private offlineSigner?: Signer;
     private result?: Uint8Array;
     private error?: Error;
 
-    constructor(type: string, contract: Contract, name: string) {
+    constructor(type: string, network: Network, contract: Contract, name: string) {
+        this.network = network;
         this.contract = contract;
         this.name = name;
         this.invoke = this.getInvoke(type).bind(this);
@@ -42,7 +45,7 @@ export class TransactionInvocation {
 
     getResult(): string {
         if (!this.result) {
-            throw new Error(`No transaction result. Error is: ${this.error}`);
+            throw new Error(`No transaction result. Error is: ${this.error?.stack ?? this.error}`);
         }
 
         return asString(this.result);
@@ -68,33 +71,35 @@ export class TransactionInvocation {
 
     private async evaluate(): Promise<Uint8Array> {
         let proposal = this.contract.newProposal(this.name, this.options);
-        proposal = await this.sign(proposal, this.contract.newSignedProposal);
+        proposal = await this.sign(proposal, this.contract.newSignedProposal.bind(this.contract));
  
         return await proposal.evaluate();
     }
     
     private async submit(): Promise<Uint8Array> {
-        let proposal = this.contract.newProposal(this.name, this.options);
-        proposal = await this.sign(proposal, this.contract.newSignedProposal);
+        const unsignedProposal = this.contract.newProposal(this.name, this.options);
+        const signedProposal = await this.sign(unsignedProposal, this.contract.newSignedProposal.bind(this.contract));
         
-        let transaction = await proposal.endorse();
-        transaction = await this.sign(transaction, this.contract.newSignedTransaction);
+        const unsignedTransaction = await signedProposal.endorse();
+        const signedTransaction = await this.sign(unsignedTransaction, this.contract.newSignedTransaction.bind(this.contract));
     
-        const commit = await transaction.submit();
-        const status = await commit.getStatus();
+        const submitted = await signedTransaction.submit();
+        const signedCommit = await this.sign(submitted, this.network.newSignedCommit.bind(this.network));
+
+        const status = await signedCommit.getStatus();
         if (status !== protos.TxValidationCode.VALID) {
             throw new Error(`Transaction commit failed with status: ${status} (${protos.TxValidationCode[status]})`)
         }
 
-        return transaction.getResult();
+        return submitted.getResult();
     }
 
-    private async sign<T extends Proposal | Transaction>(signable: T, newInstance: (bytes: Uint8Array, signature: Uint8Array) => T): Promise<T> {
+    private async sign<T extends Proposal | Transaction | Commit>(signable: T, newInstance: (bytes: Uint8Array, signature: Uint8Array) => T): Promise<T> {
         if (!this.offlineSigner) {
             return signable;
         }
 
         const signature = await this.offlineSigner(signable.getDigest());
-        return newInstance.bind(this.contract)(signable.getBytes(), signature);
+        return newInstance(signable.getBytes(), signature);
     }
 }

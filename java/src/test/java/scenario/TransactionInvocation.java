@@ -11,15 +11,20 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.hyperledger.fabric.client.Commit;
 import org.hyperledger.fabric.client.CommitException;
 import org.hyperledger.fabric.client.Contract;
+import org.hyperledger.fabric.client.Network;
 import org.hyperledger.fabric.client.Proposal;
+import org.hyperledger.fabric.client.SubmittedTransaction;
 import org.hyperledger.fabric.client.Transaction;
 import org.hyperledger.fabric.client.identity.Signer;
+import org.hyperledger.fabric.protos.peer.TransactionPackage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class TransactionInvocation {
+    private final Network network;
     private final Contract contract;
     private final Proposal.Builder proposalBuilder;
     private Callable<byte[]> action;
@@ -27,7 +32,8 @@ public final class TransactionInvocation {
     private String response;
     private Throwable error;
 
-    private TransactionInvocation(final Contract contract, final String transactionName) {
+    private TransactionInvocation(final Network network, final Contract contract, final String transactionName) {
+        this.network = network;
         this.contract = contract;
         proposalBuilder = contract.newProposal(transactionName);
     }
@@ -36,14 +42,14 @@ public final class TransactionInvocation {
         proposalBuilder.putAllTransient(transientData);
     }
 
-    public static TransactionInvocation prepareToSubmit(final Contract contract, final String transactionName) {
-        TransactionInvocation invocation = new TransactionInvocation(contract, transactionName);
+    public static TransactionInvocation prepareToSubmit(final Network network, final Contract contract, final String transactionName) {
+        TransactionInvocation invocation = new TransactionInvocation(network, contract, transactionName);
         invocation.action = invocation::submit;
         return invocation;
     }
 
-    public static TransactionInvocation prepareToEvaluate(final Contract contract, final String transactionName) {
-        TransactionInvocation invocation = new TransactionInvocation(contract, transactionName);
+    public static TransactionInvocation prepareToEvaluate(final Network network, final Contract contract, final String transactionName) {
+        TransactionInvocation invocation = new TransactionInvocation(network, contract, transactionName);
         invocation.action = invocation::evaluate;
         return invocation;
     }
@@ -65,14 +71,21 @@ public final class TransactionInvocation {
         }
     }
 
-    private byte[] submit() throws CommitException, InvalidProtocolBufferException, GeneralSecurityException {
-        Proposal proposal = proposalBuilder.build();
-        proposal = offlineSign(proposal);
+    private byte[] submit() throws InvalidProtocolBufferException, GeneralSecurityException {
+        Proposal unsignedProposal = proposalBuilder.build();
+        Proposal signedProposal = offlineSign(unsignedProposal);
 
-        Transaction transaction = proposal.endorse();
-        transaction = offlineSign(transaction);
+        Transaction unsignedTransaction = signedProposal.endorse();
+        Transaction signedTransaction = offlineSign(unsignedTransaction);
 
-        return transaction.submit();
+        SubmittedTransaction submitted = signedTransaction.submitAsync();
+        Commit commit = offlineSign(submitted);
+
+        if (!commit.isSuccessful()) {
+            throw new RuntimeException("Transaction commit failed with status: " + commit.getStatus());
+        }
+
+        return submitted.getResult();
     }
 
     private Proposal offlineSign(final Proposal proposal) throws GeneralSecurityException, InvalidProtocolBufferException {
@@ -93,11 +106,20 @@ public final class TransactionInvocation {
         return contract.newSignedTransaction(transaction.getBytes(), signature);
     }
 
-    private byte[] evaluate() throws InvalidProtocolBufferException, GeneralSecurityException {
-        Proposal proposal = proposalBuilder.build();
-        proposal = offlineSign(proposal);
+    private Commit offlineSign(final Commit commit) throws InvalidProtocolBufferException, GeneralSecurityException {
+        if (null == offlineSigner) {
+            return commit;
+        }
 
-        return proposal.evaluate();
+        byte[] signature = offlineSigner.sign(commit.getDigest());
+        return network.newSignedCommit(commit.getBytes(), signature);
+    }
+
+    private byte[] evaluate() throws InvalidProtocolBufferException, GeneralSecurityException {
+        Proposal unsignedProposal = proposalBuilder.build();
+        Proposal signedProposal = offlineSign(unsignedProposal);
+
+        return signedProposal.evaluate();
     }
 
     private void setResponse(final byte[] response) {

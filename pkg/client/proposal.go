@@ -34,7 +34,7 @@ func (proposal *Proposal) Bytes() ([]byte, error) {
 }
 
 // Digest of the proposal. This is used to generate a digital signature.
-func (proposal *Proposal) Digest() ([]byte, error) {
+func (proposal *Proposal) Digest() []byte {
 	return proposal.signingID.Hash(proposal.proposedTransaction.Proposal.ProposalBytes)
 }
 
@@ -111,11 +111,7 @@ func (proposal *Proposal) sign() error {
 		return nil
 	}
 
-	digest, err := proposal.Digest()
-	if err != nil {
-		return err
-	}
-
+	digest := proposal.Digest()
 	signature, err := proposal.signingID.Sign(digest)
 	if err != nil {
 		return err
