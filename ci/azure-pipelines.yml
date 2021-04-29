@@ -233,7 +233,7 @@ stages:
       - script: |
           GPG_TTY=$(tty)
           export GPG_TTY
-          gpg --import ${PRIVATE_KEY}
+          gpg --batch --import ${PRIVATE_KEY}
         displayName: Import private key
         env:
           PRIVATE_KEY: $(privateKey.secureFilePath)
