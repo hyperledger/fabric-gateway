@@ -374,6 +374,9 @@
                         <artifactId>maven-gpg-plugin</artifactId>
                         <configuration>
                             <useAgent>true</useAgent>
+                            <gpgArguments>
+                                <arg>--batch</arg>
+                            </gpgArguments>
                         </configuration>
                         <version>1.6</version>
                         <executions>
