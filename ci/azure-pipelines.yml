@@ -230,7 +230,10 @@ stages:
         displayName: Download private key
         inputs:
           secureFile: private-key.asc
-      - script: gpg --import ${PRIVATE_KEY}
+      - script: |
+          GPG_TTY=$(tty)
+          export GPG_TTY
+          gpg --import ${PRIVATE_KEY}
         displayName: Import private key
         env:
           PRIVATE_KEY: $(privateKey.secureFilePath)
