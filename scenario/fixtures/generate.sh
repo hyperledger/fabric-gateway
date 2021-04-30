@@ -2,15 +2,14 @@
 
 set -eo pipefail
 
-rm -f crypto-material/channel.tx
-rm -f crypto-material/core.yaml
-rm -f crypto-material/genesis.block
-rm -f crypto-material/mychannel.block
-rm -rf crypto-material/crypto-config  
-
 cd docker-compose
 
 docker-compose -f docker-compose-cli.yaml up -d
+docker exec cli rm -rf /etc/hyperledger/config/channel.tx \
+    /etc/hyperledger/config/core.yaml \
+    /etc/hyperledger/config/genesis.block \
+    /etc/hyperledger/config/mychannel.block \
+    /etc/hyperledger/config/crypto-config
 docker exec cli cryptogen generate --config=/etc/hyperledger/config/crypto-config.yaml --output /etc/hyperledger/config/crypto-config
 docker exec cli configtxgen -profile ThreeOrgsOrdererGenesis -outputBlock /etc/hyperledger/config/genesis.block -channelID testchainid
 docker exec cli configtxgen -profile ThreeOrgsChannel -outputCreateChannelTx /etc/hyperledger/config/channel.tx -channelID mychannel
