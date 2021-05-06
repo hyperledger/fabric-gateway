@@ -252,7 +252,7 @@ stages:
       - script: |
           GPG_TTY=$(tty)
           export GPG_TTY
-          mvn --batch-mode -P release deploy
+          mvn -X -e --batch-mode -P release deploy
         displayName: Deploy to artifactory
         workingDirectory: $(System.DefaultWorkingDirectory)/java
         env:
