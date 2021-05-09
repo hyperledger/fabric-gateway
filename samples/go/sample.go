@@ -42,71 +42,94 @@ func main() {
 	}
 	defer gateway.Close()
 
-	network := gateway.GetNetwork("mychannel")
-	contract := network.GetContract("basic")
-
-	exampleSubmit(contract, "put", "time", time.Now().String())
-	exampleEvaluate(contract, "get", "time")
-
+	exampleSubmit(gateway)
 	fmt.Println()
 
-	exampleSubmitAsync(contract, "put", "async", time.Now().String())
-	exampleEvaluate(contract, "get", "async")
-
+	exampleSubmitAsync(gateway)
 	fmt.Println()
 }
 
-func exampleSubmit(contract *client.Contract, name string, args ...string) {
-	fmt.Printf("Submitting \"%s\" transaction with arguments: %s\n", name, args)
+func exampleSubmit(gateway *client.Gateway) {
+	network := gateway.GetNetwork("mychannel")
+	contract := network.GetContract("basic")
+
+	timestamp := time.Now().String()
+	fmt.Printf("Submitting \"put\" transaction with arguments: time, %s\n", timestamp)
 
 	// Submit transaction, blocking until the transaction has been committed on the ledger
-	result, err := contract.SubmitTransaction(name, args...)
+	submitResult, err := contract.SubmitTransaction("put", "time", timestamp)
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
 
-	fmt.Printf("Submit result: %s\n", string(result))
+	fmt.Printf("Submit result: %s\n", string(submitResult))
+	fmt.Println("Evaluating \"get\" query with arguments: time")
 
+	evaluateResult, err := contract.EvaluateTransaction("get", "time")
+	if err != nil {
+		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+	}
+
+	fmt.Printf("Query result = %s\n", string(evaluateResult))
 }
 
-func exampleSubmitAsync(contract *client.Contract, name string, args ...string) {
-	fmt.Printf("Submitting \"%s\" transaction asynchronously with arguments: %s\n", name, args)
+func exampleSubmitAsync(gateway *client.Gateway) {
+	network := gateway.GetNetwork("mychannel")
+	contract := network.GetContract("basic")
+
+	timestamp := time.Now().String()
+	fmt.Printf("Submitting \"put\" transaction asynchronously with arguments: async, %s\n", timestamp)
 
 	// Submit transaction asynchronously, blocking until the transaction has been sent to the orderer, and allowing
 	// this thread to process the chaincode response (e.g. update a UI) without waiting for the commit notification
-	result, commit, err := contract.SubmitAsync(name, client.WithStringArguments(args...))
+	submitResult, commit, err := contract.SubmitAsync("put", client.WithStringArguments("async", timestamp))
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction asynchronously: %w", err))
 	}
-	fmt.Printf("Submit result: %s\n", string(result))
 
+	fmt.Printf("Submit result: %s\n", string(submitResult))
 	fmt.Println("Waiting for transaction commit")
 
 	successful, err := commit.Successful()
 	if err != nil {
 		panic(fmt.Errorf("failed to obtain commit status: %w", err))
 	}
-
 	if !successful {
 		status, err := commit.Status()
 		if err != nil {
 			panic(err)
 		}
-
 		panic(fmt.Errorf("transaction %s failed to commit with status code: %d", commit.TransactionID(), int32(status)))
 	}
+
 	fmt.Printf("Transaction committed successfully\n")
-}
+	fmt.Println("Evaluating \"get\" query with arguments: async")
 
-func exampleEvaluate(contract *client.Contract, name string, args ...string) {
-	fmt.Printf("Evaluating \"%s\" query with arguments: %s\n", name, args)
-
-	result, err := contract.EvaluateTransaction(name, args...)
+	evaluateResult, err := contract.EvaluateTransaction("get", "async")
 	if err != nil {
 		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
 	}
 
-	fmt.Printf("Query result = %s\n", string(result))
+	fmt.Printf("Query result = %s\n", string(evaluateResult))
+}
+
+// newGrpcConnection creates a gRPC connection to the Gateway server.
+func newGrpcConnection() *grpc.ClientConn {
+	certificate, err := loadCertificate(tlsCertPath)
+	if err != nil {
+		panic(fmt.Errorf("failed to obtain commit status: %w", err))
+	}
+
+	certPool := x509.NewCertPool()
+	certPool.AddCert(certificate)
+	transportCredentials := credentials.NewClientTLSFromCert(certPool, "peer0.org1.example.com")
+
+	connection, err := grpc.Dial(peerEndpoint, grpc.WithTransportCredentials(transportCredentials))
+	if err != nil {
+		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+	}
+
+	return connection
 }
 
 // newIdentity creates a client identity for this Gateway connection using an X.509 certificate.
@@ -142,25 +165,6 @@ func newSign() identity.Sign {
 	}
 
 	return sign
-}
-
-// newGrpcConnection creates a gRPC connection to the Gateway server.
-func newGrpcConnection() *grpc.ClientConn {
-	certificate, err := loadCertificate(tlsCertPath)
-	if err != nil {
-		panic(err)
-	}
-
-	certPool := x509.NewCertPool()
-	certPool.AddCert(certificate)
-	transportCredentials := credentials.NewClientTLSFromCert(certPool, "peer0.org1.example.com")
-
-	connection, err := grpc.Dial(peerEndpoint, grpc.WithTransportCredentials(transportCredentials))
-	if err != nil {
-		panic(err)
-	}
-
-	return connection
 }
 
 func loadCertificate(filename string) (*x509.Certificate, error) {

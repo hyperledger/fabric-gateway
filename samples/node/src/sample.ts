@@ -1,12 +1,13 @@
 /*
-Copyright IBM Corp. All Rights Reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
+ * Copyright IBM Corp. All Rights Reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 import * as grpc from '@grpc/grpc-js';
+import { ServiceClient } from '@grpc/grpc-js/build/src/make-client';
 import crypto from 'crypto';
-import { connect, ConnectOptions, Contract, Identity, signers } from 'fabric-gateway';
+import { connect, Gateway, Identity, Signer, signers } from 'fabric-gateway';
 import fs from 'fs';
 import path from 'path';
 
@@ -21,25 +22,17 @@ async function main() {
     // The gRPC client connection should be shared by all Gateway connections to this endpoint
     const client = newGrpcConnection();
 
-    const options: ConnectOptions = {
+    const gateway = await connect({
         client,
         identity: await newIdentity(),
         signer: await newSigner(),
-    };
-    const gateway = await connect(options);
+    });
 
     try {
-        const network = gateway.getNetwork('mychannel');
-        const contract = network.getContract('basic');
-
-        await exampleSubmit(contract, 'put', 'timestamp', new Date().toISOString());
-        await exampleEvaluate(contract, 'get', 'timestamp');
-
+        await exampleSubmit(gateway);
         console.log();
 
-        await exampleSubmitAsync(contract, 'put', 'async', new Date().toISOString())
-        await exampleEvaluate(contract, 'get', 'async');
-
+        await exampleSubmitAsync(gateway)
         console.log();
     } finally {
         gateway.close();
@@ -47,41 +40,56 @@ async function main() {
     }
 }
 
-async function exampleSubmit(contract: Contract, name: string, ...args: string[]) {
-    console.log(`Submitting "${name}" transaction with arguments:`, args);
+async function exampleSubmit(gateway: Gateway) {
+    const network = gateway.getNetwork('mychannel');
+    const contract = network.getContract('basic');
 
-    // Submit a transaction, blocking until the transaction has been committed on the ledger.
-    const submitResult = await contract.submitTransaction(name, ...args);
+    const timestamp = new Date().toISOString();
+    console.log('Submitting "put" transaction with arguments: time,', timestamp);
+
+    // Submit a transaction, blocking until the transaction has been committed on the ledger
+    const submitResult = await contract.submitTransaction('put', 'time', timestamp);
+
     console.log('Submit result:', submitResult.toString());
+    console.log('Evaluating "get" query with arguments: time');
+
+    const evaluateResult = await contract.evaluateTransaction('get', 'time');
+
+    console.log('Query result:', evaluateResult.toString());
 }
 
-async function exampleSubmitAsync(contract: Contract, name: string, ...args: string[]) {
-    console.log(`Submitting "${name}" transaction asynchronously with arguments:`, args);
+async function exampleSubmitAsync(gateway: Gateway) {
+    const network = gateway.getNetwork('mychannel');
+    const contract = network.getContract('basic');
+
+    const timestamp = new Date().toISOString();
+    console.log('Submitting "put" transaction asynchronously with arguments: async,', timestamp);
 
 	// Submit transaction asynchronously, blocking until the transaction has been sent to the orderer, and allowing
 	// this thread to process the chaincode response (e.g. update a UI) without waiting for the commit notification
-    const commit = await contract.submitAsync(name, { arguments: args });
-    const result = commit.getResult();
-    console.log('Proposal result:', result.toString());
+    const commit = await contract.submitAsync('put', {
+        arguments: ['async', timestamp],
+    });
+    const submitResult = commit.getResult();
 
+    console.log('Submit result:', submitResult.toString());
     console.log('Waiting for transaction commit');
 
     const successful = await commit.isSuccessful();
     if (!successful) {
         const status = await commit.getStatus();
-        throw new Error(`Transaction ${commit.getTransactionId()} failed to commit with status code ${status}`)
+        throw new Error(`Transaction ${commit.getTransactionId()} failed to commit with status code: ${status}`);
     }
-    console.log('Transaction committed successfully')
+
+    console.log('Transaction committed successfully');
+    console.log('Evaluating "get" query with arguments: async');
+
+    const evaluateResult = await contract.evaluateTransaction('get', 'async');
+
+    console.log('Query result:', evaluateResult.toString());
 }
 
-async function exampleEvaluate(contract: Contract, name: string, ...args: string[]) {
-    console.log(`Evaluating "${name}" query with arguments: ${args}`);
-
-    const result = await contract.evaluateTransaction('get', 'timestamp');
-    console.log('Query result:', result.toString());
-}
-
-function newGrpcConnection() {
+function newGrpcConnection(): ServiceClient {
     const tlsRootCert = fs.readFileSync(tlsCertPath);
     const tlsCredentials = grpc.credentials.createSsl(tlsRootCert);
 
@@ -91,16 +99,15 @@ function newGrpcConnection() {
     });
 }
 
-async function newIdentity() {
+async function newIdentity(): Promise<Identity> {
     const certificate = await fs.promises.readFile(certPath);
-    const identity: Identity = {
+    return {
         mspId: mspId,
         credentials: certificate
     };
-    return identity;
 }
 
-async function newSigner() {
+async function newSigner(): Promise<Signer> {
     const privateKeyPem = await fs.promises.readFile(keyPath);
     const privateKey = crypto.createPrivateKey(privateKeyPem);
     return signers.newPrivateKeySigner(privateKey);

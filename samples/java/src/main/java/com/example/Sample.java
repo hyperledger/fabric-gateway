@@ -1,5 +1,6 @@
 /*
  * Copyright IBM Corp. All Rights Reserved.
+ *
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -52,39 +53,49 @@ public class Sample {
                 .signer(signer)
                 .connection(channel)
                 .connect()) {
-            Network network = gateway.getNetwork("mychannel");
-            Contract contract = network.getContract("basic");
-
-            exampleSubmit(contract, "put", "time", LocalDateTime.now().toString());
-            exampleEvaluate(contract, "get", "time");
-
+            exampleSubmit(gateway);
             System.out.println();
 
-            exampleSubmitAsync(contract, "put", "async", LocalDateTime.now().toString());
-            exampleEvaluate(contract, "get", "async");
-
+            exampleSubmitAsync(gateway);
             System.out.println();
         } finally {
             channel.shutdownNow();
         }
     }
 
-    private static void exampleSubmit(Contract contract, String name, String... args) throws CommitException {
-        System.out.println("Submitting \"" + name + "\" transaction with arguments: " + Arrays.toString(args));
+    private static void exampleSubmit(Gateway gateway) throws CommitException {
+        Network network = gateway.getNetwork("mychannel");
+        Contract contract = network.getContract("basic");
+
+        String timestamp = LocalDateTime.now().toString();
+        System.out.println("Submitting \"put\" transaction with arguments: time, " + timestamp);
 
         // Submit a transaction, blocking until the transaction has been committed on the ledger.
-        byte[] result = contract.submitTransaction(name, args);
-        System.out.println("Submit result: " + new String(result, StandardCharsets.UTF_8));
+        byte[] submitResult = contract.submitTransaction("put", "time", timestamp);
+
+        System.out.println("Submit result: " + new String(submitResult, StandardCharsets.UTF_8));
+        System.out.println("Evaluating \"get\" query with arguments: time");
+
+        byte[] evaluateResult = contract.evaluateTransaction("get", "time");
+        System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
     }
 
-    private static void exampleSubmitAsync(Contract contract, String name, String... args) {
-        System.out.println("Submitting \"" + name + "\" transaction asynchronously with arguments: " + Arrays.toString(args));
+    private static void exampleSubmitAsync(Gateway gateway) {
+        Network network = gateway.getNetwork("mychannel");
+        Contract contract = network.getContract("basic");
+
+        String timestamp = LocalDateTime.now().toString();
+        System.out.println("Submitting \"put\" transaction asynchronously with arguments: async");
 
         // Submit transaction asynchronously, blocking until the transaction has been sent to the orderer, and allowing
         // this thread to process the chaincode response (e.g. update a UI) without waiting for the commit notification
-        SubmittedTransaction commit = contract.newProposal(name).addArguments(args).build().endorse().submitAsync();
-        System.out.println("Proposal result: " + new String(commit.getResult(), StandardCharsets.UTF_8));
+        SubmittedTransaction commit = contract.newProposal("put")
+                .addArguments("async", timestamp)
+                .build()
+                .endorse()
+                .submitAsync();
 
+        System.out.println("Submit result: " + new String(commit.getResult(), StandardCharsets.UTF_8));
         System.out.println("Waiting for transaction commit");
 
         if (!commit.isSuccessful()) {
@@ -92,13 +103,22 @@ public class Sample {
             throw new RuntimeException("Transaction " + commit.getTransactionId() +
                     " failed to commit with status code " + status.getNumber() + " (" + status.name() + ")");
         }
+
+        System.out.println("Transaction committed successfully");
+        System.out.println("Evaluating \"get\" query with arguments: async");
+
+        byte[] evaluateResult = contract.evaluateTransaction("get", "async");
+        System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
     }
 
-    private static void exampleEvaluate(Contract contract, String name, String... args) {
-        System.out.println("Evaluating \"" + name + "\" query with arguments: " + Arrays.toString(args));
+    private static ManagedChannel newGrpcConnection() throws IOException, CertificateException {
+        Reader tlsCertReader = Files.newBufferedReader(tlsCertPath);
+        X509Certificate tlsCert = Identities.readX509Certificate(tlsCertReader);
 
-        byte[] result = contract.evaluateTransaction(name, args);
-        System.out.println("Query result: " + new String(result, StandardCharsets.UTF_8));
+        return NettyChannelBuilder.forTarget("localhost:7051")
+                .sslContext(GrpcSslContexts.forClient().trustManager(tlsCert).build())
+                .overrideAuthority("peer0.org1.example.com")
+                .build();
     }
 
     private static Identity newIdentity() throws IOException, CertificateException {
@@ -113,15 +133,5 @@ public class Sample {
         PrivateKey privateKey = Identities.readPrivateKey(keyReader);
 
         return Signers.newPrivateKeySigner(privateKey);
-    }
-
-    private static ManagedChannel newGrpcConnection() throws IOException, CertificateException {
-        Reader tlsCertReader = Files.newBufferedReader(tlsCertPath);
-        X509Certificate tlsCert = Identities.readX509Certificate(tlsCertReader);
-
-        return NettyChannelBuilder.forTarget("localhost:7051")
-                .sslContext(GrpcSslContexts.forClient().trustManager(tlsCert).build())
-                .overrideAuthority("peer0.org1.example.com")
-                .build();
     }
 }
