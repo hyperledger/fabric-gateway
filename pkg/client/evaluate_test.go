@@ -290,8 +290,8 @@ func TestEvaluateTransaction(t *testing.T) {
 			actual = digest
 			return expected, nil
 		}
-		hash := func(message []byte) ([]byte, error) {
-			return expected, nil
+		hash := func(message []byte) []byte {
+			return expected
 		}
 		mockController := gomock.NewController(t)
 		defer mockController.Finish()

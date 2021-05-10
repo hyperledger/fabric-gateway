@@ -7,7 +7,6 @@
 package org.hyperledger.fabric.client;
 
 import java.util.Optional;
-import java.util.concurrent.TimeoutException;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
@@ -101,12 +100,9 @@ public interface Contract {
      * @param name Transaction function name.
      * @return Payload response from the transaction function.
      * @throws CommitException if the transaction fails to commit successfully.
-     * @throws TimeoutException If the transaction was successfully submitted to the orderer but
-     * timed out before a commit event was received from peers.
-     * @throws InterruptedException if the current thread is interrupted while waiting.
-     * @throws GatewayRuntimeException if an underlying infrastructure failure occurs.
+     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
      */
-    byte[] submitTransaction(String name) throws TimeoutException, InterruptedException, CommitException;
+    byte[] submitTransaction(String name) throws CommitException;
 
     /**
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
@@ -116,12 +112,9 @@ public interface Contract {
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
      * @throws CommitException if the transaction fails to commit successfully.
-     * @throws TimeoutException If the transaction was successfully submitted to the orderer but
-     * timed out before a commit event was received from peers.
-     * @throws InterruptedException if the current thread is interrupted while waiting.
-     * @throws GatewayRuntimeException if an underlying infrastructure failure occurs.
+     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
      */
-    byte[] submitTransaction(String name, String... args) throws CommitException, TimeoutException, InterruptedException;
+    byte[] submitTransaction(String name, String... args) throws CommitException;
 
     /**
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
@@ -131,12 +124,9 @@ public interface Contract {
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
      * @throws CommitException if the transaction fails to commit successfully.
-     * @throws TimeoutException If the transaction was successfully submitted to the orderer but
-     * timed out before a commit event was received from peers.
-     * @throws InterruptedException if the current thread is interrupted while waiting.
-     * @throws GatewayRuntimeException if an underlying infrastructure failure occurs.
+     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
      */
-    byte[] submitTransaction(String name, byte[]... args) throws CommitException, TimeoutException, InterruptedException;
+    byte[] submitTransaction(String name, byte[]... args) throws CommitException;
 
     /**
      * Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
@@ -144,6 +134,7 @@ public interface Contract {
      * This can be used for querying the world state.
      * @param name Transaction function name.
      * @return Payload response from the transaction function.
+     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
      */
     byte[] evaluateTransaction(String name);
 
@@ -154,6 +145,7 @@ public interface Contract {
      * @param name Transaction function name.
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
+     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
      */
     byte[] evaluateTransaction(String name, String... args);
 
@@ -164,6 +156,7 @@ public interface Contract {
      * @param name Transaction function name.
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
+     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
      */
     byte[] evaluateTransaction(String name, byte[]... args);
 

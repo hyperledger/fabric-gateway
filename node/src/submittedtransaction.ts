@@ -4,36 +4,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Commit } from "./commit";
-import { protos } from "./protos/protos";
+import { Commit, CommitImpl, CommitImplOptions } from "./commit";
 
 export interface SubmittedTransaction extends Commit {
+    /**
+     * Get the transaction result. This is obtained during the endorsement process when the transaction proposal is
+     * run on endorsing peers and so is available immediately. The transaction might subsequently fail to commit
+     * successfully.
+     * @returns Transaction result.
+     */
     getResult(): Uint8Array;
 }
 
-export interface SubmittedTransactionImplOptions {
+export interface SubmittedTransactionImplOptions extends CommitImplOptions {
     readonly result: Uint8Array;
-    readonly commit: Commit;
 }
 
-export class SubmittedTransactionImpl implements SubmittedTransaction {
+export class SubmittedTransactionImpl extends CommitImpl {
     #result: Uint8Array;
-    #commit: Commit;
 
     constructor(options: SubmittedTransactionImplOptions) {
+        super(options);
         this.#result = options.result;
-        this.#commit = options.commit;
     }
 
     getResult(): Uint8Array {
         return this.#result;
-    }
-
-    getStatus(): Promise<protos.TxValidationCode> {
-        return this.#commit.getStatus();
-    }
-
-    getTransactionId(): string {
-        return this.#commit.getTransactionId();
     }
 }

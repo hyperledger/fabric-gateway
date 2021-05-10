@@ -684,7 +684,7 @@ func transactionInvokeFn(txType TransactionType) func() ([]byte, error) {
 }
 
 type Signable interface {
-	Digest() ([]byte, error)
+	Digest() []byte
 	Bytes() ([]byte, error)
 }
 
@@ -725,12 +725,17 @@ func invokeSubmit() ([]byte, error) {
 
 	result := signedTransaction.Result()
 
-	commit, err := signedTransaction.Submit()
+	unsignedCommit, err := signedTransaction.Submit()
 	if err != nil {
 		return result, err
 	}
 
-	status, err := commit.Status()
+	signedCommit, err := offlineSignCommit(unsignedCommit)
+	if err != nil {
+		return result, err
+	}
+
+	status, err := signedCommit.Status()
 	if err != nil {
 		return result, err
 	}
@@ -777,12 +782,26 @@ func offlineSignTransaction(clientTransaction *client.Transaction) (*client.Tran
 	return clientTransaction, nil
 }
 
-func bytesAndSignature(signable Signable) ([]byte, []byte, error) {
-	digest, err := signable.Digest()
-	if err != nil {
-		return nil, nil, err
+func offlineSignCommit(commit *client.Commit) (*client.Commit, error) {
+	if nil == transaction.offlineSign {
+		return commit, nil
 	}
 
+	bytes, signature, err := bytesAndSignature(commit)
+	if err != nil {
+		return nil, err
+	}
+
+	commit, err = network.NewSignedCommit(bytes, signature)
+	if err != nil {
+		return nil, err
+	}
+
+	return commit, nil
+}
+
+func bytesAndSignature(signable Signable) ([]byte, []byte, error) {
+	digest := signable.Digest()
 	bytes, err := signable.Bytes()
 	if err != nil {
 		return nil, nil, err

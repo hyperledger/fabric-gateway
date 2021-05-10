@@ -32,14 +32,14 @@ func (transaction *Transaction) Result() []byte {
 func (transaction *Transaction) Bytes() ([]byte, error) {
 	transactionBytes, err := proto.Marshal(transaction.preparedTransaction)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshall Proposal protobuf: %w", err)
+		return nil, fmt.Errorf("failed to marshall PreparedTransaction protobuf: %w", err)
 	}
 
 	return transactionBytes, nil
 }
 
 // Digest of the transaction. This is used to generate a digital signature.
-func (transaction *Transaction) Digest() ([]byte, error) {
+func (transaction *Transaction) Digest() []byte {
 	return transaction.signingID.Hash(transaction.preparedTransaction.Envelope.Payload)
 }
 
@@ -54,6 +54,12 @@ func (transaction *Transaction) Submit() (*Commit, error) {
 		return nil, err
 	}
 
+	// Build before the submit to avoid chance of errors after the submit
+	statusRequest, err := transaction.newSignedCommitStatusRequest()
+	if err != nil {
+		return nil, err
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
@@ -62,17 +68,12 @@ func (transaction *Transaction) Submit() (*Commit, error) {
 		ChannelId:           transaction.channelID,
 		PreparedTransaction: transaction.preparedTransaction.Envelope,
 	}
-	_, err := transaction.client.Submit(ctx, submitRequest)
+	_, err = transaction.client.Submit(ctx, submitRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to submit transaction to the orderer: %w", err)
 	}
 
-	commit := &Commit{
-		client:        transaction.client,
-		channelID:     transaction.channelID,
-		transactionID: transaction.TransactionID(),
-	}
-	return commit, nil
+	return newCommit(transaction.client, transaction.signingID, transaction.TransactionID(), statusRequest), nil
 }
 
 func (transaction *Transaction) sign() error {
@@ -80,11 +81,7 @@ func (transaction *Transaction) sign() error {
 		return nil
 	}
 
-	digest, err := transaction.Digest()
-	if err != nil {
-		return err
-	}
-
+	digest := transaction.Digest()
 	signature, err := transaction.signingID.Sign(digest)
 	if err != nil {
 		return err
@@ -101,4 +98,27 @@ func (transaction *Transaction) isSigned() bool {
 
 func (transaction *Transaction) setSignature(signature []byte) {
 	transaction.preparedTransaction.Envelope.Signature = signature
+}
+
+func (transaction *Transaction) newSignedCommitStatusRequest() (*gateway.SignedCommitStatusRequest, error) {
+	creator, err := transaction.signingID.Creator()
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize identity: %w", err)
+	}
+
+	request := &gateway.CommitStatusRequest{
+		ChannelId:     transaction.channelID,
+		TransactionId: transaction.TransactionID(),
+		Identity:      creator,
+	}
+
+	requestBytes, err := proto.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+
+	signedRequest := &gateway.SignedCommitStatusRequest{
+		Request: requestBytes,
+	}
+	return signedRequest, nil
 }

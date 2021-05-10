@@ -30,7 +30,7 @@ GO_TAGS ?=
 
 build: build-protos build-go build-node
 
-fabric_protos_commit = 70417cdafefd26c2e1b7d37d12622a4bfc159989
+fabric_protos_commit = 1c9f434d900eaade067ebdf3a78051c88f078ace
 pb_files = protos/gateway/gateway.pb.go protos/gateway/gateway_grpc.pb.go
 
 .PHONEY: build-protos
@@ -49,7 +49,10 @@ build-go:
 	go build -o bin/gateway cmd/gateway/*.go
 
 build-node: build-protos
-	cd $(node_dir); npm install; npm run build
+	cd $(node_dir); npm install; npm run build; rm -f fabric-gateway-dev.tgz; mv $$(npm pack) fabric-gateway-dev.tgz
+
+build-java: build-protos
+	cd $(java_dir); mvn install -DskipTests
 
 unit-test: generate unit-test-go unit-test-node unit-test-java
 
@@ -71,11 +74,19 @@ staticcheck:
 sample-network: pull-latest-peer vendor-chaincode
 	cd $(scenario_dir)/go; GATEWAY_NO_SHUTDOWN=TRUE godog $(scenario_dir)/features/transactions.feature
 
-run-samples: sample-network
+sample-network-clean:
+	docker ps -aq | xargs docker rm -f; docker images -q 'dev-*' | xargs docker rmi -f; docker network prune --force
+
+run-samples: | sample-network run-samples-go run-samples-node run-samples-java sample-network-clean
+
+run-samples-go:
 	cd $(samples_dir)/go; go run sample.go
-	cd $(samples_dir)/node; npm install; npm run build; npm start
+
+run-samples-node: build-node
+	cd $(samples_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; npm run build; npm start
+
+run-samples-java: build-java
 	cd $(samples_dir)/java; mvn test
-	docker ps -aq | xargs docker rm -f; docker network prune --force
 
 generate:
 	go generate ./pkg/...
@@ -87,7 +98,6 @@ scenario-test-go: vendor-chaincode
 	cd $(scenario_dir)/go; godog $(scenario_dir)/features/
 
 scenario-test-node: vendor-chaincode build-node
-	cd $(node_dir); rm -f fabric-gateway-dev.tgz; mv $$(npm pack) fabric-gateway-dev.tgz
 	cd $(scenario_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; npm test
 
 scenario-test-java: vendor-chaincode build-protos

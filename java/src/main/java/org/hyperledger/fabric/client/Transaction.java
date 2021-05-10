@@ -6,10 +6,6 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.Supplier;
-
-import org.hyperledger.fabric.protos.peer.TransactionPackage;
-
 public interface Transaction {
     /**
      * Get the transaction result. The result is obtained as part of the proposal endorsement so may be read
@@ -42,15 +38,17 @@ public interface Transaction {
      * Submit the transaction to the orderer to be committed to the ledger. This method blocks until the transaction
      * has been successfully committed to the ledger.
      * @return A transaction result.
-     * @throws CommitException On commit failure.
+     * @throws CommitException if the transaction fails to commit successfully.
+     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
      */
     byte[] submit() throws CommitException;
 
     /**
      * Submit the transaction to the orderer to be committed to the ledger. This method returns immediately after the
-     * transaction is successfully delivered to the orderer. The returned Supplier may be used to subsequently wait
+     * transaction is successfully delivered to the orderer. The returned Commit may be used to subsequently wait
      * for the transaction to be committed to the ledger.
-     * @return A commit handle.
+     * @return A transaction commit.
+     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
      */
-    Supplier<TransactionPackage.TxValidationCode> submitAsync();
+    SubmittedTransaction submitAsync();
 }

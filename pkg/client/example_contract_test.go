@@ -49,10 +49,7 @@ func ExampleContract_offlineSignProposal() (*client.Proposal, error) {
 		return nil, err
 	}
 
-	digest, err := unsignedProposal.Digest()
-	if err != nil {
-		return nil, err
-	}
+	digest := unsignedProposal.Digest()
 
 	// Generate signature from digest
 	signature, err := sign(digest)
@@ -80,10 +77,7 @@ func ExampleContract_offlineSignTransaction() (*client.Transaction, error) {
 		return nil, err
 	}
 
-	digest, err := unsignedTransaction.Digest()
-	if err != nil {
-		return nil, err
-	}
+	digest := unsignedTransaction.Digest()
 
 	// Generate signature from digest
 	signature, err := sign(digest)

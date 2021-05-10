@@ -142,7 +142,7 @@ stages:
           # TODO: update this variable name in the Makefile
           JENKINS_URL: true
 
-  - job: Samples
+  - job: SamplesGo
     pool:
       vmImage: ubuntu-20.04
     dependsOn: []
@@ -150,9 +150,37 @@ stages:
     steps:
       - template: install_deps.yml
       - checkout: self
-      - script: make run-samples
-        displayName: Run SDK samples
+      - script: |
+          make sample-network
+          make run-samples-go
+        displayName: Run Go SDK samples
 
+  - job: SamplesNode
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+      - template: install_deps.yml
+      - checkout: self
+      - script: |
+          make sample-network
+          make run-samples-node
+        displayName: Run Node SDK samples
+
+  - job: SamplesJava
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+      - template: install_deps.yml
+      - checkout: self
+      - script: |
+          make sample-network
+          make run-samples-java
+        displayName: Run Java SDK samples
+    
 # TODO only run on the scheduled builds (run on merge builds while debugging)
 - stage: Publish
   dependsOn: Test

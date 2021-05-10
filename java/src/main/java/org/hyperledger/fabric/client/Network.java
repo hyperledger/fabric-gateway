@@ -6,6 +6,8 @@
 
 package org.hyperledger.fabric.client;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+
 /**
  * The Network represents a Fabric network (channel). Network instances are obtained from a Gateway using the
  * {@link Gateway#getNetwork(String)} method.
@@ -41,4 +43,14 @@ public interface Network {
      * @return The network name.
      */
     String getName();
+
+    /**
+     * Create a commit with the specified digital signature, which can be used to access information about a
+     * transaction that is committed to the ledger. Supports off-line signing flow.
+     * @param bytes Serialized commit status request.
+     * @param signature Digital signature.
+     * @return A signed commit status request.
+     * @throws InvalidProtocolBufferException if the supplied commit bytes are not a valid commit.
+     */
+    Commit newSignedCommit(byte[] bytes, byte[] signature) throws InvalidProtocolBufferException;
 }

@@ -1,4 +1,5 @@
 crypto-config/
+core.yaml
 genesis.block
 mychannel.block
 channel.tx

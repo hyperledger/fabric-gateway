@@ -6,17 +6,16 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.Supplier;
-
 import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
+import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.hyperledger.fabric.protos.peer.TransactionPackage;
 
-class TransactionImpl implements Transaction {
+final class TransactionImpl implements Transaction {
     private final GatewayGrpc.GatewayBlockingStub client;
     private final SigningIdentity signingIdentity;
     private final String channelName;
@@ -54,7 +53,7 @@ class TransactionImpl implements Transaction {
     }
 
     @Override
-    public Supplier<TransactionPackage.TxValidationCode> submitAsync() {
+    public SubmittedTransaction submitAsync() {
         sign();
         SubmitRequest submitRequest = SubmitRequest.newBuilder()
                 .setTransactionId(preparedTransaction.getTransactionId())
@@ -63,18 +62,12 @@ class TransactionImpl implements Transaction {
                 .build();
         client.submit(submitRequest);
 
-        return () -> {
-            CommitStatusRequest statusRequest = CommitStatusRequest.newBuilder()
-                    .setChannelId(channelName)
-                    .setTransactionId(preparedTransaction.getTransactionId())
-                    .build();
-            return client.commitStatus(statusRequest).getResult();
-        };
+        return new SubmittedTransactionImpl(client, signingIdentity, getTransactionId(), newSignedCommitStatusRequest(), getResult());
     }
 
     @Override
     public byte[] submit() throws CommitException {
-        TransactionPackage.TxValidationCode status = submitAsync().get();
+        TransactionPackage.TxValidationCode status = submitAsync().getStatus();
         if (status != TransactionPackage.TxValidationCode.VALID) {
             throw new CommitException(getTransactionId(), status);
         }
@@ -104,5 +97,20 @@ class TransactionImpl implements Transaction {
 
     private boolean isSigned() {
         return !preparedTransaction.getEnvelope().getSignature().isEmpty();
+    }
+
+    private SignedCommitStatusRequest newSignedCommitStatusRequest() {
+        return SignedCommitStatusRequest.newBuilder()
+                .setRequest(newCommitStatusRequest().toByteString())
+                .build();
+    }
+
+    private CommitStatusRequest newCommitStatusRequest() {
+        ByteString creator = ByteString.copyFrom(signingIdentity.getCreator());
+        return CommitStatusRequest.newBuilder()
+                .setChannelId(channelName)
+                .setTransactionId(preparedTransaction.getTransactionId())
+                .setIdentity(creator)
+                .build();
     }
 }

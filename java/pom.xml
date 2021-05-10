@@ -416,6 +416,7 @@
                             <doctitle>Hyperledger Fabric Gateway SDK for Java</doctitle>
                             <nohelp>true</nohelp>
                             <failOnError>true</failOnError>
+                            <failOnWarnings>true</failOnWarnings>
                             <additionalJOptions>
                                 <additionalJOption>--no-module-directories</additionalJOption>
                             </additionalJOptions>

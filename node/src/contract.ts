@@ -9,7 +9,7 @@ import { Proposal, ProposalImpl } from "./proposal";
 import { ProposalBuilder, ProposalOptions } from "./proposalbuilder";
 import { gateway, protos } from "./protos/protos";
 import { SigningIdentity } from "./signingidentity";
-import { SubmittedTransaction, SubmittedTransactionImpl } from './submittedtransaction';
+import { SubmittedTransaction } from './submittedtransaction';
 import { Transaction, TransactionImpl } from "./transaction";
 
 /**
@@ -201,12 +201,7 @@ export class ContractImpl implements Contract {
 
     async submitAsync(transactionName: string, options?: ProposalOptions): Promise<SubmittedTransaction> {
         const transaction = await this.newProposal(transactionName, options).endorse();
-        const commit = await transaction.submit();
-
-        return new SubmittedTransactionImpl({
-            commit,
-            result: transaction.getResult(),
-        });
+        return await transaction.submit();
     }
 
     newProposal(transactionName: string, options: ProposalOptions = {}): Proposal {

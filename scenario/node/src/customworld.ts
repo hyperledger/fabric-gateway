@@ -144,7 +144,7 @@ export class CustomWorld {
     }
 
     prepareTransaction(action: string, transactionName: string): void {
-        this.transaction = new TransactionInvocation(action, this.getContract(), transactionName);
+        this.transaction = new TransactionInvocation(action, this.getNetwork(), this.getContract(), transactionName);
     }
 
     setArguments(jsonArgs: string): void {

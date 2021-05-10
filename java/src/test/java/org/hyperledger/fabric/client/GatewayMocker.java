@@ -11,9 +11,9 @@ import java.util.concurrent.TimeUnit;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.ManagedChannel;
 import org.hyperledger.fabric.protos.common.Common;
-import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
+import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.hyperledger.fabric.protos.peer.Chaincode;
 import org.hyperledger.fabric.protos.peer.ProposalPackage;
@@ -41,7 +41,7 @@ public final class GatewayMocker implements AutoCloseable {
     @Captor
     private ArgumentCaptor<SubmitRequest> submitRequestCaptor;
     @Captor
-    private ArgumentCaptor<CommitStatusRequest> commitStatusRequestCaptor;
+    private ArgumentCaptor<SignedCommitStatusRequest> commitStatusRequestCaptor;
 
     public GatewayMocker() {
         this(utils.newGatewayBuilder());
@@ -87,7 +87,7 @@ public final class GatewayMocker implements AutoCloseable {
         return submitRequestCaptor.getValue();
     }
 
-    public CommitStatusRequest captureCommitStatus() {
+    public SignedCommitStatusRequest captureCommitStatus() {
         Mockito.verify(stub).commitStatus(commitStatusRequestCaptor.capture());
         return commitStatusRequestCaptor.getValue();
     }

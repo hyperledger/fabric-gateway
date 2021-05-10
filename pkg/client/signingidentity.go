@@ -35,7 +35,7 @@ func (signingID *signingIdentity) Identity() identity.Identity {
 	return signingID.id
 }
 
-func (signingID *signingIdentity) Hash(message []byte) ([]byte, error) {
+func (signingID *signingIdentity) Hash(message []byte) []byte {
 	return signingID.hash(message)
 }
 

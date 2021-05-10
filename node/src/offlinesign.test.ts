@@ -15,7 +15,7 @@ interface MockGatewayClient extends GatewayClient {
     endorse: jest.Mock<Promise<gateway.IEndorseResponse>, gateway.IEndorseRequest[]>,
     evaluate: jest.Mock<Promise<gateway.IEvaluateResponse>, gateway.IEvaluateRequest[]>,
     submit: jest.Mock<Promise<gateway.ISubmitResponse>, gateway.ISubmitRequest[]>,
-    commitStatus: jest.Mock<Promise<gateway.ICommitStatusResponse>, gateway.ICommitStatusRequest[]>,
+    commitStatus: jest.Mock<Promise<gateway.ICommitStatusResponse>, gateway.ISignedCommitStatusRequest[]>,
 }
 
 function newMockGatewayClient(): MockGatewayClient {
@@ -133,6 +133,34 @@ describe('Offline sign', () => {
         });
     });
 
+    describe('commit', () => {
+        it('throws with no signer and no explicit signing', async () => {
+            const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
+            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const unsignedTransaction = await signedProposal.endorse();
+            const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
+            const commit = await signedTransaction.submit();
+
+            await expect(commit.getStatus()).rejects.toThrow();
+        });
+
+        it('uses offline signature', async () => {
+            const expected = Buffer.from('MY_SIGNATURE');
+
+            const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
+            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const unsignedTransaction = await signedProposal.endorse();
+            const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
+            const unsignedCommit = await signedTransaction.submit();
+            const signedCommit = network.newSignedCommit(unsignedCommit.getBytes(), expected);
+            await signedCommit.getStatus();
+    
+            const commitRequest = client.commitStatus.mock.calls[0][0];
+            const actual = Buffer.from(commitRequest.signature ?? '').toString();
+            expect(actual).toBe(expected.toString());
+        });
+    });
+
     describe('serialization', () => {
         it('proposal keeps same transaction ID', async () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
@@ -170,11 +198,38 @@ describe('Offline sign', () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
             const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedTransaction = await signedProposal.endorse();
-            const digest = unsignedTransaction.getDigest();
             const expected = unsignedTransaction.getTransactionId();
 
-            const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), digest);
+            const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
             const actual = signedTransaction.getTransactionId();
+    
+            expect(actual).toEqual(expected);
+        });
+
+        it('commit keeps same transaction ID', async () => {
+            const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
+            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const unsignedTransaction = await signedProposal.endorse();
+            const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
+            const unsignedCommit = await signedTransaction.submit();
+            const expected = unsignedCommit.getTransactionId();
+
+            const signedCommit = network.newSignedCommit(unsignedCommit.getBytes(), Buffer.from('SIGNATURE'))
+            const actual = signedCommit.getTransactionId();
+    
+            expect(actual).toEqual(expected);
+        });
+
+        it('commit keeps same digest', async () => {
+            const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
+            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const unsignedTransaction = await signedProposal.endorse();
+            const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
+            const unsignedCommit = await signedTransaction.submit();
+            const expected = unsignedCommit.getDigest();
+
+            const signedCommit = network.newSignedCommit(unsignedCommit.getBytes(), expected)
+            const actual = signedCommit.getDigest();
     
             expect(actual).toEqual(expected);
         });
