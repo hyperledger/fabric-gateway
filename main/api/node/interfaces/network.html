@@ -82,6 +82,7 @@
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="network.html#getcontract" class="tsd-kind-icon">get<wbr>Contract</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="network.html#getname" class="tsd-kind-icon">get<wbr>Name</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="network.html#newsignedcommit" class="tsd-kind-icon">new<wbr>Signed<wbr>Commit</a></li>
 							</ul>
 						</section>
 					</div>
@@ -99,7 +100,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/123208c/node/src/network.ts#L13">network.ts:13</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/2143620/node/src/network.ts#L15">network.ts:15</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -125,10 +126,49 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/123208c/node/src/network.ts#L12">network.ts:12</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/2143620/node/src/network.ts#L14">network.ts:14</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
+					<a name="newsignedcommit" class="tsd-anchor"></a>
+					<h3>new<wbr>Signed<wbr>Commit</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
+						<li class="tsd-signature tsd-kind-icon">new<wbr>Signed<wbr>Commit<span class="tsd-signature-symbol">(</span>bytes<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Uint8Array</span>, signature<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="commit.html" class="tsd-signature-type" data-tsd-kind="Interface">Commit</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/2143620/node/src/network.ts#L24">network.ts:24</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Create a commit with the specified digital signature, which can be used to access information about a
+									transaction that is committed to the ledger. Supports off-line signing flow.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>bytes: <span class="tsd-signature-type">Uint8Array</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Serialized commit status request.</p>
+									</div>
+								</li>
+								<li>
+									<h5>signature: <span class="tsd-signature-type">Uint8Array</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Digital signature.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="commit.html" class="tsd-signature-type" data-tsd-kind="Interface">Commit</a></h4>
+							<p>A signed commit status request.</p>
 						</li>
 					</ul>
 				</section>
@@ -169,6 +209,9 @@
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-interface">
 								<a href="network.html#getname" class="tsd-kind-icon">get<wbr>Name</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-interface">
+								<a href="network.html#newsignedcommit" class="tsd-kind-icon">new<wbr>Signed<wbr>Commit</a>
 							</li>
 						</ul>
 					</li>
