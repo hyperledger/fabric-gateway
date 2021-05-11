@@ -10,7 +10,7 @@ chapter of the Fabric documentation.
 
 ## Overview
 
-The original proposal is described in the [Fabric Gateway RFC](https://hyperledger.github.io/fabric-rfcs/text/0000-fabric-gateway.html).
+The original proposal is described in the [Fabric Gateway RFC](https://github.com/hyperledger/fabric-rfcs/blob/main/text/0000-fabric-gateway.md).
 Adding a Gateway component to the Fabric Peer provides a single entry point to a Fabric network, and removes much of the transaction submission logic from the client application.
 
 The Gateway component in the Fabric Peer exposes a simple gRPC interface to client applications and manages the lifecycle of transaction invocation on behalf of the client.
