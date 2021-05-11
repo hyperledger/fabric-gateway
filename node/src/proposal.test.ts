@@ -6,7 +6,7 @@
 
 import { GatewayClient } from './client';
 import { Contract } from './contract';
-import { connect, Gateway, InternalConnectOptions } from './gateway';
+import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
 import { common, gateway, msp, protos } from './protos/protos';
@@ -20,10 +20,10 @@ interface MockGatewayClient extends GatewayClient {
 
 function newMockGatewayClient(): MockGatewayClient {
     return {
-        endorse: jest.fn(),
-        evaluate: jest.fn(),
-        submit: jest.fn(),
-        commitStatus: jest.fn(),
+        endorse: jest.fn(undefined),
+        evaluate: jest.fn(undefined),
+        submit: jest.fn(undefined),
+        commitStatus: jest.fn(undefined),
     };
 }
 
@@ -79,14 +79,16 @@ describe('Proposal', () => {
     let network: Network;
     let contract: Contract;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         client = newMockGatewayClient();
         identity = {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
         }
-        signer = jest.fn().mockReturnValue(Buffer.from('SIGNATURE'));
-        hash = jest.fn().mockReturnValue(Buffer.from('DIGEST'));
+        signer = jest.fn(undefined);
+        signer.mockResolvedValue(Buffer.from('SIGNATURE'));
+        hash = jest.fn(undefined);
+        hash.mockReturnValue(Buffer.from('DIGEST'));
 
         const options: InternalConnectOptions = {
             identity,
@@ -94,7 +96,7 @@ describe('Proposal', () => {
             hash,
             gatewayClient: client,
         };
-        gateway = await connect(options);
+        gateway = internalConnect(options);
         network = gateway.getNetwork('CHANNEL_NAME');
         contract = network.getContract('CHAINCODE_ID');
     });
@@ -153,7 +155,7 @@ describe('Proposal', () => {
             expect(argStrings[0]).toBe('MY_TRANSACTION');
         });
 
-        it('includes transaction name in proposal for default smart contract', async () => {
+        it('includes transaction name in proposal for named smart contract', async () => {
             contract = network.getContract('CHAINCODE_ID', 'MY_CONTRACT');
 
             await contract.evaluateTransaction('MY_TRANSACTION');
@@ -291,7 +293,7 @@ describe('Proposal', () => {
             expect(argStrings[0]).toBe('MY_TRANSACTION');
         });
 
-        it('includes transaction name in proposal for default smart contract', async () => {
+        it('includes transaction name in proposal for named smart contract', async () => {
             contract = network.getContract('CHAINCODE_ID', 'MY_CONTRACT');
 
             await contract.submitTransaction('MY_TRANSACTION');

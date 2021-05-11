@@ -10,7 +10,7 @@
         "strict": true,
         "noUnusedLocals": true,
         "noImplicitReturns": true,
-        "baseUrl": "src",
+        "baseUrl": ".",
         "forceConsistentCasingInFileNames": true
     },
     "include": [

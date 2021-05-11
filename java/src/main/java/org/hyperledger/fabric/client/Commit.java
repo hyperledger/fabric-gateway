@@ -8,6 +8,9 @@ package org.hyperledger.fabric.client;
 
 import org.hyperledger.fabric.protos.peer.TransactionPackage;
 
+/**
+ * Allows access to information about a transaction that is committed to the ledger.
+ */
 public interface Commit {
     /**
      * Get the serialized transaction message bytes.

@@ -23,11 +23,11 @@ import com.google.protobuf.InvalidProtocolBufferException;
  *     {@link #submitTransaction(String, byte[][]) submitTransaction(String, byte[]...)}.</li>
  * </ul>
  *
- * For more complex transaction invocations, such as including transient data, the transaction proposal can be built
+ * <p>For more complex transaction invocations, such as including transient data, the transaction proposal can be built
  * using {@link #newProposal(String)}. Once built, the proposal can either be evaluated, or can be sent for endorsement
- * and the resulting transaction object can be submitted to the orderer to be committed to the ledger.
+ * and the resulting transaction object can be submitted to the orderer to be committed to the ledger.</p>
  *
- * <h2>Evaluate transaction flow</h2>
+ * <h3>Evaluate transaction example</h3>
  * <pre><code>
  *     byte[] result = contract.newProposal("transactionName")
  *             .addArguments("one", "two")
@@ -36,7 +36,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
  *             .evaluate();
  * </code></pre>
  *
- * <h2>Submit transaction flow</h2>
+ * <h3>Submit transaction example</h3>
  * <pre><code>
  *     byte[] result = contract.newProposal("transactionName")
  *             .addArguments("one", "two")
@@ -52,14 +52,16 @@ import com.google.protobuf.InvalidProtocolBufferException;
  * connecting the Gateway. In cases where an external client holds the signing credentials, a signing implementation
  * can be omitted when connecting the Gateway and off-line signing can be carried out by:</p>
  * <ol>
- *     <li>Returning the serialized proposal or transaction message along with its digest to the client for them to
- *     generate a signature.</li>
+ *     <li>Returning the serialized proposal, transaction or commit status message along with its digest to the client
+ *     for them to generate a signature.</li>
  *     <li>On receipt of the serialized message and signature from the client, creating a signed proposal or transaction
  *     using the Contract's {@link #newSignedProposal(byte[], byte[])} or {@link #newSignedTransaction(byte[], byte[])}
- *     methods respectively.</li>
+ *     methods respectively,  or creating a signed commit using the Network's
+ *     {@link Network#newSignedCommit(byte[], byte[])} method.</li>
  * </ol>
  *
- * <h3>Off-line signing of proposal</h3>
+ * <h3>Off-line signing examples</h3>
+ * <p>Signing of a proposal that can then be evaluated or endorsed:</p>
  * <pre><code>
  *     Proposal unsignedProposal = contract.newProposal("transactionName").build();
  *     byte[] proposalBytes = unsignedProposal.getBytes();
@@ -68,13 +70,22 @@ import com.google.protobuf.InvalidProtocolBufferException;
  *     Proposal signedProposal = contract.newSignedProposal(proposalBytes, proposalSignature);
  * </code></pre>
  *
- * <h3>Off-line signing of transaction</h3>
+ * <p>Signing of an endorsed transaction that can then be submitted to the orderer:</p>
  * <pre><code>
  *     Transaction unsignedTransaction = signedProposal.endorse();
  *     byte[] transactionBytes = unsignedTransaction.getBytes();
  *     byte[] transactionDigest = unsignedTransaction.getDigest();
  *     // Generate signature from digest
  *     Transaction signedTransaction = contract.newSignedTransaction(transactionBytes, transactionSignature);
+ * </code></pre>
+ *
+ * <p>Signing of a commit that can be used to obtain the status of a submitted transaction:</p>
+ * <pre><code>
+ *     Commit unsignedCommit = signedTransaction.submitAsync();
+ *     byte[] commitBytes = unsignedCommit.getBytes();
+ *     byte[] commitDigest = unsignedCommit.getDigest();
+ *     // Generate signature from digest
+ *     Commit signedCommit = network.newSignedCommit(commitBytes, commitDigest);
  * </code></pre>
  *
  * @see <a href="https://hyperledger-fabric.readthedocs.io/en/latest/developapps/application.html#construct-request">Developing Fabric Applications - Construct request</a>

@@ -21,6 +21,11 @@ type Network struct {
 	name      string
 }
 
+// Name of the Fabric channel this network represents.
+func (network *Network) Name() string {
+	return network.name
+}
+
 // GetContract returns a Contract representing the default smart contract for the named chaincode.
 func (network *Network) GetContract(chaincodeID string) *Contract {
 	return network.GetContractWithName(chaincodeID, "")

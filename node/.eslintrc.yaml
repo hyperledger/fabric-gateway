@@ -20,9 +20,16 @@ overrides:
           sourceType: module
           ecmaFeatures:
               impliedStrict: true
+          project:
+              - "./tsconfig.json"
       plugins:
           - "@typescript-eslint"
+          - jest
+          - "eslint-plugin-tsdoc"
       extends:
           - eslint:recommended
-          - plugin:@typescript-eslint/eslint-recommended
           - plugin:@typescript-eslint/recommended
+          - plugin:@typescript-eslint/recommended-requiring-type-checking
+          - plugin:jest/recommended
+      rules:
+          tsdoc/syntax: error

@@ -31,11 +31,11 @@ func TestNetwork(t *testing.T) {
 		if nil == contract {
 			t.Fatal("Expected network, got nil")
 		}
-		if contract.chaincodeID != chaincodeID {
-			t.Fatalf("Expected a network with chaincode ID %s, got %s", chaincodeID, contract.chaincodeID)
+		if contract.ChaincodeID() != chaincodeID {
+			t.Fatalf("Expected a network with chaincode ID %s, got %s", chaincodeID, contract.ChaincodeID())
 		}
-		if len(contract.contractName) > 0 {
-			t.Fatalf("Expected a network with empty contract name, got %s", contract.contractName)
+		if len(contract.Name()) > 0 {
+			t.Fatalf("Expected a network with empty contract name, got %s", contract.Name())
 		}
 	})
 
@@ -53,11 +53,11 @@ func TestNetwork(t *testing.T) {
 		if nil == contract {
 			t.Fatal("Expected network, got nil")
 		}
-		if contract.chaincodeID != chaincodeID {
-			t.Fatalf("Expected a network with chaincode ID %s, got %s", chaincodeID, contract.chaincodeID)
+		if contract.ChaincodeID() != chaincodeID {
+			t.Fatalf("Expected a network with chaincode ID %s, got %s", chaincodeID, contract.ChaincodeID())
 		}
-		if contract.contractName != contractName {
-			t.Fatalf("Expected a network with contract name %s, got %s", contractName, contract.contractName)
+		if contract.Name() != contractName {
+			t.Fatalf("Expected a network with contract name %s, got %s", contractName, contract.Name())
 		}
 	})
 }

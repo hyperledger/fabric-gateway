@@ -23,21 +23,32 @@ import (
 // For more complex transaction invocations, such as including transient data, transactions can be evaluated or
 // submitted using the Evaluate() or SubmitSync() methods respectively.
 //
-// By default, proposal and transaction messages will be signed using the signing implementation specified when
-// connecting the Gateway. In cases where an external client holds the signing credentials, a signing implementation
-// can be omitted when connecting the Gateway and off-line signing can be carried out by:
+// By default, proposal, transaction and commit status messages will be signed using the signing implementation
+// specified when connecting the Gateway. In cases where an external client holds the signing credentials, a signing
+// implementation can be omitted when connecting the Gateway and off-line signing can be carried out by:
 //
-// 1. Returning the serialized proposal or transaction message along with its digest to the client for them to
-// generate a signature.
+// 1. Returning the serialized proposal, transaction or commit status message along with its digest to the client for
+// them to generate a signature.
 //
 // 2. On receipt of the serialized message and signature from the client, creating a signed proposal or transaction
-// using the Contract's NewSignedProposal() or NewSignedTransaction() methods respectively.
+// using the Contract's NewSignedProposal() or NewSignedTransaction() methods respectively, or creating a signed
+// commit using the Network's NewSignedCommit() method.
 type Contract struct {
 	client       gateway.GatewayClient
 	signingID    *signingIdentity
 	channelName  string
 	chaincodeID  string
 	contractName string
+}
+
+// ChaincodeID of the chaincode that contains this smart contract.
+func (contract *Contract) ChaincodeID() string {
+	return contract.chaincodeID
+}
+
+// Name of the contract within the chaincode, or an empty string for the default smart contract.
+func (contract *Contract) Name() string {
+	return contract.contractName
 }
 
 // EvaluateTransaction will evaluate a transaction function and return its results. A transaction proposal will be

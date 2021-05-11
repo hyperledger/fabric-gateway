@@ -10,6 +10,9 @@ import { SigningIdentity } from './signingidentity';
 import { Transaction, TransactionImpl } from './transaction';
 import * as util from 'util';
 
+/**
+ * Proposal represents a transaction proposal that can be sent to peers for endorsement or evaluated as a query.
+ */
 export interface Proposal {
     /**
      * Get the serialized proposal message.

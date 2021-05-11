@@ -16,14 +16,15 @@
 
     <pre><code>
     public static void main(String[] args) throws IOException {
-        // Create client identity and signing implementation based on X.509 certificate and private key
-        Identity identity = new X509Identity("mspId", certificate);
-        Signer signer = Signers.newPrivateKeySigner(privateKey);
 
-        // Create gRPC channel used for the gateway connection
-        Channel grpcChannel = ManagedChannelBuilder.forAddress("example.org", 1337)
+        // Create gRPC channel, which should be shared by all gateway connections to this endpoint.
+        Channel grpcChannel = ManagedChannelBuilder.forAddress("gateway.example.org", 1337)
                 .usePlaintext()
                 .build();
+
+        // Create client identity and signing implementation based on X.509 certificate and private key.
+        Identity identity = new X509Identity("mspId", certificate);
+        Signer signer = Signers.newPrivateKeySigner(privateKey);
 
         // Configure gateway connection used to access the network.
         Gateway.Builder builder = Gateway.newInstance()
@@ -31,7 +32,7 @@
                 .signer(signer)
                 .connection(grpcChannel);
 
-        // Create gateway connection
+        // Create gateway connection.
         try (Gateway gateway = builder.connect()) {
 
             // Obtain smart contract deployed on the network.

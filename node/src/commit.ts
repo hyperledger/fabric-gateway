@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SigningIdentity } from 'signingidentity';
+import { SigningIdentity } from './signingidentity';
 import * as util from 'util';
 import { GatewayClient } from './client';
 import { gateway, protos } from './protos/protos';
