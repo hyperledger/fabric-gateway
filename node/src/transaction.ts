@@ -10,6 +10,9 @@ import { GatewayClient } from './client';
 import { common, gateway } from './protos/protos';
 import { SigningIdentity } from './signingidentity';
 
+/**
+ * Represents an endorsed transaction that can be submitted to the orderer for commit to the ledger.
+ */
 export interface Transaction {
     /**
      * Get the serialized transaction message.

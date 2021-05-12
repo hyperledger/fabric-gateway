@@ -5,7 +5,11 @@
  */
 
 import * as crypto from 'crypto';
+import { Hash } from './hash';
 
-export function sha256(message: Uint8Array): Uint8Array {
+/**
+ * SHA256 hash the supplied message bytes to create a digest for signing.
+ */
+export const sha256: Hash = (message) => {
     return crypto.createHash('sha256').update(message).digest();
 }

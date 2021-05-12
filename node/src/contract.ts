@@ -14,59 +14,77 @@ import { Transaction, TransactionImpl } from "./transaction";
 
 /**
  * Represents a smart contract, and allows applications to:
+ *
  * - Evaluate transactions that query state from the ledger using `evaluateTransaction()`.
  * - Submit transactions that store state to the ledger using `submitTransaction()`.
  * 
  * For more complex transaction invocations, such as including transient data, transactions can be evaluated or
  * submitted using `evaluate()` or `submitSync()` respectively.
  * 
- * By default, proposal and transaction messages will be signed using the signing implementation specified when
- * connecting the Gateway. In cases where an external client holds the signing credentials, a signing implementation
- * can be omitted when connecting the Gateway and off-line signing can be carried out by:
- * 1. Returning the serialized proposal or transaction message along with its digest to the client for them to
- * generate a signature.
+ * By default, proposal, transaction and commit status messages will be signed using the signing implementation
+ * specified when connecting the Gateway. In cases where an external client holds the signing credentials, a signing
+ * implementation can be omitted when connecting the Gateway and off-line signing can be carried out by:
+ *
+ * 1. Returning the serialized proposal, transaction or commit status message along with its digest to the client for
+ * them to generate a signature.
  * 1. On receipt of the serialized message and signature from the client, creating a signed proposal or transaction
- * using the Contract's `newSignedProposal()` or `newSignedTransaction()` methods respectively.
+ * using the Contract's `newSignedProposal()` or `newSignedTransaction()` methods respectively, or creating a signed
+ * commit using the Network's `newSignedCommit()` method.
  * 
  * @example Evaluate transaction
- * 
+ * ```
  * const result = await contract.evaluate('transactionName', {
  *     arguments: ['one', 'two'],
  *     // Specify additional proposal options, such as transient data
  * });
+ * ```
  * 
  * @example Submit transaction
- * 
+ * ```
  * const result = await contract.submitSync('transactionName', {
  *     arguments: ['one', 'two'],
  *     // Specify additional proposal options, such as transient data
  * });
+ * ```
  *
- * @example Off-line signing of proposal
- *
+ * @example Off-line signing
+ * 
+ * Signing of a proposal that can then be evaluated or endorsed:
+ * ```
  * const unsignedProposal = contract.newProposal('transactionName');
  * const proposalBytes = unsignedProposal.getBytes();
  * const proposalDigest = unsignedProposal.getDigest();
  * // Generate signature from digest
  * const signedProposal = contract.newSignedProposal(proposalBytes, proposalSignature);
+ * ```
  *
- * @example Off-line signing of transaction
- *
+ * Signing of an endorsed transaction that can then be submitted to the orderer:
+ * ```
  * const unsignedTransaction = await proposal.endorse();
  * const transactionBytes = unsignedTransaction.getBytes();
  * const transactionDigest = unsignedTransaction.getDigest();
  * // Generate signature from digest
  * const signedTransaction = contract.newSignedTransaction(transactionBytes, transactionSignature);
+ * ```
+ * 
+ * Signing of a commit that can be used to obtain the status of a submitted transaction:
+ * ```
+ * const unsignedCommit = await transaction.submitAsync();
+ * const commitBytes = unsignedCommit.getBytes();
+ * const commitDigest = unsignedCommit.getBytes();
+ * // Generate signature from digest
+ * const signedCommit = network.newSignedCommit(commitBytes, commitDigest);
+ * ```
  */
 export interface Contract {
     /**
-     * Get the ID of the chaincode that contains this contract.
+     * Get the ID of the chaincode that contains this smart contract.
      */
     getChaincodeId(): string;
     
     /**
-     * Get the name of the contract within the chaincode.
-     * @returns the contract name, or `undefined` for the default contract.
+     * Get the name of the smart contract within the chaincode.
+     * @returns the contract name, or `undefined` for the default smart contract.
      */
     getContractName(): string | undefined;
 
@@ -74,8 +92,8 @@ export interface Contract {
      * Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
      * peers but the transaction will not be sent to the ordering service and so will not be committed to the ledger.
      * This can be used for querying the world state.
-     * @param name Name of the transaction to invoke.
-     * @param args Transaction arguments.
+     * @param name - Name of the transaction to invoke.
+     * @param args - Transaction arguments.
      * @returns the result returned by the transaction function.
      */
     evaluateTransaction(name: string, ...args: Array<string|Uint8Array>): Promise<Uint8Array>;
@@ -84,8 +102,8 @@ export interface Contract {
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
      * transaction function will be evaluated on endorsing peers and then submitted to the ordering service to be
      * committed to the ledger.
-     * @param name Name of the transaction to be invoked.
-     * @param args Transaction arguments.
+     * @param name - Name of the transaction to be invoked.
+     * @param args - Transaction arguments.
      * @returns the result returned by the transaction function.
      */
     submitTransaction(name: string, ...args: Array<string|Uint8Array>): Promise<Uint8Array>;
@@ -94,8 +112,8 @@ export interface Contract {
      * Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
      * peers but the transaction will not be sent to the ordering service and so will not be committed to the ledger.
      * This can be used for querying the world state.
-     * @param transactionName Name of the transaction to invoke.
-     * @param options Transaction invocation options.
+     * @param transactionName - Name of the transaction to invoke.
+     * @param options - Transaction invocation options.
      * @returns the result returned by the transaction function.
      */
     evaluate(transactionName: string, options?: ProposalOptions): Promise<Uint8Array>;
@@ -104,42 +122,43 @@ export interface Contract {
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
      * transaction function will be evaluated on endorsing peers and then submitted to the ordering service to be
      * committed to the ledger.
-     * @param transactionName Name of the transaction to invoke.
-     * @param options Transaction invocation options.
+     * @param transactionName - Name of the transaction to invoke.
+     * @param options - Transaction invocation options.
      * @returns the result returned by the transaction function.
      */
     submit(transactionName: string, options?: ProposalOptions): Promise<Uint8Array>;
 
     /**
-     * Submit a transaction to the ledger and return its result immediately after successfully sending to the orderer,
-     * along with a Commit that can be used to wait for it to be committed to the ledger. The transaction function will
-     * be evaluated on endorsing peers and then submitted to the ordering service to be committed to the ledger.
-     * @param transactionName Name of the transaction to invoke.
-     * @param options Transaction invocation options.
-     * @returns the result returned by the transaction function and a commit handle.
+     * Submit a transaction to the ledger and return immediately after successfully sending to the orderer. The
+     * transaction function will be evaluated on endorsing peers and then submitted to the ordering service to be
+     * committed to the ledger. The submitted transaction that is returned can be used to obtain to the transaction
+     * result, and to wait for it to be committed to the ledger.
+     * @param transactionName - Name of the transaction to invoke.
+     * @param options - Transaction invocation options.
+     * @returns a submitted transaction.
      */
     submitAsync(transactionName: string, options?: ProposalOptions): Promise<SubmittedTransaction>;
 
     /**
      * Create a proposal that can be sent to peers for endorsement. Supports off-line signing flow.
-     * @param transactionName Name of the transaction to invoke.
-     * @param options Transaction invocation options.
+     * @param transactionName - Name of the transaction to invoke.
+     * @param options - Transaction invocation options.
      * @returns A transaction proposal.
      */
     newProposal(transactionName: string, options?: ProposalOptions): Proposal;
 
     /**
      * Create a proposal with the specified digital signature. Supports off-line signing flow.
-     * @param bytes Serialized proposal.
-     * @param signature Digital signature.
+     * @param bytes - Serialized proposal.
+     * @param signature - Digital signature.
      * @returns A signed proposal.
      */
     newSignedProposal(bytes: Uint8Array, signature: Uint8Array): Proposal;
 
     /**
      * Create a transaction with the specified digital signature. Supports off-line signing flow.
-     * @param bytes Serialized proposal.
-     * @param signature Digital signature.
+     * @param bytes - Serialized proposal.
+     * @param signature - Digital signature.
      * @returns A signed transaction.
      */
     newSignedTransaction(bytes: Uint8Array, signature: Uint8Array): Transaction;

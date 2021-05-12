@@ -20,9 +20,9 @@ const peerEndpoint = 'localhost:7051'
 
 async function main() {
     // The gRPC client connection should be shared by all Gateway connections to this endpoint
-    const client = newGrpcConnection();
+    const client = await newGrpcConnection();
 
-    const gateway = await connect({
+    const gateway = connect({
         client,
         identity: await newIdentity(),
         signer: await newSigner(),
@@ -89,8 +89,8 @@ async function exampleSubmitAsync(gateway: Gateway) {
     console.log('Query result:', evaluateResult.toString());
 }
 
-function newGrpcConnection(): ServiceClient {
-    const tlsRootCert = fs.readFileSync(tlsCertPath);
+async function newGrpcConnection(): Promise<ServiceClient> {
+    const tlsRootCert = await fs.promises.readFile(tlsCertPath);
     const tlsCredentials = grpc.credentials.createSsl(tlsRootCert);
 
     const GrpcClient = grpc.makeGenericClientConstructor({}, '');

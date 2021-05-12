@@ -89,3 +89,31 @@ func ExampleContract_offlineSignTransaction() (*client.Transaction, error) {
 
 	return signedTransaction, err
 }
+
+func ExampleContract_offlineSignCommit() (*client.Commit, error) {
+	var transaction *client.Transaction
+	var sign identity.Sign // Signing function
+	var network *client.Network
+
+	unsignedCommit, err := transaction.Submit()
+	if err != nil {
+		return nil, err
+	}
+
+	commitBytes, err := unsignedCommit.Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	digest := unsignedCommit.Digest()
+
+	// Generate signature from digest
+	signature, err := sign(digest)
+	if err != nil {
+		return nil, err
+	}
+
+	signedCommit, err := network.NewSignedCommit(commitBytes, signature)
+
+	return signedCommit, err
+}

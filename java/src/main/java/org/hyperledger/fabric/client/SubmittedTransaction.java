@@ -6,6 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
+/**
+ * Allows access to the transaction result and its commit status on the ledger.
+ */
 public interface SubmittedTransaction extends Commit {
     /**
      * Get the transaction result. This is obtained during the endorsement process when the transaction proposal is

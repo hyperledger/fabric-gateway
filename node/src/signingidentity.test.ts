@@ -84,7 +84,7 @@ describe('SigningIdentity', () => {
 
         it('uses supplied signer', async () => {
             const expected = Uint8Array.from(Buffer.from('SIGNATURE'));
-            const signer: Signer = async () => expected;
+            const signer: Signer = async () => Promise.resolve(expected);
             const digest = Buffer.from('DIGEST');
             const signingIdentity = new SigningIdentity({ identity, signer });
 

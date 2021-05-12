@@ -6,7 +6,7 @@
 
 import { GatewayClient } from './client';
 import { Contract } from './contract';
-import { connect, Gateway, InternalConnectOptions } from './gateway';
+import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
 import { gateway, protos } from './protos/protos';
@@ -20,10 +20,10 @@ interface MockGatewayClient extends GatewayClient {
 
 function newMockGatewayClient(): MockGatewayClient {
     return {
-        endorse: jest.fn(),
-        evaluate: jest.fn(),
-        submit: jest.fn(),
-        commitStatus: jest.fn(),
+        endorse: jest.fn(undefined),
+        evaluate: jest.fn(undefined),
+        submit: jest.fn(undefined),
+        commitStatus: jest.fn(undefined),
     };
 }
 
@@ -38,7 +38,7 @@ describe('Transaction', () => {
     let network: Network;
     let contract: Contract;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         client = newMockGatewayClient();
         client.endorse.mockResolvedValue({
             prepared_transaction: {
@@ -56,8 +56,10 @@ describe('Transaction', () => {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
         }
-        signer = jest.fn().mockResolvedValue(Buffer.from('SIGNATURE'));
-        hash = jest.fn().mockReturnValue(Buffer.from('DIGEST'));
+        signer = jest.fn(undefined);
+        signer.mockResolvedValue(Buffer.from('SIGNATURE'));
+        hash = jest.fn(undefined);
+        hash.mockReturnValue(Buffer.from('DIGEST'));
 
         const options: InternalConnectOptions = {
             identity,
@@ -65,7 +67,7 @@ describe('Transaction', () => {
             hash,
             gatewayClient: client,
         };
-        gateway = await connect(options);
+        gateway = internalConnect(options);
         network = gateway.getNetwork('CHANNEL_NAME');
         contract = network.getContract('CHAINCODE_ID');
     });
@@ -132,7 +134,7 @@ describe('Transaction', () => {
         const commit = await contract.submitAsync('TRANSACTION_NAME');
         const status = await commit.getStatus();
 
-        await expect(status).toBe(protos.TxValidationCode.MVCC_READ_CONFLICT);
+        expect(status).toBe(protos.TxValidationCode.MVCC_READ_CONFLICT);
     });
 
     it('commit returns successful for successful transaction', async () => {
@@ -143,7 +145,7 @@ describe('Transaction', () => {
         const commit = await contract.submitAsync('TRANSACTION_NAME');
         const success = await commit.isSuccessful();
 
-        await expect(success).toBe(true);
+        expect(success).toBe(true);
     });
 
     it('commit returns unsuccessful for failed transaction', async () => {
@@ -154,6 +156,6 @@ describe('Transaction', () => {
         const commit = await contract.submitAsync('TRANSACTION_NAME');
         const success = await commit.isSuccessful();
 
-        await expect(success).toBe(false);
+        expect(success).toBe(false);
     });
 });

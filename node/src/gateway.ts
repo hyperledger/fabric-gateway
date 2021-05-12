@@ -5,63 +5,99 @@
  */
 
 import * as grpc from '@grpc/grpc-js';
-import { Hash } from 'hash/hash';
+import { Hash } from './hash/hash';
 import { GatewayClient, newGatewayClient } from './client';
 import { Identity } from './identity/identity';
 import { Signer } from './identity/signer';
 import { Network, NetworkImpl } from './network';
 import { SigningIdentity } from './signingidentity';
 
+/**
+ * Options used when connecting to a Fabric Gateway.
+ */
 export interface ConnectOptions {
-    client?: grpc.Client;
+    /**
+     * A gRPC client connection to a Fabric Gateway. This should be shared by all gateway instances connecting to the
+     * same Fabric Gateway. The client connection will not be closed when the gateway is closed.
+     */
+    client: grpc.Client;
+
+    /**
+     * Client identity used by the gateway.
+     */
+    identity: Identity;
+
+    /**
+     * Signing implementation used to sign messages sent by the gateway.
+     */
+    signer?: Signer;
+
+    /**
+     * Hash implementation used by the gateway to generate digital signatures.
+     */
+    hash?: Hash;
+}
+
+export interface InternalConnectOptions {
+    gatewayClient: GatewayClient;
     identity: Identity;
     signer?: Signer;
     hash?: Hash;
 }
 
-export interface InternalConnectOptions extends ConnectOptions {
-    gatewayClient?: GatewayClient;
+/**
+ * Connect to a Fabric Gateway using a client identity, gRPC connection and signing implementation.
+ * @param options - Connection options.
+ * @returns A connected gateway.
+ */
+export function connect(options: ConnectOptions): Gateway {
+    if (!options.client) {
+        throw new Error('No client connection supplied');
+    }
+
+    const gatewayClient = newGatewayClient(options.client);
+    return internalConnect(Object.assign({ gatewayClient }, options));
 }
 
-type Closer = () => void;
-
-const noOpCloser: Closer = () => {
-    // Do nothing
-};
-
-export async function connect(options: ConnectOptions): Promise<Gateway> {
+export function internalConnect(options: InternalConnectOptions): Gateway {
     if (!options.identity) {
         throw new Error('No identity supplied');
     }
     const signingIdentity = new SigningIdentity(options);
 
-    const gatewayClient = (options as InternalConnectOptions).gatewayClient;
-    if (gatewayClient) {
-        return new GatewayImpl(gatewayClient, signingIdentity, noOpCloser);
-    }
-
-    if (options.client) {
-        return new GatewayImpl(newGatewayClient(options.client), signingIdentity, noOpCloser);
-    }
-
-    throw new Error('No client connection supplied.')
+    return new GatewayImpl(options.gatewayClient, signingIdentity);
 }
 
+/**
+ * Gateway represents the connection of a specific client identity to a Fabric Gateway.
+ */
 export interface Gateway {
+    /**
+     * Get the identity used by this gateway.
+     */
     getIdentity(): Identity;
+
+    /**
+     * Get a network representing the named Fabric channel.
+     * @param channelName - Fabric channel name.
+     * @returns A network.
+     */
     getNetwork(channelName: string): Network;
+
+    /**
+     * Close the gateway when it is no longer required. This releases all resources associated with networks and
+     * contracts obtained using the Gateway, including removing event listeners.
+     */
     close(): void;
 }
 
 class GatewayImpl {
     readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
-    readonly #closer: Closer;
 
-    constructor(client: GatewayClient, signingIdentity: SigningIdentity, closer: Closer) {
+    constructor(client: GatewayClient, signingIdentity: SigningIdentity) {
         this.#client = client;
         this.#signingIdentity = signingIdentity;
-        this.#closer = closer;
     }
 
     getIdentity(): Identity {
@@ -77,6 +113,6 @@ class GatewayImpl {
     }
 
     close(): void {
-        this.#closer();
+        // Nothing for now
     }
 }

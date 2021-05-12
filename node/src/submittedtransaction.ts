@@ -6,6 +6,9 @@
 
 import { Commit, CommitImpl, CommitImplOptions } from "./commit";
 
+/**
+ * Allows access to the transaction result and its commit status on the ledger.
+ */
 export interface SubmittedTransaction extends Commit {
     /**
      * Get the transaction result. This is obtained during the endorsement process when the transaction proposal is

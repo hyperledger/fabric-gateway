@@ -6,7 +6,7 @@
 
 import { GatewayClient } from './client';
 import { Contract } from './contract';
-import { connect, Gateway, InternalConnectOptions } from './gateway';
+import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
 import { gateway, protos } from './protos/protos';
@@ -20,10 +20,10 @@ interface MockGatewayClient extends GatewayClient {
 
 function newMockGatewayClient(): MockGatewayClient {
     return {
-        endorse: jest.fn(),
-        evaluate: jest.fn(),
-        submit: jest.fn(),
-        commitStatus: jest.fn(),
+        endorse: jest.fn(undefined),
+        evaluate: jest.fn(undefined),
+        submit: jest.fn(undefined),
+        commitStatus: jest.fn(undefined),
     };
 }
 
@@ -36,7 +36,7 @@ describe('Offline sign', () => {
     let network: Network;
     let contract: Contract;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         client = newMockGatewayClient();
         client.evaluate.mockResolvedValue({
             result: {
@@ -64,7 +64,7 @@ describe('Offline sign', () => {
             identity,
             gatewayClient: client,
         };
-        gateway = await connect(options);
+        gateway = internalConnect(options);
         network = gateway.getNetwork('CHANNEL_NAME');
         contract = network.getContract('CHAINCODE_ID');
     });
@@ -162,7 +162,7 @@ describe('Offline sign', () => {
     });
 
     describe('serialization', () => {
-        it('proposal keeps same transaction ID', async () => {
+        it('proposal keeps same transaction ID', () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
             const expected = unsignedProposal.getTransactionId();
 
@@ -172,7 +172,7 @@ describe('Offline sign', () => {
             expect(actual).toBe(expected);
         });
 
-        it('proposal keeps same digest', async () => {
+        it('proposal keeps same digest', () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
             const expected = unsignedProposal.getDigest();
 

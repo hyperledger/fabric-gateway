@@ -16,7 +16,7 @@ public final class Hash {
     private Hash() { }
 
     /**
-     * SHA-256 hash the supplied message to create a sigest for signing.
+     * SHA-256 hash the supplied message to create a digest for signing.
      * @param message Message to be hashed.
      * @return Message digest.
      */

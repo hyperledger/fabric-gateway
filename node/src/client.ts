@@ -28,59 +28,39 @@ class GatewayClientImpl implements GatewayClient {
     }
 
     async evaluate(request: gateway.IEvaluateRequest): Promise<gateway.IEvaluateResponse> {
-        return new Promise((resolve, reject) => {
-            this.#client.makeUnaryRequest(evaluateMethod, serializeEvaluateRequest, deserializeEvaluateResponse, request, (err, value) => {
-                if (err) {
-                    return reject(err);
-                }
-                if (!value) {
-                    return reject('No result returned');
-                }
-                return resolve(value);
-            })
-        });
+        return new Promise((resolve, reject) =>
+            this.#client.makeUnaryRequest(evaluateMethod, serializeEvaluateRequest, deserializeEvaluateResponse, request, newUnaryCallback(resolve, reject))
+        );
     }
 
     async endorse(request: gateway.IEndorseRequest): Promise<gateway.IEndorseResponse> {
-        return new Promise((resolve, reject) => {
-            this.#client.makeUnaryRequest(endorseMethod, serializeEndorseRequest, deserializeEndorseResponse, request, (err, value) => {
-                if (err) {
-                    return reject(err);
-                }
-                if (!value) {
-                    return reject('No result returned');
-                }
-                return resolve(value);
-            })
-        });
+        return new Promise((resolve, reject) =>
+            this.#client.makeUnaryRequest(endorseMethod, serializeEndorseRequest, deserializeEndorseResponse, request, newUnaryCallback(resolve, reject))
+        );
     }
 
     async submit(request: gateway.ISubmitRequest): Promise<gateway.ISubmitResponse> {
-        return new Promise((resolve, reject) => {
-            this.#client.makeUnaryRequest(submitMethod, serializeSubmitRequest, deserializeSubmitResponse, request, async (err, value) => {
-                if (err) {
-                    return reject(err);
-                }
-                if (!value) {
-                    return reject('No result returned');
-                }
-                return resolve(value);
-            })
-        });
+        return new Promise((resolve, reject) =>
+            this.#client.makeUnaryRequest(submitMethod, serializeSubmitRequest, deserializeSubmitResponse, request, newUnaryCallback(resolve, reject))
+        );
     }
 
     async commitStatus(request: gateway.ISignedCommitStatusRequest): Promise<gateway.ICommitStatusResponse> {
-        return new Promise((resolve, reject) => {
-            this.#client.makeUnaryRequest(commitStatusMethod, serializeSignedCommitStatusRequest, deserializeCommitStatusResponse, request, async (err, value) => {
-                if (err) {
-                    return reject(err);
-                }
-                if (!value) {
-                    return reject('No result returned');
-                }
-                return resolve(value);
-            })
-        });
+        return new Promise((resolve, reject) =>
+            this.#client.makeUnaryRequest(commitStatusMethod, serializeSignedCommitStatusRequest, deserializeCommitStatusResponse, request, newUnaryCallback(resolve, reject))
+        );
+    }
+}
+
+function newUnaryCallback<T>(resolve: (value: T) => void, reject: (reason: Error) => void): grpc.requestCallback<T> {
+    return (err, value) => {
+        if (err) {
+            return reject(err);
+        }
+        if (value == null) {
+            return reject(new Error('No result returned'));
+        }
+        return resolve(value);
     }
 }
 

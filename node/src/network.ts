@@ -10,15 +10,30 @@ import { Contract, ContractImpl } from './contract';
 import { Commit, CommitImpl } from './commit';
 import { gateway } from './protos/protos';
 
+/**
+ * Network represents a blockchain network, or Fabric channel. The Network can be used to access deployed smart
+ * contracts, and to listen for events emitted when blocks are committed to the ledger.
+ */
 export interface Network {
+    /**
+     * Get the name of the Fabric channel this network represents.
+     */
     getName(): string;
+
+    /**
+     * Get a smart contract within the named chaincode. If no contract name is supplied, this is the default smart
+     * contract for the named chaincode.
+     * @param chaincodeId - Chaincode name.
+     * @param name - Smart contract name.
+     * @returns A smart contract.
+     */
     getContract(chaincodeId: string, name?: string): Contract;
 
     /**
      * Create a commit with the specified digital signature, which can be used to access information about a
      * transaction that is committed to the ledger. Supports off-line signing flow.
-     * @param bytes Serialized commit status request.
-     * @param signature Digital signature.
+     * @param bytes - Serialized commit status request.
+     * @param signature - Digital signature.
      * @returns A signed commit status request.
      */
      newSignedCommit(bytes: Uint8Array, signature: Uint8Array): Commit;

@@ -22,37 +22,29 @@ describe('Gateway', () => {
     });
 
     describe('connect', () => {
-        it('throws if no connection details supplied', async () => {
-            const options: ConnectOptions = {
+        it('throws if no client connection supplied', () => {
+            const options = {
                 identity,
-            };
-            await expect(connect(options)).rejects.toBeDefined();
+            } as ConnectOptions;
+            expect(() => connect(options)).toThrow();
         });
 
-        it('connect using gRPC client', async () => {
-            const options: ConnectOptions = {
-                identity,
-                client,
-            };
-            await expect(connect(options)).resolves.toBeDefined();
-        });
-
-        it('throws if no identity supplied', async () => {
-            const options: ConnectOptions = {
+        it('throws if no identity supplied', () => {
+            const options = {
                 client,
             } as ConnectOptions;
-            await expect(connect(options)).rejects.toBeDefined();
+            expect(() => connect(options)).toThrow();
         });
 
     });
 
     describe('getNetwork', () => {
-        it('returns correctly named network', async () => {
+        it('returns correctly named network', () => {
             const options: ConnectOptions = {
                 identity,
                 client,
             };
-            const gateway = await connect(options);
+            const gateway = connect(options);
 
             const network = gateway.getNetwork('CHANNEL_NAME');
 
@@ -61,12 +53,12 @@ describe('Gateway', () => {
     });
 
     describe('getIdentity', () => {
-        it('returns supplied identity', async () => {
+        it('returns supplied identity', () => {
             const options: ConnectOptions = {
                 identity,
                 client,
             };
-            const gateway = await connect(options);
+            const gateway = connect(options);
 
             const result = gateway.getIdentity();
 
@@ -76,19 +68,19 @@ describe('Gateway', () => {
     });
 
     describe('close', () => {
-        it('does not close supplied gRPC client', async() => {
+        it('does not close supplied gRPC client', () => {
             const Client = grpc.makeGenericClientConstructor({}, '');
             const client = new Client('example.org:1337', grpc.credentials.createInsecure());
-            client.close = jest.fn();
+            const closeStub = client.close = jest.fn();
             const options: ConnectOptions = {
                 identity,
                 client,
             };
-            const gateway = await connect(options);
+            const gateway = connect(options);
 
             gateway.close();
 
-            expect(client.close).not.toHaveBeenCalled();
+            expect(closeStub).not.toHaveBeenCalled();
         });
     });
 });

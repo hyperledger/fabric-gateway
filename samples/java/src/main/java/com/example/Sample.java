@@ -45,14 +45,12 @@ public class Sample {
         // The gRPC client connection should be shared by all Gateway connections to this endpoint
         ManagedChannel channel = newGrpcConnection();
 
-        Identity identity = newIdentity();
-        Signer signer = newSigner();
+        Gateway.Builder builder = Gateway.newInstance()
+                .identity(newIdentity())
+                .signer(newSigner())
+                .connection(channel);
 
-        try (Gateway gateway = Gateway.newInstance()
-                .identity(identity)
-                .signer(signer)
-                .connection(channel)
-                .connect()) {
+        try (Gateway gateway = builder.connect()) {
             exampleSubmit(gateway);
             System.out.println();
 
