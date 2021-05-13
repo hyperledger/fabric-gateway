@@ -69,62 +69,60 @@
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
 						<p>Represents a smart contract, and allows applications to:</p>
+						<ul>
+							<li>Evaluate transactions that query state from the ledger using <a href="contract.html#evaluatetransaction">evaluateTransaction</a>.</li>
+							<li>Submit transactions that store state to the ledger using <a href="contract.html#submittransaction">submitTransaction</a>.</li>
+						</ul>
 					</div>
-					<ul>
-						<li>Evaluate transactions that query state from the ledger using <code>evaluateTransaction()</code>.</li>
-						<li>Submit transactions that store state to the ledger using <code>submitTransaction()</code>.</li>
-					</ul>
-					<p>For more complex transaction invocations, such as including transient data, transactions can be evaluated or
-					submitted using <code>evaluate()</code> or <code>submitSync()</code> respectively.</p>
+					<p>For more complex transaction invocations, such as including private data, transactions can be evaluated or
+						submitted using <a href="contract.html#evaluate">evaluate</a> or <a href="contract.html#submit">submit</a> respectively. The result of a submitted transaction can be
+					accessed prior to its commit to the ledger using <a href="contract.html#submitasync">submitAsync</a>.</p>
 					<p>By default, proposal, transaction and commit status messages will be signed using the signing implementation
-						specified when connecting the Gateway. In cases where an external client holds the signing credentials, a signing
-					implementation can be omitted when connecting the Gateway and off-line signing can be carried out by:</p>
+						specified when connecting the Gateway. In cases where an external client holds the signing credentials, a default
+					signing implementation can be omitted and off-line signing can be carried out by:</p>
 					<ol>
 						<li>Returning the serialized proposal, transaction or commit status message along with its digest to the client for
 						them to generate a signature.</li>
-						<li>On receipt of the serialized message and signature from the client, creating a signed proposal or transaction
-							using the Contract&#39;s <code>newSignedProposal()</code> or <code>newSignedTransaction()</code> methods respectively, or creating a signed
-						commit using the Network&#39;s <code>newSignedCommit()</code> method.</li>
+						<li>Using the serialized message and signature received from the client to create a signed proposal or transaction
+							using the Contract&#39;s <a href="contract.html#newsignedproposal">newSignedProposal</a> or <a href="contract.html#newsignedtransaction">newSignedTransaction</a> methods respectively, or create a
+						signed commit using the Network&#39;s <a href="network.html#newsignedcommit">Network.newSignedCommit</a> method.</li>
 					</ol>
 					<dl class="tsd-comment-tags">
 						<dt>example</dt>
 						<dd><p>Evaluate transaction</p>
 							<pre><code><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">result</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">contract</span><span style="color: #000000">.</span><span style="color: #795E26">evaluate</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;transactionName&#039;</span><span style="color: #000000">, {</span>
 <span style="color: #000000">    </span><span style="color: #001080">arguments:</span><span style="color: #000000"> [</span><span style="color: #A31515">&#039;one&#039;</span><span style="color: #000000">, </span><span style="color: #A31515">&#039;two&#039;</span><span style="color: #000000">],</span>
-<span style="color: #000000">    </span><span style="color: #008000">// Specify additional proposal options, such as transient data</span>
+<span style="color: #000000">    </span><span style="color: #008000">// Specify additional proposal options here</span>
 <span style="color: #000000">});</span>
 </code></pre>
 						</dd>
 						<dt>example</dt>
 						<dd><p>Submit transaction</p>
-							<pre><code><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">result</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">contract</span><span style="color: #000000">.</span><span style="color: #795E26">submitSync</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;transactionName&#039;</span><span style="color: #000000">, {</span>
+							<pre><code><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">result</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">contract</span><span style="color: #000000">.</span><span style="color: #795E26">submit</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;transactionName&#039;</span><span style="color: #000000">, {</span>
 <span style="color: #000000">    </span><span style="color: #001080">arguments:</span><span style="color: #000000"> [</span><span style="color: #A31515">&#039;one&#039;</span><span style="color: #000000">, </span><span style="color: #A31515">&#039;two&#039;</span><span style="color: #000000">],</span>
-<span style="color: #000000">    </span><span style="color: #008000">// Specify additional proposal options, such as transient data</span>
+<span style="color: #000000">    </span><span style="color: #008000">// Specify additional proposal options here</span>
 <span style="color: #000000">});</span>
 </code></pre>
 						</dd>
 						<dt>example</dt>
+						<dd><p>Async submit</p>
+							<pre><code><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">commit</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">contract</span><span style="color: #000000">.</span><span style="color: #795E26">submitAsync</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;transactionName&#039;</span><span style="color: #000000">, {</span>
+<span style="color: #000000">    </span><span style="color: #001080">arguments:</span><span style="color: #000000"> [</span><span style="color: #A31515">&#039;one&#039;</span><span style="color: #000000">, </span><span style="color: #A31515">&#039;two&#039;</span><span style="color: #000000">]</span>
+<span style="color: #000000">});</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">result</span><span style="color: #000000"> = </span><span style="color: #001080">submitted</span><span style="color: #000000">.</span><span style="color: #795E26">getResult</span><span style="color: #000000">();</span>
+<span style="color: #008000">// Update UI or reply to REST request before waiting for commit status</span>
+<span style="color: #AF00DB">if</span><span style="color: #000000"> (!</span><span style="color: #001080">commit</span><span style="color: #000000">.</span><span style="color: #795E26">isSuccessful</span><span style="color: #000000">()) {</span>
+<span style="color: #000000">    </span><span style="color: #AF00DB">throw</span><span style="color: #000000"> </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #267F99">Error</span><span style="color: #000000">(</span><span style="color: #A31515">`</span><span style="color: #0000FF">${</span><span style="color: #001080">commit</span><span style="color: #000000FF">.</span><span style="color: #795E26">getTransactionId</span><span style="color: #000000FF">()</span><span style="color: #0000FF">}</span><span style="color: #A31515"> failed: </span><span style="color: #0000FF">${</span><span style="color: #001080">commit</span><span style="color: #000000FF">.</span><span style="color: #795E26">getStatus</span><span style="color: #000000FF">()</span><span style="color: #0000FF">}</span><span style="color: #A31515">`</span><span style="color: #000000">);</span>
+<span style="color: #000000">}</span>
+</code></pre>
+						</dd>
+						<dt>example</dt>
 						<dd><p>Off-line signing</p>
-							<p>Signing of a proposal that can then be evaluated or endorsed:</p>
 							<pre><code><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">unsignedProposal</span><span style="color: #000000"> = </span><span style="color: #001080">contract</span><span style="color: #000000">.</span><span style="color: #795E26">newProposal</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;transactionName&#039;</span><span style="color: #000000">);</span>
 <span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">proposalBytes</span><span style="color: #000000"> = </span><span style="color: #001080">unsignedProposal</span><span style="color: #000000">.</span><span style="color: #795E26">getBytes</span><span style="color: #000000">();</span>
 <span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">proposalDigest</span><span style="color: #000000"> = </span><span style="color: #001080">unsignedProposal</span><span style="color: #000000">.</span><span style="color: #795E26">getDigest</span><span style="color: #000000">();</span>
 <span style="color: #008000">// Generate signature from digest</span>
 <span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">signedProposal</span><span style="color: #000000"> = </span><span style="color: #001080">contract</span><span style="color: #000000">.</span><span style="color: #795E26">newSignedProposal</span><span style="color: #000000">(</span><span style="color: #001080">proposalBytes</span><span style="color: #000000">, </span><span style="color: #001080">proposalSignature</span><span style="color: #000000">);</span>
-</code></pre>
-							<p>Signing of an endorsed transaction that can then be submitted to the orderer:</p>
-							<pre><code><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">unsignedTransaction</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">proposal</span><span style="color: #000000">.</span><span style="color: #795E26">endorse</span><span style="color: #000000">();</span>
-<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">transactionBytes</span><span style="color: #000000"> = </span><span style="color: #001080">unsignedTransaction</span><span style="color: #000000">.</span><span style="color: #795E26">getBytes</span><span style="color: #000000">();</span>
-<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">transactionDigest</span><span style="color: #000000"> = </span><span style="color: #001080">unsignedTransaction</span><span style="color: #000000">.</span><span style="color: #795E26">getDigest</span><span style="color: #000000">();</span>
-<span style="color: #008000">// Generate signature from digest</span>
-<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">signedTransaction</span><span style="color: #000000"> = </span><span style="color: #001080">contract</span><span style="color: #000000">.</span><span style="color: #795E26">newSignedTransaction</span><span style="color: #000000">(</span><span style="color: #001080">transactionBytes</span><span style="color: #000000">, </span><span style="color: #001080">transactionSignature</span><span style="color: #000000">);</span>
-</code></pre>
-							<p>Signing of a commit that can be used to obtain the status of a submitted transaction:</p>
-							<pre><code><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">unsignedCommit</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">transaction</span><span style="color: #000000">.</span><span style="color: #795E26">submitAsync</span><span style="color: #000000">();</span>
-<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">commitBytes</span><span style="color: #000000"> = </span><span style="color: #001080">unsignedCommit</span><span style="color: #000000">.</span><span style="color: #795E26">getBytes</span><span style="color: #000000">();</span>
-<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">commitDigest</span><span style="color: #000000"> = </span><span style="color: #001080">unsignedCommit</span><span style="color: #000000">.</span><span style="color: #795E26">getBytes</span><span style="color: #000000">();</span>
-<span style="color: #008000">// Generate signature from digest</span>
-<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">signedCommit</span><span style="color: #000000"> = </span><span style="color: #001080">network</span><span style="color: #000000">.</span><span style="color: #795E26">newSignedCommit</span><span style="color: #000000">(</span><span style="color: #001080">commitBytes</span><span style="color: #000000">, </span><span style="color: #001080">commitDigest</span><span style="color: #000000">);</span>
 </code></pre>
 						</dd>
 					</dl>
@@ -172,7 +170,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/8741050/node/src/contract.ts#L119">contract.ts:119</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/1d93ed5/node/src/contract.ts#L110">contract.ts:110</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -198,7 +196,7 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>the result returned by the transaction function.</p>
+							<p>The result returned by the transaction function.</p>
 						</li>
 					</ul>
 				</section>
@@ -212,7 +210,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/8741050/node/src/contract.ts#L99">contract.ts:99</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/1d93ed5/node/src/contract.ts#L90">contract.ts:90</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -238,7 +236,7 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>the result returned by the transaction function.</p>
+							<p>The result returned by the transaction function.</p>
 						</li>
 					</ul>
 				</section>
@@ -252,7 +250,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/8741050/node/src/contract.ts#L83">contract.ts:83</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/1d93ed5/node/src/contract.ts#L74">contract.ts:74</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -274,7 +272,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/8741050/node/src/contract.ts#L89">contract.ts:89</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/1d93ed5/node/src/contract.ts#L80">contract.ts:80</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -283,7 +281,7 @@
 								</div>
 							</div>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h4>
-							<p>the contract name, or <code>undefined</code> for the default smart contract.</p>
+							<p>The contract name, or <code>undefined</code> for the default smart contract.</p>
 						</li>
 					</ul>
 				</section>
@@ -297,12 +295,12 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/8741050/node/src/contract.ts#L148">contract.ts:148</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/1d93ed5/node/src/contract.ts#L138">contract.ts:138</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>Create a proposal that can be sent to peers for endorsement. Supports off-line signing flow.</p>
+									<p>Create a transaction proposal that can be evaluated or endorsed. Supports off-line signing flow.</p>
 								</div>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -321,7 +319,6 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <a href="proposal.html" class="tsd-signature-type" data-tsd-kind="Interface">Proposal</a></h4>
-							<p>A transaction proposal.</p>
 						</li>
 					</ul>
 				</section>
@@ -335,7 +332,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/8741050/node/src/contract.ts#L156">contract.ts:156</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/1d93ed5/node/src/contract.ts#L146">contract.ts:146</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -373,7 +370,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/8741050/node/src/contract.ts#L164">contract.ts:164</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/1d93ed5/node/src/contract.ts#L154">contract.ts:154</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -411,7 +408,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/8741050/node/src/contract.ts#L129">contract.ts:129</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/1d93ed5/node/src/contract.ts#L120">contract.ts:120</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -437,7 +434,7 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>the result returned by the transaction function.</p>
+							<p>The result returned by the transaction function.</p>
 						</li>
 					</ul>
 				</section>
@@ -451,7 +448,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/8741050/node/src/contract.ts#L140">contract.ts:140</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/1d93ed5/node/src/contract.ts#L131">contract.ts:131</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -478,7 +475,7 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="submittedtransaction.html" class="tsd-signature-type" data-tsd-kind="Interface">SubmittedTransaction</a><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>a submitted transaction.</p>
+							<p>A submitted transaction, providing access to the transaction result and commit status.</p>
 						</li>
 					</ul>
 				</section>
@@ -492,7 +489,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/8741050/node/src/contract.ts#L109">contract.ts:109</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/1d93ed5/node/src/contract.ts#L100">contract.ts:100</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -518,7 +515,7 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>the result returned by the transaction function.</p>
+							<p>The result returned by the transaction function.</p>
 						</li>
 					</ul>
 				</section>
