@@ -10,7 +10,7 @@
 import * as asn1 from 'asn1.js';
 import * as crypto from 'crypto';
 
-export function ecPrivateKeyAsRaw(privateKey: crypto.KeyObject): Buffer {
+export function ecPrivateKeyAsRaw(privateKey: crypto.KeyObject): { privateKey: Buffer, curveObjectId: number[] } {
     const ECPrivateKey = asn1.define('ECPrivateKey', function() {
         this.seq().obj(
             this.key('version').int().def(1),
@@ -21,5 +21,8 @@ export function ecPrivateKeyAsRaw(privateKey: crypto.KeyObject): Buffer {
     });
     const privateKeyPem = privateKey.export({ format: 'der', type: 'sec1' });
     const decodedDer = ECPrivateKey.decode(privateKeyPem, 'der');
-    return decodedDer.privateKey
+    return {
+        privateKey: decodedDer.privateKey,
+        curveObjectId: decodedDer.parameters,
+    };
 }

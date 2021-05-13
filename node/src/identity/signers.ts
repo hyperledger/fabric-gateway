@@ -9,12 +9,17 @@ import { ec as EC } from 'elliptic';
 import { ecPrivateKeyAsRaw } from './decoder';
 import { Signer } from './signer';
 
-const p256Curve = new EC('p256');
+const namedCurves: { [oid: string]: EC } = {
+    '1.2.840.10045.3.1.7': new EC('p256'),
+    '1.3.132.0.34': new EC('p384'),
+};
 
 /**
- * Create a new signing implementation that uses the supplied private key to sign messages. Currently supported
- * private key types are:
+ * Create a new signing implementation that uses the supplied private key to sign messages.
+ * 
+ * Currently supported private key types are:
  * - NIST P-256 elliptic curve.
+ * - NIST P-384 elliptic curve.
  * @param key - A private key.
  * @returns A signing implementation.
  */
@@ -32,12 +37,23 @@ export function newPrivateKeySigner(key: crypto.KeyObject): Signer {
 }
 
 function newECPrivateKeySigner(key: crypto.KeyObject): Signer {
-    const rawKey = ecPrivateKeyAsRaw(key);
-    const keyPair = p256Curve.keyFromPrivate(rawKey, 'hex');
+    const { privateKey: rawKey, curveObjectId } = ecPrivateKeyAsRaw(key);
+    const curve = getCurve(curveObjectId);
+    const keyPair = curve.keyFromPrivate(rawKey, 'hex');
 
     return async (digest) => {
-        const signature = p256Curve.sign(digest, keyPair, { canonical: true });
+        const signature = curve.sign(digest, keyPair, { canonical: true });
         const signatureBytes = new Uint8Array(signature.toDER());
         return Promise.resolve(signatureBytes);
     }
+}
+
+function getCurve(objectIdBytes: number[]): EC {
+    const objectId = objectIdBytes.join('.');
+    const curve = namedCurves[objectId];
+    if (!curve) {
+        throw new Error(`Unsupported curve object identifier: ${objectId}`);
+    }
+
+    return curve;
 }
