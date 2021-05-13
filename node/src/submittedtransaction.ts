@@ -14,7 +14,6 @@ export interface SubmittedTransaction extends Commit {
      * Get the transaction result. This is obtained during the endorsement process when the transaction proposal is
      * run on endorsing peers and so is available immediately. The transaction might subsequently fail to commit
      * successfully.
-     * @returns Transaction result.
      */
     getResult(): Uint8Array;
 }

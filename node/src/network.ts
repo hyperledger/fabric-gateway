@@ -25,7 +25,6 @@ export interface Network {
      * contract for the named chaincode.
      * @param chaincodeId - Chaincode name.
      * @param name - Smart contract name.
-     * @returns A smart contract.
      */
     getContract(chaincodeId: string, name?: string): Contract;
 

@@ -10,9 +10,19 @@ import { common, protos } from './protos/protos';
 import { SigningIdentity } from './signingidentity';
 import { TransactionContext } from './transactioncontext';
 
+/**
+ * Options used when evaluating or endorsing a transaction proposal.
+ */
 export interface ProposalOptions {
+    /**
+     * Arguments passed to the transaction function.
+     */
     arguments?: Array<string|Uint8Array>;
-    transientData?: { [k: string]: Uint8Array };
+
+    /**
+     * Private data passed to the transaction function but not recorded on the ledger.
+     */
+    transientData?: { [key: string]: Uint8Array };
 }
 
 export interface ProposalBuilderOptions {

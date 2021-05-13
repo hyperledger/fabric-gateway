@@ -81,7 +81,6 @@ export interface Gateway {
     /**
      * Get a network representing the named Fabric channel.
      * @param channelName - Fabric channel name.
-     * @returns A network.
      */
     getNetwork(channelName: string): Network;
 

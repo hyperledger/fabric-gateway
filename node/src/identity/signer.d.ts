@@ -6,6 +6,6 @@
 
 /**
  * A signing implementation used to generate digital signatures from a supplied message digest. Standard
- * implementations can be obtained using factory methods on the Signers class.
+ * implementations can be obtained using {@link signers} factory methods.
  */
 export type Signer = (digest: Uint8Array) => Promise<Uint8Array>;
