@@ -33,11 +33,13 @@ export interface Proposal {
      * Evaluate the transaction proposal and obtain its result, without updating the ledger. This runs the transaction
      * on a peer to obtain a transaction result, but does not submit the endorsed transaction to the orderer to be
      * committed to the ledger.
+     * @returns The result returned by the transaction function.
      */
     evaluate(): Promise<Uint8Array>;
 
     /**
      * Obtain endorsement for the transaction proposal from sufficient peers to allow it to be committed to the ledger.
+     * @returns An endorsed transaction that can be submitted to the ledger.
      */
     endorse(): Promise<Transaction>;
 }

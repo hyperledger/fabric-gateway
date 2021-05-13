@@ -12,32 +12,33 @@ gRPC connections to a Fabric Gateway may be shared by all `Gateway` instances in
 
 ## Example
 
-The following example shows how to connect to a Fabric network, submit a transaction and query the ledger state using an instantiated smart contract.
+The following complete example shows how to connect to a Fabric network, submit a transaction and query the ledger state using an instantiated smart contract.
 
-```typescript
-import * as grpc from '@grpc/grpc-js';
-import { connect, Identity, signers } from 'fabric-gateway';
+    import * as grpc from '@grpc/grpc-js';
+    import { connect, Identity, signers } from 'fabric-gateway';
 
-async main(): void {
-    const GrpcClient = grpc.makeGenericClientConstructor({}, '');
-    const client = new GrpcClient('gateway.example.org:1337', grpc.credentials.createInsecure());
+    async main(): void {
+        const GrpcClient = grpc.makeGenericClientConstructor({}, '');
+        const client = new GrpcClient('gateway.example.org:1337', grpc.credentials.createInsecure());
 
-    const credentials = await fs.promises.readFile('path/to/certificate.pem');
-    const identity: Identity = { mspId, credentials };
+        const credentials = await fs.promises.readFile('path/to/certificate.pem');
+        const identity: Identity = { mspId, credentials };
 
-    const privateKey = crypto.createPrivateKey(privateKeyPem);
-    const signer = signers.newPrivateKeySigner(privateKey);
+        const privateKeyPem = await fs.promises.readFile('path/to/privateKey.pem');
+        const privateKey = crypto.createPrivateKey(privateKeyPem);
+        const signer = signers.newPrivateKeySigner(privateKey);
 
-    const gateway = connect({ client, identity, signer });
-    try {
-        const network = gateway.getNetwork('channelName');
-        const contract = network.getContract('chaincodeName');
+        const gateway = connect({ client, identity, signer });
+        try {
+            const network = gateway.getNetwork('channelName');
+            const contract = network.getContract('chaincodeName');
 
-        const putResult = await contract.submitTransaction('put', 'time', new Date().toISOString());
-        const getResult = await contract.evaluateTransaction('get', 'time');
-    } finally {
-        gateway.close();
-        client.close()
+            const putResult = await contract.submitTransaction('put', 'time', new Date().toISOString());
+            const getResult = await contract.evaluateTransaction('get', 'time');
+        } finally {
+            gateway.close();
+            client.close()
+        }
     }
-}
-```
+
+    main().catch(console.log);
