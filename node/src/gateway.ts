@@ -69,7 +69,8 @@ export function internalConnect(options: InternalConnectOptions): Gateway {
 }
 
 /**
- * Gateway represents the connection of a specific client identity to a Fabric Gateway.
+ * Gateway represents the connection of a specific client identity to a Fabric Gateway. A Gateway is obtained using the
+ * {@link connect} function.
  */
 export interface Gateway {
     /**

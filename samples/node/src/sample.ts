@@ -100,11 +100,8 @@ async function newGrpcConnection(): Promise<ServiceClient> {
 }
 
 async function newIdentity(): Promise<Identity> {
-    const certificate = await fs.promises.readFile(certPath);
-    return {
-        mspId: mspId,
-        credentials: certificate
-    };
+    const credentials = await fs.promises.readFile(certPath);
+    return { mspId, credentials };
 }
 
 async function newSigner(): Promise<Signer> {
