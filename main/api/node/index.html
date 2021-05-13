@@ -58,30 +58,46 @@
 	<div class="row">
 		<div class="col-8 col-content">
 			<div class="tsd-panel tsd-typography">
-				<a href="#hyperledger-fabric-gateway-client-sdk-for-node" id="hyperledger-fabric-gateway-client-sdk-for-node" style="color: inherit; text-decoration: none;">
-					<h1>Hyperledger Fabric Gateway Client SDK for Node</h1>
+				<a href="#overview" id="overview" style="color: inherit; text-decoration: none;">
+					<h1>Overview</h1>
 				</a>
-				<p>The Fabric Gateway SDK allows applications to interact with a Fabric blockchain network.  It provides a simple API to submit transactions to a ledger or query the contents of a ledger with minimal code.</p>
-				<p>The Gateway SDK implements the Fabric programming model as described in the <a href="https://hyperledger-fabric.readthedocs.io/en/latest/developapps/developing_applications.html">Developing Applications</a> chapter of the Fabric documentation.</p>
-				<a href="#how-to-use" id="how-to-use" style="color: inherit; text-decoration: none;">
-					<h2>How to use</h2>
+				<p>The <em>fabric-gateway</em> package enables Node.js developers to build client applications using the Hyperledger Fabric programming model as described in the <a href="https://hyperledger-fabric.readthedocs.io/en/latest/developapps/developing_applications.html">Developing Applications</a> chapter of the Fabric documentation.</p>
+				<p><a href="http://www.typescriptlang.org/">TypeScript</a> definitions are included in this package.</p>
+				<a href="#getting-started" id="getting-started" style="color: inherit; text-decoration: none;">
+					<h2>Getting started</h2>
 				</a>
-				<p>Samples showing how to create a client application that updates and queries the ledger
-					are available for each of the supported SDK languages here:
-				<a href="https://github.com/hyperledger/fabric-gateway/tree/main/samples">https://github.com/hyperledger/fabric-gateway/tree/main/samples</a></p>
-				<a href="#api-documentation" id="api-documentation" style="color: inherit; text-decoration: none;">
-					<h3>API documentation</h3>
+				<p>Client applications interact with the blockchain network using a Fabric Gateway. A session for a given client identity is established by calling <code>connect()</code> with a gRPC connection to a Fabric Gateway endpoint, client identity, and client signing implementation. The returned <code>Gateway</code> enables interaction with any of the blockchain <code>Networks</code> (channels) accessible through the Fabric Gateway. This in turn provides access to Smart <code>Contracts</code> within chaincode deployed to that blockchain network, and to which transactions can be submitted or queries can be evaluated.</p>
+				<p>gRPC connections to a Fabric Gateway may be shared by all <code>Gateway</code> instances interacting with that Fabric Gateway.</p>
+				<a href="#example" id="example" style="color: inherit; text-decoration: none;">
+					<h2>Example</h2>
 				</a>
-				<p>The Node Gateway SDK documentation is available here:
-				<a href="https://hyperledger.github.io/fabric-gateway/main/api/node/">https://hyperledger.github.io/fabric-gateway/main/api/node/</a></p>
-				<a href="#installation" id="installation" style="color: inherit; text-decoration: none;">
-					<h3>Installation</h3>
-				</a>
-				<p><code>npm install fabric-gateway</code></p>
-				<a href="#compatibility" id="compatibility" style="color: inherit; text-decoration: none;">
-					<h3>Compatibility</h3>
-				</a>
-				<p>This SDK requires Fabric 2.4 Tech Preview with a Gateway enabled Peer.</p>
+				<p>The following example shows how to connect to a Fabric network, submit a transaction and query the ledger state using an instantiated smart contract.</p>
+				<pre><code class="language-typescript"><span style="color: #AF00DB">import</span><span style="color: #000000"> </span><span style="color: #0000FF">*</span><span style="color: #000000"> </span><span style="color: #AF00DB">as</span><span style="color: #000000"> </span><span style="color: #001080">grpc</span><span style="color: #000000"> </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;@grpc/grpc-js&#039;</span><span style="color: #000000">;</span>
+<span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">connect</span><span style="color: #000000">, </span><span style="color: #001080">Identity</span><span style="color: #000000">, </span><span style="color: #001080">signers</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;fabric-gateway&#039;</span><span style="color: #000000">;</span>
+
+<span style="color: #001080">async</span><span style="color: #000000"> </span><span style="color: #795E26">main</span><span style="color: #000000">(): </span><span style="color: #0000FF">void</span><span style="color: #000000"> {</span>
+<span style="color: #000000">    </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">GrpcClient</span><span style="color: #000000"> = </span><span style="color: #001080">grpc</span><span style="color: #000000">.</span><span style="color: #795E26">makeGenericClientConstructor</span><span style="color: #000000">({}, </span><span style="color: #A31515">&#039;&#039;</span><span style="color: #000000">);</span>
+<span style="color: #000000">    </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">client</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">GrpcClient</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;gateway.example.org:1337&#039;</span><span style="color: #000000">, </span><span style="color: #001080">grpc</span><span style="color: #000000">.</span><span style="color: #001080">credentials</span><span style="color: #000000">.</span><span style="color: #795E26">createInsecure</span><span style="color: #000000">());</span>
+
+<span style="color: #000000">    </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">credentials</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">fs</span><span style="color: #000000">.</span><span style="color: #001080">promises</span><span style="color: #000000">.</span><span style="color: #795E26">readFile</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;path/to/certificate.pem&#039;</span><span style="color: #000000">);</span>
+<span style="color: #000000">    </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">identity</span><span style="color: #000000">: </span><span style="color: #267F99">Identity</span><span style="color: #000000"> = { </span><span style="color: #001080">mspId</span><span style="color: #000000">, </span><span style="color: #001080">credentials</span><span style="color: #000000"> };</span>
+
+<span style="color: #000000">    </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">privateKey</span><span style="color: #000000"> = </span><span style="color: #001080">crypto</span><span style="color: #000000">.</span><span style="color: #795E26">createPrivateKey</span><span style="color: #000000">(</span><span style="color: #001080">privateKeyPem</span><span style="color: #000000">);</span>
+<span style="color: #000000">    </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">signer</span><span style="color: #000000"> = </span><span style="color: #001080">signers</span><span style="color: #000000">.</span><span style="color: #795E26">newPrivateKeySigner</span><span style="color: #000000">(</span><span style="color: #001080">privateKey</span><span style="color: #000000">);</span>
+
+<span style="color: #000000">    </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">gateway</span><span style="color: #000000"> = </span><span style="color: #795E26">connect</span><span style="color: #000000">({ </span><span style="color: #001080">client</span><span style="color: #000000">, </span><span style="color: #001080">identity</span><span style="color: #000000">, </span><span style="color: #001080">signer</span><span style="color: #000000"> });</span>
+<span style="color: #000000">    </span><span style="color: #AF00DB">try</span><span style="color: #000000"> {</span>
+<span style="color: #000000">        </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">network</span><span style="color: #000000"> = </span><span style="color: #001080">gateway</span><span style="color: #000000">.</span><span style="color: #795E26">getNetwork</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;channelName&#039;</span><span style="color: #000000">);</span>
+<span style="color: #000000">        </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">contract</span><span style="color: #000000"> = </span><span style="color: #001080">network</span><span style="color: #000000">.</span><span style="color: #795E26">getContract</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;chaincodeName&#039;</span><span style="color: #000000">);</span>
+
+<span style="color: #000000">        </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">putResult</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">contract</span><span style="color: #000000">.</span><span style="color: #795E26">submitTransaction</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;put&#039;</span><span style="color: #000000">, </span><span style="color: #A31515">&#039;time&#039;</span><span style="color: #000000">, </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #267F99">Date</span><span style="color: #000000">().</span><span style="color: #795E26">toISOString</span><span style="color: #000000">());</span>
+<span style="color: #000000">        </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">getResult</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">contract</span><span style="color: #000000">.</span><span style="color: #795E26">evaluateTransaction</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;get&#039;</span><span style="color: #000000">, </span><span style="color: #A31515">&#039;time&#039;</span><span style="color: #000000">);</span>
+<span style="color: #000000">    } </span><span style="color: #AF00DB">finally</span><span style="color: #000000"> {</span>
+<span style="color: #000000">        </span><span style="color: #001080">gateway</span><span style="color: #000000">.</span><span style="color: #795E26">close</span><span style="color: #000000">();</span>
+<span style="color: #000000">        </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">close</span><span style="color: #000000">()</span>
+<span style="color: #000000">    }</span>
+<span style="color: #000000">}</span>
+</code></pre>
 			</div>
 		</div>
 		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
