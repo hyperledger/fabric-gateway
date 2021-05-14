@@ -82,7 +82,7 @@ func exampleSubmitAsync(gateway *client.Gateway) {
 
 	// Submit transaction asynchronously, blocking until the transaction has been sent to the orderer, and allowing
 	// this thread to process the chaincode response (e.g. update a UI) without waiting for the commit notification
-	submitResult, commit, err := contract.SubmitAsync("put", client.WithStringArguments("async", timestamp))
+	submitResult, commit, err := contract.SubmitAsync("put", client.WithArguments("async", timestamp))
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction asynchronously: %w", err))
 	}

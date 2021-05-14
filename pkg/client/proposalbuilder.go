@@ -95,17 +95,17 @@ func (builder *proposalBuilder) chaincodeArgs() [][]byte {
 // ProposalOption implements an option for a transaction proposal.
 type ProposalOption = func(builder *proposalBuilder) error
 
-// WithArguments appends to the transaction function arguments associated with a transaction proposal.
-func WithArguments(args ...[]byte) ProposalOption {
+// WithBytesArguments appends to the transaction function arguments associated with a transaction proposal.
+func WithBytesArguments(args ...[]byte) ProposalOption {
 	return func(builder *proposalBuilder) error {
 		builder.args = append(builder.args, args...)
 		return nil
 	}
 }
 
-// WithStringArguments appends to the transaction function arguments associated with a transaction proposal.
-func WithStringArguments(args ...string) ProposalOption {
-	return WithArguments(stringsAsBytes(args)...)
+// WithArguments appends to the transaction function arguments associated with a transaction proposal.
+func WithArguments(args ...string) ProposalOption {
+	return WithBytesArguments(stringsAsBytes(args)...)
 }
 
 func stringsAsBytes(strings []string) [][]byte {

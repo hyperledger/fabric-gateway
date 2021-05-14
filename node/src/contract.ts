@@ -26,7 +26,7 @@ import { Transaction, TransactionImpl } from "./transaction";
  * signing implementation can be omitted and off-line signing can be carried out by:
  * 1. Returning the serialized proposal, transaction or commit status message along with its digest to the client for
  * them to generate a signature.
- * 1. Using the serialized message and signature received from the client to create a signed proposal or transaction
+ * 1. With the serialized message and signature received from the client to create a signed proposal or transaction
  * using the Contract's {@link newSignedProposal} or {@link newSignedTransaction} methods respectively, or create a
  * signed commit using the Network's {@link Network.newSignedCommit} method.
  * 
