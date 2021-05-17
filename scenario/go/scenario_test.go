@@ -617,7 +617,7 @@ func setArguments(argsJSON string) error {
 		return err
 	}
 
-	transaction.AddOptions(client.WithStringArguments(args...))
+	transaction.AddOptions(client.WithArguments(args...))
 
 	return nil
 }

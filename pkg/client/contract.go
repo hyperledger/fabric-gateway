@@ -21,7 +21,8 @@ import (
 // - Submit transactions that store state to the ledger using the SubmitTransaction() method.
 //
 // For more complex transaction invocations, such as including transient data, transactions can be evaluated or
-// submitted using the Evaluate() or SubmitSync() methods respectively.
+// submitted using the Evaluate() or Submit() methods respectively. The result of a submitted transaction can be
+// accessed prior to its commit to the ledger using SubmitAsync().
 //
 // By default, proposal, transaction and commit status messages will be signed using the signing implementation
 // specified when connecting the Gateway. In cases where an external client holds the signing credentials, a signing
@@ -30,7 +31,7 @@ import (
 // 1. Returning the serialized proposal, transaction or commit status message along with its digest to the client for
 // them to generate a signature.
 //
-// 2. On receipt of the serialized message and signature from the client, creating a signed proposal or transaction
+// 2. With the serialized message and signature received from the client to create a signed proposal or transaction
 // using the Contract's NewSignedProposal() or NewSignedTransaction() methods respectively, or creating a signed
 // commit using the Network's NewSignedCommit() method.
 type Contract struct {
@@ -55,7 +56,7 @@ func (contract *Contract) Name() string {
 // evaluated on endorsing peers but the transaction will not be sent to the ordering service and so will not be
 // committed to the ledger. This can be used for querying the world state.
 func (contract *Contract) EvaluateTransaction(name string, args ...string) ([]byte, error) {
-	return contract.Evaluate(name, WithStringArguments(args...))
+	return contract.Evaluate(name, WithArguments(args...))
 }
 
 // Evaluate a transaction function and return its result. This method provides greater control over the transaction
@@ -72,10 +73,9 @@ func (contract *Contract) Evaluate(transactionName string, options ...ProposalOp
 
 // SubmitTransaction will submit a transaction to the ledger and return its result only after it is committed to the
 // ledger. The transaction function will be evaluated on endorsing peers and then submitted to the ordering service to
-// be committed to the ledger. This method is equivalent to:
-//   SubmitSync(name, client.WithStringArguments(args...))
+// be committed to the ledger.
 func (contract *Contract) SubmitTransaction(name string, args ...string) ([]byte, error) {
-	return contract.Submit(name, WithStringArguments(args...))
+	return contract.Submit(name, WithArguments(args...))
 }
 
 // Submit a transaction to the ledger and return its result only after it has been committed to the ledger. This method

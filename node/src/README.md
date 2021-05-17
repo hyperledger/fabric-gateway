@@ -41,4 +41,4 @@ The following complete example shows how to connect to a Fabric network, submit 
         }
     }
 
-    main().catch(console.log);
+    main().catch(console.error);

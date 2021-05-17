@@ -16,7 +16,7 @@ func ExampleContract_evaluate() ([]byte, error) {
 
 	result, err := contract.Evaluate(
 		"transactionName",
-		client.WithStringArguments("one", "two"),
+		client.WithArguments("one", "two"),
 		// Specify additional proposal options, such as transient data
 	)
 
@@ -28,7 +28,7 @@ func ExampleContract_submit() ([]byte, error) {
 
 	result, err := contract.Submit(
 		"transactionName",
-		client.WithStringArguments("one", "two"),
+		client.WithArguments("one", "two"),
 		// Specify additional proposal options, such as transient data
 	)
 
@@ -39,7 +39,7 @@ func ExampleContract_offlineSignProposal() (*client.Proposal, error) {
 	var contract *client.Contract
 	var sign identity.Sign // Signing function
 
-	unsignedProposal, err := contract.NewProposal("transactionName", client.WithStringArguments("one", "two"))
+	unsignedProposal, err := contract.NewProposal("transactionName", client.WithArguments("one", "two"))
 	if err != nil {
 		return nil, err
 	}
