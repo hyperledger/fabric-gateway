@@ -42,6 +42,10 @@ public final class TransactionInvocation {
         proposalBuilder.putAllTransient(transientData);
     }
 
+    public void setEndorsingOrgs(final String[] orgs) {
+        proposalBuilder.setEndorsingOrganizations(orgs);
+    }
+
     public static TransactionInvocation prepareToSubmit(final Network network, final Contract contract, final String transactionName) {
         TransactionInvocation invocation = new TransactionInvocation(network, contract, transactionName);
         invocation.action = invocation::submit;

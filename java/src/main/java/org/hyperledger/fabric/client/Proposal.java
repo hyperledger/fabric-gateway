@@ -74,6 +74,16 @@ public interface Proposal {
         Builder putTransient(String key, byte[] value);
 
         /**
+         * Specifies the set of organizations that will attempt to endorse the proposal.
+         * No other organizations' peers will be sent this proposal.
+         * This is usually used in conjunction with {@link #putTransient(String, byte[])} or
+         * {@link #putAllTransient(Map)} for private data scenarios.
+         * @param mspids The Member Services Provider IDs of the endorsing organizations.
+         * @return This builder.
+         */
+        Builder setEndorsingOrganizations(String... mspids);
+
+        /**
          * Build the proposal from the configuration state of this builder.
          * @return A proposal.
          */

@@ -57,7 +57,7 @@ import org.hyperledger.fabric.client.identity.X509Identity;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ScenarioSteps {
-    private static final Set<String> runningChaincodes = new HashSet<>();
+    private static final Map<String, String> runningChaincodes = new HashMap<>();
     private static boolean channelsJoined = false;
     private static final String DOCKER_COMPOSE_TLS_FILE = "docker-compose-tls.yaml";
     private static final Path FIXTURES_DIR = Paths.get("..", "scenario", "fixtures").toAbsolutePath();
@@ -189,13 +189,34 @@ public class ScenarioSteps {
 
     @Given("I deploy {word} chaincode named {word} at version {word} for all organizations on channel {word} with endorsement policy {}")
     public void deployChaincode(String ccType, String ccName, String version, String channelName, String signaturePolicy) throws IOException, InterruptedException {
-        String mangledName = ccName + version + channelName;
-        if (runningChaincodes.contains(mangledName)) {
-            return;
-        }
-
         final List<String> tlsOptions = Arrays.asList("--tls", "true", "--cafile",
                 "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem");
+
+        boolean exists = false;
+        String sequence = "1";
+        String mangledName = ccName + version + channelName;
+        if (runningChaincodes.containsKey(mangledName)) {
+            if (runningChaincodes.get(mangledName).equals(signaturePolicy)) {
+                return;
+            }
+            // Already exists but different signature policy...
+            // No need to re-install, just increment the sequence number and approve/commit new signature policy
+            exists = true;
+            List<String> queryCommand = new ArrayList<>();
+            Collections.addAll(queryCommand,"docker", "exec", "org1_cli", "peer", "lifecycle", "chaincode", "querycommitted",
+                    "-o", "orderer.example.com:7050", "--channelID", channelName, "--name", ccName);
+            queryCommand.addAll(tlsOptions);
+            String out = exec(queryCommand);
+            Pattern regex = Pattern.compile(".*Sequence: ([0-9]+),.*");
+            Matcher matcher = regex.matcher(out);
+            if (!matcher.matches()) {
+                System.out.println(out);
+                throw new IllegalStateException("Cannot find installed chaincode for Org1: " + ccName);
+            }
+            String seqStr = matcher.group(1);
+            int seqInt = Integer.parseInt(seqStr);
+            sequence = String.valueOf(seqInt + 1);
+        }
 
         String ccPath = Paths.get(FileSystems.getDefault().getSeparator(), "opt", "gopath", "src",
                 "github.com", "chaincode", ccType, ccName).toString();
@@ -203,12 +224,14 @@ public class ScenarioSteps {
         String ccPackage = ccName + ".tar.gz";
 
         for (OrgConfig org : ORG_CONFIGS) {
-            exec("docker", "exec", org.cli, "peer", "lifecycle", "chaincode", "package", ccPackage, "--lang",
-                    ccType, "--label", ccLabel, "--path", ccPath);
+            if (!exists) {
+                exec("docker", "exec", org.cli, "peer", "lifecycle", "chaincode", "package", ccPackage, "--lang",
+                        ccType, "--label", ccLabel, "--path", ccPath);
 
-            for (String peer : org.peers) {
-                String env = "CORE_PEER_ADDRESS=" + peer;
-                exec("docker", "exec", "-e", env, org.cli, "peer", "lifecycle", "chaincode", "install", ccPackage);
+                for (String peer : org.peers) {
+                    String env = "CORE_PEER_ADDRESS=" + peer;
+                    exec("docker", "exec", "-e", env, org.cli, "peer", "lifecycle", "chaincode", "install", ccPackage);
+                }
             }
 
             String installed = exec("docker", "exec", org.cli, "peer", "lifecycle", "chaincode",
@@ -225,7 +248,7 @@ public class ScenarioSteps {
             Collections.addAll(approveCommand, "docker", "exec", org.cli, "peer", "lifecycle", "chaincode",
                     "approveformyorg", "--package-id", packageId, "--channelID", channelName, "--name", ccName,
                     "--version", version, "--signature-policy", signaturePolicy,
-                    "--sequence", "1", "--waitForEvent");
+                    "--sequence", sequence, "--waitForEvent");
             approveCommand.addAll(tlsOptions);
             exec(approveCommand);
         }
@@ -237,11 +260,10 @@ public class ScenarioSteps {
                 "--name", ccName,
                 "--version", version,
                 "--signature-policy", signaturePolicy,
-                "--sequence", "1",
+                "--sequence", sequence,
                 "--waitForEvent",
                 "--peerAddresses", "peer0.org1.example.com:7051",
-                "--peerAddresses",
-                "peer0.org2.example.com:8051",
+                "--peerAddresses", "peer0.org2.example.com:8051",
                 "--tlsRootCertFiles",
                 "/etc/hyperledger/configtx/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
                 "--tlsRootCertFiles",
@@ -249,8 +271,8 @@ public class ScenarioSteps {
         commitCommand.addAll(tlsOptions);
         exec(commitCommand);
 
-        runningChaincodes.add(mangledName);
-        Thread.sleep(60000);
+        runningChaincodes.put(mangledName, signaturePolicy);
+        Thread.sleep(10000);
     }
 
     @Given("I create a gateway for user {word} in MSP {word}")
@@ -319,6 +341,12 @@ public class ScenarioSteps {
         Map<String, byte[]> transientMap = table.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8)));
         transactionInvocation.setTransient(transientMap);
+    }
+
+    @When("^I set the endorsing organizations? to (.+)$")
+    public void setEndorsingOrgs(String orgsJson) {
+        String[] orgs = newStringArray(parseJsonArray(orgsJson));
+        transactionInvocation.setEndorsingOrgs(orgs);
     }
 
     @When("I stop the peer named {}")

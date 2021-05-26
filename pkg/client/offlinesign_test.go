@@ -177,6 +177,47 @@ func TestOfflineSign(t *testing.T) {
 				t.Fatalf("Expected %s, got %s", expected, actual)
 			}
 		})
+
+		t.Run("Uses off-line signature with endorsing orgs", func(t *testing.T) {
+			var actual []string
+			expected := []string{"MY_ORG"}
+
+			mockController := gomock.NewController(t)
+			defer mockController.Finish()
+
+			mockClient := NewMockGatewayClient(mockController)
+			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+				Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
+					actual = in.EndorsingOrganizations
+				}).
+				Return(newEndorseResponse("result"), nil).
+				Times(1)
+
+			contract := newContractWithNoSign(t, WithClient(mockClient))
+
+			unsignedProposal, err := contract.NewProposal("transaction", WithEndorsingOrganizations("MY_ORG"))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			proposalBytes, err := unsignedProposal.Bytes()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("SIGNATURE"))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if _, err := signedProposal.Endorse(); err != nil {
+				t.Fatal(err)
+			}
+
+			if len(actual) != 1 && expected[0] != actual[0] {
+				t.Fatalf("Expected %v, got %v", expected, actual)
+			}
+		})
 	})
 
 	t.Run("Submit", func(t *testing.T) {

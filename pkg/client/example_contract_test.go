@@ -35,6 +35,23 @@ func ExampleContract_submit() ([]byte, error) {
 	return result, err
 }
 
+func ExampleContract_privateData() ([]byte, error) {
+	var contract *client.Contract
+
+	privateData := map[string][]byte{
+		"price": []byte("3000"),
+	}
+
+	result, err := contract.Submit(
+		"transactionName",
+		client.WithArguments("one", "two"),
+		client.WithTransient(privateData),
+		client.WithEndorsingOrganizations("Org1MSP", "Org3MSP"),
+	)
+
+	return result, err
+}
+
 func ExampleContract_offlineSignProposal() (*client.Proposal, error) {
 	var contract *client.Contract
 	var sign identity.Sign // Signing function

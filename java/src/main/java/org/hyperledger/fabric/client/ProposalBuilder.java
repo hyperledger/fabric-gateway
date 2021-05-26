@@ -8,6 +8,10 @@ package org.hyperledger.fabric.client;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Map;
 
 import com.google.protobuf.ByteString;
@@ -26,6 +30,7 @@ final class ProposalBuilder implements Proposal.Builder {
     private final Chaincode.ChaincodeInput.Builder inputBuilder = Chaincode.ChaincodeInput.newBuilder();
     private final ProposalPackage.ChaincodeProposalPayload.Builder payloadBuilder = ProposalPackage.ChaincodeProposalPayload.newBuilder();
     private final TransactionContext context;
+    private Set<String> endorsingOrgs = Collections.emptySet();
 
     ProposalBuilder(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity,
                     final String channelName, final String chaincodeId, final String transactionName) {
@@ -69,6 +74,12 @@ final class ProposalBuilder implements Proposal.Builder {
     }
 
     @Override
+    public ProposalBuilder setEndorsingOrganizations(final String... mspids) {
+        this.endorsingOrgs = new HashSet<>(Arrays.asList(mspids));
+        return this;
+    }
+
+    @Override
     public Proposal build() {
         return new ProposalImpl(client, signingIdentity, channelName, newProposedTransaction());
     }
@@ -77,6 +88,7 @@ final class ProposalBuilder implements Proposal.Builder {
         return ProposedTransaction.newBuilder()
                 .setProposal(newSignedProposal())
                 .setTransactionId(context.getTransactionId())
+                .addAllEndorsingOrganizations(endorsingOrgs)
                 .build();
     }
 

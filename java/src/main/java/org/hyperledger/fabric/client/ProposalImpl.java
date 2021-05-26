@@ -66,6 +66,7 @@ final class ProposalImpl implements Proposal {
                 .setTransactionId(proposedTransaction.getTransactionId())
                 .setChannelId(channelName)
                 .setProposedTransaction(proposedTransaction.getProposal())
+                .addAllEndorsingOrganizations(proposedTransaction.getEndorsingOrganizationsList())
                 .build();
         EndorseResponse endorseResponse = client.endorse(endorseRequest);
 

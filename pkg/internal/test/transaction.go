@@ -21,6 +21,17 @@ func AssertUnmarshall(t *testing.T, b []byte, m proto.Message) {
 	}
 }
 
+// AssertUnmarshallProposalPayload ensures that a ChaincodeProposalPayload protobuf is umarshalled without error
+func AssertUnmarshallProposalPayload(t *testing.T, proposedTransaction *peer.SignedProposal) *peer.ChaincodeProposalPayload {
+	proposal := &peer.Proposal{}
+	AssertUnmarshall(t, proposedTransaction.ProposalBytes, proposal)
+
+	payload := &peer.ChaincodeProposalPayload{}
+	AssertUnmarshall(t, proposal.Payload, payload)
+
+	return payload
+}
+
 // AssertUnmarshallInvocationSpec ensures that a ChaincodeInvocationSpec protobuf is umarshalled without error
 func AssertUnmarshallInvocationSpec(t *testing.T, proposedTransaction *peer.SignedProposal) *peer.ChaincodeInvocationSpec {
 	proposal := &peer.Proposal{}

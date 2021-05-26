@@ -98,6 +98,10 @@ When('I set transient data on the transaction to', function(this: CustomWorld, d
     this.setTransientData(dataTable);
 });
 
+When(/I set the endorsing organizations? to (.+)/, function(this: CustomWorld, jsonOrgs: string): void {
+    this.setEndorsingOrgs(jsonOrgs);
+});
+
 When('I do off-line signing as user {word} in MSP {word}', async function(this: CustomWorld, user: string, mspId: string): Promise<void> {
     await this.setOfflineSigner(user, mspId);
 })

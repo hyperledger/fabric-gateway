@@ -161,6 +161,11 @@ export class CustomWorld {
         this.getTransaction().options.transientData = transient;
     }
 
+    setEndorsingOrgs(jsonOrgs: string): void {
+        const orgs = JSON.parse(jsonOrgs);
+        this.getTransaction().options.endorsingOrganizations = orgs;
+    }
+
     close(): void {
         this.gateway?.close();
         delete this.gateway;

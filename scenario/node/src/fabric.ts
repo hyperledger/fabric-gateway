@@ -74,7 +74,7 @@ async function sleep(ms: number): Promise<void> {
 export class Fabric {
     private fabricRunning = false;
     private channelsJoined = false;
-    private readonly runningChaincodes: { [chaincodeId: string]: boolean } = {};
+    private readonly runningChaincodes: { [chaincodeId: string]: string } = {};
     private readonly runningPeers: { [peerName: string]: boolean };
 
     constructor() {
@@ -146,9 +146,26 @@ export class Fabric {
     }
 
     async deployChaincode(ccType: string, ccName: string, version: string, channelName: string, signaturePolicy: string): Promise<void> {
+        let exists = false;
+        let sequence = "1"
         const mangledName = ccName + version + channelName;
-        if (this.runningChaincodes[mangledName]) {
-            return;
+        const policy = this.runningChaincodes[mangledName];
+        if (typeof policy !== 'undefined') {
+            if (policy === signaturePolicy) {
+                return;
+            }
+            // Already exists but different signature policy...
+            // No need to re-install, just increment the sequence number and approve/commit new signature policy
+            exists = true
+            const out = dockerCommandWithTLS(
+                "exec", "org1_cli", "peer", "lifecycle", "chaincode", "querycommitted",
+                "-o", "orderer.example.com:7050", "--channelID", channelName, "--name", ccName);
+            const pattern = new RegExp('.*Sequence: ([0-9]+),.*');
+            const match = out.match(pattern);
+            if (match === null || match.length < 2) {
+                throw new Error(`Chaincode ${ccName} not found on org1 peers`);
+            }
+            sequence = (Number.parseInt(match[1]) + 1).toString();
         }
 
         let ccPath = `github.com/chaincode/${ccType}/${ccName}`;
@@ -159,15 +176,17 @@ export class Fabric {
         const ccPackage = `${ccName}.tar.gz`;
 
         for (const [orgName, orgInfo] of Object.entries(orgs)) {
-            dockerCommand(
-                'exec', orgInfo.cli, 'peer', 'lifecycle', 'chaincode', 'package', ccPackage,
-                '--lang', ccType,
-                '--label', ccLabel,
-                '--path', ccPath);
+            if (!exists) {
+                dockerCommand(
+                    'exec', orgInfo.cli, 'peer', 'lifecycle', 'chaincode', 'package', ccPackage,
+                    '--lang', ccType,
+                    '--label', ccLabel,
+                    '--path', ccPath);
 
-            for (const peer of orgInfo.peers) {
-                const env = 'CORE_PEER_ADDRESS=' + peer;
-                dockerCommand('exec', "-e", env, orgInfo.cli, 'peer', 'lifecycle', 'chaincode', 'install', ccPackage);
+                for (const peer of orgInfo.peers) {
+                    const env = 'CORE_PEER_ADDRESS=' + peer;
+                    dockerCommand('exec', "-e", env, orgInfo.cli, 'peer', 'lifecycle', 'chaincode', 'install', ccPackage);
+                }
             }
 
             const out = dockerCommand('exec', orgInfo.cli, 'peer', 'lifecycle', 'chaincode', 'queryinstalled');
@@ -187,7 +206,7 @@ export class Fabric {
                 '--name', ccName,
                 '--version', version,
                 '--signature-policy', signaturePolicy,
-                '--sequence', '1',
+                '--sequence', sequence,
                 '--waitForEvent'
             );
         }
@@ -200,7 +219,7 @@ export class Fabric {
             '--name', ccName,
             '--version', version,
             '--signature-policy', signaturePolicy,
-            '--sequence', '1',
+            '--sequence', sequence,
             '--waitForEvent',
             '--peerAddresses', 'peer0.org1.example.com:7051',
             '--peerAddresses', 'peer0.org2.example.com:8051',
@@ -209,7 +228,7 @@ export class Fabric {
             '--tlsRootCertFiles',
             '/etc/hyperledger/configtx/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt');
 
-        this.runningChaincodes[mangledName] = true;
+        this.runningChaincodes[mangledName] = signaturePolicy;
         await sleep(10000);
     }
 

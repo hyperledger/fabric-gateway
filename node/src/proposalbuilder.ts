@@ -23,6 +23,13 @@ export interface ProposalOptions {
      * Private data passed to the transaction function but not recorded on the ledger.
      */
     transientData?: { [key: string]: Uint8Array };
+
+    /**
+     * Specifies the set of organizations that will attempt to endorse the proposal.
+     * No other organizations' peers will be sent this proposal.
+     * This is usually used in conjunction with transientData for private data scenarios.
+     */
+    endorsingOrganizations?: string[];
 }
 
 export interface ProposalBuilderOptions {
@@ -52,7 +59,8 @@ export class ProposalBuilder {
                 proposal: {
                     proposal_bytes: protos.Proposal.encode(this.newProposal()).finish(),
                 },
-                transaction_id: this.#transactionContext.getTransactionId(),                
+                transaction_id: this.#transactionContext.getTransactionId(),
+                endorsing_organizations: this.#options.options.endorsingOrganizations,
             },
         });
     }
