@@ -142,6 +142,7 @@ export class ProposalImpl implements Proposal {
             transaction_id: this.#proposedTransaction.transaction_id,
             channel_id: this.#channelName,
             proposed_transaction: this.#proposal,
+            endorsing_organizations: this.#proposedTransaction.endorsing_organizations,
         };
     }
 

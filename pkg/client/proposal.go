@@ -53,9 +53,10 @@ func (proposal *Proposal) Endorse() (*Transaction, error) {
 	defer cancel()
 
 	endorseRequest := &gateway.EndorseRequest{
-		TransactionId:       proposal.proposedTransaction.TransactionId,
-		ChannelId:           proposal.channelID,
-		ProposedTransaction: proposal.proposedTransaction.Proposal,
+		TransactionId:          proposal.proposedTransaction.TransactionId,
+		ChannelId:              proposal.channelID,
+		ProposedTransaction:    proposal.proposedTransaction.Proposal,
+		EndorsingOrganizations: proposal.proposedTransaction.EndorsingOrganizations,
 	}
 	response, err := proposal.client.Endorse(ctx, endorseRequest)
 	if err != nil {

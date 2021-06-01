@@ -222,7 +222,7 @@ func (transaction *Transaction) AddOptions(options ...client.ProposalOption) {
 var (
 	fabricRunning     bool = false
 	channelsJoined    bool = false
-	runningChaincodes      = make(map[string]bool)
+	runningChaincodes      = make(map[string]string)
 	gatewayConnection *GatewayConnection
 	gateway           *client.Gateway
 	network           *client.Network
@@ -248,6 +248,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I prepare to (submit|evaluate) an? (\S+) transaction$`, prepareSubmit)
 	s.Step(`^I set the transaction arguments? to (.+)$`, setArguments)
 	s.Step(`^I set transient data on the transaction to$`, setTransientData)
+	s.Step(`^I set the endorsing organizations? to (.+)$`, setEndorsingOrgs)
 	s.Step(`^I do off-line signing as user (\S+) in MSP (\S+)$`, useOfflineSigner)
 	s.Step(`^I invoke the transaction$`, invokeTransaction)
 	s.Step(`^I use the (\S+) contract$`, useContract)
@@ -317,10 +318,34 @@ func createCryptoMaterial() error {
 
 func deployChaincode(ccType, ccName, version, channelName, signaturePolicy string) error {
 	fmt.Println("deployChaincode")
+	exists := false
+	sequence := "1"
 	mangledName := ccName + version + channelName
-	if _, ok := runningChaincodes[mangledName]; ok {
-		// already exists
-		return nil
+	if policy, ok := runningChaincodes[mangledName]; ok {
+		if policy == signaturePolicy {
+			return nil
+		}
+		// Already exists but different signature policy...
+		// No need to re-install, just increment the sequence number and approve/commit new signature policy
+		exists = true
+		out, err := dockerCommandWithTLS(
+			"exec", "org1_cli", "peer", "lifecycle", "chaincode", "querycommitted",
+			"-o", "orderer.example.com:7050", "--channelID", channelName, "--name", ccName,
+		)
+		if err != nil {
+			return err
+		}
+
+		pattern := regexp.MustCompile(".*Sequence: ([0-9]+),.*")
+		match := pattern.FindStringSubmatch(out)
+		if len(match) != 2 {
+			return fmt.Errorf("cannot find installed chaincode for Org1")
+		}
+		i, err := strconv.Atoi(match[1])
+		if err != nil {
+			return err
+		}
+		sequence = fmt.Sprintf("%d", i+1)
 	}
 
 	ccPath := "github.com/chaincode/" + ccType + "/" + ccName
@@ -331,23 +356,25 @@ func deployChaincode(ccType, ccName, version, channelName, signaturePolicy strin
 	ccPackage := ccName + ".tar.gz"
 
 	for _, org := range orgs {
-		_, err := dockerCommand(
-			"exec", org.cli, "peer", "lifecycle", "chaincode", "package", ccPackage,
-			"--lang", ccType,
-			"--label", ccLabel,
-			"--path", ccPath,
-		)
-		if err != nil {
-			return err
-		}
-
-		for _, peer := range org.peers {
-			env := "CORE_PEER_ADDRESS=" + peer
-			_, err = dockerCommand(
-				"exec", "-e", env, org.cli, "peer", "lifecycle", "chaincode", "install", ccPackage,
+		if !exists {
+			_, err := dockerCommand(
+				"exec", org.cli, "peer", "lifecycle", "chaincode", "package", ccPackage,
+				"--lang", ccType,
+				"--label", ccLabel,
+				"--path", ccPath,
 			)
 			if err != nil {
 				return err
+			}
+
+			for _, peer := range org.peers {
+				env := "CORE_PEER_ADDRESS=" + peer
+				_, err := dockerCommand(
+					"exec", "-e", env, org.cli, "peer", "lifecycle", "chaincode", "install", ccPackage,
+				)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
@@ -372,7 +399,7 @@ func deployChaincode(ccType, ccName, version, channelName, signaturePolicy strin
 			"--name", ccName,
 			"--version", version,
 			"--signature-policy", signaturePolicy,
-			"--sequence", "1",
+			"--sequence", sequence,
 			"--waitForEvent",
 		)
 		if err != nil {
@@ -387,7 +414,7 @@ func deployChaincode(ccType, ccName, version, channelName, signaturePolicy strin
 		"--name", ccName,
 		"--version", version,
 		"--signature-policy", signaturePolicy,
-		"--sequence", "1",
+		"--sequence", sequence,
 		"--waitForEvent",
 		"--peerAddresses", "peer0.org1.example.com:7051",
 		"--peerAddresses", "peer0.org2.example.com:8051",
@@ -403,7 +430,7 @@ func deployChaincode(ccType, ccName, version, channelName, signaturePolicy strin
 		return err
 	}
 
-	runningChaincodes[mangledName] = true
+	runningChaincodes[mangledName] = signaturePolicy
 	time.Sleep(10 * time.Second)
 
 	return nil
@@ -651,6 +678,16 @@ func setTransientData(table *messages.PickleStepArgument_PickleTable) error {
 	}
 
 	transaction.AddOptions(client.WithTransient(transient))
+	return nil
+}
+
+func setEndorsingOrgs(argsJSON string) error {
+	args, err := unmarshalArgs(argsJSON)
+	if err != nil {
+		return err
+	}
+
+	transaction.AddOptions(client.WithEndorsingOrganizations(args...))
 	return nil
 }
 

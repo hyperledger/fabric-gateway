@@ -12,7 +12,7 @@ require (
 	github.com/golang/protobuf v1.4.3
 	github.com/hyperledger/fabric v2.1.1+incompatible
 	github.com/hyperledger/fabric-amcl v0.0.0-20200424173818-327c9e2cf77a // indirect
-	github.com/hyperledger/fabric-protos-go v0.0.0-20210422135545-37e930696e2a
+	github.com/hyperledger/fabric-protos-go v0.0.0-20210528200356-82833ecdac31
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/mitchellh/mapstructure v1.4.0 // indirect
 	github.com/onsi/ginkgo v1.14.2 // indirect

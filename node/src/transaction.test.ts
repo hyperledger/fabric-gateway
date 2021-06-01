@@ -94,6 +94,12 @@ describe('Transaction', () => {
         expect(actual).toBe(expectedResult);
     });
 
+    it('sets endorsing orgs', async () => {
+        await contract.submit('TRANSACTION_NAME', { endorsingOrganizations: ['org1', 'org3']});
+        const actualOrgs = client.endorse.mock.calls[0][0].endorsing_organizations;
+        expect(actualOrgs).toStrictEqual(['org1', 'org3']);
+    });
+
     it('uses signer for submit', async () => {
         signer.mockResolvedValue(Buffer.from('MY_SIGNATURE'));
 

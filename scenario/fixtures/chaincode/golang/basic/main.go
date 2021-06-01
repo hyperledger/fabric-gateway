@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
@@ -62,6 +63,36 @@ func (s *SmartContract) Get(ctx contractapi.TransactionContextInterface, key str
 	}
 
 	return string(value), nil
+}
+
+// GetPeerOrg returns the mspid of the current peer
+func (s *SmartContract) GetPeerOrg(ctx contractapi.TransactionContextInterface) (string, error) {
+	peerOrgID, err := shim.GetMSPID()
+	if err != nil {
+		return "", fmt.Errorf("failed getting client's orgID: %v", err)
+	}
+
+	return peerOrgID, nil
+}
+
+// CheckEndorsingOrg checks that the peer org is present in the given transient data
+func (s *SmartContract) CheckEndorsingOrg(ctx contractapi.TransactionContextInterface) (string, error) {
+	transient, err := ctx.GetStub().GetTransient()
+	if err != nil {
+		return "", fmt.Errorf("failed to get transient data: %w", err)
+	}
+
+	peerOrgID, err := shim.GetMSPID()
+	if err != nil {
+		return "", fmt.Errorf("failed getting client's orgID: %v", err)
+	}
+	// collection := fmt.Sprintf("_implicit_org_%s", peerOrgID)
+
+	if _, ok := transient[peerOrgID]; ok {
+		return "success", nil
+	}
+
+	return "", fmt.Errorf("endorser in this org (%s) should not have been invoked", peerOrgID)
 }
 
 // ErrorMessage returns an error response containing the given message

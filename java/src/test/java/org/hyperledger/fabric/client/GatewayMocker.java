@@ -99,6 +99,12 @@ public final class GatewayMocker implements AutoCloseable {
         return chaincodeInvocationSpec.getChaincodeSpec();
     }
 
+    public ProposalPackage.ChaincodeProposalPayload getProposalPayload(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
+        ProposalPackage.Proposal proposal = getProposal(proposedTransaction);
+        ProposalPackage.ChaincodeProposalPayload chaincodeProposalPayload = ProposalPackage.ChaincodeProposalPayload.parseFrom(proposal.getPayload());
+        return chaincodeProposalPayload;
+    }
+
     public ProposalPackage.Proposal getProposal(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
         return ProposalPackage.Proposal.parseFrom(proposedTransaction.getProposalBytes());
     }

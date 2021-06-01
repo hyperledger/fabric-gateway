@@ -23,6 +23,7 @@ type proposalBuilder struct {
 	chaincodeID     string
 	transactionName string
 	transient       map[string][]byte
+	endorsingOrgs   []string
 	args            [][]byte
 }
 
@@ -42,8 +43,9 @@ func (builder *proposalBuilder) build() (*Proposal, error) {
 	}
 
 	proposedTransaction := &gateway.ProposedTransaction{
-		TransactionId: transactionID,
-		Proposal:      signedProposalProto,
+		TransactionId:          transactionID,
+		Proposal:               signedProposalProto,
+		EndorsingOrganizations: builder.endorsingOrgs,
 	}
 
 	proposal := &Proposal{
@@ -119,9 +121,20 @@ func stringsAsBytes(strings []string) [][]byte {
 }
 
 // WithTransient specifies the transient data associated with a transaction proposal.
+// This is usually used in combination with WithEndorsingOrganizations for private data scenarios
 func WithTransient(transient map[string][]byte) ProposalOption {
 	return func(builder *proposalBuilder) error {
 		builder.transient = transient
+		return nil
+	}
+}
+
+// WithEndorsingOrganizations specifies the organizations that should endorse the transaction proposal.
+// No other organizations will be sent the proposal.  This is usually used in combination with WithTransient
+// for private data scenarios, or for state-based endorsement when specific organizations have to endorse the proposal.
+func WithEndorsingOrganizations(mspids ...string) ProposalOption {
+	return func(builder *proposalBuilder) error {
+		builder.endorsingOrgs = mspids
 		return nil
 	}
 }

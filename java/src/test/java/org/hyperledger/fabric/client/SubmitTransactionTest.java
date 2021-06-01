@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -32,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -136,6 +138,51 @@ public final class SubmitTransactionTest {
                 .toArray(byte[][]::new);
 
         assertThat(chaincodeArgs).isDeepEqualTo(arguments);
+    }
+
+    @Test
+    void sends_transient_data() throws Exception {
+        Contract contract = network.getContract("CHAINCODE_ID");
+        contract.newProposal("TRANSACTION_NAME")
+                .putTransient("uno", "one".getBytes(StandardCharsets.UTF_8))
+                .putTransient("dos", "two".getBytes(StandardCharsets.UTF_8))
+                .build()
+                .endorse()
+                .submit();
+
+        EndorseRequest request = mocker.captureEndorse();
+        Map<String, ByteString> transientData = mocker.getProposalPayload(request.getProposedTransaction()).getTransientMapMap();
+        assertThat(transientData).containsOnly(
+                entry("uno", ByteString.copyFrom("one", StandardCharsets.UTF_8)),
+                entry("dos", ByteString.copyFrom("two", StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    void sets_endorsing_orgs() throws Exception {
+        Contract contract = network.getContract("CHAINCODE_ID");
+        contract.newProposal("TRANSACTION_NAME")
+                .setEndorsingOrganizations("Org1MSP", "Org3MSP")
+                .build()
+                .endorse()
+                .submit();
+
+        EndorseRequest request = mocker.captureEndorse();
+        List<String> endorsingOrgs = request.getEndorsingOrganizationsList();
+        assertThat(endorsingOrgs).containsExactlyInAnyOrder("Org1MSP", "Org3MSP");
+    }
+
+    @Test
+    void sets_endorsing_orgs_offline_signing() throws Exception {
+        Contract contract = network.getContract("CHAINCODE_ID");
+        Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME")
+                .setEndorsingOrganizations("Org1MSP", "Org3MSP")
+                .build();
+        Proposal signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        signedProposal.endorse().submit();
+
+        EndorseRequest request = mocker.captureEndorse();
+        List<String> endorsingOrgs = request.getEndorsingOrganizationsList();
+        assertThat(endorsingOrgs).containsExactlyInAnyOrder("Org1MSP", "Org3MSP");
     }
 
     @Test

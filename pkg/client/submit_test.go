@@ -511,6 +511,48 @@ func TestSubmitTransaction(t *testing.T) {
 		}
 	})
 
+	t.Run("Sends private data with submit", func(t *testing.T) {
+		var actualOrgs []string
+		expectedOrgs := []string{"MY_ORG"}
+		var actualPrice []byte
+		expectedPrice := []byte("3000")
+		mockController := gomock.NewController(t)
+		defer mockController.Finish()
+
+		mockClient := NewMockGatewayClient(mockController)
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, in *gateway.EndorseRequest) {
+				actualOrgs = in.EndorsingOrganizations
+				transient := test.AssertUnmarshallProposalPayload(t, in.ProposedTransaction).TransientMap
+				actualPrice = transient["price"]
+			}).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
+			Times(1)
+		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+			Return(nil, nil)
+		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
+			Return(newCommitStatusResponse(peer.TxValidationCode_VALID), nil)
+
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+
+		privateData := map[string][]byte{
+			"price": []byte("3000"),
+		}
+
+		_, err := contract.Submit("transaction", WithTransient(privateData), WithEndorsingOrganizations("MY_ORG"))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(actualOrgs) != 1 && expectedOrgs[0] != actualOrgs[0] {
+			t.Fatalf("Expected %v, got %v", expectedOrgs, actualOrgs)
+		}
+
+		if !bytes.Equal(actualPrice, expectedPrice) {
+			t.Fatalf("Expected %s, got %s", expectedPrice, actualPrice)
+		}
+	})
+
 	t.Run("Uses signer for commit status", func(t *testing.T) {
 		var actual []byte
 		expected := []byte("MY_SIGNATURE")
