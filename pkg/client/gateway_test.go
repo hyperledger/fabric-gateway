@@ -93,10 +93,7 @@ func TestGateway(t *testing.T) {
 
 	t.Run("GetNetwork returns correctly named Network", func(t *testing.T) {
 		networkName := "network"
-		mockController := gomock.NewController(t)
-		defer mockController.Finish()
-
-		mockClient := NewMockGatewayClient(mockController)
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		gateway := AssertNewTestGateway(t, WithClient(mockClient))
 
 		network := gateway.GetNetwork(networkName)
@@ -110,10 +107,7 @@ func TestGateway(t *testing.T) {
 	})
 
 	t.Run("Identity returns connecting identity", func(t *testing.T) {
-		mockController := gomock.NewController(t)
-		defer mockController.Finish()
-
-		mockClient := NewMockGatewayClient(mockController)
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		gateway := AssertNewTestGateway(t, WithIdentity(id), WithClient(mockClient))
 
 		result := gateway.Identity()

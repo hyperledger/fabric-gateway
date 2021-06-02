@@ -49,10 +49,7 @@ func TestIdentity(t *testing.T) {
 
 	t.Run("Evaluate uses client identity for proposals", func(t *testing.T) {
 		var actual []byte
-		mockController := gomock.NewController(t)
-		defer mockController.Finish()
-
-		mockClient := NewMockGatewayClient(mockController)
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		evaluateResponse := gateway.EvaluateResponse{
 			Result: &peer.Response{
 				Payload: nil,
@@ -78,10 +75,7 @@ func TestIdentity(t *testing.T) {
 
 	t.Run("Submit uses client identity for proposals", func(t *testing.T) {
 		var actual []byte
-		mockController := gomock.NewController(t)
-		defer mockController.Finish()
-
-		mockClient := NewMockGatewayClient(mockController)
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		endorseResponse := gateway.EndorseResponse{
 			PreparedTransaction: &common.Envelope{},
 			Result: &peer.Response{
