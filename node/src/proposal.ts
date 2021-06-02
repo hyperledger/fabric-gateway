@@ -8,7 +8,7 @@ import { GatewayClient } from './client';
 import { common, gateway, protos } from './protos/protos';
 import { SigningIdentity } from './signingidentity';
 import { Transaction, TransactionImpl } from './transaction';
-import * as util from 'util';
+import util from 'util';
 
 /**
  * Proposal represents a transaction proposal that can be sent to peers for endorsement or evaluated as a query.

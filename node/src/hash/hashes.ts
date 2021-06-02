@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as crypto from 'crypto';
+import crypto from 'crypto';
 import { Hash } from './hash';
 
 /**

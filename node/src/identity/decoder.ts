@@ -7,8 +7,8 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import * as asn1 from 'asn1.js';
-import * as crypto from 'crypto';
+import asn1 from 'asn1.js';
+import crypto from 'crypto';
 
 export function ecPrivateKeyAsRaw(privateKey: crypto.KeyObject): { privateKey: Buffer, curveObjectId: number[] } {
     const ECPrivateKey = asn1.define('ECPrivateKey', function() {

@@ -121,6 +121,13 @@ public final class TestUtils {
                 .build();
     }
 
+    public CommitStatusResponse newCommitStatusResponse(TransactionPackage.TxValidationCode status, long blockNumber) {
+        return CommitStatusResponse.newBuilder()
+                .setResult(status)
+                .setBlockNumber(blockNumber)
+                .build();
+    }
+
     private String newFakeTransactionId() {
         return Long.toHexString(currentTransactionId.incrementAndGet());
     }

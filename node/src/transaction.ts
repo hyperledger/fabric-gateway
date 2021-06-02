@@ -5,7 +5,7 @@
  */
 
 import { SubmittedTransaction, SubmittedTransactionImpl } from './submittedtransaction';
-import * as util from 'util';
+import util from 'util';
 import { GatewayClient } from './client';
 import { common, gateway } from './protos/protos';
 import { SigningIdentity } from './signingidentity';
