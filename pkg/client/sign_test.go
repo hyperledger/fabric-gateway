@@ -42,10 +42,7 @@ func TestSign(t *testing.T) {
 			return expected, nil
 		}
 		var actual []byte
-		mockController := gomock.NewController(t)
-		defer mockController.Finish()
-
-		mockClient := NewMockGatewayClient(mockController)
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
 				actual = in.ProposedTransaction.Signature
@@ -70,10 +67,7 @@ func TestSign(t *testing.T) {
 			return expected, nil
 		}
 		var actual []byte
-		mockController := gomock.NewController(t)
-		defer mockController.Finish()
-
-		mockClient := NewMockGatewayClient(mockController)
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
 				actual = in.ProposedTransaction.Signature
@@ -102,10 +96,7 @@ func TestSign(t *testing.T) {
 			return expected, nil
 		}
 		var actual []byte
-		mockController := gomock.NewController(t)
-		defer mockController.Finish()
-
-		mockClient := NewMockGatewayClient(mockController)
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Return(&endorseResponse, nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
@@ -129,10 +120,7 @@ func TestSign(t *testing.T) {
 	})
 
 	t.Run("Default error implementation is used if no signing implementation supplied", func(t *testing.T) {
-		mockController := gomock.NewController(t)
-		defer mockController.Finish()
-
-		mockClient := NewMockGatewayClient(mockController)
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
 			Return(&evaluateResponse, nil).
 			AnyTimes()
