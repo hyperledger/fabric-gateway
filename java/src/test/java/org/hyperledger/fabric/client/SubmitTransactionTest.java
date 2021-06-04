@@ -400,4 +400,18 @@ public final class SubmitTransactionTest {
 
         assertThat(commit.isSuccessful()).isFalse();
     }
+
+    @Test
+    void commit_returns_block_number() {
+        doReturn(utils.newCommitStatusResponse(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT, 101))
+                .when(stub).commitStatus(any());
+
+        Contract contract = network.getContract("CHAINCODE_ID");
+        Commit commit = contract.newProposal("TRANSACTION_NAME")
+                .build()
+                .endorse()
+                .submitAsync();
+
+        assertThat(commit.getBlockNumber()).isEqualTo(101);
+    }
 }

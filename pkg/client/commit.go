@@ -22,7 +22,7 @@ type Commit struct {
 	signingID     *signingIdentity
 	transactionID string
 	signedRequest *gateway.SignedCommitStatusRequest
-	status        peer.TxValidationCode
+	response      *gateway.CommitStatusResponse
 }
 
 func newCommit(
@@ -36,7 +36,6 @@ func newCommit(
 		signingID:     signingID,
 		transactionID: transactionID,
 		signedRequest: signedRequest,
-		status:        -1,
 	}
 }
 
@@ -58,23 +57,12 @@ func (commit *Commit) Digest() []byte {
 // Status of the committed transaction. If the transaction has not yet committed, this call blocks until the commit
 // occurs.
 func (commit *Commit) Status() (peer.TxValidationCode, error) {
-	if commit.status < 0 {
-		if err := commit.sign(); err != nil {
-			return 0, err
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-		defer cancel()
-
-		status, err := commit.client.CommitStatus(ctx, commit.signedRequest)
-		if err != nil {
-			return 0, fmt.Errorf("failed to obtain transaction commit status: %w", err)
-		}
-
-		commit.status = status.Result
+	response, err := commit.commitStatus()
+	if err != nil {
+		return 0, err
 	}
 
-	return commit.status, nil
+	return response.Result, nil
 }
 
 // Successful returns true if the transaction committed successfully; otherwise false. If the transaction has not yet
@@ -91,6 +79,37 @@ func (commit *Commit) Successful() (bool, error) {
 // TransactionID of the transaction.
 func (commit *Commit) TransactionID() string {
 	return commit.transactionID
+}
+
+// BlockNumber in which the transaction committed. If the transaction has not yet committed, this call blocks until the
+// commit occurs.
+func (commit *Commit) BlockNumber() (uint64, error) {
+	response, err := commit.commitStatus()
+	if err != nil {
+		return 0, err
+	}
+
+	return response.BlockNumber, nil
+}
+
+func (commit *Commit) commitStatus() (*gateway.CommitStatusResponse, error) {
+	if commit.response == nil {
+		if err := commit.sign(); err != nil {
+			return nil, err
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		response, err := commit.client.CommitStatus(ctx, commit.signedRequest)
+		if err != nil {
+			return nil, fmt.Errorf("failed to obtain transaction commit status: %w", err)
+		}
+
+		commit.response = response
+	}
+
+	return commit.response, nil
 }
 
 func (commit *Commit) sign() error {

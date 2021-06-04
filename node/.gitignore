@@ -4,3 +4,4 @@ coverage/
 *.tgz
 src/protos/
 apidocs/
+package-lock.json

@@ -44,4 +44,10 @@ public interface Commit {
      */
     String getTransactionId();
 
+    /**
+     * Get the block number in which the transaction committed. If the transaction has not yet committed, this method
+     * blocks until the commit occurs.
+     * @return A block number.
+     */
+    long getBlockNumber();
 }

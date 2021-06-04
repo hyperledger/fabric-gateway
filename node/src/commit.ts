@@ -5,9 +5,10 @@
  */
 
 import { SigningIdentity } from './signingidentity';
-import * as util from 'util';
+import util from 'util';
 import { GatewayClient } from './client';
 import { gateway, protos } from './protos/protos';
+import Long from 'long';
 
 /**
  * Allows access to information about a transaction that is committed to the ledger.
@@ -39,6 +40,13 @@ export interface Commit {
      * Get the ID of the transaction.
      */
     getTransactionId(): string;
+
+
+    /**
+     * Get the block number in which the transaction committed. If the transaction has not yet committed, this method
+     * blocks until the commit occurs.
+     */
+    getBlockNumber(): Promise<Long>;
 }
 
 export interface CommitImplOptions {
@@ -53,7 +61,7 @@ export class CommitImpl implements Commit {
     readonly #signingIdentity: SigningIdentity
     readonly #transactionId: string;
     readonly #signedRequest: gateway.ISignedCommitStatusRequest;
-    #status?: protos.TxValidationCode;
+    #response?: gateway.ICommitStatusResponse;
 
     constructor(options: CommitImplOptions) {
         this.#client = options.client;
@@ -76,13 +84,8 @@ export class CommitImpl implements Commit {
     }
 
     async getStatus(): Promise<protos.TxValidationCode> {
-        if (this.#status === undefined) {
-            await this.sign();
-            const response = await this.#client.commitStatus(this.#signedRequest);
-            this.#status = response.result ?? protos.TxValidationCode.INVALID_OTHER_REASON;
-        }
-
-        return this.#status;
+        const response = await this.getCommitStatus();
+        return response.result ?? protos.TxValidationCode.INVALID_OTHER_REASON;
     }
 
     async isSuccessful(): Promise<boolean> {
@@ -94,8 +97,32 @@ export class CommitImpl implements Commit {
         return this.#transactionId
     }
 
+    async getBlockNumber(): Promise<Long> {
+        const response = await this.getCommitStatus();
+        const blockNumber = response.block_number;
+
+        if (blockNumber == undefined) {
+            throw new Error('Missing block number');
+        }
+
+        if (Long.isLong(blockNumber)) {
+            return blockNumber;
+        }
+
+        return Long.fromInt(blockNumber, true);
+    }
+
     setSignature(signature: Uint8Array): void {
         this.#signedRequest.signature = signature;
+    }
+
+    private async getCommitStatus(): Promise<gateway.ICommitStatusResponse> {
+        if (this.#response === undefined) {
+            await this.sign();
+            this.#response = await this.#client.commitStatus(this.#signedRequest);
+        }
+
+        return this.#response;
     }
 
     private async sign(): Promise<void> {

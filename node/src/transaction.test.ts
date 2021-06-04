@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import Long from 'long';
 import { GatewayClient } from './client';
 import { Contract } from './contract';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
@@ -163,5 +164,40 @@ describe('Transaction', () => {
         const success = await commit.isSuccessful();
 
         expect(success).toBe(false);
+    });
+
+    it('commit returns Long block number', async () => {
+        client.commitStatus.mockResolvedValue({
+            result: protos.TxValidationCode.MVCC_READ_CONFLICT,
+            block_number: Long.fromInt(101, true),
+        });
+
+        const commit = await contract.submitAsync('TRANSACTION_NAME');
+        const blockNumber = await commit.getBlockNumber();
+
+        expect(blockNumber).toEqual(Long.fromInt(101, true));
+    });
+
+    it('commit returns number block number', async () => {
+        client.commitStatus.mockResolvedValue({
+            result: protos.TxValidationCode.MVCC_READ_CONFLICT,
+            block_number: 101,
+        });
+
+        const commit = await contract.submitAsync('TRANSACTION_NAME');
+        const blockNumber = await commit.getBlockNumber();
+
+        expect(blockNumber).toEqual(Long.fromInt(101, true));
+    });
+
+    it('commit throws accessing missing block number', async () => {
+        client.commitStatus.mockResolvedValue({
+            result: protos.TxValidationCode.MVCC_READ_CONFLICT,
+        });
+
+        const commit = await contract.submitAsync('TRANSACTION_NAME');
+        await expect(() => commit.getBlockNumber())
+            .rejects
+            .toThrow();
     });
 });
