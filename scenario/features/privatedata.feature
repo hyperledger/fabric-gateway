@@ -40,3 +40,15 @@ Feature: Private data
         And I invoke the transaction
         Then the response should be "success"
 
+    Scenario: Evaluate on org1
+        When I prepare to evaluate a getPeerOrg transaction
+        And I set the endorsing organizations to ["Org1MSP"]
+        And I invoke the transaction
+        Then the response should be "Org1MSP"
+
+    Scenario: Evaluate on org2
+        When I prepare to evaluate a getPeerOrg transaction
+        And I set the endorsing organizations to ["Org2MSP"]
+        And I invoke the transaction
+        Then the response should be "Org2MSP"
+

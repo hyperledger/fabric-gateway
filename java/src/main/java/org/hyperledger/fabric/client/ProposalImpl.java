@@ -52,6 +52,7 @@ final class ProposalImpl implements Proposal {
                 .setTransactionId(proposedTransaction.getTransactionId())
                 .setChannelId(channelName)
                 .setProposedTransaction(proposedTransaction.getProposal())
+                .addAllTargetOrganizations(proposedTransaction.getEndorsingOrganizationsList())
                 .build();
         return client.evaluate(evaluateRequest)
                 .getResult()

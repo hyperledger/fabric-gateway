@@ -189,6 +189,12 @@ describe('Proposal', () => {
             expect(argStrings.slice(1)).toStrictEqual(expected);
         });
 
+        it('sets endorsing orgs', async () => {
+            await contract.evaluate('TRANSACTION_NAME', { endorsingOrganizations: ['org1']});
+            const actualOrgs = client.evaluate.mock.calls[0][0].target_organizations;
+            expect(actualOrgs).toStrictEqual(['org1']);
+        });
+
         it('uses signer', async () => {
             signer.mockResolvedValue(Buffer.from('MY_SIGNATURE'));
 

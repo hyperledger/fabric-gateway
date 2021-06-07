@@ -8,6 +8,7 @@ package org.hyperledger.fabric.client;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -20,14 +21,15 @@ import io.grpc.StatusRuntimeException;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.X509Identity;
+import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
 import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -234,5 +236,48 @@ public final class EvaluateTransactionTest {
         String actual = request.getTransactionId();
 
         assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void sends_transient_data() throws Exception {
+        Contract contract = network.getContract("CHAINCODE_ID");
+        contract.newProposal("TRANSACTION_NAME")
+                .putTransient("uno", "one".getBytes(StandardCharsets.UTF_8))
+                .putTransient("dos", "two".getBytes(StandardCharsets.UTF_8))
+                .build()
+                .evaluate();
+
+        EvaluateRequest request = mocker.captureEvaluate();
+        Map<String, ByteString> transientData = mocker.getProposalPayload(request.getProposedTransaction()).getTransientMapMap();
+        assertThat(transientData).containsOnly(
+                entry("uno", ByteString.copyFrom("one", StandardCharsets.UTF_8)),
+                entry("dos", ByteString.copyFrom("two", StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    void sets_endorsing_orgs() throws Exception {
+        Contract contract = network.getContract("CHAINCODE_ID");
+        contract.newProposal("TRANSACTION_NAME")
+                .setEndorsingOrganizations("Org1MSP", "Org3MSP")
+                .build()
+                .evaluate();
+
+        EvaluateRequest request = mocker.captureEvaluate();
+        List<String> endorsingOrgs = request.getTargetOrganizationsList();
+        assertThat(endorsingOrgs).containsExactlyInAnyOrder("Org1MSP", "Org3MSP");
+    }
+
+    @Test
+    void sets_endorsing_orgs_offline_signing() throws Exception {
+        Contract contract = network.getContract("CHAINCODE_ID");
+        Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME")
+                .setEndorsingOrganizations("Org1MSP", "Org3MSP")
+                .build();
+        Proposal signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        signedProposal.evaluate();
+
+        EvaluateRequest request = mocker.captureEvaluate();
+        List<String> endorsingOrgs = request.getTargetOrganizationsList();
+        assertThat(endorsingOrgs).containsExactlyInAnyOrder("Org1MSP", "Org3MSP");
     }
 }
