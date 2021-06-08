@@ -90,6 +90,7 @@ func (proposal *Proposal) Evaluate() ([]byte, error) {
 		TransactionId:       proposal.proposedTransaction.TransactionId,
 		ChannelId:           proposal.channelID,
 		ProposedTransaction: proposal.proposedTransaction.Proposal,
+		TargetOrganizations: proposal.proposedTransaction.EndorsingOrganizations,
 	}
 	response, err := proposal.client.Evaluate(ctx, evaluateRequest)
 	if err != nil {

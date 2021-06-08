@@ -278,4 +278,38 @@ func TestEvaluateTransaction(t *testing.T) {
 			t.Fatalf("Expected %s, got %s", expected, actual)
 		}
 	})
+
+	t.Run("Sends private data with evaluate", func(t *testing.T) {
+		var actualOrgs []string
+		expectedOrgs := []string{"MY_ORG"}
+		var actualPrice []byte
+		expectedPrice := []byte("3000")
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, in *gateway.EvaluateRequest) {
+				actualOrgs = in.TargetOrganizations
+				transient := test.AssertUnmarshallProposalPayload(t, in.ProposedTransaction).TransientMap
+				actualPrice = transient["price"]
+			}).
+			Return(newEvaluateResponse(nil), nil)
+
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+
+		privateData := map[string][]byte{
+			"price": []byte("3000"),
+		}
+
+		_, err := contract.Evaluate("transaction", WithTransient(privateData), WithEndorsingOrganizations("MY_ORG"))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(actualOrgs) != 1 && expectedOrgs[0] != actualOrgs[0] {
+			t.Fatalf("Expected %v, got %v", expectedOrgs, actualOrgs)
+		}
+
+		if !bytes.Equal(actualPrice, expectedPrice) {
+			t.Fatalf("Expected %s, got %s", expectedPrice, actualPrice)
+		}
+	})
 }
