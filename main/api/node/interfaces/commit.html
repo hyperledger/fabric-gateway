@@ -92,6 +92,7 @@
 						<section class="tsd-index-section ">
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="commit.html#getblocknumber" class="tsd-kind-icon">get<wbr>Block<wbr>Number</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="commit.html#getbytes" class="tsd-kind-icon">get<wbr>Bytes</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="commit.html#getdigest" class="tsd-kind-icon">get<wbr>Digest</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="commit.html#getstatus" class="tsd-kind-icon">get<wbr>Status</a></li>
@@ -105,6 +106,29 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Methods</h2>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
+					<a name="getblocknumber" class="tsd-anchor"></a>
+					<h3>get<wbr>Block<wbr>Number</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Block<wbr>Number<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Long</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/5977600/node/src/commit.ts#L49">commit.ts:49</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Get the block number in which the transaction committed. If the transaction has not yet committed, this method
+									blocks until the commit occurs.</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Long</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
 					<a name="getbytes" class="tsd-anchor"></a>
 					<h3>get<wbr>Bytes</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
@@ -114,7 +138,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/f8cb3c5/node/src/commit.ts#L19">commit.ts:19</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/5977600/node/src/commit.ts#L20">commit.ts:20</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -136,7 +160,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/f8cb3c5/node/src/commit.ts#L24">commit.ts:24</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/5977600/node/src/commit.ts#L25">commit.ts:25</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -158,7 +182,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/f8cb3c5/node/src/commit.ts#L30">commit.ts:30</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/5977600/node/src/commit.ts#L31">commit.ts:31</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -181,7 +205,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/f8cb3c5/node/src/commit.ts#L41">commit.ts:41</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/5977600/node/src/commit.ts#L42">commit.ts:42</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -203,7 +227,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/f8cb3c5/node/src/commit.ts#L36">commit.ts:36</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/5977600/node/src/commit.ts#L37">commit.ts:37</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -233,6 +257,9 @@
 					<li class="current tsd-kind-interface">
 						<a href="commit.html" class="tsd-kind-icon">Commit</a>
 						<ul>
+							<li class=" tsd-kind-method tsd-parent-kind-interface">
+								<a href="commit.html#getblocknumber" class="tsd-kind-icon">get<wbr>Block<wbr>Number</a>
+							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-interface">
 								<a href="commit.html#getbytes" class="tsd-kind-icon">get<wbr>Bytes</a>
 							</li>
