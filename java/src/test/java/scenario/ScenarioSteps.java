@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -69,6 +70,8 @@ public class ScenarioSteps {
     static {
         Map<String, String> mspIdToOrgMap = new HashMap<>();
         mspIdToOrgMap.put("Org1MSP", "org1.example.com");
+        mspIdToOrgMap.put("Org2MSP", "org2.example.com");
+        mspIdToOrgMap.put("Org3MSP", "org3.example.com");
         MSP_ID_TO_ORG_MAP = Collections.unmodifiableMap(mspIdToOrgMap);
     }
 
@@ -99,11 +102,8 @@ public class ScenarioSteps {
         ORG_CONFIGS = Collections.unmodifiableCollection(orgConfigs);
     }
 
-    private Gateway.Builder gatewayBuilder;
-    private Gateway gateway;
-    private Network network;
-    private Contract contract;
-    private TransactionInvocation transactionInvocation;
+    private GatewayContext currentGateway;
+    private Map<String, GatewayContext> gateways = new HashMap<>();
 
     private static final class OrgConfig {
         final String cli;
@@ -139,11 +139,32 @@ public class ScenarioSteps {
         }
     }
 
+    private static final class GatewayContext {
+        private Gateway.Builder gatewayBuilder;
+        private ManagedChannel channel;
+        private Gateway gateway;
+        private Network network;
+        private Contract contract;
+        private TransactionInvocation transactionInvocation;
+    }
+
     @After
     public void afterEach() {
-        if (gateway != null) {
-            gateway.close();
-        }
+        gateways.values().stream().forEach(gateway -> {
+            if (gateway.gateway != null) {
+                gateway.gateway.close();
+            }
+            if (gateway.channel.isShutdown()) {
+                return;
+            }
+            gateway.channel.shutdownNow();
+            try {
+                gateway.channel.awaitTermination(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                // Ignore
+            }
+
+        });
     }
 
     @Given("I have deployed a Fabric network")
@@ -223,6 +244,12 @@ public class ScenarioSteps {
         String ccLabel = ccName + "v" + version;
         String ccPackage = ccName + ".tar.gz";
 
+        String collectionsConfig = null;
+        String collectionsFile = Paths.get("chaincode", ccType, ccName, "collections_config.json").toString();
+        if (Paths.get(FIXTURES_DIR.toString(), collectionsFile).toAbsolutePath().toFile().exists()) {
+            collectionsConfig = Paths.get("/opt/gopath/src/github.com", collectionsFile).toString();
+        }
+
         for (OrgConfig org : ORG_CONFIGS) {
             if (!exists) {
                 exec("docker", "exec", org.cli, "peer", "lifecycle", "chaincode", "package", ccPackage, "--lang",
@@ -249,6 +276,9 @@ public class ScenarioSteps {
                     "approveformyorg", "--package-id", packageId, "--channelID", channelName, "--name", ccName,
                     "--version", version, "--signature-policy", signaturePolicy,
                     "--sequence", sequence, "--waitForEvent");
+            if(collectionsConfig != null) {
+                Collections.addAll(approveCommand, "--collections-config", collectionsConfig);
+            }
             approveCommand.addAll(tlsOptions);
             exec(approveCommand);
         }
@@ -268,6 +298,9 @@ public class ScenarioSteps {
                 "/etc/hyperledger/configtx/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
                 "--tlsRootCertFiles",
                 "/etc/hyperledger/configtx/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt");
+        if(collectionsConfig != null) {
+            Collections.addAll(commitCommand, "--collections-config", collectionsConfig);
+        }
         commitCommand.addAll(tlsOptions);
         exec(commitCommand);
 
@@ -275,17 +308,21 @@ public class ScenarioSteps {
         Thread.sleep(10000);
     }
 
-    @Given("I create a gateway for user {word} in MSP {word}")
-    public void createGateway(String user, String mspId) throws CertificateException, InvalidKeyException, IOException {
-        gatewayBuilder = Gateway.newInstance()
+    @Given("I create a gateway named {word} for user {word} in MSP {word}")
+    public void createGateway(String name, String user, String mspId) throws CertificateException, InvalidKeyException, IOException {
+        currentGateway = new GatewayContext();
+        currentGateway.gatewayBuilder = Gateway.newInstance()
                 .identity(newIdentity(user, mspId))
                 .signer(newSigner(user, mspId));
+        gateways.put(name, currentGateway);
     }
 
-    @Given("I create a gateway without signer for user {word} in MSP {word}")
-    public void createGatewayWithoutSigner(String user, String mspId) throws CertificateException, IOException {
-        gatewayBuilder = Gateway.newInstance()
+    @Given("I create a gateway named {word} without signer for user {word} in MSP {word}")
+    public void createGatewayWithoutSigner(String name, String user, String mspId) throws CertificateException, IOException {
+        currentGateway = new GatewayContext();
+        currentGateway.gatewayBuilder = Gateway.newInstance()
                 .identity(newIdentity(user, mspId));
+        gateways.put(name, currentGateway);
     }
 
     @Given("I connect the gateway to {word}")
@@ -296,43 +333,49 @@ public class ScenarioSteps {
                 .overrideAuthority(info.serverNameOverride)
                 .build();
 
-        gateway = gatewayBuilder.connection(channel).connect();
+        currentGateway.gateway = currentGateway.gatewayBuilder.connection(channel).connect();
+        currentGateway.channel = channel;
+    }
+
+    @Given("I use the gateway named {word}")
+    public void useGateway(String name) {
+        currentGateway = gateways.get(name);
     }
 
     @Given("I use the {word} network")
     public void useNetwork(String networkName) {
-        network = gateway.getNetwork(networkName);
+        currentGateway.network = currentGateway.gateway.getNetwork(networkName);
     }
 
     @Given("I use the {word} contract")
     public void useContract(String contractName) {
-        contract = network.getContract(contractName);
+        currentGateway.contract = currentGateway.network.getContract(contractName);
     }
 
     @When("^I prepare to (evaluate|submit) an? ([^ ]+) transaction$")
     public void prepareTransaction(String action, String transactionName) {
         if (action.equals("submit")) {
-            transactionInvocation = TransactionInvocation.prepareToSubmit(network, contract, transactionName);
+            currentGateway.transactionInvocation = TransactionInvocation.prepareToSubmit(currentGateway.network, currentGateway.contract, transactionName);
         } else {
-            transactionInvocation = TransactionInvocation.prepareToEvaluate(network, contract, transactionName);
+            currentGateway.transactionInvocation = TransactionInvocation.prepareToEvaluate(currentGateway.network, currentGateway.contract, transactionName);
         }
     }
 
     @When("^I set the transaction arguments? to (.+)$")
     public void setTransactionArguments(String argsJson) {
         String[] args = newStringArray(parseJsonArray(argsJson));
-        transactionInvocation.setArguments(args);
+        currentGateway.transactionInvocation.setArguments(args);
     }
 
     @When("I do off-line signing as user {word} in MSP {word}")
     public void offlineSign(String user, String mspId) throws InvalidKeyException, IOException {
-        transactionInvocation.setOfflineSigner(newSigner(user, mspId));
+        currentGateway.transactionInvocation.setOfflineSigner(newSigner(user, mspId));
     }
 
     @When("I invoke the transaction")
     public void invokeTransaction() {
-        transactionInvocation.invoke();
-        transactionInvocation.getResponse();
+        currentGateway.transactionInvocation.invoke();
+        currentGateway.transactionInvocation.getResponse();
     }
 
     @When("I set transient data on the transaction to")
@@ -340,13 +383,13 @@ public class ScenarioSteps {
         Map<String, String> table = data.asMap(String.class, String.class);
         Map<String, byte[]> transientMap = table.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8)));
-        transactionInvocation.setTransient(transientMap);
+        currentGateway.transactionInvocation.setTransient(transientMap);
     }
 
     @When("^I set the endorsing organizations? to (.+)$")
     public void setEndorsingOrgs(String orgsJson) {
         String[] orgs = newStringArray(parseJsonArray(orgsJson));
-        transactionInvocation.setEndorsingOrgs(orgs);
+        currentGateway.transactionInvocation.setEndorsingOrgs(orgs);
     }
 
     @When("I stop the peer named {}")
@@ -364,14 +407,14 @@ public class ScenarioSteps {
 
     @Then("the transaction invocation should fail")
     public void invokeFailingTransaction() {
-        transactionInvocation.invoke();
-        transactionInvocation.getError();
+        currentGateway.transactionInvocation.invoke();
+        currentGateway.transactionInvocation.getError();
     }
 
     @Then("the response should be JSON matching")
     public void assertJsonResponse(DocString expected) {
         try (JsonReader expectedReader = createJsonReader(expected.getContent());
-             JsonReader actualReader = createJsonReader(transactionInvocation.getResponse())) {
+             JsonReader actualReader = createJsonReader(currentGateway.transactionInvocation.getResponse())) {
             JsonObject expectedObject = expectedReader.readObject();
             JsonObject actualObject = actualReader.readObject();
             assertThat(actualObject).isEqualTo(expectedObject);
@@ -380,12 +423,12 @@ public class ScenarioSteps {
 
     @Then("the response should be {string}")
     public void assertResponse(String expected) {
-        assertThat(transactionInvocation.getResponse()).isEqualTo(expected);
+        assertThat(currentGateway.transactionInvocation.getResponse()).isEqualTo(expected);
     }
 
     @Then("the error message should contain {string}")
     public void assertErrorMessageContains(String expected) {
-        assertThat(transactionInvocation.getError()).hasMessageContaining(expected);
+        assertThat(currentGateway.transactionInvocation.getError()).hasMessageContaining(expected);
     }
 
     private static void startAllPeers() throws InterruptedException, IOException {

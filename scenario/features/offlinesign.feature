@@ -8,7 +8,7 @@ Feature: Off-line signing
         Given I have deployed a Fabric network
         And I have created and joined all channels
         And I deploy golang chaincode named basic at version 1.0.0 for all organizations on channel mychannel with endorsement policy AND("Org1MSP.member","Org2MSP.member")
-        And I create a gateway without signer for user User1 in MSP Org1MSP
+        And I create a gateway named mygateway without signer for user User1 in MSP Org1MSP
         And I connect the gateway to peer0.org1.example.com
         And I use the mychannel network
         And I use the basic contract

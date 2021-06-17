@@ -58,12 +58,16 @@ Given(/^I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organiza
         await fabric.deployChaincode(ccType, ccName, version, channelName, signaturePolicy);
     });
 
-Given('I create a gateway for user {word} in MSP {word}', async function(this: CustomWorld, user: string, mspId: string): Promise<void> {
-    await this.createGateway(user, mspId);
+Given('I create a gateway named {word} for user {word} in MSP {word}', async function(this: CustomWorld, name: string, user: string, mspId: string): Promise<void> {
+    await this.createGateway(name, user, mspId);
 });
 
-Given('I create a gateway without signer for user {word} in MSP {word}', async function(this: CustomWorld, user: string, mspId: string): Promise<void> {
-    await this.createGatewayWithoutSigner(user, mspId);
+Given('I create a gateway named {word} without signer for user {word} in MSP {word}', async function(this: CustomWorld, name: string, user: string, mspId: string): Promise<void> {
+    await this.createGatewayWithoutSigner(name, user, mspId);
+});
+
+Given('I use the gateway named {word}', async function(this: CustomWorld, name: string): Promise<void> {
+    await this.useGateway(name);
 });
 
 Given('I connect the gateway to {word}', async function(this: CustomWorld, address: string): Promise<void> {
