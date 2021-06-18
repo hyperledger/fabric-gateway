@@ -189,6 +189,14 @@ describe('Proposal', () => {
             expect(argStrings.slice(1)).toStrictEqual(expected);
         });
 
+        it('sets transient data', async () => {
+            await contract.evaluate('TRANSACTION_NAME', { transientData: {'uno': Buffer.from('one'), 'dos': Buffer.from('two')}});
+            const proposal_bytes = client.evaluate.mock.calls[0][0].proposed_transaction?.proposal_bytes ?? Buffer.from('');
+            const proposal = protos.Proposal.decode(proposal_bytes);
+            const payload = protos.ChaincodeProposalPayload.decode(proposal.payload);
+            expect(payload.TransientMap).toMatchObject({'uno': Buffer.from('one'), 'dos': Buffer.from('two')})
+        });
+
         it('sets endorsing orgs', async () => {
             await contract.evaluate('TRANSACTION_NAME', { endorsingOrganizations: ['org1']});
             const actualOrgs = client.evaluate.mock.calls[0][0].target_organizations;

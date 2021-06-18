@@ -87,6 +87,17 @@ describe('Offline sign', () => {
             const actual = Buffer.from(evaluateRequest.proposed_transaction?.signature ?? '').toString();
             expect(actual).toBe(expected.toString());
         });
+
+        it('uses offline signature and selected orgs', async () => {
+            const expected = Buffer.from('MY_SIGNATURE');
+
+            const unsignedProposal = contract.newProposal('TRANSACTION_NAME', {endorsingOrganizations: ['org3', 'org5']});
+            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), expected);
+            await signedProposal.evaluate();
+
+            const actualOrgs = client.evaluate.mock.calls[0][0].target_organizations;
+            expect(actualOrgs).toStrictEqual(['org3', 'org5']);
+        });
     });
 
     describe('endorse', () => {
