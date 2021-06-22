@@ -12,6 +12,7 @@ OrdererOrgs:
   # ---------------------------------------------------------------------------
   - Name: Orderer
     Domain: example.com
+    EnableNodeOUs: true
     # ---------------------------------------------------------------------------
     # "Specs" - See PeerOrgs below for complete description
     # ---------------------------------------------------------------------------
@@ -30,6 +31,7 @@ PeerOrgs:
   # ---------------------------------------------------------------------------
   - Name: Org1
     Domain: org1.example.com
+    EnableNodeOUs: true
     Template:
       Count: 3 # Use 3rd one for the gateway id
     Users:
@@ -42,6 +44,7 @@ PeerOrgs:
   # ---------------------------------------------------------------------------
   - Name: Org2
     Domain: org2.example.com
+    EnableNodeOUs: true
     Template:
       Count: 2
     Users:
@@ -54,6 +57,7 @@ PeerOrgs:
   # ---------------------------------------------------------------------------
   - Name: Org3
     Domain: org3.example.com
+    EnableNodeOUs: true
     Template:
       Count: 1
     Users:

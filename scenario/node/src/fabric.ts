@@ -6,6 +6,7 @@
 
 import { execFileSync, spawnSync } from 'child_process';
 import * as path from 'path';
+import * as fs from "fs";
 
 export const fixturesDir = path.resolve(__dirname, '..', '..', 'fixtures');
 
@@ -175,6 +176,13 @@ export class Fabric {
         const ccLabel = `${ccName}v${version}`;
         const ccPackage = `${ccName}.tar.gz`;
 
+        // is there a collections_config.json file?
+        let collectionsConfig: string[] = [];
+        const collectionsFile = `chaincode/${ccType}/${ccName}/collections_config.json`;
+        if (fs.existsSync(path.join(fixturesDir, collectionsFile))) {
+            collectionsConfig = ['--collections-config', path.join('/opt/gopath/src/github.com', collectionsFile)]
+        }
+
         for (const [orgName, orgInfo] of Object.entries(orgs)) {
             if (!exists) {
                 dockerCommand(
@@ -207,7 +215,8 @@ export class Fabric {
                 '--version', version,
                 '--signature-policy', signaturePolicy,
                 '--sequence', sequence,
-                '--waitForEvent'
+                '--waitForEvent',
+                ...collectionsConfig
             );
         }
 
@@ -226,7 +235,9 @@ export class Fabric {
             '--tlsRootCertFiles',
             '/etc/hyperledger/configtx/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt',
             '--tlsRootCertFiles',
-            '/etc/hyperledger/configtx/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt');
+            '/etc/hyperledger/configtx/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt',
+            ...collectionsConfig
+        );
 
         this.runningChaincodes[mangledName] = signaturePolicy;
         await sleep(10000);

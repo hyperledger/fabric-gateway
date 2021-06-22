@@ -93,6 +93,7 @@ generate:
 
 vendor-chaincode:
 	cd $(scenario_dir)/fixtures/chaincode/golang/basic; GO111MODULE=on go mod vendor
+	cd $(scenario_dir)/fixtures/chaincode/golang/private; GO111MODULE=on go mod vendor
 
 scenario-test-go: vendor-chaincode
 	cd $(scenario_dir)/go; godog $(scenario_dir)/features/

@@ -19,6 +19,7 @@ require (
 	github.com/onsi/gomega v1.10.4 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/spf13/viper v1.7.1 // indirect
+	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/sykesm/zap-logfmt v0.0.4 // indirect
 	go.uber.org/zap v1.16.0 // indirect
 	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5 // indirect
