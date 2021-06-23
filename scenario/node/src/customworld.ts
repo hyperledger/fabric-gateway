@@ -97,7 +97,7 @@ function assertDefined<T>(value: T | null | undefined, property: string): T {
 
 interface GatewayContext {
     gateway?: Gateway;
-    identity?: Identity;
+    identity: Identity;
     signer?: Signer;
     network?: Network;
     contract?: Contract;
@@ -106,19 +106,21 @@ interface GatewayContext {
 
 export class CustomWorld {
     private gateways: { [name: string]: GatewayContext } = {};
-    private currentGateway: GatewayContext = {};
+    private currentGateway?: GatewayContext;
 
     async createGateway(name: string, user: string, mspId: string): Promise<void> {
-        const gateway: GatewayContext = {};
-        gateway.identity = await newIdentity(user, mspId);
-        gateway.signer = await newSigner(user, mspId);
+        const gateway: GatewayContext = {
+            identity: await newIdentity(user, mspId),
+            signer: await newSigner(user, mspId)
+        };
         this.gateways[name] = gateway;
         this.currentGateway = gateway;
     }
 
     async createGatewayWithoutSigner(name: string, user: string, mspId: string): Promise<void> {
-        const gateway: GatewayContext = {};
-        gateway.identity = await newIdentity(user, mspId);
+        const gateway: GatewayContext = {
+            identity: await newIdentity(user, mspId)
+        };
         this.gateways[name] = gateway;
         this.currentGateway = gateway;
     }
@@ -128,11 +130,11 @@ export class CustomWorld {
     }
 
     useNetwork(channelName: string): void {
-        this.currentGateway.network = this.getGateway().getNetwork(channelName);
+        this.getCurrentGateway().network = this.getGateway().getNetwork(channelName);
     }
 
     useContract(contractName: string): void {
-        this.currentGateway.contract = this.getNetwork().getContract(contractName);
+        this.getCurrentGateway().contract = this.getNetwork().getContract(contractName);
     }
 
     async connect(address: string): Promise<void> {
@@ -149,15 +151,15 @@ export class CustomWorld {
         }
         const client = new GrpcClient(peer.url, credentials, grpcOptions);
         const options: ConnectOptions = {
-            signer: this.currentGateway.signer,
-            identity: this.getIdentity(),
+            signer: this.getCurrentGateway().signer,
+            identity: this.getCurrentGateway().identity,
             client,
         };
-        this.currentGateway.gateway = await connect(options);
+        this.getCurrentGateway().gateway = await connect(options);
     }
 
     prepareTransaction(action: string, transactionName: string): void {
-        this.currentGateway.transaction = new TransactionInvocation(action, this.getNetwork(), this.getContract(), transactionName);
+        this.getCurrentGateway().transaction = new TransactionInvocation(action, this.getNetwork(), this.getContract(), transactionName);
     }
 
     setArguments(jsonArgs: string): void {
@@ -180,8 +182,14 @@ export class CustomWorld {
     }
 
     close(): void {
-        this.currentGateway.gateway?.close();
-        delete this.currentGateway.gateway;
+        for (const context in this.gateways) {
+            const gw = this.gateways[context].gateway;
+            if (gw) {
+                gw.close();
+            }
+        }
+        this.gateways = {};
+        delete this.currentGateway;
     }
 
     async setOfflineSigner(user: string, mspId: string): Promise<void> {
@@ -203,24 +211,24 @@ export class CustomWorld {
         return this.getTransaction().getResult();
     }
 
+    private getCurrentGateway(): GatewayContext {
+        return assertDefined(this.currentGateway, 'currentGateway');
+    }
+
     private getGateway(): Gateway {
-        return assertDefined(this.currentGateway.gateway, 'gateway');
+        return assertDefined(this.getCurrentGateway().gateway, 'gateway');
     }
 
     private getNetwork(): Network {
-        return assertDefined(this.currentGateway.network, 'network');
+        return assertDefined(this.getCurrentGateway().network, 'network');
     }
 
     private getContract(): Contract {
-        return assertDefined(this.currentGateway.contract, 'contract');
+        return assertDefined(this.getCurrentGateway().contract, 'contract');
     }
 
     private getTransaction(): TransactionInvocation {
-        return assertDefined(this.currentGateway.transaction, 'transaction');
-    }
-
-    private getIdentity(): Identity {
-        return assertDefined(this.currentGateway.identity, 'identity');
+        return assertDefined(this.getCurrentGateway().transaction, 'transaction');
     }
 }
 
