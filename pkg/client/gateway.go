@@ -77,7 +77,8 @@ func WithHash(hash hash.Hash) ConnectOption {
 }
 
 // WithClientConnection uses the supplied gRPC client connection to a Fabric Gateway. This should be shared by all
-// Gateway instances connecting to the same Fabric Gateway. The client connection will not be closed when the Gateway is closed.
+// Gateway instances connecting to the same Fabric Gateway. The client connection will not be closed when the Gateway
+// is closed.
 func WithClientConnection(clientConnection *grpc.ClientConn) ConnectOption {
 	return func(gateway *Gateway) error {
 		gateway.client = proto.NewGatewayClient(clientConnection)

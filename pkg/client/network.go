@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
@@ -58,4 +59,76 @@ func (network *Network) NewSignedCommit(bytes []byte, signature []byte) (*Commit
 	commit.setSignature(signature)
 
 	return commit, nil
+}
+
+// ChaincodeEvents returns a channel from which chaincode events emitted by transaction functions in the specified
+// chaincode can be read.
+func (network *Network) ChaincodeEvents(ctx context.Context, chaincodeID string) (<-chan *ChaincodeEvent, error) {
+	events, err := network.NewChaincodeEvents(chaincodeID)
+	if err != nil {
+		return nil, err
+	}
+
+	return events.Events(ctx)
+}
+
+// NewChaincodeEvents creates a request to read events emitted by the specified chaincode.
+func (network *Network) NewChaincodeEvents(chaincodeID string) (*ChaincodeEvents, error) {
+	request, err := network.newSignedChaincodeEventsRequest(chaincodeID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &ChaincodeEvents{
+		client:        network.client,
+		signingID:     network.signingID,
+		signedRequest: request,
+	}
+	return result, nil
+}
+
+func (network *Network) newSignedChaincodeEventsRequest(chaincodeID string) (*gateway.SignedChaincodeEventsRequest, error) {
+	request, err := network.newChaincodeEventsRequest(chaincodeID)
+	if err != nil {
+		return nil, err
+	}
+
+	requestBytes, err := proto.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize chaincode events request: %w", err)
+	}
+
+	signedRequest := &gateway.SignedChaincodeEventsRequest{
+		Request: requestBytes,
+	}
+	return signedRequest, nil
+}
+
+func (network *Network) newChaincodeEventsRequest(chaincodeID string) (*gateway.ChaincodeEventsRequest, error) {
+	creator, err := network.signingID.Creator()
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize identity: %w", err)
+	}
+
+	request := &gateway.ChaincodeEventsRequest{
+		ChannelId:   network.name,
+		Identity:    creator,
+		ChaincodeId: chaincodeID,
+	}
+	return request, nil
+}
+
+// NewSignedChaincodeEvents creates a signed request to read events emitted by a specific chaincode.
+func (network *Network) NewSignedChaincodeEvents(bytes []byte, signature []byte) (*ChaincodeEvents, error) {
+	request := &gateway.SignedChaincodeEventsRequest{}
+	if err := proto.Unmarshal(bytes, request); err != nil {
+		return nil, fmt.Errorf("failed to deserialize signed chaincode events request: %w", err)
+	}
+
+	result := &ChaincodeEvents{
+		client:        network.client,
+		signingID:     network.signingID,
+		signedRequest: request,
+	}
+	return result, nil
 }

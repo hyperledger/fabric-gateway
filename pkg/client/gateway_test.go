@@ -17,7 +17,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-//go:generate mockgen -destination ./closer_mock_test.go -package ${GOPACKAGE} io Closer
 //go:generate mockgen -destination ./gateway_mock_test.go -package ${GOPACKAGE} github.com/hyperledger/fabric-protos-go/gateway GatewayClient
 
 // WithClient uses the supplied client for the Gateway. Allows a stub implementation to be used for testing.
