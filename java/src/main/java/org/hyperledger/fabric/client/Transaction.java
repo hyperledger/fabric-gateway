@@ -6,7 +6,7 @@
 
 package org.hyperledger.fabric.client;
 
-public interface Transaction {
+public interface Transaction extends Signable {
     /**
      * Get the transaction result. The result is obtained as part of the proposal endorsement so may be read
      * immediately. It is not necessary to submit the transaction before getting the transaction result, but the
@@ -15,18 +15,6 @@ public interface Transaction {
      * @return A transaction result.
      */
     byte[] getResult();
-
-    /**
-     * Get the serialized transaction message bytes.
-     * @return A serialized transaction.
-     */
-    byte[] getBytes();
-
-    /**
-     * Get the digest of the serialized transaction. This is used to generate a digital signature.
-     * @return A hash of the transaction.
-     */
-    byte[] getDigest();
 
     /**
      * Get the transaction ID.

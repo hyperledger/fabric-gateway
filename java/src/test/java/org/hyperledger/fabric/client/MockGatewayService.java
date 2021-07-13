@@ -7,12 +7,15 @@
 package org.hyperledger.fabric.client;
 
 import io.grpc.stub.StreamObserver;
+import net.bytebuddy.asm.MemberSubstitution;
+import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EndorseResponse;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
 import org.hyperledger.fabric.protos.gateway.EvaluateResponse;
 import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
+import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitResponse;
@@ -68,6 +71,16 @@ public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
         try {
             CommitStatusResponse response = stub.commitStatus(request);
             responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(e);
+        }
+    }
+
+    @Override
+    public void chaincodeEvents(SignedChaincodeEventsRequest request, StreamObserver<ChaincodeEventsResponse> responseObserver) {
+        try {
+            stub.chaincodeEvents(request).forEachOrdered(responseObserver::onNext);
             responseObserver.onCompleted();
         } catch (Exception e) {
             responseObserver.onError(e);

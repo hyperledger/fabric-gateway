@@ -13,6 +13,7 @@ import io.grpc.ManagedChannel;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
+import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.hyperledger.fabric.protos.peer.Chaincode;
@@ -42,6 +43,8 @@ public final class GatewayMocker implements AutoCloseable {
     private ArgumentCaptor<SubmitRequest> submitRequestCaptor;
     @Captor
     private ArgumentCaptor<SignedCommitStatusRequest> commitStatusRequestCaptor;
+    @Captor
+    private ArgumentCaptor<SignedChaincodeEventsRequest> chaincodeEventsRequestCaptor;
 
     public GatewayMocker() {
         this(utils.newGatewayBuilder());
@@ -90,6 +93,11 @@ public final class GatewayMocker implements AutoCloseable {
     public SignedCommitStatusRequest captureCommitStatus() {
         Mockito.verify(stub).commitStatus(commitStatusRequestCaptor.capture());
         return commitStatusRequestCaptor.getValue();
+    }
+
+    public SignedChaincodeEventsRequest captureChaincodeEvents() {
+        Mockito.verify(stub).chaincodeEvents(chaincodeEventsRequestCaptor.capture());
+        return chaincodeEventsRequestCaptor.getValue();
     }
 
     public Chaincode.ChaincodeSpec getChaincodeSpec(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
