@@ -69,7 +69,7 @@ function dockerCommandWithTLS(...args: string[]): string {
 }
 
 async function sleep(ms: number): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, ms));
+    await new Promise<void>(resolve => setTimeout(resolve, ms));
 }
 
 export class Fabric {
