@@ -28,6 +28,9 @@
         "long": "^4.0.0",
         "protobufjs": "^6.11.2"
     },
+    "optionalDependencies": {
+        "pkcs11js": "^1.2.5"
+    },
     "devDependencies": {
         "@tsconfig/node12": "^1.0.7",
         "@types/elliptic": "^6.4.12",
