@@ -11,19 +11,7 @@ import org.hyperledger.fabric.protos.peer.TransactionPackage;
 /**
  * Allows access to information about a transaction that is committed to the ledger.
  */
-public interface Commit {
-    /**
-     * Get the serialized transaction message bytes.
-     * @return A serialized transaction.
-     */
-    byte[] getBytes();
-
-    /**
-     * Get the digest of the serialized transaction. This is used to generate a digital signature.
-     * @return A hash of the transaction.
-     */
-    byte[] getDigest();
-
+public interface Commit extends Signable {
     /**
      * Get the committed transaction status code. If the transaction has not yet committed, this method blocks until
      * the commit occurs.
