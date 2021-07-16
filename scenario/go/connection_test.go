@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package scenario
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 
@@ -24,6 +25,8 @@ func NewGatewayConnection(user string, mspID string) (*GatewayConnection, error)
 	connection := GatewayConnection{
 		id: id,
 	}
+	connection.ctx, connection.cancel = context.WithCancel(context.Background())
+
 	return &connection, nil
 }
 
@@ -91,6 +94,9 @@ type GatewayConnection struct {
 	gateway    *client.Gateway
 	network    *client.Network
 	contract   *client.Contract
+	ctx        context.Context
+	cancel     context.CancelFunc
+	events     <-chan *client.ChaincodeEvent
 }
 
 func (connection *GatewayConnection) AddOptions(options ...client.ConnectOption) {
@@ -110,6 +116,7 @@ func (connection *GatewayConnection) Connect(grpcClient *grpc.ClientConn) error 
 
 	connection.grpcClient = grpcClient
 	connection.gateway = gateway
+
 	return nil
 }
 
@@ -142,7 +149,35 @@ func (connection *GatewayConnection) PrepareTransaction(txnType TransactionType,
 	return NewTransaction(connection.network, connection.contract, txnType, name), nil
 }
 
+func (connection *GatewayConnection) ListenForChaincodeEvents(chaincodeID string) error {
+	if connection.network == nil {
+		return fmt.Errorf("no network selected")
+	}
+
+	events, err := connection.network.ChaincodeEvents(connection.ctx, chaincodeID)
+	if err != nil {
+		return err
+	}
+
+	connection.events = events
+	return nil
+}
+
+func (connection *GatewayConnection) ChaincodeEvent() (*client.ChaincodeEvent, error) {
+	if connection.events == nil {
+		return nil, fmt.Errorf("no chaincode event listener attached")
+	}
+
+	event, ok := <-connection.events
+	if !ok {
+		return nil, fmt.Errorf("Event channel closed")
+	}
+	return event, nil
+}
+
 func (connection *GatewayConnection) Close() {
+	connection.cancel()
+
 	if connection.gateway != nil {
 		connection.gateway.Close()
 	}

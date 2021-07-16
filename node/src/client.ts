@@ -12,12 +12,14 @@ const evaluateMethod = servicePath + 'Evaluate';
 const endorseMethod = servicePath + 'Endorse';
 const submitMethod = servicePath + 'Submit';
 const commitStatusMethod = servicePath + 'CommitStatus';
+const chaincodeEventsMethod = servicePath + 'ChaincodeEvents';
 
 export interface GatewayClient {
     evaluate(request: gateway.IEvaluateRequest): Promise<gateway.IEvaluateResponse>;
     endorse(request: gateway.IEndorseRequest): Promise<gateway.IEndorseResponse>;
     submit(request: gateway.ISubmitRequest): Promise<gateway.ISubmitResponse>;
     commitStatus(request: gateway.ISignedCommitStatusRequest): Promise<gateway.ICommitStatusResponse>;
+    chaincodeEvents(request: gateway.ISignedChaincodeEventsRequest): AsyncIterable<gateway.IChaincodeEventsResponse>;
 }
 
 class GatewayClientImpl implements GatewayClient {
@@ -49,6 +51,10 @@ class GatewayClientImpl implements GatewayClient {
         return new Promise((resolve, reject) =>
             this.#client.makeUnaryRequest(commitStatusMethod, serializeSignedCommitStatusRequest, deserializeCommitStatusResponse, request, newUnaryCallback(resolve, reject))
         );
+    }
+
+    chaincodeEvents(request: gateway.ISignedChaincodeEventsRequest): AsyncIterable<gateway.ChaincodeEventsResponse> {
+        return this.#client.makeServerStreamRequest(chaincodeEventsMethod, serializeSignedChaincodeEventsRequest, deserializeChaincodeEventsResponse, request);
     }
 }
 
@@ -84,6 +90,11 @@ function serializeSignedCommitStatusRequest(message: gateway.ISignedCommitStatus
     return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength); // Create a Buffer view to avoid copying
 }
 
+function serializeSignedChaincodeEventsRequest(message: gateway.ISignedChaincodeEventsRequest): Buffer {
+    const bytes = gateway.SignedChaincodeEventsRequest.encode(message).finish();
+    return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength); // Create a Buffer view to avoid copying
+}
+
 function deserializeEvaluateResponse(bytes: Uint8Array): gateway.EvaluateResponse {
     return gateway.EvaluateResponse.decode(bytes);
 }
@@ -98,6 +109,10 @@ function deserializeSubmitResponse(bytes: Uint8Array): gateway.SubmitResponse {
 
 function deserializeCommitStatusResponse(bytes: Uint8Array): gateway.CommitStatusResponse {
     return gateway.CommitStatusResponse.decode(bytes);
+}
+
+function deserializeChaincodeEventsResponse(bytes: Uint8Array): gateway.ChaincodeEventsResponse {
+    return gateway.ChaincodeEventsResponse.decode(bytes);
 }
 
 export function newGatewayClient(client: grpc.Client): GatewayClient {

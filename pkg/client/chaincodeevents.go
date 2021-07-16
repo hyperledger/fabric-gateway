@@ -14,15 +14,15 @@ import (
 	"github.com/hyperledger/fabric-protos-go/gateway"
 )
 
-// ChaincodeEvents delivers events emitted by transaction functions in a specific chaincode.
-type ChaincodeEvents struct {
+// ChaincodeEventsRequest delivers events emitted by transaction functions in a specific chaincode.
+type ChaincodeEventsRequest struct {
 	client        gateway.GatewayClient
 	signingID     *signingIdentity
 	signedRequest *gateway.SignedChaincodeEventsRequest
 }
 
 // Bytes of the serialized chaincode events request.
-func (events *ChaincodeEvents) Bytes() ([]byte, error) {
+func (events *ChaincodeEventsRequest) Bytes() ([]byte, error) {
 	requestBytes, err := proto.Marshal(events.signedRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshall SignedChaincodeEventsRequest protobuf: %w", err)
@@ -32,12 +32,12 @@ func (events *ChaincodeEvents) Bytes() ([]byte, error) {
 }
 
 // Digest of the chaincode events request. This is used to generate a digital signature.
-func (events *ChaincodeEvents) Digest() []byte {
+func (events *ChaincodeEventsRequest) Digest() []byte {
 	return events.signingID.Hash(events.signedRequest.Request)
 }
 
 // Events returns a channel from which chaincode events can be read.
-func (events *ChaincodeEvents) Events(ctx context.Context) (<-chan *ChaincodeEvent, error) {
+func (events *ChaincodeEventsRequest) Events(ctx context.Context) (<-chan *ChaincodeEvent, error) {
 	if err := events.sign(); err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (events *ChaincodeEvents) Events(ctx context.Context) (<-chan *ChaincodeEve
 	return results, nil
 }
 
-func (events *ChaincodeEvents) sign() error {
+func (events *ChaincodeEventsRequest) sign() error {
 	if events.isSigned() {
 		return nil
 	}
@@ -80,11 +80,11 @@ func (events *ChaincodeEvents) sign() error {
 	return nil
 }
 
-func (events *ChaincodeEvents) isSigned() bool {
+func (events *ChaincodeEventsRequest) isSigned() bool {
 	return len(events.signedRequest.Signature) > 0
 }
 
-func (events *ChaincodeEvents) setSignature(signature []byte) {
+func (events *ChaincodeEventsRequest) setSignature(signature []byte) {
 	events.signedRequest.Signature = signature
 }
 

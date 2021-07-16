@@ -5,13 +5,15 @@
  */
 
 import { DataTable, setWorldConstructor } from '@cucumber/cucumber';
+import * as grpc from '@grpc/grpc-js';
 import * as crypto from 'crypto';
-import { connect, ConnectOptions, Contract, Gateway, Identity, Network, Signer, signers } from 'fabric-gateway';
+import { ChaincodeEvent, Identity, Signer, signers } from 'fabric-gateway';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fixturesDir, getOrgForMsp } from './fabric';
+import { GatewayContext } from './gatewaycontext';
 import { TransactionInvocation } from './transactioninvocation';
-import * as grpc from '@grpc/grpc-js';
+import { assertDefined } from './utils';
 
 interface ConnectionInfo {
     readonly url: string;
@@ -87,54 +89,36 @@ function getCredentialsPath(user: string, mspId: string): string {
         'users', `${user}@${org}`, 'msp');
 }
 
-
-function assertDefined<T>(value: T | null | undefined, property: string): T {
-    if (null == value) {
-        throw new Error(`Bad step sequence: ${property} not defined`);
-    }
-    return value;
-}
-
-interface GatewayContext {
-    gateway?: Gateway;
-    identity: Identity;
-    signer?: Signer;
-    network?: Network;
-    contract?: Contract;
-    transaction?: TransactionInvocation;
-}
-
 export class CustomWorld {
-    private gateways: { [name: string]: GatewayContext } = {};
-    private currentGateway?: GatewayContext;
+    #gateways: { [name: string]: GatewayContext } = {};
+    #currentGateway?: GatewayContext;
+    #transaction?: TransactionInvocation;
 
     async createGateway(name: string, user: string, mspId: string): Promise<void> {
-        const gateway: GatewayContext = {
-            identity: await newIdentity(user, mspId),
-            signer: await newSigner(user, mspId)
-        };
-        this.gateways[name] = gateway;
-        this.currentGateway = gateway;
+        const identity = await newIdentity(user, mspId);
+        const signer = await newSigner(user, mspId);
+        const gateway = new GatewayContext(identity, signer);
+        this.#gateways[name] = gateway;
+        this.#currentGateway = gateway;
     }
 
     async createGatewayWithoutSigner(name: string, user: string, mspId: string): Promise<void> {
-        const gateway: GatewayContext = {
-            identity: await newIdentity(user, mspId)
-        };
-        this.gateways[name] = gateway;
-        this.currentGateway = gateway;
+        const identity = await newIdentity(user, mspId);
+        const gateway = new GatewayContext(identity);
+        this.#gateways[name] = gateway;
+        this.#currentGateway = gateway;
     }
 
     useGateway(name: string): void {
-        this.currentGateway = this.gateways[name];
+        this.#currentGateway = this.#gateways[name];
     }
 
     useNetwork(channelName: string): void {
-        this.getCurrentGateway().network = this.getGateway().getNetwork(channelName);
+        this.getCurrentGateway().useNetwork(channelName);
     }
 
     useContract(contractName: string): void {
-        this.getCurrentGateway().contract = this.getNetwork().getContract(contractName);
+        this.getCurrentGateway().useContract(contractName);
     }
 
     async connect(address: string): Promise<void> {
@@ -150,16 +134,11 @@ export class CustomWorld {
             };
         }
         const client = new GrpcClient(peer.url, credentials, grpcOptions);
-        const options: ConnectOptions = {
-            signer: this.getCurrentGateway().signer,
-            identity: this.getCurrentGateway().identity,
-            client,
-        };
-        this.getCurrentGateway().gateway = await connect(options);
+        await this.getCurrentGateway().connect(client);
     }
 
     prepareTransaction(action: string, transactionName: string): void {
-        this.getCurrentGateway().transaction = new TransactionInvocation(action, this.getNetwork(), this.getContract(), transactionName);
+        this.#transaction = this.getCurrentGateway().newTransaction(action, transactionName);
     }
 
     setArguments(jsonArgs: string): void {
@@ -181,15 +160,12 @@ export class CustomWorld {
         this.getTransaction().options.endorsingOrganizations = orgs;
     }
 
-    close(): void {
-        for (const context in this.gateways) {
-            const gw = this.gateways[context].gateway;
-            if (gw) {
-                gw.close();
-            }
-        }
-        this.gateways = {};
-        delete this.currentGateway;
+    async listenForChaincodeEvents(chaincodeId: string): Promise<void> {
+        await this.getCurrentGateway().listenForChaincodeEvents(chaincodeId);
+    }
+
+    async nextChaincodeEvent(): Promise<ChaincodeEvent> {
+        return await this.getCurrentGateway().nextChaincodeEvent();
     }
 
     async setOfflineSigner(user: string, mspId: string): Promise<void> {
@@ -204,31 +180,31 @@ export class CustomWorld {
 
     async assertTransactionFails(): Promise<void> {
         await this.getTransaction().invokeTransaction();
-        this.getTransaction().getError();
+        this.getError();
     }
 
     getResult(): string {
         return this.getTransaction().getResult();
     }
 
+    getError(): Error {
+        return this.getTransaction().getError();
+    }
+
+    close(): void {
+        for (const context of Object.values(this.#gateways)) {
+            context.close();
+        }
+        this.#gateways = {};
+        this.#currentGateway = undefined;
+    }
+
     private getCurrentGateway(): GatewayContext {
-        return assertDefined(this.currentGateway, 'currentGateway');
-    }
-
-    private getGateway(): Gateway {
-        return assertDefined(this.getCurrentGateway().gateway, 'gateway');
-    }
-
-    private getNetwork(): Network {
-        return assertDefined(this.getCurrentGateway().network, 'network');
-    }
-
-    private getContract(): Contract {
-        return assertDefined(this.getCurrentGateway().contract, 'contract');
+        return assertDefined(this.#currentGateway, 'currentGateway');
     }
 
     private getTransaction(): TransactionInvocation {
-        return assertDefined(this.getCurrentGateway().transaction, 'transaction');
+        return assertDefined(this.#transaction, 'transaction');
     }
 }
 

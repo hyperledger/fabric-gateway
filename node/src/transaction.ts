@@ -9,21 +9,12 @@ import util from 'util';
 import { GatewayClient } from './client';
 import { common, gateway } from './protos/protos';
 import { SigningIdentity } from './signingidentity';
+import { Signable } from './signable';
 
 /**
  * Represents an endorsed transaction that can be submitted to the orderer for commit to the ledger.
  */
-export interface Transaction {
-    /**
-     * Get the serialized transaction message.
-     */
-    getBytes(): Uint8Array;
-
-    /**
-     * Get the digest of the transaction. This is used to generate a digital signature.
-     */
-    getDigest(): Uint8Array;
-
+export interface Transaction extends Signable {
     /**
      * Get the transaction result. This is obtained during the endorsement process when the transaction proposal is
      * run on endorsing peers.

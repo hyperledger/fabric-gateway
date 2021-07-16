@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export { ChaincodeEvent } from './chaincodeevent';
+export { ChaincodeEventCallback, ChaincodeEventsRequest } from './chaincodeeventsrequest';
 export { Commit } from './commit';
 export { Contract } from './contract';
 export { connect, ConnectOptions, Gateway } from './gateway';
@@ -15,5 +17,6 @@ export * as signers from './identity/signers';
 export { Network } from './network';
 export { Proposal } from './proposal';
 export { ProposalOptions } from './proposalbuilder';
+export { Signable } from './signable';
 export { SubmittedTransaction } from './submittedtransaction';
 export { Transaction } from './transaction';

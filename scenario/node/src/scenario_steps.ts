@@ -6,8 +6,9 @@
 
 import { After, AfterAll, BeforeAll, DataTable, Given, setDefaultTimeout, Then, When } from '@cucumber/cucumber';
 import expect from 'expect';
-import { Fabric } from './fabric';
 import { CustomWorld } from './customworld';
+import { Fabric } from './fabric';
+import { asString } from './utils';
 
 setDefaultTimeout(30 * 1000);
 
@@ -114,6 +115,10 @@ When('I invoke the transaction', async function(this: CustomWorld): Promise<void
     await this.invokeTransaction();
 });
 
+When('I listen for chaincode events from {word}', async function(this: CustomWorld, chaincodeId: string): Promise<void> {
+    await this.listenForChaincodeEvents(chaincodeId);
+});
+
 Then('the transaction invocation should fail', async function(this: CustomWorld): Promise<void> {
     await this.assertTransactionFails();
 });
@@ -128,4 +133,10 @@ Then('the response should be JSON matching', function(this: CustomWorld, docStri
 Then('the response should be {string}', function(this: CustomWorld, expected: string): void {
     const actual = this.getResult();
     expect(actual).toEqual(expected);
+});
+
+Then('I should receive a chaincode event named {string} with payload {string}', async function(this: CustomWorld, eventName: string, payload: string): Promise<void> {
+    const event = await this.nextChaincodeEvent();
+    const actual = Object.assign({}, event, { payload: asString(event.payload)})
+    expect(actual).toMatchObject({ eventName, payload });
 });

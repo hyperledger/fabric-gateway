@@ -26,7 +26,7 @@ final class ChaincodeEventIterator implements Iterator<ChaincodeEvent> {
 
     @Override
     public ChaincodeEvent next() {
-        ChaincodeEventsResponse response = getResponse();
+        ChaincodeEventsResponse response = nextResponse();
         return new ChaincodeEvent(response.getBlockNumber(), response.getEvents(eventIndex++));
     }
 
@@ -34,7 +34,7 @@ final class ChaincodeEventIterator implements Iterator<ChaincodeEvent> {
         return currentResponse != null && eventIndex < currentResponse.getEventsCount();
     }
 
-    private ChaincodeEventsResponse getResponse() {
+    private ChaincodeEventsResponse nextResponse() {
         if (!hasNextEvent()) {
             currentResponse = responseIter.next();
             eventIndex = 0;

@@ -12,14 +12,12 @@ import java.util.concurrent.Callable;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.hyperledger.fabric.client.Commit;
-import org.hyperledger.fabric.client.CommitException;
 import org.hyperledger.fabric.client.Contract;
 import org.hyperledger.fabric.client.Network;
 import org.hyperledger.fabric.client.Proposal;
 import org.hyperledger.fabric.client.SubmittedTransaction;
 import org.hyperledger.fabric.client.Transaction;
 import org.hyperledger.fabric.client.identity.Signer;
-import org.hyperledger.fabric.protos.peer.TransactionPackage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

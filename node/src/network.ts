@@ -4,11 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ChaincodeEvent } from './chaincodeevent';
+import { ChaincodeEventCallback, ChaincodeEventsRequest, ChaincodeEventsRequestImpl } from './chaincodeeventsrequest';
 import { GatewayClient } from './client';
-import { SigningIdentity } from './signingidentity';
-import { Contract, ContractImpl } from './contract';
 import { Commit, CommitImpl } from './commit';
+import { Contract, ContractImpl } from './contract';
 import { gateway } from './protos/protos';
+import { SigningIdentity } from './signingidentity';
 
 /**
  * Network represents a blockchain network, or Fabric channel. The Network can be used to access deployed smart
@@ -35,7 +37,31 @@ export interface Network {
      * @param signature - Digital signature.
      * @returns A signed commit status request.
      */
-     newSignedCommit(bytes: Uint8Array, signature: Uint8Array): Commit;
+    newSignedCommit(bytes: Uint8Array, signature: Uint8Array): Commit;
+
+    /**
+     * Get chaincode events emitted by transaction functions of a specific chaincode.
+     * @param chaincodeId - A chaincode ID.
+     * @param callback - Event callback function.
+     */
+    onChaincodeEvent(chaincodeId: string, callback: ChaincodeEventCallback): Promise<void>;
+
+    /**
+     * Get chaincode events emitted by transaction functions of a specific chaincode.
+     * @param chaincodeId - A chaincode ID.
+     * @returns Chaincode events.
+     * @example
+     * ```
+     * const events = await network.getChaincodeEvents(chaincodeId);
+     * for async (const event of events) {
+     *     // Process event
+     * }
+     * ```
+     */
+    getChaincodeEvents(chaincodeId: string): Promise<AsyncIterable<ChaincodeEvent>>
+
+    newChaincodeEventsRequest(chaincodeId: string): ChaincodeEventsRequest;
+    newSignedChaincodeEventsRequest(bytes: Uint8Array, signature: Uint8Array): ChaincodeEventsRequest;
 }
 
 export interface NetworkOptions {
@@ -82,5 +108,46 @@ export class NetworkImpl implements Network {
         result.setSignature(signature);
 
         return result;
+    }
+
+    async onChaincodeEvent(chaincodeId: string, listener: ChaincodeEventCallback): Promise<void> {
+        const request = this.newChaincodeEventsRequest(chaincodeId);
+        return request.onEvent(listener);
+    }
+
+    async getChaincodeEvents(chaincodeId: string): Promise<AsyncIterable<ChaincodeEvent>> {
+        const request = this.newChaincodeEventsRequest(chaincodeId);
+        return request.getEvents();
+    }
+
+    newChaincodeEventsRequest(chaincodeId: string): ChaincodeEventsRequest {
+        const request = this.newChaincodeEventsRequestProto(chaincodeId);
+
+        return new ChaincodeEventsRequestImpl({
+            client: this.#client,
+            signingIdentity: this.#signingIdentity,
+            request,
+        });
+    }
+
+    newSignedChaincodeEventsRequest(bytes: Uint8Array, signature: Uint8Array): ChaincodeEventsRequest {
+        const request = gateway.ChaincodeEventsRequest.decode(bytes);
+
+        const result = new ChaincodeEventsRequestImpl({
+            client: this.#client,
+            signingIdentity: this.#signingIdentity,
+            request,
+        });
+        result.setSignature(signature);
+
+        return result;
+    }
+
+    private newChaincodeEventsRequestProto(chaincodeId: string): gateway.IChaincodeEventsRequest {
+        return {
+            channel_id: this.#channelName,
+            chaincode_id: chaincodeId,
+            identity: this.#signingIdentity.getCreator(),
+        };
     }
 }

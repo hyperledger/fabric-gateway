@@ -6,7 +6,6 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -56,9 +55,9 @@ public final class ChaincodeEventsTest {
     void throws_on_connection_error() {
         doThrow(new StatusRuntimeException(Status.UNAVAILABLE)).when(stub).chaincodeEvents(any());
 
-        Iterator<ChaincodeEvent> eventIter = network.getChaincodeEvents("CHAINCODE_ID");
+        Iterator<ChaincodeEvent> events = network.getChaincodeEvents("CHAINCODE_ID");
 
-        assertThatThrownBy(() -> eventIter.forEachRemaining(event -> {}))
+        assertThatThrownBy(() -> events.forEachRemaining(event -> {}))
                 .isInstanceOf(StatusRuntimeException.class);
     }
 
@@ -107,16 +106,13 @@ public final class ChaincodeEventsTest {
         );
         doReturn(responses).when(stub).chaincodeEvents(any());
 
-        Iterator<ChaincodeEvent> eventIter = network.getChaincodeEvents("CHAINCODE_ID");
-        List<ChaincodeEvent> actual = new ArrayList<>();
-        eventIter.forEachRemaining(actual::add);
+        Iterator<ChaincodeEvent> actual = network.getChaincodeEvents("CHAINCODE_ID");
 
         List<ChaincodeEvent> expected = Arrays.asList(
                 new ChaincodeEvent(1, event1),
                 new ChaincodeEvent(1, event2),
                 new ChaincodeEvent(2, event3)
         );
-
-        assertThat(actual).hasSameElementsAs(expected);
+        assertThat(Stream.generate(actual::next).limit(3)).hasSameElementsAs(expected);
     }
 }

@@ -58,7 +58,7 @@ public interface Network {
 
     /**
      * Get events emitted by transaction functions of a specific chaincode. Note that the returned {@link Iterator} may
-     * throw {@link io.grpc.StatusRuntimeException} from any of its methods if a gRPC connection error occurs.
+     * throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC connection error occurs.
      * @param chaincodeId A chaincode ID.
      * @return Ordered sequence of events.
      */
@@ -70,7 +70,7 @@ public interface Network {
      * @param chaincodeId A chaincode ID.
      * @return A chaincode events request.
      */
-    ChaincodeEventsSupplier newChaincodeEvents(String chaincodeId);
+    ChaincodeEventsRequest newChaincodeEventsRequest(String chaincodeId);
 
     /**
      * Create a chaincode events request with the specified digital signature, which can be used to obtain events
@@ -80,5 +80,5 @@ public interface Network {
      * @return A signed chaincode events request.
      * @throws InvalidProtocolBufferException if the supplied chaincode events request bytes are not valid.
      */
-    ChaincodeEventsSupplier newSignedChaincodeEvents(byte[] bytes, byte[] signature) throws InvalidProtocolBufferException;
+    ChaincodeEventsRequest newSignedChaincodeEventsRequest(byte[] bytes, byte[] signature) throws InvalidProtocolBufferException;
 }
