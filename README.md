@@ -36,7 +36,7 @@ docker run --rm -v "${PWD}":/workdir mikefarah/yq eval '.peer.gateway.enabled = 
 ## Client SDKs
 
 Three SDKs are available to support the development of client applications that interact with the Fabric network via
-the Gateway.  
+the Gateway.
 
 ### Go SDK
 
@@ -76,6 +76,22 @@ In order to build these components, the following needs to be installed and avai
   - `go get google.golang.org/grpc google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc`
   - `go get honnef.co/go/tools/cmd/staticcheck`
   - `go get github.com/golang/mock/mockgen`
+- pkcs11 enabled fabric-ca-client
+  - `go get -tags 'pkcs11' github.com/hyperledger/fabric-ca/cmd/fabric-ca-client`
+- SoftHSM which can be installed using the package manager for your host system:
+* Ubuntu: `sudo apt install softhsm2`
+* macOS: `brew install softhsm`
+* Windows: **unsupported**
+
+Or compiled and installed from source:
+
+1. install openssl 1.0.0+ or botan 1.10.0+
+2. download the source code from <https://dist.opendnssec.org/source/softhsm-2.5.0.tar.gz>
+3. `tar -xvf softhsm-2.5.0.tar.gz`
+4. `cd softhsm-2.5.0`
+5. `./configure --disable-gost` (would require additional libraries, turn it off unless you need 'gost' algorithm support for the Russian market)
+6. `make`
+7. `sudo make install`
 
 #### Build using make
 
