@@ -17,3 +17,4 @@ export { Proposal } from './proposal';
 export { ProposalOptions } from './proposalbuilder';
 export { SubmittedTransaction } from './submittedtransaction';
 export { Transaction } from './transaction';
+// export * as hsmsigners from './identity/hsmsigners';
