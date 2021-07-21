@@ -8,24 +8,12 @@ package org.hyperledger.fabric.client;
 
 import java.util.Map;
 
-public interface Proposal {
+public interface Proposal extends Signable {
     /**
      * Get the transaction ID.
      * @return A transaction ID.
      */
     String getTransactionId();
-
-    /**
-     * Get the serialized proposal message bytes.
-     * @return A serialized proposal.
-     */
-    byte[] getBytes();
-
-    /**
-     * Get the digest of the serialized proposal. This is used to generate a digital signature.
-     * @return A hash of the proposal.
-     */
-    byte[] getDigest();
 
     /**
      * Evaluate the proposal and return the transaction result. The transaction is not submitted to the orderer and is

@@ -11,8 +11,10 @@ import java.nio.charset.StandardCharsets;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.X509Identity;
+import org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
+import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.junit.jupiter.api.AfterEach;
@@ -227,6 +229,31 @@ public final class OfflineSignTest {
 
         Commit signedCommit = network.newSignedCommit(unsignedCommit.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
         byte[] actual = signedCommit.getDigest();
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void chaincode_events_uses_offline_signature() throws Exception {
+        byte[] expected = "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
+
+        ChaincodeEventsSupplier unsignedRequest = network.newChaincodeEvents("CHAINCODE_ID");
+        ChaincodeEventsSupplier signedRequest = network.newSignedChaincodeEvents(unsignedRequest.getBytes(), expected);
+        signedRequest.get();
+
+        SignedChaincodeEventsRequest request = mocker.captureChaincodeEvents();
+        byte[] actual = request.getSignature().toByteArray();
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void signed_chaincode_events_keep_same_digest() throws Exception {
+        ChaincodeEventsSupplier unsignedRequest = network.newChaincodeEvents("CHAINCODE_ID");
+        byte[] expected = unsignedRequest.getDigest();
+
+        ChaincodeEventsSupplier signedRequest = network.newSignedChaincodeEvents(unsignedRequest.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        byte[] actual = signedRequest.getDigest();
 
         assertThat(actual).isEqualTo(expected);
     }

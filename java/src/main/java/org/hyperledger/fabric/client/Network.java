@@ -6,6 +6,8 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.Iterator;
+
 import com.google.protobuf.InvalidProtocolBufferException;
 
 /**
@@ -53,4 +55,30 @@ public interface Network {
      * @throws InvalidProtocolBufferException if the supplied commit bytes are not a valid commit.
      */
     Commit newSignedCommit(byte[] bytes, byte[] signature) throws InvalidProtocolBufferException;
+
+    /**
+     * Get events emitted by transaction functions of a specific chaincode. Note that the returned {@link Iterator} may
+     * throw {@link io.grpc.StatusRuntimeException} from any of its methods if a gRPC connection error occurs.
+     * @param chaincodeId A chaincode ID.
+     * @return Ordered sequence of events.
+     */
+    Iterator<ChaincodeEvent> getChaincodeEvents(String chaincodeId);
+
+    /**
+     * Create a chaincode events request, which can be used to obtain events emitted by transaction functions of a
+     * specific chaincode. Supports off-line signing flow.
+     * @param chaincodeId A chaincode ID.
+     * @return A chaincode events request.
+     */
+    ChaincodeEventsSupplier newChaincodeEvents(String chaincodeId);
+
+    /**
+     * Create a chaincode events request with the specified digital signature, which can be used to obtain events
+     * emitted by transaction functions of a specific chaincode. Supports off-line signing flow.
+     * @param bytes Serialized chaincode events request.
+     * @param signature Digital signature.
+     * @return A signed chaincode events request.
+     * @throws InvalidProtocolBufferException if the supplied chaincode events request bytes are not valid.
+     */
+    ChaincodeEventsSupplier newSignedChaincodeEvents(byte[] bytes, byte[] signature) throws InvalidProtocolBufferException;
 }

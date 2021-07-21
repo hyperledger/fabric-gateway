@@ -85,9 +85,4 @@ final class GatewayImpl implements Gateway {
     public Network getNetwork(final String networkName) {
         return new NetworkImpl(client, signingIdentity, networkName);
     }
-
-    // for test purposes
-    Channel getChannel() {
-        return client.getChannel();
-    }
 }
