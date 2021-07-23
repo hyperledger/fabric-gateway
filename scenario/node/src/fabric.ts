@@ -72,7 +72,6 @@ export function findSoftHSMPKCS11Lib(): string {
     throw new Error('Unable to find PKCS11 library')
 }
 
-
 function dockerCommand(...args: string[]): string {
     const result = spawnSync('docker', args);
     const output = result.output.toString();
@@ -126,7 +125,7 @@ export class Fabric {
     }
 
     generateHSMUser(hsmuserid: string):void {
-        const generateOut = execFileSync('./generate-hsm-user.sh', [findSoftHSMPKCS11Lib(), hsmuserid], { cwd: fixturesDir });
+        const generateOut = execFileSync('./generate-hsm-user.sh', [hsmuserid], { cwd: fixturesDir });
         console.log(generateOut.toString());
     }
 
