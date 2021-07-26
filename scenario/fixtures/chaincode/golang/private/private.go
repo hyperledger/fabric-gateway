@@ -9,6 +9,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/hyperledger/fabric-chaincode-go/pkg/statebased"
 	"github.com/hyperledger/fabric-chaincode-go/shim"
@@ -61,17 +62,18 @@ func (s *SmartContract) CheckEndorsingOrg(ctx contractapi.TransactionContextInte
 	return "", fmt.Errorf("endorser in this org (%s) should not have been invoked", peerOrgID)
 }
 
-// WritePrivateData writes the transient data to a private data collection
+// WritePrivateData writes the transient data to private data collection(s)
 func (s *SmartContract) WritePrivateData(ctx contractapi.TransactionContextInterface) (string, error) {
 	transient, err := ctx.GetStub().GetTransient()
 	if err != nil {
 		return "", fmt.Errorf("failed to get transient data: %w", err)
 	}
 
-	collection, ok := transient["collection"]
+	c, ok := transient["collection"]
 	if !ok {
 		return "", fmt.Errorf("transient data doesn't contain collection name")
 	}
+	collections := strings.Split(string(c), ",")
 	key, ok := transient["key"]
 	if !ok {
 		return "", fmt.Errorf("transient data doesn't contain key")
@@ -81,7 +83,14 @@ func (s *SmartContract) WritePrivateData(ctx contractapi.TransactionContextInter
 		return "", fmt.Errorf("transient data doesn't contain value")
 	}
 
-	return "", ctx.GetStub().PutPrivateData(string(collection), string(key), value)
+	for _, collection := range collections {
+		err = ctx.GetStub().PutPrivateData(collection, string(key), value)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return "", nil
 }
 
 // ReadPrivateData attempts to read from a private data collection
@@ -98,6 +107,10 @@ func (s *SmartContract) SetStateWithEndorser(ctx contractapi.TransactionContextI
 	return "", setStateEndorser(ctx, key, endorser)
 }
 
+func (s *SmartContract) SetStateEndorsers(ctx contractapi.TransactionContextInterface, key, endorser1, endorser2 string) (string, error) {
+	return "", setStateEndorser(ctx, key, endorser1, endorser2)
+}
+
 func (s *SmartContract) GetState(ctx contractapi.TransactionContextInterface, key string) (string, error) {
 	value, err := ctx.GetStub().GetState(key)
 	return string(value), err
@@ -107,14 +120,16 @@ func (s *SmartContract) ChangeState(ctx contractapi.TransactionContextInterface,
 	return "", ctx.GetStub().PutState(key, []byte(value))
 }
 
-func setStateEndorser(ctx contractapi.TransactionContextInterface, key, endorser string) error {
+func setStateEndorser(ctx contractapi.TransactionContextInterface, key string, endorsers ...string) error {
 	endorsementPolicy, err := statebased.NewStateEP(nil)
 	if err != nil {
 		return err
 	}
-	err = endorsementPolicy.AddOrgs(statebased.RoleTypePeer, endorser)
-	if err != nil {
-		return fmt.Errorf("failed to add org to endorsement policy: %v", err)
+	for _, endorser := range endorsers {
+		err = endorsementPolicy.AddOrgs(statebased.RoleTypePeer, endorser)
+		if err != nil {
+			return fmt.Errorf("failed to add org to endorsement policy: %v", err)
+		}
 	}
 	policy, err := endorsementPolicy.Policy()
 	if err != nil {
