@@ -64,7 +64,7 @@ func (network *Network) NewSignedCommit(bytes []byte, signature []byte) (*Commit
 // ChaincodeEvents returns a channel from which chaincode events emitted by transaction functions in the specified
 // chaincode can be read.
 func (network *Network) ChaincodeEvents(ctx context.Context, chaincodeID string) (<-chan *ChaincodeEvent, error) {
-	events, err := network.NewChaincodeEvents(chaincodeID)
+	events, err := network.NewChaincodeEventsRequest(chaincodeID)
 	if err != nil {
 		return nil, err
 	}
@@ -72,14 +72,14 @@ func (network *Network) ChaincodeEvents(ctx context.Context, chaincodeID string)
 	return events.Events(ctx)
 }
 
-// NewChaincodeEvents creates a request to read events emitted by the specified chaincode.
-func (network *Network) NewChaincodeEvents(chaincodeID string) (*ChaincodeEvents, error) {
-	request, err := network.newSignedChaincodeEventsRequest(chaincodeID)
+// NewChaincodeEventsRequest creates a request to read events emitted by the specified chaincode.
+func (network *Network) NewChaincodeEventsRequest(chaincodeID string) (*ChaincodeEventsRequest, error) {
+	request, err := network.newSignedChaincodeEventsRequestProto(chaincodeID)
 	if err != nil {
 		return nil, err
 	}
 
-	result := &ChaincodeEvents{
+	result := &ChaincodeEventsRequest{
 		client:        network.client,
 		signingID:     network.signingID,
 		signedRequest: request,
@@ -87,8 +87,8 @@ func (network *Network) NewChaincodeEvents(chaincodeID string) (*ChaincodeEvents
 	return result, nil
 }
 
-func (network *Network) newSignedChaincodeEventsRequest(chaincodeID string) (*gateway.SignedChaincodeEventsRequest, error) {
-	request, err := network.newChaincodeEventsRequest(chaincodeID)
+func (network *Network) newSignedChaincodeEventsRequestProto(chaincodeID string) (*gateway.SignedChaincodeEventsRequest, error) {
+	request, err := network.newChaincodeEventsRequestProto(chaincodeID)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (network *Network) newSignedChaincodeEventsRequest(chaincodeID string) (*ga
 	return signedRequest, nil
 }
 
-func (network *Network) newChaincodeEventsRequest(chaincodeID string) (*gateway.ChaincodeEventsRequest, error) {
+func (network *Network) newChaincodeEventsRequestProto(chaincodeID string) (*gateway.ChaincodeEventsRequest, error) {
 	creator, err := network.signingID.Creator()
 	if err != nil {
 		return nil, fmt.Errorf("failed to serialize identity: %w", err)
@@ -118,14 +118,14 @@ func (network *Network) newChaincodeEventsRequest(chaincodeID string) (*gateway.
 	return request, nil
 }
 
-// NewSignedChaincodeEvents creates a signed request to read events emitted by a specific chaincode.
-func (network *Network) NewSignedChaincodeEvents(bytes []byte, signature []byte) (*ChaincodeEvents, error) {
+// NewSignedChaincodeEventsRequest creates a signed request to read events emitted by a specific chaincode.
+func (network *Network) NewSignedChaincodeEventsRequest(bytes []byte, signature []byte) (*ChaincodeEventsRequest, error) {
 	request := &gateway.SignedChaincodeEventsRequest{}
 	if err := proto.Unmarshal(bytes, request); err != nil {
 		return nil, fmt.Errorf("failed to deserialize signed chaincode events request: %w", err)
 	}
 
-	result := &ChaincodeEvents{
+	result := &ChaincodeEventsRequest{
 		client:        network.client,
 		signingID:     network.signingID,
 		signedRequest: request,

@@ -9,21 +9,12 @@ import { common, gateway, protos } from './protos/protos';
 import { SigningIdentity } from './signingidentity';
 import { Transaction, TransactionImpl } from './transaction';
 import util from 'util';
+import { Signable } from './signable';
 
 /**
  * Proposal represents a transaction proposal that can be sent to peers for endorsement or evaluated as a query.
  */
-export interface Proposal {
-    /**
-     * Get the serialized proposal message.
-     */
-    getBytes(): Uint8Array;
-
-    /**
-     * Get the digest of the proposal. This is used to generate a digital signature.
-     */
-    getDigest(): Uint8Array;
-
+export interface Proposal extends Signable {
     /**
      * Get the transaction ID for this proposal.
      */

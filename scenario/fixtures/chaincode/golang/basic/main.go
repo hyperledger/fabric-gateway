@@ -69,6 +69,12 @@ func (s *SmartContract) ErrorMessage(ctx contractapi.TransactionContextInterface
 	return errors.New(message)
 }
 
+// Event emits an event with a given name and payload
+func (s *SmartContract) Event(ctx contractapi.TransactionContextInterface, name string, payload string) error {
+	ctx.GetStub().SetEvent(name, []byte(payload))
+	return nil
+}
+
 func toStringValues(input map[string][]byte) map[string]string {
 	results := make(map[string]string)
 	for key, value := range input {

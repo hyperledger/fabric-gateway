@@ -7,7 +7,6 @@
 package org.hyperledger.fabric.client;
 
 import io.grpc.stub.StreamObserver;
-import net.bytebuddy.asm.MemberSubstitution;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
@@ -81,7 +80,7 @@ public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
     public void chaincodeEvents(SignedChaincodeEventsRequest request, StreamObserver<ChaincodeEventsResponse> responseObserver) {
         try {
             stub.chaincodeEvents(request).forEachOrdered(responseObserver::onNext);
-            responseObserver.onCompleted();
+//            responseObserver.onCompleted();
         } catch (Exception e) {
             responseObserver.onError(e);
         }

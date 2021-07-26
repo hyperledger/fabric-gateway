@@ -6,16 +6,11 @@
 
 package org.hyperledger.fabric.client;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.security.interfaces.ECPrivateKey;
 import java.util.concurrent.TimeUnit;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;

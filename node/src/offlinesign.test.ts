@@ -4,28 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GatewayClient } from './client';
+import { MockGatewayClient, newMockGatewayClient } from './client.test';
 import { Contract } from './contract';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { gateway, protos } from './protos/protos';
-
-interface MockGatewayClient extends GatewayClient {
-    endorse: jest.Mock<Promise<gateway.IEndorseResponse>, gateway.IEndorseRequest[]>,
-    evaluate: jest.Mock<Promise<gateway.IEvaluateResponse>, gateway.IEvaluateRequest[]>,
-    submit: jest.Mock<Promise<gateway.ISubmitResponse>, gateway.ISubmitRequest[]>,
-    commitStatus: jest.Mock<Promise<gateway.ICommitStatusResponse>, gateway.ISignedCommitStatusRequest[]>,
-}
-
-function newMockGatewayClient(): MockGatewayClient {
-    return {
-        endorse: jest.fn(undefined),
-        evaluate: jest.fn(undefined),
-        submit: jest.fn(undefined),
-        commitStatus: jest.fn(undefined),
-    };
-}
+import { protos } from './protos/protos';
 
 describe('Offline sign', () => {
     const expectedResult = 'TX_RESULT';

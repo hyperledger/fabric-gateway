@@ -7,11 +7,7 @@
 import { Contract, Network, Proposal, ProposalOptions, Signer, Transaction } from 'fabric-gateway';
 import { Commit } from 'fabric-gateway/dist/commit';
 import { protos } from 'fabric-gateway/dist/protos/protos';
-import { TextDecoder } from 'util';
-
-function asString(bytes?: Uint8Array): string {
-    return new TextDecoder().decode(bytes);
-}
+import { asString } from './utils';
 
 export class TransactionInvocation {
     readonly options: ProposalOptions = {};

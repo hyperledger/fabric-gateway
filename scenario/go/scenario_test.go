@@ -165,6 +165,8 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I start the peer named (\S+)$`, startPeer)
 	s.Step(`^the response should be "(.*)"$`, theResponseShouldBe)
 	s.Step(`^the transaction invocation should fail$`, theTransactionShouldFail)
+	s.Step(`^I listen for chaincode events from (\S+)$`, listenForChaincodeEvents)
+	s.Step(`^I should receive a chaincode event named "(.*)" with payload "(.*)"$`, receiveChaincodeEvent)
 }
 
 func beforeScenario(sc *godog.Scenario) {
@@ -675,5 +677,22 @@ func theResponseShouldBe(expected string) error {
 	if actual != expected {
 		return fmt.Errorf("transaction response \"%s\" does not match expected value \"%s\"", actual, expected)
 	}
+	return nil
+}
+
+func listenForChaincodeEvents(chaincodeID string) error {
+	return currentGateway.ListenForChaincodeEvents(chaincodeID)
+}
+
+func receiveChaincodeEvent(name string, payload string) error {
+	event, err := currentGateway.ChaincodeEvent()
+	if err != nil {
+		return err
+	}
+
+	if event.EventName != name || string(event.Payload) != payload {
+		return fmt.Errorf("expected event named \"%s\" with payload \"%s\", got: %v", name, payload, event)
+	}
+
 	return nil
 }

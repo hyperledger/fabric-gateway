@@ -9,21 +9,12 @@ import util from 'util';
 import { GatewayClient } from './client';
 import { gateway, protos } from './protos/protos';
 import Long from 'long';
+import { Signable } from './signable';
 
 /**
  * Allows access to information about a transaction that is committed to the ledger.
  */
-export interface Commit {
-    /**
-     * Get the serialized commit status request message.
-     */
-    getBytes(): Uint8Array;
-
-    /**
-     * Get the digest of the commit status request. This is used to generate a digital signature.
-     */
-    getDigest(): Uint8Array;
-
+export interface Commit extends Signable {
     /**
      * Get the committed transaction status code. If the transaction has not yet committed, this method blocks until
      * the commit occurs.
