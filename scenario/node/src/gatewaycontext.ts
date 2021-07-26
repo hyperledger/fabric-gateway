@@ -13,15 +13,17 @@ import { assertDefined } from './utils';
 export class GatewayContext {
     readonly #identity: Identity;
     readonly #signer?: Signer;
+    readonly #signerClose?: () => void;
     #client?: grpc.Client;
     #gateway?: Gateway;
     #network?: Network;
     #contract?: Contract;
     #chaincodeEvents?: BlockingQueue<ChaincodeEvent>
 
-    constructor(identity: Identity, signer?: Signer) {
+    constructor(identity: Identity, signer?: Signer, signerClose?: () => void) {
         this.#identity = identity;
         this.#signer = signer;
+        this.#signerClose = signerClose;
     }
 
     async connect(client: grpc.Client): Promise<void> {
@@ -61,6 +63,9 @@ export class GatewayContext {
     close(): void {
         this.#gateway?.close();
         this.#client?.close();
+        if (this.#signerClose) {
+            this.#signerClose();
+        }
     }
 
     private getGateway(): Gateway {

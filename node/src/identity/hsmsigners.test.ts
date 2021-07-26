@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SessionInfo, SlotInfo, TokenInfo, Template, Mechanism } from 'pkcs11js';
+import { SessionInfo, SlotInfo, TokenInfo, Template, Mechanism, Pkcs11Error } from 'pkcs11js';
 import { HSMSignerOptions, newHSMSignerFactory } from './hsmsigners';
 
 const pkcs11Stub = {
@@ -57,6 +57,7 @@ const CKK_EC = 87;
 const CKM_ECDSA = 532;
 const CKF_SERIAL_SESSION = 24;
 const CKU_USER = 72;
+const CKR_USER_ALREADY_LOGGED_IN = 256;
 
 const hsmOptions: HSMSignerOptions = {
     label: 'ForFabric',
@@ -80,6 +81,7 @@ jest.mock('pkcs11js', () => {
     const CKM_ECDSA = 532;
     const CKF_SERIAL_SESSION = 24;
     const CKU_USER = 72;
+    const CKR_USER_ALREADY_LOGGED_IN = 256;
 
     const exports = {
         PKCS11,
@@ -90,7 +92,8 @@ jest.mock('pkcs11js', () => {
         CKK_EC,
         CKM_ECDSA,
         CKF_SERIAL_SESSION,
-        CKU_USER
+        CKU_USER,
+        CKR_USER_ALREADY_LOGGED_IN
     }
     return exports;
 });
@@ -239,16 +242,35 @@ describe('When using an HSM Signer', () => {
 
     it('throws if pkcs11 login throws an error', () => {
         pkcs11Stub.C_Login = () => { throw new Error('Some Error'); }
+        pkcs11Stub.C_CloseSession = jest.fn();
         pkcs11Stub.C_GetSlotList = () => [slot1, slot2];
         expect(() => hsmSignerFactory.newSigner(hsmOptions))
             .toThrowError('Some Error');
+        expect(pkcs11Stub.C_CloseSession).toBeCalledWith(mockSession);
+    });
+
+    it('Ignores already logged in errors at login time', () => {
+        pkcs11Stub.C_CloseSession = jest.fn();
+        const alreadyLoggedInError: Pkcs11Error = {
+            code: CKR_USER_ALREADY_LOGGED_IN,
+            message: 'CKR_USER_ALREADY_LOGGED_IN',
+            nativeStack: '[Native]',
+            method: 'C_Login',
+            name: 'error'
+        }
+        pkcs11Stub.C_Login = () => { throw alreadyLoggedInError }
+        expect(() => hsmSignerFactory.newSigner(hsmOptions))
+            .not.toThrow();
+        expect(pkcs11Stub.C_CloseSession).not.toBeCalled();
     });
 
     it('throws and calls find final if it cannot find the HSM object', () => {
+        pkcs11Stub.C_CloseSession = jest.fn();
         pkcs11Stub.C_FindObjects = jest.fn(() => { return [] });
         expect(() => hsmSignerFactory.newSigner(hsmOptions))
             .toThrowError('Unable to find object in HSM with ID id');
         expect(pkcs11Stub.C_FindObjectsFinal).toBeCalled();
+        expect(pkcs11Stub.C_CloseSession).toBeCalledWith(mockSession);
     })
 
     it('finds the HSM object if it exists', () => {

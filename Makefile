@@ -96,10 +96,10 @@ vendor-chaincode:
 	cd $(scenario_dir)/fixtures/chaincode/golang/private; GO111MODULE=on go mod vendor
 
 scenario-test-go: vendor-chaincode
-	cd $(scenario_dir)/go; godog $(scenario_dir)/features/
+	cd $(scenario_dir)/go; godog --tags="~@hsm" $(scenario_dir)/features/
 
 scenario-test-node: vendor-chaincode build-node
-	cd $(scenario_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; npm test
+	cd $(scenario_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; SOFTHSM2_CONF=${HOME}/softhsm2.conf npm test
 
 scenario-test-java: vendor-chaincode build-protos
 	cd $(java_dir); mvn verify

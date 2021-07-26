@@ -59,12 +59,24 @@ Given(/^I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organiza
         await fabric.deployChaincode(ccType, ccName, version, channelName, signaturePolicy);
     });
 
+Given('I register and enroll an HSM user {word} in MSP Org1MSP', async function(this: CustomWorld, user: string): Promise<void> {
+    await fabric.generateHSMUser(user);
+});
+
 Given('I create a gateway named {word} for user {word} in MSP {word}', async function(this: CustomWorld, name: string, user: string, mspId: string): Promise<void> {
     await this.createGateway(name, user, mspId);
 });
 
+Given('I create a gateway named {word} for HSM user {word} in MSP {word}', async function(this: CustomWorld, name: string, user: string, mspId: string): Promise<void> {
+    await this.createGatewayWithHSMUser(name, user, mspId);
+});
+
 Given('I create a gateway named {word} without signer for user {word} in MSP {word}', async function(this: CustomWorld, name: string, user: string, mspId: string): Promise<void> {
     await this.createGatewayWithoutSigner(name, user, mspId);
+});
+
+Given('I create a gateway named {word} without signer for HSM user {word} in MSP {word}', async function(this: CustomWorld, name: string, user: string, mspId: string): Promise<void> {
+    await this.createGatewayWithHSMUserWithoutSigner(name, user, mspId);
 });
 
 Given('I use the gateway named {word}', async function(this: CustomWorld, name: string): Promise<void> {
@@ -110,6 +122,11 @@ When(/I set the endorsing organizations? to (.+)/, function(this: CustomWorld, j
 When('I do off-line signing as user {word} in MSP {word}', async function(this: CustomWorld, user: string, mspId: string): Promise<void> {
     await this.setOfflineSigner(user, mspId);
 })
+
+When('I do off-line signing as HSM user {word} in MSP Org1MSP', async function(this: CustomWorld, user: string): Promise<void> {
+    await this.setOfflineHSMSigner(user);
+})
+
 
 When('I invoke the transaction', async function(this: CustomWorld): Promise<void> {
     await this.invokeTransaction();

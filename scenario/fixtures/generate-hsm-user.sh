@@ -13,7 +13,6 @@ POSSIBLE_LIB_LOC=('/usr/lib/softhsm/libsofthsm2.so' \
 )
 for TEST_LIB in "${POSSIBLE_LIB_LOC[@]}"
 do
-  echo $TEST_LIB
   if [ -f $TEST_LIB ]; then
      HSM2_LIB=$TEST_LIB
      break
