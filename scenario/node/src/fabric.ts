@@ -55,6 +55,23 @@ export function getOrgForMsp(mspId: string): string {
     return org;
 }
 
+export function findSoftHSMPKCS11Lib(): string {
+    const commonSoftHSMPathNames = [
+        '/usr/lib/softhsm/libsofthsm2.so',
+        '/usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so',
+        '/usr/local/lib/softhsm/libsofthsm2.so',
+        '/usr/lib/libacsp-pkcs11.so',
+    ];
+
+    for (const pathnameToTry of commonSoftHSMPathNames) {
+        if (fs.existsSync(pathnameToTry)) {
+            return pathnameToTry
+        }
+    }
+
+    throw new Error('Unable to find PKCS11 library')
+}
+
 function dockerCommand(...args: string[]): string {
     const result = spawnSync('docker', args);
     const output = result.output.toString();
@@ -85,7 +102,6 @@ export class Fabric {
                 .map(hostPort => hostPort.split(':')[0])
                 .map(host => [host, true])
         );
-        
     }
 
     dockerDown(): void {
@@ -106,6 +122,11 @@ export class Fabric {
 
         this.fabricRunning = true;
         await sleep(20000);
+    }
+
+    generateHSMUser(hsmuserid: string):void {
+        const generateOut = execFileSync('./generate-hsm-user.sh', [hsmuserid], { cwd: fixturesDir });
+        console.log(generateOut.toString());
     }
 
     async createChannels(): Promise<void> {
