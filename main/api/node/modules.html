@@ -71,6 +71,8 @@
 						<section class="tsd-index-section ">
 							<h3>Interfaces</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-interface"><a href="interfaces/chaincodeevent.html" class="tsd-kind-icon">Chaincode<wbr>Event</a></li>
+								<li class="tsd-kind-interface"><a href="interfaces/chaincodeeventsrequest.html" class="tsd-kind-icon">Chaincode<wbr>Events<wbr>Request</a></li>
 								<li class="tsd-kind-interface"><a href="interfaces/commit.html" class="tsd-kind-icon">Commit</a></li>
 								<li class="tsd-kind-interface"><a href="interfaces/connectoptions.html" class="tsd-kind-icon">Connect<wbr>Options</a></li>
 								<li class="tsd-kind-interface"><a href="interfaces/contract.html" class="tsd-kind-icon">Contract</a></li>
@@ -79,6 +81,7 @@
 								<li class="tsd-kind-interface"><a href="interfaces/network.html" class="tsd-kind-icon">Network</a></li>
 								<li class="tsd-kind-interface"><a href="interfaces/proposal.html" class="tsd-kind-icon">Proposal</a></li>
 								<li class="tsd-kind-interface"><a href="interfaces/proposaloptions.html" class="tsd-kind-icon">Proposal<wbr>Options</a></li>
+								<li class="tsd-kind-interface"><a href="interfaces/signable.html" class="tsd-kind-icon">Signable</a></li>
 								<li class="tsd-kind-interface"><a href="interfaces/submittedtransaction.html" class="tsd-kind-icon">Submitted<wbr>Transaction</a></li>
 								<li class="tsd-kind-interface"><a href="interfaces/transaction.html" class="tsd-kind-icon">Transaction</a></li>
 							</ul>
@@ -86,6 +89,7 @@
 						<section class="tsd-index-section ">
 							<h3>Type aliases</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-type-alias"><a href="modules.html#chaincodeeventcallback" class="tsd-kind-icon">Chaincode<wbr>Event<wbr>Callback</a></li>
 								<li class="tsd-kind-type-alias"><a href="modules.html#hash" class="tsd-kind-icon">Hash</a></li>
 								<li class="tsd-kind-type-alias"><a href="modules.html#signer" class="tsd-kind-icon">Signer</a></li>
 							</ul>
@@ -102,12 +106,43 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Type aliases</h2>
 				<section class="tsd-panel tsd-member tsd-kind-type-alias">
+					<a name="chaincodeeventcallback" class="tsd-anchor"></a>
+					<h3>Chaincode<wbr>Event<wbr>Callback</h3>
+					<div class="tsd-signature tsd-kind-icon">Chaincode<wbr>Event<wbr>Callback<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>event<span class="tsd-signature-symbol">: </span><a href="interfaces/chaincodeevent.html" class="tsd-signature-type" data-tsd-kind="Interface">ChaincodeEvent</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/bbf5054/node/src/chaincodeeventsrequest.ts#L14">chaincodeeventsrequest.ts:14</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-signature">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-type-alias">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>event<span class="tsd-signature-symbol">: </span><a href="interfaces/chaincodeevent.html" class="tsd-signature-type" data-tsd-kind="Interface">ChaincodeEvent</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>event: <a href="interfaces/chaincodeevent.html" class="tsd-signature-type" data-tsd-kind="Interface">ChaincodeEvent</a></h5>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias">
 					<a name="hash" class="tsd-anchor"></a>
 					<h3>Hash</h3>
 					<div class="tsd-signature tsd-kind-icon">Hash<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Uint8Array</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/85c3d97/node/src/hash/hash.d.ts#L10">hash/hash.d.ts:10</a></li>
+							<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/bbf5054/node/src/hash/hash.d.ts#L10">hash/hash.d.ts:10</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -143,7 +178,7 @@
 					<div class="tsd-signature tsd-kind-icon">Signer<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>digest<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/85c3d97/node/src/identity/signer.d.ts#L11">identity/signer.d.ts:11</a></li>
+							<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/bbf5054/node/src/identity/signer.d.ts#L11">identity/signer.d.ts:11</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -187,7 +222,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/85c3d97/node/src/gateway.ts#L53">gateway.ts:53</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/bbf5054/node/src/gateway.ts#L53">gateway.ts:53</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -228,6 +263,12 @@
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
 					<li class=" tsd-kind-interface">
+						<a href="interfaces/chaincodeevent.html" class="tsd-kind-icon">Chaincode<wbr>Event</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/chaincodeeventsrequest.html" class="tsd-kind-icon">Chaincode<wbr>Events<wbr>Request</a>
+					</li>
+					<li class=" tsd-kind-interface">
 						<a href="interfaces/commit.html" class="tsd-kind-icon">Commit</a>
 					</li>
 					<li class=" tsd-kind-interface">
@@ -252,10 +293,16 @@
 						<a href="interfaces/proposaloptions.html" class="tsd-kind-icon">Proposal<wbr>Options</a>
 					</li>
 					<li class=" tsd-kind-interface">
+						<a href="interfaces/signable.html" class="tsd-kind-icon">Signable</a>
+					</li>
+					<li class=" tsd-kind-interface">
 						<a href="interfaces/submittedtransaction.html" class="tsd-kind-icon">Submitted<wbr>Transaction</a>
 					</li>
 					<li class=" tsd-kind-interface">
 						<a href="interfaces/transaction.html" class="tsd-kind-icon">Transaction</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="modules.html#chaincodeeventcallback" class="tsd-kind-icon">Chaincode<wbr>Event<wbr>Callback</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
 						<a href="modules.html#hash" class="tsd-kind-icon">Hash</a>
