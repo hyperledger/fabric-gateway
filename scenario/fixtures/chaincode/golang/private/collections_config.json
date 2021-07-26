@@ -19,5 +19,17 @@
     "endorsementPolicy": {
       "signaturePolicy": "OR('Org1MSP.member')"
     }
+  },
+  {
+    "name": "Org3Collection",
+    "policy": "OR('Org3MSP.member')",
+    "requiredPeerCount": 0,
+    "maxPeerCount": 1,
+    "blockToLive":3,
+    "memberOnlyRead": false,
+    "memberOnlyWrite": false,
+    "endorsementPolicy": {
+      "signaturePolicy": "OR('Org3MSP.member')"
+    }
   }
 ]

@@ -115,3 +115,42 @@ Feature: Private data collections
         And I set the endorsing organizations to ["Org1MSP"]
         Then the transaction invocation should fail
 
+    # The following scenarios tests the ability for Endorse() to work out which orgs to endorse based on collection policies
+    # This one will endorse with the gateway's org
+    Scenario: Org1 writes private data to SharedCollection without specifying endorsers
+        When I use the gateway named gateway1
+        And I prepare to submit a WritePrivateData transaction
+        And I set transient data on the transaction to
+            | collection | SharedCollection |
+            | key | key-108 |
+            | value | value-108 |
+        And I invoke the transaction
+        And I prepare to evaluate a ReadPrivateData transaction
+        And I set the transaction arguments to ["SharedCollection", "key-108"]
+        And I set the endorsing organizations to ["Org1MSP"]
+        And I invoke the transaction
+        Then the response should be "value-108"
+
+    # This needs endorsement from Org3
+    Scenario: Org1 writes private data to SharedCollection and Org3Collection without specifying endorsers
+        When I use the gateway named gateway1
+        And I prepare to submit a WritePrivateData transaction
+        And I set transient data on the transaction to
+            | collection | SharedCollection,Org3Collection |
+            | key | key-109 |
+            | value | value-109 |
+        And I invoke the transaction
+        And I prepare to evaluate a ReadPrivateData transaction
+        And I set the transaction arguments to ["SharedCollection", "key-109"]
+        And I set the endorsing organizations to ["Org1MSP"]
+        And I invoke the transaction
+        Then the response should be "value-109"
+        And I prepare to evaluate a ReadPrivateData transaction
+        And I set the transaction arguments to ["Org3Collection", "key-109"]
+        And I set the endorsing organizations to ["Org3MSP"]
+        And I invoke the transaction
+        Then the response should be "value-109"
+        And I prepare to evaluate a ReadPrivateData transaction
+        And I set the transaction arguments to ["Org3Collection", "key-109"]
+        And I set the endorsing organizations to ["Org1MSP"]
+        Then the transaction invocation should fail
