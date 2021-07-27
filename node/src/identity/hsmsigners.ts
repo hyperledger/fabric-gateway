@@ -100,8 +100,24 @@ export class HSMSignerFactory {
         const pkcs11 = this.#pkcs11;
         const slot = this.findSlotForLabel(hsmSignerOptions.label);
         const session = pkcs11.C_OpenSession(slot, pkcs11js.CKF_SERIAL_SESSION);
-        pkcs11.C_Login(session, hsmSignerOptions.userType, hsmSignerOptions.pin);
-        const privateKeyHandle = this.findObjectInHSM(session, pkcs11js.CKO_PRIVATE_KEY, hsmSignerOptions.identifier);
+
+        try {
+            pkcs11.C_Login(session, hsmSignerOptions.userType, hsmSignerOptions.pin);
+        } catch(err) {
+            const pkcs11err = err as pkcs11js.Pkcs11Error;
+            if (pkcs11err.code !== pkcs11js.CKR_USER_ALREADY_LOGGED_IN) {
+                pkcs11.C_CloseSession(session);
+                throw err;
+            }
+        }
+
+        let privateKeyHandle: Buffer;
+        try {
+            privateKeyHandle = this.findObjectInHSM(session, pkcs11js.CKO_PRIVATE_KEY, hsmSignerOptions.identifier);
+        } catch(err) {
+            pkcs11.C_CloseSession(session);
+            throw err;
+        }
 
         const definedCurves = elliptic.curves as unknown as { [key: string]: elliptic.curves.PresetCurve };
         const ecdsaCurve = definedCurves[`p${supportedKeySize}`];
@@ -111,7 +127,6 @@ export class HSMSignerFactory {
         const halfOrder = curveBigNum.shrn(1);
 
         const close = ():void => {
-            pkcs11.C_Logout(session);
             pkcs11.C_CloseSession(session);
         }
 

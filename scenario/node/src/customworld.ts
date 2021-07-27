@@ -7,13 +7,16 @@
 import { DataTable, setWorldConstructor } from '@cucumber/cucumber';
 import * as grpc from '@grpc/grpc-js';
 import * as crypto from 'crypto';
-import { ChaincodeEvent, Identity, Signer, signers } from 'fabric-gateway';
+import { ChaincodeEvent, Identity, Signer, signers, HSMSigner, HSMSignerOptions, newHSMSignerFactory, HSMSignerFactory } from 'fabric-gateway';
 import * as fs from 'fs';
 import * as path from 'path';
-import { fixturesDir, getOrgForMsp } from './fabric';
+import { fixturesDir, getOrgForMsp, findSoftHSMPKCS11Lib } from './fabric';
+import { getSKIFromCertificate } from './fabricski';
 import { GatewayContext } from './gatewaycontext';
 import { TransactionInvocation } from './transactioninvocation';
 import { assertDefined } from './utils';
+
+let hsmSignerFactory: HSMSignerFactory;
 
 interface ConnectionInfo {
     readonly url: string;
@@ -55,7 +58,6 @@ const peerConnectionInfo: { [peer: string]: ConnectionInfo } = {
     }
 };
 
-
 async function newIdentity(user: string, mspId: string): Promise<Identity> {
     const certificate = await readCertificate(user, mspId);
     return {
@@ -89,9 +91,38 @@ function getCredentialsPath(user: string, mspId: string): string {
         'users', `${user}@${org}`, 'msp');
 }
 
+async function newHSMIdentity(user: string, mspId: string): Promise<Identity> {
+    const certificate = await readHSMCertificate(user);
+    return {
+        mspId,
+        credentials: certificate
+    };
+}
+
+async function newHSMSigner(user: string): Promise<HSMSigner> {
+    if (!hsmSignerFactory) {
+        hsmSignerFactory = newHSMSignerFactory(findSoftHSMPKCS11Lib());
+    }
+
+    const certificate = await readHSMCertificate(user);
+    const ski = getSKIFromCertificate(certificate.toString());
+    const hsmConfigOptions: HSMSignerOptions = {
+        label: 'ForFabric',
+        pin: '98765432',
+        identifier: ski
+    }
+    return hsmSignerFactory.newSigner(hsmConfigOptions);
+}
+
+async function readHSMCertificate(user: string): Promise<Buffer> {
+    const certPath = path.join(fixturesDir, 'crypto-material', 'hsm', user, 'signcerts', 'cert.pem' );
+    return await fs.promises.readFile(certPath);
+}
+
 export class CustomWorld {
     #gateways: { [name: string]: GatewayContext } = {};
     #currentGateway?: GatewayContext;
+    #offlineHSMSigners = new Map<string, HSMSigner>()
     #transaction?: TransactionInvocation;
 
     async createGateway(name: string, user: string, mspId: string): Promise<void> {
@@ -104,6 +135,21 @@ export class CustomWorld {
 
     async createGatewayWithoutSigner(name: string, user: string, mspId: string): Promise<void> {
         const identity = await newIdentity(user, mspId);
+        const gateway = new GatewayContext(identity);
+        this.#gateways[name] = gateway;
+        this.#currentGateway = gateway;
+    }
+
+    async createGatewayWithHSMUser(name: string, user: string, mspId: string): Promise<void> {
+        const identity = await newHSMIdentity(user, mspId);
+        const {signer, close} = await newHSMSigner(user);
+        const gateway = new GatewayContext(identity, signer, close);
+        this.#gateways[name] = gateway;
+        this.#currentGateway = gateway;
+    }
+
+    async createGatewayWithHSMUserWithoutSigner(name: string, user: string, mspId: string): Promise<void> {
+        const identity = await newHSMIdentity(user, mspId);
         const gateway = new GatewayContext(identity);
         this.#gateways[name] = gateway;
         this.#currentGateway = gateway;
@@ -173,6 +219,15 @@ export class CustomWorld {
         this.getTransaction().setOfflineSigner(signer);
     }
 
+    async setOfflineHSMSigner(user: string): Promise<void> {
+        let hsmSigner = this.#offlineHSMSigners.get(user);
+        if (!hsmSigner) {
+            hsmSigner = await newHSMSigner(user);
+            this.#offlineHSMSigners.set(user, hsmSigner);
+        }
+        this.getTransaction().setOfflineSigner(hsmSigner.signer);
+    }
+
     async invokeTransaction(): Promise<void> {
         await this.getTransaction().invokeTransaction();
         this.getTransaction().getResult();
@@ -195,6 +250,12 @@ export class CustomWorld {
         for (const context of Object.values(this.#gateways)) {
             context.close();
         }
+
+        this.#offlineHSMSigners.forEach(hsmSigner => {
+            hsmSigner.close();
+        });
+        this.#offlineHSMSigners.clear();
+
         this.#gateways = {};
         this.#currentGateway = undefined;
     }
