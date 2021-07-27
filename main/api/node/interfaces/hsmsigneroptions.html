@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>ProposalOptions | fabric-gateway</title>
+	<title>HSMSignerOptions | fabric-gateway</title>
 	<meta name="description" content="Documentation for fabric-gateway">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -55,28 +55,21 @@
 					<a href="../modules.html">fabric-gateway</a>
 				</li>
 				<li>
-					<a href="proposaloptions.html">ProposalOptions</a>
+					<a href="hsmsigneroptions.html">HSMSignerOptions</a>
 				</li>
 			</ul>
-			<h1>Interface ProposalOptions</h1>
+			<h1>Interface HSMSignerOptions</h1>
 		</div>
 	</div>
 </header>
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
-			<section class="tsd-panel tsd-comment">
-				<div class="tsd-comment tsd-typography">
-					<div class="lead">
-						<p>Options used when evaluating or endorsing a transaction proposal.</p>
-					</div>
-				</div>
-			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">ProposalOptions</span>
+						<span class="target">HSMSignerOptions</span>
 					</li>
 				</ul>
 			</section>
@@ -87,9 +80,10 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="proposaloptions.html#arguments" class="tsd-kind-icon">arguments</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="proposaloptions.html#endorsingorganizations" class="tsd-kind-icon">endorsing<wbr>Organizations</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="proposaloptions.html#transientdata" class="tsd-kind-icon">transient<wbr>Data</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="hsmsigneroptions.html#identifier" class="tsd-kind-icon">identifier</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="hsmsigneroptions.html#label" class="tsd-kind-icon">label</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="hsmsigneroptions.html#pin" class="tsd-kind-icon">pin</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="hsmsigneroptions.html#usertype" class="tsd-kind-icon">user<wbr>Type</a></li>
 							</ul>
 						</section>
 					</div>
@@ -98,58 +92,63 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="arguments" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> arguments</h3>
-					<div class="tsd-signature tsd-kind-icon">arguments<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span></div>
+					<a name="identifier" class="tsd-anchor"></a>
+					<h3>identifier</h3>
+					<div class="tsd-signature tsd-kind-icon">identifier<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Buffer</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/2dcf395/node/src/proposalbuilder.ts#L20">proposalbuilder.ts:20</a></li>
+							<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/2dcf395/node/src/identity/hsmsigners.ts#L29">identity/hsmsigners.ts:29</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>Arguments passed to the transaction function.</p>
+							<p>Identifier. The CKA_ID assigned to the HSM object</p>
 						</div>
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="endorsingorganizations" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> endorsing<wbr>Organizations</h3>
-					<div class="tsd-signature tsd-kind-icon">endorsing<wbr>Organizations<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
+					<a name="label" class="tsd-anchor"></a>
+					<h3>label</h3>
+					<div class="tsd-signature tsd-kind-icon">label<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/2dcf395/node/src/proposalbuilder.ts#L32">proposalbuilder.ts:32</a></li>
+							<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/2dcf395/node/src/identity/hsmsigners.ts#L19">identity/hsmsigners.ts:19</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>Specifies the set of organizations that will attempt to endorse the proposal.
-								No other organizations&#39; peers will be sent this proposal.
-							This is usually used in conjunction with transientData for private data scenarios.</p>
+							<p>The label associated with the token for the slot</p>
 						</div>
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="transientdata" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> transient<wbr>Data</h3>
-					<div class="tsd-signature tsd-kind-icon">transient<wbr>Data<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{}</span></div>
+					<a name="pin" class="tsd-anchor"></a>
+					<h3>pin</h3>
+					<div class="tsd-signature tsd-kind-icon">pin<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/2dcf395/node/src/proposalbuilder.ts#L25">proposalbuilder.ts:25</a></li>
+							<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/2dcf395/node/src/identity/hsmsigners.ts#L24">identity/hsmsigners.ts:24</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>Private data passed to the transaction function but not recorded on the ledger.</p>
+							<p>The pin for the slot identified by the label</p>
 						</div>
 					</div>
-					<div class="tsd-type-declaration">
-						<h4>Type declaration</h4>
-						<ul class="tsd-parameters">
-							<li class="tsd-parameter-index-signature">
-								<h5><span class="tsd-signature-symbol">[</span>key: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><span class="tsd-signature-type">Uint8Array</span></h5>
-							</li>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="usertype" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> user<wbr>Type</h3>
+					<div class="tsd-signature tsd-kind-icon">user<wbr>Type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/2dcf395/node/src/identity/hsmsigners.ts#L34">identity/hsmsigners.ts:34</a></li>
 						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Optional user type for the HSM. If not specified it defaults to CKU_USER</p>
+						</div>
 					</div>
 				</section>
 			</section>
@@ -188,9 +187,27 @@
 					<li class=" tsd-kind-interface">
 						<a href="hsmsigner.html" class="tsd-kind-icon">HSMSigner</a>
 					</li>
-					<li class=" tsd-kind-interface">
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-interface">
 						<a href="hsmsigneroptions.html" class="tsd-kind-icon">HSMSigner<wbr>Options</a>
+						<ul>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="hsmsigneroptions.html#identifier" class="tsd-kind-icon">identifier</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="hsmsigneroptions.html#label" class="tsd-kind-icon">label</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="hsmsigneroptions.html#pin" class="tsd-kind-icon">pin</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="hsmsigneroptions.html#usertype" class="tsd-kind-icon">user<wbr>Type</a>
+							</li>
+						</ul>
 					</li>
+				</ul>
+				<ul class="after-current">
 					<li class=" tsd-kind-interface">
 						<a href="identity.html" class="tsd-kind-icon">Identity</a>
 					</li>
@@ -200,24 +217,9 @@
 					<li class=" tsd-kind-interface">
 						<a href="proposal.html" class="tsd-kind-icon">Proposal</a>
 					</li>
-				</ul>
-				<ul class="current">
-					<li class="current tsd-kind-interface">
+					<li class=" tsd-kind-interface">
 						<a href="proposaloptions.html" class="tsd-kind-icon">Proposal<wbr>Options</a>
-						<ul>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="proposaloptions.html#arguments" class="tsd-kind-icon">arguments</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="proposaloptions.html#endorsingorganizations" class="tsd-kind-icon">endorsing<wbr>Organizations</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="proposaloptions.html#transientdata" class="tsd-kind-icon">transient<wbr>Data</a>
-							</li>
-						</ul>
 					</li>
-				</ul>
-				<ul class="after-current">
 					<li class=" tsd-kind-interface">
 						<a href="signable.html" class="tsd-kind-icon">Signable</a>
 					</li>
