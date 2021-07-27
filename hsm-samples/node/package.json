@@ -1,0 +1,26 @@
+{
+  "name": "gateway-sample",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/sample.js",
+  "engines": {
+    "node": "^12.13.0 || ^14.15.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "SOFTHSM2_CONF=${HOME}/softhsm2.conf node dist/hsm-sample.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.3.0",
+    "jsrsasign": "^10.3.0",
+    "fabric-gateway": "../../node/fabric-gateway-dev.tgz"
+  },
+  "devDependencies": {
+    "@tsconfig/node12": "^1.0.7",
+    "@types/jsrsasign": "^8.0.13",
+    "typescript": "^4.2.3"
+  }
+}

@@ -14,6 +14,7 @@ export * as hash from './hash/hashes';
 export { Identity } from './identity/identity';
 export { Signer } from './identity/signer';
 export * as signers from './identity/signers';
+export { HSMSignerOptions, HSMSigner, HSMSignerFactory, newHSMSignerFactory } from './identity/hsmsigners'
 export { Network } from './network';
 export { Proposal } from './proposal';
 export { ProposalOptions } from './proposalbuilder';

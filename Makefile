@@ -11,6 +11,7 @@ node_dir := $(base_dir)/node
 java_dir := $(base_dir)/java
 scenario_dir := $(base_dir)/scenario
 samples_dir := $(base_dir)/samples
+hsm_samples_dir := $(base_dir)/hsm-samples
 
 # PEER_IMAGE_PULL is where to pull peer image from, it can be set by external env variable
 PEER_IMAGE_PULL ?= hyperledger-fabric.jfrog.io/fabric-peer:amd64-latest
@@ -74,6 +75,9 @@ staticcheck:
 sample-network: pull-latest-peer vendor-chaincode
 	cd $(scenario_dir)/go; GATEWAY_NO_SHUTDOWN=TRUE godog $(scenario_dir)/features/transactions.feature
 
+enroll-hsm-user:
+	cd ${scenario_dir}/fixtures; ./generate-hsm-user.sh HSMUser
+
 sample-network-clean:
 	docker ps -aq | xargs docker rm -f; docker images -q 'dev-*' | xargs docker rmi -f; docker network prune --force
 
@@ -82,8 +86,9 @@ run-samples: | sample-network run-samples-go run-samples-node run-samples-java s
 run-samples-go:
 	cd $(samples_dir)/go; go run sample.go
 
-run-samples-node: build-node
+run-samples-node: build-node enroll-hsm-user
 	cd $(samples_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; npm run build; npm start
+	cd $(hsm_samples_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; npm run build; npm start
 
 run-samples-java: build-java
 	cd $(samples_dir)/java; mvn test
