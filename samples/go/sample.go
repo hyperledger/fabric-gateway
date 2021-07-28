@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"context"
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
@@ -42,10 +43,28 @@ func main() {
 	}
 	defer gateway.Close()
 
+	fmt.Println("exampleSubmit:")
 	exampleSubmit(gateway)
 	fmt.Println()
 
+	fmt.Println("exampleSubmitAsync:")
 	exampleSubmitAsync(gateway)
+	fmt.Println()
+
+	fmt.Println("exampleSubmitPrivateData:")
+	exampleSubmitPrivateData(gateway)
+	fmt.Println()
+
+	fmt.Println("exampleSubmitPrivateData2:")
+	exampleSubmitPrivateData2(gateway)
+	fmt.Println()
+
+	fmt.Println("exampleStateBasedEndorsement:")
+	exampleStateBasedEndorsement(gateway)
+	fmt.Println()
+
+	fmt.Println("exampleChaincodeEvents:")
+	exampleChaincodeEvents(gateway)
 	fmt.Println()
 }
 
@@ -111,6 +130,164 @@ func exampleSubmitAsync(gateway *client.Gateway) {
 	}
 
 	fmt.Printf("Query result = %s\n", string(evaluateResult))
+}
+
+func exampleSubmitPrivateData(gateway *client.Gateway) {
+	network := gateway.GetNetwork("mychannel")
+	contract := network.GetContract("private")
+
+	timestamp := time.Now().String() // This is our 'sensitive' data for this example
+	privateData := map[string][]byte{
+		"collection": []byte("SharedCollection,Org3Collection"), // SharedCollection owned by Org1 & Org3, Org3Collection owned by Org3.
+		"key":        []byte("my-private-key"),
+		"value":      []byte(timestamp),
+	}
+	fmt.Printf("Submitting \"WritePrivateData\" transaction with private data: %s\n", privateData["value"])
+
+	// Submit transaction, blocking until the transaction has been committed on the ledger.
+	// The 'transient' data will not get written to the ledger, and is used to send sensitive data to the trusted endorsing peers.
+	// The gateway will only send this to peers that are included in the ownership policy of all collections accessed by the chaincode function.
+	// It is assumed that the gateway's organization is trusted and will invoke the chaincode to work out if extra endorsements are required from other orgs.
+	// In this example, it will also seek endorsement from Org3, which is included in the ownership policy of both collections.
+	_, err := contract.Submit("WritePrivateData", client.WithTransient(privateData))
+	if err != nil {
+		panic(fmt.Errorf("failed to submit transaction: %w", err))
+	}
+
+	fmt.Printf("Transaction committed successfully\n")
+	fmt.Println("Evaluating \"ReadPrivateData\" query with arguments: \"SharedCollection\", \"my-private-key\"")
+
+	evaluateResult, err := contract.EvaluateTransaction("ReadPrivateData", "SharedCollection", "my-private-key")
+	if err != nil {
+		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+	}
+
+	fmt.Printf("Query result = %s\n", string(evaluateResult))
+}
+
+func exampleSubmitPrivateData2(gateway *client.Gateway) {
+	network := gateway.GetNetwork("mychannel")
+	contract := network.GetContract("private")
+
+	timestamp := time.Now().String() // This is our 'sensitive' data for this example
+	privateData := map[string][]byte{
+		"collection": []byte("Org1Collection,Org3Collection"), // Org1Collection owned by Org1, Org3Collection owned by Org3.
+		"key":        []byte("my-private-key2"),
+		"value":      []byte(timestamp),
+	}
+	fmt.Printf("Submitting \"WritePrivateData\" transaction with private data: %s\n", privateData["value"])
+
+	// This example is similar to the previous private data example.
+	// The difference here is that the gateway cannot assume that Org3 is trusted to receive transient data
+	// that might be destined for storage in Org1Collection, since Org3 is not in its ownership policy.
+	// The client application must explicitly specify which organizations must endorse using the WithEndorsingOrganizations() functional argument.
+	_, err := contract.Submit("WritePrivateData",
+		client.WithTransient(privateData),
+		client.WithEndorsingOrganizations("Org1MSP", "Org3MSP"),
+	)
+	if err != nil {
+		panic(fmt.Errorf("failed to submit transaction: %w", err))
+	}
+
+	fmt.Printf("Transaction committed successfully\n")
+	fmt.Println("Evaluating \"ReadPrivateData\" query with arguments: \"Org1Collection\", \"my-private-key2\"")
+
+	evaluateResult, err := contract.EvaluateTransaction("ReadPrivateData", "Org1Collection", "my-private-key2")
+	if err != nil {
+		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+	}
+
+	fmt.Printf("Query result = %s\n", string(evaluateResult))
+}
+
+func exampleStateBasedEndorsement(gateway *client.Gateway) {
+	network := gateway.GetNetwork("mychannel")
+	contract := network.GetContract("private")
+
+	fmt.Println("Submitting \"SetStateWithEndorser\" transaction with arguments: \"sbe-key\", \"value1\", \"Org1MSP\"")
+	// Submit transaction, blocking until the transaction has been committed on the ledger
+	_, err := contract.SubmitTransaction("SetStateWithEndorser", "sbe-key", "value1", "Org1MSP")
+	if err != nil {
+		panic(fmt.Errorf("failed to submit transaction: %w", err))
+	}
+	fmt.Println("Transaction committed successfully")
+
+	// Query the current state
+	fmt.Println("Evaluating \"GetState\" query with arguments: \"sbe-key\"")
+	evaluateResult, err := contract.EvaluateTransaction("GetState", "sbe-key")
+	if err != nil {
+		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+	}
+	fmt.Printf("Query result = %s\n", string(evaluateResult))
+
+	// Submit transaction to modify the state.
+	// The state-based endorsement policy will override the chaincode policy for this state (key).
+	fmt.Println("Submitting \"ChangeState\" transaction with arguments: \"sbe-key\", \"value2\"")
+	_, err = contract.SubmitTransaction("ChangeState", "sbe-key", "value2")
+	if err != nil {
+		panic(fmt.Errorf("failed to submit transaction: %w", err))
+	}
+	fmt.Println("Transaction committed successfully")
+
+	// Verify the current state
+	fmt.Println("Evaluating \"GetState\" query with arguments: \"sbe-key\"")
+	evaluateResult, err = contract.EvaluateTransaction("GetState", "sbe-key")
+	if err != nil {
+		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+	}
+	fmt.Printf("Query result = %s\n", string(evaluateResult))
+
+	// Now change the state-based endorsement policy for this state.
+	fmt.Println("Submitting \"SetStateEndorsers\" transaction with arguments: \"sbe-key\", \"Org2MSP\", \"Org3MSP\"")
+	_, err = contract.SubmitTransaction("SetStateEndorsers", "sbe-key", "Org2MSP", "Org3MSP")
+	if err != nil {
+		panic(fmt.Errorf("failed to submit transaction: %w", err))
+	}
+	fmt.Println("Transaction committed successfully")
+
+	// Modify the state.  It will now require endorsement from Org2 and Org3 for this transaction to succeed.
+	// The gateway will endorse this transaction proposal on one of its organization's peers and will determine if
+	// extra endorsements are required to satisfy any state changes.
+	// In this example, it will seek endorsements from Org2 and Org3 in order to satisfy the SBE policy.
+	fmt.Println("Submitting \"ChangeState\" transaction with arguments: \"sbe-key\", \"value3\"")
+	_, err = contract.SubmitTransaction("ChangeState", "sbe-key", "value3")
+	if err != nil {
+		panic(fmt.Errorf("failed to submit transaction: %w", err))
+	}
+	fmt.Println("Transaction committed successfully")
+
+	// Verify the new state
+	fmt.Println("Evaluating \"GetState\" query with arguments: \"sbe-key\"")
+	evaluateResult, err = contract.EvaluateTransaction("GetState", "sbe-key")
+	if err != nil {
+		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+	}
+	fmt.Printf("Query result = %s\n", string(evaluateResult))
+}
+
+func exampleChaincodeEvents(gateway *client.Gateway) {
+	network := gateway.GetNetwork("mychannel")
+	contract := network.GetContract("basic")
+
+	fmt.Println("Listening for chaincode events")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	events, err := network.ChaincodeEvents(ctx, "basic")
+
+	// Submit a transaction that generates a chaincode event
+	fmt.Println("Submitting \"event\" transaction with arguments: \"my-event-name\", \"my-event-payload\"")
+	_, err = contract.SubmitTransaction("event", "my-event-name", "my-event-payload")
+	if err != nil {
+		panic(fmt.Errorf("failed to submit transaction: %w", err))
+	}
+	fmt.Println("Transaction committed successfully")
+
+	select {
+	case ev := <-events:
+		fmt.Printf("Received event name: %s, payload: %s, txId: %s\n", ev.EventName, ev.Payload, ev.TransactionID)
+	case <-time.After(10 * time.Second):
+		fmt.Println("Timed out waiting for chaincode event")
+	}
 }
 
 // newGrpcConnection creates a gRPC connection to the Gateway server.
