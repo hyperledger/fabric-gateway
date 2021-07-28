@@ -73,7 +73,7 @@ staticcheck:
 	staticcheck $(base_dir)/pkg/... $(scenario_dir)/go
 
 sample-network: pull-latest-peer vendor-chaincode
-	cd $(scenario_dir)/go; GATEWAY_NO_SHUTDOWN=TRUE godog $(scenario_dir)/features/transactions.feature
+	cd $(scenario_dir)/go; GATEWAY_NO_SHUTDOWN=TRUE godog $(scenario_dir)/features/transactions.feature $(scenario_dir)/features/privatedata.feature
 
 enroll-hsm-user:
 	cd ${scenario_dir}/fixtures; ./generate-hsm-user.sh HSMUser

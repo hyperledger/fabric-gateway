@@ -17,16 +17,15 @@ import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
-import java.util.Arrays;
+import java.util.Iterator;
+import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TransferQueue;
 
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
-import org.hyperledger.fabric.client.CommitException;
-import org.hyperledger.fabric.client.Contract;
-import org.hyperledger.fabric.client.Gateway;
-import org.hyperledger.fabric.client.Network;
-import org.hyperledger.fabric.client.SubmittedTransaction;
+import org.hyperledger.fabric.client.*;
 import org.hyperledger.fabric.client.identity.Identities;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
@@ -51,10 +50,24 @@ public class Sample {
                 .connection(channel);
 
         try (Gateway gateway = builder.connect()) {
+            System.out.println("exampleSubmit:");
             exampleSubmit(gateway);
             System.out.println();
 
+            System.out.println("exampleSubmitAsync:");
             exampleSubmitAsync(gateway);
+            System.out.println();
+
+            System.out.println("exampleSubmitPrivateData:");
+            exampleSubmitPrivateData(gateway);
+            System.out.println();
+
+            System.out.println("exampleSubmitPrivateData2:");
+            exampleSubmitPrivateData2(gateway);
+            System.out.println();
+
+            System.out.println("exampleStateBasedEndorsement:");
+            exampleStateBasedEndorsement(gateway);
             System.out.println();
         } finally {
             channel.shutdownNow();
@@ -106,6 +119,100 @@ public class Sample {
         System.out.println("Evaluating \"get\" query with arguments: async");
 
         byte[] evaluateResult = contract.evaluateTransaction("get", "async");
+        System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
+    }
+
+    private static void exampleSubmitPrivateData(Gateway gateway) throws CommitException {
+        Network network = gateway.getNetwork("mychannel");
+        Contract contract = network.getContract("private");
+
+        String timestamp = LocalDateTime.now().toString();
+        System.out.println("Submitting \"WritePrivateData\" transaction with private data: " + timestamp);
+
+        // Submit transaction, blocking until the transaction has been committed on the ledger.
+        // The 'transient' data will not get written to the ledger, and is used to send sensitive data to the trusted endorsing peers.
+        // The gateway will only send this to peers that are included in the ownership policy of all collections accessed by the chaincode function.
+        // It is assumed that the gateway's organization is trusted and will invoke the chaincode to work out if extra endorsements are required from other orgs.
+        // In this example, it will also seek endorsement from Org3, which is included in the ownership policy of both collections.
+        contract.newProposal("WritePrivateData")
+                .putTransient("collection", "SharedCollection,Org3Collection".getBytes(StandardCharsets.UTF_8)) // SharedCollection owned by Org1 & Org3, Org3Collection owned by Org3.
+                .putTransient("key", "my-private-key".getBytes(StandardCharsets.UTF_8))
+                .putTransient("value", timestamp.getBytes(StandardCharsets.UTF_8))
+                .build()
+                .endorse()
+                .submit();
+
+        System.out.println("Evaluating \"ReadPrivateData\" query with arguments: \"SharedCollection\", \"my-private-key\"");
+
+        byte[] evaluateResult = contract.evaluateTransaction("ReadPrivateData", "SharedCollection", "my-private-key");
+        System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
+    }
+
+    private static void exampleSubmitPrivateData2(Gateway gateway) throws CommitException {
+        Network network = gateway.getNetwork("mychannel");
+        Contract contract = network.getContract("private");
+
+        String timestamp = LocalDateTime.now().toString();
+        System.out.println("Submitting \"WritePrivateData\" transaction with private data: " + timestamp);
+
+        // This example is similar to the previous private data example.
+        // The difference here is that the gateway cannot assume that Org3 is trusted to receive transient data
+        // that might be destined for storage in Org1Collection, since Org3 is not in its ownership policy.
+        // The client application must explicitly specify which organizations must endorse using the setEndorsingOrganizations() function.
+        contract.newProposal("WritePrivateData")
+                .putTransient("collection", "Org1Collection,Org3Collection".getBytes(StandardCharsets.UTF_8)) // Org1Collection owned by Org1, Org3Collection owned by Org3.
+                .putTransient("key", "my-private-key2".getBytes(StandardCharsets.UTF_8))
+                .putTransient("value", timestamp.getBytes(StandardCharsets.UTF_8))
+                .setEndorsingOrganizations("Org1MSP", "Org3MSP")
+                .build()
+                .endorse()
+                .submit();
+
+        System.out.println("Evaluating \"ReadPrivateData\" query with arguments: \"Org1Collection\", \"my-private-key2\"");
+
+        byte[] evaluateResult = contract.evaluateTransaction("ReadPrivateData", "Org1Collection", "my-private-key2");
+        System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
+    }
+
+    private static void exampleStateBasedEndorsement(Gateway gateway) throws CommitException {
+        Network network = gateway.getNetwork("mychannel");
+        Contract contract = network.getContract("private");
+
+        System.out.println("Submitting \"SetStateWithEndorser\" transaction with arguments:  \"sbe-key\", \"value1\", \"Org1MSP\"");
+        // Submit a transaction, blocking until the transaction has been committed on the ledger.
+        contract.submitTransaction("SetStateWithEndorser", "sbe-key", "value1", "Org1MSP");
+
+        // Query the current state
+        System.out.println("Evaluating \"GetState\" query with arguments: \"sbe-key\"");
+        byte[] evaluateResult = contract.evaluateTransaction("GetState", "sbe-key");
+        System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
+
+        // Submit transaction to modify the state.
+        System.out.println("Submitting \"ChangeState\" transaction with arguments:  \"sbe-key\", \"value2\"");
+        // Submit a transaction, blocking until the transaction has been committed on the ledger.
+        contract.submitTransaction("ChangeState", "sbe-key", "value2");
+
+        // Verify the current state
+        System.out.println("Evaluating \"GetState\" query with arguments: \"sbe-key\"");
+        evaluateResult = contract.evaluateTransaction("GetState", "sbe-key");
+        System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
+
+        // Now change the state-based endorsement policy for this state.
+        System.out.println("Submitting \"SetStateEndorsers\" transaction with arguments:  \"sbe-key\", \"Org2MSP\", \"Org3MSP\"");
+        // Submit a transaction, blocking until the transaction has been committed on the ledger.
+        contract.submitTransaction("SetStateEndorsers", "sbe-key", "Org2MSP", "Org3MSP");
+
+        // Modify the state.  It will now require endorsement from Org2 and Org3 for this transaction to succeed.
+        // The gateway will endorse this transaction proposal on one of its organization's peers and will determine if
+        // extra endorsements are required to satisfy any state changes.
+        // In this example, it will seek endorsements from Org2 and Org3 in order to satisfy the SBE policy.
+        System.out.println("Submitting \"ChangeState\" transaction with arguments:  \"sbe-key\", \"value3\"");
+        // Submit a transaction, blocking until the transaction has been committed on the ledger.
+        contract.submitTransaction("ChangeState", "sbe-key", "value3");
+
+        // Verify the new state
+        System.out.println("Evaluating \"GetState\" query with arguments: \"sbe-key\"");
+        evaluateResult = contract.evaluateTransaction("GetState", "sbe-key");
         System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
     }
 

@@ -14,8 +14,8 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "@grpc/grpc-js": "^1.3.0",
-    "fabric-gateway": "../../node/fabric-gateway-dev.tgz"
+    "@grpc/grpc-js": "^1.3.6",
+    "fabric-gateway": "file:../../node/fabric-gateway-dev.tgz"
   },
   "devDependencies": {
     "@tsconfig/node12": "^1.0.7",
