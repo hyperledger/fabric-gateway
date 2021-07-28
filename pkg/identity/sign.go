@@ -11,8 +11,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 	"fmt"
-
-	"github.com/hyperledger/fabric/bccsp/utils"
 )
 
 // Sign function generates a digital signature of the supplied digest.
@@ -35,11 +33,11 @@ func ecdsaPrivateKeySign(privateKey *ecdsa.PrivateKey) Sign {
 			return nil, err
 		}
 
-		s, err = utils.ToLowS(&privateKey.PublicKey, s)
+		s, err = toLowSByKey(&privateKey.PublicKey, s)
 		if err != nil {
 			return nil, err
 		}
 
-		return utils.MarshalECDSASignature(r, s)
+		return marshalECDSASignature(r, s)
 	}
 }
