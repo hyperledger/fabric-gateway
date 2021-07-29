@@ -71,8 +71,8 @@ stages:
     steps:
     - template: install_deps.yml
     - checkout: self
-    - script: make generate unit-test-go
-      displayName: Run Go unit tests
+    - script: make generate unit-test-go-pkcs11
+      displayName: Run Go unit tests with pkcs11
   - job: UnitTestNode
     pool:
       vmImage: ubuntu-20.04
@@ -153,6 +153,7 @@ stages:
       - script: |
           make sample-network
           make run-samples-go
+          make run-hsm-samples-go
         displayName: Run Go SDK samples
 
   - job: SamplesNode
