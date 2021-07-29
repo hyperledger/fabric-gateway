@@ -76,6 +76,13 @@ The Security Officer PIN, specified with the `--so-pin` flag, can be used to re-
 and the user PIN (see below), specified with the `--pin` flag, is used by applications to access the token for
 generating and retrieving keys.
 
+## Install PKCS#11 enabled fabric-ca-client binary
+To be able to register and enroll identities using an HSM you need a PKCS#11 enabled version of `fabric-ca-client`
+To install this use the following command
+
+```bash
+go get -tags 'pkcs11' github.com/hyperledger/fabric-ca/cmd/fabric-ca-client
+```
 ## Enroll the HSM User
 
 A user, `HSMUser`, who is HSM managed needs to be registered then enrolled for the sample

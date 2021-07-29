@@ -166,6 +166,7 @@ stages:
       - script: |
           make sample-network
           make run-samples-node
+          make run-hsm-samples-node
         displayName: Run Node SDK samples
 
   - job: SamplesJava
@@ -180,7 +181,7 @@ stages:
           make sample-network
           make run-samples-java
         displayName: Run Java SDK samples
-    
+
 # TODO only run on the scheduled builds (run on merge builds while debugging)
 - stage: Publish
   dependsOn: Test
