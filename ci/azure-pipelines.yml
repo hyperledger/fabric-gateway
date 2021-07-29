@@ -183,11 +183,10 @@ stages:
           make run-samples-java
         displayName: Run Java SDK samples
 
-# TODO only run on the scheduled builds (run on merge builds while debugging)
+# Only publish on scheduled builds
 - stage: Publish
   dependsOn: Test
-  condition: and(succeeded('Test'),eq(variables['Build.Reason'], 'IndividualCI'))
-  #condition: and(succeeded('Test'), eq(variables['Build.Reason'], 'Schedule'))
+  condition: and(succeeded('Test'), eq(variables['Build.Reason'], 'Schedule'))
   jobs:
   - job: PublishDocs
     pool:
@@ -282,7 +281,7 @@ stages:
       - script: |
           GPG_TTY=$(tty)
           export GPG_TTY
-          mvn -X -e --batch-mode -P release deploy
+          mvn --batch-mode -P release deploy
         displayName: Deploy to artifactory
         workingDirectory: $(System.DefaultWorkingDirectory)/java
         env:
