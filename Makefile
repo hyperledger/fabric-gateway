@@ -86,9 +86,11 @@ run-samples: | sample-network run-samples-go run-samples-node run-samples-java s
 run-samples-go:
 	cd $(samples_dir)/go; go run sample.go
 
-run-samples-node: build-node enroll-hsm-user
-	cd $(samples_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; npm run build; npm start
+run-hsm-samples-node: build-node enroll-hsm-user
 	cd $(hsm_samples_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; npm run build; npm start
+
+run-samples-node: build-node
+	cd $(samples_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; npm run build; npm start
 
 run-samples-java: build-java
 	cd $(samples_dir)/java; mvn test
