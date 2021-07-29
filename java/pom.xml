@@ -42,7 +42,7 @@
 
     <repositories>
         <repository>
-            <id>nightly-repo</id>
+            <id>maven-artifactory</id>
             <url>https://hyperledger-fabric.jfrog.io/artifactory/fabric-maven</url>
             <releases>
                 <enabled>true</enabled>
@@ -323,7 +323,7 @@
 
     <distributionManagement>
         <repository>
-            <id>fabric-maven</id>
+            <id>maven-artifactory</id>
             <name>Hyperledger Artifactory Repository</name>
             <url>https://hyperledger-fabric.jfrog.io/artifactory/fabric-maven</url>
         </repository>
