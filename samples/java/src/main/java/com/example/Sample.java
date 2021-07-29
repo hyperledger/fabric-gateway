@@ -69,6 +69,10 @@ public class Sample {
             System.out.println("exampleStateBasedEndorsement:");
             exampleStateBasedEndorsement(gateway);
             System.out.println();
+
+            System.out.println("exampleChaincodeEvents:");
+            exampleChaincodeEvents(gateway);
+            System.out.println();
         } finally {
             channel.shutdownNow();
         }
@@ -214,6 +218,23 @@ public class Sample {
         System.out.println("Evaluating \"GetState\" query with arguments: \"sbe-key\"");
         evaluateResult = contract.evaluateTransaction("GetState", "sbe-key");
         System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
+    }
+
+    private static void exampleChaincodeEvents(Gateway gateway) throws CommitException, InterruptedException {
+        Network network = gateway.getNetwork("mychannel");
+        Contract contract = network.getContract("basic");
+
+        System.out.println("Listening for chaincode events");
+
+        TransferQueue<ChaincodeEvent> chaincodeEventQueue = new LinkedTransferQueue<>();
+        Iterator<ChaincodeEvent> events = network.getChaincodeEvents("basic");
+
+        // Submit a transaction that generates a chaincode event
+        System.out.println("Submitting \"event\" transaction with arguments:  \"my-event-name\", \"my-event-payload\"");
+        contract.submitTransaction("event", "my-event-name", "my-event-payload");
+
+        ChaincodeEvent ev = chaincodeEventQueue.poll(10, TimeUnit.SECONDS);
+        System.out.println("Received event name: " + ev.getEventName() + ", payload: " + ev.getPayload().toString() + ", txId: " + ev.getTransactionId());
     }
 
     private static ManagedChannel newGrpcConnection() throws IOException, CertificateException {
