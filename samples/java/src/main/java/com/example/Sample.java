@@ -18,6 +18,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.util.Iterator;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TransferQueue;
@@ -228,13 +229,22 @@ public class Sample {
 
         TransferQueue<ChaincodeEvent> chaincodeEventQueue = new LinkedTransferQueue<>();
         Iterator<ChaincodeEvent> events = network.getChaincodeEvents("basic");
+        CompletableFuture<Void> chaincodeEventJob = CompletableFuture.runAsync(() -> {
+            events.forEachRemaining(event -> {
+                try {
+                    chaincodeEventQueue.transfer(event);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        });
 
         // Submit a transaction that generates a chaincode event
         System.out.println("Submitting \"event\" transaction with arguments:  \"my-event-name\", \"my-event-payload\"");
         contract.submitTransaction("event", "my-event-name", "my-event-payload");
 
         ChaincodeEvent ev = chaincodeEventQueue.poll(10, TimeUnit.SECONDS);
-        System.out.println("Received event name: " + ev.getEventName() + ", payload: " + ev.getPayload().toString() + ", txId: " + ev.getTransactionId());
+        System.out.println("Received event name: " + ev.getEventName() + ", payload: " + new String(ev.getPayload(), StandardCharsets.UTF_8) + ", txId: " + ev.getTransactionId());
     }
 
     private static ManagedChannel newGrpcConnection() throws IOException, CertificateException {
