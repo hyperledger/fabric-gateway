@@ -19,6 +19,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"google.golang.org/grpc/codes"
 )
 
 func TestSubmitTransaction(t *testing.T) {
@@ -38,52 +39,52 @@ func TestSubmitTransaction(t *testing.T) {
 		}
 	}
 
-	t.Run("Returns endorsement error", func(t *testing.T) {
-		expectedError := "ENDORSE_ERROR"
+	t.Run("Returns endorse error without wrapping to allow gRPC status to be interrogated", func(t *testing.T) {
+		expected := NewStatusError(t, codes.Aborted, "ENDORSE_ERROR")
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(nil, errors.New(expectedError))
+			Return(nil, expected)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
 
-		if nil == err || !strings.Contains(err.Error(), expectedError) {
-			t.Fatalf("Expected error containing %s, got %v", expectedError, err)
+		if err != expected {
+			t.Fatalf("Expected unmodified invocation error, got: %v", err)
 		}
 	})
 
-	t.Run("Returns error sending to orderer", func(t *testing.T) {
-		expectedError := "SUBMIT_ERROR"
+	t.Run("Returns submit error without wrapping to allow gRPC status to be interrogated", func(t *testing.T) {
+		expected := NewStatusError(t, codes.Aborted, "SUBMIT_ERROR")
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(nil, errors.New(expectedError))
+			Return(nil, expected)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
 
-		if nil == err || !strings.Contains(err.Error(), expectedError) {
-			t.Fatalf("Expected error containing %s, got %v", expectedError, err)
+		if err != expected {
+			t.Fatalf("Expected unmodified invocation error, got: %v", err)
 		}
 	})
 
-	t.Run("Returns commit error", func(t *testing.T) {
-		expectedError := "COMMIT_ERROR"
+	t.Run("Returns commit error without wrapping to allow gRPC status to be interrogated", func(t *testing.T) {
+		expected := NewStatusError(t, codes.Aborted, "COMMIT_ERROR")
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(nil, errors.New(expectedError))
+			Return(nil, expected)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
 
-		if nil == err || !strings.Contains(err.Error(), expectedError) {
-			t.Fatalf("Expected error containing %s, got %v", expectedError, err)
+		if err != expected {
+			t.Fatalf("Expected unmodified invocation error, got: %v", err)
 		}
 	})
 

@@ -9,16 +9,26 @@ package client
 import (
 	"bytes"
 	"context"
-	"errors"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
+
+func NewStatusError(t *testing.T, code codes.Code, message string, details ...proto.Message) error {
+	s, err := status.New(code, message).WithDetails(details...)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return s.Err()
+}
 
 func TestEvaluateTransaction(t *testing.T) {
 	newEvaluateResponse := func(value []byte) *gateway.EvaluateResponse {
@@ -29,18 +39,18 @@ func TestEvaluateTransaction(t *testing.T) {
 		}
 	}
 
-	t.Run("Returns gRPC invocation error", func(t *testing.T) {
-		expectedError := "EVALUATE_ERROR"
+	t.Run("Returns evaluate error without wrapping to allow gRPC status to be interrogated", func(t *testing.T) {
+		expected := NewStatusError(t, codes.Aborted, "EVALUATE_ERROR")
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
-			Return(nil, errors.New(expectedError))
+			Return(nil, expected)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.EvaluateTransaction("transaction")
 
-		if nil == err || !strings.Contains(err.Error(), expectedError) {
-			t.Fatalf("Expected error containing %s, got %v", expectedError, err)
+		if err != expected {
+			t.Fatalf("Expected unmodified invocation error, got: %v", err)
 		}
 	})
 

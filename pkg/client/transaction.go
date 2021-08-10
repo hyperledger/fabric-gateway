@@ -70,7 +70,7 @@ func (transaction *Transaction) Submit() (*Commit, error) {
 	}
 	_, err = transaction.client.Submit(ctx, submitRequest)
 	if err != nil {
-		return nil, fmt.Errorf("failed to submit transaction to the orderer: %w", err)
+		return nil, err
 	}
 
 	return newCommit(transaction.client, transaction.signingID, transaction.TransactionID(), statusRequest), nil
