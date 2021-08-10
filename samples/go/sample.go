@@ -17,6 +17,7 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -78,7 +79,12 @@ func exampleSubmit(gateway *client.Gateway) {
 	// Submit transaction, blocking until the transaction has been committed on the ledger
 	submitResult, err := contract.SubmitTransaction("put", "time", timestamp)
 	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
+		// Convert error to a grpc error status to make any details that are encoded in the grpc error available
+		// For compactness, subsequent calls will do the conversion in the error/panic line itself
+		// Convert() is safe even if the err is not convertable.
+		// Details() is safe even if there are no details
+		statusError := status.Convert(err)
+		panic(fmt.Errorf("failed to submit transaction: %v: %s", err, statusError.Details()))
 	}
 
 	fmt.Printf("Submit result: %s\n", string(submitResult))
@@ -86,7 +92,7 @@ func exampleSubmit(gateway *client.Gateway) {
 
 	evaluateResult, err := contract.EvaluateTransaction("get", "time")
 	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+		panic(fmt.Errorf("failed to evaluate transaction: %v: %s", err, status.Convert(err).Details()))
 	}
 
 	fmt.Printf("Query result = %s\n", string(evaluateResult))
@@ -103,7 +109,7 @@ func exampleSubmitAsync(gateway *client.Gateway) {
 	// this thread to process the chaincode response (e.g. update a UI) without waiting for the commit notification
 	submitResult, commit, err := contract.SubmitAsync("put", client.WithArguments("async", timestamp))
 	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction asynchronously: %w", err))
+		panic(fmt.Errorf("failed to submit transaction asynchronously: %v: %s", err, status.Convert(err).Details()))
 	}
 
 	fmt.Printf("Submit result: %s\n", string(submitResult))
@@ -111,7 +117,7 @@ func exampleSubmitAsync(gateway *client.Gateway) {
 
 	successful, err := commit.Successful()
 	if err != nil {
-		panic(fmt.Errorf("failed to obtain commit status: %w", err))
+		panic(fmt.Errorf("failed to obtain commit status: %v: %s", err, status.Convert(err).Details()))
 	}
 	if !successful {
 		status, err := commit.Status()
@@ -126,7 +132,7 @@ func exampleSubmitAsync(gateway *client.Gateway) {
 
 	evaluateResult, err := contract.EvaluateTransaction("get", "async")
 	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+		panic(fmt.Errorf("failed to evaluate transaction: %v: %s", err, status.Convert(err).Details()))
 	}
 
 	fmt.Printf("Query result = %s\n", string(evaluateResult))
@@ -151,7 +157,7 @@ func exampleSubmitPrivateData(gateway *client.Gateway) {
 	// In this example, it will also seek endorsement from Org3, which is included in the ownership policy of both collections.
 	_, err := contract.Submit("WritePrivateData", client.WithTransient(privateData))
 	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
+		panic(fmt.Errorf("failed to submit transaction: %v: %s", err, status.Convert(err).Details()))
 	}
 
 	fmt.Printf("Transaction committed successfully\n")
@@ -159,7 +165,7 @@ func exampleSubmitPrivateData(gateway *client.Gateway) {
 
 	evaluateResult, err := contract.EvaluateTransaction("ReadPrivateData", "SharedCollection", "my-private-key")
 	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+		panic(fmt.Errorf("failed to evaluate transaction: %v: %s", err, status.Convert(err).Details()))
 	}
 
 	fmt.Printf("Query result = %s\n", string(evaluateResult))
@@ -186,7 +192,7 @@ func exampleSubmitPrivateData2(gateway *client.Gateway) {
 		client.WithEndorsingOrganizations("Org1MSP", "Org3MSP"),
 	)
 	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
+		panic(fmt.Errorf("failed to submit transaction: %v: %s", err, status.Convert(err).Details()))
 	}
 
 	fmt.Printf("Transaction committed successfully\n")
@@ -194,7 +200,7 @@ func exampleSubmitPrivateData2(gateway *client.Gateway) {
 
 	evaluateResult, err := contract.EvaluateTransaction("ReadPrivateData", "Org1Collection", "my-private-key2")
 	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+		panic(fmt.Errorf("failed to evaluate transaction: %v: %s", err, status.Convert(err).Details()))
 	}
 
 	fmt.Printf("Query result = %s\n", string(evaluateResult))
@@ -208,7 +214,7 @@ func exampleStateBasedEndorsement(gateway *client.Gateway) {
 	// Submit transaction, blocking until the transaction has been committed on the ledger
 	_, err := contract.SubmitTransaction("SetStateWithEndorser", "sbe-key", "value1", "Org1MSP")
 	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
+		panic(fmt.Errorf("failed to submit transaction: %v: %s", err, status.Convert(err).Details()))
 	}
 	fmt.Println("Transaction committed successfully")
 
@@ -216,7 +222,7 @@ func exampleStateBasedEndorsement(gateway *client.Gateway) {
 	fmt.Println("Evaluating \"GetState\" query with arguments: \"sbe-key\"")
 	evaluateResult, err := contract.EvaluateTransaction("GetState", "sbe-key")
 	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+		panic(fmt.Errorf("failed to evaluate transaction: %v: %s", err, status.Convert(err).Details()))
 	}
 	fmt.Printf("Query result = %s\n", string(evaluateResult))
 
@@ -225,7 +231,7 @@ func exampleStateBasedEndorsement(gateway *client.Gateway) {
 	fmt.Println("Submitting \"ChangeState\" transaction with arguments: \"sbe-key\", \"value2\"")
 	_, err = contract.SubmitTransaction("ChangeState", "sbe-key", "value2")
 	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
+		panic(fmt.Errorf("failed to submit transaction: %v: %s", err, status.Convert(err).Details()))
 	}
 	fmt.Println("Transaction committed successfully")
 
@@ -233,7 +239,7 @@ func exampleStateBasedEndorsement(gateway *client.Gateway) {
 	fmt.Println("Evaluating \"GetState\" query with arguments: \"sbe-key\"")
 	evaluateResult, err = contract.EvaluateTransaction("GetState", "sbe-key")
 	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+		panic(fmt.Errorf("failed to evaluate transaction: %v: %s", err, status.Convert(err).Details()))
 	}
 	fmt.Printf("Query result = %s\n", string(evaluateResult))
 
@@ -241,7 +247,7 @@ func exampleStateBasedEndorsement(gateway *client.Gateway) {
 	fmt.Println("Submitting \"SetStateEndorsers\" transaction with arguments: \"sbe-key\", \"Org2MSP\", \"Org3MSP\"")
 	_, err = contract.SubmitTransaction("SetStateEndorsers", "sbe-key", "Org2MSP", "Org3MSP")
 	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
+		panic(fmt.Errorf("failed to submit transaction: %v: %s", err, status.Convert(err).Details()))
 	}
 	fmt.Println("Transaction committed successfully")
 
@@ -252,7 +258,7 @@ func exampleStateBasedEndorsement(gateway *client.Gateway) {
 	fmt.Println("Submitting \"ChangeState\" transaction with arguments: \"sbe-key\", \"value3\"")
 	_, err = contract.SubmitTransaction("ChangeState", "sbe-key", "value3")
 	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
+		panic(fmt.Errorf("failed to submit transaction: %v: %s", err, status.Convert(err).Details()))
 	}
 	fmt.Println("Transaction committed successfully")
 
@@ -260,7 +266,7 @@ func exampleStateBasedEndorsement(gateway *client.Gateway) {
 	fmt.Println("Evaluating \"GetState\" query with arguments: \"sbe-key\"")
 	evaluateResult, err = contract.EvaluateTransaction("GetState", "sbe-key")
 	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+		panic(fmt.Errorf("failed to evaluate transaction: %v: %s", err, status.Convert(err).Details()))
 	}
 	fmt.Printf("Query result = %s\n", string(evaluateResult))
 }
@@ -273,12 +279,15 @@ func exampleChaincodeEvents(gateway *client.Gateway) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	events, err := network.ChaincodeEvents(ctx, "basic")
+	if err != nil {
+		panic(fmt.Errorf("failed to register for chaincode events: %v: %s", err, status.Convert(err).Details()))
+	}
 
 	// Submit a transaction that generates a chaincode event
 	fmt.Println("Submitting \"event\" transaction with arguments: \"my-event-name\", \"my-event-payload\"")
 	_, err = contract.SubmitTransaction("event", "my-event-name", "my-event-payload")
 	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
+		panic(fmt.Errorf("failed to submit transaction: %v: %s", err, status.Convert(err).Details()))
 	}
 	fmt.Println("Transaction committed successfully")
 
