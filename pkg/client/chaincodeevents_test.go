@@ -10,13 +10,13 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"google.golang.org/grpc/codes"
 )
 
 //go:generate mockgen -destination ./chaincodeevents_mock_test.go -package ${GOPACKAGE} github.com/hyperledger/fabric-protos-go/gateway Gateway_ChaincodeEventsClient
@@ -52,12 +52,11 @@ func TestChaincodeEvents(t *testing.T) {
 		}
 	}
 
-	t.Run("Returns error read on connect error", func(t *testing.T) {
-		controller := gomock.NewController(t)
-		mockClient := NewMockGatewayClient(controller)
-
+	t.Run("Returns connect error without wrapping to allow gRPC status to be interrogated", func(t *testing.T) {
+		expected := NewStatusError(t, codes.Aborted, "CHAINCODE_EVENTS_ERROR")
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().ChaincodeEvents(gomock.Any(), gomock.Any()).
-			Return(nil, errors.New("CONNECT_ERROR"))
+			Return(nil, expected)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -65,8 +64,8 @@ func TestChaincodeEvents(t *testing.T) {
 		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
 		_, err := network.ChaincodeEvents(ctx, "CHAINCODE_ID")
 
-		if err == nil || !strings.Contains(err.Error(), "CONNECT_ERROR") {
-			t.Fatalf("Expected connect error, got %v", err)
+		if err != expected {
+			t.Fatalf("Expected unmodified invocation error, got: %v", err)
 		}
 	})
 
