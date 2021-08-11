@@ -77,6 +77,8 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+			Return(nil, nil)
+		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(nil, expected)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))

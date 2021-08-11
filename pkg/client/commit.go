@@ -103,7 +103,7 @@ func (commit *Commit) commitStatus() (*gateway.CommitStatusResponse, error) {
 
 		response, err := commit.client.CommitStatus(ctx, commit.signedRequest)
 		if err != nil {
-			return nil, fmt.Errorf("failed to obtain transaction commit status: %w", err)
+			return nil, err
 		}
 
 		commit.response = response
