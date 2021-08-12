@@ -5,9 +5,9 @@ The Fabric Gateway SDK allows applications to interact with a Fabric blockchain 
 
 The Gateway SDK implements the Fabric programming model as described in the [Developing Applications](https://hyperledger-fabric.readthedocs.io/en/latest/developapps/developing_applications.html) chapter of the Fabric documentation.
 
-## How to use 
+## How to use
 
-Samples showing how to create a client application that updates and queries the ledger 
+Samples showing how to create a client application that updates and queries the ledger
 are available for each of the supported SDK languages here:
 https://github.com/hyperledger/fabric-gateway/tree/main/samples
 
@@ -22,5 +22,4 @@ https://pkg.go.dev/github.com/hyperledger/fabric-gateway/pkg/client
 
 ### Compatibility
 
-This SDK requires Fabric 2.4 Tech Preview with a Gateway enabled Peer.
-
+This SDK requires Fabric 2.4 with a Gateway enabled Peer.
