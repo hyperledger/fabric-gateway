@@ -84,6 +84,15 @@ make enroll-hsm-user
 This will register a user `HSMUser` with the CA in Org1 (if not already registered) and then enroll that user which will
 generate a certificate on the file system for use by the sample. The private key is stored in SoftHSM
 
+### Go SDK
+
+For HSM support you need to ensure you include the `pkcs11` build tag.
+
+```
+cd <base-path>/fabric-gateway/hsm-samples/go
+go run -tags pkcs11 hsm-sample.go
+```
+
 ### Node SDK
 
 ```
