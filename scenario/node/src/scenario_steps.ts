@@ -152,6 +152,11 @@ Then('the response should be {string}', function(this: CustomWorld, expected: st
     expect(actual).toEqual(expected);
 });
 
+Then('the error message should contain {string}', function(this: CustomWorld, expected: string): void {
+    const actual = this.getError().message;
+    expect(actual).toContain(expected);
+});
+
 Then('I should receive a chaincode event named {string} with payload {string}', async function(this: CustomWorld, eventName: string, payload: string): Promise<void> {
     const event = await this.nextChaincodeEvent();
     const actual = Object.assign({}, event, { payload: asString(event.payload)})

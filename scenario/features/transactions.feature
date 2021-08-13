@@ -47,3 +47,15 @@ Feature: Transaction invocation
                 "key2": "value2"
             }
             """
+
+    Scenario: Evaluate with error response
+        When I prepare to evaluate an errorMessage transaction
+        And I set the transaction arguments to ["ALL_YOUR_ERROR_ARE_BELONG_TO_US"]
+        Then the transaction invocation should fail
+        And the error message should contain "ALL_YOUR_ERROR_ARE_BELONG_TO_US"
+
+    Scenario: Submit with error response
+        When I prepare to submit an errorMessage transaction
+        And I set the transaction arguments to ["ALL_YOUR_ERROR_ARE_BELONG_TO_US"]
+        Then the transaction invocation should fail
+        And the error message should contain "ALL_YOUR_ERROR_ARE_BELONG_TO_US"
