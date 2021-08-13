@@ -75,10 +75,6 @@ Given('I create a gateway named {word} without signer for user {word} in MSP {wo
     await this.createGatewayWithoutSigner(name, user, mspId);
 });
 
-Given('I create a gateway named {word} without signer for HSM user {word} in MSP {word}', async function(this: CustomWorld, name: string, user: string, mspId: string): Promise<void> {
-    await this.createGatewayWithHSMUserWithoutSigner(name, user, mspId);
-});
-
 Given('I use the gateway named {word}', async function(this: CustomWorld, name: string): Promise<void> {
     await this.useGateway(name);
 });
@@ -122,11 +118,6 @@ When(/I set the endorsing organizations? to (.+)/, function(this: CustomWorld, j
 When('I do off-line signing as user {word} in MSP {word}', async function(this: CustomWorld, user: string, mspId: string): Promise<void> {
     await this.setOfflineSigner(user, mspId);
 })
-
-When('I do off-line signing as HSM user {word} in MSP Org1MSP', async function(this: CustomWorld, user: string): Promise<void> {
-    await this.setOfflineHSMSigner(user);
-})
-
 
 When('I invoke the transaction', async function(this: CustomWorld): Promise<void> {
     await this.invokeTransaction();

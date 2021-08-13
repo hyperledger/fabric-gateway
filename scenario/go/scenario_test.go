@@ -145,7 +145,9 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.BeforeScenario(beforeScenario)
 	s.AfterScenario(afterScenario)
 
+	s.Step(`^I register and enroll an HSM user (\S+) in MSP Org1MSP$`, generateHSMUser)
 	s.Step(`^I create a gateway named (\S+) for user (\S+) in MSP (\S+)$`, createGateway)
+	s.Step(`^I create a gateway named (\S+) for HSM user (\S+) in MSP (\S+)`, createGatewayWithHSMSigner)
 	s.Step(`^I create a gateway named (\S+) without signer for user (\S+) in MSP (\S+)$`, createGatewayWithoutSigner)
 	s.Step(`^I connect the gateway to (\S+)$`, connectGateway)
 	s.Step(`^I use the gateway named (\S+)$`, useGateway)
@@ -226,6 +228,20 @@ func stopFabric() error {
 func createCryptoMaterial() error {
 	fmt.Println("createCryptoMaterial")
 	cmd := exec.Command("./generate.sh")
+	cmd.Dir = fixturesDir
+	out, err := cmd.CombinedOutput()
+	if out != nil {
+		fmt.Println(string(out))
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func generateHSMUser(hsmUserid string) error {
+	fmt.Println("generateHSMUser")
+	cmd := exec.Command("./generate-hsm-user.sh", hsmUserid)
 	cmd.Dir = fixturesDir
 	out, err := cmd.CombinedOutput()
 	if out != nil {
@@ -381,8 +397,19 @@ func createGateway(name string, user string, mspID string) error {
 	return nil
 }
 
+func createGatewayWithHSMSigner(name string, user string, mspID string) error {
+	connection, err := NewGatewayConnectionWithHSMSigner(user, mspID)
+	if err != nil {
+		return err
+	}
+
+	currentGateway = connection
+	gateways[name] = connection
+	return nil
+}
+
 func createGatewayWithoutSigner(name string, user string, mspID string) error {
-	connection, err := NewGatewayConnection(user, mspID)
+	connection, err := NewGatewayConnection(user, mspID, false)
 	if err != nil {
 		return err
 	}
