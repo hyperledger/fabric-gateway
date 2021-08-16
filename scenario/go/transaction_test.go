@@ -22,6 +22,7 @@ type Transaction struct {
 	options     []client.ProposalOption
 	offlineSign identity.Sign
 	result      []byte
+	err         error
 }
 
 func NewTransaction(network *client.Network, contract *client.Contract, txType TransactionType, name string) *Transaction {
@@ -38,20 +39,16 @@ func (transaction *Transaction) AddOptions(options ...client.ProposalOption) {
 }
 
 func (transaction *Transaction) Invoke() error {
-	var result []byte
-	var err error
-
 	switch transaction.txType {
 	case Submit:
-		result, err = transaction.submit()
+		transaction.result, transaction.err = transaction.submit()
 	case Evaluate:
-		result, err = transaction.evaluate()
+		transaction.result, transaction.err = transaction.evaluate()
 	default:
 		panic(fmt.Errorf("unknown transaction type: %v", transaction.txType))
 	}
 
-	transaction.result = result
-	return err
+	return transaction.err
 }
 
 func (transaction *Transaction) SetOfflineSign(sign identity.Sign) {
@@ -60,6 +57,10 @@ func (transaction *Transaction) SetOfflineSign(sign identity.Sign) {
 
 func (transaction *Transaction) Result() []byte {
 	return transaction.result
+}
+
+func (transaction *Transaction) Err() error {
+	return transaction.err
 }
 
 func (transaction *Transaction) evaluate() ([]byte, error) {

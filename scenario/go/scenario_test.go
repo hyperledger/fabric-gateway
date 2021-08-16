@@ -163,10 +163,11 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^the response should be JSON matching$`, theResponseShouldBeJSONMatching)
 	s.Step(`^I stop the peer named (\S+)$`, stopPeer)
 	s.Step(`^I start the peer named (\S+)$`, startPeer)
-	s.Step(`^the response should be "(.*)"$`, theResponseShouldBe)
+	s.Step(`^the response should be "([^"]*)"$`, theResponseShouldBe)
 	s.Step(`^the transaction invocation should fail$`, theTransactionShouldFail)
+	s.Step(`^the error message should contain "([^"]*)"$`, theErrorMessageShouldContain)
 	s.Step(`^I listen for chaincode events from (\S+)$`, listenForChaincodeEvents)
-	s.Step(`^I should receive a chaincode event named "(.*)" with payload "(.*)"$`, receiveChaincodeEvent)
+	s.Step(`^I should receive a chaincode event named "([^"]*)" with payload "([^"]*)"$`, receiveChaincodeEvent)
 }
 
 func beforeScenario(sc *godog.Scenario) {
@@ -677,6 +678,20 @@ func theResponseShouldBe(expected string) error {
 	if actual != expected {
 		return fmt.Errorf("transaction response \"%s\" does not match expected value \"%s\"", actual, expected)
 	}
+	return nil
+}
+
+func theErrorMessageShouldContain(expected string) error {
+	transactionErr := transaction.Err()
+	if transactionErr == nil {
+		return fmt.Errorf("no transaction error, result is %s", string(transaction.Result()))
+	}
+
+	actual := transactionErr.Error()
+	if !strings.Contains(actual, expected) {
+		return fmt.Errorf("transaction error message \"%s\" does not contain expected value \"%s\"", actual, expected)
+	}
+
 	return nil
 }
 
