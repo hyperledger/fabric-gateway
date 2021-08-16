@@ -1,12 +1,6 @@
 # Hyperledger Fabric Gateway
 
-The Fabric Gateway is a core component of a Fabric blockchain network and coordinates the actions required to
-submit transactions and query ledger state on behalf of client applications.  By using the Gateway, client applications
-only need to connect to a single endpoint in the Fabric network.
-
-The Gateway SDKs implement the Fabric programming model as described in the
-[Developing Applications](https://hyperledger-fabric.readthedocs.io/en/latest/developapps/developing_applications.html)
-chapter of the Fabric documentation.
+For information on using the Gateway, including client SDK API references, please visit the [Fabric Gateway documentation](https://hyperledger.github.io/fabric-gateway/).
 
 ## Overview
 
@@ -18,48 +12,9 @@ This minimises the network traffic passing between the client and the blockchain
 
 See the [gateway.proto file](https://github.com/hyperledger/fabric-protos/blob/main/gateway/gateway.proto) for details of the gRPC interface.
 
-## Configuring the Gateway
-
-Enable the Gateway feature flag in `core.yaml` by adding the following:
-
-```
-peer:
-    gateway:
-        enabled: true
-```
-
-Alternatively, using [yq](https://mikefarah.gitbook.io/yq/):
-
-```
-docker run --rm -v "${PWD}":/workdir mikefarah/yq eval '.peer.gateway.enabled = true' --inplace core.yaml
-```
-## Client SDKs
-
-Three SDKs are available to support the development of client applications that interact with the Fabric network via
-the Gateway.
-
-### Go SDK
-
-The Go SDK provides a high-level API for client applications written in Go.
-
-Read the [quickstart](pkg/client/README.md) guide for more details.
-
-### Node SDK
-
-The Node SDK provides a high-level API for client applications written in Javascript or Typescript.
-
-Read the [quickstart](node/README.md) guide for more details.
-
-### Java SDK
-
-The Java SDK provides a high-level API for client applications written in Java.
-
-Read the [quickstart](java/README.md) guide for more details.
-
-
 ## Building and testing
 
-#### Install pre-reqs
+### Install pre-reqs
 
 This repo comprises the Gateway server (written in Go) and three SDKs (written in Go, Typescript and Java).
 In order to build these components, the following needs to be installed and available in the PATH:
@@ -93,7 +48,7 @@ Or compiled and installed from source:
 6. `make`
 7. `sudo make install`
 
-#### Build using make
+### Build using make
 
 The following Makefile targets are available
 - `make build-go` - compile the gateway server executable
@@ -113,7 +68,7 @@ Note that immediately after creating a fresh copy of this repository, auto-gener
 Go code will show errors. Running the `unit-test` make target will generate the required mock implementations, and they
 can also be generated explicitly by running `make generate`.
 
-#### Scenario tests
+### Scenario tests
 
 The scenario tests create a Fabric network comprising two orgs (one peer in each org) and a single gateway within a set
 of docker containers.  The clients connect to the gateway to submit transactions and query the ledger state.
