@@ -19,14 +19,19 @@ import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TransferQueue;
+import java.util.concurrent.TimeoutException;
 
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
-import org.hyperledger.fabric.client.*;
+import org.hyperledger.fabric.client.ChaincodeEvent;
+import org.hyperledger.fabric.client.CommitException;
+import org.hyperledger.fabric.client.Contract;
+import org.hyperledger.fabric.client.Gateway;
+import org.hyperledger.fabric.client.Network;
+import org.hyperledger.fabric.client.SubmittedTransaction;
 import org.hyperledger.fabric.client.identity.Identities;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
@@ -74,9 +79,18 @@ public class Sample {
             System.out.println("exampleChaincodeEvents:");
             exampleChaincodeEvents(gateway);
             System.out.println();
+        } catch (Throwable e) {
+            e.printStackTrace();
         } finally {
             channel.shutdownNow();
+            try {
+                channel.awaitTermination(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                // Ignore
+            }
         }
+
+        System.exit(0);
     }
 
     private static void exampleSubmit(Gateway gateway) throws CommitException {
@@ -221,30 +235,25 @@ public class Sample {
         System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
     }
 
-    private static void exampleChaincodeEvents(Gateway gateway) throws CommitException, InterruptedException {
+    private static void exampleChaincodeEvents(Gateway gateway) throws CommitException, InterruptedException, ExecutionException, TimeoutException {
         Network network = gateway.getNetwork("mychannel");
         Contract contract = network.getContract("basic");
 
         System.out.println("Listening for chaincode events");
 
-        TransferQueue<ChaincodeEvent> chaincodeEventQueue = new LinkedTransferQueue<>();
         Iterator<ChaincodeEvent> events = network.getChaincodeEvents("basic");
-        CompletableFuture<Void> chaincodeEventJob = CompletableFuture.runAsync(() -> {
-            events.forEachRemaining(event -> {
-                try {
-                    chaincodeEventQueue.transfer(event);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        });
+        // The Java gRPC implementation may not actually start receiving events until the first read attempt, so start
+        // reading immediately to avoid possibility of missing the chaincode event emitted by the transaction below
+        CompletableFuture<ChaincodeEvent> chaincodeEventJob = CompletableFuture.supplyAsync(() -> events.next());
 
         // Submit a transaction that generates a chaincode event
         System.out.println("Submitting \"event\" transaction with arguments:  \"my-event-name\", \"my-event-payload\"");
         contract.submitTransaction("event", "my-event-name", "my-event-payload");
 
-        ChaincodeEvent ev = chaincodeEventQueue.poll(10, TimeUnit.SECONDS);
-        System.out.println("Received event name: " + ev.getEventName() + ", payload: " + new String(ev.getPayload(), StandardCharsets.UTF_8) + ", txId: " + ev.getTransactionId());
+        ChaincodeEvent event = chaincodeEventJob.get(10, TimeUnit.SECONDS);
+        System.out.println("Received event name: " + event.getEventName() +
+                ", payload: " + new String(event.getPayload(), StandardCharsets.UTF_8) +
+                ", txId: " + event.getTransactionId());
     }
 
     private static ManagedChannel newGrpcConnection() throws IOException, CertificateException {

@@ -6,10 +6,11 @@
 
 import * as grpc from '@grpc/grpc-js';
 import { ServiceClient } from '@grpc/grpc-js/build/src/make-client';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import { connect, Gateway, Identity, Signer, signers } from 'fabric-gateway';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
+import { TextDecoder } from 'util';
 
 const mspId = 'Org1MSP'
 const cryptoPath = path.resolve(__dirname, '..', '..', '..', 'scenario', 'fixtures', 'crypto-material', 'crypto-config', 'peerOrganizations', 'org1.example.com');
@@ -206,8 +207,10 @@ async function exampleChaincodeEvents(gateway: Gateway) {
     console.log('Submitting "event" transaction with arguments:  "my-event-name", "my-event-payload"');
     await contract.submitTransaction('event', 'my-event-name', 'my-event-payload');
 
+    const decoder = new TextDecoder();
     for await (const event of events) {
-        console.log('Received event name: ' + event.eventName + ', payload: ' + event.payload + ', txID: ' + event.transactionId);
+        const payload = decoder.decode(event.payload);
+        console.log(`Received event name: ${event.eventName}, payload: ${payload}, txID: ${event.transactionId}`);
         break;
     }
 }
