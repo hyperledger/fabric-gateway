@@ -76,7 +76,7 @@ staticcheck:
 	staticcheck -tags="pkcs11" $(base_dir)/pkg/... $(scenario_dir)/go
 
 sample-network: pull-latest-peer vendor-chaincode
-	cd $(scenario_dir)/go; GATEWAY_NO_SHUTDOWN=TRUE godog $(scenario_dir)/features/transactions.feature $(scenario_dir)/features/privatedata.feature
+	cd $(scenario_dir)/go; GATEWAY_NO_SHUTDOWN=TRUE go test -tags pkcs11 -v -args $(scenario_dir)/features/transactions.feature $(scenario_dir)/features/privatedata.feature
 
 enroll-hsm-user:
 	cd ${scenario_dir}/fixtures; ./generate-hsm-user.sh HSMUser
@@ -109,7 +109,7 @@ vendor-chaincode:
 	cd $(scenario_dir)/fixtures/chaincode/golang/private; GO111MODULE=on go mod vendor
 
 scenario-test-go: vendor-chaincode
-	cd $(scenario_dir)/go; godog --tags="~@hsm" $(scenario_dir)/features/
+	cd $(scenario_dir)/go; SOFTHSM2_CONF=${HOME}/softhsm2.conf go test -tags pkcs11 -v -args $(scenario_dir)/features/
 
 scenario-test-node: vendor-chaincode build-node
 	cd $(scenario_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; SOFTHSM2_CONF=${HOME}/softhsm2.conf npm test

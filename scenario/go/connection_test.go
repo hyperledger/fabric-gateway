@@ -8,16 +8,49 @@ package scenario
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"google.golang.org/grpc"
 )
 
-func NewGatewayConnection(user string, mspID string) (*GatewayConnection, error) {
-	id, err := newIdentity(mspID, certificatePath(user, mspID))
+var hsmSignerFactory *identity.HSMSignerFactory
+
+func findSoftHSMLibrary() (string, error) {
+
+	libraryLocations := []string{
+		"/usr/lib/softhsm/libsofthsm2.so",
+		"/usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so",
+		"/usr/local/lib/softhsm/libsofthsm2.so",
+		"/usr/lib/libacsp-pkcs11.so",
+	}
+
+	for _, libraryLocation := range libraryLocations {
+		if _, err := os.Stat(libraryLocation); errors.Is(err, os.ErrNotExist) {
+			// file does not exist
+		} else {
+			return libraryLocation, nil
+		}
+	}
+	return "", fmt.Errorf("no SoftHSM Library found")
+}
+
+func NewGatewayConnection(user string, mspID string, isHSMUser bool) (*GatewayConnection, error) {
+	certificatePathImpl := certificatePath
+	if isHSMUser {
+		certificatePathImpl = hsmCertificatePath
+	}
+
+	id, err := newIdentity(mspID, certificatePathImpl(user, mspID))
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +64,7 @@ func NewGatewayConnection(user string, mspID string) (*GatewayConnection, error)
 }
 
 func NewGatewayConnectionWithSigner(user string, mspID string) (*GatewayConnection, error) {
-	connection, err := NewGatewayConnection(user, mspID)
+	connection, err := NewGatewayConnection(user, mspID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -42,6 +75,22 @@ func NewGatewayConnectionWithSigner(user string, mspID string) (*GatewayConnecti
 	}
 
 	connection.AddOptions(client.WithSign(sign))
+
+	return connection, nil
+}
+
+func NewGatewayConnectionWithHSMSigner(user string, mspID string) (*GatewayConnection, error) {
+	connection, err := NewGatewayConnection(user, mspID, true)
+	if err != nil {
+		return nil, err
+	}
+
+	hsmSign, _, err := NewHSMSigner(user)
+	if err != nil {
+		return nil, err
+	}
+
+	connection.AddOptions(client.WithSign(hsmSign))
 
 	return connection, nil
 }
@@ -73,9 +122,56 @@ func NewSign(keyPath string) (identity.Sign, error) {
 
 	return identity.NewPrivateKeySign(privateKey)
 }
+
+func NewHSMSigner(user string) (identity.Sign, identity.HSMSignClose, error) {
+	if hsmSignerFactory == nil {
+		softHSMLibrary, err := findSoftHSMLibrary()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		hsmSignerFactory, err = identity.NewHSMSignerFactory(softHSMLibrary)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	certificatePEM, err := ioutil.ReadFile(hsmCertificatePath(user, ""))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	ski := getSKI(certificatePEM)
+	hsmSignerOptions := identity.HSMSignerOptions{
+		Label:      "ForFabric",
+		Pin:        "98765432",
+		Identifier: string(ski),
+	}
+
+	return hsmSignerFactory.NewHSMSigner(hsmSignerOptions)
+}
+
+func getSKI(certPEM []byte) []byte {
+	block, _ := pem.Decode(certPEM)
+
+	x590cert, _ := x509.ParseCertificate(block.Bytes)
+	pk := x590cert.PublicKey
+
+	return skiForKey(pk.(*ecdsa.PublicKey))
+}
+
+func skiForKey(pk *ecdsa.PublicKey) []byte {
+	ski := sha256.Sum256(elliptic.Marshal(pk.Curve, pk.X, pk.Y))
+	return ski[:]
+}
+
 func certificatePath(user string, mspID string) string {
 	org := GetOrgForMSP(mspID)
 	return credentialsDirectory(user, org) + "/signcerts/" + user + "@" + org + "-cert.pem"
+}
+
+func hsmCertificatePath(user string, _ string) string {
+	return fixturesDir + "/crypto-material/hsm/" + user + "/signcerts/cert.pem"
 }
 
 func PrivateKeyPath(user string, mspID string) string {

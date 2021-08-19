@@ -122,7 +122,6 @@ async function readHSMCertificate(user: string): Promise<Buffer> {
 export class CustomWorld {
     #gateways: { [name: string]: GatewayContext } = {};
     #currentGateway?: GatewayContext;
-    #offlineHSMSigners = new Map<string, HSMSigner>()
     #transaction?: TransactionInvocation;
 
     async createGateway(name: string, user: string, mspId: string): Promise<void> {
@@ -144,13 +143,6 @@ export class CustomWorld {
         const identity = await newHSMIdentity(user, mspId);
         const {signer, close} = await newHSMSigner(user);
         const gateway = new GatewayContext(identity, signer, close);
-        this.#gateways[name] = gateway;
-        this.#currentGateway = gateway;
-    }
-
-    async createGatewayWithHSMUserWithoutSigner(name: string, user: string, mspId: string): Promise<void> {
-        const identity = await newHSMIdentity(user, mspId);
-        const gateway = new GatewayContext(identity);
         this.#gateways[name] = gateway;
         this.#currentGateway = gateway;
     }
@@ -219,15 +211,6 @@ export class CustomWorld {
         this.getTransaction().setOfflineSigner(signer);
     }
 
-    async setOfflineHSMSigner(user: string): Promise<void> {
-        let hsmSigner = this.#offlineHSMSigners.get(user);
-        if (!hsmSigner) {
-            hsmSigner = await newHSMSigner(user);
-            this.#offlineHSMSigners.set(user, hsmSigner);
-        }
-        this.getTransaction().setOfflineSigner(hsmSigner.signer);
-    }
-
     async invokeTransaction(): Promise<void> {
         await this.getTransaction().invokeTransaction();
         this.getTransaction().getResult();
@@ -250,11 +233,6 @@ export class CustomWorld {
         for (const context of Object.values(this.#gateways)) {
             context.close();
         }
-
-        this.#offlineHSMSigners.forEach(hsmSigner => {
-            hsmSigner.close();
-        });
-        this.#offlineHSMSigners.clear();
 
         this.#gateways = {};
         this.#currentGateway = undefined;
