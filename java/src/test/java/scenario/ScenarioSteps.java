@@ -416,7 +416,7 @@ public class ScenarioSteps {
     }
 
     @Then("I should receive a chaincode event named {string} with payload {string}")
-    public void assertReceiveChaincodeEvent(String eventName, String payload) throws InterruptedException {
+    public void assertReceiveChaincodeEvent(String eventName, String payload) {
         ChaincodeEvent event = currentGateway.nextChaincodeEvent();
         assertThat(event.getEventName()).isEqualTo(eventName);
         assertThat(new String(event.getPayload(), StandardCharsets.UTF_8)).isEqualTo(payload);
