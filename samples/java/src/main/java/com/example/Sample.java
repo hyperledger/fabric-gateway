@@ -18,7 +18,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.util.Iterator;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -240,17 +239,13 @@ public class Sample {
         Contract contract = network.getContract("basic");
 
         System.out.println("Listening for chaincode events");
-
         Iterator<ChaincodeEvent> events = network.getChaincodeEvents("basic");
-        // The Java gRPC implementation may not actually start receiving events until the first read attempt, so start
-        // reading immediately to avoid possibility of missing the chaincode event emitted by the transaction below
-        CompletableFuture<ChaincodeEvent> chaincodeEventJob = CompletableFuture.supplyAsync(() -> events.next());
 
         // Submit a transaction that generates a chaincode event
         System.out.println("Submitting \"event\" transaction with arguments:  \"my-event-name\", \"my-event-payload\"");
         contract.submitTransaction("event", "my-event-name", "my-event-payload");
 
-        ChaincodeEvent event = chaincodeEventJob.get(10, TimeUnit.SECONDS);
+        ChaincodeEvent event = events.next();
         System.out.println("Received event name: " + event.getEventName() +
                 ", payload: " + new String(event.getPayload(), StandardCharsets.UTF_8) +
                 ", txId: " + event.getTransactionId());

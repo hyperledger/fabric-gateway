@@ -36,7 +36,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <grpcVersion>1.39.0</grpcVersion>
+        <grpcVersion>1.40.0</grpcVersion>
         <protobufVersion>3.17.3</protobufVersion>
     </properties>
 
