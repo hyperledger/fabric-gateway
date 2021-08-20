@@ -25,7 +25,7 @@ interface OrgInfo {
     readonly peers: string[];
 }
 
-const orgs: { [mspId: string]: OrgInfo } = {
+const orgs: Record<string, OrgInfo> = {
     Org1MSP: {
         orgName: "org1.example.com",
         cli: "org1_cli",
@@ -92,8 +92,8 @@ async function sleep(ms: number): Promise<void> {
 export class Fabric {
     private fabricRunning = false;
     private channelsJoined = false;
-    private readonly runningChaincodes: { [chaincodeId: string]: string } = {};
-    private readonly runningPeers: { [peerName: string]: boolean };
+    private readonly runningChaincodes: Record<string, string> = {};
+    private readonly runningPeers: Record<string, boolean>;
 
     constructor() {
         this.runningPeers = Object.fromEntries(

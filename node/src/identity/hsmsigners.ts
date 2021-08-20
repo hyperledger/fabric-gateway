@@ -6,40 +6,46 @@
 
 import * as pkcs11js from 'pkcs11js';
 import * as elliptic from 'elliptic';
-import BN = require("bn.js");
-import ecSignature = require('elliptic/lib/elliptic/ec/signature');
+import BN from 'bn.js';
 import { Signer } from './signer';
-
-type DER = string | number[];
+import { ecRawSignatureAsDer } from './asn1';
 
 export interface HSMSignerOptions {
     /**
-     * The label associated with the token for the slot
+     * The label associated with the token for the slot.
      */
     label: string;
 
     /**
-     * The pin for the slot identified by the label
+     * The pin for the slot identified by the label.
      */
     pin: string;
 
     /**
-     * Identifier. The CKA_ID assigned to the HSM object
+     * Identifier. The CKA_ID assigned to the HSM object.
      */
     identifier: string | Buffer;
 
     /**
-     * Optional user type for the HSM. If not specified it defaults to CKU_USER
+     * Optional user type for the HSM. If not specified it defaults to CKU_USER.
      */
     userType?: number;
 }
 
 export interface HSMSigner {
+    /**
+     * HSM signer implementation.
+     */
     signer: Signer;
+
+    /**
+     * Close the HSM session when the signer is no longer needed.
+     */
     close: () => void;
 }
+
 /**
- * Create an HSM Signer factory. You should only ever call this once within your application
+ * Create an HSM Signer factory. A single signer factory instance should be used to create all required HSM signers.
  */
 export function newHSMSignerFactory(library: string): HSMSignerFactory {
     if (!library || library.trim() === '') {
@@ -50,10 +56,9 @@ export function newHSMSignerFactory(library: string): HSMSignerFactory {
 }
 
 /**
- * Factory to be able to create HSM Signers.
+ * Factory to create HSM Signers.
  */
 export class HSMSignerFactory {
-
     #pkcs11: pkcs11js.PKCS11;
 
     constructor(library: string) {
@@ -63,23 +68,23 @@ export class HSMSignerFactory {
     }
 
     /**
-     * disposes of the factory when it and HSM signers are not required anymore
+     * Dispose of the factory when it, and any HSM signers created by it, are no longer required.
      */
-    public dispose(): void {
+    dispose(): void {
         this.#pkcs11.C_Finalize();
     }
 
     /**
      * Create a new HSM signing implementation based on provided HSM options.
      *
-     * This returns an object with 2 properties
-     * - signer which is the signer function
-     * - close which is a close function to close the signer when it's not required anymore
+     * This returns an object with two properties:
+     * 1. the signer function.
+     * 2. a close function to be called when the signer is no longer required.
      *
-     * @param hsmSignerOptions - The HSM signer options
-     * @returns an HSM Signer implementation
+     * @param hsmSignerOptions - The HSM signer options.
+     * @returns an HSM Signer implementation.
      */
-    public newSigner(hsmSignerOptions: HSMSignerOptions): HSMSigner {
+    newSigner(hsmSignerOptions: HSMSignerOptions): HSMSigner {
         if (!hsmSignerOptions.label || hsmSignerOptions.label.trim() === '') {
             throw new Error('label property must be provided');
         }
@@ -119,18 +124,18 @@ export class HSMSignerFactory {
             throw err;
         }
 
-        const definedCurves = elliptic.curves as unknown as { [key: string]: elliptic.curves.PresetCurve };
+        const definedCurves = elliptic.curves as unknown as Record<string, elliptic.curves.PresetCurve>;
         const ecdsaCurve = definedCurves[`p${supportedKeySize}`];
 
         // currently the only supported curve is p256 and it will always have an 'n' value
         const curveBigNum = ecdsaCurve.n!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
         const halfOrder = curveBigNum.shrn(1);
 
-        const close = ():void => {
+        const close = (): void => {
             pkcs11.C_CloseSession(session);
         }
 
-        const signer: Signer = async (digest: Uint8Array) => {
+        const signer: Signer = (digest) => {
             pkcs11.C_SignInit(session, { mechanism: pkcs11js.CKM_ECDSA }, privateKeyHandle);
             const sig = pkcs11.C_Sign(session, Buffer.from(digest), Buffer.alloc(supportedKeySize));
 
@@ -141,16 +146,11 @@ export class HSMSignerFactory {
                 s = curveBigNum.sub(s);
             }
 
-            const signatureInput: elliptic.SignatureInput = {
-                r,
-                s
-            }
-
-            const der = new ecSignature(signatureInput).toDER() as DER; // eslint-disable-line
-            return Promise.resolve(Buffer.from(der));
+            const signature = new Uint8Array(ecRawSignatureAsDer(r, s));
+            return Promise.resolve(signature);
         }
 
-        return {signer, close};
+        return { signer, close };
     }
 
     private findSlotForLabel(pkcs11Label: string): Buffer {
@@ -160,16 +160,10 @@ export class HSMSignerFactory {
             throw new Error('No pkcs11 slots can be found');
         }
 
-        let slot: Buffer | undefined;
-        let tokenInfo: pkcs11js.TokenInfo;
-
-        for (const slotToCheck of slots) {
-            tokenInfo = this.#pkcs11.C_GetTokenInfo(slotToCheck);
-            if (tokenInfo && tokenInfo.label && tokenInfo.label.trim() === pkcs11Label) {
-                slot = slotToCheck;
-                break;
-            }
-        }
+        const slot = slots.find(slotToCheck => {
+            const tokenInfo = this.#pkcs11.C_GetTokenInfo(slotToCheck);
+            return tokenInfo?.label?.trim() === pkcs11Label;
+        });
 
         if (!slot) {
             throw new Error(`label ${pkcs11Label} cannot be found in the pkcs11 slot list`);

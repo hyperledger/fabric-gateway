@@ -296,7 +296,7 @@ describe('When using an HSM Signer', () => {
 
         const {signer} = hsmSignerFactory.newSigner(hsmOptions);
         const signed = await signer(digest);
-        expect(signed).toEqual(Buffer.from(DERSignature, 'hex'));
+        expect(signed).toEqual(new Uint8Array(Buffer.from(DERSignature, 'hex')));
 
         expect(pkcs11Stub.C_SignInit).toBeCalledWith(mockSession, { mechanism: CKM_ECDSA }, mockPrivateKeyHandle);
         expect(pkcs11Stub.C_Sign).toBeCalledWith(mockSession, digest, expect.anything());

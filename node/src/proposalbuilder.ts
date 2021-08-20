@@ -17,12 +17,12 @@ export interface ProposalOptions {
     /**
      * Arguments passed to the transaction function.
      */
-    arguments?: Array<string|Uint8Array>;
-
+    arguments?: (string | Uint8Array)[];
+    
     /**
      * Private data passed to the transaction function but not recorded on the ledger.
      */
-    transientData?: { [key: string]: Uint8Array };
+    transientData?: Record<string, string | Uint8Array>;
 
     /**
      * Specifies the set of organizations that will attempt to endorse the proposal.
@@ -103,7 +103,7 @@ export class ProposalBuilder {
     private newChaincodeProposalPayload(): protos.IChaincodeProposalPayload {
         return {
             input: protos.ChaincodeInvocationSpec.encode(this.newChaincodeInvocationSpec()).finish(),
-            TransientMap: this.#options.options.transientData,
+            TransientMap: this.getTransientData(),
         };
     }
 
@@ -123,6 +123,21 @@ export class ProposalBuilder {
 
     private getArgsAsBytes(): Uint8Array[] {
         return Array.of(this.#options.transactionName, ...(this.#options.options.arguments ?? []))
-            .map(arg => typeof arg === 'string' ? Buffer.from(arg) : arg);
+            .map(asBytes);
     }
+
+    private getTransientData(): Record<string, Uint8Array> {
+        const result: Record<string, Uint8Array> = {};
+
+        for (const [key, value] of Object.entries(this.#options.options.transientData || {})) {
+            result[key] = asBytes(value);
+        }
+
+        return result;
+    }
+
+}
+
+function asBytes(value: string | Uint8Array): Uint8Array {
+    return typeof value === 'string' ? Buffer.from(value) : value;
 }

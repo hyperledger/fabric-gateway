@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Contract, Network, Proposal, ProposalOptions, Signer, Transaction } from 'fabric-gateway';
-import { Commit } from 'fabric-gateway/dist/commit';
+import { Contract, Network, ProposalOptions, Signable, Signer } from 'fabric-gateway';
 import { protos } from 'fabric-gateway/dist/protos/protos';
 import { asString } from './utils';
 
@@ -90,7 +89,7 @@ export class TransactionInvocation {
         return submitted.getResult();
     }
 
-    private async sign<T extends Proposal | Transaction | Commit>(signable: T, newInstance: (bytes: Uint8Array, signature: Uint8Array) => T): Promise<T> {
+    private async sign<T extends Signable>(signable: T, newInstance: (bytes: Uint8Array, signature: Uint8Array) => T): Promise<T> {
         if (!this.offlineSigner) {
             return signable;
         }

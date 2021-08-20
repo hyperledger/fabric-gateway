@@ -6,10 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
-import io.grpc.Channel;
-
 import java.util.function.Function;
 
+import io.grpc.Channel;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 
@@ -27,7 +26,7 @@ import org.hyperledger.fabric.client.identity.Signer;
  * <p>Multiple Gateway instances may share the same underlying gRPC connection by supplying the gRPC {@code Channel} as
  * an option to the Gateway connect.</p>
  *
- * <pre><code>
+ * <pre>{@code
  *     Identity identity = new X509Identity("mspId", certificate);
  *     Signer signer = Signers.newPrivateKeySigner(privateKey);
  *
@@ -40,7 +39,7 @@ import org.hyperledger.fabric.client.identity.Signer;
  *         Network network = gateway.getNetwork("channel");
  *         // Interactions with the network
  *     }
- * </code></pre>
+ * }</pre>
  */
 public interface Gateway extends AutoCloseable {
     /**

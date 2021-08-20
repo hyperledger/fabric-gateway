@@ -28,23 +28,23 @@ import com.google.protobuf.InvalidProtocolBufferException;
  * and the resulting transaction object can be submitted to the orderer to be committed to the ledger.</p>
  *
  * <h3>Evaluate transaction example</h3>
- * <pre><code>
+ * <pre>{@code
  *     byte[] result = contract.newProposal("transactionName")
  *             .addArguments("one", "two")
  *             // Specify additional proposal options, such as transient data
  *             .build()
  *             .evaluate();
- * </code></pre>
+ * }</pre>
  *
  * <h3>Submit transaction example</h3>
- * <pre><code>
+ * <pre>{@code
  *     byte[] result = contract.newProposal("transactionName")
  *             .addArguments("one", "two")
  *             // Specify additional proposal options, such as transient data
  *             .build()
  *             .endorse()
- *             .submitSync();
- * </code></pre>
+ *             .submit();
+ * }</pre>
  *
  * <h2>Off-line signing</h2>
  *
@@ -62,31 +62,31 @@ import com.google.protobuf.InvalidProtocolBufferException;
  *
  * <h3>Off-line signing examples</h3>
  * <p>Signing of a proposal that can then be evaluated or endorsed:</p>
- * <pre><code>
+ * <pre>{@code
  *     Proposal unsignedProposal = contract.newProposal("transactionName").build();
  *     byte[] proposalBytes = unsignedProposal.getBytes();
  *     byte[] proposalDigest = unsignedProposal.getDigest();
  *     // Generate signature from digest
  *     Proposal signedProposal = contract.newSignedProposal(proposalBytes, proposalSignature);
- * </code></pre>
+ * }</pre>
  *
  * <p>Signing of an endorsed transaction that can then be submitted to the orderer:</p>
- * <pre><code>
+ * <pre>{@code
  *     Transaction unsignedTransaction = signedProposal.endorse();
  *     byte[] transactionBytes = unsignedTransaction.getBytes();
  *     byte[] transactionDigest = unsignedTransaction.getDigest();
  *     // Generate signature from digest
  *     Transaction signedTransaction = contract.newSignedTransaction(transactionBytes, transactionSignature);
- * </code></pre>
+ * }</pre>
  *
  * <p>Signing of a commit that can be used to obtain the status of a submitted transaction:</p>
- * <pre><code>
+ * <pre>{@code
  *     Commit unsignedCommit = signedTransaction.submitAsync();
  *     byte[] commitBytes = unsignedCommit.getBytes();
  *     byte[] commitDigest = unsignedCommit.getDigest();
  *     // Generate signature from digest
  *     Commit signedCommit = network.newSignedCommit(commitBytes, commitDigest);
- * </code></pre>
+ * }</pre>
  *
  * @see <a href="https://hyperledger-fabric.readthedocs.io/en/latest/developapps/application.html#construct-request">Developing Fabric Applications - Construct request</a>
  */

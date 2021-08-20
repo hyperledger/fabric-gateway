@@ -74,6 +74,12 @@ final class ProposalBuilder implements Proposal.Builder {
     }
 
     @Override
+    public ProposalBuilder putTransient(final String key, final String value) {
+        payloadBuilder.putTransientMap(key, ByteString.copyFromUtf8(value));
+        return this;
+    }
+
+    @Override
     public ProposalBuilder setEndorsingOrganizations(final String... mspids) {
         this.endorsingOrgs = new HashSet<>(Arrays.asList(mspids));
         return this;
