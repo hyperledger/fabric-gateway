@@ -237,7 +237,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_transient_data() throws Exception {
+    void sends_byte_array_transient_data() throws Exception {
         Contract contract = network.getContract("CHAINCODE_ID");
         contract.newProposal("TRANSACTION_NAME")
                 .putTransient("uno", "one".getBytes(StandardCharsets.UTF_8))
@@ -248,8 +248,24 @@ public final class EvaluateTransactionTest {
         EvaluateRequest request = mocker.captureEvaluate();
         Map<String, ByteString> transientData = mocker.getProposalPayload(request.getProposedTransaction()).getTransientMapMap();
         assertThat(transientData).containsOnly(
-                entry("uno", ByteString.copyFrom("one", StandardCharsets.UTF_8)),
-                entry("dos", ByteString.copyFrom("two", StandardCharsets.UTF_8)));
+                entry("uno", ByteString.copyFromUtf8("one")),
+                entry("dos", ByteString.copyFromUtf8("two")));
+    }
+
+    @Test
+    void sends_string_transient_data() throws Exception {
+        Contract contract = network.getContract("CHAINCODE_ID");
+        contract.newProposal("TRANSACTION_NAME")
+                .putTransient("uno", "one")
+                .putTransient("dos", "two")
+                .build()
+                .evaluate();
+
+        EvaluateRequest request = mocker.captureEvaluate();
+        Map<String, ByteString> transientData = mocker.getProposalPayload(request.getProposedTransaction()).getTransientMapMap();
+        assertThat(transientData).containsOnly(
+                entry("uno", ByteString.copyFromUtf8("one")),
+                entry("dos", ByteString.copyFromUtf8("two")));
     }
 
     @Test

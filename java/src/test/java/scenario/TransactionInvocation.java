@@ -36,8 +36,8 @@ public final class TransactionInvocation {
         proposalBuilder = contract.newProposal(transactionName);
     }
 
-    public void setTransient(final Map<String, byte[]> transientData) {
-        proposalBuilder.putAllTransient(transientData);
+    public void setTransient(final Map<String, String> transientData) {
+        transientData.entrySet().forEach(entry -> proposalBuilder.putTransient(entry.getKey(), entry.getValue()));
     }
 
     public void setEndorsingOrgs(final String[] orgs) {

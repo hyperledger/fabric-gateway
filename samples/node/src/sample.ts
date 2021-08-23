@@ -8,7 +8,7 @@ import * as grpc from '@grpc/grpc-js';
 import { ServiceClient } from '@grpc/grpc-js/build/src/make-client';
 import * as crypto from 'crypto';
 import { connect, Gateway, Identity, Signer, signers } from 'fabric-gateway';
-import * as fs from 'fs';
+import { promises as fs } from 'fs';
 import * as path from 'path';
 import { TextDecoder } from 'util';
 
@@ -216,7 +216,7 @@ async function exampleChaincodeEvents(gateway: Gateway) {
 }
 
 async function newGrpcConnection(): Promise<ServiceClient> {
-    const tlsRootCert = await fs.promises.readFile(tlsCertPath);
+    const tlsRootCert = await fs.readFile(tlsCertPath);
     const tlsCredentials = grpc.credentials.createSsl(tlsRootCert);
 
     const GrpcClient = grpc.makeGenericClientConstructor({}, '');
@@ -226,12 +226,12 @@ async function newGrpcConnection(): Promise<ServiceClient> {
 }
 
 async function newIdentity(): Promise<Identity> {
-    const credentials = await fs.promises.readFile(certPath);
+    const credentials = await fs.readFile(certPath);
     return { mspId, credentials };
 }
 
 async function newSigner(): Promise<Signer> {
-    const privateKeyPem = await fs.promises.readFile(keyPath);
+    const privateKeyPem = await fs.readFile(keyPath);
     const privateKey = crypto.createPrivateKey(privateKeyPem);
     return signers.newPrivateKeySigner(privateKey);
 }

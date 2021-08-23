@@ -14,6 +14,7 @@ gRPC connections to a Fabric Gateway may be shared by all `Gateway` instances in
 
 The following complete example shows how to connect to a Fabric network, submit a transaction and query the ledger state using an instantiated smart contract.
 
+    import { promises as fs } from 'fs';
     import * as grpc from '@grpc/grpc-js';
     import { connect, Identity, signers } from 'fabric-gateway';
 
@@ -21,10 +22,10 @@ The following complete example shows how to connect to a Fabric network, submit 
         const GrpcClient = grpc.makeGenericClientConstructor({}, '');
         const client = new GrpcClient('gateway.example.org:1337', grpc.credentials.createInsecure());
 
-        const credentials = await fs.promises.readFile('path/to/certificate.pem');
+        const credentials = await fs.readFile('path/to/certificate.pem');
         const identity: Identity = { mspId, credentials };
 
-        const privateKeyPem = await fs.promises.readFile('path/to/privateKey.pem');
+        const privateKeyPem = await fs.readFile('path/to/privateKey.pem');
         const privateKey = crypto.createPrivateKey(privateKeyPem);
         const signer = signers.newPrivateKeySigner(privateKey);
 

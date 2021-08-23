@@ -6,10 +6,10 @@
 
 import crypto from 'crypto';
 import { ec as EC } from 'elliptic';
-import { ecPrivateKeyAsRaw } from './decoder';
+import { ecPrivateKeyAsRaw } from './asn1';
 import { Signer } from './signer';
 
-const namedCurves: { [oid: string]: EC } = {
+const namedCurves: Record<string, EC> = {
     '1.2.840.10045.3.1.7': new EC('p256'),
     '1.3.132.0.34': new EC('p384'),
 };

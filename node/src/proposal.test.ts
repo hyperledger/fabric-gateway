@@ -173,8 +173,16 @@ describe('Proposal', () => {
             expect(argStrings.slice(1)).toStrictEqual(expected);
         });
 
-        it('sets transient data', async () => {
+        it('incldues bytes transient data in proposal', async () => {
             await contract.evaluate('TRANSACTION_NAME', { transientData: {'uno': Buffer.from('one'), 'dos': Buffer.from('two')}});
+            const proposal_bytes = client.evaluate.mock.calls[0][0].proposed_transaction?.proposal_bytes ?? Buffer.from('');
+            const proposal = protos.Proposal.decode(proposal_bytes);
+            const payload = protos.ChaincodeProposalPayload.decode(proposal.payload);
+            expect(payload.TransientMap).toMatchObject({'uno': Buffer.from('one'), 'dos': Buffer.from('two')})
+        });
+
+        it('incldues string transient data in proposal', async () => {
+            await contract.evaluate('TRANSACTION_NAME', { transientData: {'uno': 'one', 'dos': 'two'}});
             const proposal_bytes = client.evaluate.mock.calls[0][0].proposed_transaction?.proposal_bytes ?? Buffer.from('');
             const proposal = protos.Proposal.decode(proposal_bytes);
             const payload = protos.ChaincodeProposalPayload.decode(proposal.payload);

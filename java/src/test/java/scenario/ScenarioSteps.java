@@ -359,9 +359,7 @@ public class ScenarioSteps {
 
     @When("I set transient data on the transaction to")
     public void setTransientData(DataTable data) {
-        Map<String, String> table = data.asMap(String.class, String.class);
-        Map<String, byte[]> transientMap = table.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8)));
+        Map<String, String> transientMap = data.asMap(String.class, String.class);
         transactionInvocation.setTransient(transientMap);
     }
 

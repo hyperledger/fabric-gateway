@@ -8,7 +8,7 @@ import { DataTable, setWorldConstructor } from '@cucumber/cucumber';
 import * as grpc from '@grpc/grpc-js';
 import * as crypto from 'crypto';
 import { ChaincodeEvent, Identity, Signer, signers, HSMSigner, HSMSignerOptions, newHSMSignerFactory, HSMSignerFactory } from 'fabric-gateway';
-import * as fs from 'fs';
+import { promises as fs } from 'fs';
 import * as path from 'path';
 import { fixturesDir, getOrgForMsp, findSoftHSMPKCS11Lib } from './fabric';
 import { getSKIFromCertificate } from './fabricski';
@@ -25,7 +25,7 @@ interface ConnectionInfo {
     running : boolean;
 }
 
-const peerConnectionInfo: { [peer: string]: ConnectionInfo } = {
+const peerConnectionInfo: Record<string, ConnectionInfo> = {
     "peer0.org1.example.com": {
         url:                "localhost:7051",
         serverNameOverride: "peer0.org1.example.com",
@@ -70,7 +70,7 @@ async function readCertificate(user: string, mspId: string): Promise<Buffer> {
     const org = getOrgForMsp(mspId);
     const credentialsPath = getCredentialsPath(user, mspId);
     const certPath = path.join(credentialsPath, 'signcerts', `${user}@${org}-cert.pem`);
-    return await fs.promises.readFile(certPath);
+    return await fs.readFile(certPath);
 }
 
 async function newSigner(user: string, mspId: string): Promise<Signer> {
@@ -81,7 +81,7 @@ async function newSigner(user: string, mspId: string): Promise<Signer> {
 async function readPrivateKey(user: string, mspId: string): Promise<crypto.KeyObject> {
     const credentialsPath = getCredentialsPath(user, mspId);
     const keyPath = path.join(credentialsPath, 'keystore', 'key.pem');
-    const privateKeyPem = await fs.promises.readFile(keyPath);
+    const privateKeyPem = await fs.readFile(keyPath);
     return crypto.createPrivateKey(privateKeyPem);
 }
 
@@ -116,11 +116,11 @@ async function newHSMSigner(user: string): Promise<HSMSigner> {
 
 async function readHSMCertificate(user: string): Promise<Buffer> {
     const certPath = path.join(fixturesDir, 'crypto-material', 'hsm', user, 'signcerts', 'cert.pem' );
-    return await fs.promises.readFile(certPath);
+    return await fs.readFile(certPath);
 }
 
 export class CustomWorld {
-    #gateways: { [name: string]: GatewayContext } = {};
+    #gateways: Record<string, GatewayContext> = {};
     #currentGateway?: GatewayContext;
     #transaction?: TransactionInvocation;
 
@@ -162,7 +162,7 @@ export class CustomWorld {
     async connect(address: string): Promise<void> {
         // address is the name of the peer, lookup the connection info
         const peer = peerConnectionInfo[address];
-        const tlsRootCert = fs.readFileSync(peer.tlsRootCertPath)
+        const tlsRootCert = await fs.readFile(peer.tlsRootCertPath)
         const GrpcClient = grpc.makeGenericClientConstructor({}, '');
         const credentials = grpc.credentials.createSsl(tlsRootCert);
         let grpcOptions: Record<string, unknown> = {};
@@ -185,12 +185,7 @@ export class CustomWorld {
     }
 
     setTransientData(dataTable: DataTable): void {
-        const hash = dataTable.rowsHash();
-        const transient: { [key: string]: Buffer } = {};
-        for (const key in hash) {
-            transient[key] = Buffer.from(hash[key]);
-        }
-        this.getTransaction().options.transientData = transient;
+        this.getTransaction().options.transientData = dataTable.rowsHash();
     }
 
     setEndorsingOrgs(jsonOrgs: string): void {

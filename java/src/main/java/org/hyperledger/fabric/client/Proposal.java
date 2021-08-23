@@ -62,6 +62,14 @@ public interface Proposal extends Signable {
         Builder putTransient(String key, byte[] value);
 
         /**
+         * Associates the specified transient data key and value with the proposal.
+         * @param key Key with which the specified value is to be associated.
+         * @param value Value to be associated with the specified key.
+         * @return This builder.
+         */
+        Builder putTransient(String key, String value);
+
+        /**
          * Specifies the set of organizations that will attempt to endorse the proposal.
          * No other organizations' peers will be sent this proposal.
          * This is usually used in conjunction with {@link #putTransient(String, byte[])} or

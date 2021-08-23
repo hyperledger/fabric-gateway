@@ -7,7 +7,7 @@
 import * as grpc from '@grpc/grpc-js';
 import { ServiceClient } from '@grpc/grpc-js/build/src/make-client';
 import * as crypto from 'crypto';
-import jsrsa = require('jsrsasign');
+import * as jsrsa from 'jsrsasign';
 import { connect, Gateway, HSMSignerFactory, HSMSignerOptions, newHSMSignerFactory, HSMSigner } from 'fabric-gateway';
 import * as fs from 'fs';
 import * as path from 'path';
