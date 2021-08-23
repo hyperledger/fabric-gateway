@@ -68,7 +68,7 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>Factory to be able to create HSM Signers.</p>
+						<p>Factory to create HSM Signers.</p>
 					</div>
 				</div>
 			</section>
@@ -120,7 +120,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/c256df6/node/src/identity/hsmsigners.ts#L57">identity/hsmsigners.ts:57</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/64f1930/node/src/identity/hsmsigners.ts#L62">identity/hsmsigners.ts:62</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -142,7 +142,7 @@
 					<div class="tsd-signature tsd-kind-icon">#pkcs11<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">PKCS11</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/c256df6/node/src/identity/hsmsigners.ts#L57">identity/hsmsigners.ts:57</a></li>
+							<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/64f1930/node/src/identity/hsmsigners.ts#L62">identity/hsmsigners.ts:62</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -159,12 +159,12 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/c256df6/node/src/identity/hsmsigners.ts#L68">identity/hsmsigners.ts:68</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/64f1930/node/src/identity/hsmsigners.ts#L73">identity/hsmsigners.ts:73</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>disposes of the factory when it and HSM signers are not required anymore</p>
+									<p>Dispose of the factory when it, and any HSM signers created by it, are no longer required.</p>
 								</div>
 							</div>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -181,7 +181,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/c256df6/node/src/identity/hsmsigners.ts#L181">identity/hsmsigners.ts:181</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/64f1930/node/src/identity/hsmsigners.ts#L175">identity/hsmsigners.ts:175</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -210,7 +210,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/c256df6/node/src/identity/hsmsigners.ts#L156">identity/hsmsigners.ts:156</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/64f1930/node/src/identity/hsmsigners.ts#L156">identity/hsmsigners.ts:156</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -233,30 +233,30 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/c256df6/node/src/identity/hsmsigners.ts#L82">identity/hsmsigners.ts:82</a></li>
+									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/64f1930/node/src/identity/hsmsigners.ts#L87">identity/hsmsigners.ts:87</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
 									<p>Create a new HSM signing implementation based on provided HSM options.</p>
 								</div>
-								<p>This returns an object with 2 properties</p>
-								<ul>
-									<li>signer which is the signer function</li>
-									<li>close which is a close function to close the signer when it&#39;s not required anymore</li>
-								</ul>
+								<p>This returns an object with two properties:</p>
+								<ol>
+									<li>the signer function.</li>
+									<li>a close function to be called when the signer is no longer required.</li>
+								</ol>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>hsmSignerOptions: <a href="../interfaces/hsmsigneroptions.html" class="tsd-signature-type" data-tsd-kind="Interface">HSMSignerOptions</a></h5>
 									<div class="tsd-comment tsd-typography">
-										<p>The HSM signer options</p>
+										<p>The HSM signer options.</p>
 									</div>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <a href="../interfaces/hsmsigner.html" class="tsd-signature-type" data-tsd-kind="Interface">HSMSigner</a></h4>
-							<p>an HSM Signer implementation</p>
+							<p>an HSM Signer implementation.</p>
 						</li>
 					</ul>
 				</section>
