@@ -29,7 +29,7 @@ variables:
   - name: PATH
     value: $(Agent.BuildDirectory)/go/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
   - name: GOVER
-    value: 1.15.6
+    value: 1.16.7
   - name: NODEVER
     value: 12.16.1
 
