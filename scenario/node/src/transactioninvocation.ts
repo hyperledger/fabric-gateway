@@ -6,7 +6,7 @@
 
 import { Contract, Network, ProposalOptions, Signable, Signer } from 'fabric-gateway';
 import { protos } from 'fabric-gateway/dist/protos/protos';
-import { asString } from './utils';
+import { bytesAsString, toError, toString } from './utils';
 
 export class TransactionInvocation {
     readonly options: ProposalOptions = {};
@@ -30,7 +30,7 @@ export class TransactionInvocation {
         try {
             this.result = await this.invoke();
         } catch (error) {
-            this.error = error;
+            this.error = toError(error);
         }
     }
 
@@ -40,15 +40,15 @@ export class TransactionInvocation {
 
     getResult(): string {
         if (!this.result) {
-            throw new Error(`No transaction result. Error is: ${this.error?.stack ?? this.error}`);
+            throw new Error(`No transaction result. Error is: ${toString(this.error)}`);
         }
 
-        return asString(this.result);
+        return bytesAsString(this.result);
     }
 
     getError(): Error {
         if (!this.error) {
-            throw new Error(`No transaction error. Result is: ${asString(this.result)}`)
+            throw new Error(`No transaction error. Result is: ${bytesAsString(this.result)}`)
         }
 
         return this.error;
