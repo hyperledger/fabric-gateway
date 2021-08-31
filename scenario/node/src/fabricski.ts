@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import jsrsa = require('jsrsasign');
+import * as jsrsa from 'jsrsasign';
 
 export function getSKIFromCertificate(pem: string): Buffer {
     const key = jsrsa.KEYUTIL.getKey(pem);

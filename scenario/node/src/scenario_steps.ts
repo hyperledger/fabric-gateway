@@ -8,7 +8,7 @@ import { After, AfterAll, BeforeAll, DataTable, Given, setDefaultTimeout, Then, 
 import expect from 'expect';
 import { CustomWorld } from './customworld';
 import { Fabric } from './fabric';
-import { asString } from './utils';
+import { bytesAsString, toError } from './utils';
 
 setDefaultTimeout(30 * 1000);
 
@@ -26,8 +26,9 @@ function parseJson(json: string): unknown {
     try {
         return JSON.parse(json);
     } catch (err) {
-        err.message = `${err.message}: ${json}`;
-        throw err;
+        const error = toError(err);
+        error.message = `${error.message}: ${json}`;
+        throw error;
     }
 }
 
@@ -150,6 +151,6 @@ Then('the error message should contain {string}', function(this: CustomWorld, ex
 
 Then('I should receive a chaincode event named {string} with payload {string}', async function(this: CustomWorld, eventName: string, payload: string): Promise<void> {
     const event = await this.nextChaincodeEvent();
-    const actual = Object.assign({}, event, { payload: asString(event.payload)})
+    const actual = Object.assign({}, event, { payload: bytesAsString(event.payload)})
     expect(actual).toMatchObject({ eventName, payload });
 });
