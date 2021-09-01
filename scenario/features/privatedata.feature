@@ -75,21 +75,6 @@ Feature: Private data collections
         And I invoke the transaction
         Then the response should be "value-104"
 
-    Scenario: Org1 writes private data to SharedCollection, endorsed by Org3, and can read it back via Org1 peer
-        When I use the gateway named gateway1
-        And I prepare to submit a WritePrivateData transaction
-        And I set transient data on the transaction to
-            | collection | SharedCollection |
-            | key | key-105 |
-            | value | value-105 |
-        And I set the endorsing organizations to ["Org3MSP"]
-        And I invoke the transaction
-        And I prepare to evaluate a ReadPrivateData transaction
-        And I set the transaction arguments to ["SharedCollection", "key-105"]
-        And I set the endorsing organizations to ["Org1MSP"]
-        And I invoke the transaction
-        Then the response should be "value-105"
-
     Scenario: Org1 writes private data to SharedCollection, and Org2 fails to read it
         When I use the gateway named gateway1
         And I prepare to submit a WritePrivateData transaction
