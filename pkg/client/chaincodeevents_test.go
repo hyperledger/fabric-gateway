@@ -16,6 +16,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
 
@@ -76,7 +77,7 @@ func TestChaincodeEvents(t *testing.T) {
 
 		var actual *gateway.ChaincodeEventsRequest
 		mockClient.EXPECT().ChaincodeEvents(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.SignedChaincodeEventsRequest) {
+			Do(func(_ context.Context, in *gateway.SignedChaincodeEventsRequest, _ ...grpc.CallOption) {
 				request := &gateway.ChaincodeEventsRequest{}
 				if err := proto.Unmarshal(in.GetRequest(), request); err != nil {
 					t.Fatal(err)

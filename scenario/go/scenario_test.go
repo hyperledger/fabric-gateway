@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package scenario
 
 import (
+	"context"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
@@ -21,7 +22,7 @@ import (
 	"time"
 
 	"github.com/cucumber/godog"
-	messages "github.com/cucumber/messages-go/v10"
+	messages "github.com/cucumber/messages-go/v16"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -142,8 +143,8 @@ func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 }
 
 func InitializeScenario(s *godog.ScenarioContext) {
-	s.BeforeScenario(beforeScenario)
-	s.AfterScenario(afterScenario)
+	s.Before(beforeScenario)
+	s.After(afterScenario)
 
 	s.Step(`^I register and enroll an HSM user (\S+) in MSP Org1MSP$`, generateHSMUser)
 	s.Step(`^I create a gateway named (\S+) for user (\S+) in MSP (\S+)$`, createGateway)
@@ -172,16 +173,18 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I should receive a chaincode event named "([^"]*)" with payload "([^"]*)"$`, receiveChaincodeEvent)
 }
 
-func beforeScenario(sc *godog.Scenario) {
+func beforeScenario(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 	gateways = make(map[string]*GatewayConnection)
 	currentGateway = nil
 	transaction = nil
+	return ctx, nil
 }
 
-func afterScenario(sc *godog.Scenario, err error) {
+func afterScenario(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
 	for _, connection := range gateways {
 		connection.Close()
 	}
+	return ctx, nil
 }
 
 func startFabric() error {
@@ -629,7 +632,7 @@ func unmarshalArgs(argsJSON string) ([]string, error) {
 	return args, nil
 }
 
-func setTransientData(table *messages.PickleStepArgument_PickleTable) error {
+func setTransientData(table *messages.PickleTable) error {
 	transient := make(map[string][]byte)
 	for _, row := range table.Rows {
 		transient[row.Cells[0].Value] = []byte(row.Cells[1].Value)
@@ -678,8 +681,8 @@ func theTransactionShouldFail() error {
 	return nil
 }
 
-func theResponseShouldBeJSONMatching(arg *messages.PickleStepArgument_PickleDocString) error {
-	same, err := jsonEqual([]byte(arg.GetContent()), transaction.Result())
+func theResponseShouldBeJSONMatching(arg *messages.PickleDocString) error {
+	same, err := jsonEqual([]byte(arg.Content), transaction.Result())
 	if err != nil {
 		return err
 	}
