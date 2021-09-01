@@ -17,6 +17,7 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -76,7 +77,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		var actual string
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.EvaluateRequest) {
+			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
 				actual = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).ChannelId
 			}).
 			Return(newEvaluateResponse(nil), nil).
@@ -99,7 +100,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		var actual string
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.EvaluateRequest) {
+			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
 				actual = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.ChaincodeId.Name
 			}).
 			Return(newEvaluateResponse(nil), nil).
@@ -122,7 +123,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		var args [][]byte
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.EvaluateRequest) {
+			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
 				args = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
 			}).
 			Return(newEvaluateResponse(nil), nil).
@@ -146,7 +147,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		var args [][]byte
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.EvaluateRequest) {
+			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
 				args = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
 			}).
 			Return(newEvaluateResponse(nil), nil).
@@ -170,7 +171,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		var args [][]byte
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.EvaluateRequest) {
+			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
 				args = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
 			}).
 			Return(newEvaluateResponse(nil), nil).
@@ -194,7 +195,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		var actual string
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.EvaluateRequest) {
+			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
 				actual = in.ChannelId
 			}).
 			Return(newEvaluateResponse(nil), nil).
@@ -218,7 +219,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		var expected string
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.EvaluateRequest) {
+			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
 				actual = in.TransactionId
 				expected = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).TxId
 			}).
@@ -245,7 +246,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		}
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.EvaluateRequest) {
+			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
 				actual = in.ProposedTransaction.Signature
 			}).
 			Return(newEvaluateResponse(nil), nil).
@@ -296,7 +297,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		expectedPrice := []byte("3000")
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.EvaluateRequest) {
+			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
 				actualOrgs = in.TargetOrganizations
 				transient := test.AssertUnmarshallProposalPayload(t, in.ProposedTransaction).TransientMap
 				actualPrice = transient["price"]
