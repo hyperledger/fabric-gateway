@@ -9,6 +9,7 @@ package org.hyperledger.fabric.client.identity;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.math.BigInteger;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -16,12 +17,15 @@ import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.ECGenParameterSpec;
 import java.util.Date;
 import java.util.Locale;
 
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.asn1.x9.ECNamedCurveTable;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
@@ -39,18 +43,26 @@ public final class X509Credentials {
     private final X509Certificate certificate;
     private final PrivateKey privateKey;
 
+    /**
+     * Create credentials using a P-256 curve.
+     */
     public X509Credentials() {
-        KeyPair keyPair = generateKeyPair();
+        this("P-256");
+    }
+
+    public X509Credentials(String curveName) {
+        KeyPair keyPair = generateKeyPair(curveName);
         certificate = generateCertificate(keyPair);
         privateKey = keyPair.getPrivate();
     }
 
-    private KeyPair generateKeyPair() {
+    private KeyPair generateKeyPair(String curveName) {
         try {
             KeyPairGenerator generator = KeyPairGenerator.getInstance("EC", BC_PROVIDER);
-            generator.initialize(384);
+            AlgorithmParameterSpec curveParam = new ECGenParameterSpec(curveName);
+            generator.initialize(curveParam);
             return generator.generateKeyPair();
-        } catch (NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
             throw new RuntimeException(e);
         }
     }
