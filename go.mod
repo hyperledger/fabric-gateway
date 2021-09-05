@@ -13,7 +13,7 @@ require (
 	github.com/hashicorp/go-version v1.0.0 // indirect
 	github.com/hyperledger/fabric v2.1.1+incompatible
 	github.com/hyperledger/fabric-amcl v0.0.0-20200424173818-327c9e2cf77a // indirect
-	github.com/hyperledger/fabric-protos-go v0.0.0-20210528200356-82833ecdac31
+	github.com/hyperledger/fabric-protos-go v0.0.0-20210903093419-e9e1b9f969d8
 	github.com/miekg/pkcs11 v1.0.3
 	github.com/mitchellh/mapstructure v1.4.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -22,6 +22,6 @@ require (
 	github.com/sykesm/zap-logfmt v0.0.4 // indirect
 	go.uber.org/zap v1.16.0 // indirect
 	google.golang.org/grpc v1.40.0
-	google.golang.org/protobuf v1.26.0
+	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
