@@ -12,13 +12,13 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/stretchr/testify/require"
 )
 
 // AssertUnmarshall ensures that a protobuf is umarshalled without error
 func AssertUnmarshall(t *testing.T, b []byte, m proto.Message) {
-	if err := proto.Unmarshal(b, m); err != nil {
-		t.Fatal(err)
-	}
+	err := proto.Unmarshal(b, m)
+	require.NoError(t, err)
 }
 
 // AssertUnmarshallProposalPayload ensures that a ChaincodeProposalPayload protobuf is umarshalled without error

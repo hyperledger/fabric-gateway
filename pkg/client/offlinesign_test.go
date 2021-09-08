@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"bytes"
 	"context"
 	"testing"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 )
 
@@ -27,9 +27,7 @@ func TestOfflineSign(t *testing.T) {
 
 	newNetworkWithNoSign := func(t *testing.T, options ...ConnectOption) *Network {
 		gateway, err := Connect(TestCredentials.identity, options...)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		return gateway.GetNetwork("network")
 	}
@@ -63,13 +61,10 @@ func TestOfflineSign(t *testing.T) {
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			proposal, err := contract.NewProposal("transaction")
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
-			if _, err := proposal.Evaluate(); nil == err {
-				t.Fatal("Expected signing error but got nil")
-			}
+			_, err = proposal.Evaluate()
+			require.Error(t, err)
 		})
 
 		t.Run("Uses off-line signature", func(t *testing.T) {
@@ -86,27 +81,18 @@ func TestOfflineSign(t *testing.T) {
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			proposalBytes, err := unsignedProposal.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, expected)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
-			if _, err := signedProposal.Evaluate(); err != nil {
-				t.Fatal(err)
-			}
+			_, err = signedProposal.Evaluate()
+			require.NoError(t, err)
 
-			if !bytes.Equal(actual, expected) {
-				t.Fatalf("Expected %s, got %s", expected, actual)
-			}
+			require.EqualValues(t, expected, actual)
 		})
 
 		t.Run("Uses off-line signature with endorsing orgs", func(t *testing.T) {
@@ -124,27 +110,18 @@ func TestOfflineSign(t *testing.T) {
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction", WithEndorsingOrganizations("MY_ORG"))
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			proposalBytes, err := unsignedProposal.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("SIGNATURE"))
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
-			if _, err := signedProposal.Evaluate(); err != nil {
-				t.Fatal(err)
-			}
+			_, err = signedProposal.Evaluate()
+			require.NoError(t, err)
 
-			if len(actual) != 1 || expected[0] != actual[0] {
-				t.Fatalf("Expected %v, got %v", expected, actual)
-			}
+			require.EqualValues(t, expected, actual)
 		})
 	})
 
@@ -158,13 +135,10 @@ func TestOfflineSign(t *testing.T) {
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			proposal, err := contract.NewProposal("transaction")
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
-			if _, err := proposal.Endorse(); nil == err {
-				t.Fatal("Expected signing error but got nil")
-			}
+			_, err = proposal.Endorse()
+			require.Error(t, err)
 		})
 
 		t.Run("Uses off-line signature", func(t *testing.T) {
@@ -181,27 +155,18 @@ func TestOfflineSign(t *testing.T) {
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			proposalBytes, err := unsignedProposal.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, expected)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
-			if _, err := signedProposal.Endorse(); err != nil {
-				t.Fatal(err)
-			}
+			_, err = signedProposal.Endorse()
+			require.NoError(t, err)
 
-			if !bytes.Equal(actual, expected) {
-				t.Fatalf("Expected %s, got %s", expected, actual)
-			}
+			require.EqualValues(t, expected, actual)
 		})
 
 		t.Run("Uses off-line signature with endorsing orgs", func(t *testing.T) {
@@ -219,27 +184,18 @@ func TestOfflineSign(t *testing.T) {
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction", WithEndorsingOrganizations("MY_ORG"))
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			proposalBytes, err := unsignedProposal.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("SIGNATURE"))
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
-			if _, err := signedProposal.Endorse(); err != nil {
-				t.Fatal(err)
-			}
+			_, err = signedProposal.Endorse()
+			require.NoError(t, err)
 
-			if len(actual) != 1 && expected[0] != actual[0] {
-				t.Fatalf("Expected %v, got %v", expected, actual)
-			}
+			require.EqualValues(t, expected, actual)
 		})
 	})
 
@@ -256,28 +212,19 @@ func TestOfflineSign(t *testing.T) {
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			proposalBytes, err := unsignedProposal.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			transaction, err := signedProposal.Endorse()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
-			if _, err := transaction.Submit(); nil == err {
-				t.Fatal("Expected signing error but got nil")
-			}
+			_, err = transaction.Submit()
+			require.Error(t, err)
 		})
 
 		t.Run("Uses off-line signature", func(t *testing.T) {
@@ -296,42 +243,27 @@ func TestOfflineSign(t *testing.T) {
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			proposalBytes, err := unsignedProposal.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, expected)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			unsignedTransaction, err := signedProposal.Endorse()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			transactionBytes, err := unsignedTransaction.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedTransaction, err := contract.NewSignedTransaction(transactionBytes, expected)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
-			if _, err := signedTransaction.Submit(); err != nil {
-				t.Fatal(err)
-			}
+			_, err = signedTransaction.Submit()
+			require.NoError(t, err)
 
-			if !bytes.Equal(actual, expected) {
-				t.Fatalf("Expected %s, got %s", expected, actual)
-			}
+			require.EqualValues(t, expected, actual)
 		})
 	})
 
@@ -351,43 +283,28 @@ func TestOfflineSign(t *testing.T) {
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			proposalBytes, err := unsignedProposal.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			unsignedTransaction, err := signedProposal.Endorse()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			transactionBytes, err := unsignedTransaction.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedTransaction, err := contract.NewSignedTransaction(transactionBytes, []byte("signature"))
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			commit, err := signedTransaction.Submit()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
-			if _, err := commit.Status(); nil == err {
-				t.Fatal("Expected signing error but got nil")
-			}
+			_, err = commit.Status()
+			require.Error(t, err)
 		})
 
 		t.Run("Uses off-line signature", func(t *testing.T) {
@@ -410,57 +327,36 @@ func TestOfflineSign(t *testing.T) {
 			contract := network.GetContract("chaincode")
 
 			unsignedProposal, err := contract.NewProposal("transaction")
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			proposalBytes, err := unsignedProposal.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, expected)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			unsignedTransaction, err := signedProposal.Endorse()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			transactionBytes, err := unsignedTransaction.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedTransaction, err := contract.NewSignedTransaction(transactionBytes, expected)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			unsignedCommit, err := signedTransaction.Submit()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			commitBytes, err := unsignedCommit.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedCommit, err := network.NewSignedCommit(commitBytes, expected)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
-			if _, err := signedCommit.Status(); err != nil {
-				t.Fatal(err)
-			}
+			_, err = signedCommit.Status()
+			require.NoError(t, err)
 
-			if !bytes.Equal(actual, expected) {
-				t.Fatalf("Expected %s, got %s", expected, actual)
-			}
+			require.EqualValues(t, expected, actual)
 		})
 	})
 
@@ -470,26 +366,18 @@ func TestOfflineSign(t *testing.T) {
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			proposalBytes, err := unsignedProposal.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			expected := unsignedProposal.Digest()
 			actual := signedProposal.Digest()
 
-			if !bytes.Equal(actual, expected) {
-				t.Fatalf("Expected %s, got %s", expected, actual)
-			}
+			require.EqualValues(t, expected, actual)
 		})
 
 		t.Run("Proposal keeps same transaction ID", func(t *testing.T) {
@@ -497,26 +385,18 @@ func TestOfflineSign(t *testing.T) {
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			proposalBytes, err := unsignedProposal.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			expected := unsignedProposal.TransactionID()
 			actual := signedProposal.TransactionID()
 
-			if actual != expected {
-				t.Fatalf("Expected %s, got %s", expected, actual)
-			}
+			require.EqualValues(t, expected, actual)
 		})
 
 		t.Run("Transaction keeps same digest", func(t *testing.T) {
@@ -528,41 +408,27 @@ func TestOfflineSign(t *testing.T) {
 			contract := newContractWithNoSign(t, WithClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			proposalBytes, err := unsignedProposal.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			unsignedTransaction, err := signedProposal.Endorse()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			transactionBytes, err := unsignedTransaction.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedTransaction, err := contract.NewSignedTransaction(transactionBytes, []byte("signature"))
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			expected := unsignedTransaction.Digest()
 			actual := signedTransaction.Digest()
 
-			if !bytes.Equal(actual, expected) {
-				t.Fatalf("Expected %s, got %s", expected, actual)
-			}
+			require.EqualValues(t, expected, actual)
 		})
 
 		t.Run("Commit keeps same digest", func(t *testing.T) {
@@ -578,56 +444,36 @@ func TestOfflineSign(t *testing.T) {
 			contract := network.GetContract("chaincode")
 
 			unsignedProposal, err := contract.NewProposal("transaction")
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			proposalBytes, err := unsignedProposal.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			unsignedTransaction, err := signedProposal.Endorse()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			transactionBytes, err := unsignedTransaction.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedTransaction, err := contract.NewSignedTransaction(transactionBytes, []byte("signature"))
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			unsignedCommit, err := signedTransaction.Submit()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			commitBytes, err := unsignedCommit.Bytes()
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			signedCommit, err := network.NewSignedCommit(commitBytes, []byte("signature"))
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			expected := unsignedCommit.Digest()
 			actual := signedCommit.Digest()
 
-			if !bytes.Equal(actual, expected) {
-				t.Fatalf("Expected %s, got %s", expected, actual)
-			}
+			require.EqualValues(t, expected, actual)
 		})
 	})
 }

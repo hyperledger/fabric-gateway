@@ -10,29 +10,22 @@ import (
 	"testing"
 
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIdentity(t *testing.T) {
 	const mspID = "mspID"
 
 	privateKey, err := test.NewECDSAPrivateKey()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	certificate, err := test.NewCertificate(privateKey)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	t.Run("NewX509Identity", func(t *testing.T) {
 		identity, err := NewX509Identity(mspID, certificate)
-		if err != nil {
-			t.Fatalf("Failed to create identity: %v", err)
-		}
+		require.NoError(t, err)
 
-		if identity.MspID() != mspID {
-			t.Fatalf("Expected %s, got %s", mspID, identity.MspID())
-		}
+		require.Equal(t, mspID, identity.MspID())
 	})
 }

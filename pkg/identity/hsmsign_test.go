@@ -17,7 +17,6 @@ import (
 )
 
 func findSoftHSMLibrary(t *testing.T) string {
-
 	libraryLocations := []string{
 		"/usr/lib/softhsm/libsofthsm2.so",
 		"/usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so",
@@ -26,19 +25,16 @@ func findSoftHSMLibrary(t *testing.T) string {
 	}
 
 	for _, libraryLocation := range libraryLocations {
-		if _, err := os.Stat(libraryLocation); errors.Is(err, os.ErrNotExist) {
-			// file does not exist
-		} else {
+		if _, err := os.Stat(libraryLocation); !errors.Is(err, os.ErrNotExist) {
 			return libraryLocation
 		}
 	}
 
-	t.Fatal("No SoftHSM library can be found. Tests cannot be run.")
+	require.FailNow(t, "No SoftHSM library can be found. Tests cannot be run.")
 	return ""
 }
 
 func TestNewHSMSignerFactory(t *testing.T) {
-
 	t.Run("No library provided", func(t *testing.T) {
 		_, err := NewHSMSignerFactory("")
 		require.EqualError(t, err, "library path not provided", "Expected Error message about no library provided")
@@ -59,7 +55,6 @@ func TestNewHSMSignerFactory(t *testing.T) {
 }
 
 func TestNewHSMSigner(t *testing.T) {
-
 	// SoftHSM must be installed for this to pass
 	hsmSignerFactory, err := NewHSMSignerFactory(findSoftHSMLibrary(t))
 	require.NoError(t, err)
@@ -119,7 +114,7 @@ func TestNewHSMSigner(t *testing.T) {
 		_, _, err := hsmSignerFactory.NewHSMSigner(hsmSignerOptions)
 
 		require.Error(t, err)
-		require.Containsf(t, err.Error(), "CKR_PIN_INCORRECT", "Expected Error message invalid Pin")
+		require.Contains(t, err.Error(), "CKR_PIN_INCORRECT", "Expected Error message invalid Pin")
 	})
 
 	t.Run("Object not found", func(t *testing.T) {

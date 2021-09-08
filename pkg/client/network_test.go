@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
 )
 
 func AssertNewTestNetwork(t *testing.T, networkName string, options ...ConnectOption) *Network {
@@ -25,15 +26,9 @@ func TestNetwork(t *testing.T) {
 
 		contract := network.GetContract(chaincodeID)
 
-		if nil == contract {
-			t.Fatal("Expected network, got nil")
-		}
-		if contract.ChaincodeID() != chaincodeID {
-			t.Fatalf("Expected a network with chaincode ID %s, got %s", chaincodeID, contract.ChaincodeID())
-		}
-		if len(contract.Name()) > 0 {
-			t.Fatalf("Expected a network with empty contract name, got %s", contract.Name())
-		}
+		require.NotNil(t, contract)
+		require.Equal(t, chaincodeID, contract.ChaincodeID(), "chaincodeID")
+		require.Equal(t, "", contract.Name(), "name")
 	})
 
 	t.Run("GetContractWithName returns correctly named Contract", func(t *testing.T) {
@@ -44,14 +39,8 @@ func TestNetwork(t *testing.T) {
 
 		contract := network.GetContractWithName(chaincodeID, contractName)
 
-		if nil == contract {
-			t.Fatal("Expected network, got nil")
-		}
-		if contract.ChaincodeID() != chaincodeID {
-			t.Fatalf("Expected a network with chaincode ID %s, got %s", chaincodeID, contract.ChaincodeID())
-		}
-		if contract.Name() != contractName {
-			t.Fatalf("Expected a network with contract name %s, got %s", contractName, contract.Name())
-		}
+		require.NotNil(t, contract)
+		require.Equal(t, chaincodeID, contract.ChaincodeID(), "chaincodeID")
+		require.Equal(t, contractName, contract.Name(), "name")
 	})
 }
