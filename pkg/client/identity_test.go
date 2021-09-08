@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"bytes"
 	"context"
 	"testing"
 
@@ -19,33 +18,26 @@ import (
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/msp"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 )
 
 func TestIdentity(t *testing.T) {
 	privateKey, err := test.NewECDSAPrivateKey()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	certificate, err := test.NewCertificate(privateKey)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	id, err := identity.NewX509Identity("MSP_ID", certificate)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	serializedIdentity := &msp.SerializedIdentity{
 		Mspid:   id.MspID(),
 		IdBytes: id.Credentials(),
 	}
 	creator, err := proto.Marshal(serializedIdentity)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	t.Run("Evaluate uses client identity for proposals", func(t *testing.T) {
 		var actual []byte
@@ -64,13 +56,10 @@ func TestIdentity(t *testing.T) {
 
 		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithIdentity(id))
 
-		if _, err := contract.EvaluateTransaction("transaction"); err != nil {
-			t.Fatal(err)
-		}
+		_, err := contract.EvaluateTransaction("transaction")
+		require.NoError(t, err)
 
-		if !bytes.Equal(actual, creator) {
-			t.Fatalf("Expected identity: %v\nGot: %v", creator, actual)
-		}
+		require.EqualValues(t, creator, actual)
 	})
 
 	t.Run("Submit uses client identity for proposals", func(t *testing.T) {
@@ -98,12 +87,9 @@ func TestIdentity(t *testing.T) {
 
 		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithIdentity(id))
 
-		if _, err := contract.SubmitTransaction("transaction"); err != nil {
-			t.Fatal(err)
-		}
+		_, err := contract.SubmitTransaction("transaction")
+		require.NoError(t, err)
 
-		if !bytes.Equal(actual, creator) {
-			t.Fatalf("Expected identity: %v\nGot: %v", creator, actual)
-		}
+		require.EqualValues(t, creator, actual)
 	})
 }

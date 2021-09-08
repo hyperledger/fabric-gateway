@@ -7,9 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"bytes"
 	"context"
-	"reflect"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -17,6 +15,7 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -24,9 +23,7 @@ import (
 
 func NewStatusError(t *testing.T, code codes.Code, message string, details ...proto.Message) error {
 	s, err := status.New(code, message).WithDetails(details...)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	return s.Err()
 }
@@ -50,9 +47,7 @@ func TestEvaluateTransaction(t *testing.T) {
 
 		_, err := contract.EvaluateTransaction("transaction")
 
-		if err != expected {
-			t.Fatalf("Expected unmodified invocation error, got: %v", err)
-		}
+		require.Equal(t, expected, err)
 	})
 
 	t.Run("Returns result", func(t *testing.T) {
@@ -64,13 +59,9 @@ func TestEvaluateTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		actual, err := contract.EvaluateTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if !bytes.Equal(actual, expected) {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.EqualValues(t, expected, actual)
 	})
 
 	t.Run("Includes channel name in proposal", func(t *testing.T) {
@@ -86,14 +77,10 @@ func TestEvaluateTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.EvaluateTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		expected := contract.channelName
-		if actual != expected {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Includes chaincode ID in proposal", func(t *testing.T) {
@@ -109,14 +96,10 @@ func TestEvaluateTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.EvaluateTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		expected := contract.chaincodeID
-		if actual != expected {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Includes transaction name in proposal for default smart contract", func(t *testing.T) {
@@ -133,14 +116,10 @@ func TestEvaluateTransaction(t *testing.T) {
 
 		expected := "TRANSACTION_NAME"
 		_, err := contract.EvaluateTransaction(expected)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		actual := string(args[0])
-		if actual != expected {
-			t.Fatalf("Expected Args[0] to be %s, got Args: %s", expected, args)
-		}
+		require.Equal(t, expected, actual, "got Args: %s", args)
 	})
 
 	t.Run("Includes transaction name in proposal for named smart contract", func(t *testing.T) {
@@ -156,15 +135,11 @@ func TestEvaluateTransaction(t *testing.T) {
 		contract := AssertNewTestContractWithName(t, "chaincode", "CONTRACT_NAME", WithClient(mockClient))
 
 		_, err := contract.EvaluateTransaction("TRANSACTION_NAME")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		actual := string(args[0])
 		expected := "CONTRACT_NAME:TRANSACTION_NAME"
-		if actual != expected {
-			t.Fatalf("Expected Args[0] to be %s, got Args: %s", expected, args)
-		}
+		require.Equal(t, expected, actual, "got Args: %s", args)
 	})
 
 	t.Run("Includes arguments in proposal", func(t *testing.T) {
@@ -181,14 +156,10 @@ func TestEvaluateTransaction(t *testing.T) {
 
 		expected := []string{"one", "two", "three"}
 		_, err := contract.EvaluateTransaction("transaction", expected...)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		actual := bytesAsStrings(args[1:])
-		if !reflect.DeepEqual(actual, expected) {
-			t.Fatalf("Expected Args[1:] to be %s, got Args: %s", expected, args)
-		}
+		require.EqualValues(t, expected, actual, "got Args: %s", args)
 	})
 
 	t.Run("Includes channel name in proposed transaction", func(t *testing.T) {
@@ -204,14 +175,10 @@ func TestEvaluateTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.EvaluateTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		expected := contract.channelName
-		if actual != expected {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Includes transaction ID in proposed transaction", func(t *testing.T) {
@@ -229,13 +196,9 @@ func TestEvaluateTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.EvaluateTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if actual != expected {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Uses sign", func(t *testing.T) {
@@ -255,13 +218,9 @@ func TestEvaluateTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSign(sign))
 
 		_, err := contract.EvaluateTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if !bytes.Equal(actual, expected) {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.EqualValues(t, expected, actual)
 	})
 
 	t.Run("Uses hash", func(t *testing.T) {
@@ -281,13 +240,9 @@ func TestEvaluateTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSign(sign), WithHash(hash))
 
 		_, err := contract.EvaluateTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if !bytes.Equal(actual, expected) {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.EqualValues(t, expected, actual)
 	})
 
 	t.Run("Sends private data with evaluate", func(t *testing.T) {
@@ -311,16 +266,9 @@ func TestEvaluateTransaction(t *testing.T) {
 		}
 
 		_, err := contract.Evaluate("transaction", WithTransient(privateData), WithEndorsingOrganizations("MY_ORG"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if len(actualOrgs) != 1 && expectedOrgs[0] != actualOrgs[0] {
-			t.Fatalf("Expected %v, got %v", expectedOrgs, actualOrgs)
-		}
-
-		if !bytes.Equal(actualPrice, expectedPrice) {
-			t.Fatalf("Expected %s, got %s", expectedPrice, actualPrice)
-		}
+		require.EqualValues(t, expectedOrgs, actualOrgs)
+		require.EqualValues(t, expectedPrice, actualPrice)
 	})
 }

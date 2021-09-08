@@ -12,109 +12,76 @@ import (
 	"crypto/rand"
 	"math/big"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
-func TestToLowSByKey(t *testing.T) {
+func TestECDSAUtils(t *testing.T) {
+	type TestDefinition struct {
+		Description string
+		toLowS      func(*big.Int) (*big.Int, error)
+	}
+
 	lowLevelKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
-	s, err := toLowSByKey(&lowLevelKey.PublicKey, big.NewInt(0))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if s.Cmp(big.NewInt(0)) != 0 {
-		t.Fatalf("Unexpected change of S value")
-	}
-
-	s = new(big.Int)
-	s.Set(getCurveHalfOrdersAt(elliptic.P256()))
-	compareS := new(big.Int)
-	compareS.Set(getCurveHalfOrdersAt(elliptic.P256()))
-
-	s, err = toLowSByKey(&lowLevelKey.PublicKey, s)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if s.Cmp(compareS) != 0 {
-		t.Fatalf("Unexpected change of S value")
-	}
-
-	s = s.Add(s, big.NewInt(100))
-	compareS = compareS.Add(s, big.NewInt(100))
-
-	s, err = toLowSByKey(&lowLevelKey.PublicKey, s)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if s.Cmp(compareS) != -1 {
-		t.Fatalf("S value has not been reduced")
-	}
-
-	compareS = big.NewInt(0)
-	compareS = compareS.Set(s)
-
-	s, err = toLowSByKey(&lowLevelKey.PublicKey, s)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if s.Cmp(compareS) != 0 {
-		t.Fatalf("Unexpected change of S value")
-	}
-}
-
-func TestToLowSByCurve(t *testing.T) {
 	curve := elliptic.P256()
 
-	s, err := toLowSByCurve(curve, big.NewInt(0))
-	if err != nil {
-		t.Fatal(err)
+	tests := []*TestDefinition{
+		{
+			Description: "toLowSByKey",
+			toLowS: func(s *big.Int) (*big.Int, error) {
+				return toLowSByKey(&lowLevelKey.PublicKey, s)
+			},
+		},
+		{
+			Description: "toLowByCurve",
+			toLowS: func(s *big.Int) (*big.Int, error) {
+				return toLowSByCurve(curve, s)
+			},
+		},
 	}
 
-	if s.Cmp(big.NewInt(0)) != 0 {
-		t.Fatalf("Unexpected change of S value")
-	}
+	for _, def := range tests {
+		t.Run(def.Description, func(t *testing.T) {
+			t.Run("zero S is not changed", func(t *testing.T) {
+				s := big.NewInt(0)
 
-	s = new(big.Int)
-	s.Set(getCurveHalfOrdersAt(elliptic.P256()))
-	compareS := new(big.Int)
-	compareS.Set(getCurveHalfOrdersAt(elliptic.P256()))
+				s, err := def.toLowS(s)
+				require.NoError(t, err)
 
-	s, err = toLowSByCurve(curve, s)
-	if err != nil {
-		t.Fatal(err)
-	}
+				require.Equal(t, 0, big.NewInt(0).Cmp(s))
+			})
 
-	if s.Cmp(compareS) != 0 {
-		t.Fatalf("Unexpected change of S value")
-	}
+			t.Run("smaller than half-order S is not changed", func(t *testing.T) {
+				s := big.NewInt(1)
+				s.Sub(getCurveHalfOrdersAt(curve), s)
+				initialS := big.NewInt(0).Set(s)
 
-	s = s.Add(s, big.NewInt(100))
-	compareS = compareS.Add(s, big.NewInt(100))
+				s, err := def.toLowS(s)
+				require.NoError(t, err)
 
-	s, err = toLowSByCurve(curve, s)
-	if err != nil {
-		t.Fatal(err)
-	}
+				require.Equal(t, 0, initialS.Cmp(s))
+			})
 
-	if s.Cmp(compareS) != -1 {
-		t.Fatalf("S value has not been reduced")
-	}
+			t.Run("half-order S is not changed", func(t *testing.T) {
+				s := getCurveHalfOrdersAt(curve)
 
-	compareS = big.NewInt(0)
-	compareS = compareS.Set(s)
+				s, err := def.toLowS(s)
+				require.NoError(t, err)
 
-	s, err = toLowSByCurve(curve, s)
-	if err != nil {
-		t.Fatal(err)
-	}
+				require.Equal(t, 0, getCurveHalfOrdersAt(curve).Cmp(s))
+			})
 
-	if s.Cmp(compareS) != 0 {
-		t.Fatalf("Unexpected change of S value")
+			t.Run("larger than half-order S is reduced to <= half-order", func(t *testing.T) {
+				s := big.NewInt(1)
+				s.Add(getCurveHalfOrdersAt(curve), s)
+
+				s, err := def.toLowS(s)
+				require.NoError(t, err)
+
+				require.NotEqual(t, -1, getCurveHalfOrdersAt(curve).Cmp(s))
+			})
+		})
 	}
 }

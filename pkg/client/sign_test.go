@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"bytes"
 	"context"
 	"testing"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 )
 
@@ -52,13 +52,10 @@ func TestSign(t *testing.T) {
 
 		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
 
-		if _, err := contract.EvaluateTransaction("transaction"); err != nil {
-			t.Fatal(err)
-		}
+		_, err := contract.EvaluateTransaction("transaction")
+		require.NoError(t, err)
 
-		if !bytes.Equal(actual, expected) {
-			t.Fatalf("Expected signature: %v\nGot: %v", expected, actual)
-		}
+		require.EqualValues(t, expected, actual)
 	})
 
 	t.Run("Submit signs proposal using client signing implementation", func(t *testing.T) {
@@ -81,13 +78,10 @@ func TestSign(t *testing.T) {
 
 		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
 
-		if _, err := contract.SubmitTransaction("transaction"); err != nil {
-			t.Fatal(err)
-		}
+		_, err := contract.SubmitTransaction("transaction")
+		require.NoError(t, err)
 
-		if !bytes.Equal(actual, expected) {
-			t.Fatalf("Expected signature: %v\nGot: %v", expected, actual)
-		}
+		require.EqualValues(t, expected, actual)
 	})
 
 	t.Run("Submit signs transaction using client signing implementation", func(t *testing.T) {
@@ -110,13 +104,10 @@ func TestSign(t *testing.T) {
 
 		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
 
-		if _, err := contract.SubmitTransaction("transaction"); err != nil {
-			t.Fatal(err)
-		}
+		_, err := contract.SubmitTransaction("transaction")
+		require.NoError(t, err)
 
-		if !bytes.Equal(actual, expected) {
-			t.Fatalf("Expected signature: %v\nGot: %v", expected, actual)
-		}
+		require.EqualValues(t, expected, actual)
 	})
 
 	t.Run("Default error implementation is used if no signing implementation supplied", func(t *testing.T) {
@@ -126,14 +117,11 @@ func TestSign(t *testing.T) {
 			AnyTimes()
 
 		gateway, err := Connect(TestCredentials.identity, WithClient(mockClient))
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		contract := gateway.GetNetwork("network").GetContract("chaincode")
 
-		if _, err := contract.EvaluateTransaction("transaction"); nil == err {
-			t.Fatal("Expected signing error but got nil")
-		}
+		_, err = contract.EvaluateTransaction("transaction")
+		require.Error(t, err)
 	})
 }

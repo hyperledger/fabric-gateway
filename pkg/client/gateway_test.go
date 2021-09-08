@@ -8,12 +8,12 @@ package client
 
 import (
 	"errors"
-	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	proto "github.com/hyperledger/fabric-protos-go/gateway"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 )
 
@@ -38,9 +38,7 @@ func WithIdentity(id identity.Identity) ConnectOption {
 func AssertNewTestGateway(t *testing.T, options ...ConnectOption) *Gateway {
 	options = append([]ConnectOption{WithSign(TestCredentials.sign)}, options...)
 	gateway, err := Connect(TestCredentials.identity, options...)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	return gateway
 }
@@ -50,33 +48,26 @@ func TestGateway(t *testing.T) {
 	sign := TestCredentials.sign
 
 	t.Run("Connect Gateway with no endpoint returns error", func(t *testing.T) {
-		if _, err := Connect(id, WithSign(sign)); nil == err {
-			t.Fatal("Expected error, got nil")
-		}
+		_, err := Connect(id, WithSign(sign))
+
+		require.Error(t, err)
 	})
 
 	t.Run("Connect Gateway using existing gRPC client connection", func(t *testing.T) {
 		var clientConnection *grpc.ClientConn
 		gateway, err := Connect(id, WithSign(sign), WithClientConnection(clientConnection))
-		if err != nil {
-			t.Fatal(err)
-		}
-		if nil == gateway {
-			t.Fatal("Expected gateway, got nil")
-		}
+
+		require.NoError(t, err)
+		require.NotNil(t, gateway)
 	})
 
 	t.Run("Close Gateway using existing gRPC client connection does not close connection", func(t *testing.T) {
 		var clientConnection *grpc.ClientConn
 		gateway, err := Connect(id, WithSign(sign), WithClientConnection(clientConnection))
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		err = gateway.Close() // This would panic if clientConnection.Close() was called
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	})
 
 	t.Run("Connect Gateway with failing option returns error", func(t *testing.T) {
@@ -85,9 +76,8 @@ func TestGateway(t *testing.T) {
 			return expectedErr
 		}
 		_, actualErr := Connect(id, badOption)
-		if !strings.Contains(actualErr.Error(), expectedErr.Error()) {
-			t.Fatalf("Expected error message to contain %s, got %v", expectedErr.Error(), actualErr)
-		}
+
+		require.ErrorIs(t, actualErr, expectedErr)
 	})
 
 	t.Run("GetNetwork returns correctly named Network", func(t *testing.T) {
@@ -97,12 +87,8 @@ func TestGateway(t *testing.T) {
 
 		network := gateway.GetNetwork(networkName)
 
-		if nil == network {
-			t.Fatal("Expected network, got nil")
-		}
-		if network.name != networkName {
-			t.Fatalf("Expected a network named %s, got %s", networkName, network.name)
-		}
+		require.NotNil(t, network)
+		require.Equal(t, networkName, network.name)
 	})
 
 	t.Run("Identity returns connecting identity", func(t *testing.T) {
@@ -111,8 +97,6 @@ func TestGateway(t *testing.T) {
 
 		result := gateway.Identity()
 
-		if result != id {
-			t.Fatalf("Expected identity %v, got %v", id, result)
-		}
+		require.Equal(t, id, result)
 	})
 }

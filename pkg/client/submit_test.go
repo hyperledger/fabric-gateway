@@ -7,11 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"reflect"
-	"strings"
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
@@ -19,6 +16,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
@@ -50,9 +48,7 @@ func TestSubmitTransaction(t *testing.T) {
 
 		_, err := contract.SubmitTransaction("transaction")
 
-		if err != expected {
-			t.Fatalf("Expected unmodified invocation error, got: %v", err)
-		}
+		require.Equal(t, expected, err)
 	})
 
 	t.Run("Returns submit error without wrapping to allow gRPC status to be interrogated", func(t *testing.T) {
@@ -67,9 +63,7 @@ func TestSubmitTransaction(t *testing.T) {
 
 		_, err := contract.SubmitTransaction("transaction")
 
-		if err != expected {
-			t.Fatalf("Expected unmodified invocation error, got: %v", err)
-		}
+		require.Equal(t, expected, err)
 	})
 
 	t.Run("Returns commit error without wrapping to allow gRPC status to be interrogated", func(t *testing.T) {
@@ -86,9 +80,7 @@ func TestSubmitTransaction(t *testing.T) {
 
 		_, err := contract.SubmitTransaction("transaction")
 
-		if err != expected {
-			t.Fatalf("Expected unmodified invocation error, got: %v", err)
-		}
+		require.Equal(t, expected, err)
 	})
 
 	t.Run("Returns result for committed transaction", func(t *testing.T) {
@@ -104,13 +96,9 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		actual, err := contract.SubmitTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if !bytes.Equal(actual, expected) {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Returns error with status code for commit failure", func(t *testing.T) {
@@ -127,9 +115,8 @@ func TestSubmitTransaction(t *testing.T) {
 
 		_, err := contract.SubmitTransaction("transaction")
 
-		if nil == err || !strings.Contains(err.Error(), expectedError) {
-			t.Fatalf("Expected error containing %s, got %v", expectedError, err)
-		}
+		require.Error(t, err)
+		require.Contains(t, err.Error(), expectedError)
 	})
 
 	t.Run("Returns error with details on communication failure getting transaction commit status", func(t *testing.T) {
@@ -146,9 +133,8 @@ func TestSubmitTransaction(t *testing.T) {
 
 		_, err := contract.SubmitTransaction("transaction")
 
-		if nil == err || !strings.Contains(err.Error(), expectedError) {
-			t.Fatalf("Expected error containing %s, got %v", expectedError, err)
-		}
+		require.Error(t, err)
+		require.Contains(t, err.Error(), expectedError)
 	})
 
 	t.Run("Includes channel name in proposal", func(t *testing.T) {
@@ -168,14 +154,10 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		expected := contract.channelName
-		if actual != expected {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Includes chaincode ID in proposal", func(t *testing.T) {
@@ -195,14 +177,10 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		expected := contract.chaincodeID
-		if actual != expected {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Includes transaction name in proposal for default contract", func(t *testing.T) {
@@ -223,14 +201,10 @@ func TestSubmitTransaction(t *testing.T) {
 
 		expected := "TRANSACTION_NAME"
 		_, err := contract.SubmitTransaction(expected)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		actual := string(args[0])
-		if actual != expected {
-			t.Fatalf("Expected Args[0] to be %s, got Args: %s", expected, args)
-		}
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Includes transaction name in proposal for named contract", func(t *testing.T) {
@@ -250,15 +224,11 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContractWithName(t, "chaincode", "CONTRACT_NAME", WithClient(mockClient))
 
 		_, err := contract.SubmitTransaction("TRANSACTION_NAME")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		actual := string(args[0])
 		expected := "CONTRACT_NAME:TRANSACTION_NAME"
-		if actual != expected {
-			t.Fatalf("Expected Args[0] to be %s, got Args: %s", expected, args)
-		}
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Includes arguments in proposal", func(t *testing.T) {
@@ -279,14 +249,10 @@ func TestSubmitTransaction(t *testing.T) {
 
 		expected := []string{"one", "two", "three"}
 		_, err := contract.SubmitTransaction("transaction", expected...)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		actual := bytesAsStrings(args[1:])
-		if !reflect.DeepEqual(actual, expected) {
-			t.Fatalf("Expected Args[1:] to be %s, got Args: %s", expected, args)
-		}
+		require.EqualValues(t, expected, actual)
 	})
 
 	t.Run("Includes channel name in proposed transaction", func(t *testing.T) {
@@ -306,14 +272,10 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		expected := contract.channelName
-		if actual != expected {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Includes transaction ID in proposed transaction", func(t *testing.T) {
@@ -335,13 +297,9 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if actual != expected {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Includes channel name in commit status request", func(t *testing.T) {
@@ -363,14 +321,10 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		expected := contract.channelName
-		if actual != expected {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Includes transaction ID in commit status request", func(t *testing.T) {
@@ -396,13 +350,9 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if actual != expected {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Uses signer for endorse", func(t *testing.T) {
@@ -426,13 +376,9 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSign(sign))
 
 		_, err := contract.SubmitTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if !bytes.Equal(actual, expected) {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.EqualValues(t, expected, actual)
 	})
 
 	t.Run("Uses signer for submit", func(t *testing.T) {
@@ -456,13 +402,9 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSign(sign))
 
 		_, err := contract.SubmitTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if !bytes.Equal(actual, expected) {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.EqualValues(t, expected, actual)
 	})
 
 	t.Run("Sends private data with submit", func(t *testing.T) {
@@ -491,17 +433,10 @@ func TestSubmitTransaction(t *testing.T) {
 		}
 
 		_, err := contract.Submit("transaction", WithTransient(privateData), WithEndorsingOrganizations("MY_ORG"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if len(actualOrgs) != 1 && expectedOrgs[0] != actualOrgs[0] {
-			t.Fatalf("Expected %v, got %v", expectedOrgs, actualOrgs)
-		}
-
-		if !bytes.Equal(actualPrice, expectedPrice) {
-			t.Fatalf("Expected %s, got %s", expectedPrice, actualPrice)
-		}
+		require.EqualValues(t, expectedOrgs, actualOrgs)
+		require.EqualValues(t, expectedPrice, actualPrice)
 	})
 
 	t.Run("Uses signer for commit status", func(t *testing.T) {
@@ -525,24 +460,20 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSign(sign))
 
 		_, err := contract.SubmitTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if !bytes.Equal(actual, expected) {
-			t.Fatalf("Expected %s, got %s", expected, actual)
-		}
+		require.EqualValues(t, expected, actual)
 	})
 
 	t.Run("Uses hash", func(t *testing.T) {
 		var actual [][]byte
-		expected := []byte("MY_DIGEST")
+		digest := []byte("MY_DIGEST")
 		sign := func(digest []byte) ([]byte, error) {
 			actual = append(actual, digest)
-			return expected, nil
+			return digest, nil
 		}
 		hash := func(message []byte) []byte {
-			return expected
+			return digest
 		}
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
@@ -555,18 +486,10 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSign(sign), WithHash(hash))
 
 		_, err := contract.SubmitTransaction("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if len(actual) != 3 { // Endorse, Submit and CommitStatus
-			t.Fatalf("Expected 3 signatures, got %v", len(actual))
-		}
-		for i, digest := range actual {
-			if !bytes.Equal(digest, expected) {
-				t.Fatalf("Expected %s for call %v, got %s", expected, i, digest)
-			}
-		}
+		expected := [][]byte{digest, digest, digest}
+		require.EqualValues(t, expected, actual)
 	})
 
 	t.Run("Commit returns transaction status", func(t *testing.T) {
@@ -581,18 +504,12 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, commit, err := contract.SubmitAsync("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		status, err := commit.Status()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if status != peer.TxValidationCode_MVCC_READ_CONFLICT {
-			t.Fatalf("Expected status %v, got %v", peer.TxValidationCode_MVCC_READ_CONFLICT, status)
-		}
+		require.Equal(t, peer.TxValidationCode_MVCC_READ_CONFLICT, status)
 	})
 
 	t.Run("Commit returns successful for successful transaction", func(t *testing.T) {
@@ -607,18 +524,12 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, commit, err := contract.SubmitAsync("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		success, err := commit.Successful()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if !success {
-			t.Fatal("Expected successful, got unsuccessful")
-		}
+		require.True(t, success)
 	})
 
 	t.Run("Commit returns unsuccessful for failed transaction", func(t *testing.T) {
@@ -633,18 +544,12 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, commit, err := contract.SubmitAsync("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		success, err := commit.Successful()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if success {
-			t.Fatal("Expected unsuccessful, got successful")
-		}
+		require.False(t, success)
 	})
 
 	t.Run("Commit returns block number", func(t *testing.T) {
@@ -660,17 +565,11 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, commit, err := contract.SubmitAsync("transaction")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		blockNumber, err := commit.BlockNumber()
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
-		if blockNumber != expectedBlockNumber {
-			t.Fatalf("Expected block number %v, got %v", expectedBlockNumber, blockNumber)
-		}
+		require.Equal(t, expectedBlockNumber, blockNumber)
 	})
 }

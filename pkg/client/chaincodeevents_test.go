@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"testing"
@@ -16,6 +15,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
@@ -43,16 +43,6 @@ func TestChaincodeEvents(t *testing.T) {
 		}
 	}
 
-	assertEqualEvents := func(t *testing.T, expected *ChaincodeEvent, actual *ChaincodeEvent) {
-		if expected.BlockNumber != actual.BlockNumber ||
-			expected.ChaincodeID != actual.ChaincodeID ||
-			expected.EventName != actual.EventName ||
-			expected.TransactionID != actual.TransactionID ||
-			!bytes.Equal(expected.Payload, actual.Payload) {
-			t.Fatalf("Events are not equal.\nExpected: %v\nGot: %v", expected, actual)
-		}
-	}
-
 	t.Run("Returns connect error without wrapping to allow gRPC status to be interrogated", func(t *testing.T) {
 		expected := NewStatusError(t, codes.Aborted, "CHAINCODE_EVENTS_ERROR")
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
@@ -65,9 +55,7 @@ func TestChaincodeEvents(t *testing.T) {
 		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
 		_, err := network.ChaincodeEvents(ctx, "CHAINCODE_ID")
 
-		if err != expected {
-			t.Fatalf("Expected unmodified invocation error, got: %v", err)
-		}
+		require.Equal(t, expected, err)
 	})
 
 	t.Run("Sends valid request", func(t *testing.T) {
@@ -79,9 +67,9 @@ func TestChaincodeEvents(t *testing.T) {
 		mockClient.EXPECT().ChaincodeEvents(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.SignedChaincodeEventsRequest, _ ...grpc.CallOption) {
 				request := &gateway.ChaincodeEventsRequest{}
-				if err := proto.Unmarshal(in.GetRequest(), request); err != nil {
-					t.Fatal(err)
-				}
+				err := proto.Unmarshal(in.GetRequest(), request)
+				require.NoError(t, err)
+
 				actual = &gateway.ChaincodeEventsRequest{
 					ChannelId:   request.ChannelId,
 					ChaincodeId: request.ChaincodeId,
@@ -99,17 +87,13 @@ func TestChaincodeEvents(t *testing.T) {
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
 		_, err := network.ChaincodeEvents(ctx, "CHAINCODE_ID")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		expected := &gateway.ChaincodeEventsRequest{
 			ChannelId:   "NETWORK",
 			ChaincodeId: "CHAINCODE_ID",
 		}
-		if !proto.Equal(expected, actual) {
-			t.Fatalf("Expected %v, got %v", expected, actual)
-		}
+		require.True(t, proto.Equal(expected, actual), "Expected %v, got %v", expected, actual)
 	})
 
 	t.Run("Closes event channel on receive error", func(t *testing.T) {
@@ -129,15 +113,11 @@ func TestChaincodeEvents(t *testing.T) {
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
 		receive, err := network.ChaincodeEvents(ctx, "CHAINCODE_ID")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		actual, ok := <-receive
 
-		if ok {
-			t.Fatalf("Expected event listening to be cancelled, got %v", actual)
-		}
+		require.False(t, ok, "Expected event listening to be cancelled, got %v", actual)
 	})
 
 	t.Run("Receives events", func(t *testing.T) {
@@ -193,13 +173,11 @@ func TestChaincodeEvents(t *testing.T) {
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
 		receive, err := network.ChaincodeEvents(ctx, "CHAINCODE_ID")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		for _, event := range expected {
 			actual := <-receive
-			assertEqualEvents(t, event, actual)
+			require.EqualValues(t, event, actual)
 		}
 	})
 }
