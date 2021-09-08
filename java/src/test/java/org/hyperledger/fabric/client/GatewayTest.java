@@ -88,7 +88,6 @@ public final class GatewayTest {
 
     @Test
     void close_does_not_shutdown_supplied_gRPC_channel() throws Exception {
-        channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
         gateway = Gateway.newInstance()
                 .identity(identity)
                 .signer(signer)
