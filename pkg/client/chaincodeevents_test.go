@@ -14,6 +14,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/gateway"
+	"github.com/hyperledger/fabric-protos-go/orderer"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -58,7 +59,95 @@ func TestChaincodeEvents(t *testing.T) {
 		require.Equal(t, expected, err)
 	})
 
-	t.Run("Sends valid request", func(t *testing.T) {
+	t.Run("Sends valid request with default start position", func(t *testing.T) {
+		controller := gomock.NewController(t)
+		mockClient := NewMockGatewayClient(controller)
+		mockEvents := NewMockGateway_ChaincodeEventsClient(controller)
+
+		var actual *gateway.ChaincodeEventsRequest
+		mockClient.EXPECT().ChaincodeEvents(gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, in *gateway.SignedChaincodeEventsRequest, _ ...grpc.CallOption) {
+				request := &gateway.ChaincodeEventsRequest{}
+				err := proto.Unmarshal(in.GetRequest(), request)
+				require.NoError(t, err)
+				actual = request
+			}).
+			Return(mockEvents, nil).
+			Times(1)
+
+		mockEvents.EXPECT().Recv().
+			Return(nil, errors.New("fake")).
+			AnyTimes()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
+		_, err := network.ChaincodeEvents(ctx, "CHAINCODE_ID")
+		require.NoError(t, err)
+
+		creator, err := network.signingID.Creator()
+		require.NoError(t, err)
+
+		expected := &gateway.ChaincodeEventsRequest{
+			ChannelId:   "NETWORK",
+			ChaincodeId: "CHAINCODE_ID",
+			Identity:    creator,
+			StartPosition: &orderer.SeekPosition{
+				Type: &orderer.SeekPosition_NextCommit{
+					NextCommit: &orderer.SeekNextCommit{},
+				},
+			},
+		}
+		require.True(t, proto.Equal(expected, actual), "Expected %v, got %v", expected, actual)
+	})
+
+	t.Run("Sends valid request with specified start block number", func(t *testing.T) {
+		controller := gomock.NewController(t)
+		mockClient := NewMockGatewayClient(controller)
+		mockEvents := NewMockGateway_ChaincodeEventsClient(controller)
+
+		var actual *gateway.ChaincodeEventsRequest
+		mockClient.EXPECT().ChaincodeEvents(gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, in *gateway.SignedChaincodeEventsRequest, _ ...grpc.CallOption) {
+				request := &gateway.ChaincodeEventsRequest{}
+				err := proto.Unmarshal(in.GetRequest(), request)
+				require.NoError(t, err)
+				actual = request
+			}).
+			Return(mockEvents, nil).
+			Times(1)
+
+		mockEvents.EXPECT().Recv().
+			Return(nil, errors.New("fake")).
+			AnyTimes()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
+		_, err := network.ChaincodeEvents(ctx, "CHAINCODE_ID", WithStartBlock(418))
+		require.NoError(t, err)
+
+		creator, err := network.signingID.Creator()
+		require.NoError(t, err)
+
+		expected := &gateway.ChaincodeEventsRequest{
+			ChannelId:   "NETWORK",
+			ChaincodeId: "CHAINCODE_ID",
+			Identity:    creator,
+			StartPosition: &orderer.SeekPosition{
+				Type: &orderer.SeekPosition_Specified{
+					Specified: &orderer.SeekSpecified{
+						Number: 418,
+					},
+				},
+			},
+		}
+		require.True(t, proto.Equal(expected, actual), "Expected %v, got %v", expected, actual)
+	})
+
+	t.Run("Defaults to next commit as start position", func(t *testing.T) {
 		controller := gomock.NewController(t)
 		mockClient := NewMockGatewayClient(controller)
 		mockEvents := NewMockGateway_ChaincodeEventsClient(controller)
