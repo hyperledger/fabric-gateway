@@ -9,7 +9,11 @@ import { Contract } from './contract';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { protos } from './protos/protos';
+import { Envelope } from './protos/common/common_pb';
+import { CommitStatusResponse, EndorseResponse, EvaluateResponse } from './protos/gateway/gateway_pb';
+import { Response } from './protos/peer/proposal_response_pb';
+import { TxValidationCode } from './protos/peer/transaction_pb';
+import { undefinedSignerMessage } from './signingidentity';
 
 describe('Offline sign', () => {
     const expectedResult = 'TX_RESULT';
@@ -22,22 +26,28 @@ describe('Offline sign', () => {
 
     beforeEach(() => {
         client = newMockGatewayClient();
-        client.evaluate.mockResolvedValue({
-            result: {
-                payload: Buffer.from(expectedResult),
-            },
-        });
-        client.endorse.mockResolvedValue({
-            prepared_transaction: {
-                payload: Buffer.from('PAYLOAD'),
-            },
-            result: {
-                payload: Buffer.from(expectedResult),
-            },
-        });
-        client.commitStatus.mockResolvedValue({
-            result: protos.TxValidationCode.VALID,
-        });
+
+        const txResult = new Response()
+        txResult.setPayload(Buffer.from(expectedResult));
+
+        const evaluateResult = new EvaluateResponse();
+        evaluateResult.setResult(txResult)
+
+        client.evaluate.mockResolvedValue(evaluateResult);
+
+        const preparedTx = new Envelope();
+        preparedTx.setPayload(Buffer.from('PAYLOAD'));
+
+        const endorseResult = new EndorseResponse();
+        endorseResult.setPreparedTransaction(preparedTx);
+        endorseResult.setResult(txResult)
+
+        client.endorse.mockResolvedValue(endorseResult);
+
+        const commitResult = new CommitStatusResponse();
+        commitResult.setResult(TxValidationCode.VALID);
+
+        client.commitStatus.mockResolvedValue(commitResult);
 
         identity = {
             mspId: 'MSP_ID',
@@ -57,7 +67,7 @@ describe('Offline sign', () => {
         it('throws with no signer and no explicit signing', async () => {
             const proposal = contract.newProposal('TRANSACTION_NAME');
 
-            await expect(proposal.evaluate()).rejects.toThrow();
+            await expect(proposal.evaluate()).rejects.toThrow(undefinedSignerMessage);
         });
     
         it('uses offline signature', async () => {
@@ -68,7 +78,7 @@ describe('Offline sign', () => {
             await signedProposal.evaluate();
     
             const evaluateRequest = client.evaluate.mock.calls[0][0];
-            const actual = Buffer.from(evaluateRequest.proposed_transaction?.signature ?? '').toString();
+            const actual = Buffer.from(evaluateRequest.getProposedTransaction()?.getSignature_asU8() || '').toString();
             expect(actual).toBe(expected.toString());
         });
 
@@ -79,7 +89,7 @@ describe('Offline sign', () => {
             const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), expected);
             await signedProposal.evaluate();
 
-            const actualOrgs = client.evaluate.mock.calls[0][0].target_organizations;
+            const actualOrgs = client.evaluate.mock.calls[0][0].getTargetOrganizationsList();
             expect(actualOrgs).toStrictEqual(['org3', 'org5']);
         });
     });
@@ -88,7 +98,7 @@ describe('Offline sign', () => {
         it('throws with no signer and no explicit signing', async () => {
             const proposal = contract.newProposal('TRANSACTION_NAME');
 
-            await expect(proposal.endorse()).rejects.toThrow();
+            await expect(proposal.endorse()).rejects.toThrow(undefinedSignerMessage);
         });
     
         it('uses offline signature', async () => {
@@ -99,7 +109,7 @@ describe('Offline sign', () => {
             await signedProposal.endorse();
     
             const endorseRequest = client.endorse.mock.calls[0][0];
-            const actual = Buffer.from(endorseRequest.proposed_transaction?.signature ?? '').toString();
+            const actual = Buffer.from(endorseRequest.getProposedTransaction()?.getSignature_asU8() || '').toString();
             expect(actual).toBe(expected.toString());
         });
 
@@ -110,7 +120,7 @@ describe('Offline sign', () => {
             const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), expected);
             await signedProposal.endorse();
 
-            const actualOrgs = client.endorse.mock.calls[0][0].endorsing_organizations;
+            const actualOrgs = client.endorse.mock.calls[0][0].getEndorsingOrganizationsList();
             expect(actualOrgs).toStrictEqual(['org3', 'org5']);
         });
     });
@@ -121,7 +131,7 @@ describe('Offline sign', () => {
             const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const transaction = await signedProposal.endorse();
 
-            await expect(transaction.submit()).rejects.toThrow();
+            await expect(transaction.submit()).rejects.toThrow(undefinedSignerMessage);
         });
     
         it('uses offline signature', async () => {
@@ -134,7 +144,7 @@ describe('Offline sign', () => {
             await signedTransaction.submit();
     
             const submitRequest = client.submit.mock.calls[0][0];
-            const actual = Buffer.from(submitRequest.prepared_transaction?.signature ?? '').toString();
+            const actual = Buffer.from(submitRequest.getPreparedTransaction()?.getSignature_asU8() || '').toString();
             expect(actual).toBe(expected.toString());
         });
     });
@@ -147,7 +157,7 @@ describe('Offline sign', () => {
             const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
             const commit = await signedTransaction.submit();
 
-            await expect(commit.getStatus()).rejects.toThrow();
+            await expect(commit.getStatus()).rejects.toThrow(undefinedSignerMessage);
         });
 
         it('uses offline signature', async () => {
@@ -162,7 +172,7 @@ describe('Offline sign', () => {
             await signedCommit.getStatus();
     
             const commitRequest = client.commitStatus.mock.calls[0][0];
-            const actual = Buffer.from(commitRequest.signature ?? '').toString();
+            const actual = Buffer.from(commitRequest.getSignature_asU8() ?? '').toString();
             expect(actual).toBe(expected.toString());
         });
     });

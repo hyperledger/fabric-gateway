@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Network } from './network';
+import * as grpc from '@grpc/grpc-js';
 import { connect, ConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
-import * as grpc from "@grpc/grpc-js";
+import { Network } from './network';
 
 describe ('Network', () => {
     let network: Network;

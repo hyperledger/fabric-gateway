@@ -8,10 +8,12 @@ import { Hash } from './hash/hash';
 import { sha256 } from './hash/hashes';
 import { Identity } from './identity/identity';
 import { Signer } from './identity/signer';
-import { msp } from './protos/protos';
+import { SerializedIdentity } from './protos/msp/identities_pb';
+
+export const undefinedSignerMessage = 'No signing implementation';
 
 const undefinedSigner: Signer = () => {
-    throw new Error('No signing implementation');
+    throw new Error(undefinedSignerMessage);
 }
 
 export interface SigningIdentityOptions {
@@ -32,10 +34,10 @@ export class SigningIdentity {
             credentials: Uint8Array.from(options.identity.credentials)
         };
 
-        this.#creator = msp.SerializedIdentity.encode({
-            mspid: options.identity.mspId,
-            id_bytes: options.identity.credentials
-        }).finish();
+        const serializedIdentity = new SerializedIdentity();
+        serializedIdentity.setMspid(options.identity.mspId);
+        serializedIdentity.setIdBytes(options.identity.credentials);
+        this.#creator = serializedIdentity.serializeBinary();
 
         this.#hash = options.hash || sha256;
         this.#sign = options.signer || undefinedSigner;

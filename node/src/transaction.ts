@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SubmittedTransaction, SubmittedTransactionImpl } from './submittedtransaction';
 import util from 'util';
 import { GatewayClient } from './client';
-import { common, gateway } from './protos/protos';
-import { SigningIdentity } from './signingidentity';
+import { Envelope } from './protos/common/common_pb';
+import { CommitStatusRequest, PreparedTransaction, SignedCommitStatusRequest, SubmitRequest } from './protos/gateway/gateway_pb';
 import { Signable } from './signable';
+import { SigningIdentity } from './signingidentity';
+import { SubmittedTransaction, SubmittedTransactionImpl } from './submittedtransaction';
 
 /**
  * Represents an endorsed transaction that can be submitted to the orderer for commit to the ledger.
@@ -36,15 +37,15 @@ export interface TransactionImplOptions {
     readonly client: GatewayClient;
     readonly signingIdentity: SigningIdentity;
     readonly channelName: string;
-    readonly preparedTransaction: gateway.IPreparedTransaction;
+    readonly preparedTransaction: PreparedTransaction;
 }
 
 export class TransactionImpl implements Transaction {
     readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
     readonly #channelName: string;
-    readonly #preparedTransaction: gateway.IPreparedTransaction;
-    readonly #envelope: common.IEnvelope;
+    readonly #preparedTransaction: PreparedTransaction;
+    readonly #envelope: Envelope;
 
     constructor(options: TransactionImplOptions) {
         this.#client = options.client;
@@ -52,7 +53,7 @@ export class TransactionImpl implements Transaction {
         this.#channelName = options.channelName;
         this.#preparedTransaction = options.preparedTransaction;
 
-        const envelope = options.preparedTransaction.envelope;
+        const envelope = options.preparedTransaction.getEnvelope();
         if (!envelope) {
             throw new Error(`Envelope not defined: ${util.inspect(options.preparedTransaction)}`);
         }
@@ -60,27 +61,21 @@ export class TransactionImpl implements Transaction {
     }
 
     getBytes(): Uint8Array {
-        return gateway.PreparedTransaction.encode(this.#preparedTransaction).finish();
+        return this.#preparedTransaction.serializeBinary();
     }
 
     getDigest(): Uint8Array {
-        const payload = this.#envelope.payload;
-        if (!payload) {
-            throw new Error(`Payload not defined: ${util.inspect(this.#envelope)}`);
-        }
+        const payload = this.#envelope.getPayload_asU8();
         return this.#signingIdentity.hash(payload);
     }
 
     getResult(): Uint8Array {
-        return this.#preparedTransaction?.result?.payload || new Uint8Array(0);
+        const result = this.#preparedTransaction.getResult();
+        return result?.getPayload_asU8() || new Uint8Array(0);
     }
 
     getTransactionId(): string {
-        const transactionId = this.#preparedTransaction.transaction_id;
-        if (typeof transactionId !== 'string') {
-            throw new Error(`Transaction ID not defined: ${util.inspect(this.#preparedTransaction)}`);
-        }
-        return transactionId;
+        return this.#preparedTransaction.getTransactionId();
     }
 
     async submit(): Promise<SubmittedTransaction> {
@@ -97,7 +92,7 @@ export class TransactionImpl implements Transaction {
     }
 
     setSignature(signature: Uint8Array): void {
-        this.#envelope.signature = signature;
+        this.#envelope.setSignature(signature);
     }
 
     private async sign(): Promise<void> {
@@ -110,29 +105,29 @@ export class TransactionImpl implements Transaction {
     }
 
     private isSigned(): boolean {
-        const signatureLength = this.#envelope.signature?.length ?? 0;
+        const signatureLength = this.#envelope.getSignature_asU8()?.length || 0;
         return signatureLength > 0;
     }
 
-    private newSubmitRequest(): gateway.ISubmitRequest {
-        return {
-            transaction_id: this.getTransactionId(),
-            channel_id: this.#channelName,
-            prepared_transaction: this.#envelope,
-        };
+    private newSubmitRequest(): SubmitRequest {
+        const result = new SubmitRequest();
+        result.setTransactionId(this.getTransactionId());
+        result.setChannelId(this.#channelName);
+        result.setPreparedTransaction(this.#envelope);
+        return result;
     }
 
-    private newSignedCommitStatusRequest(): gateway.ISignedCommitStatusRequest {
-        return {
-            request: gateway.CommitStatusRequest.encode(this.newCommitStatusRequest()).finish(),
-        }
+    private newSignedCommitStatusRequest(): SignedCommitStatusRequest {
+        const result = new SignedCommitStatusRequest();
+        result.setRequest(this.newCommitStatusRequest().serializeBinary());
+        return result;
     }
 
-    private newCommitStatusRequest(): gateway.ICommitStatusRequest {
-        return {
-            channel_id: this.#channelName,
-            transaction_id: this.getTransactionId(),
-            identity: this.#signingIdentity.getCreator(),
-        }
+    private newCommitStatusRequest(): CommitStatusRequest {
+        const result = new CommitStatusRequest();
+        result.setChannelId(this.#channelName);
+        result.setTransactionId(this.getTransactionId());
+        result.setIdentity(this.#signingIdentity.getCreator());
+        return result;
     }
 }

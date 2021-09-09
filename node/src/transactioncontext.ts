@@ -5,12 +5,12 @@
  */
 
 import crypto from 'crypto';
-import { common } from './protos/protos';
+import { SignatureHeader } from './protos/common/common_pb';
 import { SigningIdentity } from './signingidentity';
 
 export class TransactionContext {
     readonly #transactionId: string;
-    readonly #signatureHeader: common.ISignatureHeader;
+    readonly #signatureHeader: SignatureHeader;
 
     constructor(signingIdentity: SigningIdentity) {
         const nonce = crypto.randomBytes(24);
@@ -20,17 +20,16 @@ export class TransactionContext {
         const rawTransactionId = signingIdentity.hash(saltedCreator);
         this.#transactionId = Buffer.from(rawTransactionId).toString('hex');
 
-        this.#signatureHeader = {
-            creator,
-            nonce: nonce,
-        };
+        this.#signatureHeader = new SignatureHeader();
+        this.#signatureHeader.setCreator(creator);
+        this.#signatureHeader.setNonce(nonce);
     }
 
     getTransactionId(): string {
         return this.#transactionId;
     }
 
-    getSignatureHeader(): common.ISignatureHeader {
+    getSignatureHeader(): SignatureHeader {
         return this.#signatureHeader;
     }
 }

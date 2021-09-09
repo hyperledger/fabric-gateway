@@ -4,9 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
 import { GatewayClient } from './client';
 import { Proposal, ProposalImpl } from './proposal';
-import { common, protos } from './protos/protos';
+import { ChannelHeader, Header, HeaderType } from './protos/common/common_pb';
+import { ProposedTransaction } from './protos/gateway/gateway_pb';
+import { ChaincodeID, ChaincodeInput, ChaincodeInvocationSpec, ChaincodeSpec } from './protos/peer/chaincode_pb';
+import { ChaincodeHeaderExtension, ChaincodeProposalPayload, Proposal as ProposalProto, SignedProposal } from './protos/peer/proposal_pb';
 import { SigningIdentity } from './signingidentity';
 import { TransactionContext } from './transactioncontext';
 
@@ -55,70 +59,91 @@ export class ProposalBuilder {
             client: this.#options.client,
             signingIdentity: this.#options.signingIdentity,
             channelName: this.#options.channelName,
-            proposedTransaction: {
-                proposal: {
-                    proposal_bytes: protos.Proposal.encode(this.newProposal()).finish(),
-                },
-                transaction_id: this.#transactionContext.getTransactionId(),
-                endorsing_organizations: this.#options.options.endorsingOrganizations,
-            },
+            proposedTransaction: this.newProposedTransaction(),
         });
     }
 
-    private newProposal(): protos.IProposal {
-        return {
-            header: common.Header.encode(this.newHeader()).finish(),
-            payload: protos.ChaincodeProposalPayload.encode(this.newChaincodeProposalPayload()).finish(),
-        };
+    private newProposedTransaction(): ProposedTransaction {
+        const result = new ProposedTransaction();
+        result.setProposal(this.newSignedProposal());
+        result.setTransactionId(this.#transactionContext.getTransactionId());
+        if (this.#options.options.endorsingOrganizations) {
+            result.setEndorsingOrganizationsList(this.#options.options.endorsingOrganizations);
+        }
+        return result;
     }
 
-    private newHeader(): common.IHeader {
-        return {
-            channel_header: common.ChannelHeader.encode(this.newChannelHeader()).finish(),
-            signature_header: common.SignatureHeader.encode(this.#transactionContext.getSignatureHeader()).finish(),
-        };
+    private newSignedProposal(): SignedProposal {
+        const result = new SignedProposal();
+        result.setProposalBytes(this.newProposal().serializeBinary());
+        return result;
     }
 
-    private newChannelHeader(): common.IChannelHeader {
-        return {
-            type: common.HeaderType.ENDORSER_TRANSACTION,
-            tx_id: this.#transactionContext.getTransactionId(),
-            timestamp: {
-                seconds: Date.now() / 1000,
-            },
-            channel_id: this.#options.channelName,
-            extension: protos.ChaincodeHeaderExtension.encode(this.newChaincodeHeaderExtension()).finish(),
-            epoch: 0,
-        };
+    private newProposal(): ProposalProto {
+        const result = new ProposalProto();
+        result.setHeader(this.newHeader().serializeBinary());
+        result.setPayload(this.newChaincodeProposalPayload().serializeBinary());
+        return result;
     }
 
-    private newChaincodeHeaderExtension(): protos.IChaincodeHeaderExtension {
-        return {
-            chaincode_id: {
-                name: this.#options.chaincodeId,
-            },
-        };
+    private newHeader(): Header {
+        const result = new Header();
+        result.setChannelHeader(this.newChannelHeader().serializeBinary());
+        result.setSignatureHeader(this.#transactionContext.getSignatureHeader().serializeBinary());
+        return result;
     }
 
-    private newChaincodeProposalPayload(): protos.IChaincodeProposalPayload {
-        return {
-            input: protos.ChaincodeInvocationSpec.encode(this.newChaincodeInvocationSpec()).finish(),
-            TransientMap: this.getTransientData(),
-        };
+    private newChannelHeader(): ChannelHeader {
+        const result = new ChannelHeader();
+        result.setType(HeaderType.ENDORSER_TRANSACTION);
+        result.setTxId(this.#transactionContext.getTransactionId());
+        result.setTimestamp(Timestamp.fromDate(new Date()));
+        result.setChannelId(this.#options.channelName);
+        result.setExtension$(this.newChaincodeHeaderExtension().serializeBinary());
+        result.setEpoch(0);
+        return result;
     }
 
-    private newChaincodeInvocationSpec(): protos.IChaincodeInvocationSpec {
-        return {
-            chaincode_spec: {
-                type: protos.ChaincodeSpec.Type.NODE,
-                chaincode_id: {
-                    name: this.#options.chaincodeId,
-                },
-                input: {
-                    args: this.getArgsAsBytes(),
-                },
-            },
-        };
+    private newChaincodeHeaderExtension(): ChaincodeHeaderExtension {
+        const result = new ChaincodeHeaderExtension();
+        result.setChaincodeId(this.newChaincodeID());
+        return result;
+    }
+
+    private newChaincodeID(): ChaincodeID {
+        const result = new ChaincodeID();
+        result.setName(this.#options.chaincodeId);
+        return result;
+    }
+
+    private newChaincodeProposalPayload(): ChaincodeProposalPayload {
+        const result = new ChaincodeProposalPayload();
+        result.setInput(this.newChaincodeInvocationSpec().serializeBinary());
+        const transientMap = result.getTransientmapMap();
+        for (const [key, value] of Object.entries(this.getTransientData())) {
+            transientMap.set(key, value);
+        }
+        return result;
+    }
+
+    private newChaincodeInvocationSpec(): ChaincodeInvocationSpec {
+        const result = new ChaincodeInvocationSpec();
+        result.setChaincodeSpec(this.newChaincodeSpec());
+        return result;
+    }
+
+    private newChaincodeSpec(): ChaincodeSpec {
+        const result = new ChaincodeSpec();
+        result.setType(ChaincodeSpec.Type.NODE);
+        result.setChaincodeId(this.newChaincodeID());
+        result.setInput(this.newChaincodeInput());
+        return result;
+    }
+
+    private newChaincodeInput(): ChaincodeInput {
+        const result = new ChaincodeInput();
+        result.setArgsList(this.getArgsAsBytes());
+        return result;
     }
 
     private getArgsAsBytes(): Uint8Array[] {

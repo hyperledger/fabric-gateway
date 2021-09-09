@@ -4,13 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import Long from 'long';
 import { MockGatewayClient, newMockGatewayClient } from './client.test';
 import { Contract } from './contract';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { protos } from './protos/protos';
+import { Envelope } from './protos/common/common_pb';
+import { CommitStatusResponse, EndorseResponse } from './protos/gateway/gateway_pb';
+import { Response } from './protos/peer/proposal_response_pb';
+import { TxValidationCode } from './protos/peer/transaction_pb';
 
 describe('Transaction', () => {
     const expectedResult = 'TX_RESULT';
@@ -25,17 +27,23 @@ describe('Transaction', () => {
 
     beforeEach(() => {
         client = newMockGatewayClient();
-        client.endorse.mockResolvedValue({
-            prepared_transaction: {
-                payload: Buffer.from('PAYLOAD'),
-            },
-            result: {
-                payload: Buffer.from(expectedResult),
-            },
-        });
-        client.commitStatus.mockResolvedValue({
-            result: protos.TxValidationCode.VALID,
-        });
+
+        const txResult = new Response()
+        txResult.setPayload(Buffer.from(expectedResult));
+
+        const preparedTx = new Envelope();
+        preparedTx.setPayload(Buffer.from('PAYLOAD'));
+
+        const endorseResult = new EndorseResponse();
+        endorseResult.setPreparedTransaction(preparedTx);
+        endorseResult.setResult(txResult)
+
+        client.endorse.mockResolvedValue(endorseResult);
+
+        const commitResult = new CommitStatusResponse();
+        commitResult.setResult(TxValidationCode.VALID);
+
+        client.commitStatus.mockResolvedValue(commitResult);
 
         identity = {
             mspId: 'MSP_ID',
@@ -64,12 +72,12 @@ describe('Transaction', () => {
     });
 
     it('throws on commit failure', async () => {
-        client.commitStatus.mockResolvedValue({
-            result: protos.TxValidationCode.MVCC_READ_CONFLICT,
-        });
+        const commitResult = new CommitStatusResponse();
+        commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
+        client.commitStatus.mockResolvedValue(commitResult);
 
         await expect(contract.submitTransaction('TRANSACTION_NAME'))
-            .rejects.toThrow(protos.TxValidationCode[protos.TxValidationCode.MVCC_READ_CONFLICT]);
+            .rejects.toThrow('MVCC_READ_CONFLICT');
     });
 
     it('returns result', async () => {
@@ -81,8 +89,20 @@ describe('Transaction', () => {
 
     it('sets endorsing orgs', async () => {
         await contract.submit('TRANSACTION_NAME', { endorsingOrganizations: ['org1', 'org3']});
-        const actualOrgs = client.endorse.mock.calls[0][0].endorsing_organizations;
+        const actualOrgs = client.endorse.mock.calls[0][0].getEndorsingOrganizationsList();
         expect(actualOrgs).toStrictEqual(['org1', 'org3']);
+    });
+
+    it('includes transaction ID in submit request', async () => {
+        await contract.submitTransaction('TRANSACTION_NAME');
+
+        const endorseRequest = client.endorse.mock.calls[0][0];
+        const expected = endorseRequest.getTransactionId();
+
+        const submitRequest = client.submit.mock.calls[0][0];
+        const actual = submitRequest.getTransactionId();
+
+        expect(actual).toBe(expected);
     });
 
     it('uses signer for submit', async () => {
@@ -91,7 +111,7 @@ describe('Transaction', () => {
         await contract.submitTransaction('TRANSACTION_NAME');
 
         const submitRequest = client.submit.mock.calls[0][0];
-        const signature = Buffer.from(submitRequest.prepared_transaction?.signature ?? '').toString();
+        const signature = Buffer.from(submitRequest.getPreparedTransaction()?.getSignature_asU8() || '').toString();
         expect(signature).toBe('MY_SIGNATURE');
     });
 
@@ -101,7 +121,7 @@ describe('Transaction', () => {
         await contract.submitTransaction('TRANSACTION_NAME');
 
         const statusRequest = client.commitStatus.mock.calls[0][0];
-        const signature = Buffer.from(statusRequest.signature ?? '').toString();
+        const signature = Buffer.from(statusRequest.getSignature() || '').toString();
         expect(signature).toBe('MY_SIGNATURE');
     });
 
@@ -118,20 +138,20 @@ describe('Transaction', () => {
     });
 
     it('commit returns transaction validation code', async () => {
-        client.commitStatus.mockResolvedValue({
-            result: protos.TxValidationCode.MVCC_READ_CONFLICT,
-        });
+        const commitResult = new CommitStatusResponse();
+        commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
+        client.commitStatus.mockResolvedValue(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
         const status = await commit.getStatus();
 
-        expect(status).toBe(protos.TxValidationCode.MVCC_READ_CONFLICT);
+        expect(status).toBe(TxValidationCode.MVCC_READ_CONFLICT);
     });
 
     it('commit returns successful for successful transaction', async () => {
-        client.commitStatus.mockResolvedValue({
-            result: protos.TxValidationCode.VALID,
-        });
+        const commitResult = new CommitStatusResponse();
+        commitResult.setResult(TxValidationCode.VALID);
+        client.commitStatus.mockResolvedValue(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
         const success = await commit.isSuccessful();
@@ -140,9 +160,9 @@ describe('Transaction', () => {
     });
 
     it('commit returns unsuccessful for failed transaction', async () => {
-        client.commitStatus.mockResolvedValue({
-            result: protos.TxValidationCode.MVCC_READ_CONFLICT,
-        });
+        const commitResult = new CommitStatusResponse();
+        commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
+        client.commitStatus.mockResolvedValue(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
         const success = await commit.isSuccessful();
@@ -150,38 +170,26 @@ describe('Transaction', () => {
         expect(success).toBe(false);
     });
 
-    it('commit returns Long block number', async () => {
-        client.commitStatus.mockResolvedValue({
-            result: protos.TxValidationCode.MVCC_READ_CONFLICT,
-            block_number: Long.fromInt(101, true),
-        });
+    it('commit returns block number', async () => {
+        const commitResult = new CommitStatusResponse();
+        commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
+        commitResult.setBlockNumber('101');
+        client.commitStatus.mockResolvedValue(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
         const blockNumber = await commit.getBlockNumber();
 
-        expect(blockNumber).toEqual(Long.fromInt(101, true));
+        expect(blockNumber).toBe(BigInt(101));
     });
 
-    it('commit returns number block number', async () => {
-        client.commitStatus.mockResolvedValue({
-            result: protos.TxValidationCode.MVCC_READ_CONFLICT,
-            block_number: 101,
-        });
+    it('commit returns zero for missing block number', async () => {
+        const commitResult = new CommitStatusResponse();
+        commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
+        client.commitStatus.mockResolvedValue(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
         const blockNumber = await commit.getBlockNumber();
 
-        expect(blockNumber).toEqual(Long.fromInt(101, true));
-    });
-
-    it('commit throws accessing missing block number', async () => {
-        client.commitStatus.mockResolvedValue({
-            result: protos.TxValidationCode.MVCC_READ_CONFLICT,
-        });
-
-        const commit = await contract.submitAsync('TRANSACTION_NAME');
-        await expect(() => commit.getBlockNumber())
-            .rejects
-            .toThrow();
+        expect(blockNumber).toBe(BigInt(0));
     });
 });

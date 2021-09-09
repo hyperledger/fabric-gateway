@@ -6,7 +6,7 @@
 
 import { execFileSync, spawnSync } from 'child_process';
 import * as path from 'path';
-import * as fs from "fs";
+import * as fs from 'fs';
 
 export const fixturesDir = path.resolve(__dirname, '..', '..', 'fixtures');
 
@@ -27,22 +27,22 @@ interface OrgInfo {
 
 const orgs: Record<string, OrgInfo> = {
     Org1MSP: {
-        orgName: "org1.example.com",
-        cli: "org1_cli",
-        anchortx: "/etc/hyperledger/configtx/Org1MSPanchors.tx",
-        peers: ["peer0.org1.example.com:7051", "peer1.org1.example.com:9051"],
+        orgName: 'org1.example.com',
+        cli: 'org1_cli',
+        anchortx: '/etc/hyperledger/configtx/Org1MSPanchors.tx',
+        peers: ['peer0.org1.example.com:7051', 'peer1.org1.example.com:9051'],
     },
     Org2MSP: {
-        orgName: "org2.example.com",
-        cli: "org2_cli",
-        anchortx: "/etc/hyperledger/configtx/Org2MSPanchors.tx",
-        peers: ["peer0.org2.example.com:8051", "peer1.org2.example.com:10051"],
+        orgName: 'org2.example.com',
+        cli: 'org2_cli',
+        anchortx: '/etc/hyperledger/configtx/Org2MSPanchors.tx',
+        peers: ['peer0.org2.example.com:8051', 'peer1.org2.example.com:10051'],
     },
     Org3MSP: {
-        orgName: "org2.example.com",
-        cli: "org3_cli",
-        anchortx: "/etc/hyperledger/configtx/Org3MSPanchors.tx",
-        peers: ["peer0.org3.example.com:11051"],
+        orgName: 'org2.example.com',
+        cli: 'org3_cli',
+        anchortx: '/etc/hyperledger/configtx/Org3MSPanchors.tx',
+        peers: ['peer0.org3.example.com:11051'],
     },
 };
 
@@ -149,7 +149,7 @@ export class Fabric {
             for (const peer of org.peers) {
                 const env = 'CORE_PEER_ADDRESS=' + peer;
                 dockerCommandWithTLS(
-                    'exec', "-e", env, org.cli,
+                    'exec', '-e', env, org.cli,
                     'peer', 'channel', 'join',
                     '-b', '/etc/hyperledger/configtx/mychannel.block'
                 );
@@ -169,7 +169,7 @@ export class Fabric {
 
     async deployChaincode(ccType: string, ccName: string, version: string, channelName: string, signaturePolicy: string): Promise<void> {
         let exists = false;
-        let sequence = "1"
+        let sequence = '1'
         const mangledName = ccName + version + channelName;
         const policy = this.runningChaincodes[mangledName];
         if (typeof policy !== 'undefined') {
@@ -180,8 +180,8 @@ export class Fabric {
             // No need to re-install, just increment the sequence number and approve/commit new signature policy
             exists = true
             const out = dockerCommandWithTLS(
-                "exec", "org1_cli", "peer", "lifecycle", "chaincode", "querycommitted",
-                "-o", "orderer.example.com:7050", "--channelID", channelName, "--name", ccName);
+                'exec', 'org1_cli', 'peer', 'lifecycle', 'chaincode', 'querycommitted',
+                '-o', 'orderer.example.com:7050', '--channelID', channelName, '--name', ccName);
             const pattern = new RegExp('.*Sequence: ([0-9]+),.*');
             const match = out.match(pattern);
             if (match === null || match.length < 2) {
@@ -214,7 +214,7 @@ export class Fabric {
 
                 for (const peer of orgInfo.peers) {
                     const env = 'CORE_PEER_ADDRESS=' + peer;
-                    dockerCommand('exec', "-e", env, orgInfo.cli, 'peer', 'lifecycle', 'chaincode', 'install', ccPackage);
+                    dockerCommand('exec', '-e', env, orgInfo.cli, 'peer', 'lifecycle', 'chaincode', 'install', ccPackage);
                 }
             }
 

@@ -4,12 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ChaincodeEvent, newChaincodeEvents } from "./chaincodeevent";
-import { GatewayClient } from "./client";
-import { gateway } from "./protos/protos";
-import { Signable } from "./signable";
-import { SigningIdentity } from "./signingidentity";
-import { MandatoryProperties } from "./utils";
+import { ChaincodeEvent, newChaincodeEvents } from './chaincodeevent';
+import { GatewayClient } from './client';
+import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, SignedChaincodeEventsRequest as SignedChaincodeEventsRequestProto } from './protos/gateway/gateway_pb';
+import { Signable } from './signable';
+import { SigningIdentity } from './signingidentity';
 
 export type ChaincodeEventCallback = (event: ChaincodeEvent) => Promise<void>;
 
@@ -40,20 +39,19 @@ export interface ChaincodeEventsRequest extends Signable {
 export interface ChaincodeEventsRequestOptions {
     readonly client: GatewayClient;
     readonly signingIdentity: SigningIdentity;
-    readonly request: gateway.IChaincodeEventsRequest;
+    readonly request: ChaincodeEventsRequestProto;
 }
 
 export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
     readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
-    readonly #signedRequest: MandatoryProperties<gateway.ISignedChaincodeEventsRequest, 'request'>;
+    readonly #signedRequest: SignedChaincodeEventsRequestProto;
 
     constructor(options: ChaincodeEventsRequestOptions) {
         this.#client = options.client;
         this.#signingIdentity = options.signingIdentity;
-        this.#signedRequest = {
-            request: gateway.ChaincodeEventsRequest.encode(options.request).finish(),
-        }
+        this.#signedRequest = new SignedChaincodeEventsRequestProto();
+        this.#signedRequest.setRequest(options.request.serializeBinary())
     }
 
     async onEvent(listener: ChaincodeEventCallback): Promise<void> {
@@ -81,15 +79,15 @@ export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
     }
 
     getBytes(): Uint8Array {
-        return this.#signedRequest.request;
+        return this.#signedRequest.getRequest_asU8();
     }
 
     getDigest(): Uint8Array {
-        return this.#signingIdentity.hash(this.#signedRequest.request);
+        return this.#signingIdentity.hash(this.#signedRequest.getRequest_asU8());
     }
 
     setSignature(signature: Uint8Array): void {
-        this.#signedRequest.signature = signature;
+        this.#signedRequest.setSignature(signature);
     }
 
     private async sign(): Promise<void> {
@@ -102,7 +100,7 @@ export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
     }
 
     private isSigned(): boolean {
-        const signatureLength = this.#signedRequest.signature?.length ?? 0;
+        const signatureLength = this.#signedRequest.getSignature()?.length || 0;
         return signatureLength > 0;
     }
 }

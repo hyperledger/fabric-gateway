@@ -9,7 +9,7 @@ import { ChaincodeEventCallback, ChaincodeEventsRequest, ChaincodeEventsRequestI
 import { GatewayClient } from './client';
 import { Commit, CommitImpl } from './commit';
 import { Contract, ContractImpl } from './contract';
-import { gateway } from './protos/protos';
+import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, CommitStatusRequest, SignedCommitStatusRequest } from './protos/gateway/gateway_pb';
 import { SigningIdentity } from './signingidentity';
 
 /**
@@ -96,13 +96,13 @@ export class NetworkImpl implements Network {
     }
 
     newSignedCommit(bytes: Uint8Array, signature: Uint8Array): Commit {
-        const signedRequest = gateway.SignedCommitStatusRequest.decode(bytes);
-        const request = gateway.CommitStatusRequest.decode(signedRequest.request);
+        const signedRequest = SignedCommitStatusRequest.deserializeBinary(bytes);
+        const request = CommitStatusRequest.deserializeBinary(signedRequest.getRequest_asU8());
 
         const result = new CommitImpl({
             client: this.#client,
             signingIdentity: this.#signingIdentity,
-            transactionId: request.transaction_id,
+            transactionId: request.getTransactionId(),
             signedRequest: signedRequest,
         });
         result.setSignature(signature);
@@ -131,7 +131,7 @@ export class NetworkImpl implements Network {
     }
 
     newSignedChaincodeEventsRequest(bytes: Uint8Array, signature: Uint8Array): ChaincodeEventsRequest {
-        const request = gateway.ChaincodeEventsRequest.decode(bytes);
+        const request = ChaincodeEventsRequestProto.deserializeBinary(bytes);
 
         const result = new ChaincodeEventsRequestImpl({
             client: this.#client,
@@ -143,11 +143,11 @@ export class NetworkImpl implements Network {
         return result;
     }
 
-    private newChaincodeEventsRequestProto(chaincodeId: string): gateway.IChaincodeEventsRequest {
-        return {
-            channel_id: this.#channelName,
-            chaincode_id: chaincodeId,
-            identity: this.#signingIdentity.getCreator(),
-        };
+    private newChaincodeEventsRequestProto(chaincodeId: string): ChaincodeEventsRequestProto {
+        const result = new ChaincodeEventsRequestProto();
+        result.setChannelId(this.#channelName);
+        result.setChaincodeId(chaincodeId);
+        result.setIdentity(this.#signingIdentity.getCreator());
+        return result;
     }
 }

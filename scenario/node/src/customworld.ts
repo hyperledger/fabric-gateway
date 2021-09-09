@@ -26,34 +26,34 @@ interface ConnectionInfo {
 }
 
 const peerConnectionInfo: Record<string, ConnectionInfo> = {
-    "peer0.org1.example.com": {
-        url:                "localhost:7051",
-        serverNameOverride: "peer0.org1.example.com",
-        tlsRootCertPath:    fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
+    'peer0.org1.example.com': {
+        url:                'localhost:7051',
+        serverNameOverride: 'peer0.org1.example.com',
+        tlsRootCertPath:    fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt',
         running:            true,
     },
-    "peer1.org1.example.com": {
-        url:                "localhost:9051",
-        serverNameOverride: "peer1.org1.example.com",
-        tlsRootCertPath:    fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt",
+    'peer1.org1.example.com': {
+        url:                'localhost:9051',
+        serverNameOverride: 'peer1.org1.example.com',
+        tlsRootCertPath:    fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt',
         running:            true,
     },
-    "peer0.org2.example.com": {
-        url:                "localhost:8051",
-        serverNameOverride: "peer0.org2.example.com",
-        tlsRootCertPath:    fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt",
+    'peer0.org2.example.com': {
+        url:                'localhost:8051',
+        serverNameOverride: 'peer0.org2.example.com',
+        tlsRootCertPath:    fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt',
         running:            true,
     },
-    "peer1.org2.example.com": {
-        url:                "localhost:10051",
-        serverNameOverride: "peer1.org2.example.com",
-        tlsRootCertPath:    fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls/ca.crt",
+    'peer1.org2.example.com': {
+        url:                'localhost:10051',
+        serverNameOverride: 'peer1.org2.example.com',
+        tlsRootCertPath:    fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls/ca.crt',
         running:            true,
     },
-    "peer0.org3.example.com": {
-        url:                "localhost:11051",
-        serverNameOverride: "peer0.org3.example.com",
-        tlsRootCertPath:    fixturesDir + "/crypto-material/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt",
+    'peer0.org3.example.com': {
+        url:                'localhost:11051',
+        serverNameOverride: 'peer0.org3.example.com',
+        tlsRootCertPath:    fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt',
         running:            true,
     }
 };

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Commit, CommitImpl, CommitImplOptions } from "./commit";
+import { Commit, CommitImpl, CommitImplOptions } from './commit';
 
 /**
  * Allows access to the transaction result and its commit status on the ledger.

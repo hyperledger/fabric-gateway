@@ -5,7 +5,8 @@
  */
 
 import * as grpc from '@grpc/grpc-js';
-import { gateway } from './protos/protos';
+import { Message } from 'google-protobuf';
+import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
 
 const servicePath = '/gateway.Gateway/';
 const evaluateMethod = servicePath + 'Evaluate';
@@ -15,11 +16,11 @@ const commitStatusMethod = servicePath + 'CommitStatus';
 const chaincodeEventsMethod = servicePath + 'ChaincodeEvents';
 
 export interface GatewayClient {
-    evaluate(request: gateway.IEvaluateRequest): Promise<gateway.IEvaluateResponse>;
-    endorse(request: gateway.IEndorseRequest): Promise<gateway.IEndorseResponse>;
-    submit(request: gateway.ISubmitRequest): Promise<gateway.ISubmitResponse>;
-    commitStatus(request: gateway.ISignedCommitStatusRequest): Promise<gateway.ICommitStatusResponse>;
-    chaincodeEvents(request: gateway.ISignedChaincodeEventsRequest): AsyncIterable<gateway.IChaincodeEventsResponse>;
+    evaluate(request: EvaluateRequest): Promise<EvaluateResponse>;
+    endorse(request: EndorseRequest): Promise<EndorseResponse>;
+    submit(request: SubmitRequest): Promise<SubmitResponse>;
+    commitStatus(request: SignedCommitStatusRequest): Promise<CommitStatusResponse>;
+    chaincodeEvents(request: SignedChaincodeEventsRequest): AsyncIterable<ChaincodeEventsResponse>;
 }
 
 class GatewayClientImpl implements GatewayClient {
@@ -29,32 +30,32 @@ class GatewayClientImpl implements GatewayClient {
         this.#client = client;
     }
 
-    async evaluate(request: gateway.IEvaluateRequest): Promise<gateway.IEvaluateResponse> {
+    evaluate(request: EvaluateRequest): Promise<EvaluateResponse> {
         return new Promise((resolve, reject) =>
-            this.#client.makeUnaryRequest(evaluateMethod, serializeEvaluateRequest, deserializeEvaluateResponse, request, newUnaryCallback(resolve, reject))
+            this.#client.makeUnaryRequest(evaluateMethod, serialize, deserializeEvaluateResponse, request, newUnaryCallback(resolve, reject))
         );
     }
 
-    async endorse(request: gateway.IEndorseRequest): Promise<gateway.IEndorseResponse> {
+    endorse(request: EndorseRequest): Promise<EndorseResponse> {
         return new Promise((resolve, reject) =>
-            this.#client.makeUnaryRequest(endorseMethod, serializeEndorseRequest, deserializeEndorseResponse, request, newUnaryCallback(resolve, reject))
+            this.#client.makeUnaryRequest(endorseMethod, serialize, deserializeEndorseResponse, request, newUnaryCallback(resolve, reject))
         );
     }
 
-    async submit(request: gateway.ISubmitRequest): Promise<gateway.ISubmitResponse> {
+    submit(request: SubmitRequest): Promise<SubmitResponse> {
         return new Promise((resolve, reject) =>
-            this.#client.makeUnaryRequest(submitMethod, serializeSubmitRequest, deserializeSubmitResponse, request, newUnaryCallback(resolve, reject))
+            this.#client.makeUnaryRequest(submitMethod, serialize, deserializeSubmitResponse, request, newUnaryCallback(resolve, reject))
         );
     }
 
-    async commitStatus(request: gateway.ISignedCommitStatusRequest): Promise<gateway.ICommitStatusResponse> {
+    commitStatus(request: SignedCommitStatusRequest): Promise<CommitStatusResponse> {
         return new Promise((resolve, reject) =>
-            this.#client.makeUnaryRequest(commitStatusMethod, serializeSignedCommitStatusRequest, deserializeCommitStatusResponse, request, newUnaryCallback(resolve, reject))
+            this.#client.makeUnaryRequest(commitStatusMethod, serialize, deserializeCommitStatusResponse, request, newUnaryCallback(resolve, reject))
         );
     }
 
-    chaincodeEvents(request: gateway.ISignedChaincodeEventsRequest): AsyncIterable<gateway.ChaincodeEventsResponse> {
-        return this.#client.makeServerStreamRequest(chaincodeEventsMethod, serializeSignedChaincodeEventsRequest, deserializeChaincodeEventsResponse, request);
+    chaincodeEvents(request: SignedChaincodeEventsRequest): AsyncIterable<ChaincodeEventsResponse> {
+        return this.#client.makeServerStreamRequest(chaincodeEventsMethod, serialize, deserializeChaincodeEventsResponse, request);
     }
 }
 
@@ -70,49 +71,29 @@ function newUnaryCallback<T>(resolve: (value: T) => void, reject: (reason: Error
     }
 }
 
-function serializeEvaluateRequest(message: gateway.IEvaluateRequest): Buffer {
-    const bytes = gateway.EvaluateRequest.encode(message).finish();
+function serialize(message: Message): Buffer {
+    const bytes = message.serializeBinary();
     return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength); // Create a Buffer view to avoid copying
 }
 
-function serializeEndorseRequest(message: gateway.IEndorseRequest): Buffer {
-    const bytes = gateway.EndorseRequest.encode(message).finish();
-    return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength); // Create a Buffer view to avoid copying
+function deserializeEvaluateResponse(bytes: Uint8Array): EvaluateResponse {
+    return EvaluateResponse.deserializeBinary(bytes);
 }
 
-function serializeSubmitRequest(message: gateway.ISubmitRequest): Buffer {
-    const bytes = gateway.SubmitRequest.encode(message).finish();
-    return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength); // Create a Buffer view to avoid copying
+function deserializeEndorseResponse(bytes: Uint8Array): EndorseResponse {
+    return EndorseResponse.deserializeBinary(bytes);
 }
 
-function serializeSignedCommitStatusRequest(message: gateway.ISignedCommitStatusRequest): Buffer {
-    const bytes = gateway.SignedCommitStatusRequest.encode(message).finish();
-    return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength); // Create a Buffer view to avoid copying
+function deserializeSubmitResponse(bytes: Uint8Array): SubmitResponse {
+    return SubmitResponse.deserializeBinary(bytes);
 }
 
-function serializeSignedChaincodeEventsRequest(message: gateway.ISignedChaincodeEventsRequest): Buffer {
-    const bytes = gateway.SignedChaincodeEventsRequest.encode(message).finish();
-    return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength); // Create a Buffer view to avoid copying
+function deserializeCommitStatusResponse(bytes: Uint8Array): CommitStatusResponse {
+    return CommitStatusResponse.deserializeBinary(bytes);
 }
 
-function deserializeEvaluateResponse(bytes: Uint8Array): gateway.EvaluateResponse {
-    return gateway.EvaluateResponse.decode(bytes);
-}
-
-function deserializeEndorseResponse(bytes: Uint8Array): gateway.EndorseResponse {
-    return gateway.EndorseResponse.decode(bytes);
-}
-
-function deserializeSubmitResponse(bytes: Uint8Array): gateway.SubmitResponse {
-    return gateway.SubmitResponse.decode(bytes);
-}
-
-function deserializeCommitStatusResponse(bytes: Uint8Array): gateway.CommitStatusResponse {
-    return gateway.CommitStatusResponse.decode(bytes);
-}
-
-function deserializeChaincodeEventsResponse(bytes: Uint8Array): gateway.ChaincodeEventsResponse {
-    return gateway.ChaincodeEventsResponse.decode(bytes);
+function deserializeChaincodeEventsResponse(bytes: Uint8Array): ChaincodeEventsResponse {
+    return ChaincodeEventsResponse.deserializeBinary(bytes);
 }
 
 export function newGatewayClient(client: grpc.Client): GatewayClient {
