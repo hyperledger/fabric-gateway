@@ -6,7 +6,7 @@
 
 import { Identity } from './identity/identity';
 import { Signer } from './identity/signer';
-import { msp } from './protos/protos';
+import { SerializedIdentity } from './protos/msp/identities_pb';
 import { SigningIdentity } from './signingidentity';
 
 describe('SigningIdentity', () => {
@@ -56,9 +56,9 @@ describe('SigningIdentity', () => {
 
             const creator = signingIdentity.getCreator();
 
-            const actual = msp.SerializedIdentity.decode(creator);
-            expect(actual.mspid).toBe(identity.mspId);
-            const credentials = Uint8Array.from(actual.id_bytes); // Ensure it's really a Uint8Array
+            const actual = SerializedIdentity.deserializeBinary(creator);
+            expect(actual.getMspid()).toBe(identity.mspId);
+            const credentials = Uint8Array.from(actual.getIdBytes_asU8()); // Ensure it's really a Uint8Array
             expect(credentials).toEqual(identity.credentials);
         });
 

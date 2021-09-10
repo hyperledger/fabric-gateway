@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GatewayClient } from "./client";
-import { Proposal, ProposalImpl } from "./proposal";
-import { ProposalBuilder, ProposalOptions } from "./proposalbuilder";
-import { gateway, protos } from "./protos/protos";
-import { SigningIdentity } from "./signingidentity";
+import { GatewayClient } from './client';
+import { TxStatusString } from './commit';
+import { Proposal, ProposalImpl } from './proposal';
+import { ProposalBuilder, ProposalOptions } from './proposalbuilder';
+import { PreparedTransaction, ProposedTransaction } from './protos/gateway/gateway_pb';
+import { SigningIdentity } from './signingidentity';
 import { SubmittedTransaction } from './submittedtransaction';
-import { Transaction, TransactionImpl } from "./transaction";
+import { Transaction, TransactionImpl } from './transaction';
 
 /**
  * Represents a smart contract, and allows applications to:
@@ -200,9 +201,10 @@ export class ContractImpl implements Contract {
     async submit(transactionName: string, options?: ProposalOptions): Promise<Uint8Array> {
         const submitted = await this.submitAsync(transactionName, options);
 
-        const status = await submitted.getStatus();
-        if (status !== protos.TxValidationCode.VALID) {
-            throw new Error(`Transaction ${submitted.getTransactionId()} failed to commit with status code ${status} (${protos.TxValidationCode[status]})`)
+        const successful = await submitted.isSuccessful();
+        if (!successful) {
+            const status = await submitted.getStatus();
+            throw new Error(`Transaction ${submitted.getTransactionId()} failed to commit with status code ${status} (${TxStatusString[status]})`)
         }
 
         return submitted.getResult();
@@ -225,7 +227,7 @@ export class ContractImpl implements Contract {
     }
 
     newSignedProposal(bytes: Uint8Array, signature: Uint8Array): Proposal {
-        const proposedTransaction = gateway.ProposedTransaction.decode(bytes);
+        const proposedTransaction = ProposedTransaction.deserializeBinary(bytes);
 
         const result = new ProposalImpl({
             client: this.#client,
@@ -239,7 +241,7 @@ export class ContractImpl implements Contract {
     }
 
     newSignedTransaction(bytes: Uint8Array, signature: Uint8Array): Transaction {
-        const preparedTransaction = gateway.PreparedTransaction.decode(bytes);
+        const preparedTransaction = PreparedTransaction.deserializeBinary(bytes);
 
         const result = new TransactionImpl({
             client: this.#client,

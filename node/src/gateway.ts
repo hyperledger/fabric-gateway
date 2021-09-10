@@ -5,8 +5,8 @@
  */
 
 import * as grpc from '@grpc/grpc-js';
-import { Hash } from './hash/hash';
 import { GatewayClient, newGatewayClient } from './client';
+import { Hash } from './hash/hash';
 import { Identity } from './identity/identity';
 import { Signer } from './identity/signer';
 import { Network, NetworkImpl } from './network';

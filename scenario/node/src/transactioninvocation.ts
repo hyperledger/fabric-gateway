@@ -5,7 +5,6 @@
  */
 
 import { Contract, Network, ProposalOptions, Signable, Signer } from 'fabric-gateway';
-import { protos } from 'fabric-gateway/dist/protos/protos';
 import { bytesAsString, toError, toString } from './utils';
 
 export class TransactionInvocation {
@@ -81,9 +80,10 @@ export class TransactionInvocation {
         const submitted = await signedTransaction.submit();
         const signedCommit = await this.sign(submitted, this.network.newSignedCommit.bind(this.network));
 
-        const status = await signedCommit.getStatus();
-        if (status !== protos.TxValidationCode.VALID) {
-            throw new Error(`Transaction commit failed with status: ${status} (${protos.TxValidationCode[status]})`)
+        const successful = await signedCommit.isSuccessful();
+        if (!successful) {
+            const status = await signedCommit.getStatus();
+            throw new Error(`Transaction commit failed with status: ${status}`)
         }
 
         return submitted.getResult();

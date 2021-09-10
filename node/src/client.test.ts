@@ -7,14 +7,14 @@
 /* eslint-disable jest/no-export */
 
 import { GatewayClient } from './client';
-import { gateway } from './protos/protos';
+import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
 
 export interface MockGatewayClient extends GatewayClient {
-    endorse: jest.Mock<Promise<gateway.IEndorseResponse>, gateway.IEndorseRequest[]>,
-    evaluate: jest.Mock<Promise<gateway.IEvaluateResponse>, gateway.IEvaluateRequest[]>,
-    submit: jest.Mock<Promise<gateway.ISubmitResponse>, gateway.ISubmitRequest[]>,
-    commitStatus: jest.Mock<Promise<gateway.ICommitStatusResponse>, gateway.ISignedCommitStatusRequest[]>,
-    chaincodeEvents: jest.Mock<AsyncIterable<gateway.IChaincodeEventsResponse>, gateway.ISignedChaincodeEventsRequest[]>,
+    endorse: jest.Mock<Promise<EndorseResponse>, EndorseRequest[]>,
+    evaluate: jest.Mock<Promise<EvaluateResponse>, EvaluateRequest[]>,
+    submit: jest.Mock<Promise<SubmitResponse>, SubmitRequest[]>,
+    commitStatus: jest.Mock<Promise<CommitStatusResponse>, SignedCommitStatusRequest[]>,
+    chaincodeEvents: jest.Mock<AsyncIterable<ChaincodeEventsResponse>, SignedChaincodeEventsRequest[]>,
 }
 
 export function newMockGatewayClient(): MockGatewayClient {

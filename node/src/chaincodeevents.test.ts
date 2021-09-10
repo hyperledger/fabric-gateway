@@ -4,27 +4,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as Long from 'long';
 import { ChaincodeEvent } from './chaincodeevent';
 import { ChaincodeEventCallback } from './chaincodeeventsrequest';
 import { MockGatewayClient, newMockGatewayClient } from './client.test';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { gateway, gateway as gatewayProto, protos } from './protos/protos';
+import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, ChaincodeEventsResponse, SignedChaincodeEventsRequest } from './protos/gateway/gateway_pb';
+import { ChaincodeEvent as ChaincodeEventProto } from './protos/peer/chaincode_event_pb';
 
-function assertDecodeChaincodeEventsRequest(signedRequest: gatewayProto.ISignedChaincodeEventsRequest): gatewayProto.IChaincodeEventsRequest {
-    expect(signedRequest.request).toBeDefined();
-    return gatewayProto.ChaincodeEventsRequest.decode(signedRequest.request!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+function assertDecodeChaincodeEventsRequest(signedRequest: SignedChaincodeEventsRequest): ChaincodeEventsRequestProto {
+    const requestBytes = signedRequest.getRequest_asU8();
+    expect(requestBytes).toBeDefined();
+    return ChaincodeEventsRequestProto.deserializeBinary(requestBytes);
 }
 
-function newChaincodeEvent(blockNumber: number, event: protos.IChaincodeEvent): ChaincodeEvent {
+function newChaincodeEvent(blockNumber: number, event: ChaincodeEventProto): ChaincodeEvent {
     return {
-        blockNumber: Long.fromInt(blockNumber),
-        chaincodeId: event.chaincode_id ?? '',
-        eventName: event.event_name ?? '',
-        transactionId: event.tx_id ?? '',
-        payload: event.payload ?? new Uint8Array(),
+        blockNumber: BigInt(blockNumber),
+        chaincodeId: event.getChaincodeId() ?? '',
+        eventName: event.getEventName() ?? '',
+        transactionId: event.getTxId() ?? '',
+        payload: event.getPayload_asU8() ?? new Uint8Array(),
     };
 }
 
@@ -108,47 +109,42 @@ describe('Chaincode Events', () => {
         await network.onChaincodeEvent('CHAINCODE', noOpListener);
 
         const signedRequest = client.chaincodeEvents.mock.calls[0][0];
-        expect(signedRequest.signature).toEqual(signature);
+        expect(signedRequest.getSignature()).toEqual(signature);
 
         const request = assertDecodeChaincodeEventsRequest(signedRequest);
-        const expectedRequest: gatewayProto.IChaincodeEventsRequest = {
-            channel_id: channelName,
-            chaincode_id: 'CHAINCODE',
-        };
-        expect(request).toMatchObject(expectedRequest);
+
+        expect(request.getChannelId()).toBe(channelName);
+        expect(request.getChaincodeId()).toBe('CHAINCODE');
     });
 
     it('returns events', async () => {
-        const event1: protos.IChaincodeEvent = {
-            chaincode_id: 'CHAINCODE',
-            tx_id: 'tx1',
-            event_name: 'event1',
-            payload: new Uint8Array(Buffer.from('payload1')),
-        };
-        const event2: protos.IChaincodeEvent = {
-            chaincode_id: 'CHAINCODE',
-            tx_id: 'tx2',
-            event_name: 'event2',
-            payload: new Uint8Array(Buffer.from('payload2')),
-        };
-        const event3: protos.IChaincodeEvent = {
-            chaincode_id: 'CHAINCODE',
-            tx_id: 'tx3',
-            event_name: 'event3',
-            payload: new Uint8Array(Buffer.from('payload3')),
-        };
+        const event1 = new ChaincodeEventProto();
+        event1.setChaincodeId('CHAINCODE');
+        event1.setTxId('tx1');
+        event1.setEventName('event1'),
+        event1.setPayload(Buffer.from('payload1'));
 
-        const responses: gateway.IChaincodeEventsResponse[] = [
-            {
-                block_number: 1,
-                events: [ event1, event2],
-            },
-            {
-                block_number: 2,
-                events: [ event3 ],
-            },
-        ];
-        client.chaincodeEvents.mockReturnValue(newAsyncIterable(responses));
+        const event2 = new ChaincodeEventProto();
+        event2.setChaincodeId('CHAINCODE');
+        event2.setTxId('tx2');
+        event2.setEventName('event2'),
+        event2.setPayload(Buffer.from('payload2'));
+
+        const event3 = new ChaincodeEventProto();
+        event3.setChaincodeId('CHAINCODE');
+        event3.setTxId('tx3');
+        event3.setEventName('event3'),
+        event3.setPayload(Buffer.from('payload3'));
+
+        const response1 = new ChaincodeEventsResponse();
+        response1.setBlockNumber('1');
+        response1.setEventsList([ event1, event2 ]);
+
+        const response2 = new ChaincodeEventsResponse();
+        response2.setBlockNumber('2');
+        response2.setEventsList([ event3 ]);
+
+        client.chaincodeEvents.mockReturnValue(newAsyncIterable([ response1, response2 ]));
 
         const expectedEvents: ChaincodeEvent[] = [
             newChaincodeEvent(1, event1),
@@ -164,19 +160,17 @@ describe('Chaincode Events', () => {
     });
 
     it('listener callback error does not stop event delivery', async () => {
-        const event: protos.IChaincodeEvent = {
-            chaincode_id: 'CHAINCODE',
-            tx_id: 'tx',
-            event_name: 'event',
-            payload: new Uint8Array(Buffer.from('payload')),
-        };
-        const responses: gateway.IChaincodeEventsResponse[] = [
-            {
-                block_number: 1,
-                events: [ event, event ],
-            },
-        ];
-        client.chaincodeEvents.mockReturnValue(newAsyncIterable(responses));
+        const event = new ChaincodeEventProto();
+        event.setChaincodeId('CHAINCODE');
+        event.setTxId('tx');
+        event.setEventName('event'),
+        event.setPayload(Buffer.from('payload'));
+
+        const response = new ChaincodeEventsResponse();
+        response.setBlockNumber('1');
+        response.setEventsList([ event, event ]);
+
+        client.chaincodeEvents.mockReturnValue(newAsyncIterable([ response ]));
 
         const { listener, mock, complete } = mockAsyncListener<ChaincodeEvent>(2);
         mock.mockRejectedValueOnce(new Error('EXPECTED_ERROR'));
