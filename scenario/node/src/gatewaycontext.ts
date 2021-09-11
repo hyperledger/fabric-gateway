@@ -6,7 +6,6 @@
 
 import * as grpc from '@grpc/grpc-js';
 import { ChaincodeEvent, connect, ConnectOptions, Contract, Gateway, Identity, Network, Signer } from 'fabric-gateway';
-import { BlockingQueue } from './blockingqueue';
 import { TransactionInvocation } from './transactioninvocation';
 import { assertDefined } from './utils';
 
@@ -18,7 +17,7 @@ export class GatewayContext {
     #gateway?: Gateway;
     #network?: Network;
     #contract?: Contract;
-    #chaincodeEvents?: BlockingQueue<ChaincodeEvent>
+    #chaincodeEvents?: AsyncIterator<ChaincodeEvent>;
 
     constructor(identity: Identity, signer?: Signer, signerClose?: () => void) {
         this.#identity = identity;
@@ -50,14 +49,13 @@ export class GatewayContext {
     }
 
     async listenForChaincodeEvents(chaincodeId: string): Promise<void> {
-        const eventQueue = new BlockingQueue<ChaincodeEvent>();
-        this.#chaincodeEvents = eventQueue;
-        await this.getNetwork().onChaincodeEvent(chaincodeId, async (event) => eventQueue.put(event));
+        const events = await this.getNetwork().getChaincodeEvents(chaincodeId);
+        this.#chaincodeEvents = events[Symbol.asyncIterator]();
     }
 
     async nextChaincodeEvent(): Promise<ChaincodeEvent> {
-        const eventQueue = this.getChaincodeEvents();
-        return await eventQueue.get();
+        const result = await this.getChaincodeEvents().next();
+        return result.value;
     }
 
     close(): void {
@@ -80,7 +78,7 @@ export class GatewayContext {
         return assertDefined(this.#contract, 'contract');
     }
 
-    private getChaincodeEvents(): BlockingQueue<ChaincodeEvent> {
+    private getChaincodeEvents(): AsyncIterator<ChaincodeEvent> {
         return assertDefined(this.#chaincodeEvents, 'chaincodeEvents');
     }
 }
