@@ -36,13 +36,12 @@ export interface ProposalOptions {
     endorsingOrganizations?: string[];
 }
 
-export interface ProposalBuilderOptions {
+export interface ProposalBuilderOptions extends Readonly<ProposalOptions> {
     readonly client: GatewayClient;
     readonly signingIdentity: SigningIdentity;
     readonly channelName: string;
     readonly chaincodeId: string;
     readonly transactionName: string;
-    readonly options: ProposalOptions;
 }
 
 export class ProposalBuilder {
@@ -67,8 +66,8 @@ export class ProposalBuilder {
         const result = new ProposedTransaction();
         result.setProposal(this.newSignedProposal());
         result.setTransactionId(this.#transactionContext.getTransactionId());
-        if (this.#options.options.endorsingOrganizations) {
-            result.setEndorsingOrganizationsList(this.#options.options.endorsingOrganizations);
+        if (this.#options.endorsingOrganizations) {
+            result.setEndorsingOrganizationsList(this.#options.endorsingOrganizations);
         }
         return result;
     }
@@ -147,14 +146,14 @@ export class ProposalBuilder {
     }
 
     private getArgsAsBytes(): Uint8Array[] {
-        return Array.of(this.#options.transactionName, ...(this.#options.options.arguments ?? []))
+        return Array.of(this.#options.transactionName, ...(this.#options.arguments ?? []))
             .map(asBytes);
     }
 
     private getTransientData(): Record<string, Uint8Array> {
         const result: Record<string, Uint8Array> = {};
 
-        for (const [key, value] of Object.entries(this.#options.options.transientData || {})) {
+        for (const [key, value] of Object.entries(this.#options.transientData || {})) {
             result[key] = asBytes(value);
         }
 

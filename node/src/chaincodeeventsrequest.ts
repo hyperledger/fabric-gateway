@@ -9,8 +9,9 @@ import { GatewayClient } from './client';
 import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, SignedChaincodeEventsRequest as SignedChaincodeEventsRequestProto } from './protos/gateway/gateway_pb';
 import { Signable } from './signable';
 import { SigningIdentity } from './signingidentity';
+import { Callback } from './utils';
 
-export type ChaincodeEventCallback = (event: ChaincodeEvent) => Promise<void>;
+export type ChaincodeEventCallback = Callback<ChaincodeEvent>
 
 /**
  * Delivers events emitted by transaction functions in a specific chaincode.
@@ -60,14 +61,13 @@ export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
             try {
                 for await (const event of events) {
                     try {
-                        await listener(event);
+                        await listener(undefined, event);
                     } catch (err) {
                         console.error('Chaincode event listener error:', err);
                     }
                 }
             } catch (err) {
-                // Reconnect? Surface error to listener?
-                console.error('Error receiving chaincode events:', err);
+                await listener(err, undefined);
             }
         })();
     }

@@ -5,7 +5,8 @@
  */
 
 import { ChaincodeEvent } from './chaincodeevent';
-import { ChaincodeEventCallback, ChaincodeEventsRequest, ChaincodeEventsRequestImpl } from './chaincodeeventsrequest';
+import { ChaincodeEventsBuilder, ChaincodeEventsOptions } from './chaincodeeventsbuilder';
+import { ChaincodeEventsRequest, ChaincodeEventsRequestImpl } from './chaincodeeventsrequest';
 import { GatewayClient } from './client';
 import { Commit, CommitImpl } from './commit';
 import { Contract, ContractImpl } from './contract';
@@ -42,13 +43,6 @@ export interface Network {
     /**
      * Get chaincode events emitted by transaction functions of a specific chaincode.
      * @param chaincodeId - A chaincode ID.
-     * @param callback - Event callback function.
-     */
-    onChaincodeEvent(chaincodeId: string, callback: ChaincodeEventCallback): Promise<void>;
-
-    /**
-     * Get chaincode events emitted by transaction functions of a specific chaincode.
-     * @param chaincodeId - A chaincode ID.
      * @returns Chaincode events.
      * @example
      * ```
@@ -58,9 +52,9 @@ export interface Network {
      * }
      * ```
      */
-    getChaincodeEvents(chaincodeId: string): Promise<AsyncIterable<ChaincodeEvent>>
+    getChaincodeEvents(chaincodeId: string, options?: ChaincodeEventsOptions): Promise<AsyncIterable<ChaincodeEvent>>
 
-    newChaincodeEventsRequest(chaincodeId: string): ChaincodeEventsRequest;
+    newChaincodeEventsRequest(chaincodeId: string, options?: ChaincodeEventsOptions): ChaincodeEventsRequest;
     newSignedChaincodeEventsRequest(bytes: Uint8Array, signature: Uint8Array): ChaincodeEventsRequest;
 }
 
@@ -110,24 +104,23 @@ export class NetworkImpl implements Network {
         return result;
     }
 
-    async onChaincodeEvent(chaincodeId: string, listener: ChaincodeEventCallback): Promise<void> {
-        const request = this.newChaincodeEventsRequest(chaincodeId);
-        return request.onEvent(listener);
+    async getChaincodeEvents(chaincodeId: string, options?: ChaincodeEventsOptions): Promise<AsyncIterable<ChaincodeEvent>> {
+        return this.newChaincodeEventsRequest(chaincodeId, options).getEvents();
     }
 
-    async getChaincodeEvents(chaincodeId: string): Promise<AsyncIterable<ChaincodeEvent>> {
-        const request = this.newChaincodeEventsRequest(chaincodeId);
-        return request.getEvents();
-    }
-
-    newChaincodeEventsRequest(chaincodeId: string): ChaincodeEventsRequest {
-        const request = this.newChaincodeEventsRequestProto(chaincodeId);
-
-        return new ChaincodeEventsRequestImpl({
-            client: this.#client,
-            signingIdentity: this.#signingIdentity,
-            request,
-        });
+    newChaincodeEventsRequest(chaincodeId: string, options: ChaincodeEventsOptions = {}): ChaincodeEventsRequest {
+        const builderOptions = Object.assign(
+            {
+                chaincodeId,
+                channelName: this.#channelName,
+                client: this.#client,
+                signingIdentity: this.#signingIdentity,
+                options,
+            },
+            options,
+        );
+        
+        return new ChaincodeEventsBuilder(builderOptions).build();
     }
 
     newSignedChaincodeEventsRequest(bytes: Uint8Array, signature: Uint8Array): ChaincodeEventsRequest {
@@ -140,14 +133,6 @@ export class NetworkImpl implements Network {
         });
         result.setSignature(signature);
 
-        return result;
-    }
-
-    private newChaincodeEventsRequestProto(chaincodeId: string): ChaincodeEventsRequestProto {
-        const result = new ChaincodeEventsRequestProto();
-        result.setChannelId(this.#channelName);
-        result.setChaincodeId(chaincodeId);
-        result.setIdentity(this.#signingIdentity.getCreator());
         return result;
     }
 }

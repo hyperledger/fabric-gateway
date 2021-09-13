@@ -31,7 +31,7 @@ GO_TAGS ?=
 
 build: build-protos build-go build-node
 
-fabric_protos_commit = e08a20156346c7c6aaf97d4effa517689769367c
+fabric_protos_commit = 0135abbbff7054cb55974595bda8901442acfa95
 pb_files = protos/gateway/gateway.pb.go protos/gateway/gateway_grpc.pb.go
 
 .PHONEY: build-protos

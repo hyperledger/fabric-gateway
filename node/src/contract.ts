@@ -216,14 +216,19 @@ export class ContractImpl implements Contract {
     }
 
     newProposal(transactionName: string, options: ProposalOptions = {}): Proposal {
-        return new ProposalBuilder({
-            client: this.#client,
-            signingIdentity: this.#signingIdentity,
-            channelName: this.#channelName,
-            chaincodeId: this.#chaincodeId,
-            transactionName: this.getQualifiedTransactionName(transactionName),
+        const builderOptions = Object.assign(
+            {
+                client: this.#client,
+                signingIdentity: this.#signingIdentity,
+                channelName: this.#channelName,
+                chaincodeId: this.#chaincodeId,
+                transactionName: this.getQualifiedTransactionName(transactionName),
+                options,
+            },
             options,
-        }).build();
+        );
+        
+        return new ProposalBuilder(builderOptions).build();
     }
 
     newSignedProposal(bytes: Uint8Array, signature: Uint8Array): Proposal {

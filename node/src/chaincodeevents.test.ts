@@ -5,12 +5,12 @@
  */
 
 import { ChaincodeEvent } from './chaincodeevent';
-import { ChaincodeEventCallback } from './chaincodeeventsrequest';
 import { MockGatewayClient, newMockGatewayClient } from './client.test';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
 import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, ChaincodeEventsResponse, SignedChaincodeEventsRequest } from './protos/gateway/gateway_pb';
+import { SeekPosition } from './protos/orderer/ab_pb';
 import { ChaincodeEvent as ChaincodeEventProto } from './protos/peer/chaincode_event_pb';
 
 function assertDecodeChaincodeEventsRequest(signedRequest: SignedChaincodeEventsRequest): ChaincodeEventsRequestProto {
@@ -61,12 +61,22 @@ function mockAsyncListener<T>(expectedCallCount = 1): {
     return { listener, mock, complete }
 }
 
+async function readElements<T>(iter: AsyncIterable<T>, count: number): Promise<T[]> {
+    const elements: T[] = [];
+    for await (const element of iter) {
+        elements.push(element);
+
+        if (--count <= 0) {
+            break;
+        }
+    }
+
+    return elements;
+}
+
 describe('Chaincode Events', () => {
     const channelName = 'CHANNEL_NAME';
     const signature = Buffer.from('SIGNATURE');
-    const noOpListener: ChaincodeEventCallback = async () => {
-        // Ignore
-    };
     let client: MockGatewayClient;
     let identity: Identity;
     let signer: jest.Mock<Promise<Uint8Array>, Uint8Array[]>;
@@ -95,89 +105,136 @@ describe('Chaincode Events', () => {
         network = gateway.getNetwork(channelName);
     });
 
-    it('throws on connection error', async () => {
-        client.chaincodeEvents.mockImplementation(() => {
-            throw new Error('CONNECTION_ERROR');
+    describe('request', () => {
+        it('throws on connection error', async () => {
+            client.chaincodeEvents.mockImplementation(() => {
+                throw new Error('CONNECTION_ERROR');
+            });
+    
+            await expect(network.getChaincodeEvents('CHAINCODE'))
+                .rejects
+                .toThrow('CONNECTION_ERROR');
         });
-
-        await expect(network.onChaincodeEvent('CHAINCODE', noOpListener))
-            .rejects
-            .toThrow('CONNECTION_ERROR');
+    
+        it('sends valid request with default start position', async () => {
+            await network.getChaincodeEvents('CHAINCODE');
+    
+            const signedRequest = client.chaincodeEvents.mock.calls[0][0];
+            expect(signedRequest.getSignature()).toEqual(signature);
+    
+            const request = assertDecodeChaincodeEventsRequest(signedRequest);
+    
+            expect(request.getChannelId()).toBe(channelName);
+            expect(request.getChaincodeId()).toBe('CHAINCODE');
+    
+            const startPosition = request.getStartPosition();
+            expect(startPosition).toBeDefined();
+            expect(startPosition?.getTypeCase()).toBe(SeekPosition.TypeCase.NEXT_COMMIT);
+            expect(startPosition?.getNextCommit()).toBeDefined();
+        });
+    
+        it('sends valid request with specified start block number', async () => {
+            const startBlock = BigInt(418);
+            await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock });
+    
+            const signedRequest = client.chaincodeEvents.mock.calls[0][0];
+            expect(signedRequest.getSignature()).toEqual(signature);
+    
+            const request = assertDecodeChaincodeEventsRequest(signedRequest);
+    
+            expect(request.getChannelId()).toBe(channelName);
+            expect(request.getChaincodeId()).toBe('CHAINCODE');
+    
+            const startPosition = request.getStartPosition();
+            expect(startPosition).toBeDefined();
+            expect(startPosition?.getTypeCase()).toBe(SeekPosition.TypeCase.SPECIFIED);
+            expect(startPosition?.getSpecified()?.getNumber()).toBe(Number(startBlock));
+        });
     });
 
-    it('sends valid request', async () => {
-        await network.onChaincodeEvent('CHAINCODE', noOpListener);
-
-        const signedRequest = client.chaincodeEvents.mock.calls[0][0];
-        expect(signedRequest.getSignature()).toEqual(signature);
-
-        const request = assertDecodeChaincodeEventsRequest(signedRequest);
-
-        expect(request.getChannelId()).toBe(channelName);
-        expect(request.getChaincodeId()).toBe('CHAINCODE');
-    });
-
-    it('returns events', async () => {
+    describe('event delivery', () => {
         const event1 = new ChaincodeEventProto();
         event1.setChaincodeId('CHAINCODE');
         event1.setTxId('tx1');
         event1.setEventName('event1'),
         event1.setPayload(Buffer.from('payload1'));
-
+    
         const event2 = new ChaincodeEventProto();
         event2.setChaincodeId('CHAINCODE');
         event2.setTxId('tx2');
         event2.setEventName('event2'),
         event2.setPayload(Buffer.from('payload2'));
-
+    
         const event3 = new ChaincodeEventProto();
         event3.setChaincodeId('CHAINCODE');
         event3.setTxId('tx3');
         event3.setEventName('event3'),
         event3.setPayload(Buffer.from('payload3'));
-
+    
         const response1 = new ChaincodeEventsResponse();
-        response1.setBlockNumber('1');
+        response1.setBlockNumber(1);
         response1.setEventsList([ event1, event2 ]);
-
+    
         const response2 = new ChaincodeEventsResponse();
-        response2.setBlockNumber('2');
+        response2.setBlockNumber(2);
         response2.setEventsList([ event3 ]);
-
-        client.chaincodeEvents.mockReturnValue(newAsyncIterable([ response1, response2 ]));
-
+    
         const expectedEvents: ChaincodeEvent[] = [
             newChaincodeEvent(1, event1),
             newChaincodeEvent(1, event2),
             newChaincodeEvent(2, event3),
         ];
+    
+        it('returns events as AsyncIterable', async () => {
+            client.chaincodeEvents.mockReturnValue(newAsyncIterable([ response1, response2 ]));
+    
+            const events = await network.getChaincodeEvents('CHAINCODE');
+    
+            const actualEvents = await readElements(events, expectedEvents.length);
+            expect(actualEvents).toEqual(expectedEvents);
+        });
 
-        const { listener, mock, complete } = mockAsyncListener<ChaincodeEvent>(expectedEvents.length);
-        void network.onChaincodeEvent('CHAINCODE', listener);
-
-        await complete;
-        expect(mock.mock.calls.map(call => call[0])).toEqual(expectedEvents);
-    });
-
-    it('listener callback error does not stop event delivery', async () => {
-        const event = new ChaincodeEventProto();
-        event.setChaincodeId('CHAINCODE');
-        event.setTxId('tx');
-        event.setEventName('event'),
-        event.setPayload(Buffer.from('payload'));
-
-        const response = new ChaincodeEventsResponse();
-        response.setBlockNumber('1');
-        response.setEventsList([ event, event ]);
-
-        client.chaincodeEvents.mockReturnValue(newAsyncIterable([ response ]));
-
-        const { listener, mock, complete } = mockAsyncListener<ChaincodeEvent>(2);
-        mock.mockRejectedValueOnce(new Error('EXPECTED_ERROR'));
-
-        void network.onChaincodeEvent('CHAINCODE', listener);
-
-        await complete;
-        expect(mock).toBeCalledTimes(2);
-    });
+        it('delivers events to listener callback', async () => {
+            client.chaincodeEvents.mockReturnValue(newAsyncIterable([ response1, response2 ]));
+    
+            const { listener, mock, complete } = mockAsyncListener<ChaincodeEvent | unknown>(3);
+    
+            void network.newChaincodeEventsRequest('CHAINCODE')
+                .onEvent((err, event) => listener(err || event));
+    
+            await complete;
+            expect(mock.mock.calls.flat()).toEqual(expectedEvents);
+        });
+    
+        it('delivers errors to listener callback', async () => {
+            const expectedError = new Error('EXPECTED_ERROR');
+            const asyncIter: AsyncIterable<ChaincodeEventsResponse> = {
+                async* [Symbol.asyncIterator]() { // eslint-disable-line @typescript-eslint/require-await,require-yield
+                    throw expectedError;
+                }
+            }
+            client.chaincodeEvents.mockReturnValue(asyncIter);
+    
+            const { listener, mock, complete } = mockAsyncListener<ChaincodeEvent | unknown>(1);
+    
+            void network.newChaincodeEventsRequest('CHAINCODE')
+                .onEvent((err, event) => listener(err || event));
+    
+            await complete;
+            expect(mock.mock.calls.flat()).toEqual([expectedError]);
+        });
+    
+        it('listener callback error does not stop event delivery', async () => {
+            client.chaincodeEvents.mockReturnValue(newAsyncIterable([ response1, response2 ]));
+    
+            const { listener, mock, complete } = mockAsyncListener<ChaincodeEvent | unknown>(3);
+            mock.mockRejectedValueOnce(new Error('EXPECTED_ERROR'));
+    
+            void network.newChaincodeEventsRequest('CHAINCODE')
+                .onEvent((err, event) => listener(err || event));
+    
+            await complete;
+            expect(mock.mock.calls.flat()).toEqual(expectedEvents);
+        });
+    })
 });

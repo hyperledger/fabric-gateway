@@ -173,7 +173,7 @@ describe('Transaction', () => {
     it('commit returns block number', async () => {
         const commitResult = new CommitStatusResponse();
         commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
-        commitResult.setBlockNumber('101');
+        commitResult.setBlockNumber(101);
         client.commitStatus.mockResolvedValue(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
