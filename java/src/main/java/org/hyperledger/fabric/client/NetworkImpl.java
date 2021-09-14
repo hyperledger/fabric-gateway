@@ -59,14 +59,14 @@ final class NetworkImpl implements Network {
     @Override
     public ChaincodeEventsRequest newChaincodeEventsRequest(final String chaincodeId) {
         SignedChaincodeEventsRequest signedRequest = newSignedChaincodeEventsRequestProto(chaincodeId);
-        return new ChaincodeEventsRequest(client, signingIdentity, signedRequest);
+        return new ChaincodeEventsRequestImpl(client, signingIdentity, signedRequest);
     }
 
     @Override
     public ChaincodeEventsRequest newSignedChaincodeEventsRequest(final byte[] bytes, final byte[] signature) throws InvalidProtocolBufferException {
         SignedChaincodeEventsRequest signedRequest = SignedChaincodeEventsRequest.parseFrom(bytes);
 
-        ChaincodeEventsRequest result = new ChaincodeEventsRequest(client, signingIdentity, signedRequest);
+        ChaincodeEventsRequestImpl result = new ChaincodeEventsRequestImpl(client, signingIdentity, signedRequest);
         result.setSignature(signature);
 
         return result;

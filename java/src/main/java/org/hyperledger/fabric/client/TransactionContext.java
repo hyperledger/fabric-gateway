@@ -13,7 +13,7 @@ import com.google.protobuf.ByteString;
 import org.bouncycastle.util.encoders.Hex;
 import org.hyperledger.fabric.protos.common.Common;
 
-class TransactionContext {
+final class TransactionContext {
     private static final int NONCE_LENGTH = 24;
     private static final SecureRandom RANDOM = new SecureRandom();
 
