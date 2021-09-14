@@ -53,6 +53,13 @@ public final class OfflineSignTest {
     }
 
     @Test
+    void newProposal_throws_NullPointerException_on_null_transaction_name() {
+        assertThatThrownBy(() -> contract.newProposal(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("transaction name");
+    }
+
+    @Test
     void evaluate_throws_with_no_signer_and_no_explicit_signing() {
         Proposal proposal = contract.newProposal("TRANSACTION_NAME").build();
 

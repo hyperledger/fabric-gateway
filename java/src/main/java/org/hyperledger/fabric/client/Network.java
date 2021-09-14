@@ -27,6 +27,7 @@ public interface Network {
      * Get an instance of a contract on the current network.
      * @param chaincodeId The name of the chaincode that implements the smart contract.
      * @return The contract object.
+     * @throws NullPointerException if the chaincode ID is null.
      */
     Contract getContract(String chaincodeId);
 
@@ -37,6 +38,7 @@ public interface Network {
      * @param chaincodeId The name of the chaincode that implements the smart contract.
      * @param name The class name of the smart contract within the chaincode.
      * @return The contract object.
+     * @throws NullPointerException if the chaincode ID is null.
      */
     Contract getContract(String chaincodeId, String name);
 
@@ -61,6 +63,7 @@ public interface Network {
      * throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC connection error occurs.
      * @param chaincodeId A chaincode ID.
      * @return Ordered sequence of events.
+     * @throws NullPointerException if the chaincode ID is null.
      */
     Iterator<ChaincodeEvent> getChaincodeEvents(String chaincodeId);
 
@@ -69,6 +72,7 @@ public interface Network {
      * specific chaincode. Supports off-line signing flow.
      * @param chaincodeId A chaincode ID.
      * @return A chaincode events request.
+     * @throws NullPointerException if the chaincode ID is null.
      */
     ChaincodeEventsRequest newChaincodeEventsRequest(String chaincodeId);
 

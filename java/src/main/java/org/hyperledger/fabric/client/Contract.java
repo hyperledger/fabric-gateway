@@ -112,6 +112,7 @@ public interface Contract {
      * @return Payload response from the transaction function.
      * @throws CommitException if the transaction fails to commit successfully.
      * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
+     * @throws NullPointerException if the transaction name is null.
      */
     byte[] submitTransaction(String name) throws CommitException;
 
@@ -124,6 +125,7 @@ public interface Contract {
      * @return Payload response from the transaction function.
      * @throws CommitException if the transaction fails to commit successfully.
      * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
+     * @throws NullPointerException if the transaction name is null.
      */
     byte[] submitTransaction(String name, String... args) throws CommitException;
 
@@ -136,6 +138,7 @@ public interface Contract {
      * @return Payload response from the transaction function.
      * @throws CommitException if the transaction fails to commit successfully.
      * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
+     * @throws NullPointerException if the transaction name is null.
      */
     byte[] submitTransaction(String name, byte[]... args) throws CommitException;
 
@@ -146,6 +149,7 @@ public interface Contract {
      * @param name Transaction function name.
      * @return Payload response from the transaction function.
      * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
+     * @throws NullPointerException if the transaction name is null.
      */
     byte[] evaluateTransaction(String name);
 
@@ -157,6 +161,7 @@ public interface Contract {
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
      * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
+     * @throws NullPointerException if the transaction name is null.
      */
     byte[] evaluateTransaction(String name, String... args);
 
@@ -168,6 +173,7 @@ public interface Contract {
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
      * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
+     * @throws NullPointerException if the transaction name is null.
      */
     byte[] evaluateTransaction(String name, byte[]... args);
 
@@ -175,6 +181,7 @@ public interface Contract {
      * Build a new proposal that can be evaluated or sent to peers for endorsement.
      * @param transactionName The name of the transaction to be invoked.
      * @return A proposal builder.
+     * @throws NullPointerException if the transaction name is null.
      */
     Proposal.Builder newProposal(String transactionName);
 

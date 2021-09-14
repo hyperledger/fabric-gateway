@@ -111,4 +111,17 @@ public final class GatewayTest {
 
         assertThat(network.getName()).isEqualTo("CHANNEL_NAME");
     }
+
+    @Test
+    void getNetwork_throws_NullPointerException_on_null_network_name() {
+        gateway = Gateway.newInstance()
+                .identity(identity)
+                .signer(signer)
+                .connection(channel)
+                .connect();
+
+        assertThatThrownBy(() -> gateway.getNetwork(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("network name");
+    }
 }

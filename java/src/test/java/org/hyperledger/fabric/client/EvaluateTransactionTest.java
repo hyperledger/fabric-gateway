@@ -56,6 +56,15 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
+    void throws_NullPointerException_on_null_transaction_name() {
+        Contract contract = network.getContract("CHAINCODE_ID", "CONTRACT_NAME");
+
+        assertThatThrownBy(() -> contract.evaluateTransaction(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("transaction name");
+    }
+
+    @Test
     void returns_gateway_response() {
         doReturn(utils.newEvaluateResponse("MY_RESULT"))
                 .when(stub).evaluate(any());

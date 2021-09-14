@@ -6,6 +6,7 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -26,6 +27,8 @@ final class ContractImpl implements Contract {
 
     ContractImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity,
                  final String channelName, final String chaincodeId, final String contractName) {
+        Objects.requireNonNull(chaincodeId, "chaincode ID");
+
         this.client = client;
         this.signingIdentity = signingIdentity;
         this.channelName = channelName;
@@ -117,6 +120,7 @@ final class ContractImpl implements Contract {
     }
 
     private String qualifiedTransactionName(final String name) {
+        Objects.requireNonNull(name, "transaction name");
         return getContractName()
                 .map(contractName -> contractName + ":" + name)
                 .orElse(name);
