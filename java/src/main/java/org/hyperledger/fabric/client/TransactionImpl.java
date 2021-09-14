@@ -13,7 +13,6 @@ import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
-import org.hyperledger.fabric.protos.peer.TransactionPackage;
 
 final class TransactionImpl implements Transaction {
     private final GatewayGrpc.GatewayBlockingStub client;
@@ -67,9 +66,9 @@ final class TransactionImpl implements Transaction {
 
     @Override
     public byte[] submit() throws CommitException {
-        TransactionPackage.TxValidationCode status = submitAsync().getStatus();
-        if (status != TransactionPackage.TxValidationCode.VALID) {
-            throw new CommitException(getTransactionId(), status);
+        SubmittedTransaction submitted = submitAsync();
+        if (!submitted.isSuccessful()) {
+            throw new CommitException(getTransactionId(), submitted.getStatus());
         }
 
         return getResult();
