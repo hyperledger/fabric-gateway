@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public final class NetworkTest {
     private static final TestUtils testUtils = TestUtils.getInstance();
@@ -48,5 +49,12 @@ public final class NetworkTest {
         Contract contract = network.getContract("CHAINCODE_ID", "CONTRACT");
         assertThat(contract.getChaincodeId()).isEqualTo("CHAINCODE_ID");
         assertThat(contract.getContractName()).get().isEqualTo("CONTRACT");
+    }
+
+    @Test
+    void getContract_throws_NullPointerException_on_null_chaincode_ID() {
+        assertThatThrownBy(() -> network.getContract(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("chaincode ID");
     }
 }

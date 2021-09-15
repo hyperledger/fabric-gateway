@@ -52,6 +52,13 @@ public final class ChaincodeEventsTest {
     }
 
     @Test
+    void throws_NullPointerException_on_null_chaincode_ID() {
+        assertThatThrownBy(() -> network.getChaincodeEvents(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("chaincode ID");
+    }
+
+    @Test
     void throws_on_connection_error() {
         doThrow(new StatusRuntimeException(Status.UNAVAILABLE)).when(stub).chaincodeEvents(any());
 

@@ -62,6 +62,15 @@ public final class SubmitTransactionTest {
     }
 
     @Test
+    void throws_NullPointerException_on_null_transaction_name() {
+        Contract contract = network.getContract("CHAINCODE_ID", "CONTRACT_NAME");
+
+        assertThatThrownBy(() -> contract.submitTransaction(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("transaction name");
+    }
+
+    @Test
     void returns_gateway_response() throws Exception {
         doReturn(utils.newEndorseResponse("MY_RESULT"))
                 .when(stub).endorse(any());

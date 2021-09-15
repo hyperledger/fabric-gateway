@@ -7,6 +7,7 @@
 package org.hyperledger.fabric.client;
 
 import java.util.Iterator;
+import java.util.Objects;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -21,6 +22,8 @@ final class NetworkImpl implements Network {
     private final String channelName;
 
     NetworkImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity, final String channelName) {
+        Objects.requireNonNull(channelName, "network name");
+
         this.client = client;
         this.signingIdentity = signingIdentity;
         this.channelName = channelName;
@@ -58,6 +61,8 @@ final class NetworkImpl implements Network {
 
     @Override
     public ChaincodeEventsRequest newChaincodeEventsRequest(final String chaincodeId) {
+        Objects.requireNonNull(chaincodeId, "chaincode ID");
+
         SignedChaincodeEventsRequest signedRequest = newSignedChaincodeEventsRequestProto(chaincodeId);
         return new ChaincodeEventsRequestImpl(client, signingIdentity, signedRequest);
     }
