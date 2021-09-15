@@ -40,7 +40,7 @@ func (proposal *Proposal) Digest() []byte {
 
 // TransactionID for the proposal.
 func (proposal *Proposal) TransactionID() string {
-	return proposal.proposedTransaction.TransactionId
+	return proposal.proposedTransaction.GetTransactionId()
 }
 
 // Endorse the proposal to obtain an endorsed transaction for submission to the orderer.
@@ -53,10 +53,10 @@ func (proposal *Proposal) Endorse() (*Transaction, error) {
 	defer cancel()
 
 	endorseRequest := &gateway.EndorseRequest{
-		TransactionId:          proposal.proposedTransaction.TransactionId,
+		TransactionId:          proposal.proposedTransaction.GetTransactionId(),
 		ChannelId:              proposal.channelID,
-		ProposedTransaction:    proposal.proposedTransaction.Proposal,
-		EndorsingOrganizations: proposal.proposedTransaction.EndorsingOrganizations,
+		ProposedTransaction:    proposal.proposedTransaction.GetProposal(),
+		EndorsingOrganizations: proposal.proposedTransaction.GetEndorsingOrganizations(),
 	}
 	response, err := proposal.client.Endorse(ctx, endorseRequest)
 	if err != nil {
@@ -64,9 +64,9 @@ func (proposal *Proposal) Endorse() (*Transaction, error) {
 	}
 
 	preparedTransaction := &gateway.PreparedTransaction{
-		TransactionId: proposal.proposedTransaction.TransactionId,
-		Envelope:      response.PreparedTransaction,
-		Result:        response.Result,
+		TransactionId: proposal.proposedTransaction.GetTransactionId(),
+		Envelope:      response.GetPreparedTransaction(),
+		Result:        response.GetResult(),
 	}
 	result := &Transaction{
 		client:              proposal.client,
@@ -87,17 +87,17 @@ func (proposal *Proposal) Evaluate() ([]byte, error) {
 	defer cancel()
 
 	evaluateRequest := &gateway.EvaluateRequest{
-		TransactionId:       proposal.proposedTransaction.TransactionId,
+		TransactionId:       proposal.proposedTransaction.GetTransactionId(),
 		ChannelId:           proposal.channelID,
-		ProposedTransaction: proposal.proposedTransaction.Proposal,
-		TargetOrganizations: proposal.proposedTransaction.EndorsingOrganizations,
+		ProposedTransaction: proposal.proposedTransaction.GetProposal(),
+		TargetOrganizations: proposal.proposedTransaction.GetEndorsingOrganizations(),
 	}
 	response, err := proposal.client.Evaluate(ctx, evaluateRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	return response.Result.Payload, nil
+	return response.GetResult().GetPayload(), nil
 }
 
 func (proposal *Proposal) setSignature(signature []byte) {
@@ -105,7 +105,7 @@ func (proposal *Proposal) setSignature(signature []byte) {
 }
 
 func (proposal *Proposal) isSigned() bool {
-	return len(proposal.proposedTransaction.Proposal.Signature) > 0
+	return len(proposal.proposedTransaction.GetProposal().GetSignature()) > 0
 }
 
 func (proposal *Proposal) sign() error {

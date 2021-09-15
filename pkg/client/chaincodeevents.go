@@ -33,7 +33,7 @@ func (events *ChaincodeEventsRequest) Bytes() ([]byte, error) {
 
 // Digest of the chaincode events request. This is used to generate a digital signature.
 func (events *ChaincodeEventsRequest) Digest() []byte {
-	return events.signingID.Hash(events.signedRequest.Request)
+	return events.signingID.Hash(events.signedRequest.GetRequest())
 }
 
 // Events returns a channel from which chaincode events can be read.
@@ -98,13 +98,13 @@ type ChaincodeEvent struct {
 }
 
 func deliverChaincodeEvents(response *gateway.ChaincodeEventsResponse, send chan<- *ChaincodeEvent) {
-	for _, event := range response.Events {
+	for _, event := range response.GetEvents() {
 		send <- &ChaincodeEvent{
-			BlockNumber:   response.BlockNumber,
-			TransactionID: event.TxId,
-			ChaincodeID:   event.ChaincodeId,
-			EventName:     event.EventName,
-			Payload:       event.Payload,
+			BlockNumber:   response.GetBlockNumber(),
+			TransactionID: event.GetTxId(),
+			ChaincodeID:   event.GetChaincodeId(),
+			EventName:     event.GetEventName(),
+			Payload:       event.GetPayload(),
 		}
 	}
 }
