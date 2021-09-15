@@ -51,7 +51,7 @@ func (commit *Commit) Bytes() ([]byte, error) {
 
 // Digest of the commit status request. This is used to generate a digital signature.
 func (commit *Commit) Digest() []byte {
-	return commit.signingID.Hash(commit.signedRequest.Request)
+	return commit.signingID.Hash(commit.signedRequest.GetRequest())
 }
 
 // Status of the committed transaction. If the transaction has not yet committed, this call blocks until the commit
@@ -62,7 +62,7 @@ func (commit *Commit) Status() (peer.TxValidationCode, error) {
 		return 0, err
 	}
 
-	return response.Result, nil
+	return response.GetResult(), nil
 }
 
 // Successful returns true if the transaction committed successfully; otherwise false. If the transaction has not yet
@@ -89,7 +89,7 @@ func (commit *Commit) BlockNumber() (uint64, error) {
 		return 0, err
 	}
 
-	return response.BlockNumber, nil
+	return response.GetBlockNumber(), nil
 }
 
 func (commit *Commit) commitStatus() (*gateway.CommitStatusResponse, error) {
@@ -129,7 +129,7 @@ func (commit *Commit) sign() error {
 }
 
 func (commit *Commit) isSigned() bool {
-	return len(commit.signedRequest.Signature) > 0
+	return len(commit.signedRequest.GetSignature()) > 0
 }
 
 func (commit *Commit) setSignature(signature []byte) {

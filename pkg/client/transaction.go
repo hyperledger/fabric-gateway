@@ -25,7 +25,7 @@ type Transaction struct {
 
 // Result of the proposed transaction invocation.
 func (transaction *Transaction) Result() []byte {
-	return transaction.preparedTransaction.Result.Payload
+	return transaction.preparedTransaction.GetResult().GetPayload()
 }
 
 // Bytes of the serialized transaction.
@@ -40,12 +40,12 @@ func (transaction *Transaction) Bytes() ([]byte, error) {
 
 // Digest of the transaction. This is used to generate a digital signature.
 func (transaction *Transaction) Digest() []byte {
-	return transaction.signingID.Hash(transaction.preparedTransaction.Envelope.Payload)
+	return transaction.signingID.Hash(transaction.preparedTransaction.GetEnvelope().GetPayload())
 }
 
 // TransactionID of the transaction.
 func (transaction *Transaction) TransactionID() string {
-	return transaction.preparedTransaction.TransactionId
+	return transaction.preparedTransaction.GetTransactionId()
 }
 
 // Submit the transaction to the orderer for commit to the ledger.
@@ -66,7 +66,7 @@ func (transaction *Transaction) Submit() (*Commit, error) {
 	submitRequest := &gateway.SubmitRequest{
 		TransactionId:       transaction.TransactionID(),
 		ChannelId:           transaction.channelID,
-		PreparedTransaction: transaction.preparedTransaction.Envelope,
+		PreparedTransaction: transaction.preparedTransaction.GetEnvelope(),
 	}
 	_, err = transaction.client.Submit(ctx, submitRequest)
 	if err != nil {
@@ -93,7 +93,7 @@ func (transaction *Transaction) sign() error {
 }
 
 func (transaction *Transaction) isSigned() bool {
-	return len(transaction.preparedTransaction.Envelope.Signature) > 0
+	return len(transaction.preparedTransaction.GetEnvelope().GetSignature()) > 0
 }
 
 func (transaction *Transaction) setSignature(signature []byte) {
