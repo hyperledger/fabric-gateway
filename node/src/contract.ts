@@ -5,7 +5,7 @@
  */
 
 import { GatewayClient } from './client';
-import { TxStatusString } from './commit';
+import { CommitStatusNames } from './commit';
 import { Proposal, ProposalImpl } from './proposal';
 import { ProposalBuilder, ProposalOptions } from './proposalbuilder';
 import { PreparedTransaction, ProposedTransaction } from './protos/gateway/gateway_pb';
@@ -204,7 +204,7 @@ export class ContractImpl implements Contract {
         const successful = await submitted.isSuccessful();
         if (!successful) {
             const status = await submitted.getStatus();
-            throw new Error(`Transaction ${submitted.getTransactionId()} failed to commit with status code ${status} (${TxStatusString[status]})`)
+            throw new Error(`Transaction ${submitted.getTransactionId()} failed to commit with status code ${status} (${CommitStatusNames[status]})`)
         }
 
         return submitted.getResult();

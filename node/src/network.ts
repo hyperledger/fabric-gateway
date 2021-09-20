@@ -46,7 +46,7 @@ export interface Network {
      * @returns Chaincode events.
      * @example
      * ```
-     * const events = await network.getChaincodeEvents(chaincodeId);
+     * const events = await network.getChaincodeEvents(chaincodeId, { startBlock: BigInt(101) });
      * for async (const event of events) {
      *     // Process event
      * }

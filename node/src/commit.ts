@@ -12,12 +12,25 @@ import { Signable } from './signable';
 import { SigningIdentity } from './signingidentity';
 
 /**
+ * Enumeration of transaction status codes.
+ */
+export const CommitStatus = Object.freeze(TxValidationCode);
+
+export const CommitStatusNames = Object.freeze(
+    Object.fromEntries(
+        Object.entries(CommitStatus)
+            .filter(([_, code]) => typeof code === 'number') // eslint-disable-line @typescript-eslint/no-unused-vars
+            .map(([name, code]) => [code, name])
+    ) as { [P in keyof typeof CommitStatus as typeof CommitStatus[P]]: P }
+);
+ 
+/**
  * Allows access to information about a transaction that is committed to the ledger.
  */
 export interface Commit extends Signable {
     /**
      * Get the committed transaction status code. If the transaction has not yet committed, this method blocks until
-     * the commit occurs.
+     * the commit occurs. The return value corresponds to one of the values enumerated by {@link CommitStatus}.
      */
     getStatus(): Promise<TxValidationCodeMap[keyof TxValidationCodeMap]>;
 
@@ -46,12 +59,6 @@ export interface CommitImplOptions {
     readonly transactionId: string;
     readonly signedRequest: SignedCommitStatusRequest;
 }
-
-type TxStatusStringMap = { [K in keyof TxValidationCodeMap as TxValidationCodeMap[K]]: K };
-
-export const TxStatusString = Object.fromEntries(
-    Object.entries(TxValidationCode).map(([k, v]) => [v, k])
-) as TxStatusStringMap;
 
 export class CommitImpl implements Commit {
     readonly #client: GatewayClient;
@@ -82,12 +89,12 @@ export class CommitImpl implements Commit {
 
     async getStatus(): Promise<TxValidationCodeMap[keyof TxValidationCodeMap]> {
         const response = await this.getCommitStatus();
-        return response.getResult() ?? TxValidationCode.INVALID_OTHER_REASON;
+        return response.getResult() ?? CommitStatus.INVALID_OTHER_REASON;
     }
 
     async isSuccessful(): Promise<boolean> {
         const status = await this.getStatus();
-        return status === TxValidationCode.VALID;
+        return status === CommitStatus.VALID;
     }
 
     getTransactionId(): string {

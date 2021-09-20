@@ -9,9 +9,9 @@ import { GatewayClient } from './client';
 import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, SignedChaincodeEventsRequest as SignedChaincodeEventsRequestProto } from './protos/gateway/gateway_pb';
 import { Signable } from './signable';
 import { SigningIdentity } from './signingidentity';
-import { Callback } from './utils';
+import { ErrorFirstCallback } from './utils';
 
-export type ChaincodeEventCallback = Callback<ChaincodeEvent>
+export type ChaincodeEventCallback = ErrorFirstCallback<ChaincodeEvent>
 
 /**
  * Delivers events emitted by transaction functions in a specific chaincode.
@@ -20,6 +20,16 @@ export interface ChaincodeEventsRequest extends Signable {
     /**
      * Get chaincode events emitted by transaction functions of a specific chaincode.
      * @param callback - Event callback function.
+     * @example
+     * ```
+     * await request.onEvent((err, event) => {
+     *     if (err) {
+     *         // Handle connection error
+     *     } else {
+     *         // Process event
+     *     }
+     * });
+     * ```
      */
     onEvent(callback: ChaincodeEventCallback): Promise<void>;
 
