@@ -1,663 +1,103 @@
-<!doctype html>
-<html class="default no-js">
-<head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>Contract | fabric-gateway</title>
-	<meta name="description" content="Documentation for fabric-gateway">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="../assets/css/main.css">
-	<script async src="../assets/js/search.js" id="search-script"></script>
-</head>
-<body>
-<header>
-	<div class="tsd-page-toolbar">
-		<div class="container">
-			<div class="table-wrap">
-				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.json" data-base="..">
-					<div class="field">
-						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
-						<input id="tsd-search-field" type="text" />
-					</div>
-					<ul class="results">
-						<li class="state loading">Preparing search index...</li>
-						<li class="state failure">The search index is not available</li>
-					</ul>
-					<a href="../index.html" class="title">fabric-gateway</a>
-				</div>
-				<div class="table-cell" id="tsd-widgets">
-					<div id="tsd-filter">
-						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
-						<div class="tsd-filter-group">
-							<div class="tsd-select" id="tsd-filter-visibility">
-								<span class="tsd-select-label">All</span>
-								<ul class="tsd-select-list">
-									<li data-value="public">Public</li>
-									<li data-value="protected">Public/Protected</li>
-									<li data-value="private" class="selected">All</li>
-								</ul>
-							</div>
-							<input type="checkbox" id="tsd-filter-inherited" checked />
-							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
-							<input type="checkbox" id="tsd-filter-externals" checked />
-							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
-						</div>
-					</div>
-					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
-				</div>
-			</div>
-		</div>
-	</div>
-	<div class="tsd-page-title">
-		<div class="container">
-			<ul class="tsd-breadcrumb">
-				<li>
-					<a href="../modules.html">fabric-gateway</a>
-				</li>
-				<li>
-					<a href="Contract.html">Contract</a>
-				</li>
-			</ul>
-			<h1>Interface Contract</h1>
-		</div>
-	</div>
-</header>
-<div class="container container-main">
-	<div class="row">
-		<div class="col-8 col-content">
-			<section class="tsd-panel tsd-comment">
-				<div class="tsd-comment tsd-typography">
-					<div class="lead">
-						<p>Represents a smart contract, and allows applications to:</p>
-						<ul>
-							<li>Evaluate transactions that query state from the ledger using <a href="Contract.html#evaluateTransaction">evaluateTransaction</a>.</li>
-							<li>Submit transactions that store state to the ledger using <a href="Contract.html#submitTransaction">submitTransaction</a>.</li>
-						</ul>
-					</div>
-					<p>For more complex transaction invocations, such as including private data, transactions can be evaluated or
-						submitted using <a href="Contract.html#evaluate">evaluate</a> or <a href="Contract.html#submit">submit</a> respectively. The result of a submitted transaction can be
-					accessed prior to its commit to the ledger using <a href="Contract.html#submitAsync">submitAsync</a>.</p>
-					<p>By default, proposal, transaction and commit status messages will be signed using the signing implementation
-						specified when connecting the Gateway. In cases where an external client holds the signing credentials, a default
-					signing implementation can be omitted and off-line signing can be carried out by:</p>
-					<ol>
-						<li>Returning the serialized proposal, transaction or commit status message along with its digest to the client for
-						them to generate a signature.</li>
-						<li>With the serialized message and signature received from the client to create a signed proposal or transaction
-							using the Contract&#39;s <a href="Contract.html#newSignedProposal">newSignedProposal</a> or <a href="Contract.html#newSignedTransaction">newSignedTransaction</a> methods respectively, or create a
-						signed commit using the Network&#39;s <a href="Network.html#newSignedCommit">Network.newSignedCommit</a> method.</li>
-					</ol>
-					<dl class="tsd-comment-tags">
-						<dt>example</dt>
-						<dd><p>Evaluate transaction</p>
-							<pre><code><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">result</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">contract</span><span style="color: #000000">.</span><span style="color: #795E26">evaluate</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;transactionName&#039;</span><span style="color: #000000">, {</span>
-<span style="color: #000000">    </span><span style="color: #001080">arguments:</span><span style="color: #000000"> [</span><span style="color: #A31515">&#039;one&#039;</span><span style="color: #000000">, </span><span style="color: #A31515">&#039;two&#039;</span><span style="color: #000000">],</span>
-<span style="color: #000000">    </span><span style="color: #008000">// Specify additional proposal options here</span>
-<span style="color: #000000">});</span>
+<!DOCTYPE html><html class="default no-js"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Contract | fabric-gateway</title><meta name="description" content="Documentation for fabric-gateway"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script async src="../assets/search.js" id="search-script"></script></head><body><header><div class="tsd-page-toolbar"><div class="container"><div class="table-wrap"><div class="table-cell" id="tsd-search" data-base=".."><div class="field"><label for="tsd-search-field" class="tsd-widget search no-caption">Search</label><input type="text" id="tsd-search-field"/></div><ul class="results"><li class="state loading">Preparing search index...</li><li class="state failure">The search index is not available</li></ul><a href="../index.html" class="title">fabric-gateway</a></div><div class="table-cell" id="tsd-widgets"><div id="tsd-filter"><a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a><div class="tsd-filter-group"><div class="tsd-select" id="tsd-filter-visibility"><span class="tsd-select-label">All</span><ul class="tsd-select-list"><li data-value="public">Public</li><li data-value="protected">Public/Protected</li><li data-value="private" class="selected">All</li></ul></div> <input type="checkbox" id="tsd-filter-inherited" checked/><label class="tsd-widget" for="tsd-filter-inherited">Inherited</label><input type="checkbox" id="tsd-filter-externals" checked/><label class="tsd-widget" for="tsd-filter-externals">Externals</label></div></div><a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a></div></div></div></div><div class="tsd-page-title"><div class="container"><ul class="tsd-breadcrumb"><li><a href="../modules.html">fabric-gateway</a></li><li><a href="Contract.html">Contract</a></li></ul><h1>Interface Contract</h1></div></div></header><div class="container container-main"><div class="row"><div class="col-8 col-content"><section class="tsd-panel tsd-comment"><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Represents a smart contract, and allows applications to:</p>
+<ul>
+<li>Evaluate transactions that query state from the ledger using <a href="Contract.html#evaluateTransaction">evaluateTransaction</a>.</li>
+<li>Submit transactions that store state to the ledger using <a href="Contract.html#submitTransaction">submitTransaction</a>.</li>
+</ul>
+</div><div><p>For more complex transaction invocations, such as including private data, transactions can be evaluated or
+submitted using <a href="Contract.html#evaluate">evaluate</a> or <a href="Contract.html#submit">submit</a> respectively. The result of a submitted transaction can be
+accessed prior to its commit to the ledger using <a href="Contract.html#submitAsync">submitAsync</a>.</p>
+<p>By default, proposal, transaction and commit status messages will be signed using the signing implementation
+specified when connecting the Gateway. In cases where an external client holds the signing credentials, a default
+signing implementation can be omitted and off-line signing can be carried out by:</p>
+<ol>
+<li>Returning the serialized proposal, transaction or commit status message along with its digest to the client for
+them to generate a signature.</li>
+<li>With the serialized message and signature received from the client to create a signed proposal or transaction
+using the Contract&#39;s <a href="Contract.html#newSignedProposal">newSignedProposal</a> or <a href="Contract.html#newSignedTransaction">newSignedTransaction</a> methods respectively, or create a
+signed commit using the Network&#39;s <a href="Network.html#newSignedCommit">Network.newSignedCommit</a> method.</li>
+</ol>
+</div><dl class="tsd-comment-tags"><dt>example</dt><dd><p>Evaluate transaction</p>
+<pre><code><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">result</span><span class="hl-1"> = </span><span class="hl-0">await</span><span class="hl-1"> </span><span class="hl-2">contract</span><span class="hl-1">.</span><span class="hl-5">evaluate</span><span class="hl-1">(</span><span class="hl-3">&#39;transactionName&#39;</span><span class="hl-1">, {</span><br/><span class="hl-1">    </span><span class="hl-2">arguments:</span><span class="hl-1"> [</span><span class="hl-3">&#39;one&#39;</span><span class="hl-1">, </span><span class="hl-3">&#39;two&#39;</span><span class="hl-1">],</span><br/><span class="hl-1">    </span><span class="hl-8">// Specify additional proposal options here</span><br/><span class="hl-1">});</span>
 </code></pre>
-						</dd>
-						<dt>example</dt>
-						<dd><p>Submit transaction</p>
-							<pre><code><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">result</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">contract</span><span style="color: #000000">.</span><span style="color: #795E26">submit</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;transactionName&#039;</span><span style="color: #000000">, {</span>
-<span style="color: #000000">    </span><span style="color: #001080">arguments:</span><span style="color: #000000"> [</span><span style="color: #A31515">&#039;one&#039;</span><span style="color: #000000">, </span><span style="color: #A31515">&#039;two&#039;</span><span style="color: #000000">],</span>
-<span style="color: #000000">    </span><span style="color: #008000">// Specify additional proposal options here</span>
-<span style="color: #000000">});</span>
+</dd><dt>example</dt><dd><p>Submit transaction</p>
+<pre><code><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">result</span><span class="hl-1"> = </span><span class="hl-0">await</span><span class="hl-1"> </span><span class="hl-2">contract</span><span class="hl-1">.</span><span class="hl-5">submit</span><span class="hl-1">(</span><span class="hl-3">&#39;transactionName&#39;</span><span class="hl-1">, {</span><br/><span class="hl-1">    </span><span class="hl-2">arguments:</span><span class="hl-1"> [</span><span class="hl-3">&#39;one&#39;</span><span class="hl-1">, </span><span class="hl-3">&#39;two&#39;</span><span class="hl-1">],</span><br/><span class="hl-1">    </span><span class="hl-8">// Specify additional proposal options here</span><br/><span class="hl-1">});</span>
 </code></pre>
-						</dd>
-						<dt>example</dt>
-						<dd><p>Async submit</p>
-							<pre><code><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">commit</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">contract</span><span style="color: #000000">.</span><span style="color: #795E26">submitAsync</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;transactionName&#039;</span><span style="color: #000000">, {</span>
-<span style="color: #000000">    </span><span style="color: #001080">arguments:</span><span style="color: #000000"> [</span><span style="color: #A31515">&#039;one&#039;</span><span style="color: #000000">, </span><span style="color: #A31515">&#039;two&#039;</span><span style="color: #000000">]</span>
-<span style="color: #000000">});</span>
-<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">result</span><span style="color: #000000"> = </span><span style="color: #001080">submitted</span><span style="color: #000000">.</span><span style="color: #795E26">getResult</span><span style="color: #000000">();</span>
-<span style="color: #008000">// Update UI or reply to REST request before waiting for commit status</span>
-<span style="color: #AF00DB">if</span><span style="color: #000000"> (!</span><span style="color: #001080">commit</span><span style="color: #000000">.</span><span style="color: #795E26">isSuccessful</span><span style="color: #000000">()) {</span>
-<span style="color: #000000">    </span><span style="color: #AF00DB">throw</span><span style="color: #000000"> </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #267F99">Error</span><span style="color: #000000">(</span><span style="color: #A31515">`</span><span style="color: #0000FF">${</span><span style="color: #001080">commit</span><span style="color: #000000FF">.</span><span style="color: #795E26">getTransactionId</span><span style="color: #000000FF">()</span><span style="color: #0000FF">}</span><span style="color: #A31515"> failed: </span><span style="color: #0000FF">${</span><span style="color: #001080">commit</span><span style="color: #000000FF">.</span><span style="color: #795E26">getStatus</span><span style="color: #000000FF">()</span><span style="color: #0000FF">}</span><span style="color: #A31515">`</span><span style="color: #000000">);</span>
-<span style="color: #000000">}</span>
+</dd><dt>example</dt><dd><p>Async submit</p>
+<pre><code><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">commit</span><span class="hl-1"> = </span><span class="hl-0">await</span><span class="hl-1"> </span><span class="hl-2">contract</span><span class="hl-1">.</span><span class="hl-5">submitAsync</span><span class="hl-1">(</span><span class="hl-3">&#39;transactionName&#39;</span><span class="hl-1">, {</span><br/><span class="hl-1">    </span><span class="hl-2">arguments:</span><span class="hl-1"> [</span><span class="hl-3">&#39;one&#39;</span><span class="hl-1">, </span><span class="hl-3">&#39;two&#39;</span><span class="hl-1">]</span><br/><span class="hl-1">});</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">result</span><span class="hl-1"> = </span><span class="hl-2">submitted</span><span class="hl-1">.</span><span class="hl-5">getResult</span><span class="hl-1">();</span><br/><span class="hl-8">// Update UI or reply to REST request before waiting for commit status</span><br/><span class="hl-0">if</span><span class="hl-1"> (!</span><span class="hl-2">commit</span><span class="hl-1">.</span><span class="hl-5">isSuccessful</span><span class="hl-1">()) {</span><br/><span class="hl-1">    </span><span class="hl-0">throw</span><span class="hl-1"> </span><span class="hl-4">new</span><span class="hl-1"> </span><span class="hl-7">Error</span><span class="hl-1">(</span><span class="hl-3">`</span><span class="hl-4">${</span><span class="hl-2">commit</span><span class="hl-9">.</span><span class="hl-5">getTransactionId</span><span class="hl-9">()</span><span class="hl-4">}</span><span class="hl-3"> failed: </span><span class="hl-4">${</span><span class="hl-2">commit</span><span class="hl-9">.</span><span class="hl-5">getStatus</span><span class="hl-9">()</span><span class="hl-4">}</span><span class="hl-3">`</span><span class="hl-1">);</span><br/><span class="hl-1">}</span>
 </code></pre>
-						</dd>
-						<dt>example</dt>
-						<dd><p>Off-line signing</p>
-							<pre><code><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">unsignedProposal</span><span style="color: #000000"> = </span><span style="color: #001080">contract</span><span style="color: #000000">.</span><span style="color: #795E26">newProposal</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;transactionName&#039;</span><span style="color: #000000">);</span>
-<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">proposalBytes</span><span style="color: #000000"> = </span><span style="color: #001080">unsignedProposal</span><span style="color: #000000">.</span><span style="color: #795E26">getBytes</span><span style="color: #000000">();</span>
-<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">proposalDigest</span><span style="color: #000000"> = </span><span style="color: #001080">unsignedProposal</span><span style="color: #000000">.</span><span style="color: #795E26">getDigest</span><span style="color: #000000">();</span>
-<span style="color: #008000">// Generate signature from digest</span>
-<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">signedProposal</span><span style="color: #000000"> = </span><span style="color: #001080">contract</span><span style="color: #000000">.</span><span style="color: #795E26">newSignedProposal</span><span style="color: #000000">(</span><span style="color: #001080">proposalBytes</span><span style="color: #000000">, </span><span style="color: #001080">proposalSignature</span><span style="color: #000000">);</span>
+</dd><dt>example</dt><dd><p>Off-line signing</p>
+<pre><code><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">unsignedProposal</span><span class="hl-1"> = </span><span class="hl-2">contract</span><span class="hl-1">.</span><span class="hl-5">newProposal</span><span class="hl-1">(</span><span class="hl-3">&#39;transactionName&#39;</span><span class="hl-1">);</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">proposalBytes</span><span class="hl-1"> = </span><span class="hl-2">unsignedProposal</span><span class="hl-1">.</span><span class="hl-5">getBytes</span><span class="hl-1">();</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">proposalDigest</span><span class="hl-1"> = </span><span class="hl-2">unsignedProposal</span><span class="hl-1">.</span><span class="hl-5">getDigest</span><span class="hl-1">();</span><br/><span class="hl-8">// Generate signature from digest</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-6">signedProposal</span><span class="hl-1"> = </span><span class="hl-2">contract</span><span class="hl-1">.</span><span class="hl-5">newSignedProposal</span><span class="hl-1">(</span><span class="hl-2">proposalBytes</span><span class="hl-1">, </span><span class="hl-2">proposalSignature</span><span class="hl-1">);</span>
 </code></pre>
-						</dd>
-					</dl>
-				</div>
-			</section>
-			<section class="tsd-panel tsd-hierarchy">
-				<h3>Hierarchy</h3>
-				<ul class="tsd-hierarchy">
-					<li>
-						<span class="target">Contract</span>
-					</li>
-				</ul>
-			</section>
-			<section class="tsd-panel-group tsd-index-group">
-				<h2>Index</h2>
-				<section class="tsd-panel tsd-index-panel">
-					<div class="tsd-index-content">
-						<section class="tsd-index-section ">
-							<h3>Methods</h3>
-							<ul class="tsd-index-list">
-								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#evaluate" class="tsd-kind-icon">evaluate</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#evaluateTransaction" class="tsd-kind-icon">evaluate<wbr>Transaction</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#getChaincodeId" class="tsd-kind-icon">get<wbr>Chaincode<wbr>Id</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#getContractName" class="tsd-kind-icon">get<wbr>Contract<wbr>Name</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#newProposal" class="tsd-kind-icon">new<wbr>Proposal</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#newSignedProposal" class="tsd-kind-icon">new<wbr>Signed<wbr>Proposal</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#newSignedTransaction" class="tsd-kind-icon">new<wbr>Signed<wbr>Transaction</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#submit" class="tsd-kind-icon">submit</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#submitAsync" class="tsd-kind-icon">submit<wbr>Async</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#submitTransaction" class="tsd-kind-icon">submit<wbr>Transaction</a></li>
-							</ul>
-						</section>
-					</div>
-				</section>
-			</section>
-			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Methods</h2>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
-					<a name="evaluate" class="tsd-anchor"></a>
-					<h3>evaluate</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
-						<li class="tsd-signature tsd-kind-icon">evaluate<span class="tsd-signature-symbol">(</span>transactionName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="ProposalOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">ProposalOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/48689c5/node/src/contract.ts#L111">contract.ts:111</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
-										peers but the transaction will not be sent to the ordering service and so will not be committed to the ledger.
-									This can be used for querying the world state.</p>
-								</div>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>transactionName: <span class="tsd-signature-type">string</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Name of the transaction to invoke.</p>
-									</div>
-								</li>
-								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="ProposalOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">ProposalOptions</a></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Transaction invocation options.</p>
-									</div>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>The result returned by the transaction function.</p>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
-					<a name="evaluateTransaction" class="tsd-anchor"></a>
-					<h3>evaluate<wbr>Transaction</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
-						<li class="tsd-signature tsd-kind-icon">evaluate<wbr>Transaction<span class="tsd-signature-symbol">(</span>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, <span class="tsd-signature-symbol">...</span>args<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/48689c5/node/src/contract.ts#L91">contract.ts:91</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
-										peers but the transaction will not be sent to the ordering service and so will not be committed to the ledger.
-									This can be used for querying the world state.</p>
-								</div>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>name: <span class="tsd-signature-type">string</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Name of the transaction to invoke.</p>
-									</div>
-								</li>
-								<li>
-									<h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>args: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Transaction arguments.</p>
-									</div>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>The result returned by the transaction function.</p>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
-					<a name="getChaincodeId" class="tsd-anchor"></a>
-					<h3>get<wbr>Chaincode<wbr>Id</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
-						<li class="tsd-signature tsd-kind-icon">get<wbr>Chaincode<wbr>Id<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/48689c5/node/src/contract.ts#L75">contract.ts:75</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Get the ID of the chaincode that contains this smart contract.</p>
-								</div>
-							</div>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
-					<a name="getContractName" class="tsd-anchor"></a>
-					<h3>get<wbr>Contract<wbr>Name</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
-						<li class="tsd-signature tsd-kind-icon">get<wbr>Contract<wbr>Name<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/48689c5/node/src/contract.ts#L81">contract.ts:81</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Get the name of the smart contract within the chaincode.</p>
-								</div>
-							</div>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h4>
-							<p>The contract name, or <code>undefined</code> for the default smart contract.</p>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
-					<a name="newProposal" class="tsd-anchor"></a>
-					<h3>new<wbr>Proposal</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
-						<li class="tsd-signature tsd-kind-icon">new<wbr>Proposal<span class="tsd-signature-symbol">(</span>transactionName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="ProposalOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">ProposalOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Proposal.html" class="tsd-signature-type" data-tsd-kind="Interface">Proposal</a></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/48689c5/node/src/contract.ts#L139">contract.ts:139</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Create a transaction proposal that can be evaluated or endorsed. Supports off-line signing flow.</p>
-								</div>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>transactionName: <span class="tsd-signature-type">string</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Name of the transaction to invoke.</p>
-									</div>
-								</li>
-								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="ProposalOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">ProposalOptions</a></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Transaction invocation options.</p>
-									</div>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="Proposal.html" class="tsd-signature-type" data-tsd-kind="Interface">Proposal</a></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
-					<a name="newSignedProposal" class="tsd-anchor"></a>
-					<h3>new<wbr>Signed<wbr>Proposal</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
-						<li class="tsd-signature tsd-kind-icon">new<wbr>Signed<wbr>Proposal<span class="tsd-signature-symbol">(</span>bytes<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Uint8Array</span>, signature<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Proposal.html" class="tsd-signature-type" data-tsd-kind="Interface">Proposal</a></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/48689c5/node/src/contract.ts#L147">contract.ts:147</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Create a proposal with the specified digital signature. Supports off-line signing flow.</p>
-								</div>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>bytes: <span class="tsd-signature-type">Uint8Array</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Serialized proposal.</p>
-									</div>
-								</li>
-								<li>
-									<h5>signature: <span class="tsd-signature-type">Uint8Array</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Digital signature.</p>
-									</div>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="Proposal.html" class="tsd-signature-type" data-tsd-kind="Interface">Proposal</a></h4>
-							<p>A signed proposal.</p>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
-					<a name="newSignedTransaction" class="tsd-anchor"></a>
-					<h3>new<wbr>Signed<wbr>Transaction</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
-						<li class="tsd-signature tsd-kind-icon">new<wbr>Signed<wbr>Transaction<span class="tsd-signature-symbol">(</span>bytes<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Uint8Array</span>, signature<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Transaction.html" class="tsd-signature-type" data-tsd-kind="Interface">Transaction</a></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/48689c5/node/src/contract.ts#L155">contract.ts:155</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Create a transaction with the specified digital signature. Supports off-line signing flow.</p>
-								</div>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>bytes: <span class="tsd-signature-type">Uint8Array</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Serialized proposal.</p>
-									</div>
-								</li>
-								<li>
-									<h5>signature: <span class="tsd-signature-type">Uint8Array</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Digital signature.</p>
-									</div>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="Transaction.html" class="tsd-signature-type" data-tsd-kind="Interface">Transaction</a></h4>
-							<p>A signed transaction.</p>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
-					<a name="submit" class="tsd-anchor"></a>
-					<h3>submit</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
-						<li class="tsd-signature tsd-kind-icon">submit<span class="tsd-signature-symbol">(</span>transactionName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="ProposalOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">ProposalOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/48689c5/node/src/contract.ts#L121">contract.ts:121</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
-										transaction function will be evaluated on endorsing peers and then submitted to the ordering service to be
-									committed to the ledger.</p>
-								</div>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>transactionName: <span class="tsd-signature-type">string</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Name of the transaction to invoke.</p>
-									</div>
-								</li>
-								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="ProposalOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">ProposalOptions</a></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Transaction invocation options.</p>
-									</div>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>The result returned by the transaction function.</p>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
-					<a name="submitAsync" class="tsd-anchor"></a>
-					<h3>submit<wbr>Async</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
-						<li class="tsd-signature tsd-kind-icon">submit<wbr>Async<span class="tsd-signature-symbol">(</span>transactionName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="ProposalOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">ProposalOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="SubmittedTransaction.html" class="tsd-signature-type" data-tsd-kind="Interface">SubmittedTransaction</a><span class="tsd-signature-symbol">&gt;</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/48689c5/node/src/contract.ts#L132">contract.ts:132</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Submit a transaction to the ledger and return immediately after successfully sending to the orderer. The
-										transaction function will be evaluated on endorsing peers and then submitted to the ordering service to be
-										committed to the ledger. The submitted transaction that is returned can be used to obtain to the transaction
-									result, and to wait for it to be committed to the ledger.</p>
-								</div>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>transactionName: <span class="tsd-signature-type">string</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Name of the transaction to invoke.</p>
-									</div>
-								</li>
-								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="ProposalOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">ProposalOptions</a></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Transaction invocation options.</p>
-									</div>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="SubmittedTransaction.html" class="tsd-signature-type" data-tsd-kind="Interface">SubmittedTransaction</a><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>A submitted transaction, providing access to the transaction result and commit status.</p>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
-					<a name="submitTransaction" class="tsd-anchor"></a>
-					<h3>submit<wbr>Transaction</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
-						<li class="tsd-signature tsd-kind-icon">submit<wbr>Transaction<span class="tsd-signature-symbol">(</span>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, <span class="tsd-signature-symbol">...</span>args<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/48689c5/node/src/contract.ts#L101">contract.ts:101</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
-										transaction function will be evaluated on endorsing peers and then submitted to the ordering service to be
-									committed to the ledger.</p>
-								</div>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>name: <span class="tsd-signature-type">string</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Name of the transaction to be invoked.</p>
-									</div>
-								</li>
-								<li>
-									<h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>args: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>Transaction arguments.</p>
-									</div>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>The result returned by the transaction function.</p>
-						</li>
-					</ul>
-				</section>
-			</section>
-		</div>
-		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
-			<nav class="tsd-navigation primary">
-				<ul>
-					<li class=" ">
-						<a href="../modules.html">Exports</a>
-					</li>
-				</ul>
-			</nav>
-			<nav class="tsd-navigation secondary menu-sticky">
-				<ul class="before-current">
-					<li class=" tsd-kind-class">
-						<a href="../classes/HSMSignerFactory.html" class="tsd-kind-icon">HSMSigner<wbr>Factory</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="ChaincodeEvent.html" class="tsd-kind-icon">Chaincode<wbr>Event</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="ChaincodeEventsRequest.html" class="tsd-kind-icon">Chaincode<wbr>Events<wbr>Request</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="Commit.html" class="tsd-kind-icon">Commit</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="ConnectOptions.html" class="tsd-kind-icon">Connect<wbr>Options</a>
-					</li>
-				</ul>
-				<ul class="current">
-					<li class="current tsd-kind-interface">
-						<a href="Contract.html" class="tsd-kind-icon">Contract</a>
-						<ul>
-							<li class=" tsd-kind-method tsd-parent-kind-interface">
-								<a href="Contract.html#evaluate" class="tsd-kind-icon">evaluate</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-interface">
-								<a href="Contract.html#evaluateTransaction" class="tsd-kind-icon">evaluate<wbr>Transaction</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-interface">
-								<a href="Contract.html#getChaincodeId" class="tsd-kind-icon">get<wbr>Chaincode<wbr>Id</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-interface">
-								<a href="Contract.html#getContractName" class="tsd-kind-icon">get<wbr>Contract<wbr>Name</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-interface">
-								<a href="Contract.html#newProposal" class="tsd-kind-icon">new<wbr>Proposal</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-interface">
-								<a href="Contract.html#newSignedProposal" class="tsd-kind-icon">new<wbr>Signed<wbr>Proposal</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-interface">
-								<a href="Contract.html#newSignedTransaction" class="tsd-kind-icon">new<wbr>Signed<wbr>Transaction</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-interface">
-								<a href="Contract.html#submit" class="tsd-kind-icon">submit</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-interface">
-								<a href="Contract.html#submitAsync" class="tsd-kind-icon">submit<wbr>Async</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-interface">
-								<a href="Contract.html#submitTransaction" class="tsd-kind-icon">submit<wbr>Transaction</a>
-							</li>
-						</ul>
-					</li>
-				</ul>
-				<ul class="after-current">
-					<li class=" tsd-kind-interface">
-						<a href="Gateway.html" class="tsd-kind-icon">Gateway</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="HSMSigner.html" class="tsd-kind-icon">HSMSigner</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="HSMSignerOptions.html" class="tsd-kind-icon">HSMSigner<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="Identity.html" class="tsd-kind-icon">Identity</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="Network.html" class="tsd-kind-icon">Network</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="Proposal.html" class="tsd-kind-icon">Proposal</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="ProposalOptions.html" class="tsd-kind-icon">Proposal<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="Signable.html" class="tsd-kind-icon">Signable</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="SubmittedTransaction.html" class="tsd-kind-icon">Submitted<wbr>Transaction</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="Transaction.html" class="tsd-kind-icon">Transaction</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="../modules.html#ChaincodeEventCallback" class="tsd-kind-icon">Chaincode<wbr>Event<wbr>Callback</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="../modules.html#Hash" class="tsd-kind-icon">Hash</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="../modules.html#Signer" class="tsd-kind-icon">Signer</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="../modules.html#connect" class="tsd-kind-icon">connect</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="../modules.html#newHSMSignerFactory" class="tsd-kind-icon">newHSMSigner<wbr>Factory</a>
-					</li>
-				</ul>
-			</nav>
-		</div>
-	</div>
-</div>
-<footer class="with-border-bottom">
-	<div class="container">
-		<h2>Legend</h2>
-		<div class="tsd-legend-group">
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
-			</ul>
-		</div>
-	</div>
-</footer>
-<div class="container tsd-generator">
-	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
-</div>
-<div class="overlay"></div>
-<script src="../assets/js/main.js"></script>
-</body>
-</html>
+</dd></dl></div></section><section class="tsd-panel tsd-hierarchy"><h3>Hierarchy</h3><ul class="tsd-hierarchy"><li><span class="target">Contract</span></li></ul></section><section class="tsd-panel-group tsd-index-group"><h2>Index</h2><section class="tsd-panel tsd-index-panel"><div class="tsd-index-content"><section class="tsd-index-section "><h3>Methods</h3><ul class="tsd-index-list"><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#evaluate" class="tsd-kind-icon">evaluate</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#evaluateTransaction" class="tsd-kind-icon">evaluate<wbr/>Transaction</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#getChaincodeId" class="tsd-kind-icon">get<wbr/>Chaincode<wbr/>Id</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#getContractName" class="tsd-kind-icon">get<wbr/>Contract<wbr/>Name</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#newProposal" class="tsd-kind-icon">new<wbr/>Proposal</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#newSignedProposal" class="tsd-kind-icon">new<wbr/>Signed<wbr/>Proposal</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#newSignedTransaction" class="tsd-kind-icon">new<wbr/>Signed<wbr/>Transaction</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#submit" class="tsd-kind-icon">submit</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#submitAsync" class="tsd-kind-icon">submit<wbr/>Async</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#submitTransaction" class="tsd-kind-icon">submit<wbr/>Transaction</a></li></ul></section></div></section></section><section class="tsd-panel-group tsd-member-group "><h2>Methods</h2><section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface"><a name="evaluate" class="tsd-anchor"></a><h3>evaluate</h3><ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface"><li class="tsd-signature tsd-kind-icon">evaluate<span class="tsd-signature-symbol">(</span>transactionName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="ProposalOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">ProposalOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></li></ul><ul class="tsd-descriptions"><li class="tsd-description"><aside class="tsd-sources"><ul><li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/d6d8b05/node/src/contract.ts#L111">contract.ts:111</a></li></ul></aside><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
+peers but the transaction will not be sent to the ordering service and so will not be committed to the ledger.
+This can be used for querying the world state.</p>
+</div></div><h4 class="tsd-parameters-title">Parameters</h4><ul class="tsd-parameters"><li><h5>transactionName: <span class="tsd-signature-type">string</span></h5><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Name of the transaction to invoke.</p>
+</div></div></li><li><h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="ProposalOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">ProposalOptions</a></h5><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Transaction invocation options.</p>
+</div></div></li></ul><h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></h4><div><p>The result returned by the transaction function.</p>
+</div></li></ul></section><section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface"><a name="evaluateTransaction" class="tsd-anchor"></a><h3>evaluate<wbr/>Transaction</h3><ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface"><li class="tsd-signature tsd-kind-icon">evaluate<wbr/>Transaction<span class="tsd-signature-symbol">(</span>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, <span class="tsd-signature-symbol">...</span>args<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></li></ul><ul class="tsd-descriptions"><li class="tsd-description"><aside class="tsd-sources"><ul><li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/d6d8b05/node/src/contract.ts#L91">contract.ts:91</a></li></ul></aside><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
+peers but the transaction will not be sent to the ordering service and so will not be committed to the ledger.
+This can be used for querying the world state.</p>
+</div></div><h4 class="tsd-parameters-title">Parameters</h4><ul class="tsd-parameters"><li><h5>name: <span class="tsd-signature-type">string</span></h5><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Name of the transaction to invoke.</p>
+</div></div></li><li><h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>args: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span></h5><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Transaction arguments.</p>
+</div></div></li></ul><h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></h4><div><p>The result returned by the transaction function.</p>
+</div></li></ul></section><section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface"><a name="getChaincodeId" class="tsd-anchor"></a><h3>get<wbr/>Chaincode<wbr/>Id</h3><ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface"><li class="tsd-signature tsd-kind-icon">get<wbr/>Chaincode<wbr/>Id<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li></ul><ul class="tsd-descriptions"><li class="tsd-description"><aside class="tsd-sources"><ul><li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/d6d8b05/node/src/contract.ts#L75">contract.ts:75</a></li></ul></aside><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Get the ID of the chaincode that contains this smart contract.</p>
+</div></div><h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4></li></ul></section><section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface"><a name="getContractName" class="tsd-anchor"></a><h3>get<wbr/>Contract<wbr/>Name</h3><ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface"><li class="tsd-signature tsd-kind-icon">get<wbr/>Contract<wbr/>Name<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></li></ul><ul class="tsd-descriptions"><li class="tsd-description"><aside class="tsd-sources"><ul><li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/d6d8b05/node/src/contract.ts#L81">contract.ts:81</a></li></ul></aside><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Get the name of the smart contract within the chaincode.</p>
+</div></div><h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h4><div><p>The contract name, or <code>undefined</code> for the default smart contract.</p>
+</div></li></ul></section><section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface"><a name="newProposal" class="tsd-anchor"></a><h3>new<wbr/>Proposal</h3><ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface"><li class="tsd-signature tsd-kind-icon">new<wbr/>Proposal<span class="tsd-signature-symbol">(</span>transactionName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="ProposalOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">ProposalOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Proposal.html" class="tsd-signature-type" data-tsd-kind="Interface">Proposal</a></li></ul><ul class="tsd-descriptions"><li class="tsd-description"><aside class="tsd-sources"><ul><li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/d6d8b05/node/src/contract.ts#L139">contract.ts:139</a></li></ul></aside><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Create a transaction proposal that can be evaluated or endorsed. Supports off-line signing flow.</p>
+</div></div><h4 class="tsd-parameters-title">Parameters</h4><ul class="tsd-parameters"><li><h5>transactionName: <span class="tsd-signature-type">string</span></h5><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Name of the transaction to invoke.</p>
+</div></div></li><li><h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="ProposalOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">ProposalOptions</a></h5><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Transaction invocation options.</p>
+</div></div></li></ul><h4 class="tsd-returns-title">Returns <a href="Proposal.html" class="tsd-signature-type" data-tsd-kind="Interface">Proposal</a></h4></li></ul></section><section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface"><a name="newSignedProposal" class="tsd-anchor"></a><h3>new<wbr/>Signed<wbr/>Proposal</h3><ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface"><li class="tsd-signature tsd-kind-icon">new<wbr/>Signed<wbr/>Proposal<span class="tsd-signature-symbol">(</span>bytes<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Uint8Array</span>, signature<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Proposal.html" class="tsd-signature-type" data-tsd-kind="Interface">Proposal</a></li></ul><ul class="tsd-descriptions"><li class="tsd-description"><aside class="tsd-sources"><ul><li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/d6d8b05/node/src/contract.ts#L147">contract.ts:147</a></li></ul></aside><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Create a proposal with the specified digital signature. Supports off-line signing flow.</p>
+</div></div><h4 class="tsd-parameters-title">Parameters</h4><ul class="tsd-parameters"><li><h5>bytes: <span class="tsd-signature-type">Uint8Array</span></h5><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Serialized proposal.</p>
+</div></div></li><li><h5>signature: <span class="tsd-signature-type">Uint8Array</span></h5><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Digital signature.</p>
+</div></div></li></ul><h4 class="tsd-returns-title">Returns <a href="Proposal.html" class="tsd-signature-type" data-tsd-kind="Interface">Proposal</a></h4><div><p>A signed proposal.</p>
+</div></li></ul></section><section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface"><a name="newSignedTransaction" class="tsd-anchor"></a><h3>new<wbr/>Signed<wbr/>Transaction</h3><ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface"><li class="tsd-signature tsd-kind-icon">new<wbr/>Signed<wbr/>Transaction<span class="tsd-signature-symbol">(</span>bytes<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Uint8Array</span>, signature<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Transaction.html" class="tsd-signature-type" data-tsd-kind="Interface">Transaction</a></li></ul><ul class="tsd-descriptions"><li class="tsd-description"><aside class="tsd-sources"><ul><li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/d6d8b05/node/src/contract.ts#L155">contract.ts:155</a></li></ul></aside><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Create a transaction with the specified digital signature. Supports off-line signing flow.</p>
+</div></div><h4 class="tsd-parameters-title">Parameters</h4><ul class="tsd-parameters"><li><h5>bytes: <span class="tsd-signature-type">Uint8Array</span></h5><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Serialized proposal.</p>
+</div></div></li><li><h5>signature: <span class="tsd-signature-type">Uint8Array</span></h5><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Digital signature.</p>
+</div></div></li></ul><h4 class="tsd-returns-title">Returns <a href="Transaction.html" class="tsd-signature-type" data-tsd-kind="Interface">Transaction</a></h4><div><p>A signed transaction.</p>
+</div></li></ul></section><section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface"><a name="submit" class="tsd-anchor"></a><h3>submit</h3><ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface"><li class="tsd-signature tsd-kind-icon">submit<span class="tsd-signature-symbol">(</span>transactionName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="ProposalOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">ProposalOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></li></ul><ul class="tsd-descriptions"><li class="tsd-description"><aside class="tsd-sources"><ul><li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/d6d8b05/node/src/contract.ts#L121">contract.ts:121</a></li></ul></aside><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
+transaction function will be evaluated on endorsing peers and then submitted to the ordering service to be
+committed to the ledger.</p>
+</div></div><h4 class="tsd-parameters-title">Parameters</h4><ul class="tsd-parameters"><li><h5>transactionName: <span class="tsd-signature-type">string</span></h5><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Name of the transaction to invoke.</p>
+</div></div></li><li><h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="ProposalOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">ProposalOptions</a></h5><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Transaction invocation options.</p>
+</div></div></li></ul><h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></h4><div><p>The result returned by the transaction function.</p>
+</div></li></ul></section><section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface"><a name="submitAsync" class="tsd-anchor"></a><h3>submit<wbr/>Async</h3><ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface"><li class="tsd-signature tsd-kind-icon">submit<wbr/>Async<span class="tsd-signature-symbol">(</span>transactionName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="ProposalOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">ProposalOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="SubmittedTransaction.html" class="tsd-signature-type" data-tsd-kind="Interface">SubmittedTransaction</a><span class="tsd-signature-symbol">&gt;</span></li></ul><ul class="tsd-descriptions"><li class="tsd-description"><aside class="tsd-sources"><ul><li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/d6d8b05/node/src/contract.ts#L132">contract.ts:132</a></li></ul></aside><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Submit a transaction to the ledger and return immediately after successfully sending to the orderer. The
+transaction function will be evaluated on endorsing peers and then submitted to the ordering service to be
+committed to the ledger. The submitted transaction that is returned can be used to obtain to the transaction
+result, and to wait for it to be committed to the ledger.</p>
+</div></div><h4 class="tsd-parameters-title">Parameters</h4><ul class="tsd-parameters"><li><h5>transactionName: <span class="tsd-signature-type">string</span></h5><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Name of the transaction to invoke.</p>
+</div></div></li><li><h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="ProposalOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">ProposalOptions</a></h5><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Transaction invocation options.</p>
+</div></div></li></ul><h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="SubmittedTransaction.html" class="tsd-signature-type" data-tsd-kind="Interface">SubmittedTransaction</a><span class="tsd-signature-symbol">&gt;</span></h4><div><p>A submitted transaction, providing access to the transaction result and commit status.</p>
+</div></li></ul></section><section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface"><a name="submitTransaction" class="tsd-anchor"></a><h3>submit<wbr/>Transaction</h3><ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface"><li class="tsd-signature tsd-kind-icon">submit<wbr/>Transaction<span class="tsd-signature-symbol">(</span>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, <span class="tsd-signature-symbol">...</span>args<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></li></ul><ul class="tsd-descriptions"><li class="tsd-description"><aside class="tsd-sources"><ul><li>Defined in <a href="https://github.com/hyperledger/fabric-gateway/blob/d6d8b05/node/src/contract.ts#L101">contract.ts:101</a></li></ul></aside><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
+transaction function will be evaluated on endorsing peers and then submitted to the ordering service to be
+committed to the ledger.</p>
+</div></div><h4 class="tsd-parameters-title">Parameters</h4><ul class="tsd-parameters"><li><h5>name: <span class="tsd-signature-type">string</span></h5><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Name of the transaction to be invoked.</p>
+</div></div></li><li><h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>args: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span></h5><div class="tsd-comment tsd-typography"><div class="lead">
+<p>Transaction arguments.</p>
+</div></div></li></ul><h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&gt;</span></h4><div><p>The result returned by the transaction function.</p>
+</div></li></ul></section></section></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class=""><a href="../modules.html">Exports</a></li><li class=" tsd-kind-namespace"><a href="../modules/hash.html">hash</a></li><li class=" tsd-kind-namespace"><a href="../modules/signers.html">signers</a></li></ul></nav><nav class="tsd-navigation secondary menu-sticky"><ul><li class="current tsd-kind-interface"><a href="Contract.html" class="tsd-kind-icon">Contract</a><ul><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#evaluate" class="tsd-kind-icon">evaluate</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#evaluateTransaction" class="tsd-kind-icon">evaluate<wbr/>Transaction</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#getChaincodeId" class="tsd-kind-icon">get<wbr/>Chaincode<wbr/>Id</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#getContractName" class="tsd-kind-icon">get<wbr/>Contract<wbr/>Name</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#newProposal" class="tsd-kind-icon">new<wbr/>Proposal</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#newSignedProposal" class="tsd-kind-icon">new<wbr/>Signed<wbr/>Proposal</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#newSignedTransaction" class="tsd-kind-icon">new<wbr/>Signed<wbr/>Transaction</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#submit" class="tsd-kind-icon">submit</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#submitAsync" class="tsd-kind-icon">submit<wbr/>Async</a></li><li class="tsd-kind-method tsd-parent-kind-interface"><a href="Contract.html#submitTransaction" class="tsd-kind-icon">submit<wbr/>Transaction</a></li></ul></li></ul></nav></div></div></div><footer class="with-border-bottom"><div class="container"><h2>Legend</h2><div class="tsd-legend-group"><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li><li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li><li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li><li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li></ul></div><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="container tsd-generator"><p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div><div class="overlay"></div><script src="../assets/main.js"></script></body></html>
