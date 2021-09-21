@@ -243,7 +243,7 @@ public final class OfflineSignTest {
     void chaincode_events_uses_offline_signature() throws Exception {
         byte[] expected = "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
 
-        ChaincodeEventsRequest unsignedRequest = network.newChaincodeEventsRequest("CHAINCODE_ID");
+        ChaincodeEventsRequest unsignedRequest = network.newChaincodeEventsRequest("CHAINCODE_ID").build();
         ChaincodeEventsRequest signedRequest = network.newSignedChaincodeEventsRequest(unsignedRequest.getBytes(), expected);
         signedRequest.getEvents();
 
@@ -255,7 +255,7 @@ public final class OfflineSignTest {
 
     @Test
     void signed_chaincode_events_keep_same_digest() throws Exception {
-        ChaincodeEventsRequest unsignedRequest = network.newChaincodeEventsRequest("CHAINCODE_ID");
+        ChaincodeEventsRequest unsignedRequest = network.newChaincodeEventsRequest("CHAINCODE_ID").build();
         byte[] expected = unsignedRequest.getDigest();
 
         ChaincodeEventsRequest signedRequest = network.newSignedChaincodeEventsRequest(unsignedRequest.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));

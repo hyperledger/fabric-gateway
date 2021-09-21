@@ -132,7 +132,14 @@ describe('Chaincode Events', () => {
             expect(startPosition?.getTypeCase()).toBe(SeekPosition.TypeCase.NEXT_COMMIT);
             expect(startPosition?.getNextCommit()).toBeDefined();
         });
-    
+
+        it('throws with negative specified start block number', async () => {
+            const startBlock = BigInt(-1);
+            await expect(network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock }))
+                .rejects
+                .toThrow();
+        });
+
         it('sends valid request with specified start block number', async () => {
             const startBlock = BigInt(418);
             await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock });

@@ -19,4 +19,25 @@ public interface ChaincodeEventsRequest extends Signable {
      * @return Ordered sequence of events.
      */
     Iterator<ChaincodeEvent> getEvents();
+
+    /**
+     * Builder used to create a new chaincode events request. The default behavior is to read chaincode events from the
+     * next committed block.
+     */
+    interface Builder {
+        /**
+         * Specify the block number at which to start reading chaincode events.
+         * <p>Note that the block number is an unsigned 64-bit integer, with the sign bit used to hold the top bit of
+         * the number.</p>
+         * @param blockNumber a ledger block number.
+         * @return This builder.
+         */
+        Builder startBlock(long blockNumber);
+
+        /**
+         * Build the chaincode events request from the configuration state of this builder.
+         * @return A chaincode events request.
+         */
+        ChaincodeEventsRequest build();
+    }
 }

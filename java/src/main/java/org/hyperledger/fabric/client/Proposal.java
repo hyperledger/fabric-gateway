@@ -8,6 +8,11 @@ package org.hyperledger.fabric.client;
 
 import java.util.Map;
 
+/**
+ * A Fabric Gateway transaction proposal, which can be used to evaluate a transaction to query ledger state, or obtain
+ * endorsements so that the transaction can be submitted to update ledger state. Supports off-line signing flow using
+ * {@link Network#newSignedChaincodeEventsRequest(byte[], byte[])}.
+ */
 public interface Proposal extends Signable {
     /**
      * Get the transaction ID.
@@ -31,6 +36,9 @@ public interface Proposal extends Signable {
      */
     Transaction endorse();
 
+    /**
+     * Builder used to create a new transaction proposal.
+     */
     interface Builder {
         /**
          * Add transactions arguments to the proposal. These extend any previously added arguments.

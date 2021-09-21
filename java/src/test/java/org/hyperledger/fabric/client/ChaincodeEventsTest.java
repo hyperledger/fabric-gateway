@@ -17,6 +17,7 @@ import io.grpc.StatusRuntimeException;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
+import org.hyperledger.fabric.protos.orderer.Ab;
 import org.hyperledger.fabric.protos.peer.ChaincodeEventPackage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,7 +70,7 @@ public final class ChaincodeEventsTest {
     }
 
     @Test
-    void sends_valid_request() throws Exception {
+    void sends_valid_request_with_default_start_position() throws Exception {
         network.getChaincodeEvents("CHAINCODE_ID");
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
@@ -77,6 +78,44 @@ public final class ChaincodeEventsTest {
 
         assertThat(request.getChannelId()).isEqualTo("NETWORK");
         assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_ID");
+
+        assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.NEXT_COMMIT);
+    }
+
+    @Test
+    void sends_valid_request_with_specified_start_block_number() throws Exception {
+        long startBlock = 101;
+        network.newChaincodeEventsRequest("CHAINCODE_ID")
+                .startBlock(startBlock)
+                .build()
+                .getEvents();
+
+        SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
+        ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
+
+        assertThat(request.getChannelId()).isEqualTo("NETWORK");
+        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_ID");
+
+        assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
+        assertThat(request.getStartPosition().getSpecified().getNumber()).isEqualTo(startBlock);
+    }
+
+    @Test
+    void sends_valid_request_with_specified_start_block_number_using_sign_bit_for_unsigned_64bit_value() throws Exception {
+        long startBlock = -1;
+        network.newChaincodeEventsRequest("CHAINCODE_ID")
+                .startBlock(startBlock)
+                .build()
+                .getEvents();
+
+        SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
+        ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
+
+        assertThat(request.getChannelId()).isEqualTo("NETWORK");
+        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_ID");
+
+        assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
+        assertThat(request.getStartPosition().getSpecified().getNumber()).isEqualTo(startBlock);
     }
 
     @Test
