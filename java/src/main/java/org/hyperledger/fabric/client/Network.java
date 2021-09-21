@@ -18,6 +18,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
  * <ul>
  *     <li>Obtain a specific smart contract deployed to the network using {@link #getContract(String)}, in order to
  *     submit and evaluate transactions for that smart contract.</li>
+ *     <li>Listen for events emitted when blocks are committed to the ledger using {@link #getChaincodeEvents(String)}
+ *     or {@link #newChaincodeEventsRequest(String)}.</li>
  * </ul>
  *
  * @see <a href="https://hyperledger-fabric.readthedocs.io/en/release-1.4/developapps/application.html#network-channel">Developing Fabric Applications - Network Channel</a>
@@ -59,22 +61,24 @@ public interface Network {
     Commit newSignedCommit(byte[] bytes, byte[] signature) throws InvalidProtocolBufferException;
 
     /**
-     * Get events emitted by transaction functions of a specific chaincode. Note that the returned {@link Iterator} may
-     * throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC connection error occurs.
+     * Get events emitted by transaction functions of a specific chaincode from the next committed block. Note that the
+     * returned {@link Iterator} may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC connection
+     * error occurs.
      * @param chaincodeId A chaincode ID.
      * @return Ordered sequence of events.
      * @throws NullPointerException if the chaincode ID is null.
+     * @see #newChaincodeEventsRequest(String)
      */
     Iterator<ChaincodeEvent> getChaincodeEvents(String chaincodeId);
 
     /**
-     * Create a chaincode events request, which can be used to obtain events emitted by transaction functions of a
-     * specific chaincode. Supports off-line signing flow.
+     * Build a new chaincode events request, which can be used to obtain events emitted by transaction functions of a
+     * specific chaincode. This can be used to specify a specific ledger start position. Supports offline signing flow.
      * @param chaincodeId A chaincode ID.
-     * @return A chaincode events request.
+     * @return A chaincode events request builder.
      * @throws NullPointerException if the chaincode ID is null.
      */
-    ChaincodeEventsRequest newChaincodeEventsRequest(String chaincodeId);
+    ChaincodeEventsRequest.Builder newChaincodeEventsRequest(String chaincodeId);
 
     /**
      * Create a chaincode events request with the specified digital signature, which can be used to obtain events

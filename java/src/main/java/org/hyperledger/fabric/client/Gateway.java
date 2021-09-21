@@ -61,7 +61,6 @@ public interface Gateway extends AutoCloseable {
      *
      * @param networkName The name of the network (channel name)
      * @return A network.
-     * @throws GatewayRuntimeException if a configuration or infrastructure error causes a failure.
      * @throws NullPointerException if the network name is null.
      */
     Network getNetwork(String networkName);
