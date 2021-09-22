@@ -5,7 +5,7 @@
  */
 
 import * as grpc from '@grpc/grpc-js';
-import { ChaincodeEvent, connect, ConnectOptions, Contract, Gateway, Identity, Network, Signer } from 'fabric-gateway';
+import { ChaincodeEvent, ChaincodeEventsOptions, connect, ConnectOptions, Contract, Gateway, Identity, Network, Signer } from 'fabric-gateway';
 import { TransactionInvocation } from './transactioninvocation';
 import { assertDefined } from './utils';
 
@@ -48,8 +48,8 @@ export class GatewayContext {
         return new TransactionInvocation(action, this.getNetwork(), this.getContract(), transactionName);
     }
 
-    async listenForChaincodeEvents(chaincodeId: string): Promise<void> {
-        const events = await this.getNetwork().getChaincodeEvents(chaincodeId);
+    async listenForChaincodeEvents(chaincodeId: string, options?: ChaincodeEventsOptions): Promise<void> {
+        const events = await this.getNetwork().getChaincodeEvents(chaincodeId, options);
         this.#chaincodeEvents = events[Symbol.asyncIterator]();
     }
 

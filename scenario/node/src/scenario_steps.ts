@@ -121,11 +121,15 @@ When('I do off-line signing as user {word} in MSP {word}', async function(this: 
 })
 
 When('I invoke the transaction', async function(this: CustomWorld): Promise<void> {
-    await this.invokeTransaction();
+    await this.invokeSuccessfulTransaction();
 });
 
 When('I listen for chaincode events from {word}', async function(this: CustomWorld, chaincodeId: string): Promise<void> {
     await this.listenForChaincodeEvents(chaincodeId);
+});
+
+When('I replay chaincode events from {word} starting at last committed block', async function(this: CustomWorld, chaincodeId: string): Promise<void> {
+    await this.replayChaincodeEvents(chaincodeId, this.getLastCommittedBlockNumber())
 });
 
 Then('the transaction invocation should fail', async function(this: CustomWorld): Promise<void> {

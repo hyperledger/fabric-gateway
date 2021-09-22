@@ -11,6 +11,6 @@ import io.cucumber.junit.CucumberOptions;
 import org.junit.runner.RunWith;
 
 @RunWith(Cucumber.class)
-@CucumberOptions(plugin = {"pretty"}, tags ="~@hsm", features="../scenario/features")
+@CucumberOptions(plugin = { "pretty" }, features = { "../scenario/features" }, tags = "not @hsm")
 public class RunScenarioTest {
 }

@@ -123,6 +123,7 @@ export class CustomWorld {
     #gateways: Record<string, GatewayContext> = {};
     #currentGateway?: GatewayContext;
     #transaction?: TransactionInvocation;
+    #lastCommittedBlockNumber = BigInt(0);
 
     async createGateway(name: string, user: string, mspId: string): Promise<void> {
         const identity = await newIdentity(user, mspId);
@@ -197,6 +198,10 @@ export class CustomWorld {
         await this.getCurrentGateway().listenForChaincodeEvents(chaincodeId);
     }
 
+    async replayChaincodeEvents(chaincodeId: string, startBlock: bigint): Promise<void> {
+        await this.getCurrentGateway().listenForChaincodeEvents(chaincodeId, { startBlock });
+    }
+
     async nextChaincodeEvent(): Promise<ChaincodeEvent> {
         return await this.getCurrentGateway().nextChaincodeEvent();
     }
@@ -206,13 +211,19 @@ export class CustomWorld {
         this.getTransaction().setOfflineSigner(signer);
     }
 
-    async invokeTransaction(): Promise<void> {
-        await this.getTransaction().invokeTransaction();
+    async invokeSuccessfulTransaction(): Promise<void> {
+        await this.invokeTransaction();
         this.getTransaction().getResult();
     }
 
+    private async invokeTransaction(): Promise<void> {
+        const transaction = this.getTransaction();
+        await transaction.invokeTransaction();
+        this.#lastCommittedBlockNumber = transaction.getBlockNumber();
+    }
+
     async assertTransactionFails(): Promise<void> {
-        await this.getTransaction().invokeTransaction();
+        await this.invokeTransaction();
         this.getError();
     }
 
@@ -222,6 +233,10 @@ export class CustomWorld {
 
     getError(): Error {
         return this.getTransaction().getError();
+    }
+
+    getLastCommittedBlockNumber(): bigint {
+        return this.#lastCommittedBlockNumber;
     }
 
     close(): void {

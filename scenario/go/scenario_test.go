@@ -126,12 +126,13 @@ func GetOrgForMSP(mspID string) string {
 }
 
 var (
-	fabricRunning     = false
-	channelsJoined    = false
-	runningChaincodes = make(map[string]string)
-	gateways          map[string]*GatewayConnection
-	currentGateway    *GatewayConnection
-	transaction       *Transaction
+	fabricRunning            = false
+	channelsJoined           = false
+	runningChaincodes        = make(map[string]string)
+	gateways                 map[string]*GatewayConnection
+	currentGateway           *GatewayConnection
+	transaction              *Transaction
+	lastCommittedBlockNumber uint64
 )
 
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
@@ -160,7 +161,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I set transient data on the transaction to$`, setTransientData)
 	s.Step(`^I set the endorsing organizations? to (.+)$`, setEndorsingOrgs)
 	s.Step(`^I do off-line signing as user (\S+) in MSP (\S+)$`, useOfflineSigner)
-	s.Step(`^I invoke the transaction$`, invokeTransaction)
+	s.Step(`^I invoke the transaction$`, invokeSuccessfulTransaction)
 	s.Step(`^I use the (\S+) contract$`, useContract)
 	s.Step(`^I use the (\S+) network$`, useNetwork)
 	s.Step(`^the response should be JSON matching$`, theResponseShouldBeJSONMatching)
@@ -170,6 +171,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^the transaction invocation should fail$`, theTransactionShouldFail)
 	s.Step(`^the error message should contain "([^"]*)"$`, theErrorMessageShouldContain)
 	s.Step(`^I listen for chaincode events from (\S+)$`, listenForChaincodeEvents)
+	s.Step(`^I replay chaincode events from (\S+) starting at last committed block$`, replayChaincodeEventsFromLastBlock)
 	s.Step(`^I should receive a chaincode event named "([^"]*)" with payload "([^"]*)"$`, receiveChaincodeEvent)
 }
 
@@ -652,14 +654,21 @@ func setEndorsingOrgs(argsJSON string) error {
 	return nil
 }
 
-func invokeTransaction() error {
-	if err := transaction.Invoke(); err != nil {
+func invokeSuccessfulTransaction() error {
+	if err := invokeTransaction(); err != nil {
 		if s, ok := status.FromError(err); ok {
 			fmt.Printf("Error details: %+v\n", s.Details())
 		}
 		return err
 	}
+
 	return nil
+}
+
+func invokeTransaction() error {
+	err := transaction.Invoke()
+	lastCommittedBlockNumber = transaction.BlockNumber()
+	return err
 }
 
 func useNetwork(channelName string) error {
@@ -671,7 +680,7 @@ func useContract(contractName string) error {
 }
 
 func theTransactionShouldFail() error {
-	err := transaction.Invoke()
+	err := invokeTransaction()
 	if err == nil {
 		return fmt.Errorf("transaction invocation was expected to fail, but it returned: %s", transaction.Result())
 	}
@@ -727,6 +736,10 @@ func theErrorMessageShouldContain(expected string) error {
 
 func listenForChaincodeEvents(chaincodeID string) error {
 	return currentGateway.ListenForChaincodeEvents(chaincodeID)
+}
+
+func replayChaincodeEventsFromLastBlock(chaincodeID string) error {
+	return currentGateway.ReplayChaincodeEvents(chaincodeID, lastCommittedBlockNumber)
 }
 
 func receiveChaincodeEvent(name string, payload string) error {

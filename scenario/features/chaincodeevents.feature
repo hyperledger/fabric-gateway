@@ -19,3 +19,10 @@ Feature: Chaincode event listening
         And I set the transaction arguments to ["foo", "bar"]
         And I invoke the transaction
         Then I should receive a chaincode event named "foo" with payload "bar"
+    
+    Scenario: Replay chaincode event
+        When I prepare to submit an event transaction
+        And I set the transaction arguments to ["event", "replay"]
+        And I invoke the transaction
+        And I replay chaincode events from basic starting at last committed block
+        Then I should receive a chaincode event named "event" with payload "replay"

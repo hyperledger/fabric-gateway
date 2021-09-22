@@ -7,7 +7,10 @@
 package scenario;
 
 import java.util.Iterator;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TransferQueue;
 
 import io.grpc.ManagedChannel;
 import org.hyperledger.fabric.client.ChaincodeEvent;
@@ -23,7 +26,8 @@ public class GatewayContext {
     private Gateway gateway;
     private Network network;
     private Contract contract;
-    private Iterator<ChaincodeEvent> eventIter;
+    private TransferQueue<ChaincodeEvent> eventQueue;
+    private CompletableFuture<Void> eventJob;
 
     public GatewayContext(Identity identity) {
         gatewayBuilder = Gateway.newInstance()
@@ -58,18 +62,53 @@ public class GatewayContext {
     }
 
     public void listenForChaincodeEvents(String chaincodeId) {
-        eventIter = network.getChaincodeEvents(chaincodeId);
+        Iterator<ChaincodeEvent> eventIter = network.getChaincodeEvents(chaincodeId);
+        receiveChaincodeEvents(eventIter);
     }
 
-    public ChaincodeEvent nextChaincodeEvent() {
-        return eventIter.next();
+    public void replayChaincodeEvents(String chaincodeId, long startBlock) {
+        Iterator<ChaincodeEvent> eventIter = network.newChaincodeEventsRequest(chaincodeId)
+                .startBlock(startBlock)
+                .build()
+                .getEvents();
+        receiveChaincodeEvents(eventIter);
+    }
+
+    private void receiveChaincodeEvents(final Iterator<ChaincodeEvent> eventIter) {
+        closeChaincodeEvents();
+
+        // Java gRPC implementation doesn't request events until the first read from iterator, so start reading
+        // asynchronously immediately
+        final TransferQueue<ChaincodeEvent> queue = new LinkedTransferQueue<>();
+        eventQueue = queue;
+        eventJob = CompletableFuture.runAsync(() -> eventIter.forEachRemaining(event -> {
+            try {
+                queue.transfer(event);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }));
+    }
+
+    public ChaincodeEvent nextChaincodeEvent() throws InterruptedException {
+        return eventQueue.poll(30, TimeUnit.SECONDS);
     }
 
     public void close() {
+        closeChaincodeEvents();
+
         if (gateway != null) {
             gateway.close();
         }
+
         closeChannel();
+    }
+
+    private void closeChaincodeEvents() {
+        if (eventJob != null) {
+            eventJob.cancel(true);
+            eventJob = null;
+        }
     }
 
     private void closeChannel() {
