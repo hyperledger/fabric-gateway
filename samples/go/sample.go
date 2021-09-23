@@ -109,11 +109,9 @@ func exampleSubmitAsync(gateway *client.Gateway) {
 	fmt.Printf("Submit result: %s\n", string(submitResult))
 	fmt.Println("Waiting for transaction commit")
 
-	successful, err := commit.Successful()
-	if err != nil {
+	if successful, err := commit.Successful(); err != nil {
 		panic(fmt.Errorf("failed to obtain commit status: %w", err))
-	}
-	if !successful {
+	} else if !successful {
 		status, err := commit.Status()
 		if err != nil {
 			panic(err)
@@ -269,18 +267,35 @@ func exampleChaincodeEvents(gateway *client.Gateway) {
 	network := gateway.GetNetwork("mychannel")
 	contract := network.GetContract("basic")
 
-	fmt.Println("Listening for chaincode events")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	events, err := network.ChaincodeEvents(ctx, "basic")
-
 	// Submit a transaction that generates a chaincode event
 	fmt.Println("Submitting \"event\" transaction with arguments: \"my-event-name\", \"my-event-payload\"")
-	_, err = contract.SubmitTransaction("event", "my-event-name", "my-event-payload")
+	_, commit, err := contract.SubmitAsync("event", client.WithArguments("my-event-name", "my-event-payload"))
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
-	fmt.Println("Transaction committed successfully")
+
+	if successful, err := commit.Successful(); err != nil {
+		panic(fmt.Errorf("failed to get commit status: %w", err))
+	} else if !successful {
+		status, err := commit.Status()
+		if err != nil {
+			panic(err)
+		}
+		panic(fmt.Errorf("transaction failed to commit with status: %d", int32(status)))
+	}
+
+	blockNumber, err := commit.BlockNumber()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Read chaincode events starting at block number %d\n", blockNumber)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	events, err := network.ChaincodeEvents(ctx, "basic", client.WithStartBlock(blockNumber))
+	if err != nil {
+		panic(fmt.Errorf("failed to read chaincode events: %w", err))
+	}
 
 	select {
 	case ev := <-events:

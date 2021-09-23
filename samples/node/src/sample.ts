@@ -200,12 +200,19 @@ async function exampleChaincodeEvents(gateway: Gateway) {
     const network = gateway.getNetwork('mychannel');
     const contract = network.getContract('basic');
 
-    console.log('Listening for chaincode events');
-    const events = await network.getChaincodeEvents('basic');
-
     // Submit a transaction that generates a chaincode event
     console.log('Submitting "event" transaction with arguments:  "my-event-name", "my-event-payload"');
-    await contract.submitTransaction('event', 'my-event-name', 'my-event-payload');
+    const commit = await contract.submitAsync('event', { arguments: ['my-event-name', 'my-event-payload'] });
+    const successful = await commit.isSuccessful()
+    if (!successful) {
+        const status = await commit.getStatus();
+        throw new Error(`Transaction ${commit.getTransactionId()} failed to commit with status code: ${status}`);
+    }
+
+    const blockNumber = await commit.getBlockNumber()
+
+    console.log(`Read chaincode events from block number ${blockNumber}`)
+    const events = await network.getChaincodeEvents('basic', { startBlock: blockNumber });
 
     const decoder = new TextDecoder();
     for await (const event of events) {

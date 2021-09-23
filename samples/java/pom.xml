@@ -26,12 +26,12 @@
         <dependency>
             <groupId>org.hyperledger.fabric</groupId>
             <artifactId>fabric-gateway</artifactId>
-            <version>0.1.0-dev-20210812-5</version>
+            <version>0.1.0-dev-20210921-3</version>
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty-shaded</artifactId>
-            <version>1.40.0</version>
+            <version>1.40.1</version>
         </dependency>
     </dependencies>
 </project>
