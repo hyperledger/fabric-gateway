@@ -18,9 +18,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.util.Iterator;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
@@ -30,6 +28,7 @@ import org.hyperledger.fabric.client.CommitException;
 import org.hyperledger.fabric.client.Contract;
 import org.hyperledger.fabric.client.Gateway;
 import org.hyperledger.fabric.client.Network;
+import org.hyperledger.fabric.client.Status;
 import org.hyperledger.fabric.client.SubmittedTransaction;
 import org.hyperledger.fabric.client.identity.Identities;
 import org.hyperledger.fabric.client.identity.Identity;
@@ -126,8 +125,9 @@ public class Sample {
         System.out.println("Submit result: " + new String(commit.getResult(), StandardCharsets.UTF_8));
         System.out.println("Waiting for transaction commit");
 
-        if (!commit.isSuccessful()) {
-            throw new CommitException(commit.getTransactionId(), commit.getStatus());
+        Status status = commit.getStatus();
+        if (!status.isSuccessful()) {
+            throw new CommitException(commit.getTransactionId(), status.getCode());
         }
 
         System.out.println("Transaction committed successfully");
@@ -231,22 +231,23 @@ public class Sample {
         System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
     }
 
-    private static void exampleChaincodeEvents(Gateway gateway) throws CommitException, InterruptedException, ExecutionException, TimeoutException {
+    private static void exampleChaincodeEvents(Gateway gateway) throws CommitException {
         Network network = gateway.getNetwork("mychannel");
         Contract contract = network.getContract("basic");
 
         // Submit a transaction that generates a chaincode event
         System.out.println("Submitting \"event\" transaction with arguments:  \"my-event-name\", \"my-event-payload\"");
-        SubmittedTransaction commit = contract.newProposal("event")
+        Status status = contract.newProposal("event")
                 .addArguments("my-event-name", "my-event-payload")
                 .build()
                 .endorse()
-                .submitAsync();
-        if (!commit.isSuccessful()) {
-            throw new CommitException(commit.getTransactionId(), commit.getStatus());
+                .submitAsync()
+                .getStatus();
+        if (!status.isSuccessful()) {
+            throw new CommitException(status.getTransactionId(), status.getCode());
         }
 
-        long blockNumber = commit.getBlockNumber();
+        long blockNumber = status.getBlockNumber();
 
         System.out.println("Read chaincode events starting at block number " + blockNumber);
         Iterator<ChaincodeEvent> events = network.newChaincodeEventsRequest("basic")

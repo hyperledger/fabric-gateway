@@ -33,6 +33,8 @@ public final class ChaincodeEvent {
 
     /**
      * Block number that included this chaincode event.
+     * <p>Note that the block number is an unsigned 64-bit integer, with the sign bit used to hold the top bit of
+     * the number.</p>
      * @return A block number.
      */
     public long getBlockNumber() {

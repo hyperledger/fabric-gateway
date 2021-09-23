@@ -145,7 +145,7 @@ describe('Transaction', () => {
         const commit = await contract.submitAsync('TRANSACTION_NAME');
         const status = await commit.getStatus();
 
-        expect(status).toBe(TxValidationCode.MVCC_READ_CONFLICT);
+        expect(status.code).toBe(TxValidationCode.MVCC_READ_CONFLICT);
     });
 
     it('commit returns successful for successful transaction', async () => {
@@ -154,9 +154,9 @@ describe('Transaction', () => {
         client.commitStatus.mockResolvedValue(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
-        const success = await commit.isSuccessful();
+        const status = await commit.getStatus();
 
-        expect(success).toBe(true);
+        expect(status.successful).toBe(true);
     });
 
     it('commit returns unsuccessful for failed transaction', async () => {
@@ -165,9 +165,9 @@ describe('Transaction', () => {
         client.commitStatus.mockResolvedValue(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
-        const success = await commit.isSuccessful();
+        const status = await commit.getStatus();
 
-        expect(success).toBe(false);
+        expect(status.successful).toBe(false);
     });
 
     it('commit returns block number', async () => {
@@ -177,9 +177,9 @@ describe('Transaction', () => {
         client.commitStatus.mockResolvedValue(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
-        const blockNumber = await commit.getBlockNumber();
+        const status = await commit.getStatus();
 
-        expect(blockNumber).toBe(BigInt(101));
+        expect(status.blockNumber).toBe(BigInt(101));
     });
 
     it('commit returns zero for missing block number', async () => {
@@ -188,8 +188,8 @@ describe('Transaction', () => {
         client.commitStatus.mockResolvedValue(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
-        const blockNumber = await commit.getBlockNumber();
+        const status = await commit.getStatus();
 
-        expect(blockNumber).toBe(BigInt(0));
+        expect(status.blockNumber).toBe(BigInt(0));
     });
 });

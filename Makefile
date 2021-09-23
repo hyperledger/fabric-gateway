@@ -95,10 +95,10 @@ run-hsm-samples-go: enroll-hsm-user
 run-hsm-samples-node: build-node enroll-hsm-user
 	cd $(hsm_samples_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; npm run build; npm start
 
-run-samples-node:
+run-samples-node: build-node
 	cd $(samples_dir)/node; npm install; npm run build; npm start
 
-run-samples-java:
+run-samples-java: build-java
 	cd $(samples_dir)/java; mvn clean compile exec:java -Dexec.mainClass='com.example.Sample'
 
 generate:

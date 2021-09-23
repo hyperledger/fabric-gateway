@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import crypto from 'crypto';
+import { KeyObject } from 'crypto';
 import { ec as EC } from 'elliptic';
 import { ecPrivateKeyAsRaw } from './asn1';
+import { HSMSignerFactory, HSMSignerFactoryImpl } from './hsmsigner';
 import { Signer } from './signer';
 
 const namedCurves: Record<string, EC> = {
@@ -23,7 +24,7 @@ const namedCurves: Record<string, EC> = {
  * @param key - A private key.
  * @returns A signing implementation.
  */
-export function newPrivateKeySigner(key: crypto.KeyObject): Signer {
+export function newPrivateKeySigner(key: KeyObject): Signer {
     if (key.type !== 'private') {
         throw new Error(`Invalid key type: ${key.type}`);
     }
@@ -36,7 +37,7 @@ export function newPrivateKeySigner(key: crypto.KeyObject): Signer {
     }
 }
 
-function newECPrivateKeySigner(key: crypto.KeyObject): Signer {
+function newECPrivateKeySigner(key: KeyObject): Signer {
     const { privateKey: rawKey, curveObjectId } = ecPrivateKeyAsRaw(key);
     const curve = getCurve(curveObjectId);
     const keyPair = curve.keyFromPrivate(rawKey, 'hex');
@@ -56,4 +57,15 @@ function getCurve(objectIdBytes: number[]): EC {
     }
 
     return curve;
+}
+
+/**
+ * Create an HSM Signer factory. A single signer factory instance should be used to create all required HSM signers.
+ */
+export function newHSMSignerFactory(library: string): HSMSignerFactory {
+    if (!library || library.trim() === '') {
+        throw new Error('library must be provided');
+    }
+
+    return new HSMSignerFactoryImpl(library);
 }

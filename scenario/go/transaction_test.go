@@ -115,18 +115,15 @@ func (transaction *Transaction) submit() ([]byte, error) {
 		return result, err
 	}
 
-	blockNumber, err := signedCommit.BlockNumber()
-	if err != nil {
-		return result, err
-	}
-	transaction.blockNumber = blockNumber
-
 	status, err := signedCommit.Status()
 	if err != nil {
 		return result, err
 	}
-	if status != peer.TxValidationCode_VALID {
-		return result, fmt.Errorf("commit failed with status %v (%v)", status, peer.TxValidationCode_name[int32(status)])
+
+	transaction.blockNumber = status.BlockNumber
+
+	if !status.Successful {
+		return result, fmt.Errorf("commit failed with status %v (%v)", status.Code, peer.TxValidationCode_name[int32(status.Code)])
 	}
 
 	return result, nil

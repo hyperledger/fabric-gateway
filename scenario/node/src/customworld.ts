@@ -7,10 +7,10 @@
 import { DataTable, setWorldConstructor } from '@cucumber/cucumber';
 import * as grpc from '@grpc/grpc-js';
 import * as crypto from 'crypto';
-import { ChaincodeEvent, Identity, Signer, signers, HSMSigner, HSMSignerOptions, newHSMSignerFactory, HSMSignerFactory } from 'fabric-gateway';
+import { ChaincodeEvent, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers } from 'fabric-gateway';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { fixturesDir, getOrgForMsp, findSoftHSMPKCS11Lib } from './fabric';
+import { findSoftHSMPKCS11Lib, fixturesDir, getOrgForMsp } from './fabric';
 import { getSKIFromCertificate } from './fabricski';
 import { GatewayContext } from './gatewaycontext';
 import { TransactionInvocation } from './transactioninvocation';
@@ -22,7 +22,7 @@ interface ConnectionInfo {
     readonly url: string;
     readonly serverNameOverride: string;
     readonly tlsRootCertPath: string;
-    running : boolean;
+    running: boolean;
 }
 
 const peerConnectionInfo: Record<string, ConnectionInfo> = {
@@ -101,7 +101,7 @@ async function newHSMIdentity(user: string, mspId: string): Promise<Identity> {
 
 async function newHSMSigner(user: string): Promise<HSMSigner> {
     if (!hsmSignerFactory) {
-        hsmSignerFactory = newHSMSignerFactory(findSoftHSMPKCS11Lib());
+        hsmSignerFactory = signers.newHSMSignerFactory(findSoftHSMPKCS11Lib());
     }
 
     const certificate = await readHSMCertificate(user);

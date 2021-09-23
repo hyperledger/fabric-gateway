@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import util from 'util';
+import { inspect } from 'util';
 import { GatewayClient } from './client';
 import { Envelope } from './protos/common/common_pb';
 import { CommitStatusRequest, PreparedTransaction, SignedCommitStatusRequest, SubmitRequest } from './protos/gateway/gateway_pb';
@@ -55,7 +55,7 @@ export class TransactionImpl implements Transaction {
 
         const envelope = options.preparedTransaction.getEnvelope();
         if (!envelope) {
-            throw new Error(`Envelope not defined: ${util.inspect(options.preparedTransaction)}`);
+            throw new Error(`Envelope not defined: ${inspect(options.preparedTransaction)}`);
         }
         this.#envelope = envelope;
     }

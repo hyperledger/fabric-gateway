@@ -6,8 +6,10 @@
 
 import { TextDecoder, inspect } from 'util';
 
+const utf8Decoder = new TextDecoder();
+
 export function bytesAsString(bytes?: Uint8Array): string {
-    return new TextDecoder().decode(bytes);
+    return utf8Decoder.decode(bytes);
 }
 
 export function toString(thing: unknown): string {

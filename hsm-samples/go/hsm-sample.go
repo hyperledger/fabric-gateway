@@ -113,16 +113,12 @@ func exampleSubmitAsync(gateway *client.Gateway) {
 	fmt.Printf("Submit result: %s\n", string(submitResult))
 	fmt.Println("Waiting for transaction commit")
 
-	successful, err := commit.Successful()
+	status, err := commit.Status()
 	if err != nil {
 		panic(fmt.Errorf("failed to obtain commit status: %w", err))
 	}
-	if !successful {
-		status, err := commit.Status()
-		if err != nil {
-			panic(err)
-		}
-		panic(fmt.Errorf("transaction %s failed to commit with status code: %d", commit.TransactionID(), int32(status)))
+	if !status.Successful {
+		panic(fmt.Errorf("transaction %s failed to commit with status code: %d", status.TransactionID, int32(status.Code)))
 	}
 
 	fmt.Printf("Transaction committed successfully\n")
