@@ -247,9 +247,16 @@ stages:
           GATEWAY_VERSION: $(GATEWAY_VERSION)
           BUILD_DATE: $(BUILD_DATE)
           BUILD_NUMBER: $(BUILD_NUMBER)
-      - script: npm publish --tag unstable
+      # Only add latest tag here while there are no release builds!
+      - script: |
+          npm publish --tag unstable
+          npm dist-tag add fabric-gateway@${GATEWAY_VERSION}-dev.${BUILD_DATE}.${BUILD_NUMBER} latest
         displayName: npm publish
         workingDirectory: $(Pipeline.Workspace)/NodeBuild
+        env:
+          GATEWAY_VERSION: $(GATEWAY_VERSION)
+          BUILD_DATE: $(BUILD_DATE)
+          BUILD_NUMBER: $(BUILD_NUMBER)
   - job: PublishJava
     pool:
       vmImage: ubuntu-20.04
