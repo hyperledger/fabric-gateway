@@ -23,6 +23,7 @@ type Transaction struct {
 	offlineSign identity.Sign
 	result      []byte
 	err         error
+	blockNumber uint64
 }
 
 func NewTransaction(network *client.Network, contract *client.Contract, txType TransactionType, name string) *Transaction {
@@ -61,6 +62,10 @@ func (transaction *Transaction) Result() []byte {
 
 func (transaction *Transaction) Err() error {
 	return transaction.err
+}
+
+func (transaction *Transaction) BlockNumber() uint64 {
+	return transaction.blockNumber
 }
 
 func (transaction *Transaction) evaluate() ([]byte, error) {
@@ -109,6 +114,12 @@ func (transaction *Transaction) submit() ([]byte, error) {
 	if err != nil {
 		return result, err
 	}
+
+	blockNumber, err := signedCommit.BlockNumber()
+	if err != nil {
+		return result, err
+	}
+	transaction.blockNumber = blockNumber
 
 	status, err := signedCommit.Status()
 	if err != nil {

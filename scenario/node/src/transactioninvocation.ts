@@ -17,6 +17,7 @@ export class TransactionInvocation {
     private offlineSigner?: Signer;
     private result?: Uint8Array;
     private error?: Error;
+    private blockNumber = BigInt(0);
 
     constructor(type: string, network: Network, contract: Contract, name: string) {
         this.network = network;
@@ -53,6 +54,10 @@ export class TransactionInvocation {
         return this.error;
     }
 
+    getBlockNumber(): bigint {
+        return this.blockNumber;
+    }
+
     private getInvoke(type: string): () => Promise<Uint8Array> {
         if (type === 'evaluate') {
             return this.evaluate;
@@ -80,6 +85,8 @@ export class TransactionInvocation {
         const submitted = await signedTransaction.submit();
         const signedCommit = await this.sign(submitted, this.network.newSignedCommit.bind(this.network));
 
+        this.blockNumber = await signedCommit.getBlockNumber();
+        
         const status = await signedCommit.getStatus();
         if (status !== CommitStatus.VALID) {
             throw new Error(`Transaction commit failed with status: ${status}`)

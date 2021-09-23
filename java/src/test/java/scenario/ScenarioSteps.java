@@ -109,6 +109,7 @@ public class ScenarioSteps {
     private GatewayContext currentGateway;
     private Map<String, GatewayContext> gateways = new HashMap<>();
     private TransactionInvocation transactionInvocation;
+    private long lastCommittedBlockNumber;
 
     private static final class OrgConfig {
         final String cli;
@@ -352,8 +353,8 @@ public class ScenarioSteps {
     }
 
     @When("I invoke the transaction")
-    public void invokeTransaction() {
-        transactionInvocation.invoke();
+    public void invokeSuccessfulTransaction() {
+        invokeTransaction();
         transactionInvocation.getResponse();
     }
 
@@ -387,9 +388,14 @@ public class ScenarioSteps {
         currentGateway.listenForChaincodeEvents(chaincodeId);
     }
 
+    @When("I replay chaincode events from {word} starting at last committed block")
+    public void replayChaincodeEventsFromLastBlock(String chaincodeId) {
+        currentGateway.replayChaincodeEvents(chaincodeId, lastCommittedBlockNumber);
+    }
+
     @Then("the transaction invocation should fail")
-    public void invokeFailingTransaction() {
-        transactionInvocation.invoke();
+    public void assertTransactionFails() {
+        invokeTransaction();
         transactionInvocation.getError();
     }
 
@@ -414,10 +420,15 @@ public class ScenarioSteps {
     }
 
     @Then("I should receive a chaincode event named {string} with payload {string}")
-    public void assertReceiveChaincodeEvent(String eventName, String payload) {
+    public void assertReceiveChaincodeEvent(String eventName, String payload) throws InterruptedException {
         ChaincodeEvent event = currentGateway.nextChaincodeEvent();
         assertThat(event.getEventName()).isEqualTo(eventName);
         assertThat(new String(event.getPayload(), StandardCharsets.UTF_8)).isEqualTo(payload);
+    }
+
+    private void invokeTransaction() {
+        transactionInvocation.invoke();
+        lastCommittedBlockNumber = transactionInvocation.getBlockNumber();
     }
 
     private static void startAllPeers() throws InterruptedException, IOException {

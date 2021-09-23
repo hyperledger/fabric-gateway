@@ -29,6 +29,7 @@ public final class TransactionInvocation {
     private Signer offlineSigner;
     private String response;
     private Throwable error;
+    private long blockNumber;
 
     private TransactionInvocation(final Network network, final Contract contract, final String transactionName) {
         this.network = network;
@@ -82,6 +83,8 @@ public final class TransactionInvocation {
 
         SubmittedTransaction submitted = signedTransaction.submitAsync();
         Commit commit = offlineSign(submitted);
+
+        blockNumber = commit.getBlockNumber();
 
         if (!commit.isSuccessful()) {
             throw new RuntimeException("Transaction commit failed with status: " + commit.getStatus());
@@ -146,5 +149,9 @@ public final class TransactionInvocation {
                 .withFailMessage(() -> "No transaction error. Response was: " + response)
                 .isNotNull();
         return error;
+    }
+
+    public long getBlockNumber() {
+        return blockNumber;
     }
 }

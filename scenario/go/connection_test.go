@@ -246,11 +246,19 @@ func (connection *GatewayConnection) PrepareTransaction(txnType TransactionType,
 }
 
 func (connection *GatewayConnection) ListenForChaincodeEvents(chaincodeID string) error {
+	return connection.receiveChaincodeEvents(chaincodeID)
+}
+
+func (connection *GatewayConnection) ReplayChaincodeEvents(chaincodeID string, startBlock uint64) error {
+	return connection.receiveChaincodeEvents(chaincodeID, client.WithStartBlock(startBlock))
+}
+
+func (connection *GatewayConnection) receiveChaincodeEvents(chaincodeID string, options ...client.ChaincodeEventsOption) error {
 	if connection.network == nil {
 		return fmt.Errorf("no network selected")
 	}
 
-	events, err := connection.network.ChaincodeEvents(connection.ctx, chaincodeID)
+	events, err := connection.network.ChaincodeEvents(connection.ctx, chaincodeID, options...)
 	if err != nil {
 		return err
 	}
