@@ -36,7 +36,6 @@ import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Identity;
-import org.hyperledger.fabric.protos.peer.TransactionPackage;
 
 public class Sample {
     private static final String mspID     = "Org1MSP";
@@ -109,7 +108,7 @@ public class Sample {
         System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
     }
 
-    private static void exampleSubmitAsync(Gateway gateway) {
+    private static void exampleSubmitAsync(Gateway gateway) throws CommitException {
         Network network = gateway.getNetwork("mychannel");
         Contract contract = network.getContract("basic");
 
@@ -128,9 +127,7 @@ public class Sample {
         System.out.println("Waiting for transaction commit");
 
         if (!commit.isSuccessful()) {
-            TransactionPackage.TxValidationCode status = commit.getStatus();
-            throw new RuntimeException("Transaction " + commit.getTransactionId() +
-                    " failed to commit with status code " + status.getNumber() + " (" + status.name() + ")");
+            throw new CommitException(commit.getTransactionId(), commit.getStatus());
         }
 
         System.out.println("Transaction committed successfully");
@@ -153,9 +150,9 @@ public class Sample {
         // It is assumed that the gateway's organization is trusted and will invoke the chaincode to work out if extra endorsements are required from other orgs.
         // In this example, it will also seek endorsement from Org3, which is included in the ownership policy of both collections.
         contract.newProposal("WritePrivateData")
-                .putTransient("collection", "SharedCollection,Org3Collection".getBytes(StandardCharsets.UTF_8)) // SharedCollection owned by Org1 & Org3, Org3Collection owned by Org3.
-                .putTransient("key", "my-private-key".getBytes(StandardCharsets.UTF_8))
-                .putTransient("value", timestamp.getBytes(StandardCharsets.UTF_8))
+                .putTransient("collection", "SharedCollection,Org3Collection") // SharedCollection owned by Org1 & Org3, Org3Collection owned by Org3.
+                .putTransient("key", "my-private-key")
+                .putTransient("value", timestamp)
                 .build()
                 .endorse()
                 .submit();
@@ -178,9 +175,9 @@ public class Sample {
         // that might be destined for storage in Org1Collection, since Org3 is not in its ownership policy.
         // The client application must explicitly specify which organizations must endorse using the setEndorsingOrganizations() function.
         contract.newProposal("WritePrivateData")
-                .putTransient("collection", "Org1Collection,Org3Collection".getBytes(StandardCharsets.UTF_8)) // Org1Collection owned by Org1, Org3Collection owned by Org3.
-                .putTransient("key", "my-private-key2".getBytes(StandardCharsets.UTF_8))
-                .putTransient("value", timestamp.getBytes(StandardCharsets.UTF_8))
+                .putTransient("collection", "Org1Collection,Org3Collection") // Org1Collection owned by Org1, Org3Collection owned by Org3.
+                .putTransient("key", "my-private-key2")
+                .putTransient("value", timestamp)
                 .setEndorsingOrganizations("Org1MSP", "Org3MSP")
                 .build()
                 .endorse()
@@ -238,12 +235,24 @@ public class Sample {
         Network network = gateway.getNetwork("mychannel");
         Contract contract = network.getContract("basic");
 
-        System.out.println("Listening for chaincode events");
-        Iterator<ChaincodeEvent> events = network.getChaincodeEvents("basic");
-
         // Submit a transaction that generates a chaincode event
         System.out.println("Submitting \"event\" transaction with arguments:  \"my-event-name\", \"my-event-payload\"");
-        contract.submitTransaction("event", "my-event-name", "my-event-payload");
+        SubmittedTransaction commit = contract.newProposal("event")
+                .addArguments("my-event-name", "my-event-payload")
+                .build()
+                .endorse()
+                .submitAsync();
+        if (!commit.isSuccessful()) {
+            throw new CommitException(commit.getTransactionId(), commit.getStatus());
+        }
+
+        long blockNumber = commit.getBlockNumber();
+
+        System.out.println("Read chaincode events starting at block number " + blockNumber);
+        Iterator<ChaincodeEvent> events = network.newChaincodeEventsRequest("basic")
+                .startBlock(blockNumber)
+                .build()
+                .getEvents();
 
         ChaincodeEvent event = events.next();
         System.out.println("Received event name: " + event.getEventName() +
