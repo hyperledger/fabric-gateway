@@ -19,6 +19,8 @@ const keyPath = path.resolve(cryptoPath, 'users', 'User1@org1.example.com', 'msp
 const tlsCertPath = path.resolve(cryptoPath, 'peers', 'peer0.org1.example.com', 'tls', 'ca.crt');
 const peerEndpoint = 'localhost:7051'
 
+const utf8Decoder = new TextDecoder();
+
 async function main() {
     // The gRPC client connection should be shared by all Gateway connections to this endpoint
     const client = await newGrpcConnection();
@@ -70,12 +72,12 @@ async function exampleSubmit(gateway: Gateway) {
     // Submit a transaction, blocking until the transaction has been committed on the ledger
     const submitResult = await contract.submitTransaction('put', 'time', timestamp);
 
-    console.log('Submit result:', submitResult.toString());
+    console.log('Submit result:', bytesAsString(submitResult));
     console.log('Evaluating "get" query with arguments: time');
 
     const evaluateResult = await contract.evaluateTransaction('get', 'time');
 
-    console.log('Query result:', evaluateResult.toString());
+    console.log('Query result:', bytesAsString(evaluateResult));
 }
 
 async function exampleSubmitAsync(gateway: Gateway) {
@@ -92,13 +94,12 @@ async function exampleSubmitAsync(gateway: Gateway) {
     });
     const submitResult = commit.getResult();
 
-    console.log('Submit result:', submitResult.toString());
+    console.log('Submit result:', bytesAsString(submitResult));
     console.log('Waiting for transaction commit');
 
-    const successful = await commit.isSuccessful();
-    if (!successful) {
-        const status = await commit.getStatus();
-        throw new Error(`Transaction ${commit.getTransactionId()} failed to commit with status code: ${status}`);
+    const status = await commit.getStatus();
+    if (!status.successful) {
+        throw new Error(`Transaction ${status.transactionId} failed to commit with status code: ${status.code}`);
     }
 
     console.log('Transaction committed successfully');
@@ -106,7 +107,7 @@ async function exampleSubmitAsync(gateway: Gateway) {
 
     const evaluateResult = await contract.evaluateTransaction('get', 'async');
 
-    console.log('Query result:', evaluateResult.toString());
+    console.log('Query result:', bytesAsString(evaluateResult));
 }
 
 async function exampleSubmitPrivateData(gateway: Gateway) {
@@ -115,22 +116,24 @@ async function exampleSubmitPrivateData(gateway: Gateway) {
 
     const timestamp = new Date().toISOString();
     const privateData = {
-        'collection': Buffer.from('SharedCollection,Org3Collection'),
-        'key': Buffer.from('my-private-key'),
-        'value': Buffer.from(timestamp)
-    }
-    console.log('Submitting "WritePrivateData" transaction with private data: ', privateData.value.toString());
+        'collection': 'SharedCollection,Org3Collection',
+        'key': 'my-private-key',
+        'value': timestamp,
+    };
+    console.log('Submitting "WritePrivateData" transaction with private data:', privateData.value);
 
     // Submit transaction, blocking until the transaction has been committed on the ledger.
     // The 'transient' data will not get written to the ledger, and is used to send sensitive data to the trusted endorsing peers.
     // The gateway will only send this to peers that are included in the ownership policy of all collections accessed by the chaincode function.
     // It is assumed that the gateway's organization is trusted and will invoke the chaincode to work out if extra endorsements are required from other orgs.
     // In this example, it will also seek endorsement from Org3, which is included in the ownership policy of both collections.
-    await contract.submit('WritePrivateData', { transientData: privateData });
+    await contract.submit('WritePrivateData', {
+        transientData: privateData,
+    });
 
     console.log('Evaluating "ReadPrivateData" query with arguments: "SharedCollection", "my-private-key"');
     const evaluateResult = await contract.evaluateTransaction('ReadPrivateData', 'SharedCollection', 'my-private-key');
-    console.log('Query result:', evaluateResult.toString());
+    console.log('Query result:', bytesAsString(evaluateResult));
 }
 
 async function exampleSubmitPrivateData2(gateway: Gateway) {
@@ -139,21 +142,24 @@ async function exampleSubmitPrivateData2(gateway: Gateway) {
 
     const timestamp = new Date().toISOString();
     const privateData = {
-        'collection': Buffer.from('Org1Collection,Org3Collection'),
-        'key': Buffer.from('my-private-key2'),
-        'value': Buffer.from(timestamp)
-    }
-    console.log('Submitting "WritePrivateData" transaction with private data: ', privateData.value.toString());
+        'collection': 'Org1Collection,Org3Collection',
+        'key': 'my-private-key2',
+        'value': timestamp,
+    };
+    console.log('Submitting "WritePrivateData" transaction with private data:', privateData.value);
 
     // This example is similar to the previous private data example.
     // The difference here is that the gateway cannot assume that Org3 is trusted to receive transient data
     // that might be destined for storage in Org1Collection, since Org3 is not in its ownership policy.
     // The client application must explicitly specify which organizations must endorse using the endorsingOrganizations option.
-    await contract.submit('WritePrivateData', { transientData: privateData, endorsingOrganizations: ['Org1MSP', 'Org3MSP'] });
+    await contract.submit('WritePrivateData', {
+        transientData: privateData,
+        endorsingOrganizations: ['Org1MSP', 'Org3MSP'],
+    });
 
     console.log('Evaluating "ReadPrivateData" query with arguments: "Org1Collection", "my-private-key2"');
     const evaluateResult = await contract.evaluateTransaction('ReadPrivateData', 'Org1Collection', 'my-private-key2');
-    console.log('Query result:', evaluateResult.toString());
+    console.log('Query result:', bytesAsString(evaluateResult));
 }
 
 async function exampleStateBasedEndorsement(gateway: Gateway) {
@@ -167,7 +173,7 @@ async function exampleStateBasedEndorsement(gateway: Gateway) {
     // Query the current state
     console.log('Evaluating "GetState" query with arguments: "sbe-key"');
     let evaluateResult = await contract.evaluateTransaction('GetState', 'sbe-key');
-    console.log('Query result:', evaluateResult.toString());
+    console.log('Query result:', bytesAsString(evaluateResult));
 
     // Submit transaction to modify the state.
     // The state-based endorsement policy will override the chaincode policy for this state (key).
@@ -177,7 +183,7 @@ async function exampleStateBasedEndorsement(gateway: Gateway) {
     // Verify the current state
     console.log('Evaluating "GetState" query with arguments: "sbe-key"');
     evaluateResult = await contract.evaluateTransaction('GetState', 'sbe-key');
-    console.log('Query result:', evaluateResult.toString());
+    console.log('Query result:', bytesAsString(evaluateResult));
 
     // Now change the state-based endorsement policy for this state.
     console.log('Submitting "SetStateEndorsers" transaction with arguments:  "sbe-key", "Org2MSP", "Org3MSP"');
@@ -193,7 +199,7 @@ async function exampleStateBasedEndorsement(gateway: Gateway) {
     // Verify the new state
     console.log('Evaluating "GetState" query with arguments: "sbe-key"');
     evaluateResult = await contract.evaluateTransaction('GetState', 'sbe-key');
-    console.log('Query result:', evaluateResult.toString());
+    console.log('Query result:', bytesAsString(evaluateResult));
 }
 
 async function exampleChaincodeEvents(gateway: Gateway) {
@@ -202,21 +208,21 @@ async function exampleChaincodeEvents(gateway: Gateway) {
 
     // Submit a transaction that generates a chaincode event
     console.log('Submitting "event" transaction with arguments:  "my-event-name", "my-event-payload"');
-    const commit = await contract.submitAsync('event', { arguments: ['my-event-name', 'my-event-payload'] });
-    const successful = await commit.isSuccessful()
-    if (!successful) {
-        const status = await commit.getStatus();
-        throw new Error(`Transaction ${commit.getTransactionId()} failed to commit with status code: ${status}`);
+    const commit = await contract.submitAsync('event', {
+        arguments: ['my-event-name', 'my-event-payload'],
+    });
+    const status = await commit.getStatus()
+    if (!status.successful) {
+        throw new Error(`Transaction ${status.transactionId} failed to commit with status code: ${status.code}`);
     }
 
-    const blockNumber = await commit.getBlockNumber()
+    console.log('Read chaincode events from block number', status.blockNumber);
+    const events = await network.getChaincodeEvents('basic', {
+        startBlock: status.blockNumber,
+    });
 
-    console.log(`Read chaincode events from block number ${blockNumber}`)
-    const events = await network.getChaincodeEvents('basic', { startBlock: blockNumber });
-
-    const decoder = new TextDecoder();
     for await (const event of events) {
-        const payload = decoder.decode(event.payload);
+        const payload = bytesAsString(event.payload);
         console.log(`Received event name: ${event.eventName}, payload: ${payload}, txID: ${event.transactionId}`);
         break;
     }
@@ -241,6 +247,10 @@ async function newSigner(): Promise<Signer> {
     const privateKeyPem = await fs.readFile(keyPath);
     const privateKey = crypto.createPrivateKey(privateKeyPem);
     return signers.newPrivateKeySigner(privateKey);
+}
+
+function bytesAsString(bytes?: Uint8Array): string {
+    return utf8Decoder.decode(bytes);
 }
 
 main().catch(console.error);

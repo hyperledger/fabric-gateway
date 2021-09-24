@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SessionInfo, SlotInfo, TokenInfo, Template, Mechanism, Pkcs11Error } from 'pkcs11js';
-import { HSMSignerOptions, newHSMSignerFactory } from './hsmsigners';
+import { Mechanism, Pkcs11Error, SessionInfo, SlotInfo, Template, TokenInfo } from 'pkcs11js';
+import { HSMSignerOptions } from './hsmsigner';
+import { newHSMSignerFactory } from './signers';
 
 const pkcs11Stub = {
     load: (): void => { return; },

@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.protobuf.ByteString;
-import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
@@ -25,7 +24,6 @@ import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
-import org.hyperledger.fabric.protos.peer.TransactionPackage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.assertj.core.api.Assertions.entry;
+import static org.hyperledger.fabric.protos.peer.TransactionPackage.TxValidationCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -304,7 +303,7 @@ public final class SubmitTransactionTest {
 
     @Test
     void throws_on_endorse_connection_error() {
-        doThrow(new StatusRuntimeException(Status.UNAVAILABLE)).when(stub).endorse(any());
+        doThrow(new StatusRuntimeException(io.grpc.Status.UNAVAILABLE)).when(stub).endorse(any());
 
         Contract contract = network.getContract("CHAINCODE_ID");
 
@@ -314,7 +313,7 @@ public final class SubmitTransactionTest {
 
     @Test
     void throws_on_submit_connection_error() {
-        doThrow(new StatusRuntimeException(Status.UNAVAILABLE)).when(stub).submit(any());
+        doThrow(new StatusRuntimeException(io.grpc.Status.UNAVAILABLE)).when(stub).submit(any());
 
         Contract contract = network.getContract("CHAINCODE_ID");
 
@@ -324,7 +323,7 @@ public final class SubmitTransactionTest {
 
     @Test
     void throws_on_commit_failure() {
-        doReturn(utils.newCommitStatusResponse(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT))
+        doReturn(utils.newCommitStatusResponse(TxValidationCode.MVCC_READ_CONFLICT))
                 .when(stub).commitStatus(any());
 
         Transaction transaction = network.getContract("CHAINCODE_ID")
@@ -334,8 +333,8 @@ public final class SubmitTransactionTest {
 
         CommitException e = catchThrowableOfType(() -> transaction.submit(), CommitException.class);
 
-        assertThat(e).hasMessageContaining(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT.name());
-        assertThat(e.getStatus()).isEqualTo(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT);
+        assertThat(e).hasMessageContaining(TxValidationCode.MVCC_READ_CONFLICT.name());
+        assertThat(e.getStatus()).isEqualTo(TxValidationCode.MVCC_READ_CONFLICT);
         assertThat(e.getTransactionId()).isEqualTo(transaction.getTransactionId());
     }
 
@@ -372,55 +371,58 @@ public final class SubmitTransactionTest {
 
     @Test
     void commit_returns_transaction_validation_code() {
-        doReturn(utils.newCommitStatusResponse(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT))
+        doReturn(utils.newCommitStatusResponse(TxValidationCode.MVCC_READ_CONFLICT))
                 .when(stub).commitStatus(any());
 
         Contract contract = network.getContract("CHAINCODE_ID");
-        Commit commit = contract.newProposal("TRANSACTION_NAME")
+        Status status = contract.newProposal("TRANSACTION_NAME")
                 .build()
                 .endorse()
-                .submitAsync();
+                .submitAsync()
+                .getStatus();
 
-        TransactionPackage.TxValidationCode status = commit.getStatus();
-        assertThat(status).isEqualTo(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT);
+        assertThat(status.getCode()).isEqualTo(TxValidationCode.MVCC_READ_CONFLICT);
     }
 
     @Test
     void commit_returns_successful_for_successful_transaction() {
         Contract contract = network.getContract("CHAINCODE_ID");
-        Commit commit = contract.newProposal("TRANSACTION_NAME")
+        Status status = contract.newProposal("TRANSACTION_NAME")
                 .build()
                 .endorse()
-                .submitAsync();
+                .submitAsync()
+                .getStatus();
 
-        assertThat(commit.isSuccessful()).isTrue();
+        assertThat(status.isSuccessful()).isTrue();
     }
 
     @Test
     void commit_returns_unsuccessful_for_failed_transaction() {
-        doReturn(utils.newCommitStatusResponse(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT))
+        doReturn(utils.newCommitStatusResponse(TxValidationCode.MVCC_READ_CONFLICT))
                 .when(stub).commitStatus(any());
 
         Contract contract = network.getContract("CHAINCODE_ID");
-        Commit commit = contract.newProposal("TRANSACTION_NAME")
+        Status status = contract.newProposal("TRANSACTION_NAME")
                 .build()
                 .endorse()
-                .submitAsync();
+                .submitAsync()
+                .getStatus();
 
-        assertThat(commit.isSuccessful()).isFalse();
+        assertThat(status.isSuccessful()).isFalse();
     }
 
     @Test
     void commit_returns_block_number() {
-        doReturn(utils.newCommitStatusResponse(TransactionPackage.TxValidationCode.MVCC_READ_CONFLICT, 101))
+        doReturn(utils.newCommitStatusResponse(TxValidationCode.MVCC_READ_CONFLICT, 101))
                 .when(stub).commitStatus(any());
 
         Contract contract = network.getContract("CHAINCODE_ID");
-        Commit commit = contract.newProposal("TRANSACTION_NAME")
+        Status status = contract.newProposal("TRANSACTION_NAME")
                 .build()
                 .endorse()
-                .submitAsync();
+                .submitAsync()
+                .getStatus();
 
-        assertThat(commit.getBlockNumber()).isEqualTo(101);
+        assertThat(status.getBlockNumber()).isEqualTo(101);
     }
 }

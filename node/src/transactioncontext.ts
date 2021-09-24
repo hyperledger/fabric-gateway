@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import crypto from 'crypto';
+import { randomBytes } from 'crypto';
 import { SignatureHeader } from './protos/common/common_pb';
 import { SigningIdentity } from './signingidentity';
 
@@ -13,7 +13,7 @@ export class TransactionContext {
     readonly #signatureHeader: SignatureHeader;
 
     constructor(signingIdentity: SigningIdentity) {
-        const nonce = crypto.randomBytes(24);
+        const nonce = randomBytes(24);
         const creator = signingIdentity.getCreator();
 
         const saltedCreator = Buffer.concat([nonce, creator]);

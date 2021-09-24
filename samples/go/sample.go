@@ -109,14 +109,10 @@ func exampleSubmitAsync(gateway *client.Gateway) {
 	fmt.Printf("Submit result: %s\n", string(submitResult))
 	fmt.Println("Waiting for transaction commit")
 
-	if successful, err := commit.Successful(); err != nil {
-		panic(fmt.Errorf("failed to obtain commit status: %w", err))
-	} else if !successful {
-		status, err := commit.Status()
-		if err != nil {
-			panic(err)
-		}
-		panic(fmt.Errorf("transaction %s failed to commit with status code: %d", commit.TransactionID(), int32(status)))
+	if status, err := commit.Status(); err != nil {
+		panic(fmt.Errorf("failed to get commit status: %w", err))
+	} else if !status.Successful {
+		panic(fmt.Errorf("transaction %s, failed to commit with status: %d", status.TransactionID, int32(status.Code)))
 	}
 
 	fmt.Printf("Transaction committed successfully\n")
@@ -147,8 +143,7 @@ func exampleSubmitPrivateData(gateway *client.Gateway) {
 	// The gateway will only send this to peers that are included in the ownership policy of all collections accessed by the chaincode function.
 	// It is assumed that the gateway's organization is trusted and will invoke the chaincode to work out if extra endorsements are required from other orgs.
 	// In this example, it will also seek endorsement from Org3, which is included in the ownership policy of both collections.
-	_, err := contract.Submit("WritePrivateData", client.WithTransient(privateData))
-	if err != nil {
+	if _, err := contract.Submit("WritePrivateData", client.WithTransient(privateData)); err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
 
@@ -179,11 +174,10 @@ func exampleSubmitPrivateData2(gateway *client.Gateway) {
 	// The difference here is that the gateway cannot assume that Org3 is trusted to receive transient data
 	// that might be destined for storage in Org1Collection, since Org3 is not in its ownership policy.
 	// The client application must explicitly specify which organizations must endorse using the WithEndorsingOrganizations() functional argument.
-	_, err := contract.Submit("WritePrivateData",
+	if _, err := contract.Submit("WritePrivateData",
 		client.WithTransient(privateData),
 		client.WithEndorsingOrganizations("Org1MSP", "Org3MSP"),
-	)
-	if err != nil {
+	); err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
 
@@ -204,8 +198,7 @@ func exampleStateBasedEndorsement(gateway *client.Gateway) {
 
 	fmt.Println("Submitting \"SetStateWithEndorser\" transaction with arguments: \"sbe-key\", \"value1\", \"Org1MSP\"")
 	// Submit transaction, blocking until the transaction has been committed on the ledger
-	_, err := contract.SubmitTransaction("SetStateWithEndorser", "sbe-key", "value1", "Org1MSP")
-	if err != nil {
+	if _, err := contract.SubmitTransaction("SetStateWithEndorser", "sbe-key", "value1", "Org1MSP"); err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
 	fmt.Println("Transaction committed successfully")
@@ -221,8 +214,7 @@ func exampleStateBasedEndorsement(gateway *client.Gateway) {
 	// Submit transaction to modify the state.
 	// The state-based endorsement policy will override the chaincode policy for this state (key).
 	fmt.Println("Submitting \"ChangeState\" transaction with arguments: \"sbe-key\", \"value2\"")
-	_, err = contract.SubmitTransaction("ChangeState", "sbe-key", "value2")
-	if err != nil {
+	if _, err = contract.SubmitTransaction("ChangeState", "sbe-key", "value2"); err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
 	fmt.Println("Transaction committed successfully")
@@ -237,8 +229,7 @@ func exampleStateBasedEndorsement(gateway *client.Gateway) {
 
 	// Now change the state-based endorsement policy for this state.
 	fmt.Println("Submitting \"SetStateEndorsers\" transaction with arguments: \"sbe-key\", \"Org2MSP\", \"Org3MSP\"")
-	_, err = contract.SubmitTransaction("SetStateEndorsers", "sbe-key", "Org2MSP", "Org3MSP")
-	if err != nil {
+	if _, err = contract.SubmitTransaction("SetStateEndorsers", "sbe-key", "Org2MSP", "Org3MSP"); err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
 	fmt.Println("Transaction committed successfully")
@@ -248,8 +239,7 @@ func exampleStateBasedEndorsement(gateway *client.Gateway) {
 	// extra endorsements are required to satisfy any state changes.
 	// In this example, it will seek endorsements from Org2 and Org3 in order to satisfy the SBE policy.
 	fmt.Println("Submitting \"ChangeState\" transaction with arguments: \"sbe-key\", \"value3\"")
-	_, err = contract.SubmitTransaction("ChangeState", "sbe-key", "value3")
-	if err != nil {
+	if _, err = contract.SubmitTransaction("ChangeState", "sbe-key", "value3"); err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
 	fmt.Println("Transaction committed successfully")
@@ -274,25 +264,18 @@ func exampleChaincodeEvents(gateway *client.Gateway) {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
 
-	if successful, err := commit.Successful(); err != nil {
-		panic(fmt.Errorf("failed to get commit status: %w", err))
-	} else if !successful {
-		status, err := commit.Status()
-		if err != nil {
-			panic(err)
-		}
-		panic(fmt.Errorf("transaction failed to commit with status: %d", int32(status)))
-	}
-
-	blockNumber, err := commit.BlockNumber()
+	status, err := commit.Status()
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to get commit status: %w", err))
+	}
+	if !status.Successful {
+		panic(fmt.Errorf("transaction failed to commit with status: %d", int32(status.Code)))
 	}
 
-	fmt.Printf("Read chaincode events starting at block number %d\n", blockNumber)
+	fmt.Printf("Read chaincode events starting at block number %d\n", status.BlockNumber)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	events, err := network.ChaincodeEvents(ctx, "basic", client.WithStartBlock(blockNumber))
+	events, err := network.ChaincodeEvents(ctx, "basic", client.WithStartBlock(status.BlockNumber))
 	if err != nil {
 		panic(fmt.Errorf("failed to read chaincode events: %w", err))
 	}

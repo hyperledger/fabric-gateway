@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as pkcs11js from 'pkcs11js';
-import * as elliptic from 'elliptic';
 import BN from 'bn.js';
-import { Signer } from './signer';
+import * as elliptic from 'elliptic';
+import * as pkcs11js from 'pkcs11js';
 import { ecRawSignatureAsDer } from './asn1';
+import { Signer } from './signer';
 
 export interface HSMSignerOptions {
     /**
@@ -45,35 +45,9 @@ export interface HSMSigner {
 }
 
 /**
- * Create an HSM Signer factory. A single signer factory instance should be used to create all required HSM signers.
- */
-export function newHSMSignerFactory(library: string): HSMSignerFactory {
-    if (!library || library.trim() === '') {
-        throw new Error('library must be provided');
-    }
-
-    return new HSMSignerFactory(library);
-}
-
-/**
  * Factory to create HSM Signers.
  */
-export class HSMSignerFactory {
-    #pkcs11: pkcs11js.PKCS11;
-
-    constructor(library: string) {
-        this.#pkcs11 = new pkcs11js.PKCS11();
-        this.#pkcs11.load(library);
-        this.#pkcs11.C_Initialize();
-    }
-
-    /**
-     * Dispose of the factory when it, and any HSM signers created by it, are no longer required.
-     */
-    dispose(): void {
-        this.#pkcs11.C_Finalize();
-    }
-
+export interface HSMSignerFactory {
     /**
      * Create a new HSM signing implementation based on provided HSM options.
      *
@@ -84,6 +58,27 @@ export class HSMSignerFactory {
      * @param hsmSignerOptions - The HSM signer options.
      * @returns an HSM Signer implementation.
      */
+     newSigner(hsmSignerOptions: HSMSignerOptions): HSMSigner;
+
+    /**
+     * Dispose of the factory when it, and any HSM signers created by it, are no longer required.
+     */
+     dispose(): void;
+}
+
+export class HSMSignerFactoryImpl implements HSMSignerFactory {
+    #pkcs11: pkcs11js.PKCS11;
+
+    constructor(library: string) {
+        this.#pkcs11 = new pkcs11js.PKCS11();
+        this.#pkcs11.load(library);
+        this.#pkcs11.C_Initialize();
+    }
+
+    dispose(): void {
+        this.#pkcs11.C_Finalize();
+    }
+
     newSigner(hsmSignerOptions: HSMSignerOptions): HSMSigner {
         if (!hsmSignerOptions.label || hsmSignerOptions.label.trim() === '') {
             throw new Error('label property must be provided');

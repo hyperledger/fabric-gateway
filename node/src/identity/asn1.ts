@@ -7,11 +7,11 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import asn1 from 'asn1.js';
-import crypto from 'crypto';
-import { BNInput } from 'elliptic';
+import { define } from 'asn1.js';
+import BN from 'bn.js';
+import { KeyObject } from 'crypto';
 
-const ECPrivateKey = asn1.define('ECPrivateKey', function() {
+const ECPrivateKey = define('ECPrivateKey', function() {
     this.seq().obj(
         this.key('version').int().def(1),
         this.key('privateKey').octstr(),
@@ -20,14 +20,14 @@ const ECPrivateKey = asn1.define('ECPrivateKey', function() {
     );
 });
 
-const ECSignature = asn1.define('ECSignature', function() {
+const ECSignature = define('ECSignature', function() {
     return this.seq().obj(
         this.key('r').int(),
         this.key('s').int()
     );
 });
 
-export function ecPrivateKeyAsRaw(privateKey: crypto.KeyObject): { privateKey: Buffer, curveObjectId: number[] } {
+export function ecPrivateKeyAsRaw(privateKey: KeyObject): { privateKey: Buffer, curveObjectId: number[] } {
     const privateKeyPem = privateKey.export({ format: 'der', type: 'sec1' });
     const decodedDer = ECPrivateKey.decode(privateKeyPem, 'der');
     return {
@@ -36,6 +36,6 @@ export function ecPrivateKeyAsRaw(privateKey: crypto.KeyObject): { privateKey: B
     };
 }
 
-export function ecRawSignatureAsDer(r: BNInput, s: BNInput): Buffer {
+export function ecRawSignatureAsDer(r: BN, s: BN): Buffer {
     return ECSignature.encode({ r, s }, 'der');
 }

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import util from 'util';
+import { inspect } from 'util';
 import { GatewayClient } from './client';
 import { Envelope } from './protos/common/common_pb';
 import { EndorseRequest, EvaluateRequest, PreparedTransaction, ProposedTransaction } from './protos/gateway/gateway_pb';
@@ -60,7 +60,7 @@ export class ProposalImpl implements Proposal {
 
         const proposal = options.proposedTransaction.getProposal();
         if (!proposal) {
-            throw new Error(`Proposal not defined: ${util.inspect(options.proposedTransaction)}`);
+            throw new Error(`Proposal not defined: ${inspect(options.proposedTransaction)}`);
         }
         this.#proposal = proposal;
     }
@@ -93,7 +93,7 @@ export class ProposalImpl implements Proposal {
         const preparedTx = endorseResponse.getPreparedTransaction();
         const response = endorseResponse.getResult();
         if (!preparedTx || !response) {
-            throw new Error(`Invalid endorsement response: ${util.inspect(endorseResponse)}`)
+            throw new Error(`Invalid endorsement response: ${inspect(endorseResponse)}`)
         }
 
         return new TransactionImpl({

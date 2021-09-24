@@ -7,9 +7,9 @@
 import * as grpc from '@grpc/grpc-js';
 import { ServiceClient } from '@grpc/grpc-js/build/src/make-client';
 import * as crypto from 'crypto';
-import * as jsrsa from 'jsrsasign';
-import { connect, Gateway, HSMSignerFactory, HSMSignerOptions, newHSMSignerFactory, HSMSigner } from 'fabric-gateway';
+import { connect, Gateway, HSMSigner, HSMSignerFactory, HSMSignerOptions, signers } from 'fabric-gateway';
 import * as fs from 'fs';
+import * as jsrsa from 'jsrsasign';
 import * as path from 'path';
 
 const mspId = 'Org1MSP';
@@ -30,7 +30,7 @@ async function main() {
     const client = await newGrpcConnection();
 
     // get an HSMSigner Factory. You only need to do this once for the application
-    const hsmSignerFactory = newHSMSignerFactory(findSoftHSMPKCS11Lib());
+    const hsmSignerFactory = signers.newHSMSignerFactory(findSoftHSMPKCS11Lib());
     const credentials = await fs.promises.readFile(certPath);
 
     // Get the signer function and a close function. The close function closes the signer
@@ -93,10 +93,10 @@ async function exampleSubmitAsync(gateway: Gateway) {
     console.log('Submit result:', submitResult.toString());
     console.log('Waiting for transaction commit');
 
-    const successful = await commit.isSuccessful();
-    if (!successful) {
+    const status = await commit.getStatus();
+    if (!status.successful) {
         const status = await commit.getStatus();
-        throw new Error(`Transaction ${commit.getTransactionId()} failed to commit with status code: ${status}`);
+        throw new Error(`Transaction ${status.transactionId} failed to commit with status code: ${status.code}`);
     }
 
     console.log('Transaction committed successfully');

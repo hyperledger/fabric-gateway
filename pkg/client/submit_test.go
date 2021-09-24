@@ -509,7 +509,7 @@ func TestSubmitTransaction(t *testing.T) {
 		status, err := commit.Status()
 		require.NoError(t, err)
 
-		require.Equal(t, peer.TxValidationCode_MVCC_READ_CONFLICT, status)
+		require.Equal(t, peer.TxValidationCode_MVCC_READ_CONFLICT, status.Code)
 	})
 
 	t.Run("Commit returns successful for successful transaction", func(t *testing.T) {
@@ -524,12 +524,12 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, commit, err := contract.SubmitAsync("transaction")
-		require.NoError(t, err)
+		require.NoError(t, err, "submit")
 
-		success, err := commit.Successful()
-		require.NoError(t, err)
+		status, err := commit.Status()
+		require.NoError(t, err, "commit status")
 
-		require.True(t, success)
+		require.True(t, status.Successful)
 	})
 
 	t.Run("Commit returns unsuccessful for failed transaction", func(t *testing.T) {
@@ -544,12 +544,12 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, commit, err := contract.SubmitAsync("transaction")
-		require.NoError(t, err)
+		require.NoError(t, err, "submit")
 
-		success, err := commit.Successful()
-		require.NoError(t, err)
+		status, err := commit.Status()
+		require.NoError(t, err, "commit status")
 
-		require.False(t, success)
+		require.False(t, status.Successful)
 	})
 
 	t.Run("Commit returns block number", func(t *testing.T) {
@@ -565,11 +565,11 @@ func TestSubmitTransaction(t *testing.T) {
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
 		_, commit, err := contract.SubmitAsync("transaction")
-		require.NoError(t, err)
+		require.NoError(t, err, "submit")
 
-		blockNumber, err := commit.BlockNumber()
-		require.NoError(t, err)
+		status, err := commit.Status()
+		require.NoError(t, err, "commit status")
 
-		require.Equal(t, expectedBlockNumber, blockNumber)
+		require.Equal(t, expectedBlockNumber, status.BlockNumber)
 	})
 }

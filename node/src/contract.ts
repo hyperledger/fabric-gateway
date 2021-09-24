@@ -5,11 +5,11 @@
  */
 
 import { GatewayClient } from './client';
-import { CommitStatusNames } from './commit';
 import { Proposal, ProposalImpl } from './proposal';
 import { ProposalBuilder, ProposalOptions } from './proposalbuilder';
 import { PreparedTransaction, ProposedTransaction } from './protos/gateway/gateway_pb';
 import { SigningIdentity } from './signingidentity';
+import { StatusNames } from './status';
 import { SubmittedTransaction } from './submittedtransaction';
 import { Transaction, TransactionImpl } from './transaction';
 
@@ -201,10 +201,9 @@ export class ContractImpl implements Contract {
     async submit(transactionName: string, options?: ProposalOptions): Promise<Uint8Array> {
         const submitted = await this.submitAsync(transactionName, options);
 
-        const successful = await submitted.isSuccessful();
-        if (!successful) {
-            const status = await submitted.getStatus();
-            throw new Error(`Transaction ${submitted.getTransactionId()} failed to commit with status code ${status} (${CommitStatusNames[status]})`)
+        const status = await submitted.getStatus();
+        if (!status.successful) {
+            throw new Error(`Transaction ${status.transactionId} failed to commit with status code ${status.code} (${StatusNames[status.code]})`)
         }
 
         return submitted.getResult();

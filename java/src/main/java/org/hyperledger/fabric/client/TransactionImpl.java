@@ -66,9 +66,9 @@ final class TransactionImpl implements Transaction {
 
     @Override
     public byte[] submit() throws CommitException {
-        SubmittedTransaction submitted = submitAsync();
-        if (!submitted.isSuccessful()) {
-            throw new CommitException(getTransactionId(), submitted.getStatus());
+        Status status = submitAsync().getStatus();
+        if (!status.isSuccessful()) {
+            throw new CommitException(getTransactionId(), status.getCode());
         }
 
         return getResult();

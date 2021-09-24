@@ -15,6 +15,7 @@ import org.hyperledger.fabric.client.Commit;
 import org.hyperledger.fabric.client.Contract;
 import org.hyperledger.fabric.client.Network;
 import org.hyperledger.fabric.client.Proposal;
+import org.hyperledger.fabric.client.Status;
 import org.hyperledger.fabric.client.SubmittedTransaction;
 import org.hyperledger.fabric.client.Transaction;
 import org.hyperledger.fabric.client.identity.Signer;
@@ -84,10 +85,11 @@ public final class TransactionInvocation {
         SubmittedTransaction submitted = signedTransaction.submitAsync();
         Commit commit = offlineSign(submitted);
 
-        blockNumber = commit.getBlockNumber();
+        Status status = commit.getStatus();
+        blockNumber = status.getBlockNumber();
 
-        if (!commit.isSuccessful()) {
-            throw new RuntimeException("Transaction commit failed with status: " + commit.getStatus());
+        if (!status.isSuccessful()) {
+            throw new RuntimeException("Transaction commit failed with status: " + status.getCode());
         }
 
         return submitted.getResult();

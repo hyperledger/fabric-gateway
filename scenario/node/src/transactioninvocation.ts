@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CommitStatus, Contract, Network, ProposalOptions, Signable, Signer } from 'fabric-gateway';
+import { Contract, Network, ProposalOptions, Signable, Signer, StatusCode } from 'fabric-gateway';
 import { bytesAsString, toError, toString } from './utils';
 
 export class TransactionInvocation {
@@ -85,11 +85,12 @@ export class TransactionInvocation {
         const submitted = await signedTransaction.submit();
         const signedCommit = await this.sign(submitted, this.network.newSignedCommit.bind(this.network));
 
-        this.blockNumber = await signedCommit.getBlockNumber();
-        
         const status = await signedCommit.getStatus();
-        if (status !== CommitStatus.VALID) {
-            throw new Error(`Transaction commit failed with status: ${status}`)
+
+        this.blockNumber = status.blockNumber;
+
+        if (status.code !== StatusCode.VALID) {
+            throw new Error(`Transaction commit failed with status: ${status.code}`)
         }
 
         return submitted.getResult();

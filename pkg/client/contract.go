@@ -93,8 +93,8 @@ func (contract *Contract) Submit(transactionName string, options ...ProposalOpti
 		return result, err
 	}
 
-	if status != peer.TxValidationCode_VALID {
-		return nil, fmt.Errorf("transaction commit failed with status: %v", peer.TxValidationCode_name[int32(status)])
+	if !status.Successful {
+		return nil, fmt.Errorf("transaction commit failed with status: %d (%s)", int32(status.Code), peer.TxValidationCode_name[int32(status.Code)])
 	}
 
 	return result, nil
