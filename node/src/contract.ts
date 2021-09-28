@@ -52,10 +52,11 @@ import { Transaction, TransactionImpl } from './transaction';
  * const commit = await contract.submitAsync('transactionName', {
  *     arguments: ['one', 'two']
  * });
- * const result = submitted.getResult();
+ * const result = commit.getResult();
  * // Update UI or reply to REST request before waiting for commit status
- * if (!commit.isSuccessful()) {
- *     throw new Error(`${commit.getTransactionId()} failed: ${commit.getStatus()}`);
+ * const status = await commit.getStatus();
+ * if (!status.successful) {
+ *     throw new Error(`${status.transactionId} failed with status code ${status.code}`);
  * }
  * ```
  *
@@ -66,6 +67,21 @@ import { Transaction, TransactionImpl } from './transaction';
  * const proposalDigest = unsignedProposal.getDigest();
  * // Generate signature from digest
  * const signedProposal = contract.newSignedProposal(proposalBytes, proposalSignature);
+ * 
+ * const unsignedTransaction = await signedProposal.endorse();
+ * const transactionBytes = unsignedTransaction.getBytes();
+ * const transactionDigest = unsignedTransaction.getDigest();
+ * // Generate signature from digest
+ * const signedTransaction = contract.newSignedTransaction(transactionBytes, transactionDigest);
+ * 
+ * const unsignedCommit = signedTransaction.submit();
+ * const commitBytes = unsignedCommit.getBytes();
+ * const commitDigest = unsignedCommit.getDigest();
+ * // Generate signature from digest
+ * const signedCommit = network.newSignedCommit(commitBytes, commitDigest);
+ * 
+ * const result = signedCommit.getResult();
+ * const status = await signedCommit.getStatus();
  * ```
  */
 export interface Contract {
@@ -84,6 +100,11 @@ export interface Contract {
      * Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
      * peers but the transaction will not be sent to the ordering service and so will not be committed to the ledger.
      * This can be used for querying the world state.
+     * 
+     * This method is equivalent to:
+     * ```
+     * contract.evaluate(name, { arguments: [ arg1, arg2 ] });
+     * ```
      * @param name - Name of the transaction to invoke.
      * @param args - Transaction arguments.
      * @returns The result returned by the transaction function.
@@ -94,6 +115,11 @@ export interface Contract {
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
      * transaction function will be evaluated on endorsing peers and then submitted to the ordering service to be
      * committed to the ledger.
+     * 
+     * This method is equivalent to:
+     * ```
+     * contract.submit(name, { arguments: [ arg1, arg2 ] });
+     * ```
      * @param name - Name of the transaction to be invoked.
      * @param args - Transaction arguments.
      * @returns The result returned by the transaction function.
@@ -114,6 +140,16 @@ export interface Contract {
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
      * transaction function will be evaluated on endorsing peers and then submitted to the ordering service to be
      * committed to the ledger.
+     * 
+     * This method is equivalent to:
+     * ```
+     * const commit = await contract.submitAsync(transactionName, options);
+     * const status = await commit.getStatus();
+     * if (!status.successful) {
+     *     throw new Error(`Transaction ${status.transactionId} failed to commit with status code ${status.code}`);
+     * }
+     * const result = commit.getResult();
+     * ```
      * @param transactionName - Name of the transaction to invoke.
      * @param options - Transaction invocation options.
      * @returns The result returned by the transaction function.
@@ -203,7 +239,7 @@ export class ContractImpl implements Contract {
 
         const status = await submitted.getStatus();
         if (!status.successful) {
-            throw new Error(`Transaction ${status.transactionId} failed to commit with status code ${status.code} (${StatusNames[status.code]})`)
+            throw new Error(`Transaction ${status.transactionId} failed to commit with status code ${status.code} (${StatusNames[status.code]})`);
         }
 
         return submitted.getResult();
