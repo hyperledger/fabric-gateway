@@ -22,7 +22,16 @@ import com.google.protobuf.InvalidProtocolBufferException;
  *     or {@link #newChaincodeEventsRequest(String)}.</li>
  * </ul>
  *
- * @see <a href="https://hyperledger-fabric.readthedocs.io/en/release-1.4/developapps/application.html#network-channel">Developing Fabric Applications - Network Channel</a>
+ * <h3>Chaincode events example</h3>
+ * <pre>{@code
+ *     Iterator<ChaincodeEvent> events = network.newChaincodeEventsRequest("basic")
+ *             .startBlock(101)
+ *             .build()
+ *             .getEvents();
+ *     events.forEachRemaining(event -> {
+ *         // Process event
+ *     });
+ * }</pre>
  */
 public interface Network {
     /**
@@ -38,11 +47,11 @@ public interface Network {
      * than one smart contract class (available using the latest chaincode programming model), then an
      * individual class can be selected.
      * @param chaincodeId The name of the chaincode that implements the smart contract.
-     * @param name The class name of the smart contract within the chaincode.
+     * @param contractName The name of the smart contract within the chaincode.
      * @return The contract object.
      * @throws NullPointerException if the chaincode ID is null.
      */
-    Contract getContract(String chaincodeId, String name);
+    Contract getContract(String chaincodeId, String contractName);
 
     /**
      * Get the name of the network channel.

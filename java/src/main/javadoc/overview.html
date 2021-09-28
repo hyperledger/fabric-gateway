@@ -4,51 +4,60 @@
     <title>API Overview</title>
   </head>
   <body>
-	<p>
-	The Fabric Gateway SDK allows applications to interact with a Fabric blockchain network. 
-	It provides a simple API to submit transactions to a ledger or query the contents of a ledger with minimal code.
-	 The Gateway SDK implements the Fabric programming model as described in the
-	 <a href="https://hyperledger-fabric.readthedocs.io/en/latest/developapps/developing_applications.html">Developing Applications</a>
-	 chapter of the Fabric documentation.</p>
-	 <p>The following shows a complete code sample of how to connect to a fabric network,
-	 submit a transaction and query the ledger state using an instantiated smart contract (fabcar sample).
-	 </p>
+	<p>The Fabric Gateway SDK allows applications to interact with a Fabric blockchain network. It provides a simple API
+    to submit transactions to a ledger or query the contents of a ledger with minimal code. The Gateway SDK implements
+    the Fabric programming model as described in the
+    <a href="https://hyperledger-fabric.readthedocs.io/en/latest/developapps/developing_applications.html">Developing Applications</a>
+	chapter of the Fabric documentation.</p>
+
+    <p>Client applications interact with the blockchain network using a Fabric Gateway. A session for a given client
+    identity is established by building and connecting to a Fabric Gateway using a gRPC connection to the Gateway
+    endpoint, client identity, and client signing implementation. The returned <code>Gateway</code> enables interaction
+    with any of the blockchain <code>Networks</code> (channels) accessible through the Fabric Gateway. This in turn
+    provides access to Smart <code>Contracts</code> within chaincode deployed to that blockchain network, and to which
+    transactions can be submitted or queries can be evaluated.
+
+    <p>gRPC connections to a Fabric Gateway may be shared by all <code>Gateway</code> instances interacting with that
+    Fabric Gateway.</p>
+
+	<p>The following shows a complete code sample of how to connect to a fabric network, submit a transaction and query
+    the ledger state using an instantiated smart contract.</p>
 
     <pre><code>
-    public static void main(String[] args) throws IOException {
+    import io.grpc.ManagedChannel;
+    import io.grpc.ManagedChannelBuilder;
+    import org.hyperledger.fabric.client.*;
+    import org.hyperledger.fabric.client.identity.*;
 
-        // Create gRPC channel, which should be shared by all gateway connections to this endpoint.
-        Channel grpcChannel = ManagedChannelBuilder.forAddress("gateway.example.org", 1337)
+    public static void main(final String[] args) throws CommitException, InterruptedException {
+        Reader certReader = Files.newBufferedReader(certificatePath);
+        X509Certificate certificate = Identities.readX509Certificate(certReader);
+        Identity identity = new X509Identity("mspId", certificate);
+
+        Reader keyReader = Files.newBufferedReader(privateKeyPath);
+        PrivateKey privateKey = Identities.readPrivateKey(keyReader);
+        Signer signer = Signers.newPrivateKeySigner(privateKey);
+
+        ManagedChannel grpcChannel = ManagedChannelBuilder.forAddress("gateway.example.org", 1337)
                 .usePlaintext()
                 .build();
 
-        // Create client identity and signing implementation based on X.509 certificate and private key.
-        Identity identity = new X509Identity("mspId", certificate);
-        Signer signer = Signers.newPrivateKeySigner(privateKey);
-
-        // Configure gateway connection used to access the network.
         Gateway.Builder builder = Gateway.newInstance()
                 .identity(identity)
                 .signer(signer)
                 .connection(grpcChannel);
 
-        // Create gateway connection.
         try (Gateway gateway = builder.connect()) {
+            Network network = gateway.getNetwork("channelName");
+            Contract contract = network.getContract("chaincodeName");
 
-            // Obtain smart contract deployed on the network.
-            Network network = gateway.getNetwork("mychannel");
-            Contract contract = network.getContract("fabcar");
+            byte[] putResult = contract.submitTransaction("put", "time", LocalDateTime.now().toString());
+            System.out.println(new String(putResult, StandardCharsets.UTF_8));
 
-            // Submit transactions that store state to the ledger.
-            byte[] createCarResult = contract.submitTransaction("createCar", "VW", "Polo", "Grey", "Mary");
-            System.out.println(new String(createCarResult, StandardCharsets.UTF_8));
-
-            // Evaluate transactions that query state from the ledger.
-            byte[] queryAllCarsResult = contract.evaluateTransaction("queryAllCars");
-            System.out.println(new String(queryAllCarsResult, StandardCharsets.UTF_8));
-
-        } catch (ContractException | TimeoutException | InterruptedException e) {
-            e.printStackTrace();
+            byte[] getResult = contract.evaluateTransaction("get", "time");
+            System.out.println(new String(getResult, StandardCharsets.UTF_8));
+        } finally {
+            grpcChannel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
         }
     }
     </code></pre>

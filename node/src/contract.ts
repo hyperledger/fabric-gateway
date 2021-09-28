@@ -80,7 +80,7 @@ import { Transaction, TransactionImpl } from './transaction';
  * // Generate signature from digest
  * const signedCommit = network.newSignedCommit(commitBytes, commitDigest);
  * 
- * const result = signedCommit.getResult();
+ * const result = signedTransaction.getResult();
  * const status = await signedCommit.getStatus();
  * ```
  */
