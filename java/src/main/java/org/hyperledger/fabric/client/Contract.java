@@ -25,7 +25,9 @@ import com.google.protobuf.InvalidProtocolBufferException;
  *
  * <p>For more complex transaction invocations, such as including transient data, the transaction proposal can be built
  * using {@link #newProposal(String)}. Once built, the proposal can either be evaluated, or can be sent for endorsement
- * and the resulting transaction object can be submitted to the orderer to be committed to the ledger.</p>
+ * and the resulting transaction object can be submitted to the orderer to be committed to the ledger. This flow can
+ * also be used to asynchronously submit transactions, which allows the transaction result to be accessed prior to its
+ * commit to the ledger.</p>
  *
  * <h3>Evaluate transaction example</h3>
  * <pre>{@code
@@ -44,6 +46,20 @@ import com.google.protobuf.InvalidProtocolBufferException;
  *             .build()
  *             .endorse()
  *             .submit();
+ * }</pre>
+ *
+ * <h3>Async submit example</h3>
+ * <pre>{@code
+ *     SubmittedTransaction commit = contract.newProposal("transactionName")
+ *             .build()
+ *             .endorse()
+ *             .submitAsync();
+ *     byte[] result = commit.getResult();
+ *     // Update UI or reply to REST request before waiting for commit status
+ *     Status status = commit.getStatus();
+ *     if (!status.isSuccessful()) {
+ *         // Commit failure
+ *     }
  * }</pre>
  *
  * <h2>Off-line signing</h2>
@@ -86,9 +102,10 @@ import com.google.protobuf.InvalidProtocolBufferException;
  *     byte[] commitDigest = unsignedCommit.getDigest();
  *     // Generate signature from digest
  *     Commit signedCommit = network.newSignedCommit(commitBytes, commitDigest);
- * }</pre>
  *
- * @see <a href="https://hyperledger-fabric.readthedocs.io/en/latest/developapps/application.html#construct-request">Developing Fabric Applications - Construct request</a>
+ *     byte[] result = signedTransaction.getResult();
+ *     Status status = signedCommit.getStatus();
+ * }</pre>
  */
 public interface Contract {
     /**
@@ -108,6 +125,13 @@ public interface Contract {
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
      * transaction function will be evaluated on endorsing peers and then submitted to the ordering service to be
      * committed to the ledger.
+     *
+     * <p>This method is equivalent to:</p>
+     * <pre>{@code
+     *     contract.newProposal(name)
+     *             .build()
+     *             .submitSync();
+     * }</pre>
      * @param name Transaction function name.
      * @return Payload response from the transaction function.
      * @throws CommitException if the transaction fails to commit successfully.
@@ -120,6 +144,13 @@ public interface Contract {
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
      * transaction function will be evaluated on endorsing peers and then submitted to the ordering service to be
      * committed to the ledger.
+     * <p>This method is equivalent to:</p>
+     * <pre>{@code
+     *     contract.newProposal(name)
+     *             .addArguments(arg1, arg2)
+     *             .build()
+     *             .submitSync();
+     * }</pre>
      * @param name Transaction function name.
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
@@ -133,6 +164,14 @@ public interface Contract {
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
      * transaction function will be evaluated on endorsing peers and then submitted to the ordering service to be
      * committed to the ledger.
+     *
+     * <p>This method is equivalent to:</p>
+     * <pre>{@code
+     *     contract.newProposal(name)
+     *             .addArguments(arg1, arg2)
+     *             .build()
+     *             .submitSync();
+     * }</pre>
      * @param name Transaction function name.
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
@@ -146,6 +185,13 @@ public interface Contract {
      * Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
      * peers but the transaction will not be sent to the ordering service and so will not be committed to the ledger.
      * This can be used for querying the world state.
+     *
+     * <p>This method is equivalent to:</p>
+     * <pre>{@code
+     *     contract.newProposal(name)
+     *             .build()
+     *             .evaluate();
+     * }</pre>
      * @param name Transaction function name.
      * @return Payload response from the transaction function.
      * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
@@ -157,6 +203,14 @@ public interface Contract {
      * Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
      * peers but the transaction will not be sent to the ordering service and so will not be committed to the ledger.
      * This can be used for querying the world state.
+     *
+     * <p>This method is equivalent to:</p>
+     * <pre>{@code
+     *     contract.newProposal(name)
+     *             .addArguments(arg1, arg2)
+     *             .build()
+     *             .evaluate();
+     * }</pre>
      * @param name Transaction function name.
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
@@ -169,6 +223,13 @@ public interface Contract {
      * Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
      * peers but the transaction will not be sent to the ordering service and so will not be committed to the ledger.
      * This can be used for querying the world state.
+     * <p>This method is equivalent to:</p>
+     * <pre>{@code
+     *     contract.newProposal(name)
+     *             .addArguments(arg1, arg2)
+     *             .build()
+     *             .evaluate();
+     * }</pre>
      * @param name Transaction function name.
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
@@ -178,7 +239,8 @@ public interface Contract {
     byte[] evaluateTransaction(String name, byte[]... args);
 
     /**
-     * Build a new proposal that can be evaluated or sent to peers for endorsement.
+     * Build a new proposal that can be evaluated or sent to peers for endorsement. Supports both asynchronous submit
+     * of transactions and off-line signing flow.
      * @param transactionName The name of the transaction to be invoked.
      * @return A proposal builder.
      * @throws NullPointerException if the transaction name is null.

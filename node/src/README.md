@@ -23,9 +23,6 @@ The following complete example shows how to connect to a Fabric network, submit 
     const utf8Decoder = new TextDecoder();
 
     async function main(): Promise<void> {
-        const GrpcClient = grpc.makeGenericClientConstructor({}, '');
-        const client = new GrpcClient('gateway.example.org:1337', grpc.credentials.createInsecure());
-
         const credentials = await fs.readFile('path/to/certificate.pem');
         const identity: Identity = { mspId: 'myorg', credentials };
 
@@ -33,7 +30,10 @@ The following complete example shows how to connect to a Fabric network, submit 
         const privateKey = crypto.createPrivateKey(privateKeyPem);
         const signer = signers.newPrivateKeySigner(privateKey);
 
-        const gateway = connect({ client, identity, signer });
+        const GrpcClient = grpc.makeGenericClientConstructor({}, '');
+        const client = new GrpcClient('gateway.example.org:1337', grpc.credentials.createInsecure());
+
+        const gateway = connect({ identity, signer, client });
         try {
             const network = gateway.getNetwork('channelName');
             const contract = network.getContract('chaincodeName');
