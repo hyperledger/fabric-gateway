@@ -56,7 +56,7 @@ import { Transaction, TransactionImpl } from './transaction';
  * // Update UI or reply to REST request before waiting for commit status
  * const status = await commit.getStatus();
  * if (!status.successful) {
- *     throw new Error(`${status.transactionId} failed with status code ${status.code}`);
+ *     throw new Error(`transaction ${status.transactionId} failed with status code ${status.code}`);
  * }
  * ```
  *
@@ -140,16 +140,6 @@ export interface Contract {
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
      * transaction function will be evaluated on endorsing peers and then submitted to the ordering service to be
      * committed to the ledger.
-     * 
-     * This method is equivalent to:
-     * ```
-     * const commit = await contract.submitAsync(transactionName, options);
-     * const status = await commit.getStatus();
-     * if (!status.successful) {
-     *     throw new Error(`Transaction ${status.transactionId} failed to commit with status code ${status.code}`);
-     * }
-     * const result = commit.getResult();
-     * ```
      * @param transactionName - Name of the transaction to invoke.
      * @param options - Transaction invocation options.
      * @returns The result returned by the transaction function.

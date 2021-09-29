@@ -130,7 +130,7 @@ public interface Contract {
      * <pre>{@code
      *     contract.newProposal(name)
      *             .build()
-     *             .submitSync();
+     *             .submit();
      * }</pre>
      * @param name Transaction function name.
      * @return Payload response from the transaction function.
@@ -149,7 +149,7 @@ public interface Contract {
      *     contract.newProposal(name)
      *             .addArguments(arg1, arg2)
      *             .build()
-     *             .submitSync();
+     *             .submit();
      * }</pre>
      * @param name Transaction function name.
      * @param args Transaction function arguments.
@@ -170,7 +170,7 @@ public interface Contract {
      *     contract.newProposal(name)
      *             .addArguments(arg1, arg2)
      *             .build()
-     *             .submitSync();
+     *             .submit();
      * }</pre>
      * @param name Transaction function name.
      * @param args Transaction function arguments.

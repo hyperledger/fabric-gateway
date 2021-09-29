@@ -273,7 +273,7 @@ func exampleChaincodeEvents(gateway *client.Gateway) {
 	}
 
 	fmt.Printf("Read chaincode events starting at block number %d\n", status.BlockNumber)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	events, err := network.ChaincodeEvents(ctx, "basic", client.WithStartBlock(status.BlockNumber))
 	if err != nil {

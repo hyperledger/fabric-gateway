@@ -7,12 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package client_test
 
 import (
+	"fmt"
+
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 )
 
-func ExampleContract_evaluate() ([]byte, error) {
-	var contract *client.Contract
+func ExampleContract_Evaluate() {
+	var contract *client.Contract // Obtained from Network.
 
 	result, err := contract.Evaluate(
 		"transactionName",
@@ -20,23 +22,23 @@ func ExampleContract_evaluate() ([]byte, error) {
 		// Specify additional proposal options, such as transient data
 	)
 
-	return result, err
+	fmt.Printf("Result: %s, Err: %v", result, err)
 }
 
-func ExampleContract_submit() ([]byte, error) {
-	var contract *client.Contract
+func ExampleContract_Submit() {
+	var contract *client.Contract // Obtained from Network.
 
 	result, err := contract.Submit(
 		"transactionName",
 		client.WithArguments("one", "two"),
-		// Specify additional proposal options, such as transient data
+		// Specify additional proposal options, such as transient data.
 	)
 
-	return result, err
+	fmt.Printf("Result: %s, Err: %v", result, err)
 }
 
-func ExampleContract_privateData() ([]byte, error) {
-	var contract *client.Contract
+func ExampleContract_Submit_privateData() {
+	var contract *client.Contract // Obtained from Network.
 
 	privateData := map[string][]byte{
 		"price": []byte("3000"),
@@ -49,88 +51,104 @@ func ExampleContract_privateData() ([]byte, error) {
 		client.WithEndorsingOrganizations("Org1MSP", "Org3MSP"),
 	)
 
-	return result, err
+	fmt.Printf("Result: %s, Err: %v", result, err)
 }
 
-func ExampleContract_offlineSignProposal() (*client.Proposal, error) {
-	var contract *client.Contract
-	var sign identity.Sign // Signing function
+func ExampleContract_SubmitAsync() {
+	var contract *client.Contract // Obtained from Network.
 
+	// Create a transaction proposal.
+	result, commit, err := contract.SubmitAsync("transactionName", client.WithArguments("one", "two"))
+	if err != nil {
+		panic(err)
+	}
+
+	// Use transaction result to update UI or return REST response after successful submit to the orderer.
+	fmt.Printf("Result: %s", result)
+
+	// Wait for transaction commit.
+	status, err := commit.Status()
+	if err != nil {
+		panic(err)
+	}
+	if !status.Successful {
+		panic(fmt.Errorf("transaction %s failed to commit with status code %d", status.TransactionID, int32(status.Code)))
+	}
+}
+
+func ExampleContract_offlineSign() {
+	var network *client.Network   // Obtained from Gateway.
+	var contract *client.Contract // Obtained from Network.
+	var sign identity.Sign        // Signing function.
+
+	// Create a transaction proposal.
 	unsignedProposal, err := contract.NewProposal("transactionName", client.WithArguments("one", "two"))
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
+	// Off-line sign the proposal.
 	proposalBytes, err := unsignedProposal.Bytes()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-
-	digest := unsignedProposal.Digest()
-
-	// Generate signature from digest
-	signature, err := sign(digest)
+	proposalDigest := unsignedProposal.Digest()
+	proposalSignature, err := sign(proposalDigest)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-
-	signedProposal, err := contract.NewSignedProposal(proposalBytes, signature)
-
-	return signedProposal, err
-}
-
-func ExampleContract_offlineSignTransaction() (*client.Transaction, error) {
-	var proposal *client.Proposal
-	var sign identity.Sign // Signing function
-	var contract *client.Contract
-
-	unsignedTransaction, err := proposal.Endorse()
+	signedProposal, err := contract.NewSignedProposal(proposalBytes, proposalSignature)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
+	// Endorse proposal to create an endorsed transaction.
+	unsignedTransaction, err := signedProposal.Endorse()
+	if err != nil {
+		panic(err)
+	}
+
+	// Off-line sign the transaction.
 	transactionBytes, err := unsignedTransaction.Bytes()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-
 	digest := unsignedTransaction.Digest()
-
-	// Generate signature from digest
-	signature, err := sign(digest)
+	transactionSignature, err := sign(digest)
 	if err != nil {
-		return nil, err
+		panic(err)
+	}
+	signedTransaction, err := contract.NewSignedTransaction(transactionBytes, transactionSignature)
+	if err != nil {
+		panic(err)
 	}
 
-	signedTransaction, err := contract.NewSignedTransaction(transactionBytes, signature)
-
-	return signedTransaction, err
-}
-
-func ExampleContract_offlineSignCommit() (*client.Commit, error) {
-	var transaction *client.Transaction
-	var sign identity.Sign // Signing function
-	var network *client.Network
-
-	unsignedCommit, err := transaction.Submit()
+	// Submit transaction to the orderer.
+	unsignedCommit, err := signedTransaction.Submit()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
+	// Off-line sign the transaction commit status request
 	commitBytes, err := unsignedCommit.Bytes()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-
-	digest := unsignedCommit.Digest()
-
-	// Generate signature from digest
-	signature, err := sign(digest)
+	commitDigest := unsignedCommit.Digest()
+	commitSignature, err := sign(commitDigest)
 	if err != nil {
-		return nil, err
+		panic(err)
+	}
+	signedCommit, err := network.NewSignedCommit(commitBytes, commitSignature)
+
+	// Wait for transaction commit.
+	status, err := signedCommit.Status()
+	if err != nil {
+		panic(err)
+	}
+	if !status.Successful {
+		panic(fmt.Errorf("transaction %s failed to commit with status code %d", status.TransactionID, int32(status.Code)))
 	}
 
-	signedCommit, err := network.NewSignedCommit(commitBytes, signature)
-
-	return signedCommit, err
+	fmt.Printf("Result: %s, Err: %v", signedTransaction.Result(), err)
 }
