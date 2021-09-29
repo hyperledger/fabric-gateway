@@ -13,6 +13,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"sync"
 
 	"github.com/miekg/pkcs11"
 )
@@ -40,7 +41,6 @@ func NewHSMSignerFactory(library string) (*HSMSignerFactory, error) {
 	}
 
 	ctx := pkcs11.New(library)
-
 	if ctx == nil {
 		return nil, fmt.Errorf("instantiation failed for %s", library)
 	}
@@ -53,16 +53,16 @@ func NewHSMSignerFactory(library string) (*HSMSignerFactory, error) {
 }
 
 // NewHSMSigner creates a new HSM Signer. These are not Go Routine safe, do not share these across Go Routines.
-func (factory *HSMSignerFactory) NewHSMSigner(hsmSignerOptions HSMSignerOptions) (Sign, HSMSignClose, error) {
-	if hsmSignerOptions.Label == "" {
+func (factory *HSMSignerFactory) NewHSMSigner(options HSMSignerOptions) (Sign, HSMSignClose, error) {
+	if options.Label == "" {
 		return nil, nil, fmt.Errorf("no Label provided")
 	}
 
-	if hsmSignerOptions.Pin == "" {
+	if options.Pin == "" {
 		return nil, nil, fmt.Errorf("no Pin provided")
 	}
 
-	if hsmSignerOptions.Identifier == "" {
+	if options.Identifier == "" {
 		return nil, nil, fmt.Errorf("no Identifier provided")
 	}
 
@@ -73,25 +73,30 @@ func (factory *HSMSignerFactory) NewHSMSigner(hsmSignerOptions HSMSignerOptions)
 
 	for _, slot := range slots {
 		tokenInfo, err := factory.ctx.GetTokenInfo(slot)
-		if err != nil || hsmSignerOptions.Label != tokenInfo.Label {
+		if err != nil || options.Label != tokenInfo.Label {
 			continue
 		}
 
-		session, err := factory.createSession(slot, hsmSignerOptions.Pin)
+		session, err := factory.createSession(slot, options.Pin)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		privateKeyHandle, err := factory.findObjectInHSM(session, pkcs11.CKO_PRIVATE_KEY, hsmSignerOptions.Identifier)
+		privateKeyHandle, err := factory.findObjectInHSM(session, pkcs11.CKO_PRIVATE_KEY, options.Identifier)
 		if err != nil {
 			factory.ctx.CloseSession(session)
 			return nil, nil, err
 		}
 
-		return newSigner(factory.ctx, session, privateKeyHandle), newCloser(factory.ctx, session), nil
+		signer := &hsmSigner{
+			ctx:              factory.ctx,
+			session:          session,
+			privateKeyHandle: privateKeyHandle,
+		}
+		return signer.Sign, signer.Close, nil
 	}
 
-	return nil, nil, fmt.Errorf("could not find token with label %s", hsmSignerOptions.Label)
+	return nil, nil, fmt.Errorf("could not find token with label %s", options.Label)
 
 }
 
@@ -124,48 +129,69 @@ func (factory *HSMSignerFactory) findObjectInHSM(session pkcs11.SessionHandle, k
 }
 
 func (factory *HSMSignerFactory) createSession(slot uint, pin string) (pkcs11.SessionHandle, error) {
-	sess, err := factory.ctx.OpenSession(slot, pkcs11.CKF_SERIAL_SESSION)
+	session, err := factory.ctx.OpenSession(slot, pkcs11.CKF_SERIAL_SESSION)
 	if err != nil {
 		return 0, fmt.Errorf("open session failed: %w", err)
 	}
-	err = factory.ctx.Login(sess, pkcs11.CKU_USER, pin)
-	if err != nil && err != pkcs11.Error(pkcs11.CKR_USER_ALREADY_LOGGED_IN) {
-		factory.ctx.CloseSession(sess)
+
+	if err := factory.ctx.Login(session, pkcs11.CKU_USER, pin); err != nil && err != pkcs11.Error(pkcs11.CKR_USER_ALREADY_LOGGED_IN) {
+		factory.ctx.CloseSession(session)
 		return 0, fmt.Errorf("login failed: %w", err)
 	}
 
-	return sess, nil
+	return session, nil
 }
 
-func newCloser(ctx *pkcs11.Ctx, session pkcs11.SessionHandle) HSMSignClose {
-	return func() error {
-		return ctx.CloseSession(session)
-	}
+type hsmSigner struct {
+	ctx              *pkcs11.Ctx
+	lock             sync.Mutex
+	session          pkcs11.SessionHandle
+	privateKeyHandle pkcs11.ObjectHandle
 }
 
-func newSigner(ctx *pkcs11.Ctx, session pkcs11.SessionHandle, privateKeyHandle pkcs11.ObjectHandle) Sign {
-	return func(digest []byte) ([]byte, error) {
-		err := ctx.SignInit(session, []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_ECDSA, nil)}, privateKeyHandle)
-		if err != nil {
-			return nil, fmt.Errorf("sign initialize failed: %w", err)
-		}
+func (signer *hsmSigner) Close() error {
+	signer.lock.Lock()
+	defer signer.lock.Unlock()
 
-		sig, err := ctx.Sign(session, digest)
-		if err != nil {
-			return nil, fmt.Errorf("sign failed: %w", err)
-		}
+	return signer.ctx.CloseSession(signer.session)
+}
 
-		r := new(big.Int)
-		s := new(big.Int)
-		r.SetBytes(sig[0 : len(sig)/2])
-		s.SetBytes(sig[len(sig)/2:])
-
-		// Only Elliptic of 256 byte keys are supported
-		s, err = toLowSByCurve(elliptic.P256(), s)
-		if err != nil {
-			return nil, err
-		}
-
-		return marshalECDSASignature(r, s)
+func (signer *hsmSigner) Sign(digest []byte) ([]byte, error) {
+	signature, err := signer.hsmSign(digest)
+	if err != nil {
+		return nil, err
 	}
+
+	r, s := new(big.Int), new(big.Int)
+	sIndex := len(signature) / 2
+	r.SetBytes(signature[0:sIndex])
+	s.SetBytes(signature[sIndex:])
+
+	// Only Elliptic of 256 byte keys are supported
+	s, err = toLowSByCurve(elliptic.P256(), s)
+	if err != nil {
+		return nil, err
+	}
+
+	return marshalECDSASignature(r, s)
+}
+
+func (signer *hsmSigner) hsmSign(digest []byte) ([]byte, error) {
+	signer.lock.Lock()
+	defer signer.lock.Unlock()
+
+	if err := signer.ctx.SignInit(
+		signer.session,
+		[]*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_ECDSA, nil)},
+		signer.privateKeyHandle,
+	); err != nil {
+		return nil, fmt.Errorf("sign initialize failed: %w", err)
+	}
+
+	signature, err := signer.ctx.Sign(signer.session, digest)
+	if err != nil {
+		return nil, fmt.Errorf("sign failed: %w", err)
+	}
+
+	return signature, nil
 }
