@@ -55,6 +55,10 @@ func (contract *Contract) Name() string {
 // EvaluateTransaction will evaluate a transaction function and return its results. A transaction proposal will be
 // evaluated on endorsing peers but the transaction will not be sent to the ordering service and so will not be
 // committed to the ledger. This can be used for querying the world state.
+//
+// This method is equivalent to:
+//
+//     contract.Evaluate(name, WithArguments(args...))
 func (contract *Contract) EvaluateTransaction(name string, args ...string) ([]byte, error) {
 	return contract.Evaluate(name, WithArguments(args...))
 }
@@ -74,6 +78,10 @@ func (contract *Contract) Evaluate(transactionName string, options ...ProposalOp
 // SubmitTransaction will submit a transaction to the ledger and return its result only after it is committed to the
 // ledger. The transaction function will be evaluated on endorsing peers and then submitted to the ordering service to
 // be committed to the ledger.
+//
+// This method is equivalent to:
+//
+//     contract.Submit(name, client.WithArguments(args...))
 func (contract *Contract) SubmitTransaction(name string, args ...string) ([]byte, error) {
 	return contract.Submit(name, WithArguments(args...))
 }
@@ -94,7 +102,7 @@ func (contract *Contract) Submit(transactionName string, options ...ProposalOpti
 	}
 
 	if !status.Successful {
-		return nil, fmt.Errorf("transaction commit failed with status: %d (%s)", int32(status.Code), peer.TxValidationCode_name[int32(status.Code)])
+		return nil, fmt.Errorf("transaction %s failed to commit with status code %d (%s)", status.TransactionID, int32(status.Code), peer.TxValidationCode_name[int32(status.Code)])
 	}
 
 	return result, nil
