@@ -155,9 +155,9 @@ public final class ChaincodeEventsTest {
         Iterator<ChaincodeEvent> actual = network.getChaincodeEvents("CHAINCODE_ID");
 
         List<ChaincodeEvent> expected = Arrays.asList(
-                new ChaincodeEvent(1, event1),
-                new ChaincodeEvent(1, event2),
-                new ChaincodeEvent(2, event3)
+                new ChaincodeEventImpl(1, event1),
+                new ChaincodeEventImpl(1, event2),
+                new ChaincodeEventImpl(2, event3)
         );
         assertThat(Stream.generate(actual::next).limit(3)).hasSameElementsAs(expected);
     }

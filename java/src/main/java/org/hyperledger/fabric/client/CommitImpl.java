@@ -45,7 +45,7 @@ class CommitImpl implements Commit {
     public Status getStatus() {
         sign();
         CommitStatusResponse response = client.commitStatus(signedRequest);
-        return new Status(transactionId, response);
+        return new StatusImpl(transactionId, response);
     }
 
     void setSignature(final byte[] signature) {
