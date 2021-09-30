@@ -26,15 +26,16 @@ type HSMSignerOptions struct {
 	UserType   int
 }
 
-// HSMSignerFactory represents a factory to create HSM Signers.
+// HSMSignerFactory is used to create HSM signers.
 type HSMSignerFactory struct {
 	ctx *pkcs11.Ctx
 }
 
-// HSMSignClose Closes a HSM Sign.
+// HSMSignClose closes an HSM signer when it is no longer needed.
 type HSMSignClose = func() error
 
-// NewHSMSignerFactory creates a new HSMSignerFactory. You only want one of these.
+// NewHSMSignerFactory creates a new HSMSignerFactory. A single factory instance should be used to create all HSM
+// signers.
 func NewHSMSignerFactory(library string) (*HSMSignerFactory, error) {
 	if library == "" {
 		return nil, fmt.Errorf("library path not provided")
@@ -52,7 +53,10 @@ func NewHSMSignerFactory(library string) (*HSMSignerFactory, error) {
 	return &HSMSignerFactory{ctx}, nil
 }
 
-// NewHSMSigner creates a new HSM Signer. These are not Go Routine safe, do not share these across Go Routines.
+// NewHSMSigner creates a new HSM signer, and a close function that should be invoked when the signer is no longer
+// needed. The signer implementation is thread safe but HSM operations are synchronized for a given signer so have the
+// potential to become a bottleneck under load. For high volume applications, it might be beneficial to use a pool of
+// HSM signers.
 func (factory *HSMSignerFactory) NewHSMSigner(options HSMSignerOptions) (Sign, HSMSignClose, error) {
 	if options.Label == "" {
 		return nil, nil, fmt.Errorf("no Label provided")
@@ -66,43 +70,49 @@ func (factory *HSMSignerFactory) NewHSMSigner(options HSMSignerOptions) (Sign, H
 		return nil, nil, fmt.Errorf("no Identifier provided")
 	}
 
+	slot, err := factory.findSlotForLabel(options.Label)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	session, err := factory.createSession(slot, options.Pin)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	privateKeyHandle, err := factory.findObjectInHSM(session, pkcs11.CKO_PRIVATE_KEY, options.Identifier)
+	if err != nil {
+		factory.ctx.CloseSession(session)
+		return nil, nil, err
+	}
+
+	signer := &hsmSigner{
+		ctx:              factory.ctx,
+		session:          session,
+		privateKeyHandle: privateKeyHandle,
+	}
+	return signer.Sign, signer.Close, nil
+}
+
+// Dispose of resources held by the factory when it is no longer needed.
+func (factory *HSMSignerFactory) Dispose() {
+	factory.ctx.Finalize()
+}
+
+func (factory *HSMSignerFactory) findSlotForLabel(label string) (uint, error) {
 	slots, err := factory.ctx.GetSlotList(true)
 	if err != nil {
-		return nil, nil, fmt.Errorf("get slot list failed: %w", err)
+		return 0, fmt.Errorf("get slot list failed: %w", err)
 	}
 
 	for _, slot := range slots {
 		tokenInfo, err := factory.ctx.GetTokenInfo(slot)
-		if err != nil || options.Label != tokenInfo.Label {
-			continue
+		if err == nil && label == tokenInfo.Label {
+			return slot, nil
 		}
-
-		session, err := factory.createSession(slot, options.Pin)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		privateKeyHandle, err := factory.findObjectInHSM(session, pkcs11.CKO_PRIVATE_KEY, options.Identifier)
-		if err != nil {
-			factory.ctx.CloseSession(session)
-			return nil, nil, err
-		}
-
-		signer := &hsmSigner{
-			ctx:              factory.ctx,
-			session:          session,
-			privateKeyHandle: privateKeyHandle,
-		}
-		return signer.Sign, signer.Close, nil
 	}
 
-	return nil, nil, fmt.Errorf("could not find token with label %s", options.Label)
-
-}
-
-// Dispose disposes of the HSMSignerFactory.
-func (factory *HSMSignerFactory) Dispose() {
-	factory.ctx.Finalize()
+	return 0, fmt.Errorf("could not find token with label %s", label)
 }
 
 func (factory *HSMSignerFactory) findObjectInHSM(session pkcs11.SessionHandle, keyType uint, identifier string) (pkcs11.ObjectHandle, error) {
