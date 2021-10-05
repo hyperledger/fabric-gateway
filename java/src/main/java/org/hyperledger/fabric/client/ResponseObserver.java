@@ -15,38 +15,38 @@ import java.util.concurrent.atomic.AtomicReference;
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
 
-class ResponseObserver<ReqT, RespT> implements ClientResponseObserver<ReqT, RespT> {
-    private final AtomicReference<ClientCallStreamObserver<ReqT>> requestObserver = new AtomicReference<>();
-    private final TransferQueue<ValueOrThrowable<RespT>> responseQueue = new LinkedTransferQueue<>();
+class ResponseObserver<RequestType, ResponseType> implements ClientResponseObserver<RequestType, ResponseType> {
+    private final AtomicReference<ClientCallStreamObserver<RequestType>> requestObserver = new AtomicReference<>();
+    private final TransferQueue<ValueOrThrowable<ResponseType>> responseQueue = new LinkedTransferQueue<>();
 
     @Override
-    public void beforeStart(final ClientCallStreamObserver<ReqT> clientCallStreamObserver) {
+    public void beforeStart(final ClientCallStreamObserver<RequestType> clientCallStreamObserver) {
         requestObserver.set(clientCallStreamObserver);
     }
 
     @Override
-    public void onNext(final RespT response) {
+    public void onNext(final ResponseType response) {
         try {
-            responseQueue.transfer(new ValueOrThrowable<>(response));
+            responseQueue.transfer(ValueOrThrowable.of(response));
         } catch (InterruptedException e) {
-            requestObserver.get().cancel("failed to deliver event", e);
             onError(e);
+            Thread.currentThread().interrupt(); // Flag the interrupt to be handled by gRPC
         }
     }
 
     @Override
     public void onError(final Throwable t) {
-        responseQueue.offer(new ValueOrThrowable<>(t));
+        responseQueue.offer(ValueOrThrowable.of(t));
     }
 
     @Override
     public void onCompleted() {
-        responseQueue.offer(new ValueOrThrowable<>(new NoSuchElementException()));
+        responseQueue.offer(ValueOrThrowable.of(new NoSuchElementException()));
     }
 
-    public CloseableIterator<RespT> iterator() {
-        return new CloseableIterator<RespT>() {
-            private ValueOrThrowable<RespT> next;
+    public CloseableIterator<ResponseType> iterator() {
+        return new CloseableIterator<ResponseType>() {
+            private ValueOrThrowable<ResponseType> next;
             private boolean closed = false;
 
             @Override
@@ -61,32 +61,32 @@ class ResponseObserver<ReqT, RespT> implements ClientResponseObserver<ReqT, Resp
                 return !closed && !(peekNext().getThrowable() instanceof NoSuchElementException);
             }
 
-            private synchronized ValueOrThrowable<RespT> peekNext() {
+            private synchronized ValueOrThrowable<ResponseType> peekNext() {
                 if (null == next) {
                     try {
                         next = responseQueue.take();
                     } catch (InterruptedException e) {
-                        next = new ValueOrThrowable<>(e);
+                        next = ValueOrThrowable.of(e);
                     }
                 }
 
                 return next;
             }
 
-            private synchronized ValueOrThrowable<RespT> readNext() {
-                ValueOrThrowable<RespT> result = peekNext();
+            private synchronized ValueOrThrowable<ResponseType> readNext() {
+                ValueOrThrowable<ResponseType> result = peekNext();
                 next = null;
                 return result;
             }
 
             @Override
-            public RespT next() {
+            public ResponseType next() {
                 if (closed) {
                     throw new NoSuchElementException();
                 }
 
-                ValueOrThrowable<RespT> response = readNext();
-                RespT value = response.getValue();
+                ValueOrThrowable<ResponseType> response = readNext();
+                ResponseType value = response.getValue();
 
                 if (value != null) {
                     return value;
