@@ -10,22 +10,21 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
 import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 
 final class ContractImpl implements Contract {
-    private final GatewayGrpc.GatewayBlockingStub client;
+    private final GatewayClient client;
     private final SigningIdentity signingIdentity;
     private final String channelName;
     private final String chaincodeId;
     private final String contractName;
 
-    ContractImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity, final String channelName, final String chaincodeId) {
+    ContractImpl(final GatewayClient client, final SigningIdentity signingIdentity, final String channelName, final String chaincodeId) {
         this(client, signingIdentity, channelName, chaincodeId, null);
     }
 
-    ContractImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity,
+    ContractImpl(final GatewayClient client, final SigningIdentity signingIdentity,
                  final String channelName, final String chaincodeId, final String contractName) {
         Objects.requireNonNull(chaincodeId, "chaincode ID");
 

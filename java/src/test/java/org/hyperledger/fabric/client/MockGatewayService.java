@@ -6,6 +6,8 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.concurrent.CompletableFuture;
+
 import io.grpc.stub.StreamObserver;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
@@ -28,12 +30,12 @@ public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
         this(DEFAULT_STUB);
     }
 
-    public MockGatewayService(GatewayServiceStub stub) {
+    public MockGatewayService(final GatewayServiceStub stub) {
         this.stub = stub;
     }
 
     @Override
-    public void endorse(EndorseRequest request, StreamObserver<EndorseResponse> responseObserver) {
+    public void endorse(final EndorseRequest request, final StreamObserver<EndorseResponse> responseObserver) {
         try {
             EndorseResponse response = stub.endorse(request);
             responseObserver.onNext(response);
@@ -44,7 +46,7 @@ public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
     }
 
     @Override
-    public void submit(SubmitRequest request, StreamObserver<SubmitResponse> responseObserver) {
+    public void submit(final SubmitRequest request, final StreamObserver<SubmitResponse> responseObserver) {
         try {
             SubmitResponse response = stub.submit(request);
             responseObserver.onNext(response);
@@ -55,7 +57,7 @@ public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
     }
 
     @Override
-    public void evaluate(EvaluateRequest request, StreamObserver<EvaluateResponse> responseObserver) {
+    public void evaluate(final EvaluateRequest request, final StreamObserver<EvaluateResponse> responseObserver) {
         try {
             EvaluateResponse response = stub.evaluate(request);
             responseObserver.onNext(response);
@@ -66,7 +68,7 @@ public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
     }
 
     @Override
-    public void commitStatus(SignedCommitStatusRequest request, StreamObserver<CommitStatusResponse> responseObserver) {
+    public void commitStatus(final SignedCommitStatusRequest request, final StreamObserver<CommitStatusResponse> responseObserver) {
         try {
             CommitStatusResponse response = stub.commitStatus(request);
             responseObserver.onNext(response);
@@ -77,12 +79,14 @@ public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
     }
 
     @Override
-    public void chaincodeEvents(SignedChaincodeEventsRequest request, StreamObserver<ChaincodeEventsResponse> responseObserver) {
-        try {
-            stub.chaincodeEvents(request).forEachOrdered(responseObserver::onNext);
-//            responseObserver.onCompleted();
-        } catch (Exception e) {
-            responseObserver.onError(e);
-        }
+    public void chaincodeEvents(final SignedChaincodeEventsRequest request, final StreamObserver<ChaincodeEventsResponse> responseObserver) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                stub.chaincodeEvents(request).forEachOrdered(responseObserver::onNext);
+                responseObserver.onCompleted();
+            } catch (Throwable t) {
+                responseObserver.onError(t);
+            }
+        });
     }
 }

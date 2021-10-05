@@ -11,7 +11,6 @@ import java.util.function.Function;
 import io.grpc.Channel;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
-import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 
 final class GatewayImpl implements Gateway {
     public static final class Builder implements Gateway.Builder {
@@ -19,14 +18,14 @@ final class GatewayImpl implements Gateway {
             throw new UnsupportedOperationException("No signing implementation supplied");
         };
 
-        private GatewayGrpc.GatewayBlockingStub client;
+        private GatewayClient client;
         private Identity identity;
         private Signer signer = UNDEFINED_SIGNER; // No signer implementation is required if only offline signing is used
         private Function<byte[], byte[]> hash = Hash::sha256;
 
         @Override
         public Gateway.Builder connection(final Channel grpcChannel) {
-            this.client = GatewayGrpc.newBlockingStub(grpcChannel);
+            this.client = new GatewayClient(grpcChannel);
             return this;
         }
 
@@ -57,7 +56,7 @@ final class GatewayImpl implements Gateway {
         }
     }
 
-    private final GatewayGrpc.GatewayBlockingStub client;
+    private final GatewayClient client;
     private final SigningIdentity signingIdentity;
 
     private GatewayImpl(final Builder builder) {

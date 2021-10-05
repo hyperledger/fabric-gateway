@@ -6,19 +6,16 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.Iterator;
-
 import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
-import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 
 final class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
-    private final GatewayGrpc.GatewayBlockingStub client;
+    private final GatewayClient client;
     private final SigningIdentity signingIdentity;
     private SignedChaincodeEventsRequest signedRequest;
 
-    ChaincodeEventsRequestImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity,
+    ChaincodeEventsRequestImpl(final GatewayClient client, final SigningIdentity signingIdentity,
                                final SignedChaincodeEventsRequest signedRequest) {
         this.client = client;
         this.signingIdentity = signingIdentity;
@@ -26,9 +23,9 @@ final class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
     }
 
     @Override
-    public Iterator<ChaincodeEvent> getEvents() {
+    public CloseableIterator<ChaincodeEvent> getEvents() {
         sign();
-        Iterator<ChaincodeEventsResponse> responseIter = client.chaincodeEvents(signedRequest);
+        CloseableIterator<ChaincodeEventsResponse> responseIter = client.chaincodeEvents(signedRequest);
         return new ChaincodeEventIterator(responseIter);
     }
 

@@ -8,16 +8,15 @@ package org.hyperledger.fabric.client;
 
 import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
-import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 
 class CommitImpl implements Commit {
-    private final GatewayGrpc.GatewayBlockingStub client;
+    private final GatewayClient client;
     private final SigningIdentity signingIdentity;
     private final String transactionId;
     private SignedCommitStatusRequest signedRequest;
 
-    CommitImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity,
+    CommitImpl(final GatewayClient client, final SigningIdentity signingIdentity,
                 final String transactionId, final SignedCommitStatusRequest signedRequest) {
         this.client = client;
         this.signingIdentity = signingIdentity;

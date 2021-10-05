@@ -11,19 +11,18 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
-import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
-import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 import org.hyperledger.fabric.protos.peer.Chaincode;
 import org.hyperledger.fabric.protos.peer.ProposalPackage;
 
 final class ProposalBuilder implements Proposal.Builder {
-    private final GatewayGrpc.GatewayBlockingStub client;
+    private final GatewayClient client;
     private final SigningIdentity signingIdentity;
     private final String channelName;
     private final Chaincode.ChaincodeID chaincodeId;
@@ -32,7 +31,7 @@ final class ProposalBuilder implements Proposal.Builder {
     private final TransactionContext context;
     private Set<String> endorsingOrgs = Collections.emptySet();
 
-    ProposalBuilder(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity,
+    ProposalBuilder(final GatewayClient client, final SigningIdentity signingIdentity,
                     final String channelName, final String chaincodeId, final String transactionName) {
         this.client = client;
         this.signingIdentity = signingIdentity;
