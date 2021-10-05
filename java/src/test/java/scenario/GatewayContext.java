@@ -6,10 +6,7 @@
 
 package scenario;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TransferQueue;
 
 import io.grpc.ManagedChannel;
 import org.hyperledger.fabric.client.ChaincodeEvent;
@@ -26,8 +23,6 @@ public class GatewayContext {
     private Gateway gateway;
     private Network network;
     private Contract contract;
-    private TransferQueue<ChaincodeEvent> eventQueue;
-    private CompletableFuture<Void> eventJob;
     private CloseableIterator<ChaincodeEvent> eventIter;
 
     public GatewayContext(Identity identity) {
@@ -77,24 +72,11 @@ public class GatewayContext {
 
     private void receiveChaincodeEvents(final CloseableIterator<ChaincodeEvent> iter) {
         closeChaincodeEvents();
-
         this.eventIter = iter;
-
-        // Java gRPC implementation doesn't request events until the first read from iterator, so start reading
-        // asynchronously immediately
-        final TransferQueue<ChaincodeEvent> queue = new LinkedTransferQueue<>();
-        eventQueue = queue;
-        eventJob = CompletableFuture.runAsync(() -> iter.forEachRemaining(event -> {
-            try {
-                queue.transfer(event);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }));
     }
 
-    public ChaincodeEvent nextChaincodeEvent() throws InterruptedException {
-        return eventQueue.poll(30, TimeUnit.SECONDS);
+    public ChaincodeEvent nextChaincodeEvent() {
+        return eventIter.next();
     }
 
     public void close() {
@@ -111,11 +93,6 @@ public class GatewayContext {
         if (eventIter != null) {
             eventIter.close();
             eventIter = null;
-        }
-
-        if (eventJob != null) {
-            eventJob.cancel(true);
-            eventJob = null;
         }
     }
 
