@@ -26,7 +26,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
@@ -41,7 +42,7 @@ public final class EvaluateTransactionTest {
     private Network network;
 
     @BeforeEach
-    void beforeEach() throws Exception {
+    void beforeEach() {
         mocker = new GatewayMocker();
         stub = mocker.getServiceStubSpy();
 
@@ -160,7 +161,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void uses_hash() throws Exception {
+    void uses_hash() {
         AtomicReference<String> actual = new AtomicReference<>();
         Function<byte[], byte[]> hash = (message) -> "MY_DIGEST".getBytes(StandardCharsets.UTF_8);
         Signer signer = (digest) -> {
@@ -234,12 +235,15 @@ public final class EvaluateTransactionTest {
     @Test
     void sends_transaction_ID_in_proposed_transaction() throws InvalidProtocolBufferException {
         network = gateway.getNetwork("MY_NETWORK");
-
         Contract contract = network.getContract("CHAINCODE_ID");
-        contract.evaluateTransaction("TRANSACTION_NAME");
+        Proposal proposal = contract.newProposal("TRANSACTION_NAME").build();
+
+        proposal.evaluate();
+
+        String expected = proposal.getTransactionId();
+        assertThat(expected).isNotEmpty();
 
         EvaluateRequest request = mocker.captureEvaluate();
-        String expected = mocker.getChannelHeader(request.getProposedTransaction()).getTxId();
         String actual = request.getTransactionId();
 
         assertThat(actual).isEqualTo(expected);

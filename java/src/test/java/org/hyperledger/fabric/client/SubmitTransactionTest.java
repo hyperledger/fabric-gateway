@@ -255,15 +255,30 @@ public final class SubmitTransactionTest {
     @Test
     void sends_transaction_ID_in_proposed_transaction() throws Exception {
         network = gateway.getNetwork("MY_NETWORK");
-
         Contract contract = network.getContract("CHAINCODE_ID");
-        contract.submitTransaction("TRANSACTION_NAME");
+
+        Proposal proposal = contract.newProposal("TRANSACTION_NAME").build();
+        proposal.endorse().submit();
+
+        String expected = proposal.getTransactionId();
+        assertThat(expected).isNotEmpty();
 
         EndorseRequest request = mocker.captureEndorse();
-        String expected = mocker.getChannelHeader(request.getProposedTransaction()).getTxId();
         String actual = request.getTransactionId();
 
         assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void proposals_built_by_same_builder_have_different_transaction_IDs() {
+        network = gateway.getNetwork("MY_NETWORK");
+        Contract contract = network.getContract("CHAINCODE_ID");
+        Proposal.Builder builder = contract.newProposal("TRANSACTION_NAME");
+
+        Proposal proposal1 = builder.build();
+        Proposal proposal2 = builder.build();
+
+        assertThat(proposal1.getTransactionId()).isNotEqualTo(proposal2.getTransactionId());
     }
 
     @Test
@@ -341,12 +356,13 @@ public final class SubmitTransactionTest {
     @Test
     void sends_transaction_ID_in_commit_status_request() throws Exception {
         network = gateway.getNetwork("MY_NETWORK");
-
         Contract contract = network.getContract("CHAINCODE_ID");
-        contract.submitTransaction("TRANSACTION_NAME");
+        Proposal proposal = contract.newProposal("TRANSACTION_NAME").build();
 
-        EndorseRequest endorseRequest = mocker.captureEndorse();
-        String expected = mocker.getChannelHeader(endorseRequest.getProposedTransaction()).getTxId();
+        proposal.endorse().submit();
+
+        String expected = proposal.getTransactionId();
+        assertThat(expected).isNotEmpty();
 
         SignedCommitStatusRequest signedRequest = mocker.captureCommitStatus();
         CommitStatusRequest request = CommitStatusRequest.parseFrom(signedRequest.getRequest());

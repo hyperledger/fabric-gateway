@@ -28,7 +28,6 @@ final class ProposalBuilder implements Proposal.Builder {
     private final Chaincode.ChaincodeID chaincodeId;
     private final Chaincode.ChaincodeInput.Builder inputBuilder = Chaincode.ChaincodeInput.newBuilder();
     private final ProposalPackage.ChaincodeProposalPayload.Builder payloadBuilder = ProposalPackage.ChaincodeProposalPayload.newBuilder();
-    private final TransactionContext context;
     private Set<String> endorsingOrgs = Collections.emptySet();
 
     ProposalBuilder(final GatewayClient client, final SigningIdentity signingIdentity,
@@ -39,7 +38,6 @@ final class ProposalBuilder implements Proposal.Builder {
         this.chaincodeId = Chaincode.ChaincodeID.newBuilder()
                 .setName(chaincodeId)
                 .build();
-        context = new TransactionContext(signingIdentity);
 
         inputBuilder.addArgs(ByteString.copyFrom(transactionName, StandardCharsets.UTF_8));
     }
@@ -90,34 +88,36 @@ final class ProposalBuilder implements Proposal.Builder {
     }
 
     private ProposedTransaction newProposedTransaction() {
+        TransactionContext context = new TransactionContext(signingIdentity);
+
         return ProposedTransaction.newBuilder()
-                .setProposal(newSignedProposal())
+                .setProposal(newSignedProposal(context))
                 .setTransactionId(context.getTransactionId())
                 .addAllEndorsingOrganizations(endorsingOrgs)
                 .build();
     }
 
-    private ProposalPackage.SignedProposal newSignedProposal() {
+    private ProposalPackage.SignedProposal newSignedProposal(final TransactionContext context) {
         return ProposalPackage.SignedProposal.newBuilder()
-                .setProposalBytes(newProposal().toByteString())
+                .setProposalBytes(newProposal(context).toByteString())
                 .build();
     }
 
-    private ProposalPackage.Proposal newProposal() {
+    private ProposalPackage.Proposal newProposal(final TransactionContext context) {
         return ProposalPackage.Proposal.newBuilder()
-                .setHeader(newHeader().toByteString())
+                .setHeader(newHeader(context).toByteString())
                 .setPayload(newChaincodeProposalPayload().toByteString())
                 .build();
     }
 
-    private Common.Header newHeader() {
+    private Common.Header newHeader(final TransactionContext context) {
         return Common.Header.newBuilder()
-                .setChannelHeader(newChannelHeader().toByteString())
+                .setChannelHeader(newChannelHeader(context).toByteString())
                 .setSignatureHeader(context.getSignatureHeader().toByteString())
                 .build();
     }
 
-    private Common.ChannelHeader newChannelHeader() {
+    private Common.ChannelHeader newChannelHeader(final TransactionContext context) {
         Timestamp timestamp = Timestamp.newBuilder()
                 .setSeconds(Instant.now().getEpochSecond())
                 .build();
@@ -145,13 +145,15 @@ final class ProposalBuilder implements Proposal.Builder {
     }
 
     private Chaincode.ChaincodeInvocationSpec newChaincodeInvocationSpec() {
-        Chaincode.ChaincodeSpec chaincodeSpec = Chaincode.ChaincodeSpec.newBuilder()
+        return Chaincode.ChaincodeInvocationSpec.newBuilder()
+                .setChaincodeSpec(newChaincodeSpec())
+                .build();
+    }
+
+    private Chaincode.ChaincodeSpec newChaincodeSpec() {
+        return Chaincode.ChaincodeSpec.newBuilder()
                 .setChaincodeId(chaincodeId)
                 .setInput(inputBuilder.build())
-                .build();
-
-        return Chaincode.ChaincodeInvocationSpec.newBuilder()
-                .setChaincodeSpec(chaincodeSpec)
                 .build();
     }
 }
