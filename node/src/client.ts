@@ -6,7 +6,9 @@
 
 import * as grpc from '@grpc/grpc-js';
 import { Message } from 'google-protobuf';
-import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
+import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse, EndpointError } from './protos/gateway/gateway_pb';
+import { Status } from './protos/google/rpc/status_pb';
+import * as gateway from './gateway'
 
 const servicePath = '/gateway.Gateway/';
 const evaluateMethod = servicePath + 'Evaluate';
@@ -62,7 +64,25 @@ class GatewayClientImpl implements GatewayClient {
 function newUnaryCallback<T>(resolve: (value: T) => void, reject: (reason: Error) => void): grpc.requestCallback<T> {
     return (err, value) => {
         if (err) {
-            return reject(err);
+            const details: gateway.EndpointError[] = [];
+            if (typeof err.metadata !== 'undefined') {
+                const gsdb = err.metadata.get('grpc-status-details-bin')
+                gsdb.forEach(detail => {
+                    const status = deserializeStatus(detail as Uint8Array)
+                    status.getDetailsList().forEach(d => {
+                        const ee = deserializeEndpointError(d.getValue_asU8())
+                        details.push({
+                            mspid: ee.getMspId(),
+                            address: ee.getAddress(),
+                            message: ee.getMessage()
+                        });
+                    })
+                })
+            }
+            const gwErr: gateway.GatewayError = new Error(err.message);
+            gwErr.code = err.code;
+            gwErr.details = details;
+            return reject(gwErr);
         }
         if (value == null) {
             return reject(new Error('No result returned'));
@@ -94,6 +114,14 @@ function deserializeCommitStatusResponse(bytes: Uint8Array): CommitStatusRespons
 
 function deserializeChaincodeEventsResponse(bytes: Uint8Array): ChaincodeEventsResponse {
     return ChaincodeEventsResponse.deserializeBinary(bytes);
+}
+
+function deserializeStatus(bytes: Uint8Array): Status {
+    return Status.deserializeBinary(bytes);
+}
+
+function deserializeEndpointError(bytes: Uint8Array): EndpointError {
+    return EndpointError.deserializeBinary(bytes);
 }
 
 export function newGatewayClient(client: grpc.Client): GatewayClient {

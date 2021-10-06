@@ -9,6 +9,7 @@ import expect from 'expect';
 import { CustomWorld } from './customworld';
 import { Fabric } from './fabric';
 import { bytesAsString, toError } from './utils';
+import { EndpointError } from 'fabric-gateway';
 
 setDefaultTimeout(30 * 1000);
 
@@ -151,6 +152,27 @@ Then('the response should be {string}', function(this: CustomWorld, expected: st
 Then('the error message should contain {string}', function(this: CustomWorld, expected: string): void {
     const actual = this.getError().message;
     expect(actual).toContain(expected);
+});
+
+Then('the error details should be', function(this: CustomWorld, dataTable: DataTable): void {
+    const details = this.getError().details;
+    expect(details).toBeDefined();
+    const rows = dataTable.raw();
+    const expected: {[key: string]: EndpointError} = {};
+    rows.forEach(row => {
+        expected[row[0]] = {
+            mspid: row[0],
+            address: row[1],
+            message: row[2]
+        }
+    })
+    details!.forEach(detail => {
+        const ee = expected[detail.mspid];
+        expect(ee).toBeDefined();
+        expect(detail.message).toContain(ee.message);
+        delete expected[detail.mspid];
+    })
+    expect(Object.keys(expected)).toHaveLength(0);
 });
 
 Then('I should receive a chaincode event named {string} with payload {string}', async function(this: CustomWorld, eventName: string, payload: string): Promise<void> {
