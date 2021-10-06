@@ -88,7 +88,8 @@ public interface Proposal extends Signable {
         Builder setEndorsingOrganizations(String... mspids);
 
         /**
-         * Build the proposal from the configuration state of this builder.
+         * Build the proposal from the configuration state of this builder. A new transaction ID will be generated on
+         * each invocation of this method.
          * @return A proposal.
          */
         Proposal build();
