@@ -42,6 +42,8 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.json.JsonString;
 
+import com.google.protobuf.Any;
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.docstring.DocString;
 import io.cucumber.java.After;
@@ -52,12 +54,14 @@ import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import io.grpc.protobuf.StatusProto;
 import org.hyperledger.fabric.client.ChaincodeEvent;
 import org.hyperledger.fabric.client.identity.Identities;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Identity;
+import org.hyperledger.fabric.protos.gateway.EndpointError;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -417,6 +421,21 @@ public class ScenarioSteps {
     @Then("the error message should contain {string}")
     public void assertErrorMessageContains(String expected) {
         assertThat(transactionInvocation.getError()).hasMessageContaining(expected);
+    }
+
+    @Then("the error details should be")
+    public void assertErrorDetails(DataTable table) throws InvalidProtocolBufferException {
+        com.google.rpc.Status status = StatusProto.fromThrowable(transactionInvocation.getError());
+        Map<String, List<String>> expected = new HashMap<>(table.asMap(String.class, List.class));
+
+        for (Any detail : status.getDetailsList()) {
+            EndpointError ee = EndpointError.parseFrom(detail.getValue());
+            List<String> row = expected.get(ee.getMspId());
+            assertThat(row).isNotNull();
+            assertThat(ee.getMessage()).contains(row.get(1));
+            expected.remove(ee.getMspId());
+        }
+        assertThat(expected).isEmpty();
     }
 
     @Then("I should receive a chaincode event named {string} with payload {string}")

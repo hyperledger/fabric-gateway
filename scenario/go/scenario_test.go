@@ -24,6 +24,7 @@ import (
 	"github.com/cucumber/godog"
 	messages "github.com/cucumber/messages-go/v16"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
+	"github.com/hyperledger/fabric-protos-go/gateway"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
@@ -170,6 +171,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^the response should be "([^"]*)"$`, theResponseShouldBe)
 	s.Step(`^the transaction invocation should fail$`, theTransactionShouldFail)
 	s.Step(`^the error message should contain "([^"]*)"$`, theErrorMessageShouldContain)
+	s.Step(`^the error details should be$`, theErrorDetailsShouldBe)
 	s.Step(`^I listen for chaincode events from (\S+)$`, listenForChaincodeEvents)
 	s.Step(`^I replay chaincode events from (\S+) starting at last committed block$`, replayChaincodeEventsFromLastBlock)
 	s.Step(`^I should receive a chaincode event named "([^"]*)" with payload "([^"]*)"$`, receiveChaincodeEvent)
@@ -731,6 +733,39 @@ func theErrorMessageShouldContain(expected string) error {
 		return fmt.Errorf("transaction error message \"%s\" does not contain expected value \"%s\"", actual, expected)
 	}
 
+	return nil
+}
+
+func theErrorDetailsShouldBe(table *messages.PickleTable) error {
+	details := transaction.ErrDetails()
+	expected := map[string]*gateway.EndpointError{}
+	for _, row := range table.Rows {
+		mspid := row.Cells[0].Value
+		address := row.Cells[1].Value
+		msg := row.Cells[2].Value
+		expected[mspid] = &gateway.EndpointError{
+			MspId:   mspid,
+			Address: address,
+			Message: msg,
+		}
+	}
+	for _, detail := range details {
+		ee := expected[detail.MspId]
+		if ee == nil {
+			return fmt.Errorf("unexpected error from endpoint: %s", detail.Address)
+		}
+		if !strings.Contains(detail.Message, ee.Message) {
+			return fmt.Errorf("expected error detail %+v, got %+v", ee, detail)
+		}
+		delete(expected, detail.MspId)
+	}
+	if len(expected) > 0 {
+		keys := make([]string, 0, len(expected))
+		for k := range expected {
+			keys = append(keys, k)
+		}
+		return fmt.Errorf("expected error details from endpoint(s): %v", keys)
+	}
 	return nil
 }
 

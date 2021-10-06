@@ -11,7 +11,9 @@ import (
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
+	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"google.golang.org/grpc/status"
 )
 
 type Transaction struct {
@@ -62,6 +64,15 @@ func (transaction *Transaction) Result() []byte {
 
 func (transaction *Transaction) Err() error {
 	return transaction.err
+}
+
+func (transaction *Transaction) ErrDetails() []*gateway.EndpointError {
+	statusErr := status.Convert(transaction.Err())
+	var details []*gateway.EndpointError
+	for _, detail := range statusErr.Details() {
+		details = append(details, detail.(*gateway.EndpointError))
+	}
+	return details
 }
 
 func (transaction *Transaction) BlockNumber() uint64 {
