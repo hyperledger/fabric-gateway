@@ -9,19 +9,18 @@ package org.hyperledger.fabric.client;
 import java.util.Objects;
 
 import com.google.protobuf.ByteString;
-import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 import org.hyperledger.fabric.protos.orderer.Ab;
 
 final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
-    private final GatewayGrpc.GatewayBlockingStub client;
+    private final GatewayClient client;
     private final SigningIdentity signingIdentity;
     private final String channelName;
     private final String chaincodeId;
     private final Ab.SeekPosition.Builder startPositionBuilder = Ab.SeekPosition.newBuilder()
             .setNextCommit(Ab.SeekNextCommit.getDefaultInstance());
 
-    ChaincodeEventsBuilder(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity, final String channelName,
+    ChaincodeEventsBuilder(final GatewayClient client, final SigningIdentity signingIdentity, final String channelName,
                            final String chaincodeId) {
         Objects.requireNonNull(channelName, "channel name");
         Objects.requireNonNull(chaincodeId, "chaincode ID");

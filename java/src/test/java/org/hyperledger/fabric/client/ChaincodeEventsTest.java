@@ -7,8 +7,8 @@
 package org.hyperledger.fabric.client;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
 import com.google.protobuf.ByteString;
@@ -63,15 +63,19 @@ public final class ChaincodeEventsTest {
     void throws_on_connection_error() {
         doThrow(new StatusRuntimeException(Status.UNAVAILABLE)).when(stub).chaincodeEvents(any());
 
-        Iterator<ChaincodeEvent> events = network.getChaincodeEvents("CHAINCODE_ID");
-
-        assertThatThrownBy(() -> events.forEachRemaining(event -> {}))
-                .isInstanceOf(StatusRuntimeException.class);
+        assertThatThrownBy(() -> {
+            try (CloseableIterator<ChaincodeEvent> events = network.getChaincodeEvents("CHAINCODE_ID")) {
+                events.forEachRemaining(event -> {});
+            }
+        }).isInstanceOf(StatusRuntimeException.class);
     }
 
     @Test
     void sends_valid_request_with_default_start_position() throws Exception {
-        network.getChaincodeEvents("CHAINCODE_ID");
+        try (CloseableIterator<ChaincodeEvent> iter = network.getChaincodeEvents("CHAINCODE_ID")) {
+            // Need to interact with iterator before asserting to ensure async request has been made
+            iter.forEachRemaining(event -> {});
+        }
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
@@ -85,10 +89,14 @@ public final class ChaincodeEventsTest {
     @Test
     void sends_valid_request_with_specified_start_block_number() throws Exception {
         long startBlock = 101;
-        network.newChaincodeEventsRequest("CHAINCODE_ID")
+        org.hyperledger.fabric.client.ChaincodeEventsRequest eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_ID")
                 .startBlock(startBlock)
-                .build()
-                .getEvents();
+                .build();
+
+        try (CloseableIterator<ChaincodeEvent> iter = eventsRequest.getEvents()) {
+            // Need to interact with iterator before asserting to ensure async request has been made
+            iter.forEachRemaining(event -> {});
+        }
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
@@ -103,10 +111,14 @@ public final class ChaincodeEventsTest {
     @Test
     void sends_valid_request_with_specified_start_block_number_using_sign_bit_for_unsigned_64bit_value() throws Exception {
         long startBlock = -1;
-        network.newChaincodeEventsRequest("CHAINCODE_ID")
+        org.hyperledger.fabric.client.ChaincodeEventsRequest eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_ID")
                 .startBlock(startBlock)
-                .build()
-                .getEvents();
+                .build();
+
+        try (CloseableIterator<ChaincodeEvent> iter = eventsRequest.getEvents()) {
+            // Need to interact with iterator before asserting to ensure async request has been made
+            iter.forEachRemaining(event -> {});
+        }
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
@@ -152,13 +164,50 @@ public final class ChaincodeEventsTest {
         );
         doReturn(responses).when(stub).chaincodeEvents(any());
 
-        Iterator<ChaincodeEvent> actual = network.getChaincodeEvents("CHAINCODE_ID");
+        try (CloseableIterator<ChaincodeEvent> actual = network.getChaincodeEvents("CHAINCODE_ID")) {
+            List<ChaincodeEvent> expected = Arrays.asList(
+                    new ChaincodeEventImpl(1, event1),
+                    new ChaincodeEventImpl(1, event2),
+                    new ChaincodeEventImpl(2, event3)
+            );
+            assertThat(Stream.generate(actual::next).limit(3)).hasSameElementsAs(expected);
+        }
+    }
 
-        List<ChaincodeEvent> expected = Arrays.asList(
-                new ChaincodeEventImpl(1, event1),
-                new ChaincodeEventImpl(1, event2),
-                new ChaincodeEventImpl(2, event3)
+    @Test
+    void close_stops_receiving_events() {
+        ChaincodeEventPackage.ChaincodeEvent event1 = ChaincodeEventPackage.ChaincodeEvent.newBuilder()
+                .setChaincodeId("CHAINCODE_ID")
+                .setTxId("tx1")
+                .setEventName("event1")
+                .setPayload(ByteString.copyFromUtf8("payload1"))
+                .build();
+        ChaincodeEventPackage.ChaincodeEvent event2 = ChaincodeEventPackage.ChaincodeEvent.newBuilder()
+                .setChaincodeId("CHAINCODE_ID")
+                .setTxId("tx2")
+                .setEventName("event2")
+                .setPayload(ByteString.copyFromUtf8("payload2"))
+                .build();
+
+        Stream<ChaincodeEventsResponse> responses = Stream.of(
+                ChaincodeEventsResponse.newBuilder()
+                        .setBlockNumber(1)
+                        .addEvents(event1)
+                        .build(),
+                ChaincodeEventsResponse.newBuilder()
+                        .setBlockNumber(2)
+                        .addEvents(event2)
+                        .build()
         );
-        assertThat(Stream.generate(actual::next).limit(3)).hasSameElementsAs(expected);
+        doReturn(responses).when(stub).chaincodeEvents(any());
+
+        CloseableIterator<ChaincodeEvent> eventIter = network.getChaincodeEvents("CHAINCODE_ID");
+        ChaincodeEvent event = eventIter.next();
+        assertThat(event).isEqualTo(new ChaincodeEventImpl(1, event1));
+
+        eventIter.close();
+
+        assertThatThrownBy(() -> eventIter.next())
+                .isInstanceOf(NoSuchElementException.class);
     }
 }

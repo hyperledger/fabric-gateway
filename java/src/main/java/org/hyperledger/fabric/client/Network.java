@@ -6,8 +6,6 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.Iterator;
-
 import com.google.protobuf.InvalidProtocolBufferException;
 
 /**
@@ -71,14 +69,14 @@ public interface Network {
 
     /**
      * Get events emitted by transaction functions of a specific chaincode from the next committed block. Note that the
-     * returned {@link Iterator} may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC connection
-     * error occurs.
+     * returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC connection error
+     * occurs.
      * @param chaincodeId A chaincode ID.
      * @return Ordered sequence of events.
      * @throws NullPointerException if the chaincode ID is null.
      * @see #newChaincodeEventsRequest(String)
      */
-    Iterator<ChaincodeEvent> getChaincodeEvents(String chaincodeId);
+    CloseableIterator<ChaincodeEvent> getChaincodeEvents(String chaincodeId);
 
     /**
      * Build a new chaincode events request, which can be used to obtain events emitted by transaction functions of a

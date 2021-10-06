@@ -10,18 +10,17 @@ import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EndorseResponse;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
-import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
 import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 import org.hyperledger.fabric.protos.peer.ProposalPackage;
 
 final class ProposalImpl implements Proposal {
-    private final GatewayGrpc.GatewayBlockingStub client;
+    private final GatewayClient client;
     private final SigningIdentity signingIdentity;
     private final String channelName;
     private ProposedTransaction proposedTransaction;
 
-    ProposalImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity,
+    ProposalImpl(final GatewayClient client, final SigningIdentity signingIdentity,
             final String channelName, final ProposedTransaction proposedTransaction) {
         this.client = client;
         this.signingIdentity = signingIdentity;

@@ -6,16 +6,17 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 
-final class ChaincodeEventIterator implements Iterator<ChaincodeEvent> {
-    private final Iterator<ChaincodeEventsResponse> responseIter;
+final class ChaincodeEventIterator implements CloseableIterator<ChaincodeEvent> {
+    private final CloseableIterator<ChaincodeEventsResponse> responseIter;
     private ChaincodeEventsResponse currentResponse;
     private int eventIndex;
+    private boolean closed = false;
 
-    ChaincodeEventIterator(final Iterator<ChaincodeEventsResponse> responseIter) {
+    ChaincodeEventIterator(final CloseableIterator<ChaincodeEventsResponse> responseIter) {
         this.responseIter = responseIter;
     }
 
@@ -26,12 +27,16 @@ final class ChaincodeEventIterator implements Iterator<ChaincodeEvent> {
 
     @Override
     public ChaincodeEvent next() {
+        if (closed) {
+            throw new NoSuchElementException();
+        }
+
         ChaincodeEventsResponse response = nextResponse();
         return new ChaincodeEventImpl(response.getBlockNumber(), response.getEvents(eventIndex++));
     }
 
     private boolean hasNextEvent() {
-        return currentResponse != null && eventIndex < currentResponse.getEventsCount();
+        return !closed && currentResponse != null && eventIndex < currentResponse.getEventsCount();
     }
 
     private ChaincodeEventsResponse nextResponse() {
@@ -41,5 +46,11 @@ final class ChaincodeEventIterator implements Iterator<ChaincodeEvent> {
         }
 
         return currentResponse;
+    }
+
+    @Override
+    public void close() {
+        closed = true;
+        responseIter.close();
     }
 }

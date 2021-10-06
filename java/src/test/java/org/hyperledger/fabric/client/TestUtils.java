@@ -12,7 +12,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
-import java.security.interfaces.ECPrivateKey;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.protobuf.ByteString;
@@ -70,13 +69,12 @@ public final class TestUtils {
      * Get a Gateway builder configured with a valid identity and signer.
      * @return A gateway builder implementation.
      */
-    public GatewayImpl.Builder newGatewayBuilder() {
-        GatewayImpl.Builder builder = (GatewayImpl.Builder)Gateway.newInstance();
+    public Gateway.Builder newGatewayBuilder() {
         Identity id = new X509Identity("msp1", credentials.getCertificate());
-        Signer signer = Signers.newPrivateKeySigner((ECPrivateKey) credentials.getPrivateKey());
-        builder.identity(id)
+        Signer signer = Signers.newPrivateKeySigner(credentials.getPrivateKey());
+        return Gateway.newInstance()
+                .identity(id)
                 .signer(signer);
-        return builder;
     }
     
     public EndorseResponse newEndorseResponse(String value) {

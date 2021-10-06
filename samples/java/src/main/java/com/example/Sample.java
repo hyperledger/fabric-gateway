@@ -24,6 +24,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import org.hyperledger.fabric.client.ChaincodeEvent;
+import org.hyperledger.fabric.client.CloseableIterator;
 import org.hyperledger.fabric.client.CommitException;
 import org.hyperledger.fabric.client.Contract;
 import org.hyperledger.fabric.client.Gateway;
@@ -250,15 +251,16 @@ public class Sample {
         long blockNumber = status.getBlockNumber();
 
         System.out.println("Read chaincode events starting at block number " + blockNumber);
-        Iterator<ChaincodeEvent> events = network.newChaincodeEventsRequest("basic")
+        try (CloseableIterator<ChaincodeEvent> events = network.newChaincodeEventsRequest("basic")
                 .startBlock(blockNumber)
                 .build()
-                .getEvents();
+                .getEvents()) {
+            ChaincodeEvent event = events.next();
+            System.out.println("Received event name: " + event.getEventName() +
+                    ", payload: " + new String(event.getPayload(), StandardCharsets.UTF_8) +
+                    ", txId: " + event.getTransactionId());
+        }
 
-        ChaincodeEvent event = events.next();
-        System.out.println("Received event name: " + event.getEventName() +
-                ", payload: " + new String(event.getPayload(), StandardCharsets.UTF_8) +
-                ", txId: " + event.getTransactionId());
     }
 
     private static ManagedChannel newGrpcConnection() throws IOException, CertificateException {

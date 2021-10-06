@@ -9,18 +9,17 @@ package org.hyperledger.fabric.client;
 import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
-import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 
 final class TransactionImpl implements Transaction {
-    private final GatewayGrpc.GatewayBlockingStub client;
+    private final GatewayClient client;
     private final SigningIdentity signingIdentity;
     private final String channelName;
     private PreparedTransaction preparedTransaction;
 
-    TransactionImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity,
+    TransactionImpl(final GatewayClient client, final SigningIdentity signingIdentity,
             final String channelName, final PreparedTransaction preparedTransaction) {
         this.client = client;
         this.signingIdentity = signingIdentity;

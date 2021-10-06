@@ -6,13 +6,12 @@
 
 package org.hyperledger.fabric.client;
 
-import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 
 final class SubmittedTransactionImpl extends CommitImpl implements SubmittedTransaction {
     private final byte[] result;
 
-    SubmittedTransactionImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity,
+    SubmittedTransactionImpl(final GatewayClient client, final SigningIdentity signingIdentity,
                              final String transactionId, final SignedCommitStatusRequest signedRequest,
                              final byte[] result) {
         super(client, signingIdentity, transactionId, signedRequest);

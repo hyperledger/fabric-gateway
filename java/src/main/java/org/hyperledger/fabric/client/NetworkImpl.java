@@ -6,21 +6,19 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.Iterator;
 import java.util.Objects;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
-import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 
 final class NetworkImpl implements Network {
-    private final GatewayGrpc.GatewayBlockingStub client;
+    private final GatewayClient client;
     private final SigningIdentity signingIdentity;
     private final String channelName;
 
-    NetworkImpl(final GatewayGrpc.GatewayBlockingStub client, final SigningIdentity signingIdentity, final String channelName) {
+    NetworkImpl(final GatewayClient client, final SigningIdentity signingIdentity, final String channelName) {
         Objects.requireNonNull(channelName, "network name");
 
         this.client = client;
@@ -54,7 +52,7 @@ final class NetworkImpl implements Network {
     }
 
     @Override
-    public Iterator<ChaincodeEvent> getChaincodeEvents(final String chaincodeId) {
+    public CloseableIterator<ChaincodeEvent> getChaincodeEvents(final String chaincodeId) {
         return newChaincodeEventsRequest(chaincodeId).build().getEvents();
     }
 
