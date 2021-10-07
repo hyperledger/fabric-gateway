@@ -55,7 +55,9 @@ import com.google.protobuf.InvalidProtocolBufferException;
  *             .endorse()
  *             .submitAsync();
  *     byte[] result = commit.getResult();
+ *
  *     // Update UI or reply to REST request before waiting for commit status
+ *
  *     Status status = commit.getStatus();
  *     if (!status.isSuccessful()) {
  *         // Commit failure

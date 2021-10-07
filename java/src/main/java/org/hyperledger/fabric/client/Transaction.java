@@ -6,6 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
+/**
+ * An endorsed transaction that can be submitted to the orderer for commit to the ledger.
+ */
 public interface Transaction extends Signable {
     /**
      * Get the transaction result. The result is obtained as part of the proposal endorsement so may be read
