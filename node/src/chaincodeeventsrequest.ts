@@ -5,7 +5,7 @@
  */
 
 import { ChaincodeEvent, newChaincodeEvents } from './chaincodeevent';
-import { GatewayClient } from './client';
+import { CloseableAsyncIterable, GatewayClient } from './client';
 import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, SignedChaincodeEventsRequest as SignedChaincodeEventsRequestProto } from './protos/gateway/gateway_pb';
 import { Signable } from './signable';
 import { SigningIdentity } from './signingidentity';
@@ -44,7 +44,7 @@ export interface ChaincodeEventsRequest extends Signable {
      * }
      * ```
      */
-     getEvents(): Promise<AsyncIterable<ChaincodeEvent>>;
+     getEvents(): Promise<CloseableAsyncIterable<ChaincodeEvent>>;
 }
 
 export interface ChaincodeEventsRequestOptions {
@@ -82,7 +82,7 @@ export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
         })();
     }
 
-    async getEvents(): Promise<AsyncIterable<ChaincodeEvent>> {
+    async getEvents(): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
         await this.sign();
         const responses = this.#client.chaincodeEvents(this.#signedRequest);
         return newChaincodeEvents(responses);

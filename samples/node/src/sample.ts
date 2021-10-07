@@ -221,10 +221,14 @@ async function exampleChaincodeEvents(gateway: Gateway) {
         startBlock: status.blockNumber,
     });
 
-    for await (const event of events) {
-        const payload = bytesAsString(event.payload);
-        console.log(`Received event name: ${event.eventName}, payload: ${payload}, txID: ${event.transactionId}`);
-        break;
+    try {
+        for await (const event of events) {
+            const payload = bytesAsString(event.payload);
+            console.log(`Received event name: ${event.eventName}, payload: ${payload}, txID: ${event.transactionId}`);
+            break;
+        }
+    } finally {
+        events.close();
     }
 }
 

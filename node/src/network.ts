@@ -7,7 +7,7 @@
 import { ChaincodeEvent } from './chaincodeevent';
 import { ChaincodeEventsBuilder, ChaincodeEventsOptions } from './chaincodeeventsbuilder';
 import { ChaincodeEventsRequest, ChaincodeEventsRequestImpl } from './chaincodeeventsrequest';
-import { GatewayClient } from './client';
+import { CloseableAsyncIterable, GatewayClient } from './client';
 import { Commit, CommitImpl } from './commit';
 import { Contract, ContractImpl } from './contract';
 import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, CommitStatusRequest, SignedCommitStatusRequest } from './protos/gateway/gateway_pb';
@@ -47,12 +47,16 @@ export interface Network {
      * @example
      * ```
      * const events = await network.getChaincodeEvents(chaincodeId, { startBlock: BigInt(101) });
-     * for async (const event of events) {
-     *     // Process event
+     * try {
+     *     for async (const event of events) {
+     *         // Process event
+     *     }
+     * } finally {
+     *     events.close();
      * }
      * ```
      */
-    getChaincodeEvents(chaincodeId: string, options?: ChaincodeEventsOptions): Promise<AsyncIterable<ChaincodeEvent>>
+    getChaincodeEvents(chaincodeId: string, options?: ChaincodeEventsOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>>
 
     newChaincodeEventsRequest(chaincodeId: string, options?: ChaincodeEventsOptions): ChaincodeEventsRequest;
     newSignedChaincodeEventsRequest(bytes: Uint8Array, signature: Uint8Array): ChaincodeEventsRequest;
@@ -104,7 +108,7 @@ export class NetworkImpl implements Network {
         return result;
     }
 
-    async getChaincodeEvents(chaincodeId: string, options?: ChaincodeEventsOptions): Promise<AsyncIterable<ChaincodeEvent>> {
+    async getChaincodeEvents(chaincodeId: string, options?: ChaincodeEventsOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
         return this.newChaincodeEventsRequest(chaincodeId, options).getEvents();
     }
 

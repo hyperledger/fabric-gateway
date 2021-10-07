@@ -53,7 +53,9 @@ import { Transaction, TransactionImpl } from './transaction';
  *     arguments: ['one', 'two']
  * });
  * const result = commit.getResult();
+ * 
  * // Update UI or reply to REST request before waiting for commit status
+ * 
  * const status = await commit.getStatus();
  * if (!status.successful) {
  *     throw new Error(`transaction ${status.transactionId} failed with status code ${status.code}`);
