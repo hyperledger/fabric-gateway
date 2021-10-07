@@ -6,7 +6,7 @@
 
 import * as grpc from '@grpc/grpc-js';
 import { Message } from 'google-protobuf';
-import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse, EndpointError } from './protos/gateway/gateway_pb';
+import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse, ErrorDetail } from './protos/gateway/gateway_pb';
 import { Status } from './protos/google/rpc/status_pb';
 import * as gateway from './gateway'
 
@@ -64,13 +64,13 @@ class GatewayClientImpl implements GatewayClient {
 function newUnaryCallback<T>(resolve: (value: T) => void, reject: (reason: Error) => void): grpc.requestCallback<T> {
     return (err, value) => {
         if (err) {
-            const details: gateway.EndpointError[] = [];
+            const details: gateway.ErrorDetail[] = [];
             if (typeof err.metadata !== 'undefined') {
                 const gsdb = err.metadata.get('grpc-status-details-bin')
                 gsdb.forEach(detail => {
                     const status = deserializeStatus(detail as Uint8Array)
                     status.getDetailsList().forEach(d => {
-                        const ee = deserializeEndpointError(d.getValue_asU8())
+                        const ee = deserializeErrorDetail(d.getValue_asU8())
                         details.push({
                             mspid: ee.getMspId(),
                             address: ee.getAddress(),
@@ -120,8 +120,8 @@ function deserializeStatus(bytes: Uint8Array): Status {
     return Status.deserializeBinary(bytes);
 }
 
-function deserializeEndpointError(bytes: Uint8Array): EndpointError {
-    return EndpointError.deserializeBinary(bytes);
+function deserializeErrorDetail(bytes: Uint8Array): ErrorDetail {
+    return ErrorDetail.deserializeBinary(bytes);
 }
 
 export function newGatewayClient(client: grpc.Client): GatewayClient {

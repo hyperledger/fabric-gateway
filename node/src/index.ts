@@ -9,7 +9,7 @@ export { ChaincodeEventsOptions } from './chaincodeeventsbuilder';
 export { ChaincodeEventCallback, ChaincodeEventsRequest } from './chaincodeeventsrequest';
 export { Commit } from './commit';
 export { Contract } from './contract';
-export { connect, ConnectOptions, Gateway, GatewayError, EndpointError } from './gateway';
+export { connect, ConnectOptions, Gateway, GatewayError, ErrorDetail } from './gateway';
 export { Hash } from './hash/hash';
 export * as hash from './hash/hashes';
 export { HSMSigner, HSMSignerFactory, HSMSignerOptions } from './identity/hsmsigner';
