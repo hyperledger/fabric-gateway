@@ -6,7 +6,7 @@
 
 import * as grpc from '@grpc/grpc-js';
 import * as crypto from 'crypto';
-import { connect, Gateway, Identity, Signer, signers } from 'fabric-gateway';
+import { connect, Gateway, Identity, Signer, signers, ErrorDetail } from 'fabric-gateway';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { TextDecoder } from 'util';
@@ -57,6 +57,10 @@ async function main() {
 
         console.log('exampleChaincodeEventReplay:')
         await exampleChaincodeEventReplay(gateway)
+        console.log();
+
+        console.log('exampleErrorHandling:')
+        await exampleErrorHandling(gateway)
         console.log();
     } finally {
         gateway.close();
@@ -253,6 +257,26 @@ async function exampleChaincodeEventReplay(gateway: Gateway) {
     } finally {
         // Ensure event iterator is closed when done reading.
         events.close();
+    }
+}
+
+async function exampleErrorHandling(gateway: Gateway) {
+    const network = gateway.getNetwork('mychannel');
+    const contract = network.getContract('basic');
+
+    console.log('Submitting "put" transaction without arguments');
+
+    // Submit transaction, passing in the wrong number of arguments.
+    try {
+        await contract.submitTransaction('put');
+    } catch (e) {
+        console.log(e)
+        // Any error that originates from a peer or orderer node external to the gateway will have its details
+        // embedded within the error.
+        e.details.forEach((detail: ErrorDetail) => {
+            console.log('Error from endpoint: ' + detail.address +
+                ', mspId: ' + detail.mspid + ', message: ' + detail.message);
+        })
     }
 }
 

@@ -6,9 +6,12 @@
 
 package com.example;
 
+import com.google.protobuf.Any;
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.protobuf.StatusProto;
 import org.hyperledger.fabric.client.ChaincodeEvent;
 import org.hyperledger.fabric.client.ChaincodeEventsRequest;
 import org.hyperledger.fabric.client.CloseableIterator;
@@ -23,6 +26,7 @@ import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Identity;
+import org.hyperledger.fabric.protos.gateway.ErrorDetail;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -82,6 +86,10 @@ public class Sample {
 
             System.out.println("exampleChaincodeEventReplay:");
             exampleChaincodeEventReplay(gateway);
+            System.out.println();
+            
+            System.out.println("exampleErrorHandling:");
+            exampleErrorHandling(gateway);
             System.out.println();
         } catch (Throwable e) {
             e.printStackTrace();
@@ -280,6 +288,26 @@ public class Sample {
             System.out.println("Received event name: " + event.getEventName() +
                     ", payload: " + new String(event.getPayload(), StandardCharsets.UTF_8) +
                     ", txId: " + event.getTransactionId());
+        }
+    }
+
+    private static void exampleErrorHandling(Gateway gateway) throws CommitException, InvalidProtocolBufferException {
+        Network network = gateway.getNetwork("mychannel");
+        Contract contract = network.getContract("basic");
+
+        try {
+            System.out.println("Submitting \"put\" transaction without arguments");
+            // Submit transaction, passing in the wrong number of arguments.
+            contract.submitTransaction("put");
+        } catch (io.grpc.StatusRuntimeException ex) {
+            // Any error that originates from a peer or orderer node external to the gateway will have its details
+            // embedded within the grpc status error.  The following code shows how to extract that.
+            com.google.rpc.Status status = StatusProto.fromThrowable(ex);
+            for (Any any : status.getDetailsList()) {
+                ErrorDetail ee = ErrorDetail.parseFrom(any.getValue());
+                System.out.println("Error from endpoint: " + ee.getAddress() +
+                        ",  mspId: " + ee.getMspId() + ", message:" + ee.getMessage());
+            }
         }
     }
 
