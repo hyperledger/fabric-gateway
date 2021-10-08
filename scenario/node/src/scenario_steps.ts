@@ -161,16 +161,16 @@ Then('the error details should be', function(this: CustomWorld, dataTable: DataT
     const expected: {[key: string]: ErrorDetail} = {};
     rows.forEach(row => {
         expected[row[0]] = {
-            mspid: row[0],
+            mspId: row[0],
             address: row[1],
             message: row[2]
         }
     })
     details!.forEach(detail => {
-        const ee = expected[detail.mspid];
+        const ee = expected[detail.mspId];
         expect(ee).toBeDefined();
         expect(detail.message).toContain(ee.message);
-        delete expected[detail.mspid];
+        delete expected[detail.mspId];
     })
     expect(Object.keys(expected)).toHaveLength(0);
 });

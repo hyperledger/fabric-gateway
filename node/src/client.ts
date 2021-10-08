@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as grpc from '@grpc/grpc-js';
+import { Client, requestCallback, ServiceError } from '@grpc/grpc-js';
 import { Message } from 'google-protobuf';
-import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse, ErrorDetail } from './protos/gateway/gateway_pb';
+import { ErrorDetail, GatewayError } from './gateway';
+import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, ErrorDetail as ErrorDetailProto, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
 import { Status } from './protos/google/rpc/status_pb';
-import * as gateway from './gateway'
 
 const servicePath = '/gateway.Gateway/';
 const evaluateMethod = servicePath + 'Evaluate';
@@ -22,13 +22,24 @@ export interface GatewayClient {
     endorse(request: EndorseRequest): Promise<EndorseResponse>;
     submit(request: SubmitRequest): Promise<SubmitResponse>;
     commitStatus(request: SignedCommitStatusRequest): Promise<CommitStatusResponse>;
-    chaincodeEvents(request: SignedChaincodeEventsRequest): AsyncIterable<ChaincodeEventsResponse>;
+    chaincodeEvents(request: SignedChaincodeEventsRequest): CloseableAsyncIterable<ChaincodeEventsResponse>;
+}
+
+/**
+ * An async iterable that can be closed when the consumer does not want to read any more elements, freeing up resources
+ * that may be held by the iterable.
+ */
+export interface CloseableAsyncIterable<T> extends AsyncIterable<T> {
+    /**
+     * Close the iterable to free up resources when no more elements are required.
+     */
+    close(): void;
 }
 
 class GatewayClientImpl implements GatewayClient {
-    #client: grpc.Client;
+    #client: Client;
 
-    constructor(client: grpc.Client) {
+    constructor(client: Client) {
         this.#client = client;
     }
 
@@ -56,39 +67,42 @@ class GatewayClientImpl implements GatewayClient {
         );
     }
 
-    chaincodeEvents(request: SignedChaincodeEventsRequest): AsyncIterable<ChaincodeEventsResponse> {
-        return this.#client.makeServerStreamRequest(chaincodeEventsMethod, serialize, deserializeChaincodeEventsResponse, request);
+    chaincodeEvents(request: SignedChaincodeEventsRequest): CloseableAsyncIterable<ChaincodeEventsResponse> {
+        const serverStream = this.#client.makeServerStreamRequest(chaincodeEventsMethod, serialize, deserializeChaincodeEventsResponse, request);
+        return {
+            [Symbol.asyncIterator]: () => serverStream[Symbol.asyncIterator](),
+            close: () => serverStream.cancel(),
+        }
     }
 }
 
-function newUnaryCallback<T>(resolve: (value: T) => void, reject: (reason: Error) => void): grpc.requestCallback<T> {
+function newUnaryCallback<T>(resolve: (value: T) => void, reject: (reason: Error) => void): requestCallback<T> {
     return (err, value) => {
         if (err) {
-            const details: gateway.ErrorDetail[] = [];
-            if (typeof err.metadata !== 'undefined') {
-                const gsdb = err.metadata.get('grpc-status-details-bin')
-                gsdb.forEach(detail => {
-                    const status = deserializeStatus(detail as Uint8Array)
-                    status.getDetailsList().forEach(d => {
-                        const ee = deserializeErrorDetail(d.getValue_asU8())
-                        details.push({
-                            mspid: ee.getMspId(),
-                            address: ee.getAddress(),
-                            message: ee.getMessage()
-                        });
-                    })
-                })
-            }
-            const gwErr: gateway.GatewayError = new Error(err.message);
-            gwErr.code = err.code;
-            gwErr.details = details;
-            return reject(gwErr);
+            return reject(newGatewayError(err));
         }
         if (value == null) {
             return reject(new Error('No result returned'));
         }
         return resolve(value);
     }
+}
+
+function newGatewayError(err: ServiceError): GatewayError {
+    const result: GatewayError = new Error(err.message);
+    result.code = err.code;
+    result.details = err.metadata?.get('grpc-status-details-bin')
+        .flatMap(metadataValue => deserializeStatus(Buffer.from(metadataValue)).getDetailsList())
+        .map(statusDetail => {
+            const endpointError = deserializeErrorDetail(statusDetail.getValue_asU8());
+            const detail: ErrorDetail = {
+                address: endpointError.getAddress(),
+                message: endpointError.getMessage(),
+                mspId: endpointError.getMspId(),
+            };
+            return detail;
+        });
+    return result;
 }
 
 function serialize(message: Message): Buffer {
@@ -120,10 +134,10 @@ function deserializeStatus(bytes: Uint8Array): Status {
     return Status.deserializeBinary(bytes);
 }
 
-function deserializeErrorDetail(bytes: Uint8Array): ErrorDetail {
-    return ErrorDetail.deserializeBinary(bytes);
+function deserializeErrorDetail(bytes: Uint8Array): ErrorDetailProto {
+    return ErrorDetailProto.deserializeBinary(bytes);
 }
 
-export function newGatewayClient(client: grpc.Client): GatewayClient {
+export function newGatewayClient(client: Client): GatewayClient {
     return new GatewayClientImpl(client);
 }

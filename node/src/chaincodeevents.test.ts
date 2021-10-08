@@ -5,6 +5,7 @@
  */
 
 import { ChaincodeEvent } from './chaincodeevent';
+import { CloseableAsyncIterable } from './client';
 import { MockGatewayClient, newMockGatewayClient } from './client.test';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
@@ -29,13 +30,14 @@ function newChaincodeEvent(blockNumber: number, event: ChaincodeEventProto): Cha
     };
 }
 
-function newAsyncIterable<T>(values: T[]): AsyncIterable<T> {
+function newCloseableAsyncIterable<T>(values: T[]): { close: jest.Mock<void, void[]> } & CloseableAsyncIterable<T> {
     return {
         async* [Symbol.asyncIterator]() { // eslint-disable-line @typescript-eslint/require-await
             for (const value of values) {
                 yield value;
             }
-        }
+        },
+        close: jest.fn(),
     }
 }
 
@@ -193,7 +195,7 @@ describe('Chaincode Events', () => {
         ];
     
         it('returns events as AsyncIterable', async () => {
-            client.chaincodeEvents.mockReturnValue(newAsyncIterable([ response1, response2 ]));
+            client.chaincodeEvents.mockReturnValue(newCloseableAsyncIterable([ response1, response2 ]));
     
             const events = await network.getChaincodeEvents('CHAINCODE');
     
@@ -201,8 +203,29 @@ describe('Chaincode Events', () => {
             expect(actualEvents).toEqual(expectedEvents);
         });
 
+        it('closing iterator closes gRPC client stream', async () => {
+            const iterable = newCloseableAsyncIterable([ response1, response2 ])
+            client.chaincodeEvents.mockReturnValue(iterable);
+    
+            const events = await network.getChaincodeEvents('CHAINCODE');
+            events.close();
+
+            expect(iterable.close).toBeCalled();
+        });
+
+        it('stops receiving events when iterator closed', async () => {
+            client.chaincodeEvents.mockReturnValue(newCloseableAsyncIterable([ response1, response2 ]));
+    
+            const events = await network.getChaincodeEvents('CHAINCODE');
+            await readElements(events, 1);
+            events.close();
+
+            const actualEvents = await readElements(events, 1);
+            expect(actualEvents).toHaveLength(0);
+        });
+
         it('delivers events to listener callback', async () => {
-            client.chaincodeEvents.mockReturnValue(newAsyncIterable([ response1, response2 ]));
+            client.chaincodeEvents.mockReturnValue(newCloseableAsyncIterable([ response1, response2 ]));
     
             const { listener, mock, complete } = mockAsyncListener<ChaincodeEvent | unknown>(3);
     
@@ -215,10 +238,13 @@ describe('Chaincode Events', () => {
     
         it('delivers errors to listener callback', async () => {
             const expectedError = new Error('EXPECTED_ERROR');
-            const asyncIter: AsyncIterable<ChaincodeEventsResponse> = {
+            const asyncIter: CloseableAsyncIterable<ChaincodeEventsResponse> = {
                 async* [Symbol.asyncIterator]() { // eslint-disable-line @typescript-eslint/require-await,require-yield
                     throw expectedError;
-                }
+                },
+                close: () => {
+                    // Nothing
+                },
             }
             client.chaincodeEvents.mockReturnValue(asyncIter);
     
@@ -232,7 +258,7 @@ describe('Chaincode Events', () => {
         });
     
         it('listener callback error does not stop event delivery', async () => {
-            client.chaincodeEvents.mockReturnValue(newAsyncIterable([ response1, response2 ]));
+            client.chaincodeEvents.mockReturnValue(newCloseableAsyncIterable([ response1, response2 ]));
     
             const { listener, mock, complete } = mockAsyncListener<ChaincodeEvent | unknown>(3);
             mock.mockRejectedValueOnce(new Error('EXPECTED_ERROR'));

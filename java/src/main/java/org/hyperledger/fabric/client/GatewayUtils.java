@@ -66,11 +66,10 @@ final class GatewayUtils {
         if (channel.isShutdown()) {
             return;
         }
-        channel.shutdownNow();
         try {
-            channel.awaitTermination(timeout, timeUnit);
+            channel.shutdownNow().awaitTermination(timeout, timeUnit);
         } catch (InterruptedException e) {
-            // Ignore
+            Thread.currentThread().interrupt();
         }
     }
 }

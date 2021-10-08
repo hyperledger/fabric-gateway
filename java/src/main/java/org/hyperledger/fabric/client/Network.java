@@ -22,13 +22,14 @@ import com.google.protobuf.InvalidProtocolBufferException;
  *
  * <h3>Chaincode events example</h3>
  * <pre>{@code
- *     Iterator<ChaincodeEvent> events = network.newChaincodeEventsRequest("basic")
- *             .startBlock(101)
- *             .build()
- *             .getEvents();
- *     events.forEachRemaining(event -> {
- *         // Process event
- *     });
+ *     ChaincodeEventsRequest request = network.newChaincodeEventsRequest("chaincodeName")
+ *             .startBlock(blockNumber)
+ *             .build();
+ *     try (CloseableIterator<ChaincodeEvent> events = request.getEvents()) {
+ *         events.forEachRemaining(event -> {
+ *             // Process event
+ *         });
+ *     }
  * }</pre>
  */
 public interface Network {

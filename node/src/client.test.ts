@@ -6,7 +6,7 @@
 
 /* eslint-disable jest/no-export */
 
-import { GatewayClient } from './client';
+import { CloseableAsyncIterable, GatewayClient } from './client';
 import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
 
 export interface MockGatewayClient extends GatewayClient {
@@ -14,7 +14,7 @@ export interface MockGatewayClient extends GatewayClient {
     evaluate: jest.Mock<Promise<EvaluateResponse>, EvaluateRequest[]>,
     submit: jest.Mock<Promise<SubmitResponse>, SubmitRequest[]>,
     commitStatus: jest.Mock<Promise<CommitStatusResponse>, SignedCommitStatusRequest[]>,
-    chaincodeEvents: jest.Mock<AsyncIterable<ChaincodeEventsResponse>, SignedChaincodeEventsRequest[]>,
+    chaincodeEvents: jest.Mock<CloseableAsyncIterable<ChaincodeEventsResponse>, SignedChaincodeEventsRequest[]>,
 }
 
 export function newMockGatewayClient(): MockGatewayClient {
@@ -27,7 +27,8 @@ export function newMockGatewayClient(): MockGatewayClient {
             return {
                 async* [Symbol.asyncIterator]() {
                     // Nothing
-                }
+                },
+                close: jest.fn(),
             };
         }),
     };

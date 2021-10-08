@@ -9,6 +9,10 @@ import { ChaincodeEvent, ChaincodeEventsOptions, connect, ConnectOptions, Contra
 import { TransactionInvocation } from './transactioninvocation';
 import { assertDefined } from './utils';
 
+interface CloseableAsyncIterator<T> extends AsyncIterator<T> {
+    close: () => void;
+}
+
 export class GatewayContext {
     readonly #identity: Identity;
     readonly #signer?: Signer;
@@ -17,7 +21,7 @@ export class GatewayContext {
     #gateway?: Gateway;
     #network?: Network;
     #contract?: Contract;
-    #chaincodeEvents?: AsyncIterator<ChaincodeEvent>;
+    #chaincodeEvents?: CloseableAsyncIterator<ChaincodeEvent>;
 
     constructor(identity: Identity, signer?: Signer, signerClose?: () => void) {
         this.#identity = identity;
@@ -50,7 +54,9 @@ export class GatewayContext {
 
     async listenForChaincodeEvents(chaincodeId: string, options?: ChaincodeEventsOptions): Promise<void> {
         const events = await this.getNetwork().getChaincodeEvents(chaincodeId, options);
-        this.#chaincodeEvents = events[Symbol.asyncIterator]();
+        this.#chaincodeEvents = Object.assign(events[Symbol.asyncIterator](), {
+            close: events.close,
+        });
     }
 
     async nextChaincodeEvent(): Promise<ChaincodeEvent> {
@@ -59,6 +65,7 @@ export class GatewayContext {
     }
 
     close(): void {
+        this.#chaincodeEvents?.close();
         this.#gateway?.close();
         this.#client?.close();
         if (this.#signerClose) {

@@ -24,6 +24,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import org.hyperledger.fabric.client.ChaincodeEvent;
+import org.hyperledger.fabric.client.ChaincodeEventsRequest;
 import org.hyperledger.fabric.client.CloseableIterator;
 import org.hyperledger.fabric.client.CommitException;
 import org.hyperledger.fabric.client.Contract;
@@ -251,10 +252,10 @@ public class Sample {
         long blockNumber = status.getBlockNumber();
 
         System.out.println("Read chaincode events starting at block number " + blockNumber);
-        try (CloseableIterator<ChaincodeEvent> events = network.newChaincodeEventsRequest("basic")
+        ChaincodeEventsRequest request = network.newChaincodeEventsRequest("basic")
                 .startBlock(blockNumber)
-                .build()
-                .getEvents()) {
+                .build();
+        try (CloseableIterator<ChaincodeEvent> events = request.getEvents()) {
             ChaincodeEvent event = events.next();
             System.out.println("Received event name: " + event.getEventName() +
                     ", payload: " + new String(event.getPayload(), StandardCharsets.UTF_8) +

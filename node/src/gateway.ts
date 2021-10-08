@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as grpc from '@grpc/grpc-js';
+import { Client } from '@grpc/grpc-js';
 import { GatewayClient, newGatewayClient } from './client';
 import { Hash } from './hash/hash';
 import { Identity } from './identity/identity';
@@ -20,7 +20,7 @@ export interface ConnectOptions {
      * A gRPC client connection to a Fabric Gateway. This should be shared by all gateway instances connecting to the
      * same Fabric Gateway. The client connection will not be closed when the gateway is closed.
      */
-    client: grpc.Client;
+    client: Client;
 
     /**
      * Client identity used by the gateway.
@@ -50,7 +50,7 @@ export interface InternalConnectOptions {
  * It contains the address of the node as well as the error message it generated.
  */
 export interface ErrorDetail {
-    mspid: string;
+    mspId: string;
     address: string;
     message: string;
 }
