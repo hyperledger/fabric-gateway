@@ -66,6 +66,10 @@ func main() {
 	fmt.Println("exampleChaincodeEvents:")
 	exampleChaincodeEvents(gateway)
 	fmt.Println()
+
+	fmt.Println("exampleChaincodeEventReplay:")
+	exampleChaincodeEventReplay(gateway)
+	fmt.Println()
 }
 
 func exampleSubmit(gateway *client.Gateway) {
@@ -257,9 +261,36 @@ func exampleChaincodeEvents(gateway *client.Gateway) {
 	network := gateway.GetNetwork("mychannel")
 	contract := network.GetContract("basic")
 
+	fmt.Printf("Read chaincode events")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	events, err := network.ChaincodeEvents(ctx, "basic")
+	if err != nil {
+		panic(fmt.Errorf("failed to read chaincode events: %w", err))
+	}
+
 	// Submit a transaction that generates a chaincode event
 	fmt.Println("Submitting \"event\" transaction with arguments: \"my-event-name\", \"my-event-payload\"")
-	_, commit, err := contract.SubmitAsync("event", client.WithArguments("my-event-name", "my-event-payload"))
+	_, err = contract.SubmitTransaction("event", "my-event-name", "my-event-payload")
+	if err != nil {
+		panic(fmt.Errorf("failed to submit transaction: %w", err))
+	}
+
+	select {
+	case ev := <-events:
+		fmt.Printf("Received event name: %s, payload: %s, txId: %s\n", ev.EventName, ev.Payload, ev.TransactionID)
+	case <-time.After(10 * time.Second):
+		fmt.Println("Timed out waiting for chaincode event")
+	}
+}
+
+func exampleChaincodeEventReplay(gateway *client.Gateway) {
+	network := gateway.GetNetwork("mychannel")
+	contract := network.GetContract("basic")
+
+	// Submit a transaction that generates a chaincode event
+	fmt.Println("Submitting \"event\" transaction with arguments: \"my-event-name\", \"my-event-replay-payload\"")
+	_, commit, err := contract.SubmitAsync("event", client.WithArguments("my-event-name", "my-event-replay-payload"))
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}

@@ -6,20 +6,6 @@
 
 package com.example;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.InvalidKeyException;
-import java.security.PrivateKey;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.time.LocalDateTime;
-import java.util.Iterator;
-import java.util.concurrent.TimeUnit;
-
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
@@ -37,6 +23,21 @@ import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Identity;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.InvalidKeyException;
+import java.security.PrivateKey;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.time.LocalDateTime;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 public class Sample {
     private static final String mspID     = "Org1MSP";
@@ -78,15 +79,14 @@ public class Sample {
             System.out.println("exampleChaincodeEvents:");
             exampleChaincodeEvents(gateway);
             System.out.println();
+
+            System.out.println("exampleChaincodeEventReplay:");
+            exampleChaincodeEventReplay(gateway);
+            System.out.println();
         } catch (Throwable e) {
             e.printStackTrace();
         } finally {
-            channel.shutdownNow();
-            try {
-                channel.awaitTermination(5, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                // Ignore
-            }
+            channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
         }
 
         System.exit(0);
@@ -233,14 +233,34 @@ public class Sample {
         System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
     }
 
-    private static void exampleChaincodeEvents(Gateway gateway) throws CommitException {
+    private static void exampleChaincodeEvents(Gateway gateway) throws CommitException, ExecutionException, InterruptedException {
+        Network network = gateway.getNetwork("mychannel");
+        Contract contract = network.getContract("basic");
+
+        System.out.println("Read chaincode events");
+        try (CloseableIterator<ChaincodeEvent> events = network.getChaincodeEvents("basic")) {
+            // Start reading immediately as the Java implementation may not begin eventing until the iterator is used.
+            CompletableFuture<ChaincodeEvent> readEvent = CompletableFuture.supplyAsync(events::next);
+
+            // Submit a transaction that generates a chaincode event
+            System.out.println("Submitting \"event\" transaction with arguments:  \"my-event-name\", \"my-event-payload\"");
+            contract.submitTransaction("event", "my-event-name", "my-event-payload");
+
+            ChaincodeEvent event = readEvent.orTimeout(10, TimeUnit.SECONDS).get();
+            System.out.println("Received event name: " + event.getEventName() +
+                    ", payload: " + new String(event.getPayload(), StandardCharsets.UTF_8) +
+                    ", txId: " + event.getTransactionId());
+        }
+}
+
+    private static void exampleChaincodeEventReplay(Gateway gateway) throws CommitException {
         Network network = gateway.getNetwork("mychannel");
         Contract contract = network.getContract("basic");
 
         // Submit a transaction that generates a chaincode event
-        System.out.println("Submitting \"event\" transaction with arguments:  \"my-event-name\", \"my-event-payload\"");
+        System.out.println("Submitting \"event\" transaction with arguments:  \"my-event-name\", \"my-event-replay-payload\"");
         Status status = contract.newProposal("event")
-                .addArguments("my-event-name", "my-event-payload")
+                .addArguments("my-event-name", "my-event-replay-payload")
                 .build()
                 .endorse()
                 .submitAsync()
@@ -261,7 +281,6 @@ public class Sample {
                     ", payload: " + new String(event.getPayload(), StandardCharsets.UTF_8) +
                     ", txId: " + event.getTransactionId());
         }
-
     }
 
     private static ManagedChannel newGrpcConnection() throws IOException, CertificateException {

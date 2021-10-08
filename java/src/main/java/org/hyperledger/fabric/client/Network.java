@@ -22,6 +22,15 @@ import com.google.protobuf.InvalidProtocolBufferException;
  *
  * <h3>Chaincode events example</h3>
  * <pre>{@code
+ *     try (CloseableIterator<ChaincodeEvent> events = network.getChaincodeEvents("chaincodeName")) {
+ *         events.forEachRemaining(event -> {
+ *             // Process event
+ *         });
+ *     }
+ * }</pre>
+ * *
+ * <h3>Chaincode event replay example</h3>
+ * <pre>{@code
  *     ChaincodeEventsRequest request = network.newChaincodeEventsRequest("chaincodeName")
  *             .startBlock(blockNumber)
  *             .build();
@@ -69,9 +78,10 @@ public interface Network {
     Commit newSignedCommit(byte[] bytes, byte[] signature) throws InvalidProtocolBufferException;
 
     /**
-     * Get events emitted by transaction functions of a specific chaincode from the next committed block. Note that the
-     * returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC connection error
-     * occurs.
+     * Get events emitted by transaction functions of a specific chaincode from the next committed block. The Java gRPC
+     * implementation may not begin reading events until the first use of the returned iterator.
+     * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC connection error
+     * occurs.</p>
      * @param chaincodeId A chaincode ID.
      * @return Ordered sequence of events.
      * @throws NullPointerException if the chaincode ID is null.
