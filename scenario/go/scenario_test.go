@@ -738,12 +738,12 @@ func theErrorMessageShouldContain(expected string) error {
 
 func theErrorDetailsShouldBe(table *messages.PickleTable) error {
 	details := transaction.ErrDetails()
-	expected := map[string]*gateway.EndpointError{}
+	expected := map[string]*gateway.ErrorDetail{}
 	for _, row := range table.Rows {
 		mspid := row.Cells[0].Value
 		address := row.Cells[1].Value
 		msg := row.Cells[2].Value
-		expected[mspid] = &gateway.EndpointError{
+		expected[mspid] = &gateway.ErrorDetail{
 			MspId:   mspid,
 			Address: address,
 			Message: msg,

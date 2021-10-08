@@ -66,11 +66,11 @@ func (transaction *Transaction) Err() error {
 	return transaction.err
 }
 
-func (transaction *Transaction) ErrDetails() []*gateway.EndpointError {
+func (transaction *Transaction) ErrDetails() []*gateway.ErrorDetail {
 	statusErr := status.Convert(transaction.Err())
-	var details []*gateway.EndpointError
+	var details []*gateway.ErrorDetail
 	for _, detail := range statusErr.Details() {
-		details = append(details, detail.(*gateway.EndpointError))
+		details = append(details, detail.(*gateway.ErrorDetail))
 	}
 	return details
 }

@@ -61,7 +61,7 @@ import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Identity;
-import org.hyperledger.fabric.protos.gateway.EndpointError;
+import org.hyperledger.fabric.protos.gateway.ErrorDetail;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -429,7 +429,7 @@ public class ScenarioSteps {
         Map<String, List<String>> expected = new HashMap<>(table.asMap(String.class, List.class));
 
         for (Any detail : status.getDetailsList()) {
-            EndpointError ee = EndpointError.parseFrom(detail.getValue());
+            ErrorDetail ee = ErrorDetail.parseFrom(detail.getValue());
             List<String> row = expected.get(ee.getMspId());
             assertThat(row).isNotNull();
             assertThat(ee.getMessage()).contains(row.get(1));

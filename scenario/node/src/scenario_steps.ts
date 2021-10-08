@@ -9,7 +9,7 @@ import expect from 'expect';
 import { CustomWorld } from './customworld';
 import { Fabric } from './fabric';
 import { bytesAsString, toError } from './utils';
-import { EndpointError } from 'fabric-gateway';
+import { ErrorDetail } from 'fabric-gateway';
 
 setDefaultTimeout(30 * 1000);
 
@@ -158,7 +158,7 @@ Then('the error details should be', function(this: CustomWorld, dataTable: DataT
     const details = this.getError().details;
     expect(details).toBeDefined();
     const rows = dataTable.raw();
-    const expected: {[key: string]: EndpointError} = {};
+    const expected: {[key: string]: ErrorDetail} = {};
     rows.forEach(row => {
         expected[row[0]] = {
             mspid: row[0],
