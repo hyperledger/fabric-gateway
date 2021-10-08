@@ -6,6 +6,9 @@
 
 package scenario;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
 import io.grpc.ManagedChannel;
@@ -19,11 +22,12 @@ import org.hyperledger.fabric.client.identity.Signer;
 
 public class GatewayContext {
     private final Gateway.Builder gatewayBuilder;
+    private final BlockingQueue<ChaincodeEvent> eventQueue = new SynchronousQueue<>();
     private ManagedChannel channel;
     private Gateway gateway;
     private Network network;
     private Contract contract;
-    private CloseableIterator<ChaincodeEvent> eventIter;
+    private Runnable closeEventing;
 
     public GatewayContext(Identity identity) {
         gatewayBuilder = Gateway.newInstance()
@@ -72,11 +76,23 @@ public class GatewayContext {
 
     private void receiveChaincodeEvents(final CloseableIterator<ChaincodeEvent> iter) {
         closeChaincodeEvents();
-        this.eventIter = iter;
+        closeEventing = iter::close;
+
+        // Start reading events immediately as Java gRPC implementation may not invoke the gRPC service until the first
+        // read attempt occurs.
+        CompletableFuture.runAsync(() -> {
+            iter.forEachRemaining(event -> {
+                try {
+                    eventQueue.put(event);
+                } catch (InterruptedException e) {
+                    iter.close();
+                }
+            });
+        });
     }
 
-    public ChaincodeEvent nextChaincodeEvent() {
-        return eventIter.next();
+    public ChaincodeEvent nextChaincodeEvent() throws InterruptedException {
+        return eventQueue.poll(30, TimeUnit.SECONDS);
     }
 
     public void close() {
@@ -90,9 +106,9 @@ public class GatewayContext {
     }
 
     private void closeChaincodeEvents() {
-        if (eventIter != null) {
-            eventIter.close();
-            eventIter = null;
+        if (closeEventing != null) {
+            closeEventing.run();
+            closeEventing = null;
         }
     }
 
@@ -101,11 +117,10 @@ public class GatewayContext {
             return;
         }
 
-        channel.shutdownNow();
         try {
-            channel.awaitTermination(5, TimeUnit.SECONDS);
+            channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            // Ignore
+            Thread.currentThread().interrupt();
         }
     }
 }
