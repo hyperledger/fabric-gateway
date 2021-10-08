@@ -7,6 +7,7 @@
 package org.hyperledger.fabric.client;
 
 import io.grpc.Channel;
+import io.grpc.Context;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
@@ -21,11 +22,9 @@ import org.hyperledger.fabric.protos.gateway.SubmitResponse;
 
 final class GatewayClient {
     private final GatewayGrpc.GatewayBlockingStub blockingStub;
-    private final GatewayGrpc.GatewayStub asyncStub;
 
     GatewayClient(final Channel channel) {
         this.blockingStub = GatewayGrpc.newBlockingStub(channel);
-        this.asyncStub = GatewayGrpc.newStub(channel);
     }
 
     public EvaluateResponse evaluate(final EvaluateRequest request) {
@@ -45,8 +44,6 @@ final class GatewayClient {
     }
 
     public CloseableIterator<ChaincodeEventsResponse> chaincodeEvents(final SignedChaincodeEventsRequest request) {
-        final ResponseObserver<SignedChaincodeEventsRequest, ChaincodeEventsResponse> responseObserver = new ResponseObserver<>();
-        asyncStub.chaincodeEvents(request, responseObserver);
-        return responseObserver.iterator();
+        return new ServerStreamIterator<>(Context.current().withCancellation(), () -> blockingStub.chaincodeEvents(request));
     }
 }
