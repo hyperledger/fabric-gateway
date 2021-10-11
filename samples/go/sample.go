@@ -15,8 +15,10 @@ import (
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
+	gwproto "github.com/hyperledger/fabric-protos-go/gateway"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -70,6 +72,10 @@ func main() {
 	fmt.Println("exampleChaincodeEventReplay:")
 	exampleChaincodeEventReplay(gateway)
 	fmt.Println()
+
+    fmt.Println("exampleErrorHandling:")
+    exampleErrorHandling(gateway)
+    fmt.Println()
 }
 
 func exampleSubmit(gateway *client.Gateway) {
@@ -316,6 +322,26 @@ func exampleChaincodeEventReplay(gateway *client.Gateway) {
 		fmt.Printf("Received event name: %s, payload: %s, txId: %s\n", ev.EventName, ev.Payload, ev.TransactionID)
 	case <-time.After(10 * time.Second):
 		fmt.Println("Timed out waiting for chaincode event")
+	}
+}
+
+func exampleErrorHandling(gateway *client.Gateway) {
+	network := gateway.GetNetwork("mychannel")
+	contract := network.GetContract("basic")
+
+	fmt.Println("Submitting \"put\" transaction without arguments")
+
+	// Submit transaction, passing in the wrong number of arguments.
+	_, err := contract.SubmitTransaction("put")
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+		// Any error that originates from a peer or orderer node external to the gateway will have its details
+		// embedded within the grpc status error.  The following code shows how to extract that.
+		statusErr := status.Convert(err)
+		for _, detail := range statusErr.Details() {
+			errDetail := detail.(*gwproto.ErrorDetail)
+			fmt.Printf("Error from endpoint: %s, mspId: %s, message: %s\n", errDetail.Address, errDetail.MspId, errDetail.Message)
+		}
 	}
 }
 
