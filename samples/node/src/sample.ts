@@ -5,7 +5,6 @@
  */
 
 import * as grpc from '@grpc/grpc-js';
-import { ServiceClient } from '@grpc/grpc-js/build/src/make-client';
 import * as crypto from 'crypto';
 import { connect, Gateway, Identity, Signer, signers } from 'fabric-gateway';
 import { promises as fs } from 'fs';
@@ -55,10 +54,13 @@ async function main() {
         console.log('exampleChaincodeEvents:')
         await exampleChaincodeEvents(gateway)
         console.log();
+
+        console.log('exampleChaincodeEventReplay:')
+        await exampleChaincodeEventReplay(gateway)
+        console.log();
     } finally {
         gateway.close();
         client.close()
-        process.exit(0);
     }
 }
 
@@ -206,21 +208,42 @@ async function exampleChaincodeEvents(gateway: Gateway) {
     const network = gateway.getNetwork('mychannel');
     const contract = network.getContract('basic');
 
+    console.log('Read chaincode events');
+    const events = await network.getChaincodeEvents('basic');
+    try {
+        // Submit a transaction that generates a chaincode event
+        console.log('Submitting "event" transaction with arguments:  "my-event-name", "my-event-payload"');
+        await contract.submitTransaction('event', 'my-event-name', 'my-event-payload');
+
+        for await (const event of events) {
+            const payload = bytesAsString(event.payload);
+            console.log(`Received event name: ${event.eventName}, payload: ${payload}, txID: ${event.transactionId}`);
+            break;
+        }
+    } finally {
+        // Ensure event iterator is closed when done reading.
+        events.close();
+    }
+}
+
+async function exampleChaincodeEventReplay(gateway: Gateway) {
+    const network = gateway.getNetwork('mychannel');
+    const contract = network.getContract('basic');
+
     // Submit a transaction that generates a chaincode event
-    console.log('Submitting "event" transaction with arguments:  "my-event-name", "my-event-payload"');
+    console.log('Submitting "event" transaction with arguments:  "my-event-name", "my-event-replay-payload"');
     const commit = await contract.submitAsync('event', {
-        arguments: ['my-event-name', 'my-event-payload'],
+        arguments: ['my-event-name', 'my-event-replay-payload'],
     });
     const status = await commit.getStatus()
     if (!status.successful) {
         throw new Error(`Transaction ${status.transactionId} failed to commit with status code: ${status.code}`);
     }
 
-    console.log('Read chaincode events from block number', status.blockNumber);
+    console.log(`Read chaincode events from block number ${status.blockNumber}`);
     const events = await network.getChaincodeEvents('basic', {
         startBlock: status.blockNumber,
     });
-
     try {
         for await (const event of events) {
             const payload = bytesAsString(event.payload);
@@ -228,11 +251,12 @@ async function exampleChaincodeEvents(gateway: Gateway) {
             break;
         }
     } finally {
+        // Ensure event iterator is closed when done reading.
         events.close();
     }
 }
 
-async function newGrpcConnection(): Promise<ServiceClient> {
+async function newGrpcConnection(): Promise<grpc.Client> {
     const tlsRootCert = await fs.readFile(tlsCertPath);
     const tlsCredentials = grpc.credentials.createSsl(tlsRootCert);
 

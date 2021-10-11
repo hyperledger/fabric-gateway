@@ -58,7 +58,21 @@ export interface Network {
      */
     getChaincodeEvents(chaincodeId: string, options?: ChaincodeEventsOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>>
 
+    /**
+     * Create a request to receive chaincode events emitted by transaction functions of a specific chaincode. Supports
+     * off-line signing flow.
+     * @param chaincodeId - Chaincode name.
+     * @param options - Event listening options.
+     * @returns A chaincode events request.
+     */
     newChaincodeEventsRequest(chaincodeId: string, options?: ChaincodeEventsOptions): ChaincodeEventsRequest;
+
+    /**
+     * Create a chaincode events request with the specified digital signature. Supports off-line signing flow.
+     * @param bytes - Serialized chaincode events request.
+     * @param signature - Digital signature.
+     * @returns A signed chaincode events request.
+     */
     newSignedChaincodeEventsRequest(bytes: Uint8Array, signature: Uint8Array): ChaincodeEventsRequest;
 }
 
