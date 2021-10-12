@@ -5,6 +5,7 @@
  */
 
 import { MockGatewayClient, newMockGatewayClient } from './client.test';
+import { CommitError } from './commiterror';
 import { Contract } from './contract';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
@@ -71,13 +72,15 @@ describe('Transaction', () => {
         await expect(contract.submitTransaction('TRANSACTION_NAME')).rejects.toThrow('ERROR_MESSAGE');
     });
 
-    it('throws on commit failure', async () => {
+    it('throws CommitError on commit failure', async () => {
         const commitResult = new CommitStatusResponse();
         commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
         client.commitStatus.mockResolvedValue(commitResult);
 
-        await expect(contract.submitTransaction('TRANSACTION_NAME'))
-            .rejects.toThrow('MVCC_READ_CONFLICT');
+        const t = contract.submitTransaction('TRANSACTION_NAME');
+
+        await expect(t).rejects.toThrow('MVCC_READ_CONFLICT');
+        await expect(t).rejects.toThrow(CommitError);
     });
 
     it('returns result', async () => {

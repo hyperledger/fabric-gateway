@@ -5,11 +5,11 @@
  */
 
 import { GatewayClient } from './client';
+import { newCommitError } from './commiterror';
 import { Proposal, ProposalImpl } from './proposal';
 import { ProposalBuilder, ProposalOptions } from './proposalbuilder';
 import { PreparedTransaction, ProposedTransaction } from './protos/gateway/gateway_pb';
 import { SigningIdentity } from './signingidentity';
-import { StatusNames } from './status';
 import { SubmittedTransaction } from './submittedtransaction';
 import { Transaction, TransactionImpl } from './transaction';
 
@@ -110,6 +110,8 @@ export interface Contract {
      * @param name - Name of the transaction to invoke.
      * @param args - Transaction arguments.
      * @returns The result returned by the transaction function.
+     * @throws {@link GatewayError}
+     * Thrown if the gRPC service invocation fails.
      */
     evaluateTransaction(name: string, ...args: Array<string | Uint8Array>): Promise<Uint8Array>;
 
@@ -125,6 +127,10 @@ export interface Contract {
      * @param name - Name of the transaction to be invoked.
      * @param args - Transaction arguments.
      * @returns The result returned by the transaction function.
+     * @throws {@link GatewayError}
+     * Thrown if the gRPC service invocation fails.
+     * @throws {@link CommitError}
+     * Thrown if the transaction commits unsuccessfully.
      */
     submitTransaction(name: string, ...args: Array<string | Uint8Array>): Promise<Uint8Array>;
 
@@ -135,6 +141,8 @@ export interface Contract {
      * @param transactionName - Name of the transaction to invoke.
      * @param options - Transaction invocation options.
      * @returns The result returned by the transaction function.
+     * @throws {@link GatewayError}
+     * Thrown if the gRPC service invocation fails.
      */
     evaluate(transactionName: string, options?: ProposalOptions): Promise<Uint8Array>;
 
@@ -145,6 +153,10 @@ export interface Contract {
      * @param transactionName - Name of the transaction to invoke.
      * @param options - Transaction invocation options.
      * @returns The result returned by the transaction function.
+     * @throws {@link GatewayError}
+     * Thrown if the gRPC service invocation fails.
+     * @throws {@link CommitError}
+     * Thrown if the transaction commits unsuccessfully.
      */
     submit(transactionName: string, options?: ProposalOptions): Promise<Uint8Array>;
 
@@ -156,6 +168,8 @@ export interface Contract {
      * @param transactionName - Name of the transaction to invoke.
      * @param options - Transaction invocation options.
      * @returns A submitted transaction, providing access to the transaction result and commit status.
+     * @throws {@link GatewayError}
+     * Thrown if the gRPC service invocation fails.
      */
     submitAsync(transactionName: string, options?: ProposalOptions): Promise<SubmittedTransaction>;
 
@@ -231,7 +245,7 @@ export class ContractImpl implements Contract {
 
         const status = await submitted.getStatus();
         if (!status.successful) {
-            throw new Error(`Transaction ${status.transactionId} failed to commit with status code ${status.code} (${StatusNames[status.code]})`);
+            throw newCommitError(status);
         }
 
         return submitted.getResult();

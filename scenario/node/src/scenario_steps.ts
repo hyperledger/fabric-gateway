@@ -6,10 +6,10 @@
 
 import { After, AfterAll, BeforeAll, DataTable, Given, setDefaultTimeout, Then, When } from '@cucumber/cucumber';
 import expect from 'expect';
+import { ErrorDetail, GatewayError } from 'fabric-gateway';
 import { CustomWorld } from './customworld';
 import { Fabric } from './fabric';
 import { bytesAsString, toError } from './utils';
-import { ErrorDetail } from 'fabric-gateway';
 
 setDefaultTimeout(30 * 1000);
 
@@ -155,24 +155,22 @@ Then('the error message should contain {string}', function(this: CustomWorld, ex
 });
 
 Then('the error details should be', function(this: CustomWorld, dataTable: DataTable): void {
-    const details = this.getError().details;
-    expect(details).toBeDefined();
-    const rows = dataTable.raw();
-    const expected: {[key: string]: ErrorDetail} = {};
-    rows.forEach(row => {
-        expected[row[0]] = {
-            mspId: row[0],
-            address: row[1],
-            message: row[2]
-        }
-    })
-    details!.forEach(detail => {
-        const ee = expected[detail.mspId];
-        expect(ee).toBeDefined();
-        expect(detail.message).toContain(ee.message);
-        delete expected[detail.mspId];
-    })
-    expect(Object.keys(expected)).toHaveLength(0);
+    const err = this.getErrorOfType(GatewayError);
+
+    const expectedDetails = new Map<string, ErrorDetail>();
+    dataTable.raw().forEach(row => expectedDetails.set(row[0], {
+        mspId: row[0],
+        address: row[1],
+        message: row[2],
+    }));
+
+    err.details.forEach(actual => {
+        const expected = expectedDetails.get(actual.mspId);
+        expect(expected).toBeDefined();
+        expect(actual.message).toContain(expected?.message);
+        expectedDetails.delete(actual.mspId);
+    });
+    expect(Object.keys(expectedDetails)).toHaveLength(0);
 });
 
 Then('I should receive a chaincode event named {string} with payload {string}', async function(this: CustomWorld, eventName: string, payload: string): Promise<void> {

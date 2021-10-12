@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TextDecoder, inspect } from 'util';
+import { inspect, TextDecoder } from 'util';
 
 const utf8Decoder = new TextDecoder();
 
@@ -28,4 +28,12 @@ export function assertDefined<T>(value: T | undefined, property: string): T {
         throw new Error(`Bad step sequence: ${property} not defined`);
     }
     return value;
+}
+
+export interface Constructor<T> {
+    new (...args: any[]): T; // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
+export function isInstanceOf<T>(o: unknown, type: Constructor<T>): o is T {
+    return o instanceof type;
 }

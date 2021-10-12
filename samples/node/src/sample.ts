@@ -6,7 +6,7 @@
 
 import * as grpc from '@grpc/grpc-js';
 import * as crypto from 'crypto';
-import { connect, Gateway, Identity, Signer, signers, ErrorDetail } from 'fabric-gateway';
+import { connect, Gateway, GatewayError, Identity, Signer, signers } from 'fabric-gateway';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { TextDecoder } from 'util';
@@ -273,10 +273,10 @@ async function exampleErrorHandling(gateway: Gateway) {
         console.log(e)
         // Any error that originates from a peer or orderer node external to the gateway will have its details
         // embedded within the error.
-        e.details.forEach((detail: ErrorDetail) => {
-            console.log('Error from endpoint: ' + detail.address +
-                ', mspId: ' + detail.mspid + ', message: ' + detail.message);
-        })
+        if (e instanceof GatewayError) {
+            e.details.forEach(detail =>
+                console.log(`Error from endpoint: ${detail.address}, mspId: ${detail.mspId}, message: ${detail.message}`));
+        }
     }
 }
 
