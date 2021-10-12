@@ -43,4 +43,12 @@ final class StatusImpl implements Status {
     public boolean isSuccessful() {
         return code == TxValidationCode.VALID;
     };
+
+    @Override
+    public String toString() {
+        return GatewayUtils.toString(this,
+                "transactionId: " + transactionId,
+                "code: " + code.getNumber() + " (" + code.name() + ")",
+                "blockNumber: " + blockNumber);
+    }
 }

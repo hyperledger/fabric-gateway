@@ -80,15 +80,13 @@ public class GatewayContext {
 
         // Start reading events immediately as Java gRPC implementation may not invoke the gRPC service until the first
         // read attempt occurs.
-        CompletableFuture.runAsync(() -> {
-            iter.forEachRemaining(event -> {
-                try {
-                    eventQueue.put(event);
-                } catch (InterruptedException e) {
-                    iter.close();
-                }
-            });
-        });
+        CompletableFuture.runAsync(() -> iter.forEachRemaining(event -> {
+            try {
+                eventQueue.put(event);
+            } catch (InterruptedException e) {
+                iter.close();
+            }
+        }));
     }
 
     public ChaincodeEvent nextChaincodeEvent() throws InterruptedException {

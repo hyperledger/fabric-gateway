@@ -6,6 +6,21 @@
 
 package com.example;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.InvalidKeyException;
+import java.security.PrivateKey;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.time.LocalDateTime;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.ManagedChannel;
@@ -27,21 +42,6 @@ import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Identity;
 import org.hyperledger.fabric.protos.gateway.ErrorDetail;
-
-import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.InvalidKeyException;
-import java.security.PrivateKey;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.time.LocalDateTime;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 public class Sample {
     private static final String mspID     = "Org1MSP";
@@ -117,7 +117,7 @@ public class Sample {
         System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
     }
 
-    private static void exampleSubmitAsync(Gateway gateway) throws CommitException {
+    private static void exampleSubmitAsync(Gateway gateway) {
         Network network = gateway.getNetwork("mychannel");
         Contract contract = network.getContract("basic");
 
@@ -137,7 +137,7 @@ public class Sample {
 
         Status status = commit.getStatus();
         if (!status.isSuccessful()) {
-            throw new CommitException(commit.getTransactionId(), status.getCode());
+            throw new RuntimeException("Transaction " + status.getTransactionId() + " failed to commit with status code: " + status.getCode());
         }
 
         System.out.println("Transaction committed successfully");
@@ -261,7 +261,7 @@ public class Sample {
         }
 }
 
-    private static void exampleChaincodeEventReplay(Gateway gateway) throws CommitException {
+    private static void exampleChaincodeEventReplay(Gateway gateway) {
         Network network = gateway.getNetwork("mychannel");
         Contract contract = network.getContract("basic");
 
@@ -274,7 +274,7 @@ public class Sample {
                 .submitAsync()
                 .getStatus();
         if (!status.isSuccessful()) {
-            throw new CommitException(status.getTransactionId(), status.getCode());
+            throw new RuntimeException("Transaction " + status.getTransactionId() + " failed to commit with status code: " + status.getCode());
         }
 
         long blockNumber = status.getBlockNumber();

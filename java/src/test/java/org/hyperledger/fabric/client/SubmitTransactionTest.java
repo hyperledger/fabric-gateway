@@ -349,7 +349,7 @@ public final class SubmitTransactionTest {
         CommitException e = catchThrowableOfType(() -> transaction.submit(), CommitException.class);
 
         assertThat(e).hasMessageContaining(TxValidationCode.MVCC_READ_CONFLICT.name());
-        assertThat(e.getStatus()).isEqualTo(TxValidationCode.MVCC_READ_CONFLICT);
+        assertThat(e.getCode()).isEqualTo(TxValidationCode.MVCC_READ_CONFLICT);
         assertThat(e.getTransactionId()).isEqualTo(transaction.getTransactionId());
     }
 

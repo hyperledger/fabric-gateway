@@ -111,7 +111,7 @@ public class ScenarioSteps {
     }
 
     private GatewayContext currentGateway;
-    private Map<String, GatewayContext> gateways = new HashMap<>();
+    private final Map<String, GatewayContext> gateways = new HashMap<>();
     private TransactionInvocation transactionInvocation;
     private long lastCommittedBlockNumber;
 
@@ -559,7 +559,7 @@ public class ScenarioSteps {
         PrivateKey privateKey = getPrivateKey(privateKeyPath);
 
         if (privateKey instanceof ECPrivateKey) {
-            return Signers.newPrivateKeySigner((ECPrivateKey) privateKey);
+            return Signers.newPrivateKeySigner(privateKey);
         }
         throw new RuntimeException("Unexpected private key type: " + privateKey.getClass().getSimpleName());
     }
