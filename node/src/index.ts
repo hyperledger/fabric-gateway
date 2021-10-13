@@ -6,7 +6,7 @@
 
 export { ChaincodeEvent } from './chaincodeevent';
 export { ChaincodeEventsOptions } from './chaincodeeventsbuilder';
-export { ChaincodeEventCallback, ChaincodeEventsRequest } from './chaincodeeventsrequest';
+export { ChaincodeEventsRequest } from './chaincodeeventsrequest';
 export { CloseableAsyncIterable } from './client';
 export { Commit } from './commit';
 export { CommitError } from './commiterror';
@@ -27,4 +27,3 @@ export { Signable } from './signable';
 export { Status, StatusCode } from './status';
 export { SubmittedTransaction } from './submittedtransaction';
 export { Transaction } from './transaction';
-export { ErrorFirstCallback } from './utils';

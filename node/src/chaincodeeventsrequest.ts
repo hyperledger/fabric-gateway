@@ -9,30 +9,11 @@ import { CloseableAsyncIterable, GatewayClient } from './client';
 import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, SignedChaincodeEventsRequest as SignedChaincodeEventsRequestProto } from './protos/gateway/gateway_pb';
 import { Signable } from './signable';
 import { SigningIdentity } from './signingidentity';
-import { ErrorFirstCallback } from './utils';
-
-export type ChaincodeEventCallback = ErrorFirstCallback<ChaincodeEvent>
 
 /**
  * Delivers events emitted by transaction functions in a specific chaincode.
  */
 export interface ChaincodeEventsRequest extends Signable {
-    /**
-     * Get chaincode events emitted by transaction functions of a specific chaincode.
-     * @param callback - Event callback function.
-     * @example
-     * ```
-     * await request.onEvent((err, event) => {
-     *     if (err) {
-     *         // Handle connection error
-     *     } else {
-     *         // Process event
-     *     }
-     * });
-     * ```
-     */
-    onEvent(callback: ChaincodeEventCallback): Promise<void>;
-
     /**
      * Get chaincode events emitted by transaction functions of a specific chaincode.
      * @returns Chaincode events.
@@ -67,23 +48,6 @@ export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
         this.#signingIdentity = options.signingIdentity;
         this.#signedRequest = new SignedChaincodeEventsRequestProto();
         this.#signedRequest.setRequest(options.request.serializeBinary())
-    }
-
-    async onEvent(listener: ChaincodeEventCallback): Promise<void> {
-        const events = await this.getEvents();
-        void (async () => {
-            try {
-                for await (const event of events) {
-                    try {
-                        await listener(undefined, event);
-                    } catch (err) {
-                        console.error('Chaincode event listener error:', err);
-                    }
-                }
-            } catch (err) {
-                await listener(err, undefined);
-            }
-        })();
     }
 
     async getEvents(): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
