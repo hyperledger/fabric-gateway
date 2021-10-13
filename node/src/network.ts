@@ -26,10 +26,10 @@ export interface Network {
     /**
      * Get a smart contract within the named chaincode. If no contract name is supplied, this is the default smart
      * contract for the named chaincode.
-     * @param chaincodeId - Chaincode name.
-     * @param name - Smart contract name.
+     * @param chaincodeName - Chaincode name.
+     * @param contractName - Smart contract name.
      */
-    getContract(chaincodeId: string, name?: string): Contract;
+    getContract(chaincodeName: string, contractName?: string): Contract;
 
     /**
      * Create a commit with the specified digital signature, which can be used to access information about a
@@ -42,11 +42,11 @@ export interface Network {
 
     /**
      * Get chaincode events emitted by transaction functions of a specific chaincode.
-     * @param chaincodeId - A chaincode ID.
+     * @param chaincodeName - A chaincode name.
      * @returns Chaincode events.
      * @example
      * ```
-     * const events = await network.getChaincodeEvents(chaincodeId, { startBlock: BigInt(101) });
+     * const events = await network.getChaincodeEvents(chaincodeName, { startBlock: BigInt(101) });
      * try {
      *     for async (const event of events) {
      *         // Process event
@@ -56,16 +56,16 @@ export interface Network {
      * }
      * ```
      */
-    getChaincodeEvents(chaincodeId: string, options?: ChaincodeEventsOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>>
+    getChaincodeEvents(chaincodeName: string, options?: ChaincodeEventsOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>>
 
     /**
      * Create a request to receive chaincode events emitted by transaction functions of a specific chaincode. Supports
      * off-line signing flow.
-     * @param chaincodeId - Chaincode name.
+     * @param chaincodeName - Chaincode name.
      * @param options - Event listening options.
      * @returns A chaincode events request.
      */
-    newChaincodeEventsRequest(chaincodeId: string, options?: ChaincodeEventsOptions): ChaincodeEventsRequest;
+    newChaincodeEventsRequest(chaincodeName: string, options?: ChaincodeEventsOptions): ChaincodeEventsRequest;
 
     /**
      * Create a chaincode events request with the specified digital signature. Supports off-line signing flow.
@@ -97,12 +97,12 @@ export class NetworkImpl implements Network {
         return this.#channelName;
     }
 
-    getContract(chaincodeId: string, contractName?: string): Contract {
+    getContract(chaincodeName: string, contractName?: string): Contract {
         return new ContractImpl({
             client: this.#client,
             signingIdentity: this.#signingIdentity,
             channelName: this.#channelName,
-            chaincodeId,
+            chaincodeName: chaincodeName,
             contractName,
         });
     }
@@ -122,23 +122,20 @@ export class NetworkImpl implements Network {
         return result;
     }
 
-    async getChaincodeEvents(chaincodeId: string, options?: ChaincodeEventsOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
-        return this.newChaincodeEventsRequest(chaincodeId, options).getEvents();
+    async getChaincodeEvents(chaincodeName: string, options?: ChaincodeEventsOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
+        return this.newChaincodeEventsRequest(chaincodeName, options).getEvents();
     }
 
-    newChaincodeEventsRequest(chaincodeId: string, options: ChaincodeEventsOptions = {}): ChaincodeEventsRequest {
-        const builderOptions = Object.assign(
+    newChaincodeEventsRequest(chaincodeName: string, options: ChaincodeEventsOptions = {}): ChaincodeEventsRequest {
+        return new ChaincodeEventsBuilder(Object.assign(
             {
-                chaincodeId,
+                chaincodeName: chaincodeName,
                 channelName: this.#channelName,
                 client: this.#client,
                 signingIdentity: this.#signingIdentity,
-                options,
             },
             options,
-        );
-        
-        return new ChaincodeEventsBuilder(builderOptions).build();
+        )).build();
     }
 
     newSignedChaincodeEventsRequest(bytes: Uint8Array, signature: Uint8Array): ChaincodeEventsRequest {

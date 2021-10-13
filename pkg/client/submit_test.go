@@ -160,7 +160,7 @@ func TestSubmitTransaction(t *testing.T) {
 		require.Equal(t, expected, actual)
 	})
 
-	t.Run("Includes chaincode ID in proposal", func(t *testing.T) {
+	t.Run("Includes chaincode name in proposal", func(t *testing.T) {
 		var actual string
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
@@ -179,7 +179,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
 
-		expected := contract.chaincodeID
+		expected := contract.chaincodeName
 		require.Equal(t, expected, actual)
 	})
 

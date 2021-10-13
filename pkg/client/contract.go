@@ -35,20 +35,20 @@ import (
 // using the Contract's NewSignedProposal() or NewSignedTransaction() methods respectively, or creating a signed
 // commit using the Network's NewSignedCommit() method.
 type Contract struct {
-	client       gateway.GatewayClient
-	signingID    *signingIdentity
-	channelName  string
-	chaincodeID  string
-	contractName string
+	client        gateway.GatewayClient
+	signingID     *signingIdentity
+	channelName   string
+	chaincodeName string
+	contractName  string
 }
 
-// ChaincodeID of the chaincode that contains this smart contract.
-func (contract *Contract) ChaincodeID() string {
-	return contract.chaincodeID
+// ChaincodeName of the chaincode that contains this smart contract.
+func (contract *Contract) ChaincodeName() string {
+	return contract.chaincodeName
 }
 
-// Name of the contract within the chaincode, or an empty string for the default smart contract.
-func (contract *Contract) Name() string {
+// ContractName of the contract within the chaincode, or an empty string for the default smart contract.
+func (contract *Contract) ContractName() string {
 	return contract.contractName
 }
 
@@ -137,7 +137,7 @@ func (contract *Contract) NewProposal(transactionName string, options ...Proposa
 		client:          contract.client,
 		signingID:       contract.signingID,
 		channelName:     contract.channelName,
-		chaincodeID:     contract.chaincodeID,
+		chaincodeName:   contract.chaincodeName,
 		transactionName: contract.qualifiedTransactionName(transactionName),
 	}
 

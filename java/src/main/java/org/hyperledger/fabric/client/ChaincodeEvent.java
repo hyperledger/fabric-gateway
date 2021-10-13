@@ -26,9 +26,9 @@ public interface ChaincodeEvent {
 
     /**
      * Chaincode that emitted this event.
-     * @return Chaincode ID.
+     * @return Chaincode name.
      */
-    String getChaincodeId();
+    String getChaincodeName();
 
     /**
      * Name of the emitted event.

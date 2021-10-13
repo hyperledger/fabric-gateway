@@ -23,7 +23,7 @@ function assertDecodeChaincodeEventsRequest(signedRequest: SignedChaincodeEvents
 function newChaincodeEvent(blockNumber: number, event: ChaincodeEventProto): ChaincodeEvent {
     return {
         blockNumber: BigInt(blockNumber),
-        chaincodeId: event.getChaincodeId() ?? '',
+        chaincodeName: event.getChaincodeId() ?? '',
         eventName: event.getEventName() ?? '',
         transactionId: event.getTxId() ?? '',
         payload: event.getPayload_asU8() ?? new Uint8Array(),

@@ -31,16 +31,16 @@ describe ('Network', () => {
 
     describe('getContract', () => {
         it('returns correctly named default contract', () => {
-            const contract = network.getContract('CHAINCODE_ID');
+            const contract = network.getContract('CHAINCODE_NAME');
 
-            expect(contract.getChaincodeId()).toBe('CHAINCODE_ID');
+            expect(contract.getChaincodeName()).toBe('CHAINCODE_NAME');
             expect(contract.getContractName()).toBeUndefined();
         });
 
         it('returns correctly named non-default contract', () => {
-            const contract = network.getContract('CHAINCODE_ID', 'CONTRACT_NAME');
+            const contract = network.getContract('CHAINCODE_NAME', 'CONTRACT_NAME');
 
-            expect(contract.getChaincodeId()).toBe('CHAINCODE_ID');
+            expect(contract.getChaincodeName()).toBe('CHAINCODE_NAME');
             expect(contract.getContractName()).toBe('CONTRACT_NAME');
         });
     });

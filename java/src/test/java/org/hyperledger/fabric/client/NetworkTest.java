@@ -38,23 +38,23 @@ public final class NetworkTest {
     }
 
     @Test
-    void getContract_using_only_chaincode_ID_returns_correctly_named_Contract() {
-        Contract contract = network.getContract("CHAINCODE_ID");
-        assertThat(contract.getChaincodeId()).isEqualTo("CHAINCODE_ID");
+    void getContract_using_only_chaincode_name_returns_correctly_named_Contract() {
+        Contract contract = network.getContract("CHAINCODE_NAME");
+        assertThat(contract.getChaincodeName()).isEqualTo("CHAINCODE_NAME");
         assertThat(contract.getContractName()).isEmpty();
     }
 
     @Test
     void getContract_using_contract_name_returns_correctly_named_Contract() {
-        Contract contract = network.getContract("CHAINCODE_ID", "CONTRACT");
-        assertThat(contract.getChaincodeId()).isEqualTo("CHAINCODE_ID");
+        Contract contract = network.getContract("CHAINCODE_NAME", "CONTRACT");
+        assertThat(contract.getChaincodeName()).isEqualTo("CHAINCODE_NAME");
         assertThat(contract.getContractName()).get().isEqualTo("CONTRACT");
     }
 
     @Test
-    void getContract_throws_NullPointerException_on_null_chaincode_ID() {
+    void getContract_throws_NullPointerException_on_null_chaincode_name() {
         assertThatThrownBy(() -> network.getContract(null))
                 .isInstanceOf(NullPointerException.class)
-                .hasMessageContaining("chaincode ID");
+                .hasMessageContaining("chaincode name");
     }
 }

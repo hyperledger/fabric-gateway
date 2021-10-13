@@ -18,7 +18,7 @@ type chaincodeEventsBuilder struct {
 	client        gateway.GatewayClient
 	signingID     *signingIdentity
 	channelName   string
-	chaincodeID   string
+	chaincodeName string
 	startPosition *orderer.SeekPosition
 }
 
@@ -62,7 +62,7 @@ func (builder *chaincodeEventsBuilder) newChaincodeEventsRequestProto() (*gatewa
 	request := &gateway.ChaincodeEventsRequest{
 		ChannelId:     builder.channelName,
 		Identity:      creator,
-		ChaincodeId:   builder.chaincodeID,
+		ChaincodeId:   builder.chaincodeName,
 		StartPosition: builder.getStartPosition(),
 	}
 	return request, nil

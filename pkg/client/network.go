@@ -28,18 +28,18 @@ func (network *Network) Name() string {
 }
 
 // GetContract returns a Contract representing the default smart contract for the named chaincode.
-func (network *Network) GetContract(chaincodeID string) *Contract {
-	return network.GetContractWithName(chaincodeID, "")
+func (network *Network) GetContract(chaincodeName string) *Contract {
+	return network.GetContractWithName(chaincodeName, "")
 }
 
 // GetContractWithName returns a Contract representing a smart contract within a named chaincode.
-func (network *Network) GetContractWithName(chaincodeID string, contractName string) *Contract {
+func (network *Network) GetContractWithName(chaincodeName string, contractName string) *Contract {
 	return &Contract{
-		client:       network.client,
-		signingID:    network.signingID,
-		channelName:  network.name,
-		chaincodeID:  chaincodeID,
-		contractName: contractName,
+		client:        network.client,
+		signingID:     network.signingID,
+		channelName:   network.name,
+		chaincodeName: chaincodeName,
+		contractName:  contractName,
 	}
 }
 
@@ -63,8 +63,8 @@ func (network *Network) NewSignedCommit(bytes []byte, signature []byte) (*Commit
 
 // ChaincodeEvents returns a channel from which chaincode events emitted by transaction functions in the specified
 // chaincode can be read.
-func (network *Network) ChaincodeEvents(ctx context.Context, chaincodeID string, options ...ChaincodeEventsOption) (<-chan *ChaincodeEvent, error) {
-	events, err := network.NewChaincodeEventsRequest(chaincodeID, options...)
+func (network *Network) ChaincodeEvents(ctx context.Context, chaincodeName string, options ...ChaincodeEventsOption) (<-chan *ChaincodeEvent, error) {
+	events, err := network.NewChaincodeEventsRequest(chaincodeName, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -74,12 +74,12 @@ func (network *Network) ChaincodeEvents(ctx context.Context, chaincodeID string,
 
 // NewChaincodeEventsRequest creates a request to read events emitted by the specified chaincode. Supports off-line
 // signing flow.
-func (network *Network) NewChaincodeEventsRequest(chaincodeID string, options ...ChaincodeEventsOption) (*ChaincodeEventsRequest, error) {
+func (network *Network) NewChaincodeEventsRequest(chaincodeName string, options ...ChaincodeEventsOption) (*ChaincodeEventsRequest, error) {
 	builder := &chaincodeEventsBuilder{
-		client:      network.client,
-		signingID:   network.signingID,
-		channelName: network.name,
-		chaincodeID: chaincodeID,
+		client:        network.client,
+		signingID:     network.signingID,
+		channelName:   network.name,
+		chaincodeName: chaincodeName,
 	}
 
 	for _, option := range options {

@@ -63,7 +63,7 @@ describe('Transaction', () => {
         };
         gateway = internalConnect(options);
         network = gateway.getNetwork('CHANNEL_NAME');
-        contract = network.getContract('CHAINCODE_ID');
+        contract = network.getContract('CHAINCODE_NAME');
     });
 
     it('throws on submit error', async () => {

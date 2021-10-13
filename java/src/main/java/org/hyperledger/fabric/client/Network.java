@@ -44,22 +44,22 @@ import com.google.protobuf.InvalidProtocolBufferException;
 public interface Network {
     /**
      * Get an instance of a contract on the current network.
-     * @param chaincodeId The name of the chaincode that implements the smart contract.
+     * @param chaincodeName The name of the chaincode that implements the smart contract.
      * @return The contract object.
-     * @throws NullPointerException if the chaincode ID is null.
+     * @throws NullPointerException if the chaincode name is null.
      */
-    Contract getContract(String chaincodeId);
+    Contract getContract(String chaincodeName);
 
     /**
      * Get an instance of a contract on the current network.  If the chaincode instance contains more
      * than one smart contract class (available using the latest chaincode programming model), then an
      * individual class can be selected.
-     * @param chaincodeId The name of the chaincode that implements the smart contract.
+     * @param chaincodeName The name of the chaincode that implements the smart contract.
      * @param contractName The name of the smart contract within the chaincode.
      * @return The contract object.
-     * @throws NullPointerException if the chaincode ID is null.
+     * @throws NullPointerException if the chaincode name is null.
      */
-    Contract getContract(String chaincodeId, String contractName);
+    Contract getContract(String chaincodeName, String contractName);
 
     /**
      * Get the name of the network channel.
@@ -82,21 +82,21 @@ public interface Network {
      * implementation may not begin reading events until the first use of the returned iterator.
      * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC connection error
      * occurs.</p>
-     * @param chaincodeId A chaincode ID.
+     * @param chaincodeName A chaincode name.
      * @return Ordered sequence of events.
-     * @throws NullPointerException if the chaincode ID is null.
+     * @throws NullPointerException if the chaincode name is null.
      * @see #newChaincodeEventsRequest(String)
      */
-    CloseableIterator<ChaincodeEvent> getChaincodeEvents(String chaincodeId);
+    CloseableIterator<ChaincodeEvent> getChaincodeEvents(String chaincodeName);
 
     /**
      * Build a new chaincode events request, which can be used to obtain events emitted by transaction functions of a
      * specific chaincode. This can be used to specify a specific ledger start position. Supports offline signing flow.
-     * @param chaincodeId A chaincode ID.
+     * @param chaincodeName A chaincode name.
      * @return A chaincode events request builder.
-     * @throws NullPointerException if the chaincode ID is null.
+     * @throws NullPointerException if the chaincode name is null.
      */
-    ChaincodeEventsRequest.Builder newChaincodeEventsRequest(String chaincodeId);
+    ChaincodeEventsRequest.Builder newChaincodeEventsRequest(String chaincodeName);
 
     /**
      * Create a chaincode events request with the specified digital signature, which can be used to obtain events

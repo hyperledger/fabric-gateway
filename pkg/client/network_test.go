@@ -20,27 +20,27 @@ func AssertNewTestNetwork(t *testing.T, networkName string, options ...ConnectOp
 
 func TestNetwork(t *testing.T) {
 	t.Run("GetContract returns correctly named Contract", func(t *testing.T) {
-		chaincodeID := "chaincode"
+		chaincodeName := "chaincode"
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		network := AssertNewTestNetwork(t, "network", WithClient(mockClient))
 
-		contract := network.GetContract(chaincodeID)
+		contract := network.GetContract(chaincodeName)
 
 		require.NotNil(t, contract)
-		require.Equal(t, chaincodeID, contract.ChaincodeID(), "chaincodeID")
-		require.Equal(t, "", contract.Name(), "name")
+		require.Equal(t, chaincodeName, contract.ChaincodeName(), "chaincode name")
+		require.Equal(t, "", contract.ContractName(), "contract name")
 	})
 
 	t.Run("GetContractWithName returns correctly named Contract", func(t *testing.T) {
-		chaincodeID := "chaincode"
+		chaincodeName := "chaincode"
 		contractName := "contract"
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		network := AssertNewTestNetwork(t, "network", WithClient(mockClient))
 
-		contract := network.GetContractWithName(chaincodeID, contractName)
+		contract := network.GetContractWithName(chaincodeName, contractName)
 
 		require.NotNil(t, contract)
-		require.Equal(t, chaincodeID, contract.ChaincodeID(), "chaincodeID")
-		require.Equal(t, contractName, contract.Name(), "name")
+		require.Equal(t, chaincodeName, contract.ChaincodeName(), "chaincode name")
+		require.Equal(t, contractName, contract.ContractName(), "contract name")
 	})
 }

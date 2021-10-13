@@ -25,7 +25,7 @@ export interface ChaincodeEvent {
     /**
      * Chaincode that emitted this event.
      */
-    chaincodeId: string;
+    chaincodeName: string;
 
     /**
      * Name of the emitted event.
@@ -64,7 +64,7 @@ export function newChaincodeEvents(responses: CloseableAsyncIterable<ChaincodeEv
 function newChaincodeEvent(blockNumber: bigint, event: ChaincodeEventProto): ChaincodeEvent {
     return {
         blockNumber,
-        chaincodeId: event.getChaincodeId() ?? '',
+        chaincodeName: event.getChaincodeId() ?? '',
         eventName: event.getEventName() ?? '',
         transactionId: event.getTxId() ?? '',
         payload: event.getPayload_asU8() || new Uint8Array(),

@@ -92,7 +92,7 @@ func (events *ChaincodeEventsRequest) setSignature(signature []byte) {
 type ChaincodeEvent struct {
 	BlockNumber   uint64
 	TransactionID string
-	ChaincodeID   string
+	ChaincodeName string
 	EventName     string
 	Payload       []byte
 }
@@ -102,7 +102,7 @@ func deliverChaincodeEvents(response *gateway.ChaincodeEventsResponse, send chan
 		send <- &ChaincodeEvent{
 			BlockNumber:   response.GetBlockNumber(),
 			TransactionID: event.GetTxId(),
-			ChaincodeID:   event.GetChaincodeId(),
+			ChaincodeName: event.GetChaincodeId(),
 			EventName:     event.GetEventName(),
 			Payload:       event.GetPayload(),
 		}

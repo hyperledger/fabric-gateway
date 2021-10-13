@@ -14,7 +14,7 @@ import org.hyperledger.fabric.protos.peer.ChaincodeEventPackage;
 final class ChaincodeEventImpl implements ChaincodeEvent {
     private final long blockNumber;
     private final String transactionId;
-    private final String chaincodeId;
+    private final String chaincodeName;
     private final String eventName;
     private final byte[] payload;
     private final int hash;
@@ -22,10 +22,10 @@ final class ChaincodeEventImpl implements ChaincodeEvent {
     ChaincodeEventImpl(final long blockNumber, final ChaincodeEventPackage.ChaincodeEvent event) {
         this.blockNumber = blockNumber;
         this.transactionId = event.getTxId();
-        this.chaincodeId = event.getChaincodeId();
+        this.chaincodeName = event.getChaincodeId();
         this.eventName = event.getEventName();
         this.payload = event.getPayload().toByteArray();
-        this.hash = Objects.hash(blockNumber, transactionId, chaincodeId, eventName); // Ignore potentially large payload; this is good enough
+        this.hash = Objects.hash(blockNumber, transactionId, chaincodeName, eventName); // Ignore potentially large payload; this is good enough
     }
 
     @Override
@@ -39,8 +39,8 @@ final class ChaincodeEventImpl implements ChaincodeEvent {
     }
 
     @Override
-    public String getChaincodeId() {
-        return chaincodeId;
+    public String getChaincodeName() {
+        return chaincodeName;
     }
 
     @Override
@@ -63,7 +63,7 @@ final class ChaincodeEventImpl implements ChaincodeEvent {
 
         return this.blockNumber == that.blockNumber
                 && Objects.equals(this.transactionId, that.transactionId)
-                && Objects.equals(this.chaincodeId, that.chaincodeId)
+                && Objects.equals(this.chaincodeName, that.chaincodeName)
                 && Objects.equals(this.eventName, that.eventName)
                 && Arrays.equals(this.payload, that.payload);
     }
@@ -78,7 +78,7 @@ final class ChaincodeEventImpl implements ChaincodeEvent {
         return GatewayUtils.toString(this,
                 "blockNumber: " + blockNumber,
                 "transactionId: " + transactionId,
-                "chaincodeId: " + chaincodeId,
+                "chaincodeName: " + chaincodeName,
                 "eventName: " + eventName,
                 "payload: " + Arrays.toString(payload));
     }
