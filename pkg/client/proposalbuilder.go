@@ -20,7 +20,7 @@ type proposalBuilder struct {
 	client          gateway.GatewayClient
 	signingID       *signingIdentity
 	channelName     string
-	chaincodeID     string
+	chaincodeName   string
 	transactionName string
 	transient       map[string][]byte
 	endorsingOrgs   []string
@@ -61,7 +61,7 @@ func (builder *proposalBuilder) newProposalProto() (*peer.Proposal, string, erro
 	invocationSpec := &peer.ChaincodeInvocationSpec{
 		ChaincodeSpec: &peer.ChaincodeSpec{
 			Type:        peer.ChaincodeSpec_NODE,
-			ChaincodeId: &peer.ChaincodeID{Name: builder.chaincodeID},
+			ChaincodeId: &peer.ChaincodeID{Name: builder.chaincodeName},
 			Input:       &peer.ChaincodeInput{Args: builder.chaincodeArgs()},
 		},
 	}

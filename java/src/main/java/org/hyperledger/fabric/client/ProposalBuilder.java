@@ -31,12 +31,12 @@ final class ProposalBuilder implements Proposal.Builder {
     private Set<String> endorsingOrgs = Collections.emptySet();
 
     ProposalBuilder(final GatewayClient client, final SigningIdentity signingIdentity,
-                    final String channelName, final String chaincodeId, final String transactionName) {
+                    final String channelName, final String chaincodeName, final String transactionName) {
         this.client = client;
         this.signingIdentity = signingIdentity;
         this.channelName = channelName;
         this.chaincodeId = Chaincode.ChaincodeID.newBuilder()
-                .setName(chaincodeId)
+                .setName(chaincodeName)
                 .build();
 
         inputBuilder.addArgs(ByteString.copyFrom(transactionName, StandardCharsets.UTF_8));

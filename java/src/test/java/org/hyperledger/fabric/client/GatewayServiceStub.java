@@ -52,7 +52,7 @@ public class GatewayServiceStub {
     }
 
     private String newPayload(SignedProposal requestProposal) {
-        // create a mock payload string by concatenating the chaincode id, tx name and arguments from the request
+        // create a mock payload string by concatenating the chaincode name, tx name and arguments from the request
         try {
             ProposalPackage.Proposal proposal = ProposalPackage.Proposal.parseFrom(requestProposal.getProposalBytes());
             ProposalPackage.ChaincodeProposalPayload chaincodeProposalPayload = ProposalPackage.ChaincodeProposalPayload.parseFrom(proposal.getPayload());

@@ -60,7 +60,7 @@ describe('Offline sign', () => {
         };
         gateway = internalConnect(options);
         network = gateway.getNetwork('CHANNEL_NAME');
-        contract = network.getContract('CHAINCODE_ID');
+        contract = network.getContract('CHAINCODE_NAME');
     });
 
     describe('evaluate', () => {

@@ -88,7 +88,7 @@ describe('Proposal', () => {
         };
         gateway = internalConnect(options);
         network = gateway.getNetwork('CHANNEL_NAME');
-        contract = network.getContract('CHAINCODE_ID');
+        contract = network.getContract('CHAINCODE_NAME');
     });
 
     describe('evaluate', () => {
@@ -126,18 +126,18 @@ describe('Proposal', () => {
             expect(channelHeader.getChannelId()).toBe(network.getName());
         });
 
-        it('includes chaincode ID in proposal', async () => {
+        it('includes chaincode name in proposal', async () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
             const evaluateRequest = client.evaluate.mock.calls[0][0];
             const proposal = assertDecodeEvaluateRequest(evaluateRequest);
             const chaincodeSpec = assertDecodeChaincodeSpec(proposal);
             expect(chaincodeSpec.getChaincodeId()).toBeDefined();
-            expect(chaincodeSpec.getChaincodeId()?.getName()).toBe(contract.getChaincodeId());
+            expect(chaincodeSpec.getChaincodeId()?.getName()).toBe(contract.getChaincodeName());
         });
 
         it('includes transaction name in proposal for default smart contract', async () => {
-            contract = network.getContract('CHAINCODE_ID');
+            contract = network.getContract('CHAINCODE_NAME');
 
             await contract.evaluateTransaction('MY_TRANSACTION');
 
@@ -148,7 +148,7 @@ describe('Proposal', () => {
         });
 
         it('includes transaction name in proposal for named smart contract', async () => {
-            contract = network.getContract('CHAINCODE_ID', 'MY_CONTRACT');
+            contract = network.getContract('CHAINCODE_NAME', 'MY_CONTRACT');
 
             await contract.evaluateTransaction('MY_TRANSACTION');
 
@@ -322,18 +322,18 @@ describe('Proposal', () => {
             expect(channelHeader.getChannelId()).toBe(network.getName());
         });
 
-        it('includes chaincode ID in proposal', async () => {
+        it('includes chaincode name in proposal', async () => {
             await contract.submitTransaction('TRANSACTION_NAME');
 
             const endorseRequest = client.endorse.mock.calls[0][0];
             const proposal = assertDecodeEndorseRequest(endorseRequest);
             const chaincodeSpec = assertDecodeChaincodeSpec(proposal);
             expect(chaincodeSpec.getChaincodeId()).toBeDefined();
-            expect(chaincodeSpec.getChaincodeId()?.getName()).toBe(contract.getChaincodeId());
+            expect(chaincodeSpec.getChaincodeId()?.getName()).toBe(contract.getChaincodeName());
         });
 
         it('includes transaction name in proposal for default smart contract', async () => {
-            contract = network.getContract('CHAINCODE_ID');
+            contract = network.getContract('CHAINCODE_NAME');
 
             await contract.submitTransaction('MY_TRANSACTION');
 
@@ -344,7 +344,7 @@ describe('Proposal', () => {
         });
 
         it('includes transaction name in proposal for named smart contract', async () => {
-            contract = network.getContract('CHAINCODE_ID', 'MY_CONTRACT');
+            contract = network.getContract('CHAINCODE_NAME', 'MY_CONTRACT');
 
             await contract.submitTransaction('MY_TRANSACTION');
 

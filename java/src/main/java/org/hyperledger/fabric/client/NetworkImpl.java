@@ -27,13 +27,13 @@ final class NetworkImpl implements Network {
     }
 
     @Override
-    public Contract getContract(final String chaincodeId, final String contractName) {
-        return new ContractImpl(client, signingIdentity, contractName, chaincodeId, contractName);
+    public Contract getContract(final String chaincodeName, final String contractName) {
+        return new ContractImpl(client, signingIdentity, contractName, chaincodeName, contractName);
     }
 
     @Override
-    public Contract getContract(final String chaincodeId) {
-        return new ContractImpl(client, signingIdentity, channelName, chaincodeId);
+    public Contract getContract(final String chaincodeName) {
+        return new ContractImpl(client, signingIdentity, channelName, chaincodeName);
     }
 
     @Override
@@ -52,13 +52,13 @@ final class NetworkImpl implements Network {
     }
 
     @Override
-    public CloseableIterator<ChaincodeEvent> getChaincodeEvents(final String chaincodeId) {
-        return newChaincodeEventsRequest(chaincodeId).build().getEvents();
+    public CloseableIterator<ChaincodeEvent> getChaincodeEvents(final String chaincodeName) {
+        return newChaincodeEventsRequest(chaincodeName).build().getEvents();
     }
 
     @Override
-    public ChaincodeEventsRequest.Builder newChaincodeEventsRequest(final String chaincodeId) {
-        return new ChaincodeEventsBuilder(client, signingIdentity, channelName, chaincodeId);
+    public ChaincodeEventsRequest.Builder newChaincodeEventsRequest(final String chaincodeName) {
+        return new ChaincodeEventsBuilder(client, signingIdentity, channelName, chaincodeName);
     }
 
     @Override

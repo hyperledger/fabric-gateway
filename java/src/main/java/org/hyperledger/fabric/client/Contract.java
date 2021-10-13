@@ -111,10 +111,10 @@ import com.google.protobuf.InvalidProtocolBufferException;
  */
 public interface Contract {
     /**
-     * Get the identifier of the chaincode that contains the smart contract.
-     * @return Chaincode ID.
+     * Get the name of the chaincode that contains the smart contract.
+     * @return Chaincode name.
      */
-    String getChaincodeId();
+    String getChaincodeName();
 
     /**
      * Get the name of the smart contract within the chaincode. An empty value indicates that this Contract refers to

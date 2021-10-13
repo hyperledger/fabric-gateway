@@ -24,7 +24,7 @@ export interface ChaincodeEventsBuilderOptions extends Readonly<ChaincodeEventsO
     readonly client: GatewayClient;
     readonly signingIdentity: SigningIdentity;
     readonly channelName: string;
-    readonly chaincodeId: string;
+    readonly chaincodeName: string;
 }
 
 export class ChaincodeEventsBuilder {
@@ -45,7 +45,7 @@ export class ChaincodeEventsBuilder {
     private newChaincodeEventsRequestProto(): ChaincodeEventsRequestProto {
         const result = new ChaincodeEventsRequestProto();
         result.setChannelId(this.#options.channelName);
-        result.setChaincodeId(this.#options.chaincodeId);
+        result.setChaincodeId(this.#options.chaincodeName);
         result.setIdentity(this.#options.signingIdentity.getCreator());
         result.setStartPosition(this.getStartPosition());
 

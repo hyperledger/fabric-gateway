@@ -31,7 +31,7 @@ func TestChaincodeEvents(t *testing.T) {
 		for _, event := range events {
 			blockNumber = event.BlockNumber
 			peerEvents = append(peerEvents, &peer.ChaincodeEvent{
-				ChaincodeId: event.ChaincodeID,
+				ChaincodeId: event.ChaincodeName,
 				TxId:        event.TransactionID,
 				EventName:   event.EventName,
 				Payload:     event.Payload,
@@ -54,7 +54,7 @@ func TestChaincodeEvents(t *testing.T) {
 		defer cancel()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
-		_, err := network.ChaincodeEvents(ctx, "CHAINCODE_ID")
+		_, err := network.ChaincodeEvents(ctx, "CHAINCODE")
 
 		require.Equal(t, expected, err)
 	})
@@ -83,7 +83,7 @@ func TestChaincodeEvents(t *testing.T) {
 		defer cancel()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
-		_, err := network.ChaincodeEvents(ctx, "CHAINCODE_ID")
+		_, err := network.ChaincodeEvents(ctx, "CHAINCODE")
 		require.NoError(t, err)
 
 		creator, err := network.signingID.Creator()
@@ -91,7 +91,7 @@ func TestChaincodeEvents(t *testing.T) {
 
 		expected := &gateway.ChaincodeEventsRequest{
 			ChannelId:   "NETWORK",
-			ChaincodeId: "CHAINCODE_ID",
+			ChaincodeId: "CHAINCODE",
 			Identity:    creator,
 			StartPosition: &orderer.SeekPosition{
 				Type: &orderer.SeekPosition_NextCommit{
@@ -126,7 +126,7 @@ func TestChaincodeEvents(t *testing.T) {
 		defer cancel()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
-		_, err := network.ChaincodeEvents(ctx, "CHAINCODE_ID", WithStartBlock(418))
+		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithStartBlock(418))
 		require.NoError(t, err)
 
 		creator, err := network.signingID.Creator()
@@ -134,7 +134,7 @@ func TestChaincodeEvents(t *testing.T) {
 
 		expected := &gateway.ChaincodeEventsRequest{
 			ChannelId:   "NETWORK",
-			ChaincodeId: "CHAINCODE_ID",
+			ChaincodeId: "CHAINCODE",
 			Identity:    creator,
 			StartPosition: &orderer.SeekPosition{
 				Type: &orderer.SeekPosition_Specified{
@@ -175,12 +175,12 @@ func TestChaincodeEvents(t *testing.T) {
 		defer cancel()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
-		_, err := network.ChaincodeEvents(ctx, "CHAINCODE_ID")
+		_, err := network.ChaincodeEvents(ctx, "CHAINCODE")
 		require.NoError(t, err)
 
 		expected := &gateway.ChaincodeEventsRequest{
 			ChannelId:   "NETWORK",
-			ChaincodeId: "CHAINCODE_ID",
+			ChaincodeId: "CHAINCODE",
 		}
 		require.True(t, proto.Equal(expected, actual), "Expected %v, got %v", expected, actual)
 	})
@@ -201,7 +201,7 @@ func TestChaincodeEvents(t *testing.T) {
 		defer cancel()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
-		receive, err := network.ChaincodeEvents(ctx, "CHAINCODE_ID")
+		receive, err := network.ChaincodeEvents(ctx, "CHAINCODE")
 		require.NoError(t, err)
 
 		actual, ok := <-receive
@@ -220,21 +220,21 @@ func TestChaincodeEvents(t *testing.T) {
 		expected := []*ChaincodeEvent{
 			{
 				BlockNumber:   1,
-				ChaincodeID:   "CHAINCODE_ID",
+				ChaincodeName: "CHAINCODE",
 				EventName:     "EVENT_1",
 				Payload:       []byte("PAYLOAD_1"),
 				TransactionID: "TRANSACTION_ID_1",
 			},
 			{
 				BlockNumber:   1,
-				ChaincodeID:   "CHAINCODE_ID",
+				ChaincodeName: "CHAINCODE",
 				EventName:     "EVENT_2",
 				Payload:       []byte("PAYLOAD_2"),
 				TransactionID: "TRANSACTION_ID_2",
 			},
 			{
 				BlockNumber:   2,
-				ChaincodeID:   "CHAINCODE_ID",
+				ChaincodeName: "CHAINCODE",
 				EventName:     "EVENT_3",
 				Payload:       []byte("PAYLOAD_3"),
 				TransactionID: "TRANSACTION_ID_3",
@@ -261,7 +261,7 @@ func TestChaincodeEvents(t *testing.T) {
 		defer cancel()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
-		receive, err := network.ChaincodeEvents(ctx, "CHAINCODE_ID")
+		receive, err := network.ChaincodeEvents(ctx, "CHAINCODE")
 		require.NoError(t, err)
 
 		for _, event := range expected {

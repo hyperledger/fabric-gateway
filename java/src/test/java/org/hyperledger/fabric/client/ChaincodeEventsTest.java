@@ -53,10 +53,10 @@ public final class ChaincodeEventsTest {
     }
 
     @Test
-    void throws_NullPointerException_on_null_chaincode_ID() {
+    void throws_NullPointerException_on_null_CHAINCODE_NAME() {
         assertThatThrownBy(() -> network.getChaincodeEvents(null))
                 .isInstanceOf(NullPointerException.class)
-                .hasMessageContaining("chaincode ID");
+                .hasMessageContaining("chaincode name");
     }
 
     @Test
@@ -64,7 +64,7 @@ public final class ChaincodeEventsTest {
         doThrow(new StatusRuntimeException(Status.UNAVAILABLE)).when(stub).chaincodeEvents(any());
 
         assertThatThrownBy(() -> {
-            try (CloseableIterator<ChaincodeEvent> events = network.getChaincodeEvents("CHAINCODE_ID")) {
+            try (CloseableIterator<ChaincodeEvent> events = network.getChaincodeEvents("CHAINCODE_NAME")) {
                 events.forEachRemaining(event -> {});
             }
         }).isInstanceOf(StatusRuntimeException.class);
@@ -72,7 +72,7 @@ public final class ChaincodeEventsTest {
 
     @Test
     void sends_valid_request_with_default_start_position() throws Exception {
-        try (CloseableIterator<ChaincodeEvent> iter = network.getChaincodeEvents("CHAINCODE_ID")) {
+        try (CloseableIterator<ChaincodeEvent> iter = network.getChaincodeEvents("CHAINCODE_NAME")) {
             // Need to interact with iterator before asserting to ensure async request has been made
             iter.forEachRemaining(event -> {});
         }
@@ -81,7 +81,7 @@ public final class ChaincodeEventsTest {
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
         assertThat(request.getChannelId()).isEqualTo("NETWORK");
-        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_ID");
+        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_NAME");
 
         assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.NEXT_COMMIT);
     }
@@ -89,7 +89,7 @@ public final class ChaincodeEventsTest {
     @Test
     void sends_valid_request_with_specified_start_block_number() throws Exception {
         long startBlock = 101;
-        org.hyperledger.fabric.client.ChaincodeEventsRequest eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_ID")
+        org.hyperledger.fabric.client.ChaincodeEventsRequest eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
                 .startBlock(startBlock)
                 .build();
 
@@ -102,7 +102,7 @@ public final class ChaincodeEventsTest {
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
         assertThat(request.getChannelId()).isEqualTo("NETWORK");
-        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_ID");
+        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_NAME");
 
         assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
         assertThat(request.getStartPosition().getSpecified().getNumber()).isEqualTo(startBlock);
@@ -111,7 +111,7 @@ public final class ChaincodeEventsTest {
     @Test
     void sends_valid_request_with_specified_start_block_number_using_sign_bit_for_unsigned_64bit_value() throws Exception {
         long startBlock = -1;
-        org.hyperledger.fabric.client.ChaincodeEventsRequest eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_ID")
+        org.hyperledger.fabric.client.ChaincodeEventsRequest eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
                 .startBlock(startBlock)
                 .build();
 
@@ -124,7 +124,7 @@ public final class ChaincodeEventsTest {
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
         assertThat(request.getChannelId()).isEqualTo("NETWORK");
-        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_ID");
+        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_NAME");
 
         assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
         assertThat(request.getStartPosition().getSpecified().getNumber()).isEqualTo(startBlock);
@@ -133,19 +133,19 @@ public final class ChaincodeEventsTest {
     @Test
     void returns_events() {
         ChaincodeEventPackage.ChaincodeEvent event1 = ChaincodeEventPackage.ChaincodeEvent.newBuilder()
-                .setChaincodeId("CHAINCODE_ID")
+                .setChaincodeId("CHAINCODE_NAME")
                 .setTxId("tx1")
                 .setEventName("event1")
                 .setPayload(ByteString.copyFromUtf8("payload1"))
                 .build();
         ChaincodeEventPackage.ChaincodeEvent event2 = ChaincodeEventPackage.ChaincodeEvent.newBuilder()
-                .setChaincodeId("CHAINCODE_ID")
+                .setChaincodeId("CHAINCODE_NAME")
                 .setTxId("tx2")
                 .setEventName("event2")
                 .setPayload(ByteString.copyFromUtf8("payload2"))
                 .build();
         ChaincodeEventPackage.ChaincodeEvent event3 = ChaincodeEventPackage.ChaincodeEvent.newBuilder()
-                .setChaincodeId("CHAINCODE_ID")
+                .setChaincodeId("CHAINCODE_NAME")
                 .setTxId("tx3")
                 .setEventName("event3")
                 .setPayload(ByteString.copyFromUtf8("payload3"))
@@ -164,7 +164,7 @@ public final class ChaincodeEventsTest {
         );
         doReturn(responses).when(stub).chaincodeEvents(any());
 
-        try (CloseableIterator<ChaincodeEvent> actual = network.getChaincodeEvents("CHAINCODE_ID")) {
+        try (CloseableIterator<ChaincodeEvent> actual = network.getChaincodeEvents("CHAINCODE_NAME")) {
             List<ChaincodeEvent> expected = Arrays.asList(
                     new ChaincodeEventImpl(1, event1),
                     new ChaincodeEventImpl(1, event2),
@@ -177,13 +177,13 @@ public final class ChaincodeEventsTest {
     @Test
     void close_stops_receiving_events() {
         ChaincodeEventPackage.ChaincodeEvent event1 = ChaincodeEventPackage.ChaincodeEvent.newBuilder()
-                .setChaincodeId("CHAINCODE_ID")
+                .setChaincodeId("CHAINCODE_NAME")
                 .setTxId("tx1")
                 .setEventName("event1")
                 .setPayload(ByteString.copyFromUtf8("payload1"))
                 .build();
         ChaincodeEventPackage.ChaincodeEvent event2 = ChaincodeEventPackage.ChaincodeEvent.newBuilder()
-                .setChaincodeId("CHAINCODE_ID")
+                .setChaincodeId("CHAINCODE_NAME")
                 .setTxId("tx2")
                 .setEventName("event2")
                 .setPayload(ByteString.copyFromUtf8("payload2"))
@@ -201,7 +201,7 @@ public final class ChaincodeEventsTest {
         );
         doReturn(responses).when(stub).chaincodeEvents(any());
 
-        CloseableIterator<ChaincodeEvent> eventIter = network.getChaincodeEvents("CHAINCODE_ID");
+        CloseableIterator<ChaincodeEvent> eventIter = network.getChaincodeEvents("CHAINCODE_NAME");
         ChaincodeEvent event = eventIter.next();
         assertThat(event).isEqualTo(new ChaincodeEventImpl(1, event1));
 

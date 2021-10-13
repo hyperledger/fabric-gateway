@@ -88,9 +88,10 @@ import { Transaction, TransactionImpl } from './transaction';
  */
 export interface Contract {
     /**
-     * Get the ID of the chaincode that contains this smart contract.
+     * Get the name of the chaincode that contains this smart contract.
+     * @returns The chaincode name.
      */
-    getChaincodeId(): string;
+    getChaincodeName(): string;
     
     /**
      * Get the name of the smart contract within the chaincode.
@@ -201,7 +202,7 @@ export interface ContractOptions {
     readonly client: GatewayClient;
     readonly signingIdentity: SigningIdentity;
     readonly channelName: string;
-    readonly chaincodeId: string;
+    readonly chaincodeName: string;
     readonly contractName?: string;
 }
 
@@ -209,19 +210,19 @@ export class ContractImpl implements Contract {
     readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
     readonly #channelName: string;
-    readonly #chaincodeId: string;
+    readonly #chaincodeName: string;
     readonly #contractName?: string;
 
     constructor(options: ContractOptions) {
         this.#client = options.client;
         this.#signingIdentity = options.signingIdentity;
         this.#channelName = options.channelName;
-        this.#chaincodeId = options.chaincodeId;
+        this.#chaincodeName = options.chaincodeName;
         this.#contractName = options.contractName;
     }
 
-    getChaincodeId(): string {
-        return this.#chaincodeId;
+    getChaincodeName(): string {
+        return this.#chaincodeName;
     }
 
     getContractName(): string | undefined {
@@ -257,19 +258,16 @@ export class ContractImpl implements Contract {
     }
 
     newProposal(transactionName: string, options: ProposalOptions = {}): Proposal {
-        const builderOptions = Object.assign(
+        return new ProposalBuilder(Object.assign(
             {
                 client: this.#client,
                 signingIdentity: this.#signingIdentity,
                 channelName: this.#channelName,
-                chaincodeId: this.#chaincodeId,
+                chaincodeName: this.#chaincodeName,
                 transactionName: this.getQualifiedTransactionName(transactionName),
-                options,
             },
             options,
-        );
-        
-        return new ProposalBuilder(builderOptions).build();
+        )).build();
     }
 
     newSignedProposal(bytes: Uint8Array, signature: Uint8Array): Proposal {

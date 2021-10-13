@@ -17,21 +17,21 @@ final class ContractImpl implements Contract {
     private final GatewayClient client;
     private final SigningIdentity signingIdentity;
     private final String channelName;
-    private final String chaincodeId;
+    private final String chaincodeName;
     private final String contractName;
 
-    ContractImpl(final GatewayClient client, final SigningIdentity signingIdentity, final String channelName, final String chaincodeId) {
-        this(client, signingIdentity, channelName, chaincodeId, null);
+    ContractImpl(final GatewayClient client, final SigningIdentity signingIdentity, final String channelName, final String chaincodeName) {
+        this(client, signingIdentity, channelName, chaincodeName, null);
     }
 
     ContractImpl(final GatewayClient client, final SigningIdentity signingIdentity,
-                 final String channelName, final String chaincodeId, final String contractName) {
-        Objects.requireNonNull(chaincodeId, "chaincode ID");
+                 final String channelName, final String chaincodeName, final String contractName) {
+        Objects.requireNonNull(chaincodeName, "chaincode name");
 
         this.client = client;
         this.signingIdentity = signingIdentity;
         this.channelName = channelName;
-        this.chaincodeId = chaincodeId;
+        this.chaincodeName = chaincodeName;
         this.contractName = contractName;
     }
 
@@ -87,7 +87,7 @@ final class ContractImpl implements Contract {
     @Override
     public Proposal.Builder newProposal(final String transactionName) {
         String qualifiedTxName = qualifiedTransactionName(transactionName);
-        return new ProposalBuilder(client, signingIdentity, channelName, chaincodeId, qualifiedTxName);
+        return new ProposalBuilder(client, signingIdentity, channelName, chaincodeName, qualifiedTxName);
     }
 
     @Override
@@ -109,8 +109,8 @@ final class ContractImpl implements Contract {
     }
 
     @Override
-    public String getChaincodeId() {
-        return chaincodeId;
+    public String getChaincodeName() {
+        return chaincodeName;
     }
 
     @Override

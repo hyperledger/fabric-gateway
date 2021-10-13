@@ -36,7 +36,7 @@ public final class OfflineSignTest {
         mocker = new GatewayMocker(newBuilderWithoutSigner());
         gateway = mocker.getGatewayBuilder().connect();
         network = gateway.getNetwork("NETWORK");
-        contract = network.getContract("CHAINCODE_ID");
+        contract = network.getContract("CHAINCODE_NAME");
     }
 
     private Gateway.Builder newBuilderWithoutSigner() {
@@ -243,7 +243,7 @@ public final class OfflineSignTest {
     void chaincode_events_uses_offline_signature() throws Exception {
         byte[] expected = "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
 
-        ChaincodeEventsRequest unsignedRequest = network.newChaincodeEventsRequest("CHAINCODE_ID").build();
+        ChaincodeEventsRequest unsignedRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME").build();
         ChaincodeEventsRequest signedRequest = network.newSignedChaincodeEventsRequest(unsignedRequest.getBytes(), expected);
         try (CloseableIterator<ChaincodeEvent> iter = signedRequest.getEvents()) {
             // Need to interact with iterator before asserting to ensure async request has been made
@@ -258,7 +258,7 @@ public final class OfflineSignTest {
 
     @Test
     void signed_chaincode_events_keep_same_digest() throws Exception {
-        ChaincodeEventsRequest unsignedRequest = network.newChaincodeEventsRequest("CHAINCODE_ID").build();
+        ChaincodeEventsRequest unsignedRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME").build();
         byte[] expected = unsignedRequest.getDigest();
 
         ChaincodeEventsRequest signedRequest = network.newSignedChaincodeEventsRequest(unsignedRequest.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));

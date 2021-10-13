@@ -40,7 +40,7 @@ export interface ProposalBuilderOptions extends Readonly<ProposalOptions> {
     readonly client: GatewayClient;
     readonly signingIdentity: SigningIdentity;
     readonly channelName: string;
-    readonly chaincodeId: string;
+    readonly chaincodeName: string;
     readonly transactionName: string;
 }
 
@@ -111,7 +111,7 @@ export class ProposalBuilder {
 
     private newChaincodeID(): ChaincodeID {
         const result = new ChaincodeID();
-        result.setName(this.#options.chaincodeId);
+        result.setName(this.#options.chaincodeName);
         return result;
     }
 
