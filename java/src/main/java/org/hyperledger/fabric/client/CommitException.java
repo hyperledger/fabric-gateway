@@ -14,34 +14,30 @@ import org.hyperledger.fabric.protos.peer.TransactionPackage;
 public final class CommitException extends Exception {
     private static final long serialVersionUID = 1L;
 
-    private final String transactionId;
-    private final TransactionPackage.TxValidationCode status;
+    private final Status status;
 
-    private static String message(final String transactionId, final TransactionPackage.TxValidationCode status) {
-        return "Commit of transaction " + transactionId + " failed with status code " + status.getNumber()
-                + " (" + status.name() + ")";
+    private static String message(final Status status) {
+        TransactionPackage.TxValidationCode code = status.getCode();
+        return "Commit of transaction " + status.getTransactionId() + " failed with status code " + code.getNumber()
+                + " (" + code.name() + ")";
     }
 
     /**
      * Constructs a new commit exception for the specified transaction.
-     * @param transactionId The ID of the transaction.
-     * @param status Transaction validation code.
+     * @param status Transaction commit status.
      */
-    public CommitException(final String transactionId, final TransactionPackage.TxValidationCode status) {
-        super(message(transactionId, status));
-        this.transactionId = transactionId;
+    CommitException(final Status status) {
+        super(message(status));
         this.status = status;
     }
 
     /**
      * Constructs a new commit exception for the specified transaction.
-     * @param transactionId The ID of the transaction.
-     * @param status Transaction validation code.
+     * @param status Transaction commit status.
      * @param cause the cause.
      */
-    public CommitException(final String transactionId, final TransactionPackage.TxValidationCode status, final Throwable cause) {
-        super(message(transactionId, status), cause);
-        this.transactionId = transactionId;
+    CommitException(final Status status, final Throwable cause) {
+        super(message(status), cause);
         this.status = status;
     }
 
@@ -50,14 +46,14 @@ public final class CommitException extends Exception {
      * @return transaction ID.
      */
     public String getTransactionId() {
-        return transactionId;
+        return status.getTransactionId();
     }
 
     /**
-     * Get the commit status code for the transaction.
-     * @return validation code.
+     * Get the transaction status code.
+     * @return transaction status code.
      */
-    public TransactionPackage.TxValidationCode getStatus() {
-        return status;
+    public TransactionPackage.TxValidationCode getCode() {
+        return status.getCode();
     }
 }

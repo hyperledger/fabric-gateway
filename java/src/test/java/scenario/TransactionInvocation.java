@@ -39,7 +39,7 @@ public final class TransactionInvocation {
     }
 
     public void setTransient(final Map<String, String> transientData) {
-        transientData.entrySet().forEach(entry -> proposalBuilder.putTransient(entry.getKey(), entry.getValue()));
+        transientData.forEach((key, value) -> proposalBuilder.putTransient(key, value));
     }
 
     public void setEndorsingOrgs(final String[] orgs) {
