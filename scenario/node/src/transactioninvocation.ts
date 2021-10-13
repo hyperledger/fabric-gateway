@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Contract, Network, ProposalOptions, Signable, Signer, StatusCode, GatewayError } from 'fabric-gateway';
+import { Contract, Network, ProposalOptions, Signable, Signer, StatusCode } from 'fabric-gateway';
 import { bytesAsString, toError, toString } from './utils';
 
 export class TransactionInvocation {
@@ -46,7 +46,7 @@ export class TransactionInvocation {
         return bytesAsString(this.result);
     }
 
-    getError(): GatewayError {
+    getError(): Error {
         if (!this.error) {
             throw new Error(`No transaction error. Result is: ${bytesAsString(this.result)}`)
         }

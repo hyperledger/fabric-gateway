@@ -28,12 +28,16 @@ export interface Proposal extends Signable {
      * on a peer to obtain a transaction result, but does not submit the endorsed transaction to the orderer to be
      * committed to the ledger.
      * @returns The result returned by the transaction function.
+     * @throws {@link GatewayError}
+     * Thrown if the gRPC service invocation fails.
      */
     evaluate(): Promise<Uint8Array>;
 
     /**
      * Obtain endorsement for the transaction proposal from sufficient peers to allow it to be committed to the ledger.
      * @returns An endorsed transaction that can be submitted to the ledger.
+     * @throws {@link GatewayError}
+     * Thrown if the gRPC service invocation fails.
      */
     endorse(): Promise<Transaction>;
 }

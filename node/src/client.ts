@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Client, requestCallback, ServiceError } from '@grpc/grpc-js';
+import { Client, requestCallback } from '@grpc/grpc-js';
 import { Message } from 'google-protobuf';
-import { ErrorDetail, GatewayError } from './gateway';
-import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, ErrorDetail as ErrorDetailProto, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
-import { Status } from './protos/google/rpc/status_pb';
+import { newGatewayError } from './gatewayerror';
+import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
 
 const servicePath = '/gateway.Gateway/';
 const evaluateMethod = servicePath + 'Evaluate';
@@ -88,23 +87,6 @@ function newUnaryCallback<T>(resolve: (value: T) => void, reject: (reason: Error
     }
 }
 
-function newGatewayError(err: ServiceError): GatewayError {
-    const result: GatewayError = new Error(err.message);
-    result.code = err.code;
-    result.details = err.metadata?.get('grpc-status-details-bin')
-        .flatMap(metadataValue => deserializeStatus(Buffer.from(metadataValue)).getDetailsList())
-        .map(statusDetail => {
-            const endpointError = deserializeErrorDetail(statusDetail.getValue_asU8());
-            const detail: ErrorDetail = {
-                address: endpointError.getAddress(),
-                message: endpointError.getMessage(),
-                mspId: endpointError.getMspId(),
-            };
-            return detail;
-        });
-    return result;
-}
-
 function serialize(message: Message): Buffer {
     const bytes = message.serializeBinary();
     return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength); // Create a Buffer view to avoid copying
@@ -128,14 +110,6 @@ function deserializeCommitStatusResponse(bytes: Uint8Array): CommitStatusRespons
 
 function deserializeChaincodeEventsResponse(bytes: Uint8Array): ChaincodeEventsResponse {
     return ChaincodeEventsResponse.deserializeBinary(bytes);
-}
-
-function deserializeStatus(bytes: Uint8Array): Status {
-    return Status.deserializeBinary(bytes);
-}
-
-function deserializeErrorDetail(bytes: Uint8Array): ErrorDetailProto {
-    return ErrorDetailProto.deserializeBinary(bytes);
 }
 
 export function newGatewayClient(client: Client): GatewayClient {

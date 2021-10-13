@@ -28,8 +28,8 @@ export interface Status {
      */
      blockNumber: bigint;
 
-     /**
-     * Validation status code. The value corresponds to one of the values enumerated by {@link StatusCode}.
+    /**
+     * Transaction validation status code. The value corresponds to one of the values enumerated by {@link StatusCode}.
      */
     code: TxValidationCodeMap[keyof TxValidationCodeMap];
 

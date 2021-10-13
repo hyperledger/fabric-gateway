@@ -7,14 +7,14 @@
 import { DataTable, setWorldConstructor } from '@cucumber/cucumber';
 import * as grpc from '@grpc/grpc-js';
 import * as crypto from 'crypto';
-import { ChaincodeEvent, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers, GatewayError } from 'fabric-gateway';
+import { ChaincodeEvent, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers } from 'fabric-gateway';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { findSoftHSMPKCS11Lib, fixturesDir, getOrgForMsp } from './fabric';
 import { getSKIFromCertificate } from './fabricski';
 import { GatewayContext } from './gatewaycontext';
 import { TransactionInvocation } from './transactioninvocation';
-import { assertDefined } from './utils';
+import { assertDefined, Constructor, isInstanceOf } from './utils';
 
 let hsmSignerFactory: HSMSignerFactory;
 
@@ -231,8 +231,18 @@ export class CustomWorld {
         return this.getTransaction().getResult();
     }
 
-    getError(): GatewayError {
+    getError(): Error {
         return this.getTransaction().getError();
+    }
+
+    getErrorOfType<T extends Error>(type: Constructor<T>): T {
+        const err = this.getTransaction().getError();
+
+        if (!isInstanceOf(err, type)) {
+            throw new TypeError(`Error is not a ${type}: ${err}`);
+        }
+
+        return err;
     }
 
     getLastCommittedBlockNumber(): bigint {
