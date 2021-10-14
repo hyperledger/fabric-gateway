@@ -192,7 +192,7 @@ type GatewayConnection struct {
 	contract   *client.Contract
 	ctx        context.Context
 	cancel     context.CancelFunc
-	events     <-chan *client.ChaincodeEvent
+	listener   *ChaincodeEventListener
 }
 
 func (connection *GatewayConnection) AddOptions(options ...client.ConnectOption) {
@@ -258,25 +258,21 @@ func (connection *GatewayConnection) receiveChaincodeEvents(chaincodeID string, 
 		return fmt.Errorf("no network selected")
 	}
 
-	events, err := connection.network.ChaincodeEvents(connection.ctx, chaincodeID, options...)
+	listener, err := NewChaincodeEventListener(connection.ctx, connection.network, chaincodeID, options...)
 	if err != nil {
 		return err
 	}
 
-	connection.events = events
+	connection.listener = listener
 	return nil
 }
 
 func (connection *GatewayConnection) ChaincodeEvent() (*client.ChaincodeEvent, error) {
-	if connection.events == nil {
+	if connection.listener == nil {
 		return nil, fmt.Errorf("no chaincode event listener attached")
 	}
 
-	event, ok := <-connection.events
-	if !ok {
-		return nil, fmt.Errorf("Event channel closed")
-	}
-	return event, nil
+	return connection.listener.ChaincodeEvent()
 }
 
 func (connection *GatewayConnection) Close() {
@@ -288,4 +284,8 @@ func (connection *GatewayConnection) Close() {
 	if connection.grpcClient != nil {
 		connection.grpcClient.Close()
 	}
+}
+
+func (connection *GatewayConnection) CloseChaincodeEvents() {
+	connection.listener.Close()
 }

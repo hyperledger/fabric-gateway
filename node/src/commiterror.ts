@@ -21,10 +21,10 @@ export class CommitError extends Error {
      */
     transactionId: string;
 
-    constructor(properties: Omit<CommitError, keyof Error> & Partial<Error>) {
+    constructor(properties: Omit<CommitError, keyof Error> & Partial<Pick<Error, 'message'>>) {
         super(properties.message);
 
-        this.name = 'CommitError';
+        this.name = CommitError.name;
         this.code = properties.code;
         this.transactionId = properties.transactionId;
     }

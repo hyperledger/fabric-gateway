@@ -103,7 +103,7 @@ public class GatewayContext {
         closeChannel();
     }
 
-    private void closeChaincodeEvents() {
+    public void closeChaincodeEvents() {
         if (closeEventing != null) {
             closeEventing.run();
             closeEventing = null;

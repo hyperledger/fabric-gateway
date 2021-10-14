@@ -16,13 +16,13 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "@grpc/grpc-js": "^1.3.7",
+    "@grpc/grpc-js": "^1.4.1",
     "fabric-gateway": "../../node/fabric-gateway-dev.tgz"
   },
   "devDependencies": {
     "@tsconfig/node12": "^1.0.9",
     "npm-run-all": "^4.1.5",
     "rimraf": "^3.0.2",
-    "typescript": "^4.3.5"
+    "typescript": "^4.4.4"
   }
 }

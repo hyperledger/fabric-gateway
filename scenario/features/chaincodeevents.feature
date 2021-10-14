@@ -26,3 +26,16 @@ Feature: Chaincode event listening
         And I invoke the transaction
         And I replay chaincode events from basic starting at last committed block
         Then I should receive a chaincode event named "event" with payload "replay"
+
+    Scenario: Restart after closing chaincode event session
+        Given I listen for chaincode events from basic
+        And I prepare to submit an event transaction
+        And I set the transaction arguments to ["restart", "one"]
+        And I invoke the transaction
+        Then I should receive a chaincode event named "restart" with payload "one"
+        When I stop listening for chaincode events
+        And I listen for chaincode events from basic
+        And I prepare to submit an event transaction
+        And I set the transaction arguments to ["restart", "two"]
+        And I invoke the transaction
+        Then I should receive a chaincode event named "restart" with payload "two"

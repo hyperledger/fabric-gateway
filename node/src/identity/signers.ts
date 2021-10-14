@@ -44,7 +44,7 @@ function newECPrivateKeySigner(key: KeyObject): Signer {
 
     return async (digest) => {
         const signature = curve.sign(digest, keyPair, { canonical: true });
-        const signatureBytes = new Uint8Array(signature.toDER());
+        const signatureBytes = new Uint8Array(signature.toDER() as number[]);
         return Promise.resolve(signatureBytes);
     }
 }

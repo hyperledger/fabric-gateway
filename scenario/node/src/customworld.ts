@@ -258,6 +258,10 @@ export class CustomWorld {
         this.#currentGateway = undefined;
     }
 
+    closeChaincodeEvents(): void {
+        this.getCurrentGateway().closeChaincodeEvents();
+    }
+
     private getCurrentGateway(): GatewayContext {
         return assertDefined(this.#currentGateway, 'currentGateway');
     }
