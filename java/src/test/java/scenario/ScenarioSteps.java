@@ -397,6 +397,11 @@ public class ScenarioSteps {
         currentGateway.replayChaincodeEvents(chaincodeId, lastCommittedBlockNumber);
     }
 
+    @When("I stop listening for chaincode events")
+    public void stopChaincodeEventListening() {
+        currentGateway.closeChaincodeEvents();
+    }
+
     @Then("the transaction invocation should fail")
     public void assertTransactionFails() {
         invokeTransaction();

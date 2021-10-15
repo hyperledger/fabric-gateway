@@ -133,6 +133,10 @@ When('I replay chaincode events from {word} starting at last committed block', a
     await this.replayChaincodeEvents(chaincodeId, this.getLastCommittedBlockNumber())
 });
 
+When('I stop listening for chaincode events', function(this: CustomWorld): void {
+    this.closeChaincodeEvents();
+});
+
 Then('the transaction invocation should fail', async function(this: CustomWorld): Promise<void> {
     await this.assertTransactionFails();
 });

@@ -65,12 +65,16 @@ export class GatewayContext {
     }
 
     close(): void {
-        this.#chaincodeEvents?.close();
+        this.closeChaincodeEvents();
         this.#gateway?.close();
         this.#client?.close();
         if (this.#signerClose) {
             this.#signerClose();
         }
+    }
+
+    closeChaincodeEvents(): void {
+        this.#chaincodeEvents?.close();
     }
 
     private getGateway(): Gateway {
