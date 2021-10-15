@@ -9,6 +9,7 @@ package scenario
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 )
@@ -24,6 +25,7 @@ func NewChaincodeEventListener(parentCtx context.Context, network *client.Networ
 
 	events, err := network.ChaincodeEvents(ctx, chaincodeName, options...)
 	if err != nil {
+		cancel()
 		return nil, err
 	}
 
@@ -36,11 +38,15 @@ func NewChaincodeEventListener(parentCtx context.Context, network *client.Networ
 }
 
 func (listener *ChaincodeEventListener) ChaincodeEvent() (*client.ChaincodeEvent, error) {
-	event, ok := <-listener.events
-	if !ok {
-		return nil, fmt.Errorf("Event channel closed")
+	select {
+	case event, ok := <-listener.events:
+		if !ok {
+			return nil, fmt.Errorf("event channel closed")
+		}
+		return event, nil
+	case <-time.After(30 * time.Second):
+		return nil, fmt.Errorf("timeout waiting for event")
 	}
-	return event, nil
 }
 
 func (listener *ChaincodeEventListener) Close() {
