@@ -34,6 +34,8 @@ const (
 	Submit
 )
 
+const defaultListenerName = ""
+
 var (
 	gateways                 map[string]*GatewayConnection
 	currentGateway           *GatewayConnection
@@ -78,9 +80,12 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^the error message should contain "([^"]*)"$`, theErrorMessageShouldContain)
 	s.Step(`^the error details should be$`, theErrorDetailsShouldBe)
 	s.Step(`^I listen for chaincode events from (\S+)$`, listenForChaincodeEvents)
+	s.Step(`^I listen for chaincode events from (\S+) on a listener named "([^"]*)"$`, listenForChaincodeEventsOnListener)
 	s.Step(`^I replay chaincode events from (\S+) starting at last committed block$`, replayChaincodeEventsFromLastBlock)
 	s.Step(`^I stop listening for chaincode events$`, stopChaincodeEventListening)
+	s.Step(`^I stop listening for chaincode events on "([^"]*)"$`, stopChaincodeEventListeningOnListener)
 	s.Step(`^I should receive a chaincode event named "([^"]*)" with payload "([^"]*)"$`, receiveChaincodeEvent)
+	s.Step(`^I should receive a chaincode event named "([^"]*)" with payload "([^"]*)" on "([^"]*)"$`, receiveChaincodeEventOnListener)
 }
 
 func beforeScenario(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
@@ -353,20 +358,32 @@ func theErrorDetailsShouldBe(table *messages.PickleTable) error {
 	return nil
 }
 
-func listenForChaincodeEvents(chaincodeID string) error {
-	return currentGateway.ListenForChaincodeEvents(chaincodeID)
+func listenForChaincodeEvents(chaincodeName string) error {
+	return listenForChaincodeEventsOnListener(chaincodeName, defaultListenerName)
 }
 
-func replayChaincodeEventsFromLastBlock(chaincodeID string) error {
-	return currentGateway.ReplayChaincodeEvents(chaincodeID, lastCommittedBlockNumber)
+func listenForChaincodeEventsOnListener(chaincodeName string, listenerName string) error {
+	return currentGateway.ListenForChaincodeEvents(listenerName, chaincodeName)
+}
+
+func replayChaincodeEventsFromLastBlock(chaincodeName string) error {
+	return currentGateway.ReplayChaincodeEvents(defaultListenerName, chaincodeName, lastCommittedBlockNumber)
 }
 
 func stopChaincodeEventListening() {
-	currentGateway.CloseChaincodeEvents()
+	stopChaincodeEventListeningOnListener(defaultListenerName)
+}
+
+func stopChaincodeEventListeningOnListener(listenerName string) {
+	currentGateway.CloseChaincodeEvents(listenerName)
 }
 
 func receiveChaincodeEvent(name string, payload string) error {
-	event, err := currentGateway.ChaincodeEvent()
+	return receiveChaincodeEventOnListener(name, payload, defaultListenerName)
+}
+
+func receiveChaincodeEventOnListener(name string, payload string, listenerName string) error {
+	event, err := currentGateway.ChaincodeEvent(listenerName)
 	if err != nil {
 		return err
 	}

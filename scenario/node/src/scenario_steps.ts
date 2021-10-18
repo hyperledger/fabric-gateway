@@ -23,6 +23,8 @@ const TIMEOUTS = {
     SHORT_INC: 5 * 1000
 };
 
+const DEFAULT_LISTENER_NAME = '';
+
 function parseJson(json: string): unknown {
     try {
         return JSON.parse(json);
@@ -125,16 +127,24 @@ When('I invoke the transaction', async function(this: CustomWorld): Promise<void
     await this.invokeSuccessfulTransaction();
 });
 
-When('I listen for chaincode events from {word}', async function(this: CustomWorld, chaincodeId: string): Promise<void> {
-    await this.listenForChaincodeEvents(chaincodeId);
+When('I listen for chaincode events from {word}', async function(this: CustomWorld, chaincodeName: string): Promise<void> {
+    await this.listenForChaincodeEvents(DEFAULT_LISTENER_NAME, chaincodeName);
 });
 
-When('I replay chaincode events from {word} starting at last committed block', async function(this: CustomWorld, chaincodeId: string): Promise<void> {
-    await this.replayChaincodeEvents(chaincodeId, this.getLastCommittedBlockNumber())
+When('I listen for chaincode events from {word} on a listener named {string}', async function(this: CustomWorld, chaincodeName: string, listenerName: string): Promise<void> {
+    await this.listenForChaincodeEvents(listenerName, chaincodeName);
+});
+
+When('I replay chaincode events from {word} starting at last committed block', async function(this: CustomWorld, chaincodeName: string): Promise<void> {
+    await this.replayChaincodeEvents(DEFAULT_LISTENER_NAME, chaincodeName, this.getLastCommittedBlockNumber())
 });
 
 When('I stop listening for chaincode events', function(this: CustomWorld): void {
-    this.closeChaincodeEvents();
+    this.closeChaincodeEvents(DEFAULT_LISTENER_NAME);
+});
+
+When('I stop listening for chaincode events on {string}', function(this: CustomWorld, listenerName: string): void {
+    this.closeChaincodeEvents(listenerName);
 });
 
 Then('the transaction invocation should fail', async function(this: CustomWorld): Promise<void> {
@@ -178,7 +188,13 @@ Then('the error details should be', function(this: CustomWorld, dataTable: DataT
 });
 
 Then('I should receive a chaincode event named {string} with payload {string}', async function(this: CustomWorld, eventName: string, payload: string): Promise<void> {
-    const event = await this.nextChaincodeEvent();
+    const event = await this.nextChaincodeEvent(DEFAULT_LISTENER_NAME);
+    const actual = Object.assign({}, event, { payload: bytesAsString(event.payload)})
+    expect(actual).toMatchObject({ eventName, payload });
+});
+
+Then('I should receive a chaincode event named {string} with payload {string} on {string}', async function(this: CustomWorld, eventName: string, payload: string, listenerName: string): Promise<void> {
+    const event = await this.nextChaincodeEvent(listenerName);
     const actual = Object.assign({}, event, { payload: bytesAsString(event.payload)})
     expect(actual).toMatchObject({ eventName, payload });
 });

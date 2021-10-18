@@ -55,12 +55,13 @@ func NewGatewayConnection(user string, mspID string, isHSMUser bool) (*GatewayCo
 		return nil, err
 	}
 
-	connection := GatewayConnection{
-		id: id,
+	connection := &GatewayConnection{
+		id:        id,
+		listeners: make(map[string]*ChaincodeEventListener),
 	}
 	connection.ctx, connection.cancel = context.WithCancel(context.Background())
 
-	return &connection, nil
+	return connection, nil
 }
 
 func NewGatewayConnectionWithSigner(user string, mspID string) (*GatewayConnection, error) {
@@ -192,7 +193,7 @@ type GatewayConnection struct {
 	contract   *client.Contract
 	ctx        context.Context
 	cancel     context.CancelFunc
-	listener   *ChaincodeEventListener
+	listeners  map[string]*ChaincodeEventListener
 }
 
 func (connection *GatewayConnection) AddOptions(options ...client.ConnectOption) {
@@ -245,38 +246,40 @@ func (connection *GatewayConnection) PrepareTransaction(txnType TransactionType,
 	return NewTransaction(connection.network, connection.contract, txnType, name), nil
 }
 
-func (connection *GatewayConnection) ListenForChaincodeEvents(chaincodeID string) error {
-	return connection.receiveChaincodeEvents(chaincodeID)
+func (connection *GatewayConnection) ListenForChaincodeEvents(listenerName string, chaincodeName string) error {
+	return connection.receiveChaincodeEvents(listenerName, chaincodeName)
 }
 
-func (connection *GatewayConnection) ReplayChaincodeEvents(chaincodeID string, startBlock uint64) error {
-	return connection.receiveChaincodeEvents(chaincodeID, client.WithStartBlock(startBlock))
+func (connection *GatewayConnection) ReplayChaincodeEvents(listenerName string, chaincodeName string, startBlock uint64) error {
+	return connection.receiveChaincodeEvents(listenerName, chaincodeName, client.WithStartBlock(startBlock))
 }
 
-func (connection *GatewayConnection) receiveChaincodeEvents(chaincodeID string, options ...client.ChaincodeEventsOption) error {
+func (connection *GatewayConnection) receiveChaincodeEvents(listenerName string, chaincodeName string, options ...client.ChaincodeEventsOption) error {
 	if connection.network == nil {
 		return fmt.Errorf("no network selected")
 	}
 
-	listener, err := NewChaincodeEventListener(connection.ctx, connection.network, chaincodeID, options...)
+	listener, err := NewChaincodeEventListener(connection.ctx, connection.network, chaincodeName, options...)
 	if err != nil {
 		return err
 	}
 
-	connection.listener = listener
+	connection.CloseChaincodeEvents(listenerName)
+	connection.listeners[listenerName] = listener
 	return nil
 }
 
-func (connection *GatewayConnection) ChaincodeEvent() (*client.ChaincodeEvent, error) {
-	if connection.listener == nil {
+func (connection *GatewayConnection) ChaincodeEvent(listenerName string) (*client.ChaincodeEvent, error) {
+	listener := connection.listeners[listenerName]
+	if listener == nil {
 		return nil, fmt.Errorf("no chaincode event listener attached")
 	}
 
-	return connection.listener.ChaincodeEvent()
+	return listener.ChaincodeEvent()
 }
 
 func (connection *GatewayConnection) Close() {
-	connection.cancel()
+	connection.cancel() // Closes all listener contexts
 
 	if connection.gateway != nil {
 		connection.gateway.Close()
@@ -286,6 +289,8 @@ func (connection *GatewayConnection) Close() {
 	}
 }
 
-func (connection *GatewayConnection) CloseChaincodeEvents() {
-	connection.listener.Close()
+func (connection *GatewayConnection) CloseChaincodeEvents(listenerName string) {
+	if listener := connection.listeners[listenerName]; listener != nil {
+		connection.listeners[listenerName].Close()
+	}
 }

@@ -72,9 +72,9 @@ public class ScenarioSteps {
     private static final Path FIXTURES_DIR = Paths.get("..", "scenario", "fixtures").toAbsolutePath();
     private static final Path DOCKER_COMPOSE_DIR = Paths.get(FIXTURES_DIR.toString(), "docker-compose")
             .toAbsolutePath();
+    private static final String DEFAULT_LISTENER_NAME = "";
 
     private static final Map<String, String> MSP_ID_TO_ORG_MAP;
-
     static {
         Map<String, String> mspIdToOrgMap = new HashMap<>();
         mspIdToOrgMap.put("Org1MSP", "org1.example.com");
@@ -84,7 +84,6 @@ public class ScenarioSteps {
     }
 
     private static final Map<String, ConnectionInfo> peerConnectionInfo = new HashMap<>();
-
     static {
         String certPathTemplate = FIXTURES_DIR + "/crypto-material/crypto-config/peerOrganizations/org$O.example.com/peers/peer$P.org$O.example.com/tls/ca.crt";
         peerConnectionInfo.put("peer0.org1.example.com",
@@ -100,7 +99,6 @@ public class ScenarioSteps {
     }
 
     private static final Collection<OrgConfig> ORG_CONFIGS;
-
     static {
         List<OrgConfig> orgConfigs = Arrays.asList(
                 new OrgConfig("org1_cli", "/etc/hyperledger/configtx/Org1MSPanchors.tx", "peer0.org1.example.com:7051", "peer1.org1.example.com:9051"),
@@ -388,18 +386,28 @@ public class ScenarioSteps {
     }
 
     @When("I listen for chaincode events from {word}")
-    public void listenForChaincodeEvents(String chaincodeId) {
-        currentGateway.listenForChaincodeEvents(chaincodeId);
+    public void listenForChaincodeEvents(String chaincodeName) {
+        listenForChaincodeEventsOnListener(chaincodeName, DEFAULT_LISTENER_NAME);
+    }
+
+    @When("I listen for chaincode events from {word} on a listener named {string}")
+    public void listenForChaincodeEventsOnListener(String chaincodeName, String listenerName) {
+        currentGateway.listenForChaincodeEvents(listenerName, chaincodeName);
     }
 
     @When("I replay chaincode events from {word} starting at last committed block")
-    public void replayChaincodeEventsFromLastBlock(String chaincodeId) {
-        currentGateway.replayChaincodeEvents(chaincodeId, lastCommittedBlockNumber);
+    public void replayChaincodeEventsFromLastBlock(String chaincodeName) {
+        currentGateway.replayChaincodeEvents(DEFAULT_LISTENER_NAME, chaincodeName, lastCommittedBlockNumber);
     }
 
     @When("I stop listening for chaincode events")
     public void stopChaincodeEventListening() {
-        currentGateway.closeChaincodeEvents();
+        stopChaincodeEventListeningOnListener(DEFAULT_LISTENER_NAME);
+    }
+
+    @When("I stop listening for chaincode events on {string}")
+    public void stopChaincodeEventListeningOnListener(String listenerName) {
+        currentGateway.closeChaincodeEvents(listenerName);
     }
 
     @Then("the transaction invocation should fail")
@@ -429,9 +437,9 @@ public class ScenarioSteps {
     }
 
     @Then("the error details should be")
-    public void assertErrorDetails(DataTable table) throws InvalidProtocolBufferException {
+    public void assertErrorDetails(Map<String, List<String>> table) throws InvalidProtocolBufferException {
         com.google.rpc.Status status = StatusProto.fromThrowable(transactionInvocation.getError());
-        Map<String, List<String>> expected = new HashMap<>(table.asMap(String.class, List.class));
+        Map<String, List<String>> expected = new HashMap<>(table);
 
         for (Any detail : status.getDetailsList()) {
             ErrorDetail ee = ErrorDetail.parseFrom(detail.getValue());
@@ -445,7 +453,12 @@ public class ScenarioSteps {
 
     @Then("I should receive a chaincode event named {string} with payload {string}")
     public void assertReceiveChaincodeEvent(String eventName, String payload) throws InterruptedException {
-        ChaincodeEvent event = currentGateway.nextChaincodeEvent();
+        assertReceiveChaincodeEventOnListener(eventName, payload, DEFAULT_LISTENER_NAME);
+    }
+
+    @Then("I should receive a chaincode event named {string} with payload {string} on {string}")
+    public void assertReceiveChaincodeEventOnListener(String eventName, String payload, String listenerName) throws InterruptedException {
+        ChaincodeEvent event = currentGateway.nextChaincodeEvent(listenerName);
         assertThat(event.getEventName()).isEqualTo(eventName);
         assertThat(new String(event.getPayload(), StandardCharsets.UTF_8)).isEqualTo(payload);
     }

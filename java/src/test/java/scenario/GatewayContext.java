@@ -6,9 +6,8 @@
 
 package scenario;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.SynchronousQueue;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import io.grpc.ManagedChannel;
@@ -22,12 +21,11 @@ import org.hyperledger.fabric.client.identity.Signer;
 
 public class GatewayContext {
     private final Gateway.Builder gatewayBuilder;
-    private final BlockingQueue<ChaincodeEvent> eventQueue = new SynchronousQueue<>();
+    private final Map<String, EventListener<ChaincodeEvent>> chaincodeEventListeners = new HashMap<>();
     private ManagedChannel channel;
     private Gateway gateway;
     private Network network;
     private Contract contract;
-    private Runnable closeEventing;
 
     public GatewayContext(Identity identity) {
         gatewayBuilder = Gateway.newInstance()
@@ -61,40 +59,31 @@ public class GatewayContext {
         }
     }
 
-    public void listenForChaincodeEvents(String chaincodeId) {
-        CloseableIterator<ChaincodeEvent> iter = network.getChaincodeEvents(chaincodeId);
-        receiveChaincodeEvents(iter);
+    public void listenForChaincodeEvents(String listenerName, String chaincodeName) {
+        CloseableIterator<ChaincodeEvent> iter = network.getChaincodeEvents(chaincodeName);
+        receiveChaincodeEvents(listenerName, iter);
     }
 
-    public void replayChaincodeEvents(String chaincodeId, long startBlock) {
-        CloseableIterator<ChaincodeEvent> iter = network.newChaincodeEventsRequest(chaincodeId)
+    public void replayChaincodeEvents(String listenerName, String chaincodeName, long startBlock) {
+        CloseableIterator<ChaincodeEvent> iter = network.newChaincodeEventsRequest(chaincodeName)
                 .startBlock(startBlock)
                 .build()
                 .getEvents();
-        receiveChaincodeEvents(iter);
+        receiveChaincodeEvents(listenerName, iter);
     }
 
-    private void receiveChaincodeEvents(final CloseableIterator<ChaincodeEvent> iter) {
-        closeChaincodeEvents();
-        closeEventing = iter::close;
-
-        // Start reading events immediately as Java gRPC implementation may not invoke the gRPC service until the first
-        // read attempt occurs.
-        CompletableFuture.runAsync(() -> iter.forEachRemaining(event -> {
-            try {
-                eventQueue.put(event);
-            } catch (InterruptedException e) {
-                iter.close();
-            }
-        }));
+    private void receiveChaincodeEvents(final String listenerName, final CloseableIterator<ChaincodeEvent> iter) {
+        closeChaincodeEvents(listenerName);
+        EventListener<ChaincodeEvent> listener = new EventListener<>(iter);
+        chaincodeEventListeners.put(listenerName, listener);
     }
 
-    public ChaincodeEvent nextChaincodeEvent() throws InterruptedException {
-        return eventQueue.poll(30, TimeUnit.SECONDS);
+    public ChaincodeEvent nextChaincodeEvent(String listenerName) throws InterruptedException {
+        return chaincodeEventListeners.get(listenerName).next();
     }
 
     public void close() {
-        closeChaincodeEvents();
+        chaincodeEventListeners.values().forEach(EventListener::close);
 
         if (gateway != null) {
             gateway.close();
@@ -103,10 +92,10 @@ public class GatewayContext {
         closeChannel();
     }
 
-    public void closeChaincodeEvents() {
-        if (closeEventing != null) {
-            closeEventing.run();
-            closeEventing = null;
+    public void closeChaincodeEvents(String listenerName) {
+        EventListener<?> listener = chaincodeEventListeners.get(listenerName);
+        if (listener != null) {
+            listener.close();
         }
     }
 

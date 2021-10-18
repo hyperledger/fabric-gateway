@@ -6,12 +6,9 @@
 
 import * as grpc from '@grpc/grpc-js';
 import { ChaincodeEvent, ChaincodeEventsOptions, connect, ConnectOptions, Contract, Gateway, Identity, Network, Signer } from 'fabric-gateway';
+import { EventListener } from './eventlistener';
 import { TransactionInvocation } from './transactioninvocation';
 import { assertDefined } from './utils';
-
-interface CloseableAsyncIterator<T> extends AsyncIterator<T> {
-    close: () => void;
-}
 
 export class GatewayContext {
     readonly #identity: Identity;
@@ -21,7 +18,7 @@ export class GatewayContext {
     #gateway?: Gateway;
     #network?: Network;
     #contract?: Contract;
-    #chaincodeEvents?: CloseableAsyncIterator<ChaincodeEvent>;
+    #chaincodeEventListeners: Map<string, EventListener<ChaincodeEvent>> = new Map();
 
     constructor(identity: Identity, signer?: Signer, signerClose?: () => void) {
         this.#identity = identity;
@@ -52,20 +49,19 @@ export class GatewayContext {
         return new TransactionInvocation(action, this.getNetwork(), this.getContract(), transactionName);
     }
 
-    async listenForChaincodeEvents(chaincodeId: string, options?: ChaincodeEventsOptions): Promise<void> {
-        const events = await this.getNetwork().getChaincodeEvents(chaincodeId, options);
-        this.#chaincodeEvents = Object.assign(events[Symbol.asyncIterator](), {
-            close: events.close,
-        });
+    async listenForChaincodeEvents(listenerName: string, chaincodeName: string, options?: ChaincodeEventsOptions): Promise<void> {
+        this.closeChaincodeEvents(listenerName);
+        const events = await this.getNetwork().getChaincodeEvents(chaincodeName, options);
+        const listener = new EventListener(events);
+        this.#chaincodeEventListeners.set(listenerName, listener);
     }
 
-    async nextChaincodeEvent(): Promise<ChaincodeEvent> {
-        const result = await this.getChaincodeEvents().next();
-        return result.value;
+    async nextChaincodeEvent(listenerName: string): Promise<ChaincodeEvent> {
+        return await this.getChaincodeEventListener(listenerName).next();
     }
 
     close(): void {
-        this.closeChaincodeEvents();
+        this.#chaincodeEventListeners.forEach(listener => listener.close());
         this.#gateway?.close();
         this.#client?.close();
         if (this.#signerClose) {
@@ -73,8 +69,8 @@ export class GatewayContext {
         }
     }
 
-    closeChaincodeEvents(): void {
-        this.#chaincodeEvents?.close();
+    closeChaincodeEvents(listenerName: string): void {
+        this.#chaincodeEventListeners.get(listenerName)?.close();
     }
 
     private getGateway(): Gateway {
@@ -89,7 +85,7 @@ export class GatewayContext {
         return assertDefined(this.#contract, 'contract');
     }
 
-    private getChaincodeEvents(): AsyncIterator<ChaincodeEvent> {
-        return assertDefined(this.#chaincodeEvents, 'chaincodeEvents');
+    private getChaincodeEventListener(listenerName: string): EventListener<ChaincodeEvent> {
+        return assertDefined(this.#chaincodeEventListeners.get(listenerName), `chaincodeEventListener: ${listenerName}`);
     }
 }

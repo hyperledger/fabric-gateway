@@ -39,3 +39,17 @@ Feature: Chaincode event listening
         And I set the transaction arguments to ["restart", "two"]
         And I invoke the transaction
         Then I should receive a chaincode event named "restart" with payload "two"
+
+    Scenario: Close does not interrupt other chaincode event listeners
+        Given I listen for chaincode events from basic on a listener named "listener1"
+        And I listen for chaincode events from basic on a listener named "listener2"
+        And I prepare to submit an event transaction
+        And I set the transaction arguments to ["close", "before"]
+        And I invoke the transaction
+        Then I should receive a chaincode event named "close" with payload "before" on "listener1"
+        And I should receive a chaincode event named "close" with payload "before" on "listener2"
+        When I stop listening for chaincode events on "listener1"
+        And I prepare to submit an event transaction
+        And I set the transaction arguments to ["close", "after"]
+        And I invoke the transaction
+        Then I should receive a chaincode event named "close" with payload "after" on "listener2"

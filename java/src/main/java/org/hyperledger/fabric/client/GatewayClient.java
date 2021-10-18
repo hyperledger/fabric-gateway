@@ -20,6 +20,9 @@ import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitResponse;
 
+import java.util.Iterator;
+import java.util.function.Function;
+
 final class GatewayClient {
     private final GatewayGrpc.GatewayBlockingStub blockingStub;
 
@@ -44,6 +47,49 @@ final class GatewayClient {
     }
 
     public CloseableIterator<ChaincodeEventsResponse> chaincodeEvents(final SignedChaincodeEventsRequest request) {
-        return new ServerStreamIterator<>(Context.current().withCancellation(), () -> blockingStub.chaincodeEvents(request));
+        return invokeServerStreamingCall(blockingStub::chaincodeEvents, request);
+    }
+
+    private static <Request, Response> ResponseIterator<Response> invokeServerStreamingCall(
+            final Function<Request, Iterator<Response>> call,
+            final Request request
+    ) {
+        Context.CancellableContext context = Context.current().withCancellation();
+        try {
+            Iterator<Response> iterator = context.wrap(() -> call.apply(request)).call();
+            return new ResponseIterator<>(context, iterator);
+        } catch (RuntimeException e) {
+            context.cancel(e);
+            throw e;
+        } catch (Exception e) {
+            // Should never happen calling a Function
+            context.cancel(e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static final class ResponseIterator<T> implements CloseableIterator<T> {
+        private final Context.CancellableContext context;
+        private final Iterator<T> iterator;
+
+        ResponseIterator(final Context.CancellableContext context, final Iterator<T> iterator) {
+            this.context = context;
+            this.iterator = iterator;
+        }
+
+        @Override
+        public void close() {
+            context.close();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return iterator.hasNext();
+        }
+
+        @Override
+        public T next() {
+            return iterator.next();
+        }
     }
 }

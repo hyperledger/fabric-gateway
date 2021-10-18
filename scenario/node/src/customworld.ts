@@ -194,16 +194,16 @@ export class CustomWorld {
         this.getTransaction().options.endorsingOrganizations = orgs;
     }
 
-    async listenForChaincodeEvents(chaincodeId: string): Promise<void> {
-        await this.getCurrentGateway().listenForChaincodeEvents(chaincodeId);
+    async listenForChaincodeEvents(listenerName: string, chaincodeName: string): Promise<void> {
+        await this.getCurrentGateway().listenForChaincodeEvents(listenerName, chaincodeName);
     }
 
-    async replayChaincodeEvents(chaincodeId: string, startBlock: bigint): Promise<void> {
-        await this.getCurrentGateway().listenForChaincodeEvents(chaincodeId, { startBlock });
+    async replayChaincodeEvents(listenerName: string, chaincodeName: string, startBlock: bigint): Promise<void> {
+        await this.getCurrentGateway().listenForChaincodeEvents(listenerName, chaincodeName, { startBlock });
     }
 
-    async nextChaincodeEvent(): Promise<ChaincodeEvent> {
-        return await this.getCurrentGateway().nextChaincodeEvent();
+    async nextChaincodeEvent(listenerName: string): Promise<ChaincodeEvent> {
+        return await this.getCurrentGateway().nextChaincodeEvent(listenerName);
     }
 
     async setOfflineSigner(user: string, mspId: string): Promise<void> {
@@ -258,8 +258,8 @@ export class CustomWorld {
         this.#currentGateway = undefined;
     }
 
-    closeChaincodeEvents(): void {
-        this.getCurrentGateway().closeChaincodeEvents();
+    closeChaincodeEvents(listenerName: string): void {
+        this.getCurrentGateway().closeChaincodeEvents(listenerName);
     }
 
     private getCurrentGateway(): GatewayContext {
