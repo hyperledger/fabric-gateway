@@ -16,9 +16,10 @@ public interface ChaincodeEventsRequest extends Signable {
      * reading events until the first use of the returned iterator.
      * <p>Note that the returned iterator may
      * throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC connection error occurs.</p>
+     * @param options Call options.
      * @return Ordered sequence of events.
      */
-    CloseableIterator<ChaincodeEvent> getEvents();
+    CloseableIterator<ChaincodeEvent> getEvents(CallOption... options);
 
     /**
      * Builder used to create a new chaincode events request. The default behavior is to read chaincode events from the

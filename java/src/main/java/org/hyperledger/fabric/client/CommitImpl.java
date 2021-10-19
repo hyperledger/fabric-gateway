@@ -41,9 +41,9 @@ class CommitImpl implements Commit {
     }
 
     @Override
-    public Status getStatus() {
+    public Status getStatus(final CallOption... options) {
         sign();
-        CommitStatusResponse response = client.commitStatus(signedRequest);
+        CommitStatusResponse response = client.commitStatus(signedRequest, options);
         return new StatusImpl(transactionId, response);
     }
 

@@ -28,18 +28,20 @@ public interface Transaction extends Signable {
     /**
      * Submit the transaction to the orderer to be committed to the ledger. This method blocks until the transaction
      * has been successfully committed to the ledger.
+     * @param options Call options.
      * @return A transaction result.
      * @throws CommitException if the transaction fails to commit successfully.
      * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
      */
-    byte[] submit() throws CommitException;
+    byte[] submit(CallOption... options) throws CommitException;
 
     /**
      * Submit the transaction to the orderer to be committed to the ledger. This method returns immediately after the
      * transaction is successfully delivered to the orderer. The returned Commit may be used to subsequently wait
      * for the transaction to be committed to the ledger.
+     * @param options Call options.
      * @return A transaction commit.
      * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
      */
-    SubmittedTransaction submitAsync();
+    SubmittedTransaction submitAsync(CallOption... options);
 }

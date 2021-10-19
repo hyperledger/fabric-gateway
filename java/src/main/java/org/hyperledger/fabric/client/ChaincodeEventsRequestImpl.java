@@ -23,9 +23,9 @@ final class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
     }
 
     @Override
-    public CloseableIterator<ChaincodeEvent> getEvents() {
+    public CloseableIterator<ChaincodeEvent> getEvents(final CallOption... options) {
         sign();
-        CloseableIterator<ChaincodeEventsResponse> responseIter = client.chaincodeEvents(signedRequest);
+        CloseableIterator<ChaincodeEventsResponse> responseIter = client.chaincodeEvents(signedRequest, options);
         return new ChaincodeEventIterator(responseIter);
     }
 

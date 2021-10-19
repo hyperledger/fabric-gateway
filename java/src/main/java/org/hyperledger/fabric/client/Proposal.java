@@ -23,18 +23,20 @@ public interface Proposal extends Signable {
     /**
      * Evaluate the proposal and return the transaction result. The transaction is not submitted to the orderer and is
      * not committed to the ledger.
+     * @param options Call options.
      * @return Transaction result.
      * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
      */
-    byte[] evaluate();
+    byte[] evaluate(CallOption... options);
 
     /**
      * Send the proposal to peers to obtain endorsements. Successful endorsement results in a transaction that can be
      * submitted to the orderer to be committer to the ledger.
+     * @param options Call options.
      * @return An endorsed transaction.
      * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
      */
-    Transaction endorse();
+    Transaction endorse(CallOption... options);
 
     /**
      * Builder used to create a new transaction proposal.

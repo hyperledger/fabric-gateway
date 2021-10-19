@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -346,7 +347,7 @@ public final class SubmitTransactionTest {
                 .build()
                 .endorse();
 
-        CommitException e = catchThrowableOfType(() -> transaction.submit(), CommitException.class);
+        CommitException e = catchThrowableOfType(transaction::submit, CommitException.class);
 
         assertThat(e).hasMessageContaining(TxValidationCode.MVCC_READ_CONFLICT.name());
         assertThat(e.getCode()).isEqualTo(TxValidationCode.MVCC_READ_CONFLICT);
@@ -440,5 +441,46 @@ public final class SubmitTransactionTest {
                 .getStatus();
 
         assertThat(status.getBlockNumber()).isEqualTo(101);
+    }
+
+    @Test
+    void endorse_passes_call_options_to_gRPC_client() {
+        CallOption expected = CallOption.deadlineAfter(5, TimeUnit.SECONDS);
+        Contract contract = network.getContract("MY_CHAINCODE");
+
+        contract.newProposal("TRANSACTION_NAME")
+                .build()
+                .endorse(expected);
+
+        List<CallOption> actual = mocker.captureEndorseOptions();
+        assertThat(actual).contains(expected);
+    }
+
+    @Test
+    void submit_passes_call_options_to_gRPC_client() throws CommitException {
+        CallOption expected = CallOption.deadlineAfter(5, TimeUnit.SECONDS);
+        Contract contract = network.getContract("MY_CHAINCODE");
+
+        contract.newProposal("TRANSACTION_NAME")
+                .build()
+                .endorse()
+                .submit(expected);
+
+        List<CallOption> actual = mocker.captureSubmitOptions();
+        assertThat(actual).contains(expected);
+    }
+
+    @Test
+    void submit_passes_call_options_to_gRPC_client_commitStatus() throws CommitException {
+        CallOption expected = CallOption.deadlineAfter(5, TimeUnit.SECONDS);
+        Contract contract = network.getContract("MY_CHAINCODE");
+
+        contract.newProposal("TRANSACTION_NAME")
+                .build()
+                .endorse()
+                .submit(expected);
+
+        List<CallOption> actual = mocker.captureCommitStatusOptions();
+        assertThat(actual).contains(expected);
     }
 }

@@ -19,8 +19,9 @@ public interface Commit extends Signable {
     /**
      * Get the status of the committed transaction. If the transaction has not yet committed, this method blocks until
      * the commit occurs.
+     * @param options Call options.
      * @return Transaction commit status.
      * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
      */
-    Status getStatus();
+    Status getStatus(CallOption... options);
 }

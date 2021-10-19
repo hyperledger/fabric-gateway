@@ -50,7 +50,7 @@ public final class GatewayTest {
                 .connection(channel);
 
         assertThatThrownBy(builder::connect)
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -60,7 +60,7 @@ public final class GatewayTest {
                 .signer(signer);
 
         assertThatThrownBy(builder::connect)
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

@@ -51,21 +51,21 @@ final class TransactionImpl implements Transaction {
     }
 
     @Override
-    public SubmittedTransaction submitAsync() {
+    public SubmittedTransaction submitAsync(final CallOption... options) {
         sign();
         SubmitRequest submitRequest = SubmitRequest.newBuilder()
                 .setTransactionId(preparedTransaction.getTransactionId())
                 .setChannelId(channelName)
                 .setPreparedTransaction(preparedTransaction.getEnvelope())
                 .build();
-        client.submit(submitRequest);
+        client.submit(submitRequest, options);
 
         return new SubmittedTransactionImpl(client, signingIdentity, getTransactionId(), newSignedCommitStatusRequest(), getResult());
     }
 
     @Override
-    public byte[] submit() throws CommitException {
-        Status status = submitAsync().getStatus();
+    public byte[] submit(final CallOption... options) throws CommitException {
+        Status status = submitAsync(options).getStatus(options);
         if (!status.isSuccessful()) {
             throw new CommitException(status);
         }
