@@ -6,15 +6,16 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.NoSuchElementException;
+import java.util.Collections;
+import java.util.Iterator;
 
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
+import org.hyperledger.fabric.protos.peer.ChaincodeEventPackage;
 
 final class ChaincodeEventIterator implements CloseableIterator<ChaincodeEvent> {
     private final CloseableIterator<ChaincodeEventsResponse> responseIter;
-    private ChaincodeEventsResponse currentResponse;
-    private int eventIndex;
-    private boolean closed = false;
+    private Iterator<ChaincodeEventPackage.ChaincodeEvent> eventIter = Collections.emptyIterator();
+    private long blockNumber;
 
     ChaincodeEventIterator(final CloseableIterator<ChaincodeEventsResponse> responseIter) {
         this.responseIter = responseIter;
@@ -22,35 +23,22 @@ final class ChaincodeEventIterator implements CloseableIterator<ChaincodeEvent> 
 
     @Override
     public boolean hasNext() {
-        return hasNextEvent() || responseIter.hasNext();
+        return eventIter.hasNext() || responseIter.hasNext();
     }
 
     @Override
     public ChaincodeEvent next() {
-        if (closed) {
-            throw new NoSuchElementException();
+        while (!eventIter.hasNext()) {
+            ChaincodeEventsResponse response = responseIter.next();
+            eventIter = response.getEventsList().iterator();
+            blockNumber = response.getBlockNumber();
         }
 
-        ChaincodeEventsResponse response = nextResponse();
-        return new ChaincodeEventImpl(response.getBlockNumber(), response.getEvents(eventIndex++));
-    }
-
-    private boolean hasNextEvent() {
-        return !closed && currentResponse != null && eventIndex < currentResponse.getEventsCount();
-    }
-
-    private ChaincodeEventsResponse nextResponse() {
-        if (!hasNextEvent()) {
-            currentResponse = responseIter.next();
-            eventIndex = 0;
-        }
-
-        return currentResponse;
+        return new ChaincodeEventImpl(blockNumber, eventIter.next());
     }
 
     @Override
     public void close() {
-        closed = true;
         responseIter.close();
     }
 }

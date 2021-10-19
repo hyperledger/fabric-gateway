@@ -39,14 +39,9 @@ export interface ChaincodeEvent {
 }
 
 export function newChaincodeEvents(responses: CloseableAsyncIterable<ChaincodeEventsResponse>): CloseableAsyncIterable<ChaincodeEvent> {
-    let closed = false;
     return {
         async* [Symbol.asyncIterator]() { // eslint-disable-line @typescript-eslint/require-await
             for await (const response of responses) {
-                if (closed) {
-                    return;
-                }
-                
                 const blockNumber = BigInt(response.getBlockNumber() ?? 0);
                 const events = response.getEventsList() || [];
                 for (const event of events) {
@@ -55,7 +50,6 @@ export function newChaincodeEvents(responses: CloseableAsyncIterable<ChaincodeEv
             }
         },
         close: () => {
-            closed = true;
             responses.close();
         },
     };

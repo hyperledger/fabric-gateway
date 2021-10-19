@@ -190,16 +190,5 @@ describe('Chaincode Events', () => {
 
             expect(iterable.close).toBeCalled();
         });
-
-        it('stops receiving events when iterator closed', async () => {
-            client.chaincodeEvents.mockReturnValue(newCloseableAsyncIterable([ response1, response2 ]));
-    
-            const events = await network.getChaincodeEvents('CHAINCODE');
-            await readElements(events, 1);
-            events.close();
-
-            const actualEvents = await readElements(events, 1);
-            expect(actualEvents).toHaveLength(0);
-        });
     })
 });
