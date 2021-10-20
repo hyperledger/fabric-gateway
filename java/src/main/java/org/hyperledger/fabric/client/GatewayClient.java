@@ -6,6 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.Iterator;
+import java.util.function.Function;
+
 import io.grpc.Channel;
 import io.grpc.Context;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
@@ -19,9 +22,6 @@ import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitResponse;
-
-import java.util.Iterator;
-import java.util.function.Function;
 
 final class GatewayClient {
     private final GatewayGrpc.GatewayBlockingStub blockingStub;

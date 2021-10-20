@@ -6,8 +6,6 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.concurrent.CompletableFuture;
-
 import io.grpc.stub.StreamObserver;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
@@ -80,13 +78,11 @@ public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
 
     @Override
     public void chaincodeEvents(final SignedChaincodeEventsRequest request, final StreamObserver<ChaincodeEventsResponse> responseObserver) {
-        CompletableFuture.runAsync(() -> {
-            try {
-                stub.chaincodeEvents(request).forEachOrdered(responseObserver::onNext);
-                responseObserver.onCompleted();
-            } catch (Throwable t) {
-                responseObserver.onError(t);
-            }
-        });
+        try {
+            stub.chaincodeEvents(request).forEachOrdered(responseObserver::onNext);
+            responseObserver.onCompleted();
+        } catch (Throwable t) {
+            responseObserver.onError(t);
+        }
     }
 }

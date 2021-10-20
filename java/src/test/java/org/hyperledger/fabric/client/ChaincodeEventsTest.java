@@ -8,7 +8,6 @@ package org.hyperledger.fabric.client;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
 import com.google.protobuf.ByteString;
@@ -53,7 +52,7 @@ public final class ChaincodeEventsTest {
     }
 
     @Test
-    void throws_NullPointerException_on_null_CHAINCODE_NAME() {
+    void throws_NullPointerException_on_null_chaincode_name() {
         assertThatThrownBy(() -> network.getChaincodeEvents(null))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessageContaining("chaincode name");
@@ -65,7 +64,7 @@ public final class ChaincodeEventsTest {
 
         assertThatThrownBy(() -> {
             try (CloseableIterator<ChaincodeEvent> events = network.getChaincodeEvents("CHAINCODE_NAME")) {
-                events.forEachRemaining(event -> {});
+                events.forEachRemaining(event -> { });
             }
         }).isInstanceOf(StatusRuntimeException.class);
     }
@@ -73,8 +72,7 @@ public final class ChaincodeEventsTest {
     @Test
     void sends_valid_request_with_default_start_position() throws Exception {
         try (CloseableIterator<ChaincodeEvent> iter = network.getChaincodeEvents("CHAINCODE_NAME")) {
-            // Need to interact with iterator before asserting to ensure async request has been made
-            iter.forEachRemaining(event -> {});
+            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
         }
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
@@ -94,8 +92,7 @@ public final class ChaincodeEventsTest {
                 .build();
 
         try (CloseableIterator<ChaincodeEvent> iter = eventsRequest.getEvents()) {
-            // Need to interact with iterator before asserting to ensure async request has been made
-            iter.forEachRemaining(event -> {});
+            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
         }
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
@@ -116,8 +113,7 @@ public final class ChaincodeEventsTest {
                 .build();
 
         try (CloseableIterator<ChaincodeEvent> iter = eventsRequest.getEvents()) {
-            // Need to interact with iterator before asserting to ensure async request has been made
-            iter.forEachRemaining(event -> {});
+            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
         }
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
@@ -182,32 +178,22 @@ public final class ChaincodeEventsTest {
                 .setEventName("event1")
                 .setPayload(ByteString.copyFromUtf8("payload1"))
                 .build();
-        ChaincodeEventPackage.ChaincodeEvent event2 = ChaincodeEventPackage.ChaincodeEvent.newBuilder()
-                .setChaincodeId("CHAINCODE_NAME")
-                .setTxId("tx2")
-                .setEventName("event2")
-                .setPayload(ByteString.copyFromUtf8("payload2"))
+        ChaincodeEventsResponse response = ChaincodeEventsResponse.newBuilder()
+                .setBlockNumber(1)
+                .addEvents(event1)
                 .build();
 
-        Stream<ChaincodeEventsResponse> responses = Stream.of(
-                ChaincodeEventsResponse.newBuilder()
-                        .setBlockNumber(1)
-                        .addEvents(event1)
-                        .build(),
-                ChaincodeEventsResponse.newBuilder()
-                        .setBlockNumber(2)
-                        .addEvents(event2)
-                        .build()
-        );
+        Stream<ChaincodeEventsResponse> responses = Stream.generate(() -> response);
         doReturn(responses).when(stub).chaincodeEvents(any());
 
         CloseableIterator<ChaincodeEvent> eventIter = network.getChaincodeEvents("CHAINCODE_NAME");
-        ChaincodeEvent event = eventIter.next();
-        assertThat(event).isEqualTo(new ChaincodeEventImpl(1, event1));
+        try {
+            eventIter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
+        } finally {
+            eventIter.close();
+        }
 
-        eventIter.close();
-
-        assertThatThrownBy(() -> eventIter.next())
-                .isInstanceOf(NoSuchElementException.class);
+        assertThatThrownBy(() -> eventIter.forEachRemaining(event -> { }))
+                .isInstanceOf(StatusRuntimeException.class);
     }
 }

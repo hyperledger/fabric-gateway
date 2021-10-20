@@ -54,7 +54,7 @@ public final class TestUtils {
 
     public ManagedChannel newChannelForService(GatewayGrpc.GatewayImplBase service) {
         String serverName = InProcessServerBuilder.generateName();
-        Server server = InProcessServerBuilder.forName(serverName).directExecutor().addService(service).build();
+        Server server = InProcessServerBuilder.forName(serverName).addService(service).build();
 
         try {
             server.start();
