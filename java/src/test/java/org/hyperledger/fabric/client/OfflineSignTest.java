@@ -247,7 +247,7 @@ public final class OfflineSignTest {
         ChaincodeEventsRequest signedRequest = network.newSignedChaincodeEventsRequest(unsignedRequest.getBytes(), expected);
         try (CloseableIterator<ChaincodeEvent> iter = signedRequest.getEvents()) {
             // Need to interact with iterator before asserting to ensure async request has been made
-            iter.forEachRemaining(event -> {});
+            iter.forEachRemaining(event -> { });
         }
 
         SignedChaincodeEventsRequest request = mocker.captureChaincodeEvents();

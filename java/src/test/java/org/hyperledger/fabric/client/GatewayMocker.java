@@ -6,6 +6,7 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -24,6 +25,7 @@ import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.mockito.MockitoSession;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
 
 public final class GatewayMocker implements AutoCloseable {
@@ -33,18 +35,15 @@ public final class GatewayMocker implements AutoCloseable {
     private final GatewayServiceStub stub;
     private final ManagedChannel channel;
     private final Gateway.Builder builder;
+    private final GatewayClient client;
 
     private final MockitoSession mockitoSession;
-    @Captor
-    private ArgumentCaptor<EndorseRequest> endorseRequestCaptor;
-    @Captor
-    private ArgumentCaptor<EvaluateRequest> evaluateRequestCaptor;
-    @Captor
-    private ArgumentCaptor<SubmitRequest> submitRequestCaptor;
-    @Captor
-    private ArgumentCaptor<SignedCommitStatusRequest> commitStatusRequestCaptor;
-    @Captor
-    private ArgumentCaptor<SignedChaincodeEventsRequest> chaincodeEventsRequestCaptor;
+    @Captor private ArgumentCaptor<EndorseRequest> endorseRequestCaptor;
+    @Captor private ArgumentCaptor<EvaluateRequest> evaluateRequestCaptor;
+    @Captor private ArgumentCaptor<SubmitRequest> submitRequestCaptor;
+    @Captor private ArgumentCaptor<SignedCommitStatusRequest> commitStatusRequestCaptor;
+    @Captor private ArgumentCaptor<SignedChaincodeEventsRequest> chaincodeEventsRequestCaptor;
+    @Captor private ArgumentCaptor<CallOption> callOptionCaptor;
 
     public GatewayMocker() {
         this(utils.newGatewayBuilder());
@@ -59,7 +58,8 @@ public final class GatewayMocker implements AutoCloseable {
         stub = spy(STUB);
         MockGatewayService service = new MockGatewayService(stub);
         channel = utils.newChannelForService(service);
-        builder.connection(channel);
+        client = spy(new GatewayClient(channel));
+        ((GatewayImpl.Builder) builder).client(client);
     }
 
     public void close() {
@@ -80,9 +80,19 @@ public final class GatewayMocker implements AutoCloseable {
         return endorseRequestCaptor.getValue();
     }
 
+    public List<CallOption> captureEndorseOptions() {
+        Mockito.verify(client).endorse(any(), callOptionCaptor.capture());
+        return callOptionCaptor.getAllValues();
+    }
+
     public EvaluateRequest captureEvaluate() {
         Mockito.verify(stub).evaluate(evaluateRequestCaptor.capture());
         return evaluateRequestCaptor.getValue();
+    }
+
+    public List<CallOption> captureEvaluateOptions() {
+        Mockito.verify(client).evaluate(any(), callOptionCaptor.capture());
+        return callOptionCaptor.getAllValues();
     }
 
     public SubmitRequest captureSubmit() {
@@ -90,14 +100,29 @@ public final class GatewayMocker implements AutoCloseable {
         return submitRequestCaptor.getValue();
     }
 
+    public List<CallOption> captureSubmitOptions() {
+        Mockito.verify(client).submit(any(), callOptionCaptor.capture());
+        return callOptionCaptor.getAllValues();
+    }
+
     public SignedCommitStatusRequest captureCommitStatus() {
         Mockito.verify(stub).commitStatus(commitStatusRequestCaptor.capture());
         return commitStatusRequestCaptor.getValue();
     }
 
+    public List<CallOption> captureCommitStatusOptions() {
+        Mockito.verify(client).commitStatus(any(), callOptionCaptor.capture());
+        return callOptionCaptor.getAllValues();
+    }
+
     public SignedChaincodeEventsRequest captureChaincodeEvents() {
         Mockito.verify(stub).chaincodeEvents(chaincodeEventsRequestCaptor.capture());
         return chaincodeEventsRequestCaptor.getValue();
+    }
+
+    public List<CallOption> captureChaincodeEventsOptions() {
+        Mockito.verify(client).chaincodeEvents(any(), callOptionCaptor.capture());
+        return callOptionCaptor.getAllValues();
     }
 
     public Chaincode.ChaincodeSpec getChaincodeSpec(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {

@@ -52,8 +52,8 @@ final class NetworkImpl implements Network {
     }
 
     @Override
-    public CloseableIterator<ChaincodeEvent> getChaincodeEvents(final String chaincodeName) {
-        return newChaincodeEventsRequest(chaincodeName).build().getEvents();
+    public CloseableIterator<ChaincodeEvent> getChaincodeEvents(final String chaincodeName, final CallOption... options) {
+        return newChaincodeEventsRequest(chaincodeName).build().getEvents(options);
     }
 
     @Override

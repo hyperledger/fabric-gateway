@@ -16,8 +16,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
  * <ul>
  *     <li>Obtain a specific smart contract deployed to the network using {@link #getContract(String)}, in order to
  *     submit and evaluate transactions for that smart contract.</li>
- *     <li>Listen for events emitted when blocks are committed to the ledger using {@link #getChaincodeEvents(String)}
- *     or {@link #newChaincodeEventsRequest(String)}.</li>
+ *     <li>Listen for events emitted when blocks are committed to the ledger using
+ *     {@link #getChaincodeEvents(String, CallOption...)} or {@link #newChaincodeEventsRequest(String)}.</li>
  * </ul>
  *
  * <h3>Chaincode events example</h3>
@@ -83,11 +83,12 @@ public interface Network {
      * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC connection error
      * occurs.</p>
      * @param chaincodeName A chaincode name.
+     * @param options Call options.
      * @return Ordered sequence of events.
      * @throws NullPointerException if the chaincode name is null.
      * @see #newChaincodeEventsRequest(String)
      */
-    CloseableIterator<ChaincodeEvent> getChaincodeEvents(String chaincodeName);
+    CloseableIterator<ChaincodeEvent> getChaincodeEvents(String chaincodeName, CallOption... options);
 
     /**
      * Build a new chaincode events request, which can be used to obtain events emitted by transaction functions of a

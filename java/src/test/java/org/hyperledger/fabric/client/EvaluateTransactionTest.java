@@ -9,6 +9,7 @@ package org.hyperledger.fabric.client;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -145,7 +146,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void uses_signer() throws Exception {
+    void uses_signer() {
         Signer signer = (digest) -> "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
         try (Gateway gateway = mocker.getGatewayBuilder().signer(signer).connect()) {
             network = gateway.getNetwork("NETWORK");
@@ -233,7 +234,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_transaction_ID_in_proposed_transaction() throws InvalidProtocolBufferException {
+    void sends_transaction_ID_in_proposed_transaction() {
         network = gateway.getNetwork("MY_NETWORK");
         Contract contract = network.getContract("CHAINCODE_NAME");
         Proposal proposal = contract.newProposal("TRANSACTION_NAME").build();
@@ -282,7 +283,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sets_endorsing_orgs() throws Exception {
+    void sets_endorsing_orgs() {
         Contract contract = network.getContract("CHAINCODE_NAME");
         contract.newProposal("TRANSACTION_NAME")
                 .setEndorsingOrganizations("Org1MSP", "Org3MSP")
@@ -306,5 +307,18 @@ public final class EvaluateTransactionTest {
         EvaluateRequest request = mocker.captureEvaluate();
         List<String> endorsingOrgs = request.getTargetOrganizationsList();
         assertThat(endorsingOrgs).containsExactlyInAnyOrder("Org1MSP", "Org3MSP");
+    }
+
+    @Test
+    void passes_call_options_to_gRPC_client() {
+        CallOption expected = CallOption.deadlineAfter(5, TimeUnit.SECONDS);
+        Contract contract = network.getContract("MY_CHAINCODE");
+
+        contract.newProposal("TRANSACTION_NAME")
+                .build()
+                .evaluate(expected);
+
+        List<CallOption> actual = mocker.captureEvaluateOptions();
+        assertThat(actual).contains(expected);
     }
 }

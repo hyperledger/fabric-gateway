@@ -8,6 +8,7 @@ package org.hyperledger.fabric.client;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import com.google.protobuf.ByteString;
@@ -195,5 +196,16 @@ public final class ChaincodeEventsTest {
 
         assertThatThrownBy(() -> eventIter.forEachRemaining(event -> { }))
                 .isInstanceOf(StatusRuntimeException.class);
+    }
+
+    @Test
+    void passes_call_options_to_gRPC_client() {
+        CallOption expected = CallOption.deadlineAfter(5, TimeUnit.SECONDS);
+        try (CloseableIterator<ChaincodeEvent> iter = network.getChaincodeEvents("CHAINCODE_NAME", expected)) {
+            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
+        }
+
+        List<CallOption> actual = mocker.captureChaincodeEventsOptions();
+        assertThat(actual).contains(expected);
     }
 }

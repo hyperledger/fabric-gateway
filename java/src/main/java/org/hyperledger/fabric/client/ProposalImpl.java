@@ -45,7 +45,7 @@ final class ProposalImpl implements Proposal {
     }
 
     @Override
-    public byte[] evaluate() {
+    public byte[] evaluate(final CallOption... options) {
         sign();
         final EvaluateRequest evaluateRequest = EvaluateRequest.newBuilder()
                 .setTransactionId(proposedTransaction.getTransactionId())
@@ -53,14 +53,14 @@ final class ProposalImpl implements Proposal {
                 .setProposedTransaction(proposedTransaction.getProposal())
                 .addAllTargetOrganizations(proposedTransaction.getEndorsingOrganizationsList())
                 .build();
-        return client.evaluate(evaluateRequest)
+        return client.evaluate(evaluateRequest, options)
                 .getResult()
                 .getPayload()
                 .toByteArray();
     }
 
     @Override
-    public Transaction endorse() {
+    public Transaction endorse(final CallOption... options) {
         sign();
         final EndorseRequest endorseRequest = EndorseRequest.newBuilder()
                 .setTransactionId(proposedTransaction.getTransactionId())
@@ -68,7 +68,7 @@ final class ProposalImpl implements Proposal {
                 .setProposedTransaction(proposedTransaction.getProposal())
                 .addAllEndorsingOrganizations(proposedTransaction.getEndorsingOrganizationsList())
                 .build();
-        EndorseResponse endorseResponse = client.endorse(endorseRequest);
+        EndorseResponse endorseResponse = client.endorse(endorseRequest, options);
 
         PreparedTransaction preparedTransaction = PreparedTransaction.newBuilder()
                 .setTransactionId(proposedTransaction.getTransactionId())

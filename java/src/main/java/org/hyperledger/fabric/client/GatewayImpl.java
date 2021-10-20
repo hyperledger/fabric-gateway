@@ -6,6 +6,7 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 import io.grpc.Channel;
@@ -24,35 +25,42 @@ final class GatewayImpl implements Gateway {
         private Function<byte[], byte[]> hash = Hash::sha256;
 
         @Override
-        public Gateway.Builder connection(final Channel grpcChannel) {
+        public Builder connection(final Channel grpcChannel) {
+            Objects.requireNonNull(grpcChannel, "connection");
             this.client = new GatewayClient(grpcChannel);
             return this;
         }
 
         @Override
         public Builder identity(final Identity identity) {
+            Objects.requireNonNull(identity, "identity");
             this.identity = identity;
             return this;
         }
 
         @Override
         public Builder signer(final Signer signer) {
+            Objects.requireNonNull(signer, "signer");
             this.signer = signer;
             return this;
         }
 
         @Override
         public Builder hash(final Function<byte[], byte[]> hash) {
+            Objects.requireNonNull(hash, "hash");
             this.hash = hash;
             return this;
         }
 
         @Override
         public GatewayImpl connect() {
-            if (this.client == null) {
-                throw new IllegalStateException("No gRPC channel has been provided");
-            }
             return new GatewayImpl(this);
+        }
+
+        Builder client(final GatewayClient client) {
+            Objects.requireNonNull(client, "client");
+            this.client = client;
+            return this;
         }
     }
 
@@ -61,10 +69,10 @@ final class GatewayImpl implements Gateway {
 
     private GatewayImpl(final Builder builder) {
         if (null == builder.identity) {
-            throw new IllegalStateException("No client identity supplied");
+            throw new IllegalArgumentException("No client identity supplied");
         }
         if (null == builder.client) {
-            throw new IllegalStateException("No connections details supplied");
+            throw new IllegalArgumentException("No connection details supplied");
         }
 
         this.signingIdentity = new SigningIdentity(builder.identity, builder.hash, builder.signer);
