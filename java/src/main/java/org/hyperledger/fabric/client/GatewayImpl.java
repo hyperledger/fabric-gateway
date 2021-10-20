@@ -6,6 +6,7 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -19,15 +20,17 @@ final class GatewayImpl implements Gateway {
             throw new UnsupportedOperationException("No signing implementation supplied");
         };
 
+        private Channel grpcChannel;
         private GatewayClient client;
         private Identity identity;
         private Signer signer = UNDEFINED_SIGNER; // No signer implementation is required if only offline signing is used
         private Function<byte[], byte[]> hash = Hash::sha256;
+        private CallOptions.Builder optionsBuilder = CallOptions.newBuiler();
 
         @Override
         public Builder connection(final Channel grpcChannel) {
             Objects.requireNonNull(grpcChannel, "connection");
-            this.client = new GatewayClient(grpcChannel);
+            this.grpcChannel = grpcChannel;
             return this;
         }
 
@@ -53,14 +56,38 @@ final class GatewayImpl implements Gateway {
         }
 
         @Override
-        public GatewayImpl connect() {
-            return new GatewayImpl(this);
+        public Builder evaluateOptions(final CallOption... options) {
+            optionsBuilder.evaluate(Arrays.asList(options));
+            return this;
         }
 
-        Builder client(final GatewayClient client) {
-            Objects.requireNonNull(client, "client");
-            this.client = client;
+        @Override
+        public Builder endorseOptions(final CallOption... options) {
+            optionsBuilder.endorse(Arrays.asList(options));
             return this;
+        }
+
+        @Override
+        public Builder submitOptions(final CallOption... options) {
+            optionsBuilder.submit(Arrays.asList(options));
+            return this;
+        }
+
+        @Override
+        public Builder commitStatusOptions(final CallOption... options) {
+            optionsBuilder.commitStatus(Arrays.asList(options));
+            return this;
+        }
+
+        @Override
+        public Builder chaincodeEventsOptions(final CallOption... options) {
+            optionsBuilder.chaincodeEvents(Arrays.asList(options));
+            return this;
+        }
+
+        @Override
+        public GatewayImpl connect() {
+            return new GatewayImpl(this);
         }
     }
 
@@ -68,15 +95,8 @@ final class GatewayImpl implements Gateway {
     private final SigningIdentity signingIdentity;
 
     private GatewayImpl(final Builder builder) {
-        if (null == builder.identity) {
-            throw new IllegalArgumentException("No client identity supplied");
-        }
-        if (null == builder.client) {
-            throw new IllegalArgumentException("No connection details supplied");
-        }
-
-        this.signingIdentity = new SigningIdentity(builder.identity, builder.hash, builder.signer);
-        this.client = builder.client;
+        signingIdentity = new SigningIdentity(builder.identity, builder.hash, builder.signer);
+        client = new GatewayClient(builder.grpcChannel, builder.optionsBuilder.build());
     }
 
     @Override

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
@@ -26,6 +27,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoSession;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.spy;
 
 public final class GatewayMocker implements AutoCloseable {
@@ -35,7 +37,6 @@ public final class GatewayMocker implements AutoCloseable {
     private final GatewayServiceStub stub;
     private final ManagedChannel channel;
     private final Gateway.Builder builder;
-    private final GatewayClient client;
 
     private final MockitoSession mockitoSession;
     @Captor private ArgumentCaptor<EndorseRequest> endorseRequestCaptor;
@@ -43,7 +44,7 @@ public final class GatewayMocker implements AutoCloseable {
     @Captor private ArgumentCaptor<SubmitRequest> submitRequestCaptor;
     @Captor private ArgumentCaptor<SignedCommitStatusRequest> commitStatusRequestCaptor;
     @Captor private ArgumentCaptor<SignedChaincodeEventsRequest> chaincodeEventsRequestCaptor;
-    @Captor private ArgumentCaptor<CallOption> callOptionCaptor;
+    @Captor private ArgumentCaptor<CallOptions> callOptionsCaptor;
 
     public GatewayMocker() {
         this(utils.newGatewayBuilder());
@@ -57,9 +58,15 @@ public final class GatewayMocker implements AutoCloseable {
 
         stub = spy(STUB);
         MockGatewayService service = new MockGatewayService(stub);
-        channel = utils.newChannelForService(service);
-        client = spy(new GatewayClient(channel));
-        ((GatewayImpl.Builder) builder).client(client);
+        channel = spy(new WrappedManagedChannel(utils.newChannelForService(service)));
+        builder.connection(channel);
+    }
+
+    /**
+     * Reset stubs/spies.
+     */
+    public void reset() {
+        Mockito.reset(stub, channel);
     }
 
     public void close() {
@@ -80,19 +87,9 @@ public final class GatewayMocker implements AutoCloseable {
         return endorseRequestCaptor.getValue();
     }
 
-    public List<CallOption> captureEndorseOptions() {
-        Mockito.verify(client).endorse(any(), callOptionCaptor.capture());
-        return callOptionCaptor.getAllValues();
-    }
-
     public EvaluateRequest captureEvaluate() {
         Mockito.verify(stub).evaluate(evaluateRequestCaptor.capture());
         return evaluateRequestCaptor.getValue();
-    }
-
-    public List<CallOption> captureEvaluateOptions() {
-        Mockito.verify(client).evaluate(any(), callOptionCaptor.capture());
-        return callOptionCaptor.getAllValues();
     }
 
     public SubmitRequest captureSubmit() {
@@ -100,19 +97,9 @@ public final class GatewayMocker implements AutoCloseable {
         return submitRequestCaptor.getValue();
     }
 
-    public List<CallOption> captureSubmitOptions() {
-        Mockito.verify(client).submit(any(), callOptionCaptor.capture());
-        return callOptionCaptor.getAllValues();
-    }
-
     public SignedCommitStatusRequest captureCommitStatus() {
         Mockito.verify(stub).commitStatus(commitStatusRequestCaptor.capture());
         return commitStatusRequestCaptor.getValue();
-    }
-
-    public List<CallOption> captureCommitStatusOptions() {
-        Mockito.verify(client).commitStatus(any(), callOptionCaptor.capture());
-        return callOptionCaptor.getAllValues();
     }
 
     public SignedChaincodeEventsRequest captureChaincodeEvents() {
@@ -120,9 +107,9 @@ public final class GatewayMocker implements AutoCloseable {
         return chaincodeEventsRequestCaptor.getValue();
     }
 
-    public List<CallOption> captureChaincodeEventsOptions() {
-        Mockito.verify(client).chaincodeEvents(any(), callOptionCaptor.capture());
-        return callOptionCaptor.getAllValues();
+    public List<CallOptions> captureCallOptions() {
+        Mockito.verify(channel, atLeastOnce()).newCall(any(), callOptionsCaptor.capture());
+        return callOptionsCaptor.getAllValues();
     }
 
     public Chaincode.ChaincodeSpec getChaincodeSpec(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
