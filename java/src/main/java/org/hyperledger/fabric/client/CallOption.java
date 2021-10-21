@@ -6,6 +6,7 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.UnaryOperator;
 
@@ -28,6 +29,7 @@ public final class CallOption {
      * @return a call option.
      */
     public static CallOption deadline(final Deadline deadline) {
+        Objects.requireNonNull(deadline, "deadline");
         return new CallOption(stub -> stub.withDeadline(deadline));
     }
 
@@ -38,6 +40,7 @@ public final class CallOption {
      * @return a call option.
      */
     public static CallOption deadlineAfter(final long duration, final TimeUnit unit) {
+        Objects.requireNonNull(unit, "unit");
         return new CallOption(stub -> stub.withDeadlineAfter(duration, unit));
     }
 

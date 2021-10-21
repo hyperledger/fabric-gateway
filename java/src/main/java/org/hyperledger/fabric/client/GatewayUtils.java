@@ -72,4 +72,10 @@ final class GatewayUtils {
             Thread.currentThread().interrupt();
         }
     }
+
+    public static void requireNonNullArgument(final Object value, final String message) {
+        if (null == value) {
+            throw new IllegalArgumentException(message);
+        }
+    }
 }

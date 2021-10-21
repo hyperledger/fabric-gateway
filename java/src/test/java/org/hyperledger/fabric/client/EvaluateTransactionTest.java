@@ -17,6 +17,8 @@ import java.util.stream.Stream;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import io.grpc.CallOptions;
+import io.grpc.Deadline;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import org.hyperledger.fabric.client.identity.Identity;
@@ -36,6 +38,7 @@ import static org.mockito.Mockito.doThrow;
 
 public final class EvaluateTransactionTest {
     private static final TestUtils utils = TestUtils.getInstance();
+    private static final Deadline defaultDeadline = Deadline.after(1, TimeUnit.DAYS);
 
     private GatewayMocker mocker;
     private GatewayServiceStub stub;
@@ -47,7 +50,9 @@ public final class EvaluateTransactionTest {
         mocker = new GatewayMocker();
         stub = mocker.getServiceStubSpy();
 
-        gateway = mocker.getGatewayBuilder().connect();
+        gateway = mocker.getGatewayBuilder()
+                .evaluateOptions(CallOption.deadline(defaultDeadline))
+                .connect();
         network = gateway.getNetwork("NETWORK");
     }
 
@@ -310,15 +315,32 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void passes_call_options_to_gRPC_client() {
-        CallOption expected = CallOption.deadlineAfter(5, TimeUnit.SECONDS);
+    void uses_specified_call_options() {
+        Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
+        CallOption option = CallOption.deadline(expected);
         Contract contract = network.getContract("MY_CHAINCODE");
 
         contract.newProposal("TRANSACTION_NAME")
                 .build()
-                .evaluate(expected);
+                .evaluate(option);
 
-        List<CallOption> actual = mocker.captureEvaluateOptions();
-        assertThat(actual).contains(expected);
+        List<CallOptions> actual = mocker.captureCallOptions();
+        assertThat(actual).first()
+                .extracting(CallOptions::getDeadline)
+                .isEqualTo(expected);
+    }
+
+    @Test
+    void uses_default_call_options() {
+        Contract contract = network.getContract("MY_CHAINCODE");
+
+        contract.newProposal("TRANSACTION_NAME")
+                .build()
+                .evaluate();
+
+        List<CallOptions> actual = mocker.captureCallOptions();
+        assertThat(actual).first()
+                .extracting(CallOptions::getDeadline)
+                .isEqualTo(defaultDeadline);
     }
 }

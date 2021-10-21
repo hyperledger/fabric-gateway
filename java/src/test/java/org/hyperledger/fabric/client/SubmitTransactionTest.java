@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.protobuf.ByteString;
+import io.grpc.CallOptions;
+import io.grpc.Deadline;
 import io.grpc.StatusRuntimeException;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
@@ -40,6 +42,9 @@ import static org.mockito.Mockito.doThrow;
 
 public final class SubmitTransactionTest {
     private static final TestUtils utils = TestUtils.getInstance();
+    private static final Deadline defaultEndorseDeadline = Deadline.after(1, TimeUnit.DAYS);
+    private static final Deadline defaultSubmitDeadline = Deadline.after(2, TimeUnit.DAYS);
+    private static final Deadline defaultCommitStatusDeadline = Deadline.after(3, TimeUnit.DAYS);
 
     private GatewayMocker mocker;
     private GatewayServiceStub stub;
@@ -51,7 +56,11 @@ public final class SubmitTransactionTest {
         mocker = new GatewayMocker();
         stub = mocker.getServiceStubSpy();
 
-        gateway = mocker.getGatewayBuilder().connect();
+        gateway = mocker.getGatewayBuilder()
+                .endorseOptions(CallOption.deadline(defaultEndorseDeadline))
+                .submitOptions(CallOption.deadline(defaultSubmitDeadline))
+                .commitStatusOptions(CallOption.deadline(defaultCommitStatusDeadline))
+                .connect();
         network = gateway.getNetwork("NETWORK");
     }
 
@@ -444,43 +453,70 @@ public final class SubmitTransactionTest {
     }
 
     @Test
-    void endorse_passes_call_options_to_gRPC_client() {
-        CallOption expected = CallOption.deadlineAfter(5, TimeUnit.SECONDS);
+    void endorse_uses_specified_call_options() {
+        Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
+        CallOption option = CallOption.deadline(expected);
         Contract contract = network.getContract("MY_CHAINCODE");
 
         contract.newProposal("TRANSACTION_NAME")
                 .build()
-                .endorse(expected);
+                .endorse(option);
 
-        List<CallOption> actual = mocker.captureEndorseOptions();
-        assertThat(actual).contains(expected);
+        List<CallOptions> actual = mocker.captureCallOptions();
+        assertThat(actual)
+                .first()
+                .extracting(CallOptions::getDeadline)
+                .isEqualTo(expected);
     }
 
     @Test
-    void submit_passes_call_options_to_gRPC_client() throws CommitException {
-        CallOption expected = CallOption.deadlineAfter(5, TimeUnit.SECONDS);
+    void endorse_uses_default_call_options() {
         Contract contract = network.getContract("MY_CHAINCODE");
 
         contract.newProposal("TRANSACTION_NAME")
                 .build()
-                .endorse()
-                .submit(expected);
+                .endorse();
 
-        List<CallOption> actual = mocker.captureSubmitOptions();
-        assertThat(actual).contains(expected);
+        List<CallOptions> actual = mocker.captureCallOptions();
+        assertThat(actual)
+                .first()
+                .extracting(CallOptions::getDeadline)
+                .isEqualTo(defaultEndorseDeadline);
     }
 
     @Test
-    void submit_passes_call_options_to_gRPC_client_commitStatus() throws CommitException {
-        CallOption expected = CallOption.deadlineAfter(5, TimeUnit.SECONDS);
+    void submit_uses_specified_call_options_for_submit_and_commitStatus() throws CommitException {
+        Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
+        CallOption option = CallOption.deadline(expected);
         Contract contract = network.getContract("MY_CHAINCODE");
-
-        contract.newProposal("TRANSACTION_NAME")
+        Transaction transaction = contract.newProposal("TRANSACTION_NAME")
                 .build()
-                .endorse()
-                .submit(expected);
+                .endorse();
+        mocker.reset();
 
-        List<CallOption> actual = mocker.captureCommitStatusOptions();
-        assertThat(actual).contains(expected);
+        transaction.submit(option);
+
+        List<CallOptions> actual = mocker.captureCallOptions();
+        assertThat(actual)
+                .hasSize(2)
+                .extracting(CallOptions::getDeadline)
+                .containsOnly(expected);
+    }
+
+    @Test
+    void submit_uses_default_call_options_for_submit_and_commitStatus() throws CommitException {
+        Contract contract = network.getContract("MY_CHAINCODE");
+        Transaction transaction = contract.newProposal("TRANSACTION_NAME")
+                .build()
+                .endorse();
+        mocker.reset();
+
+        transaction.submit();
+
+        List<CallOptions> actual = mocker.captureCallOptions();
+        assertThat(actual)
+                .hasSize(2)
+                .extracting(CallOptions::getDeadline)
+                .containsExactly(defaultSubmitDeadline, defaultCommitStatusDeadline);
     }
 }

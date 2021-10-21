@@ -7,6 +7,7 @@
 package org.hyperledger.fabric.client;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.function.Function;
 
 import io.grpc.Channel;
@@ -24,40 +25,48 @@ import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitResponse;
 
-// Non-final only to allow spying with Mockito
-class GatewayClient {
+final class GatewayClient {
     private final GatewayGrpc.GatewayBlockingStub blockingStub;
+    private final CallOptions defaultOptions;
 
-    GatewayClient(final Channel channel) {
+    GatewayClient(final Channel channel, final CallOptions defaultOptions) {
+        GatewayUtils.requireNonNullArgument(channel, "No connection details supplied");
+        GatewayUtils.requireNonNullArgument(defaultOptions, "defaultOptions");
+
         this.blockingStub = GatewayGrpc.newBlockingStub(channel);
+        this.defaultOptions = defaultOptions;
     }
 
     public EvaluateResponse evaluate(final EvaluateRequest request, final CallOption... options) {
-        return applyOptions(blockingStub, options).evaluate(request);
+        GatewayGrpc.GatewayBlockingStub stub = applyOptions(blockingStub, defaultOptions.getEvaluate(options));
+        return stub.evaluate(request);
     }
 
     public EndorseResponse endorse(final EndorseRequest request, final CallOption... options) {
-        return applyOptions(blockingStub, options).endorse(request);
+        GatewayGrpc.GatewayBlockingStub stub = applyOptions(blockingStub, defaultOptions.getEndorse(options));
+        return stub.endorse(request);
     }
 
     public SubmitResponse submit(final SubmitRequest request, final CallOption... options) {
-        return applyOptions(blockingStub, options).submit(request);
+        GatewayGrpc.GatewayBlockingStub stub = applyOptions(blockingStub, defaultOptions.getSubmit(options));
+        return stub.submit(request);
     }
 
     public CommitStatusResponse commitStatus(final SignedCommitStatusRequest request, final CallOption... options) {
-        return applyOptions(blockingStub, options).commitStatus(request);
+        GatewayGrpc.GatewayBlockingStub stub = applyOptions(blockingStub, defaultOptions.getCommitStatus(options));
+        return stub.commitStatus(request);
     }
 
     public CloseableIterator<ChaincodeEventsResponse> chaincodeEvents(final SignedChaincodeEventsRequest request, final CallOption... options) {
-        return invokeServerStreamingCall(applyOptions(blockingStub, options)::chaincodeEvents, request);
+        GatewayGrpc.GatewayBlockingStub stub = applyOptions(blockingStub, defaultOptions.getChaincodeEvents(options));
+        return invokeServerStreamingCall(stub::chaincodeEvents, request);
     }
 
-    private static <T extends AbstractStub<T>> T applyOptions(final T stub, final CallOption... options) {
+    private static <T extends AbstractStub<T>> T applyOptions(final T stub, final List<CallOption> options) {
         T result = stub;
         for (CallOption option : options) {
             result = option.apply(result);
         }
-
         return result;
     }
 

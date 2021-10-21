@@ -22,6 +22,11 @@ final class SigningIdentity {
         this.identity = identity;
         this.hash = hash;
         this.signer = signer;
+
+        GatewayUtils.requireNonNullArgument(this.identity, "No identity supplied");
+        GatewayUtils.requireNonNullArgument(this.hash, "No hash implementation supplied");
+        GatewayUtils.requireNonNullArgument(this.signer, "No signing implementation supplied");
+
         this.creator = GatewayUtils.serializeIdentity(identity);
     }
 

@@ -109,6 +109,41 @@ public interface Gateway extends AutoCloseable {
         Builder hash(Function<byte[], byte[]> hash);
 
         /**
+         * Specify the default call options for evaluating transactions.
+         * @param options Call options.
+         * @return The builder instance, allowing multiple configuration options to be chained.
+         */
+        Builder evaluateOptions(CallOption... options);
+
+        /**
+         * Specify the default call options for endorsements.
+         * @param options Call options.
+         * @return The builder instance, allowing multiple configuration options to be chained.
+         */
+        Builder endorseOptions(CallOption... options);
+
+        /**
+         * Specify the default call options for submit of transactions to the orderer.
+         * @param options Call options.
+         * @return The builder instance, allowing multiple configuration options to be chained.
+         */
+        Builder submitOptions(CallOption... options);
+
+        /**
+         * Specify the default call options for retrieving transaction commit status.
+         * @param options Call options.
+         * @return The builder instance, allowing multiple configuration options to be chained.
+         */
+        Builder commitStatusOptions(CallOption... options);
+
+        /**
+         * Specify the default call options for chaincode events.
+         * @param options Call options.
+         * @return The builder instance, allowing multiple configuration options to be chained.
+         */
+        Builder chaincodeEventsOptions(CallOption... options);
+
+        /**
          * Connects to the gateway using the specified options.
          * @return The connected {@link Gateway} object.
          */

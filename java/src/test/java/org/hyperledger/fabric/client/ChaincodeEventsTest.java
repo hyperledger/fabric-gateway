@@ -12,6 +12,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import com.google.protobuf.ByteString;
+import io.grpc.CallOptions;
+import io.grpc.Deadline;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest;
@@ -31,6 +33,7 @@ import static org.mockito.Mockito.doThrow;
 
 public final class ChaincodeEventsTest {
     private static final TestUtils utils = TestUtils.getInstance();
+    private static final Deadline defaultDeadline = Deadline.after(1, TimeUnit.DAYS);
 
     private GatewayMocker mocker;
     private GatewayServiceStub stub;
@@ -42,7 +45,9 @@ public final class ChaincodeEventsTest {
         mocker = new GatewayMocker();
         stub = mocker.getServiceStubSpy();
 
-        gateway = mocker.getGatewayBuilder().connect();
+        gateway = mocker.getGatewayBuilder()
+                .chaincodeEventsOptions(CallOption.deadline(defaultDeadline))
+                .connect();
         network = gateway.getNetwork("NETWORK");
     }
 
@@ -199,13 +204,28 @@ public final class ChaincodeEventsTest {
     }
 
     @Test
-    void passes_call_options_to_gRPC_client() {
-        CallOption expected = CallOption.deadlineAfter(5, TimeUnit.SECONDS);
-        try (CloseableIterator<ChaincodeEvent> iter = network.getChaincodeEvents("CHAINCODE_NAME", expected)) {
+    void uses_specified_call_options() {
+        Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
+        CallOption option = CallOption.deadline(expected);
+        try (CloseableIterator<ChaincodeEvent> iter = network.getChaincodeEvents("CHAINCODE_NAME", option)) {
             iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
         }
 
-        List<CallOption> actual = mocker.captureChaincodeEventsOptions();
-        assertThat(actual).contains(expected);
+        List<CallOptions> actual = mocker.captureCallOptions();
+        assertThat(actual).first()
+                .extracting(CallOptions::getDeadline)
+                .isEqualTo(expected);
+    }
+
+    @Test
+    void uses_default_call_options() {
+        try (CloseableIterator<ChaincodeEvent> iter = network.getChaincodeEvents("CHAINCODE_NAME")) {
+            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
+        }
+
+        List<CallOptions> actual = mocker.captureCallOptions();
+        assertThat(actual).first()
+                .extracting(CallOptions::getDeadline)
+                .isEqualTo(defaultDeadline);
     }
 }
