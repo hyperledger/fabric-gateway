@@ -27,16 +27,17 @@ Feature: Errors
     Scenario: Submit fails with incorrect transaction name
         When I prepare to submit a nonexistent transaction
         Then the transaction invocation should fail
-        And the error message should contain "error in simulation: transaction returned with failure: Error: You've asked to invoke a function that does not exist: nonexistent"
+        And the error message should contain "failed to endorse transaction, see attached details for more info"
         And the error details should be
-            | Org1MSP | peer0.org1.example.com:7051 | error in simulation: transaction returned with failure: Error: You've asked to invoke a function that does not exist: nonexistent |
+            | peer0.org1.example.com:7051 | Org1MSP | error in simulation: transaction returned with failure: Error: You've asked to invoke a function that does not exist: nonexistent |
+            | peer1.org1.example.com:9051 | Org1MSP | error in simulation: transaction returned with failure: Error: You've asked to invoke a function that does not exist: nonexistent |
 
     Scenario: Evaluate crash chaincode
         When I prepare to evaluate a crash transaction
         Then the transaction invocation should fail
         And the error message should contain "error sending: chaincode stream terminated"
         And the error details should be
-            | Org1MSP | peer0.org1.example.com:7051 | error sending: chaincode stream terminated |
+            | peer0.org1.example.com:7051 | Org1MSP | error sending: chaincode stream terminated |
 
     Scenario: Evaluate with signer from unauthorized MSP
         When I prepare to evaluate an exists transaction
@@ -45,23 +46,25 @@ Feature: Errors
         Then the transaction invocation should fail
         And the error message should contain "failed to evaluate transaction: error validating proposal: access denied: channel [mychannel] creator org [Org1MSP]"
         And the error details should be
-            |  Org1MSP | peer0.org1.example.com:7051 |error validating proposal: access denied: channel [mychannel] creator org [Org1MSP] |
+            | peer0.org1.example.com:7051 | Org1MSP | error validating proposal: access denied: channel [mychannel] creator org [Org1MSP] |
 
     Scenario: Org3 fails to endorse
         When I prepare to submit an orgsFail transaction
         And I set the transaction arguments to ["[\"Org3MSP\"]"]
         Then the transaction invocation should fail
-        And the error message should contain "Org3MSP refuses to endorse this"
+        And the error message should contain "failed to endorse transaction, see attached details for more info"
         And the error details should be
-            | Org3MSP | peer0.org3.example.com:22051 | Org3MSP refuses to endorse this |
+            | peer0.org3.example.com:11051 | Org3MSP | Org3MSP refuses to endorse this |
 
     Scenario: Org2 and Org3 fail to endorse
         When I prepare to submit an orgsFail transaction
         And I set the transaction arguments to ["[\"Org2MSP\",\"Org3MSP\"]"]
         Then the transaction invocation should fail
+        And the error message should contain "failed to endorse transaction, see attached details for more info"
         And the error details should be
-            | Org2MSP | peer?.org2.example.com:8051 | Org2MSP refuses to endorse this |
-            | Org3MSP | peer0.org3.example.com:11051 | Org3MSP refuses to endorse this |
+            | peer0.org2.example.com:8051 | Org2MSP | Org2MSP refuses to endorse this |
+            | peer1.org2.example.com:10051 | Org2MSP | Org2MSP refuses to endorse this |
+            | peer0.org3.example.com:11051 | Org3MSP | Org3MSP refuses to endorse this |
 
     Scenario: Submit non-deterministic transaction
         When I prepare to submit a nondet transaction

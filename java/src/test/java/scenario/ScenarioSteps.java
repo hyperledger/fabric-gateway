@@ -443,10 +443,10 @@ public class ScenarioSteps {
 
         for (Any detail : status.getDetailsList()) {
             ErrorDetail ee = ErrorDetail.parseFrom(detail.getValue());
-            List<String> row = expected.get(ee.getMspId());
+            List<String> row = expected.get(ee.getAddress());
             assertThat(row).isNotNull();
             assertThat(ee.getMessage()).contains(row.get(1));
-            expected.remove(ee.getMspId());
+            expected.remove(ee.getAddress());
         }
         assertThat(expected).isEmpty();
     }
