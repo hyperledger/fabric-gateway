@@ -11,6 +11,7 @@ import java.util.Iterator;
 /**
  * An iterator that can be closed when the consumer does not want to read any more elements, freeing up resources that
  * may be held by the iterator.
+ * <p>Note that iteration may throw {@code io.grpc.StatusRuntimeException} if the gRPC connection fails.</p>
  * @param <T> The type of elements returned by this iterator.
  */
 public interface CloseableIterator<T> extends Iterator<T>, AutoCloseable {

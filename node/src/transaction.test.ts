@@ -4,21 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MockGatewayClient, newMockGatewayClient } from './client.test';
+import { Metadata, ServiceError } from '@grpc/grpc-js';
+import { MockGatewayGrpcClient } from './client.test';
 import { CommitError } from './commiterror';
 import { Contract } from './contract';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { Envelope } from './protos/common/common_pb';
+import { Envelope, Status } from './protos/common/common_pb';
 import { CommitStatusResponse, EndorseResponse } from './protos/gateway/gateway_pb';
 import { Response } from './protos/peer/proposal_response_pb';
 import { TxValidationCode } from './protos/peer/transaction_pb';
 
 describe('Transaction', () => {
     const expectedResult = 'TX_RESULT';
+    const serviceError: ServiceError = Object.assign(new Error('ERROR_MESSAGE'), {
+        code: Status.SERVICE_UNAVAILABLE,
+        details: 'DETAILS',
+        metadata: new Metadata(),
+    });
 
-    let client: MockGatewayClient;
+    let client: MockGatewayGrpcClient;
     let identity: Identity;
     let signer: jest.Mock<Promise<Uint8Array>, Uint8Array[]>;
     let hash: jest.Mock<Uint8Array, Uint8Array[]>;
@@ -27,7 +33,7 @@ describe('Transaction', () => {
     let contract: Contract;
 
     beforeEach(() => {
-        client = newMockGatewayClient();
+        client = new MockGatewayGrpcClient();
 
         const txResult = new Response()
         txResult.setPayload(Buffer.from(expectedResult));
@@ -39,12 +45,12 @@ describe('Transaction', () => {
         endorseResult.setPreparedTransaction(preparedTx);
         endorseResult.setResult(txResult)
 
-        client.endorse.mockResolvedValue(endorseResult);
+        client.mockEndorseResponse(endorseResult);
 
         const commitResult = new CommitStatusResponse();
         commitResult.setResult(TxValidationCode.VALID);
 
-        client.commitStatus.mockResolvedValue(commitResult);
+        client.mockCommitStatusResponse(commitResult);
 
         identity = {
             mspId: 'MSP_ID',
@@ -59,7 +65,7 @@ describe('Transaction', () => {
             identity,
             signer,
             hash,
-            gatewayClient: client,
+            client,
         };
         gateway = internalConnect(options);
         network = gateway.getNetwork('CHANNEL_NAME');
@@ -67,15 +73,16 @@ describe('Transaction', () => {
     });
 
     it('throws on submit error', async () => {
-        client.submit.mockRejectedValue(new Error('ERROR_MESSAGE'));
+        client.mockSubmitError(serviceError);
 
-        await expect(contract.submitTransaction('TRANSACTION_NAME')).rejects.toThrow('ERROR_MESSAGE');
+        await expect(contract.submitTransaction('TRANSACTION_NAME'))
+            .rejects.toThrow(serviceError.message);
     });
 
     it('throws CommitError on commit failure', async () => {
         const commitResult = new CommitStatusResponse();
         commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
-        client.commitStatus.mockResolvedValue(commitResult);
+        client.mockCommitStatusResponse(commitResult);
 
         const t = contract.submitTransaction('TRANSACTION_NAME');
 
@@ -92,17 +99,17 @@ describe('Transaction', () => {
 
     it('sets endorsing orgs', async () => {
         await contract.submit('TRANSACTION_NAME', { endorsingOrganizations: ['org1', 'org3']});
-        const actualOrgs = client.endorse.mock.calls[0][0].getEndorsingOrganizationsList();
+        const actualOrgs = client.getEndorseRequests()[0].getEndorsingOrganizationsList();
         expect(actualOrgs).toStrictEqual(['org1', 'org3']);
     });
 
     it('includes transaction ID in submit request', async () => {
         await contract.submitTransaction('TRANSACTION_NAME');
 
-        const endorseRequest = client.endorse.mock.calls[0][0];
+        const endorseRequest = client.getEndorseRequests()[0];
         const expected = endorseRequest.getTransactionId();
 
-        const submitRequest = client.submit.mock.calls[0][0];
+        const submitRequest = client.getSubmitRequests()[0];
         const actual = submitRequest.getTransactionId();
 
         expect(actual).toBe(expected);
@@ -113,7 +120,7 @@ describe('Transaction', () => {
 
         await contract.submitTransaction('TRANSACTION_NAME');
 
-        const submitRequest = client.submit.mock.calls[0][0];
+        const submitRequest = client.getSubmitRequests()[0];
         const signature = Buffer.from(submitRequest.getPreparedTransaction()?.getSignature_asU8() || '').toString();
         expect(signature).toBe('MY_SIGNATURE');
     });
@@ -123,7 +130,7 @@ describe('Transaction', () => {
 
         await contract.submitTransaction('TRANSACTION_NAME');
 
-        const statusRequest = client.commitStatus.mock.calls[0][0];
+        const statusRequest = client.getCommitStatusRequests()[0];
         const signature = Buffer.from(statusRequest.getSignature() || '').toString();
         expect(signature).toBe('MY_SIGNATURE');
     });
@@ -143,7 +150,7 @@ describe('Transaction', () => {
     it('commit returns transaction validation code', async () => {
         const commitResult = new CommitStatusResponse();
         commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
-        client.commitStatus.mockResolvedValue(commitResult);
+        client.mockCommitStatusResponse(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
         const status = await commit.getStatus();
@@ -154,7 +161,7 @@ describe('Transaction', () => {
     it('commit returns successful for successful transaction', async () => {
         const commitResult = new CommitStatusResponse();
         commitResult.setResult(TxValidationCode.VALID);
-        client.commitStatus.mockResolvedValue(commitResult);
+        client.mockCommitStatusResponse(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
         const status = await commit.getStatus();
@@ -165,7 +172,7 @@ describe('Transaction', () => {
     it('commit returns unsuccessful for failed transaction', async () => {
         const commitResult = new CommitStatusResponse();
         commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
-        client.commitStatus.mockResolvedValue(commitResult);
+        client.mockCommitStatusResponse(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
         const status = await commit.getStatus();
@@ -177,7 +184,7 @@ describe('Transaction', () => {
         const commitResult = new CommitStatusResponse();
         commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
         commitResult.setBlockNumber(101);
-        client.commitStatus.mockResolvedValue(commitResult);
+        client.mockCommitStatusResponse(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
         const status = await commit.getStatus();
@@ -188,11 +195,32 @@ describe('Transaction', () => {
     it('commit returns zero for missing block number', async () => {
         const commitResult = new CommitStatusResponse();
         commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
-        client.commitStatus.mockResolvedValue(commitResult);
+        client.mockCommitStatusResponse(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
         const status = await commit.getStatus();
 
         expect(status.blockNumber).toBe(BigInt(0));
+    });
+
+    it('submit uses specified call options', async () => {
+        const deadline = Date.now() + 1000;
+        const transaction = await contract.newProposal('TRANSACTION_NAME').endorse();
+
+        await transaction.submit({ deadline });
+
+        const actual = client.getSubmitOptions()[0];
+        expect(actual.deadline).toBe(deadline);
+    });
+
+    it('commit uses specified call options', async () => {
+        const deadline = Date.now() + 1000;
+        const transaction = await contract.newProposal('TRANSACTION_NAME').endorse();
+        const commit = await transaction.submit({ deadline });
+
+        await commit.getStatus({ deadline });
+
+        const actual = client.getSubmitOptions()[0];
+        expect(actual.deadline).toBe(deadline);
     });
 });

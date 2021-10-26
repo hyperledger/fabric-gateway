@@ -4,24 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Client, requestCallback } from '@grpc/grpc-js';
+import { CallOptions, ClientUnaryCall, requestCallback } from '@grpc/grpc-js';
 import { Message } from 'google-protobuf';
 import { newGatewayError } from './gatewayerror';
 import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
 
 const servicePath = '/gateway.Gateway/';
-const evaluateMethod = servicePath + 'Evaluate';
-const endorseMethod = servicePath + 'Endorse';
-const submitMethod = servicePath + 'Submit';
-const commitStatusMethod = servicePath + 'CommitStatus';
-const chaincodeEventsMethod = servicePath + 'ChaincodeEvents';
+export const evaluateMethod = servicePath + 'Evaluate';
+export const endorseMethod = servicePath + 'Endorse';
+export const submitMethod = servicePath + 'Submit';
+export const commitStatusMethod = servicePath + 'CommitStatus';
+export const chaincodeEventsMethod = servicePath + 'ChaincodeEvents';
 
 export interface GatewayClient {
-    evaluate(request: EvaluateRequest): Promise<EvaluateResponse>;
-    endorse(request: EndorseRequest): Promise<EndorseResponse>;
-    submit(request: SubmitRequest): Promise<SubmitResponse>;
-    commitStatus(request: SignedCommitStatusRequest): Promise<CommitStatusResponse>;
-    chaincodeEvents(request: SignedChaincodeEventsRequest): CloseableAsyncIterable<ChaincodeEventsResponse>;
+    evaluate(request: EvaluateRequest, options?: CallOptions): Promise<EvaluateResponse>;
+    endorse(request: EndorseRequest, options?: CallOptions): Promise<EndorseResponse>;
+    submit(request: SubmitRequest, options?: CallOptions): Promise<SubmitResponse>;
+    commitStatus(request: SignedCommitStatusRequest, options?: CallOptions): Promise<CommitStatusResponse>;
+    chaincodeEvents(request: SignedChaincodeEventsRequest, options?: CallOptions): CloseableAsyncIterable<ChaincodeEventsResponse>;
 }
 
 /**
@@ -35,43 +35,94 @@ export interface CloseableAsyncIterable<T> extends AsyncIterable<T> {
     close(): void;
 }
 
+/**
+ * Subset of grpc-js ClientReadableStream used by GatewayClient to aid mocking.
+ */
+export interface ServerStreamResponse<T> extends AsyncIterable<T> {
+    cancel(): void;
+}
+
+/**
+ * Subset of the grpc-js Client used by GatewayClient to aid mocking.
+ */
+export interface GatewayGrpcClient {
+    makeUnaryRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, options: CallOptions, callback: requestCallback<ResponseType>): ClientUnaryCall;
+    makeServerStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, options?: CallOptions): ServerStreamResponse<ResponseType>;
+}
+
+function defaultCallOptions(): CallOptions {
+    return {};
+}
+
 class GatewayClientImpl implements GatewayClient {
-    #client: Client;
+    #client: GatewayGrpcClient;
+    #defaultOptions: () => CallOptions;
 
-    constructor(client: Client) {
+    constructor(client: GatewayGrpcClient, defaultOptions: () => CallOptions = defaultCallOptions) {
         this.#client = client;
+        this.#defaultOptions = defaultOptions;
     }
 
-    evaluate(request: EvaluateRequest): Promise<EvaluateResponse> {
-        return new Promise((resolve, reject) =>
-            this.#client.makeUnaryRequest(evaluateMethod, serialize, deserializeEvaluateResponse, request, newUnaryCallback(resolve, reject))
+    evaluate(request: EvaluateRequest, options?: Readonly<CallOptions>): Promise<EvaluateResponse> {
+        return new Promise((resolve, reject) => this.#client.makeUnaryRequest(
+            evaluateMethod,
+            serialize,
+            deserializeEvaluateResponse,
+            request,
+            this.#buildOptions(options),
+            newUnaryCallback(resolve, reject)
+        ));
+    }
+
+    endorse(request: EndorseRequest, options?: Readonly<CallOptions>): Promise<EndorseResponse> {
+        return new Promise((resolve, reject) => this.#client.makeUnaryRequest(
+            endorseMethod,
+            serialize,
+            deserializeEndorseResponse,
+            request,
+            this.#buildOptions(options),
+            newUnaryCallback(resolve, reject)
+        ));
+    }
+
+    submit(request: SubmitRequest, options?: Readonly<CallOptions>): Promise<SubmitResponse> {
+        return new Promise((resolve, reject) => this.#client.makeUnaryRequest(
+            submitMethod,
+            serialize,
+            deserializeSubmitResponse,
+            request,
+            this.#buildOptions(options),
+            newUnaryCallback(resolve, reject)
+        ));
+    }
+
+    commitStatus(request: SignedCommitStatusRequest, options?: Readonly<CallOptions>): Promise<CommitStatusResponse> {
+        return new Promise((resolve, reject) => this.#client.makeUnaryRequest(
+            commitStatusMethod,
+            serialize,
+            deserializeCommitStatusResponse,
+            request,
+            this.#buildOptions(options),
+            newUnaryCallback(resolve, reject)
+        ));
+    }
+
+    chaincodeEvents(request: SignedChaincodeEventsRequest, options?: Readonly<CallOptions>): CloseableAsyncIterable<ChaincodeEventsResponse> {
+        const serverStream = this.#client.makeServerStreamRequest(
+            chaincodeEventsMethod,
+            serialize,
+            deserializeChaincodeEventsResponse,
+            request,
+            this.#buildOptions(options)
         );
-    }
-
-    endorse(request: EndorseRequest): Promise<EndorseResponse> {
-        return new Promise((resolve, reject) =>
-            this.#client.makeUnaryRequest(endorseMethod, serialize, deserializeEndorseResponse, request, newUnaryCallback(resolve, reject))
-        );
-    }
-
-    submit(request: SubmitRequest): Promise<SubmitResponse> {
-        return new Promise((resolve, reject) =>
-            this.#client.makeUnaryRequest(submitMethod, serialize, deserializeSubmitResponse, request, newUnaryCallback(resolve, reject))
-        );
-    }
-
-    commitStatus(request: SignedCommitStatusRequest): Promise<CommitStatusResponse> {
-        return new Promise((resolve, reject) =>
-            this.#client.makeUnaryRequest(commitStatusMethod, serialize, deserializeCommitStatusResponse, request, newUnaryCallback(resolve, reject))
-        );
-    }
-
-    chaincodeEvents(request: SignedChaincodeEventsRequest): CloseableAsyncIterable<ChaincodeEventsResponse> {
-        const serverStream = this.#client.makeServerStreamRequest(chaincodeEventsMethod, serialize, deserializeChaincodeEventsResponse, request);
         return {
             [Symbol.asyncIterator]: () => serverStream[Symbol.asyncIterator](),
             close: () => serverStream.cancel(),
         }
+    }
+
+    #buildOptions(options?: Readonly<CallOptions>): CallOptions {
+        return Object.assign({}, this.#defaultOptions(), options);
     }
 }
 
@@ -112,6 +163,6 @@ function deserializeChaincodeEventsResponse(bytes: Uint8Array): ChaincodeEventsR
     return ChaincodeEventsResponse.deserializeBinary(bytes);
 }
 
-export function newGatewayClient(client: Client): GatewayClient {
+export function newGatewayClient(client: GatewayGrpcClient): GatewayClient {
     return new GatewayClientImpl(client);
 }

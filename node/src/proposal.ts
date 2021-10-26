@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { CallOptions } from '@grpc/grpc-js';
 import { inspect } from 'util';
 import { GatewayClient } from './client';
 import { Envelope } from './protos/common/common_pb';
@@ -27,19 +28,21 @@ export interface Proposal extends Signable {
      * Evaluate the transaction proposal and obtain its result, without updating the ledger. This runs the transaction
      * on a peer to obtain a transaction result, but does not submit the endorsed transaction to the orderer to be
      * committed to the ledger.
+     * @param options - gRPC call options.
      * @returns The result returned by the transaction function.
      * @throws {@link GatewayError}
      * Thrown if the gRPC service invocation fails.
      */
-    evaluate(): Promise<Uint8Array>;
+    evaluate(options?: CallOptions): Promise<Uint8Array>;
 
     /**
      * Obtain endorsement for the transaction proposal from sufficient peers to allow it to be committed to the ledger.
+     * @param options - gRPC call options.
      * @returns An endorsed transaction that can be submitted to the ledger.
      * @throws {@link GatewayError}
      * Thrown if the gRPC service invocation fails.
      */
-    endorse(): Promise<Transaction>;
+    endorse(options?: CallOptions): Promise<Transaction>;
 }
 
 export interface ProposalImplOptions {
@@ -82,17 +85,17 @@ export class ProposalImpl implements Proposal {
         return this.#proposedTransaction.getTransactionId();
     }
 
-    async evaluate(): Promise<Uint8Array> {
+    async evaluate(options?: CallOptions): Promise<Uint8Array> {
         await this.sign();
-        const evaluateResponse = await this.#client.evaluate(this.newEvaluateRequest());
+        const evaluateResponse = await this.#client.evaluate(this.newEvaluateRequest(), options);
         const result = evaluateResponse.getResult();
 
         return result?.getPayload_asU8() || new Uint8Array(0);
     }
 
-    async endorse(): Promise<Transaction> {
+    async endorse(options?: CallOptions): Promise<Transaction> {
         await this.sign();
-        const endorseResponse = await this.#client.endorse(this.newEndorseRequest());
+        const endorseResponse = await this.#client.endorse(this.newEndorseRequest(), options);
 
         const preparedTx = endorseResponse.getPreparedTransaction();
         const response = endorseResponse.getResult();

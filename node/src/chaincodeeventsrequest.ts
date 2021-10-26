@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { CallOptions } from '@grpc/grpc-js';
 import { ChaincodeEvent, newChaincodeEvents } from './chaincodeevent';
 import { CloseableAsyncIterable, GatewayClient } from './client';
 import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, SignedChaincodeEventsRequest as SignedChaincodeEventsRequestProto } from './protos/gateway/gateway_pb';
@@ -16,6 +17,7 @@ import { SigningIdentity } from './signingidentity';
 export interface ChaincodeEventsRequest extends Signable {
     /**
      * Get chaincode events emitted by transaction functions of a specific chaincode.
+     * @param options - gRPC call options.
      * @returns Chaincode events.
      * @example
      * ```
@@ -29,7 +31,7 @@ export interface ChaincodeEventsRequest extends Signable {
      * }
      * ```
      */
-     getEvents(): Promise<CloseableAsyncIterable<ChaincodeEvent>>;
+     getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>>;
 }
 
 export interface ChaincodeEventsRequestOptions {
@@ -50,9 +52,9 @@ export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
         this.#signedRequest.setRequest(options.request.serializeBinary())
     }
 
-    async getEvents(): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
+    async getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
         await this.sign();
-        const responses = this.#client.chaincodeEvents(this.#signedRequest);
+        const responses = this.#client.chaincodeEvents(this.#signedRequest, options);
         return newChaincodeEvents(responses);
     }
 
