@@ -27,6 +27,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.protobuf.StatusProto;
+import org.hyperledger.fabric.client.CallOption;
 import org.hyperledger.fabric.client.ChaincodeEvent;
 import org.hyperledger.fabric.client.ChaincodeEventsRequest;
 import org.hyperledger.fabric.client.CloseableIterator;
@@ -57,7 +58,13 @@ public class Sample {
         Gateway.Builder builder = Gateway.newInstance()
                 .identity(newIdentity())
                 .signer(newSigner())
-                .connection(channel);
+                .connection(channel)
+                // Default timeouts for different gRPC calls
+                .evaluateOptions(CallOption.deadlineAfter(5, TimeUnit.SECONDS))
+                .endorseOptions(CallOption.deadlineAfter(15, TimeUnit.SECONDS))
+                .submitOptions(CallOption.deadlineAfter(5, TimeUnit.SECONDS))
+                .commitStatusOptions(CallOption.deadlineAfter(1, TimeUnit.MINUTES))
+                .chaincodeEventsOptions(CallOption.deadlineAfter(1, TimeUnit.MINUTES));
 
         try (Gateway gateway = builder.connect()) {
             System.out.println("exampleSubmit:");
