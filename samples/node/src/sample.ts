@@ -28,6 +28,22 @@ async function main() {
         client,
         identity: await newIdentity(),
         signer: await newSigner(),
+        // Default timeouts for different gRPC calls
+        evaluateOptions: () => {
+            return { deadline: Date.now() + 5000 }; // 5 seconds
+        },
+        endorseOptions: () => {
+            return { deadline: Date.now() + 15000 }; // 15 seconds
+        },
+        submitOptions: () => {
+            return { deadline: Date.now() + 5000 }; // 5 seconds
+        },
+        commitStatusOptions: () => {
+            return { deadline: Date.now() + 60000 }; // 1 minute
+        },
+        chaincodeEventsOptions: () => {
+            return { deadline: Date.now() + 60000 }; // 1 minute
+        },
     });
 
     try {

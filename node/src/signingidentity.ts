@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ConnectOptions } from './gateway';
 import { Hash } from './hash/hash';
 import { sha256 } from './hash/hashes';
 import { Identity } from './identity/identity';
@@ -16,11 +17,7 @@ const undefinedSigner: Signer = () => {
     throw new Error(undefinedSignerMessage);
 }
 
-export interface SigningIdentityOptions {
-    identity: Identity;
-    signer?: Signer;
-    hash?: Hash;
-}
+type SigningIdentityOptions = Pick<ConnectOptions, 'identity' | 'signer' | 'hash'>;
 
 export class SigningIdentity {
     readonly #identity: Identity;

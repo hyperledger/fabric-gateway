@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Client } from '@grpc/grpc-js';
+import { CallOptions, Client } from '@grpc/grpc-js';
 import { GatewayClient, GatewayGrpcClient, newGatewayClient } from './client';
 import { Hash } from './hash/hash';
 import { Identity } from './identity/identity';
@@ -36,6 +36,31 @@ export interface ConnectOptions {
      * Hash implementation used by the gateway to generate digital signatures.
      */
     hash?: Hash;
+
+    /**
+     * Supplier of default call options for endorsements.
+     */
+    endorseOptions?: () => CallOptions;
+
+    /**
+     * Supplier of default call options for evaluating transactions.
+     */
+    evaluateOptions?: () => CallOptions;
+ 
+    /**
+     * Supplier of default call options for submit of transactions to the orderer.
+     */
+    submitOptions?: () => CallOptions;
+ 
+    /**
+     * Supplier of default call options for retrieving transaction commit status.
+     */
+    commitStatusOptions?: () => CallOptions;
+ 
+    /**
+     * Supplier of default call options for chaincode events.
+     */
+    chaincodeEventsOptions?: () => CallOptions;
 }
 
 /**
@@ -60,7 +85,7 @@ export function internalConnect(options: InternalConnectOptions): Gateway {
     }
 
     const signingIdentity = new SigningIdentity(options);
-    const gatewayClient = newGatewayClient(options.client);
+    const gatewayClient = newGatewayClient(options.client, options);
 
     return new GatewayImpl(gatewayClient, signingIdentity);
 }

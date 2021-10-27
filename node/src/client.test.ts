@@ -176,7 +176,7 @@ describe('client', () => {
     
         beforeEach(() => {
             grpcClient = new MockGatewayGrpcClient();
-            gatewayClient = newGatewayClient(grpcClient);
+            gatewayClient = newGatewayClient(grpcClient, {});
         });
 
         it('evaluate', async () => {
