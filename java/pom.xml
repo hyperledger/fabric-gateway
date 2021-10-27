@@ -37,7 +37,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
         <grpcVersion>1.41.0</grpcVersion>
-        <protobufVersion>3.18.1</protobufVersion> <!-- keep in step with the version used by io.grpc:grpc-protobuf -->
+        <protobufVersion>3.17.2</protobufVersion> <!-- keep in step with the version used by io.grpc:grpc-protobuf -->
         <cucumberVersion>7.0.0</cucumberVersion>
         <junitVersion>5.8.1</junitVersion>
     </properties>
@@ -338,7 +338,13 @@
                     <plugin>
                         <groupId>org.owasp</groupId>
                         <artifactId>dependency-check-maven</artifactId>
-                        <version>3.2.0</version>
+                        <version>6.4.1</version>
+                        <configuration>
+                            <skipProvidedScope>true</skipProvidedScope>
+                            <skipTestScope>true</skipTestScope>
+                            <skipSystemScope>true</skipSystemScope>
+                            <failBuildOnCVSS>7</failBuildOnCVSS>
+                        </configuration>
                         <executions>
                             <execution>
                                 <goals>
@@ -347,10 +353,8 @@
                             </execution>
                         </executions>
                     </plugin>
-
                 </plugins>
             </build>
-
         </profile>
         <profile>
             <id>release</id>
