@@ -173,16 +173,16 @@ Then('the error details should be', function(this: CustomWorld, dataTable: DataT
 
     const expectedDetails = new Map<string, ErrorDetail>();
     dataTable.raw().forEach(row => expectedDetails.set(row[0], {
-        mspId: row[0],
-        address: row[1],
+        address: row[0],
+        mspId: row[1],
         message: row[2],
     }));
 
     err.details.forEach(actual => {
-        const expected = expectedDetails.get(actual.mspId);
+        const expected = expectedDetails.get(actual.address);
         expect(expected).toBeDefined();
         expect(actual.message).toContain(expected?.message);
-        expectedDetails.delete(actual.mspId);
+        expectedDetails.delete(actual.address);
     });
     expect(Object.keys(expectedDetails)).toHaveLength(0);
 });

@@ -329,24 +329,24 @@ func theErrorDetailsShouldBe(table *messages.PickleTable) error {
 	details := transaction.ErrDetails()
 	expected := map[string]*gateway.ErrorDetail{}
 	for _, row := range table.Rows {
-		mspid := row.Cells[0].Value
-		address := row.Cells[1].Value
+		address := row.Cells[0].Value
+		mspid := row.Cells[1].Value
 		msg := row.Cells[2].Value
-		expected[mspid] = &gateway.ErrorDetail{
+		expected[address] = &gateway.ErrorDetail{
 			MspId:   mspid,
 			Address: address,
 			Message: msg,
 		}
 	}
 	for _, detail := range details {
-		ee := expected[detail.MspId]
+		ee := expected[detail.Address]
 		if ee == nil {
 			return fmt.Errorf("unexpected error from endpoint: %s", detail.Address)
 		}
 		if !strings.Contains(detail.Message, ee.Message) {
 			return fmt.Errorf("expected error detail %+v, got %+v", ee, detail)
 		}
-		delete(expected, detail.MspId)
+		delete(expected, detail.Address)
 	}
 	if len(expected) > 0 {
 		keys := make([]string, 0, len(expected))

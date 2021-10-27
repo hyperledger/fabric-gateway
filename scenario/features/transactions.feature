@@ -58,4 +58,7 @@ Feature: Transaction invocation
         When I prepare to submit an errorMessage transaction
         And I set the transaction arguments to ["ALL_YOUR_ERROR_ARE_BELONG_TO_US"]
         Then the transaction invocation should fail
-        And the error message should contain "ALL_YOUR_ERROR_ARE_BELONG_TO_US"
+        And the error message should contain "failed to endorse transaction, see attached details for more info"
+        And the error details should be
+            | peer0.org1.example.com:7051 | Org1MSP | ALL_YOUR_ERROR_ARE_BELONG_TO_US |
+            | peer1.org1.example.com:9051 | Org1MSP | ALL_YOUR_ERROR_ARE_BELONG_TO_US |
