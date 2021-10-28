@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Metadata, ServiceError } from '@grpc/grpc-js';
+import { CallOptions, Metadata, ServiceError } from '@grpc/grpc-js';
 import { MockGatewayGrpcClient } from './client.test';
 import { CommitError } from './commiterror';
 import { Contract } from './contract';
@@ -24,6 +24,8 @@ describe('Transaction', () => {
         metadata: new Metadata(),
     });
 
+    let submitOptions: () => CallOptions;
+    let commitStatusOptions: () => CallOptions;
     let client: MockGatewayGrpcClient;
     let identity: Identity;
     let signer: jest.Mock<Promise<Uint8Array>, Uint8Array[]>;
@@ -33,6 +35,16 @@ describe('Transaction', () => {
     let contract: Contract;
 
     beforeEach(() => {
+        const now = new Date();
+        const submitCallOptions = {
+            deadline: now.setHours(now.getHours() + 1),
+        }
+        submitOptions = () => submitCallOptions; // Return a specific object to test modification
+        const commitStatusCallOptions = {
+            deadline: now.setHours(now.getHours() + 1),
+        }
+        commitStatusOptions = () => commitStatusCallOptions; // Return a specific object to test modification
+
         client = new MockGatewayGrpcClient();
 
         const txResult = new Response()
@@ -66,6 +78,8 @@ describe('Transaction', () => {
             signer,
             hash,
             client,
+            submitOptions,
+            commitStatusOptions,
         };
         gateway = internalConnect(options);
         network = gateway.getNetwork('CHANNEL_NAME');
@@ -213,14 +227,54 @@ describe('Transaction', () => {
         expect(actual.deadline).toBe(deadline);
     });
 
+    it('submit uses default call options', async () => {
+        const transaction = await contract.newProposal('TRANSACTION_NAME').endorse();
+
+        await transaction.submit();
+
+        const actual = client.getSubmitOptions()[0];
+        expect(actual.deadline).toBe(submitOptions().deadline);
+    });
+
+    it('submit default call options are not modified', async () => {
+        const expected = submitOptions().deadline;
+        const deadline = Date.now() + 1000;
+        const transaction = await contract.newProposal('TRANSACTION_NAME').endorse();
+
+        await transaction.submit({ deadline });
+
+        expect(submitOptions().deadline).toBe(expected);
+    });
+
     it('commit uses specified call options', async () => {
         const deadline = Date.now() + 1000;
         const transaction = await contract.newProposal('TRANSACTION_NAME').endorse();
-        const commit = await transaction.submit({ deadline });
+        const commit = await transaction.submit();
 
         await commit.getStatus({ deadline });
 
-        const actual = client.getSubmitOptions()[0];
+        const actual = client.getCommitStatusOptions()[0];
         expect(actual.deadline).toBe(deadline);
+    });
+
+    it('commit uses default call options', async () => {
+        const transaction = await contract.newProposal('TRANSACTION_NAME').endorse();
+        const commit = await transaction.submit();
+
+        await commit.getStatus();
+
+        const actual = client.getCommitStatusOptions()[0];
+        expect(actual.deadline).toBe(commitStatusOptions().deadline);
+    });
+
+    it('commit default call options are not modified', async () => {
+        const expected = commitStatusOptions().deadline;
+        const deadline = Date.now() + 1000;
+        const transaction = await contract.newProposal('TRANSACTION_NAME').endorse();
+        const commit = await transaction.submit();
+
+        await commit.getStatus({ deadline });
+
+        expect(commitStatusOptions().deadline).toBe(expected);
     });
 });

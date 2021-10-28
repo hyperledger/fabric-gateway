@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Metadata, ServiceError } from '@grpc/grpc-js';
+import { CallOptions, Metadata, ServiceError } from '@grpc/grpc-js';
 import { MockGatewayGrpcClient } from './client.test';
 import { Contract } from './contract';
 import { Gateway, internalConnect } from './gateway';
@@ -68,6 +68,8 @@ describe('Proposal', () => {
         metadata: new Metadata(),
     });
     
+    let evaluateOptions: () => CallOptions;
+    let endorseOptions: () => CallOptions;
     let client: MockGatewayGrpcClient;
     let identity: Identity;
     let signer: jest.Mock<Promise<Uint8Array>, Uint8Array[]>;
@@ -77,6 +79,16 @@ describe('Proposal', () => {
     let contract: Contract;
 
     beforeEach(() => {
+        const now = new Date();
+        const evaluateCallOptions = {
+            deadline: now.setHours(now.getHours() + 1),
+        }
+        evaluateOptions = () => evaluateCallOptions; // Return a specific object to test modification
+        const endorseCallOptions = {
+            deadline: now.setHours(now.getHours() + 1),
+        }
+        endorseOptions = () => endorseCallOptions; // Return a specific object to test modification
+
         client = new MockGatewayGrpcClient();
         identity = {
             mspId: 'MSP_ID',
@@ -92,6 +104,8 @@ describe('Proposal', () => {
             signer,
             hash,
             client,
+            evaluateOptions,
+            endorseOptions
         });
         network = gateway.getNetwork('CHANNEL_NAME');
         contract = network.getContract('CHAINCODE_NAME');
@@ -305,6 +319,23 @@ describe('Proposal', () => {
             const actual = client.getEvaluateOptions()[0];
             expect(actual.deadline).toBe(deadline);
         });
+
+        it('uses default call options', async () => {
+            await contract.evaluate('TRANSACTION_NAME');
+
+            const actual = client.getEvaluateOptions()[0];
+            expect(actual.deadline).toBe(evaluateOptions().deadline);
+        });
+
+        it('default call options are not modified', async () => {
+            const expected = evaluateOptions().deadline;
+            const deadline = Date.now() + 1000;
+            const proposal = contract.newProposal('TRANSACTION_NAME');
+
+            await proposal.evaluate({ deadline });
+
+            expect(evaluateOptions().deadline).toBe(expected);
+        });
     });
 
     describe('endorse', () => {
@@ -467,6 +498,25 @@ describe('Proposal', () => {
 
             const actual = client.getEndorseOptions()[0];
             expect(actual.deadline).toBe(deadline);
+        });
+
+        it('uses default call options', async () => {
+            const proposal = contract.newProposal('TRANSACTION_NAME');
+
+            await proposal.endorse();
+
+            const actual = client.getEndorseOptions()[0];
+            expect(actual.deadline).toBe(endorseOptions().deadline);
+        });
+
+        it('default call options are not modified', async () => {
+            const expected = endorseOptions().deadline;
+            const deadline = Date.now() + 1000;
+            const proposal = contract.newProposal('TRANSACTION_NAME');
+
+            await proposal.endorse({ deadline });
+
+            expect(endorseOptions().deadline).toBe(expected);
         });
     });
 });

@@ -6,6 +6,7 @@
 
 import { CallOptions, ClientUnaryCall, requestCallback } from '@grpc/grpc-js';
 import { Message } from 'google-protobuf';
+import { ConnectOptions } from './gateway';
 import { newGatewayError } from './gatewayerror';
 import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
 
@@ -50,17 +51,15 @@ export interface GatewayGrpcClient {
     makeServerStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, options?: CallOptions): ServerStreamResponse<ResponseType>;
 }
 
-function defaultCallOptions(): CallOptions {
-    return {};
-}
+type DefaultCallOptions = Pick<ConnectOptions, 'commitStatusOptions' | 'endorseOptions' | 'evaluateOptions' | 'submitOptions' | 'chaincodeEventsOptions'>;
 
 class GatewayClientImpl implements GatewayClient {
-    #client: GatewayGrpcClient;
-    #defaultOptions: () => CallOptions;
+    readonly #client: GatewayGrpcClient;
+    readonly #defaultOptions: Readonly<DefaultCallOptions>;
 
-    constructor(client: GatewayGrpcClient, defaultOptions: () => CallOptions = defaultCallOptions) {
+    constructor(client: GatewayGrpcClient, defaultOptions: DefaultCallOptions) {
         this.#client = client;
-        this.#defaultOptions = defaultOptions;
+        this.#defaultOptions = Object.assign({}, defaultOptions);
     }
 
     evaluate(request: EvaluateRequest, options?: Readonly<CallOptions>): Promise<EvaluateResponse> {
@@ -69,7 +68,7 @@ class GatewayClientImpl implements GatewayClient {
             serialize,
             deserializeEvaluateResponse,
             request,
-            this.#buildOptions(options),
+            buildOptions(this.#defaultOptions.evaluateOptions, options),
             newUnaryCallback(resolve, reject)
         ));
     }
@@ -80,7 +79,7 @@ class GatewayClientImpl implements GatewayClient {
             serialize,
             deserializeEndorseResponse,
             request,
-            this.#buildOptions(options),
+            buildOptions(this.#defaultOptions.endorseOptions, options),
             newUnaryCallback(resolve, reject)
         ));
     }
@@ -91,7 +90,7 @@ class GatewayClientImpl implements GatewayClient {
             serialize,
             deserializeSubmitResponse,
             request,
-            this.#buildOptions(options),
+            buildOptions(this.#defaultOptions.submitOptions, options),
             newUnaryCallback(resolve, reject)
         ));
     }
@@ -102,7 +101,7 @@ class GatewayClientImpl implements GatewayClient {
             serialize,
             deserializeCommitStatusResponse,
             request,
-            this.#buildOptions(options),
+            buildOptions(this.#defaultOptions.commitStatusOptions, options),
             newUnaryCallback(resolve, reject)
         ));
     }
@@ -113,7 +112,7 @@ class GatewayClientImpl implements GatewayClient {
             serialize,
             deserializeChaincodeEventsResponse,
             request,
-            this.#buildOptions(options)
+            buildOptions(this.#defaultOptions.chaincodeEventsOptions, options)
         );
         return {
             [Symbol.asyncIterator]: () => serverStream[Symbol.asyncIterator](),
@@ -121,9 +120,10 @@ class GatewayClientImpl implements GatewayClient {
         }
     }
 
-    #buildOptions(options?: Readonly<CallOptions>): CallOptions {
-        return Object.assign({}, this.#defaultOptions(), options);
-    }
+}
+
+function buildOptions(defaultOptions: (() => CallOptions) | undefined, options?: Readonly<CallOptions>): CallOptions {
+    return Object.assign({}, defaultOptions?.(), options);
 }
 
 function newUnaryCallback<T>(resolve: (value: T) => void, reject: (reason: Error) => void): requestCallback<T> {
@@ -163,6 +163,6 @@ function deserializeChaincodeEventsResponse(bytes: Uint8Array): ChaincodeEventsR
     return ChaincodeEventsResponse.deserializeBinary(bytes);
 }
 
-export function newGatewayClient(client: GatewayGrpcClient): GatewayClient {
-    return new GatewayClientImpl(client);
+export function newGatewayClient(client: GatewayGrpcClient, defaultOptions: DefaultCallOptions): GatewayClient {
+    return new GatewayClientImpl(client, defaultOptions);
 }

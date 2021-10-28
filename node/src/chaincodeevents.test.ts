@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { CallOptions } from '@grpc/grpc-js';
 import { ChaincodeEvent } from './chaincodeevent';
 import { ServerStreamResponse } from './client';
 import { MockGatewayGrpcClient } from './client.test';
@@ -57,7 +58,8 @@ async function readElements<T>(iter: AsyncIterable<T>, count: number): Promise<T
 describe('Chaincode Events', () => {
     const channelName = 'CHANNEL_NAME';
     const signature = Buffer.from('SIGNATURE');
-    
+
+    let chaincodeEventsOptions: () => CallOptions;
     let client: MockGatewayGrpcClient;
     let identity: Identity;
     let signer: jest.Mock<Promise<Uint8Array>, Uint8Array[]>;
@@ -66,6 +68,12 @@ describe('Chaincode Events', () => {
     let network: Network;
 
     beforeEach(() => {
+        const now = new Date();
+        const callOptions = {
+            deadline: now.setHours(now.getHours() + 1),
+        }
+        chaincodeEventsOptions = () => callOptions; // Return a specific object to test modification
+        
         client = new MockGatewayGrpcClient();
         identity = {
             mspId: 'MSP_ID',
@@ -81,6 +89,7 @@ describe('Chaincode Events', () => {
             signer,
             hash,
             client,
+            chaincodeEventsOptions,
         };
         gateway = internalConnect(options);
         network = gateway.getNetwork(channelName);
@@ -138,6 +147,24 @@ describe('Chaincode Events', () => {
             const actual = client.getChaincodeEventsOptions()[0];
             expect(actual.deadline).toBe(deadline);
         });
+
+        it('uses default call options', async () => {
+            await network.getChaincodeEvents('CHAINCODE');
+
+            const actual = client.getChaincodeEventsOptions()[0];
+            expect(actual.deadline).toBe(chaincodeEventsOptions().deadline);
+        });
+
+        it('default call options are not modified', async () => {
+            const expected = chaincodeEventsOptions().deadline;
+            const deadline = Date.now() + 1000;
+
+            await network.newChaincodeEventsRequest('CHAINCODE')
+                .getEvents({ deadline });
+
+            expect(chaincodeEventsOptions().deadline).toBe(expected);
+        });
+
     });
 
     describe('event delivery', () => {
