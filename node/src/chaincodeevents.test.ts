@@ -5,8 +5,8 @@
  */
 
 import { ChaincodeEvent } from './chaincodeevent';
-import { CloseableAsyncIterable } from './client';
-import { MockGatewayClient, newMockGatewayClient } from './client.test';
+import { ServerStreamResponse } from './client';
+import { MockGatewayGrpcClient } from './client.test';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
@@ -30,14 +30,14 @@ function newChaincodeEvent(blockNumber: number, event: ChaincodeEventProto): Cha
     };
 }
 
-function newCloseableAsyncIterable<T>(values: T[]): { close: jest.Mock<void, void[]> } & CloseableAsyncIterable<T> {
+function newServerStreamResponse<T>(values: T[]): ServerStreamResponse<T> & { cancel: jest.Mock<void, void[]> } {
     return {
         async* [Symbol.asyncIterator]() { // eslint-disable-line @typescript-eslint/require-await
             for (const value of values) {
                 yield value;
             }
         },
-        close: jest.fn(),
+        cancel: jest.fn(),
     }
 }
 
@@ -57,7 +57,8 @@ async function readElements<T>(iter: AsyncIterable<T>, count: number): Promise<T
 describe('Chaincode Events', () => {
     const channelName = 'CHANNEL_NAME';
     const signature = Buffer.from('SIGNATURE');
-    let client: MockGatewayClient;
+    
+    let client: MockGatewayGrpcClient;
     let identity: Identity;
     let signer: jest.Mock<Promise<Uint8Array>, Uint8Array[]>;
     let hash: jest.Mock<Uint8Array, Uint8Array[]>;
@@ -65,7 +66,7 @@ describe('Chaincode Events', () => {
     let network: Network;
 
     beforeEach(() => {
-        client = newMockGatewayClient();
+        client = new MockGatewayGrpcClient();
         identity = {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
@@ -79,27 +80,17 @@ describe('Chaincode Events', () => {
             identity,
             signer,
             hash,
-            gatewayClient: client,
+            client,
         };
         gateway = internalConnect(options);
         network = gateway.getNetwork(channelName);
     });
 
     describe('request', () => {
-        it('throws on connection error', async () => {
-            client.chaincodeEvents.mockImplementation(() => {
-                throw new Error('CONNECTION_ERROR');
-            });
-    
-            await expect(network.getChaincodeEvents('CHAINCODE'))
-                .rejects
-                .toThrow('CONNECTION_ERROR');
-        });
-    
         it('sends valid request with default start position', async () => {
             await network.getChaincodeEvents('CHAINCODE');
     
-            const signedRequest = client.chaincodeEvents.mock.calls[0][0];
+            const signedRequest = client.getChaincodeEventsRequests()[0];
             expect(signedRequest.getSignature()).toEqual(signature);
     
             const request = assertDecodeChaincodeEventsRequest(signedRequest);
@@ -115,16 +106,16 @@ describe('Chaincode Events', () => {
 
         it('throws with negative specified start block number', async () => {
             const startBlock = BigInt(-1);
-            await expect(network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock }))
+            await expect(network.getChaincodeEvents('CHAINCODE', { startBlock }))
                 .rejects
                 .toThrow();
         });
 
         it('sends valid request with specified start block number', async () => {
             const startBlock = BigInt(418);
-            await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock });
+            await network.getChaincodeEvents('CHAINCODE', { startBlock });
     
-            const signedRequest = client.chaincodeEvents.mock.calls[0][0];
+            const signedRequest = client.getChaincodeEventsRequests()[0];
             expect(signedRequest.getSignature()).toEqual(signature);
     
             const request = assertDecodeChaincodeEventsRequest(signedRequest);
@@ -136,6 +127,16 @@ describe('Chaincode Events', () => {
             expect(startPosition).toBeDefined();
             expect(startPosition?.getTypeCase()).toBe(SeekPosition.TypeCase.SPECIFIED);
             expect(startPosition?.getSpecified()?.getNumber()).toBe(Number(startBlock));
+        });
+
+        it('uses specified call options', async () => {
+            const deadline = Date.now() + 1000;
+
+            await network.newChaincodeEventsRequest('CHAINCODE')
+                .getEvents({ deadline });
+
+            const actual = client.getChaincodeEventsOptions()[0];
+            expect(actual.deadline).toBe(deadline);
         });
     });
 
@@ -173,7 +174,7 @@ describe('Chaincode Events', () => {
         ];
     
         it('returns events as AsyncIterable', async () => {
-            client.chaincodeEvents.mockReturnValue(newCloseableAsyncIterable([ response1, response2 ]));
+            client.mockChaincodeEventsResponse(newServerStreamResponse([ response1, response2 ]));
     
             const events = await network.getChaincodeEvents('CHAINCODE');
     
@@ -181,14 +182,14 @@ describe('Chaincode Events', () => {
             expect(actualEvents).toEqual(expectedEvents);
         });
 
-        it('closing iterator closes gRPC client stream', async () => {
-            const iterable = newCloseableAsyncIterable([ response1, response2 ])
-            client.chaincodeEvents.mockReturnValue(iterable);
+        it('closing iterator cancels gRPC client stream', async () => {
+            const iterable = newServerStreamResponse([ response1, response2 ])
+            client.mockChaincodeEventsResponse(iterable);
     
             const events = await network.getChaincodeEvents('CHAINCODE');
             events.close();
 
-            expect(iterable.close).toBeCalled();
+            expect(iterable.cancel).toBeCalled();
         });
     })
 });

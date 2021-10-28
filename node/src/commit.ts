@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { CallOptions } from '@grpc/grpc-js';
 import { inspect } from 'util';
 import { GatewayClient } from './client';
 import { CommitStatusResponse, SignedCommitStatusRequest } from './protos/gateway/gateway_pb';
@@ -18,10 +19,11 @@ export interface Commit extends Signable {
     /**
      * Get status of the committed transaction. If the transaction has not yet committed, this method blocks until the
      * commit occurs.
+     * @param options - gRPC call options.
      * @throws {@link GatewayError}
      * Thrown if the gRPC service invocation fails.
      */
-    getStatus(): Promise<Status>;
+    getStatus(options?: CallOptions): Promise<Status>;
 
     /**
      * Get the ID of the transaction.
@@ -62,9 +64,9 @@ export class CommitImpl implements Commit {
         return this.#signingIdentity.hash(request);
     }
 
-    async getStatus(): Promise<Status> {
+    async getStatus(options?: CallOptions): Promise<Status> {
         await this.sign();
-        const response = await this.#client.commitStatus(this.#signedRequest);
+        const response = await this.#client.commitStatus(this.#signedRequest, options);
         return this.newStatus(response);
     }
 

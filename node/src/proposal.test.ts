@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MockGatewayClient, newMockGatewayClient } from './client.test';
+import { Metadata, ServiceError } from '@grpc/grpc-js';
+import { MockGatewayGrpcClient } from './client.test';
 import { Contract } from './contract';
-import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
+import { Gateway, internalConnect } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { ChannelHeader, Envelope, Header, SignatureHeader } from './protos/common/common_pb';
+import { ChannelHeader, Envelope, Header, SignatureHeader, Status } from './protos/common/common_pb';
 import { CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse } from './protos/gateway/gateway_pb';
 import { SerializedIdentity } from './protos/msp/identities_pb';
 import { ChaincodeInvocationSpec, ChaincodeSpec } from './protos/peer/chaincode_pb';
@@ -61,7 +62,13 @@ function assertDecodeChannelHeader(proposal: ProposalProto): ChannelHeader {
 }
 
 describe('Proposal', () => {
-    let client: MockGatewayClient;
+    const serviceError: ServiceError = Object.assign(new Error('ERROR_MESSAGE'), {
+        code: Status.SERVICE_UNAVAILABLE,
+        details: 'DETAILS',
+        metadata: new Metadata(),
+    });
+    
+    let client: MockGatewayGrpcClient;
     let identity: Identity;
     let signer: jest.Mock<Promise<Uint8Array>, Uint8Array[]>;
     let hash: jest.Mock<Uint8Array, Uint8Array[]>;
@@ -70,7 +77,7 @@ describe('Proposal', () => {
     let contract: Contract;
 
     beforeEach(() => {
-        client = newMockGatewayClient();
+        client = new MockGatewayGrpcClient();
         identity = {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
@@ -80,13 +87,12 @@ describe('Proposal', () => {
         hash = jest.fn(undefined);
         hash.mockReturnValue(Buffer.from('DIGEST'));
 
-        const options: InternalConnectOptions = {
+        gateway = internalConnect({
             identity,
             signer,
             hash,
-            gatewayClient: client,
-        };
-        gateway = internalConnect(options);
+            client,
+        });
         network = gateway.getNetwork('CHANNEL_NAME');
         contract = network.getContract('CHAINCODE_NAME');
     });
@@ -101,13 +107,13 @@ describe('Proposal', () => {
             const evaluateResult = new EvaluateResponse();
             evaluateResult.setResult(txResult)
     
-            client.evaluate.mockResolvedValue(evaluateResult);
+            client.mockEvaluateResponse(evaluateResult);
         });
 
         it('throws on evaluate error', async () => {
-            client.evaluate.mockRejectedValue(new Error('ERROR_MESSAGE'));
+            client.mockEvaluateError(serviceError);
 
-            await expect(contract.evaluateTransaction('TRANSACTION_NAME')).rejects.toThrow('ERROR_MESSAGE');
+            await expect(contract.evaluateTransaction('TRANSACTION_NAME')).rejects.toThrow(serviceError.message);
         });
 
         it('returns result', async () => {
@@ -120,7 +126,7 @@ describe('Proposal', () => {
         it('includes channel name in proposal', async () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
-            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const evaluateRequest = client.getEvaluateRequests()[0];
             const proposal = assertDecodeEvaluateRequest(evaluateRequest);
             const channelHeader = assertDecodeChannelHeader(proposal);
             expect(channelHeader.getChannelId()).toBe(network.getName());
@@ -129,7 +135,7 @@ describe('Proposal', () => {
         it('includes chaincode name in proposal', async () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
-            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const evaluateRequest = client.getEvaluateRequests()[0];
             const proposal = assertDecodeEvaluateRequest(evaluateRequest);
             const chaincodeSpec = assertDecodeChaincodeSpec(proposal);
             expect(chaincodeSpec.getChaincodeId()).toBeDefined();
@@ -141,7 +147,7 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('MY_TRANSACTION');
 
-            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const evaluateRequest = client.getEvaluateRequests()[0];
             const proposal = assertDecodeEvaluateRequest(evaluateRequest);
             const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings[0]).toBe('MY_TRANSACTION');
@@ -152,7 +158,7 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('MY_TRANSACTION');
 
-            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const evaluateRequest = client.getEvaluateRequests()[0];
             const proposal = assertDecodeEvaluateRequest(evaluateRequest);
             const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings[0]).toBe('MY_CONTRACT:MY_TRANSACTION');
@@ -163,7 +169,7 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('TRANSACTION_NAME', ...expected);
 
-            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const evaluateRequest = client.getEvaluateRequests()[0];
             const proposal = assertDecodeEvaluateRequest(evaluateRequest);
             const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings.slice(1)).toStrictEqual(expected);
@@ -175,7 +181,7 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('TRANSACTION_NAME', ...args);
 
-            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const evaluateRequest = client.getEvaluateRequests()[0];
             const proposal = assertDecodeEvaluateRequest(evaluateRequest);
             const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings.slice(1)).toStrictEqual(expected);
@@ -188,7 +194,8 @@ describe('Proposal', () => {
             };
             await contract.evaluate('TRANSACTION_NAME', { transientData });
 
-            const proposal_bytes = client.evaluate.mock.calls[0][0].getProposedTransaction()?.getProposalBytes_asU8() || Buffer.from('');
+            const evaluateRequest = client.getEvaluateRequests()[0];
+            const proposal_bytes = evaluateRequest.getProposedTransaction()?.getProposalBytes_asU8() || Buffer.from('');
             const proposal = ProposalProto.deserializeBinary(proposal_bytes);
             const payload = ChaincodeProposalPayload.deserializeBinary(proposal.getPayload_asU8());
 
@@ -204,7 +211,8 @@ describe('Proposal', () => {
             };
             await contract.evaluate('TRANSACTION_NAME', { transientData });
 
-            const proposal_bytes = client.evaluate.mock.calls[0][0].getProposedTransaction()?.getProposalBytes_asU8() || Buffer.from('');
+            const evaluateRequest = client.getEvaluateRequests()[0];
+            const proposal_bytes = evaluateRequest.getProposedTransaction()?.getProposalBytes_asU8() || Buffer.from('');
             const proposal = ProposalProto.deserializeBinary(proposal_bytes);
             const payload = ChaincodeProposalPayload.deserializeBinary(proposal.getPayload_asU8());
 
@@ -217,7 +225,9 @@ describe('Proposal', () => {
 
         it('sets endorsing orgs', async () => {
             await contract.evaluate('TRANSACTION_NAME', { endorsingOrganizations: ['org1']});
-            const actualOrgs = client.evaluate.mock.calls[0][0].getTargetOrganizationsList();
+
+            const evaluateRequest = client.getEvaluateRequests()[0];
+            const actualOrgs = evaluateRequest.getTargetOrganizationsList();
             expect(actualOrgs).toStrictEqual(['org1']);
         });
 
@@ -226,7 +236,7 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
-            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const evaluateRequest = client.getEvaluateRequests()[0];
             const signature = Buffer.from(evaluateRequest.getProposedTransaction()?.getSignature_asU8() || '').toString();
             expect(signature).toBe('MY_SIGNATURE');
         });
@@ -246,7 +256,7 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
-            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const evaluateRequest = client.getEvaluateRequests()[0];
             const proposal = assertDecodeEvaluateRequest(evaluateRequest);
             const signatureHeader = assertDecodeSignatureHeader(proposal);
 
@@ -262,7 +272,7 @@ describe('Proposal', () => {
 
             const expected = network.getName();
 
-            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const evaluateRequest = client.getEvaluateRequests()[0];
             expect(evaluateRequest.getChannelId()).toBe(expected);
 
             const proposalProto = assertDecodeEvaluateRequest(evaluateRequest);
@@ -278,16 +288,26 @@ describe('Proposal', () => {
             const expected = proposal.getTransactionId();
             expect(expected).not.toHaveLength(0);
 
-            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const evaluateRequest = client.getEvaluateRequests()[0];
             expect(evaluateRequest.getTransactionId()).toBe(expected);
 
             const proposalProto = assertDecodeEvaluateRequest(evaluateRequest);
             const channelHeader = assertDecodeChannelHeader(proposalProto);
             expect(channelHeader.getTxId()).toBe(expected);
         });
+
+        it('uses specified call options', async () => {
+            const deadline = Date.now() + 1000;
+            const proposal = contract.newProposal('TRANSACTION_NAME');
+
+            await proposal.evaluate({ deadline });
+
+            const actual = client.getEvaluateOptions()[0];
+            expect(actual.deadline).toBe(deadline);
+        });
     });
 
-    describe('submit', () => {
+    describe('endorse', () => {
         beforeEach(() => {
             const txResult = new Response()
             txResult.setPayload(Buffer.from('TX_RESULT'));
@@ -298,25 +318,25 @@ describe('Proposal', () => {
             const endorseResult = new EndorseResponse();
             endorseResult.setPreparedTransaction(preparedTx);
             endorseResult.setResult(txResult)
-    
-            client.endorse.mockResolvedValue(endorseResult);
+
+            client.mockEndorseResponse(endorseResult);
 
             const commitResult = new CommitStatusResponse();
             commitResult.setResult(TxValidationCode.VALID);
-    
-            client.commitStatus.mockResolvedValue(commitResult);
+
+            client.mockCommitStatusResponse(commitResult);
         });
 
         it('throws on endorse error', async () => {
-            client.endorse.mockRejectedValue(new Error('ERROR_MESSAGE'));
+            client.mockEndorseError(serviceError);
 
-            await expect(contract.submitTransaction('TRANSACTION_NAME')).rejects.toThrow('ERROR_MESSAGE');
+            await expect(contract.submitTransaction('TRANSACTION_NAME')).rejects.toThrow(serviceError.message);
         });
 
         it('includes channel name in proposal', async () => {
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            const endorseRequest = client.endorse.mock.calls[0][0];
+            const endorseRequest = client.getEndorseRequests()[0];
             const proposal = assertDecodeEndorseRequest(endorseRequest);
             const channelHeader = assertDecodeChannelHeader(proposal);
             expect(channelHeader.getChannelId()).toBe(network.getName());
@@ -325,7 +345,7 @@ describe('Proposal', () => {
         it('includes chaincode name in proposal', async () => {
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            const endorseRequest = client.endorse.mock.calls[0][0];
+            const endorseRequest = client.getEndorseRequests()[0];
             const proposal = assertDecodeEndorseRequest(endorseRequest);
             const chaincodeSpec = assertDecodeChaincodeSpec(proposal);
             expect(chaincodeSpec.getChaincodeId()).toBeDefined();
@@ -337,7 +357,7 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('MY_TRANSACTION');
 
-            const endorseRequest = client.endorse.mock.calls[0][0];
+            const endorseRequest = client.getEndorseRequests()[0];
             const proposal = assertDecodeEndorseRequest(endorseRequest);
             const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings[0]).toBe('MY_TRANSACTION');
@@ -348,7 +368,7 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('MY_TRANSACTION');
 
-            const endorseRequest = client.endorse.mock.calls[0][0];
+            const endorseRequest = client.getEndorseRequests()[0];
             const proposal = assertDecodeEndorseRequest(endorseRequest);
             const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings[0]).toBe('MY_CONTRACT:MY_TRANSACTION');
@@ -359,7 +379,7 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('TRANSACTION_NAME', ...expected);
 
-            const endorseRequest = client.endorse.mock.calls[0][0];
+            const endorseRequest = client.getEndorseRequests()[0];
             const proposal = assertDecodeEndorseRequest(endorseRequest);
             const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings.slice(1)).toStrictEqual(expected);
@@ -371,7 +391,7 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('TRANSACTION_NAME', ...args);
 
-            const endorseRequest = client.endorse.mock.calls[0][0];
+            const endorseRequest = client.getEndorseRequests()[0];
             const proposal = assertDecodeEndorseRequest(endorseRequest);
             const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings.slice(1)).toStrictEqual(expected);
@@ -382,7 +402,7 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            const endorseRequest = client.endorse.mock.calls[0][0];
+            const endorseRequest = client.getEndorseRequests()[0];
             const signature = Buffer.from(endorseRequest.getProposedTransaction()?.getSignature_asU8() || '').toString();
             expect(signature).toBe('MY_SIGNATURE');
         });
@@ -402,7 +422,7 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            const endorseRequest = client.endorse.mock.calls[0][0];
+            const endorseRequest = client.getEndorseRequests()[0];
             const proposal = assertDecodeEndorseRequest(endorseRequest);
             const signatureHeader = assertDecodeSignatureHeader(proposal);
 
@@ -416,7 +436,7 @@ describe('Proposal', () => {
         it('includes channel name in request', async () => {
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            const endorseRequest = client.endorse.mock.calls[0][0];
+            const endorseRequest = client.getEndorseRequests()[0];
             expect(endorseRequest.getChannelId()).toBe(network.getName());
         });
 
@@ -431,12 +451,22 @@ describe('Proposal', () => {
             const commit = await transaction.submit();
             expect(commit.getTransactionId()).toBe(expected);
 
-            const endorseRequest = client.endorse.mock.calls[0][0];
+            const endorseRequest = client.getEndorseRequests()[0];
             expect(endorseRequest.getTransactionId()).toBe(expected);
 
             const proposalProto = assertDecodeEndorseRequest(endorseRequest);
             const channelHeader = assertDecodeChannelHeader(proposalProto);
             expect(channelHeader.getTxId()).toBe(expected);
+        });
+
+        it('uses specified call options', async () => {
+            const deadline = Date.now() + 1000;
+            const proposal = contract.newProposal('TRANSACTION_NAME');
+
+            await proposal.endorse({ deadline });
+
+            const actual = client.getEndorseOptions()[0];
+            expect(actual.deadline).toBe(deadline);
         });
     });
 });

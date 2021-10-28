@@ -34,7 +34,7 @@ public final class CallOption {
     }
 
     /**
-     * A deadline that is after the given duration from now.
+     * A deadline that is after the given duration from when the call is initiated.
      * @param duration a time duration.
      * @param unit units for the time duration.
      * @return a call option.

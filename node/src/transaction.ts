@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { CallOptions } from '@grpc/grpc-js';
 import { inspect } from 'util';
 import { GatewayClient } from './client';
 import { Envelope } from './protos/common/common_pb';
@@ -29,10 +30,11 @@ export interface Transaction extends Signable {
 
      /**
      * Submit the transaction to the orderer to be committed to the ledger.
+     * @param options - gRPC call options.
      * @throws {@link GatewayError}
      * Thrown if the gRPC service invocation fails.
      */
-    submit(): Promise<SubmittedTransaction>;
+    submit(options?: CallOptions): Promise<SubmittedTransaction>;
 }
 
 export interface TransactionImplOptions {
@@ -80,9 +82,9 @@ export class TransactionImpl implements Transaction {
         return this.#preparedTransaction.getTransactionId();
     }
 
-    async submit(): Promise<SubmittedTransaction> {
+    async submit(options?: CallOptions): Promise<SubmittedTransaction> {
         await this.sign();
-        await this.#client.submit(this.newSubmitRequest());
+        await this.#client.submit(this.newSubmitRequest(), options);
 
         return new SubmittedTransactionImpl({
             client: this.#client,

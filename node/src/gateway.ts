@@ -5,7 +5,7 @@
  */
 
 import { Client } from '@grpc/grpc-js';
-import { GatewayClient, newGatewayClient } from './client';
+import { GatewayClient, GatewayGrpcClient, newGatewayClient } from './client';
 import { Hash } from './hash/hash';
 import { Identity } from './identity/identity';
 import { Signer } from './identity/signer';
@@ -38,34 +38,31 @@ export interface ConnectOptions {
     hash?: Hash;
 }
 
-export interface InternalConnectOptions {
-    gatewayClient: GatewayClient;
-    identity: Identity;
-    signer?: Signer;
-    hash?: Hash;
-}
-
 /**
  * Connect to a Fabric Gateway using a client identity, gRPC connection and signing implementation.
  * @param options - Connection options.
  * @returns A connected gateway.
  */
 export function connect(options: ConnectOptions): Gateway {
-    if (!options.client) {
-        throw new Error('No client connection supplied');
-    }
+    return internalConnect(options);
+}
 
-    const gatewayClient = newGatewayClient(options.client);
-    return internalConnect(Object.assign({ gatewayClient }, options));
+export interface InternalConnectOptions extends Omit<ConnectOptions, 'client'> {
+    client: GatewayGrpcClient;
 }
 
 export function internalConnect(options: InternalConnectOptions): Gateway {
+    if (!options.client) {
+        throw new Error('No client connection supplied');
+    }
     if (!options.identity) {
         throw new Error('No identity supplied');
     }
-    const signingIdentity = new SigningIdentity(options);
 
-    return new GatewayImpl(options.gatewayClient, signingIdentity);
+    const signingIdentity = new SigningIdentity(options);
+    const gatewayClient = newGatewayClient(options.client);
+
+    return new GatewayImpl(gatewayClient, signingIdentity);
 }
 
 /**

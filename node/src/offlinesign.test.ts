@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MockGatewayClient, newMockGatewayClient } from './client.test';
+import { MockGatewayGrpcClient } from './client.test';
 import { Contract } from './contract';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
@@ -18,14 +18,14 @@ import { undefinedSignerMessage } from './signingidentity';
 describe('Offline sign', () => {
     const expectedResult = 'TX_RESULT';
 
-    let client: MockGatewayClient;
+    let client: MockGatewayGrpcClient;
     let identity: Identity;
     let gateway: Gateway;
     let network: Network;
     let contract: Contract;
 
     beforeEach(() => {
-        client = newMockGatewayClient();
+        client = new MockGatewayGrpcClient();
 
         const txResult = new Response()
         txResult.setPayload(Buffer.from(expectedResult));
@@ -33,7 +33,7 @@ describe('Offline sign', () => {
         const evaluateResult = new EvaluateResponse();
         evaluateResult.setResult(txResult)
 
-        client.evaluate.mockResolvedValue(evaluateResult);
+        client.mockEvaluateResponse(evaluateResult);
 
         const preparedTx = new Envelope();
         preparedTx.setPayload(Buffer.from('PAYLOAD'));
@@ -42,12 +42,12 @@ describe('Offline sign', () => {
         endorseResult.setPreparedTransaction(preparedTx);
         endorseResult.setResult(txResult)
 
-        client.endorse.mockResolvedValue(endorseResult);
+        client.mockEndorseResponse(endorseResult);
 
         const commitResult = new CommitStatusResponse();
         commitResult.setResult(TxValidationCode.VALID);
 
-        client.commitStatus.mockResolvedValue(commitResult);
+        client.mockCommitStatusResponse(commitResult);
 
         identity = {
             mspId: 'MSP_ID',
@@ -56,7 +56,7 @@ describe('Offline sign', () => {
 
         const options: InternalConnectOptions = {
             identity,
-            gatewayClient: client,
+            client,
         };
         gateway = internalConnect(options);
         network = gateway.getNetwork('CHANNEL_NAME');
@@ -77,7 +77,7 @@ describe('Offline sign', () => {
             const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), expected);
             await signedProposal.evaluate();
     
-            const evaluateRequest = client.evaluate.mock.calls[0][0];
+            const evaluateRequest = client.getEvaluateRequests()[0];
             const actual = Buffer.from(evaluateRequest.getProposedTransaction()?.getSignature_asU8() || '').toString();
             expect(actual).toBe(expected.toString());
         });
@@ -89,7 +89,8 @@ describe('Offline sign', () => {
             const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), expected);
             await signedProposal.evaluate();
 
-            const actualOrgs = client.evaluate.mock.calls[0][0].getTargetOrganizationsList();
+            const evaluateRequest = client.getEvaluateRequests()[0];
+            const actualOrgs = evaluateRequest.getTargetOrganizationsList();
             expect(actualOrgs).toStrictEqual(['org3', 'org5']);
         });
     });
@@ -108,7 +109,7 @@ describe('Offline sign', () => {
             const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), expected);
             await signedProposal.endorse();
     
-            const endorseRequest = client.endorse.mock.calls[0][0];
+            const endorseRequest = client.getEndorseRequests()[0];
             const actual = Buffer.from(endorseRequest.getProposedTransaction()?.getSignature_asU8() || '').toString();
             expect(actual).toBe(expected.toString());
         });
@@ -120,7 +121,8 @@ describe('Offline sign', () => {
             const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), expected);
             await signedProposal.endorse();
 
-            const actualOrgs = client.endorse.mock.calls[0][0].getEndorsingOrganizationsList();
+            const endorseRequest = client.getEndorseRequests()[0];
+            const actualOrgs = endorseRequest.getEndorsingOrganizationsList();
             expect(actualOrgs).toStrictEqual(['org3', 'org5']);
         });
     });
@@ -143,7 +145,7 @@ describe('Offline sign', () => {
             const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), expected);
             await signedTransaction.submit();
     
-            const submitRequest = client.submit.mock.calls[0][0];
+            const submitRequest = client.getSubmitRequests()[0];
             const actual = Buffer.from(submitRequest.getPreparedTransaction()?.getSignature_asU8() || '').toString();
             expect(actual).toBe(expected.toString());
         });
@@ -171,7 +173,7 @@ describe('Offline sign', () => {
             const signedCommit = network.newSignedCommit(unsignedCommit.getBytes(), expected);
             await signedCommit.getStatus();
     
-            const commitRequest = client.commitStatus.mock.calls[0][0];
+            const commitRequest = client.getCommitStatusRequests()[0];
             const actual = Buffer.from(commitRequest.getSignature_asU8() ?? '').toString();
             expect(actual).toBe(expected.toString());
         });
