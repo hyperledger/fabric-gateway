@@ -30,8 +30,7 @@ The following complete example shows how to connect to a Fabric network, submit 
         const privateKey = crypto.createPrivateKey(privateKeyPem);
         const signer = signers.newPrivateKeySigner(privateKey);
 
-        const GrpcClient = grpc.makeGenericClientConstructor({}, '');
-        const client = new GrpcClient('gateway.example.org:1337', grpc.credentials.createInsecure());
+        const client = new grpc.Client('gateway.example.org:1337', grpc.credentials.createInsecure());
 
         const gateway = connect({ identity, signer, client });
         try {

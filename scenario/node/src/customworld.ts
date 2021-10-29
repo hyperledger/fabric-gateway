@@ -164,7 +164,6 @@ export class CustomWorld {
         // address is the name of the peer, lookup the connection info
         const peer = peerConnectionInfo[address];
         const tlsRootCert = await fs.readFile(peer.tlsRootCertPath)
-        const GrpcClient = grpc.makeGenericClientConstructor({}, '');
         const credentials = grpc.credentials.createSsl(tlsRootCert);
         let grpcOptions: Record<string, unknown> = {};
         if (peer.serverNameOverride) {
@@ -172,7 +171,7 @@ export class CustomWorld {
                 'grpc.ssl_target_name_override': peer.serverNameOverride
             };
         }
-        const client = new GrpcClient(peer.url, credentials, grpcOptions);
+        const client = new grpc.Client(peer.url, credentials, grpcOptions);
         await this.getCurrentGateway().connect(client);
     }
 
