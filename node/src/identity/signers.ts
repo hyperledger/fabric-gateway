@@ -7,7 +7,7 @@
 import { KeyObject } from 'crypto';
 import { ec as EC } from 'elliptic';
 import { ecPrivateKeyAsRaw } from './asn1';
-import { HSMSignerFactory, HSMSignerFactoryImpl } from './hsmsigner';
+import { HSMSignerFactory, HSMSignerFactoryImpl as HSMSignerFactoryImplType } from './hsmsigner';
 import { Signer } from './signer';
 
 const namedCurves: Record<string, EC> = {
@@ -66,6 +66,10 @@ export function newHSMSignerFactory(library: string): HSMSignerFactory {
     if (!library || library.trim() === '') {
         throw new Error('library must be provided');
     }
+
+    // Dynamic module load to prevent unnecessary load of optional pkcs11js dependency
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { HSMSignerFactoryImpl } = require('./hsmsigner') as { HSMSignerFactoryImpl: typeof HSMSignerFactoryImplType };
 
     return new HSMSignerFactoryImpl(library);
 }
