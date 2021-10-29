@@ -17,8 +17,7 @@ describe('Gateway', () => {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
         }
-        const Client = grpc.makeGenericClientConstructor({}, '');
-        client = new Client('example.org:1337', grpc.credentials.createInsecure());
+        client = new grpc.Client('example.org:1337', grpc.credentials.createInsecure());
     });
 
     describe('connect', () => {
@@ -69,8 +68,7 @@ describe('Gateway', () => {
 
     describe('close', () => {
         it('does not close supplied gRPC client', () => {
-            const Client = grpc.makeGenericClientConstructor({}, '');
-            const client = new Client('example.org:1337', grpc.credentials.createInsecure());
+            const client = new grpc.Client('example.org:1337', grpc.credentials.createInsecure());
             const closeStub = client.close = jest.fn();
             const options: ConnectOptions = {
                 identity,

@@ -18,8 +18,7 @@ describe ('Network', () => {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
         }
-        const Client = grpc.makeGenericClientConstructor({}, '');
-        client = new Client('example.org:1337', grpc.credentials.createInsecure());
+        client = new grpc.Client('example.org:1337', grpc.credentials.createInsecure());
         const options: ConnectOptions = {
             identity,
             client,

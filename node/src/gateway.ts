@@ -14,6 +14,27 @@ import { SigningIdentity } from './signingidentity';
 
 /**
  * Options used when connecting to a Fabric Gateway.
+ * @example
+ * ```
+ * function defaultTimeout(): grpc.CallOptions {
+ *     return {
+ *         deadline: Date.now() + 5000, // 5 second timeout
+ *     };
+ * };
+ * const options: ConnectOptions {
+ *     identity: {
+ *         mspId: 'myorg',
+ *         credentials,
+ *     },
+ *     signer: signers.newPrivateKeySigner(privateKey),
+ *     client: new grpc.Client('gateway.example.org:1337', grpc.credentials.createInsecure()),
+ *     evaluateOptions: defaultTimeout,
+ *     endorseOptions: defaultTimeout,
+ *     submitOptions: defaultTimeout,
+ *     commitStatusOptions: defaultTimeout,
+ *     chaincodeEventsOptions: defaultTimeout,
+ * };
+ * ```
  */
 export interface ConnectOptions {
     /**

@@ -300,8 +300,7 @@ async function newGrpcConnection(): Promise<grpc.Client> {
     const tlsRootCert = await fs.readFile(tlsCertPath);
     const tlsCredentials = grpc.credentials.createSsl(tlsRootCert);
 
-    const GrpcClient = grpc.makeGenericClientConstructor({}, '');
-    return new GrpcClient(peerEndpoint, tlsCredentials, {
+    return new grpc.Client(peerEndpoint, tlsCredentials, {
         'grpc.ssl_target_name_override': 'peer0.org1.example.com'
     });
 }
