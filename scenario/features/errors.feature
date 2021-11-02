@@ -16,7 +16,7 @@ Feature: Errors
     Scenario: Evaluate fails with incorrect arguments
         When I prepare to evaluate an exists transaction
         Then the transaction invocation should fail
-        And the error message should contain "error returned from chaincode: error in simulation: transaction returned with failure: Error: Expected 1 parameters, but 0 have been supplied"
+        And the error message should contain "evaluate call to endorser returned error: error in simulation: transaction returned with failure: Error: Expected 1 parameters, but 0 have been supplied"
 
     Scenario: Submit fails with incorrect chaincode name
         When I use the nonexistent contract
@@ -44,15 +44,13 @@ Feature: Errors
         And I set the transaction arguments to ["123"]
         And I do off-line signing as user User1 in MSP Org3MSP
         Then the transaction invocation should fail
-        And the error message should contain "failed to evaluate transaction: error validating proposal: access denied: channel [mychannel] creator org [Org1MSP]"
-        And the error details should be
-            | peer0.org1.example.com:7051 | Org1MSP | error validating proposal: access denied: channel [mychannel] creator org [Org1MSP] |
+        And the error message should contain "evaluate call to endorser returned error: error validating proposal: access denied: channel [mychannel] creator org [Org1MSP]"
 
     Scenario: Org3 fails to endorse
         When I prepare to submit an orgsFail transaction
         And I set the transaction arguments to ["[\"Org3MSP\"]"]
         Then the transaction invocation should fail
-        And the error message should contain "failed to endorse transaction, see attached details for more info"
+        And the error message should contain "failed to collect enough transaction endorsements, see attached details for more info"
         And the error details should be
             | peer0.org3.example.com:11051 | Org3MSP | Org3MSP refuses to endorse this |
 
@@ -60,7 +58,7 @@ Feature: Errors
         When I prepare to submit an orgsFail transaction
         And I set the transaction arguments to ["[\"Org2MSP\",\"Org3MSP\"]"]
         Then the transaction invocation should fail
-        And the error message should contain "failed to endorse transaction, see attached details for more info"
+        And the error message should contain "failed to collect enough transaction endorsements, see attached details for more info"
         And the error details should be
             | peer0.org2.example.com:8051 | Org2MSP | Org2MSP refuses to endorse this |
             | peer1.org2.example.com:10051 | Org2MSP | Org2MSP refuses to endorse this |
