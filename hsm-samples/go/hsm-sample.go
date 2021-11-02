@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/sha256"
@@ -113,7 +114,9 @@ func exampleSubmitAsync(gateway *client.Gateway) {
 	fmt.Printf("Submit result: %s\n", string(submitResult))
 	fmt.Println("Waiting for transaction commit")
 
-	status, err := commit.Status()
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+	status, err := commit.Status(ctx)
 	if err != nil {
 		panic(fmt.Errorf("failed to obtain commit status: %w", err))
 	}

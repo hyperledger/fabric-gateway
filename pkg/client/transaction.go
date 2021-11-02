@@ -9,7 +9,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/gateway"
@@ -49,7 +48,7 @@ func (transaction *Transaction) TransactionID() string {
 }
 
 // Submit the transaction to the orderer for commit to the ledger.
-func (transaction *Transaction) Submit() (*Commit, error) {
+func (transaction *Transaction) Submit(ctx context.Context) (*Commit, error) {
 	if err := transaction.sign(); err != nil {
 		return nil, err
 	}
@@ -59,9 +58,6 @@ func (transaction *Transaction) Submit() (*Commit, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
 
 	submitRequest := &gateway.SubmitRequest{
 		TransactionId:       transaction.TransactionID(),

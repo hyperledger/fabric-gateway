@@ -29,6 +29,9 @@ func NewStatusError(t *testing.T, code codes.Code, message string, details ...pr
 }
 
 func TestEvaluateTransaction(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	newEvaluateResponse := func(value []byte) *gateway.EvaluateResponse {
 		return &gateway.EvaluateResponse{
 			Result: &peer.Response{
@@ -183,22 +186,42 @@ func TestEvaluateTransaction(t *testing.T) {
 
 	t.Run("Includes transaction ID in proposed transaction", func(t *testing.T) {
 		var actual string
-		var expected string
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
-				actual = in.TransactionId
-				expected = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).TxId
+				actual = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).TxId
 			}).
 			Return(newEvaluateResponse(nil), nil).
 			Times(1)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
-		_, err := contract.EvaluateTransaction("transaction")
-		require.NoError(t, err)
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+		_, err = proposal.Evaluate(ctx)
+		require.NoError(t, err, "Evaluate")
 
-		require.Equal(t, expected, actual)
+		require.Equal(t, proposal.TransactionID(), actual)
+	})
+
+	t.Run("Includes transaction ID in evaluate request", func(t *testing.T) {
+		var actual string
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
+				actual = in.TransactionId
+			}).
+			Return(newEvaluateResponse(nil), nil).
+			Times(1)
+
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+		_, err = proposal.Evaluate(ctx)
+		require.NoError(t, err, "Evaluate")
+
+		require.Equal(t, proposal.TransactionID(), actual)
 	})
 
 	t.Run("Uses sign", func(t *testing.T) {
@@ -270,5 +293,30 @@ func TestEvaluateTransaction(t *testing.T) {
 
 		require.EqualValues(t, expectedOrgs, actualOrgs)
 		require.EqualValues(t, expectedPrice, actualPrice)
+	})
+
+	t.Run("Uses specified context", func(t *testing.T) {
+		var actual context.Context
+		evaluateCtx, cancelCtx := context.WithCancel(ctx)
+		defer cancelCtx()
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, _ *gateway.EvaluateRequest, _ ...grpc.CallOption) {
+				actual = ctx
+			}).
+			Return(newEvaluateResponse(nil), nil).
+			Times(1)
+
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+		_, err = proposal.Evaluate(evaluateCtx)
+		require.NoError(t, err, "Evaluate")
+
+		require.Nil(t, actual.Err(), "context not done before explicit cancel")
+		cancelCtx()
+		require.NotNil(t, actual.Err(), "context done after explicit cancel")
 	})
 }

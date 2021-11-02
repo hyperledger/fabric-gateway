@@ -63,8 +63,7 @@ public class Sample {
                 .evaluateOptions(CallOption.deadlineAfter(5, TimeUnit.SECONDS))
                 .endorseOptions(CallOption.deadlineAfter(15, TimeUnit.SECONDS))
                 .submitOptions(CallOption.deadlineAfter(5, TimeUnit.SECONDS))
-                .commitStatusOptions(CallOption.deadlineAfter(1, TimeUnit.MINUTES))
-                .chaincodeEventsOptions(CallOption.deadlineAfter(1, TimeUnit.MINUTES));
+                .commitStatusOptions(CallOption.deadlineAfter(1, TimeUnit.MINUTES));
 
         try (Gateway gateway = builder.connect()) {
             System.out.println("exampleSubmit:");
