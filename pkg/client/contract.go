@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
@@ -41,6 +40,7 @@ type Contract struct {
 	channelName   string
 	chaincodeName string
 	contractName  string
+	contexts      *contextFactory
 }
 
 // ChaincodeName of the chaincode that contains this smart contract.
@@ -73,7 +73,7 @@ func (contract *Contract) Evaluate(transactionName string, options ...ProposalOp
 		return nil, err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := contract.contexts.Evaluate()
 	defer cancel()
 
 	return proposal.Evaluate(ctx)
@@ -100,7 +100,7 @@ func (contract *Contract) Submit(transactionName string, options ...ProposalOpti
 		return result, err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := contract.contexts.CommitStatus()
 	defer cancel()
 
 	status, err := commit.Status(ctx)
@@ -123,7 +123,7 @@ func (contract *Contract) SubmitAsync(transactionName string, options ...Proposa
 		return nil, nil, err
 	}
 
-	endorseCtx, cancelEndorse := context.WithCancel(context.Background())
+	endorseCtx, cancelEndorse := contract.contexts.Endorse()
 	defer cancelEndorse()
 
 	transaction, err := proposal.Endorse(endorseCtx)
@@ -133,7 +133,7 @@ func (contract *Contract) SubmitAsync(transactionName string, options ...Proposa
 
 	result := transaction.Result()
 
-	submitCtx, cancelSubmit := context.WithCancel(context.Background())
+	submitCtx, cancelSubmit := contract.contexts.Submit()
 	defer cancelSubmit()
 
 	commit, err := transaction.Submit(submitCtx)

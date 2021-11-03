@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	gomock "github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
@@ -619,6 +620,33 @@ func TestSubmitTransaction(t *testing.T) {
 		require.NotNil(t, actual.Err(), "context done after explicit cancel")
 	})
 
+	t.Run("Uses default context for endorse", func(t *testing.T) {
+		expected := errors.New("EXPECTED_ERROR")
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, _ *gateway.EndorseRequest, _ ...grpc.CallOption) (*gateway.EndorseResponse, error) {
+				select {
+				case <-time.After(1 * time.Second):
+					return newEndorseResponse("TRANSACTION_RESULT"), nil
+				case <-ctx.Done(): // Zero timeout context should cancel immediately, selecting this case
+					return nil, expected
+				}
+			})
+		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+			Return(nil, nil).
+			AnyTimes()
+		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
+			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil).
+			AnyTimes()
+
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithEndorseTimeout(0))
+
+		_, err := contract.Submit("transaction")
+
+		require.ErrorIs(t, err, expected)
+	})
+
 	t.Run("Uses specified context for submit", func(t *testing.T) {
 		var actual context.Context
 		submitCtx, cancelCtx := context.WithCancel(ctx)
@@ -647,6 +675,32 @@ func TestSubmitTransaction(t *testing.T) {
 		require.Nil(t, actual.Err(), "context not done before explicit cancel")
 		cancelCtx()
 		require.NotNil(t, actual.Err(), "context done after explicit cancel")
+	})
+
+	t.Run("Uses default context for submit", func(t *testing.T) {
+		expected := errors.New("EXPECTED_ERROR")
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, _ *gateway.SubmitRequest, _ ...grpc.CallOption) (*gateway.SubmitResponse, error) {
+				select {
+				case <-time.After(1 * time.Second):
+					return nil, nil
+				case <-ctx.Done(): // Zero timeout context should cancel immediately, selecting this case
+					return nil, expected
+				}
+			})
+		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
+			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil).
+			AnyTimes()
+
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSubmitTimeout(0))
+
+		_, err := contract.Submit("transaction")
+
+		require.ErrorIs(t, err, expected)
 	})
 
 	t.Run("Uses specified context for commit status", func(t *testing.T) {
@@ -682,5 +736,31 @@ func TestSubmitTransaction(t *testing.T) {
 		require.Nil(t, actual.Err(), "context not done before explicit cancel")
 		cancelCtx()
 		require.NotNil(t, actual.Err(), "context done after explicit cancel")
+	})
+
+	t.Run("Uses default context for commit status", func(t *testing.T) {
+		expected := errors.New("EXPECTED_ERROR")
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+			Return(nil, nil)
+		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
+			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil).
+			DoAndReturn(func(ctx context.Context, _ *gateway.SignedCommitStatusRequest, _ ...grpc.CallOption) (*gateway.CommitStatusResponse, error) {
+				select {
+				case <-time.After(1 * time.Second):
+					return nil, nil
+				case <-ctx.Done(): // Zero timeout context should cancel immediately, selecting this case
+					return nil, expected
+				}
+			})
+
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithCommitStatusTimeout(0))
+
+		_, err := contract.Submit("transaction")
+
+		require.ErrorIs(t, err, expected)
 	})
 }

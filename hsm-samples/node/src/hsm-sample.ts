@@ -5,7 +5,6 @@
  */
 
 import * as grpc from '@grpc/grpc-js';
-import { ServiceClient } from '@grpc/grpc-js/build/src/make-client';
 import * as crypto from 'crypto';
 import { connect, Gateway, HSMSigner, HSMSignerFactory, HSMSignerOptions, signers } from 'fabric-gateway';
 import * as fs from 'fs';
@@ -46,9 +45,7 @@ async function main() {
     try {
         await exampleSubmit(gateway);
         console.log();
-
-        await exampleSubmitAsync(gateway)
-        console.log('\nNode HSM sample completed successfully');
+        console.log('Node HSM sample completed successfully');
     } finally {
         gateway.close();
         client.close();
@@ -72,37 +69,6 @@ async function exampleSubmit(gateway: Gateway) {
     console.log('Evaluating "get" query with arguments: time');
 
     const evaluateResult = await contract.evaluateTransaction('get', 'time');
-
-    console.log('Query result:', evaluateResult.toString());
-}
-
-async function exampleSubmitAsync(gateway: Gateway) {
-    const network = gateway.getNetwork('mychannel');
-    const contract = network.getContract('basic');
-
-    const timestamp = new Date().toISOString();
-    console.log('Submitting "put" transaction asynchronously with arguments: async,', timestamp);
-
-	// Submit transaction asynchronously, blocking until the transaction has been sent to the orderer, and allowing
-	// this thread to process the chaincode response (e.g. update a UI) without waiting for the commit notification
-    const commit = await contract.submitAsync('put', {
-        arguments: ['async', timestamp],
-    });
-    const submitResult = commit.getResult();
-
-    console.log('Submit result:', submitResult.toString());
-    console.log('Waiting for transaction commit');
-
-    const status = await commit.getStatus();
-    if (!status.successful) {
-        const status = await commit.getStatus();
-        throw new Error(`Transaction ${status.transactionId} failed to commit with status code: ${status.code}`);
-    }
-
-    console.log('Transaction committed successfully');
-    console.log('Evaluating "get" query with arguments: async');
-
-    const evaluateResult = await contract.evaluateTransaction('get', 'async');
 
     console.log('Query result:', evaluateResult.toString());
 }

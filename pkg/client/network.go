@@ -20,6 +20,7 @@ type Network struct {
 	client    gateway.GatewayClient
 	signingID *signingIdentity
 	name      string
+	contexts  *contextFactory
 }
 
 // Name of the Fabric channel this network represents.
@@ -40,6 +41,7 @@ func (network *Network) GetContractWithName(chaincodeName string, contractName s
 		channelName:   network.name,
 		chaincodeName: chaincodeName,
 		contractName:  contractName,
+		contexts:      network.contexts,
 	}
 }
 
