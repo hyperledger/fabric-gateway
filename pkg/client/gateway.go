@@ -16,7 +16,9 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
+	"context"
 	"errors"
+	"time"
 
 	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
@@ -28,19 +30,28 @@ import (
 type Gateway struct {
 	signingID *signingIdentity
 	client    proto.GatewayClient
+	cancel    context.CancelFunc
+	contexts  *contextFactory
 }
 
 // Connect to a Fabric Gateway using a client identity, gRPC connection and signing implementation.
 func Connect(id identity.Identity, options ...ConnectOption) (*Gateway, error) {
+	ctx, cancel := context.WithCancel(context.Background())
 	gateway := &Gateway{
 		signingID: newSigningIdentity(id),
+		cancel:    cancel,
+		contexts: &contextFactory{
+			ctx: ctx,
+		},
 	}
 
 	if err := gateway.applyConnectOptions(options); err != nil {
+		cancel()
 		return nil, err
 	}
 
 	if nil == gateway.client {
+		cancel()
 		return nil, errors.New("no connection details supplied")
 	}
 
@@ -86,9 +97,50 @@ func WithClientConnection(clientConnection *grpc.ClientConn) ConnectOption {
 	}
 }
 
+// WithEvaluateTimeout specifies the default timeout for evaluating transactions.
+func WithEvaluateTimeout(timeout time.Duration) ConnectOption {
+	return func(gateway *Gateway) error {
+		gateway.contexts.evaluate = func(parent context.Context) (context.Context, context.CancelFunc) {
+			return context.WithTimeout(parent, timeout)
+		}
+		return nil
+	}
+}
+
+// WithEndorseTimeout specifies the default timeout for endorsements.
+func WithEndorseTimeout(timeout time.Duration) ConnectOption {
+	return func(gateway *Gateway) error {
+		gateway.contexts.endorse = func(parent context.Context) (context.Context, context.CancelFunc) {
+			return context.WithTimeout(parent, timeout)
+		}
+		return nil
+	}
+}
+
+// WithSubmitTimeout specifies the default timeout for submit of transactions to the orderer.
+func WithSubmitTimeout(timeout time.Duration) ConnectOption {
+	return func(gateway *Gateway) error {
+		gateway.contexts.submit = func(parent context.Context) (context.Context, context.CancelFunc) {
+			return context.WithTimeout(parent, timeout)
+		}
+		return nil
+	}
+}
+
+// WithCommitStatusTimeout specifies the default timeout for retrieving transaction commit status.
+func WithCommitStatusTimeout(timeout time.Duration) ConnectOption {
+	return func(gateway *Gateway) error {
+		gateway.contexts.commitStatus = func(parent context.Context) (context.Context, context.CancelFunc) {
+			return context.WithTimeout(parent, timeout)
+		}
+		return nil
+	}
+}
+
 // Close a Gateway when it is no longer required. This releases all resources associated with Networks and Contracts
 // obtained using the Gateway, including removing event listeners.
 func (gateway *Gateway) Close() error {
+	gateway.cancel()
 	return nil
 }
 
@@ -103,5 +155,6 @@ func (gateway *Gateway) GetNetwork(name string) *Network {
 		client:    gateway.client,
 		signingID: gateway.signingID,
 		name:      name,
+		contexts:  gateway.contexts,
 	}
 }

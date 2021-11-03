@@ -39,7 +39,16 @@ func main() {
 	sign := newSign()
 
 	// Create a Gateway connection for a specific client identity
-	gateway, err := client.Connect(id, client.WithSign(sign), client.WithClientConnection(clientConnection))
+	gateway, err := client.Connect(
+		id,
+		client.WithSign(sign),
+		client.WithClientConnection(clientConnection),
+		// Default timeouts for different gRPC calls
+		client.WithEvaluateTimeout(5*time.Second),
+		client.WithEndorseTimeout(15*time.Second),
+		client.WithSubmitTimeout(5*time.Second),
+		client.WithCommitStatusTimeout(1*time.Minute),
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -305,7 +314,6 @@ func exampleChaincodeEventReplay(gateway *client.Gateway) {
 
 	statusCtx, cancelStatus := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancelStatus()
-
 	status, err := commit.Status(statusCtx)
 	if err != nil {
 		panic(fmt.Errorf("failed to get commit status: %w", err))

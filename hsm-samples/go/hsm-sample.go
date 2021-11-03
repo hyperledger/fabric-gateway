@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/sha256"
@@ -66,9 +65,6 @@ func main() {
 
 	exampleSubmit(gateway)
 	fmt.Println()
-
-	exampleSubmitAsync(gateway)
-	fmt.Println()
 	fmt.Println("Go HSM Sample Completed Successfully")
 	fmt.Println()
 }
@@ -90,44 +86,6 @@ func exampleSubmit(gateway *client.Gateway) {
 	fmt.Println("Evaluating \"get\" query with arguments: time")
 
 	evaluateResult, err := contract.EvaluateTransaction("get", "time")
-	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
-	}
-
-	fmt.Printf("Query result = %s\n", string(evaluateResult))
-}
-
-func exampleSubmitAsync(gateway *client.Gateway) {
-	network := gateway.GetNetwork("mychannel")
-	contract := network.GetContract("basic")
-
-	timestamp := time.Now().String()
-	fmt.Printf("Submitting \"put\" transaction asynchronously with arguments: async, %s\n", timestamp)
-
-	// Submit transaction asynchronously, blocking until the transaction has been sent to the orderer, and allowing
-	// this thread to process the chaincode response (e.g. update a UI) without waiting for the commit notification
-	submitResult, commit, err := contract.SubmitAsync("put", client.WithArguments("async", timestamp))
-	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction asynchronously: %w", err))
-	}
-
-	fmt.Printf("Submit result: %s\n", string(submitResult))
-	fmt.Println("Waiting for transaction commit")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
-	status, err := commit.Status(ctx)
-	if err != nil {
-		panic(fmt.Errorf("failed to obtain commit status: %w", err))
-	}
-	if !status.Successful {
-		panic(fmt.Errorf("transaction %s failed to commit with status code: %d", status.TransactionID, int32(status.Code)))
-	}
-
-	fmt.Printf("Transaction committed successfully\n")
-	fmt.Println("Evaluating \"get\" query with arguments: async")
-
-	evaluateResult, err := contract.EvaluateTransaction("get", "async")
 	if err != nil {
 		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
 	}
@@ -217,9 +175,7 @@ func findSoftHSMLibrary() string {
 	}
 
 	for _, libraryLocation := range libraryLocations {
-		if _, err := os.Stat(libraryLocation); errors.Is(err, os.ErrNotExist) {
-			// file does not exist
-		} else {
+		if _, err := os.Stat(libraryLocation); !errors.Is(err, os.ErrNotExist) {
 			return libraryLocation
 		}
 	}

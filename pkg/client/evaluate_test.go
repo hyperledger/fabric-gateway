@@ -8,7 +8,9 @@ package client
 
 import (
 	"context"
+	"errors"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
@@ -318,5 +320,26 @@ func TestEvaluateTransaction(t *testing.T) {
 		require.Nil(t, actual.Err(), "context not done before explicit cancel")
 		cancelCtx()
 		require.NotNil(t, actual.Err(), "context done after explicit cancel")
+	})
+
+	t.Run("Uses default context", func(t *testing.T) {
+		expected := errors.New("EXPECTED_ERROR")
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, _ *gateway.EvaluateRequest, _ ...grpc.CallOption) (*gateway.EvaluateResponse, error) {
+				select {
+				case <-time.After(1 * time.Second):
+					return newEvaluateResponse(nil), nil
+				case <-ctx.Done(): // Zero timeout context should cancel immediately, selecting this case
+					return nil, expected
+				}
+			})
+
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithEvaluateTimeout(0))
+
+		_, err := contract.Evaluate("transaction")
+
+		require.ErrorIs(t, err, expected)
 	})
 }
