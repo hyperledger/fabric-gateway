@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Contract, Network, ProposalOptions, Signable, Signer, StatusCode } from 'fabric-gateway';
+import { Contract, Network, ProposalOptions, Signable, Signer, StatusCode } from '@hyperledger/fabric-gateway';
 import { bytesAsString, toError, toString } from './utils';
 
 export class TransactionInvocation {

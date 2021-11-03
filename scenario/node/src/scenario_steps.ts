@@ -6,7 +6,7 @@
 
 import { After, AfterAll, BeforeAll, DataTable, Given, setDefaultTimeout, Then, When } from '@cucumber/cucumber';
 import expect from 'expect';
-import { ErrorDetail, GatewayError } from 'fabric-gateway';
+import { ErrorDetail, GatewayError } from '@hyperledger/fabric-gateway';
 import { CustomWorld } from './customworld';
 import { Fabric } from './fabric';
 import { bytesAsString, toError } from './utils';

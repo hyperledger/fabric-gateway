@@ -18,7 +18,7 @@ https://hyperledger.github.io/fabric-gateway/main/api/node/
 
 ### Installation
 
-`npm install fabric-gateway`
+`npm install @hyperledger/fabric-gateway`
 
 ### Compatibility
 

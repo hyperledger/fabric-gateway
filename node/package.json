@@ -1,5 +1,5 @@
 {
-    "name": "fabric-gateway",
+    "name": "@hyperledger/fabric-gateway",
     "version": "0.1.0",
     "description": "Node SDK client library for Hyperledger Fabric Gateway",
     "main": "dist/index.js",
