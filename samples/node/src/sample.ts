@@ -41,9 +41,6 @@ async function main() {
         commitStatusOptions: () => {
             return { deadline: Date.now() + 60000 }; // 1 minute
         },
-        chaincodeEventsOptions: () => {
-            return { deadline: Date.now() + 60000 }; // 1 minute
-        },
     });
 
     try {

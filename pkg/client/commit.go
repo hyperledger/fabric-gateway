@@ -9,7 +9,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/gateway"
@@ -60,13 +59,10 @@ func (commit *Commit) TransactionID() string {
 
 // Status of the committed transaction. If the transaction has not yet committed, this call blocks until the commit
 // occurs.
-func (commit *Commit) Status() (*Status, error) {
+func (commit *Commit) Status(ctx context.Context) (*Status, error) {
 	if err := commit.sign(); err != nil {
 		return nil, err
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
 
 	response, err := commit.client.CommitStatus(ctx, commit.signedRequest)
 	if err != nil {

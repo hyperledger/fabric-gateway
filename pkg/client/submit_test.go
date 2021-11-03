@@ -22,6 +22,9 @@ import (
 )
 
 func TestSubmitTransaction(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	newEndorseResponse := func(value string) *gateway.EndorseResponse {
 		return &gateway.EndorseResponse{
 			PreparedTransaction: &common.Envelope{},
@@ -280,26 +283,44 @@ func TestSubmitTransaction(t *testing.T) {
 
 	t.Run("Includes transaction ID in proposed transaction", func(t *testing.T) {
 		var actual string
-		var expected string
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
+				actual = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).TxId
+			}).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
+			Times(1)
+
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+		_, err = proposal.Endorse(ctx)
+		require.NoError(t, err, "Endorse")
+
+		require.Equal(t, proposal.TransactionID(), actual)
+	})
+
+	t.Run("Includes transaction ID in endorse request", func(t *testing.T) {
+		var actual string
+
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
 				actual = in.TransactionId
-				expected = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).TxId
 			}).
 			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
 			Times(1)
-		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(nil, nil)
-		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
-			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
 
-		_, err := contract.SubmitTransaction("transaction")
-		require.NoError(t, err)
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+		_, err = proposal.Endorse(ctx)
+		require.NoError(t, err, "Endorse")
 
-		require.Equal(t, expected, actual)
+		require.Equal(t, proposal.TransactionID(), actual)
 	})
 
 	t.Run("Includes channel name in commit status request", func(t *testing.T) {
@@ -506,7 +527,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, commit, err := contract.SubmitAsync("transaction")
 		require.NoError(t, err)
 
-		status, err := commit.Status()
+		status, err := commit.Status(ctx)
 		require.NoError(t, err)
 
 		require.Equal(t, peer.TxValidationCode_MVCC_READ_CONFLICT, status.Code)
@@ -526,7 +547,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, commit, err := contract.SubmitAsync("transaction")
 		require.NoError(t, err, "submit")
 
-		status, err := commit.Status()
+		status, err := commit.Status(ctx)
 		require.NoError(t, err, "commit status")
 
 		require.True(t, status.Successful)
@@ -546,7 +567,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, commit, err := contract.SubmitAsync("transaction")
 		require.NoError(t, err, "submit")
 
-		status, err := commit.Status()
+		status, err := commit.Status(ctx)
 		require.NoError(t, err, "commit status")
 
 		require.False(t, status.Successful)
@@ -567,9 +588,99 @@ func TestSubmitTransaction(t *testing.T) {
 		_, commit, err := contract.SubmitAsync("transaction")
 		require.NoError(t, err, "submit")
 
-		status, err := commit.Status()
+		status, err := commit.Status(ctx)
 		require.NoError(t, err, "commit status")
 
 		require.Equal(t, expectedBlockNumber, status.BlockNumber)
+	})
+
+	t.Run("Uses specified context for endorse", func(t *testing.T) {
+		var actual context.Context
+		endorseCtx, cancelCtx := context.WithCancel(ctx)
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, _ *gateway.EndorseRequest, _ ...grpc.CallOption) {
+				actual = ctx
+			}).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
+			Times(1)
+
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+
+		_, err = proposal.Endorse(endorseCtx)
+		require.NoError(t, err, "Endorse")
+
+		require.Nil(t, actual.Err(), "context not done before explicit cancel")
+		cancelCtx()
+		require.NotNil(t, actual.Err(), "context done after explicit cancel")
+	})
+
+	t.Run("Uses specified context for submit", func(t *testing.T) {
+		var actual context.Context
+		submitCtx, cancelCtx := context.WithCancel(ctx)
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, _ *gateway.SubmitRequest, _ ...grpc.CallOption) {
+				actual = ctx
+			}).
+			Return(nil, nil).
+			Times(1)
+
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+
+		transaction, err := proposal.Endorse(ctx)
+		require.NoError(t, err, "Endorse")
+
+		_, err = transaction.Submit(submitCtx)
+		require.NoError(t, err, "Submit")
+
+		require.Nil(t, actual.Err(), "context not done before explicit cancel")
+		cancelCtx()
+		require.NotNil(t, actual.Err(), "context done after explicit cancel")
+	})
+
+	t.Run("Uses specified context for commit status", func(t *testing.T) {
+		var actual context.Context
+		commitCtx, cancelCtx := context.WithCancel(ctx)
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+			Return(nil, nil)
+		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, _ *gateway.SignedCommitStatusRequest, _ ...grpc.CallOption) {
+				actual = ctx
+			}).
+			Return(newCommitStatusResponse(peer.TxValidationCode_MVCC_READ_CONFLICT, 101), nil).
+			Times(1)
+
+		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+
+		transaction, err := proposal.Endorse(ctx)
+		require.NoError(t, err, "Endorse")
+
+		commit, err := transaction.Submit(ctx)
+		require.NoError(t, err, "Submit")
+
+		_, err = commit.Status(commitCtx)
+		require.NoError(t, err, "CommitStatus")
+
+		require.Nil(t, actual.Err(), "context not done before explicit cancel")
+		cancelCtx()
+		require.NotNil(t, actual.Err(), "context done after explicit cancel")
 	})
 }

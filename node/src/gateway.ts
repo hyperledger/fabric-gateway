@@ -32,7 +32,6 @@ import { SigningIdentity } from './signingidentity';
  *     endorseOptions: defaultTimeout,
  *     submitOptions: defaultTimeout,
  *     commitStatusOptions: defaultTimeout,
- *     chaincodeEventsOptions: defaultTimeout,
  * };
  * ```
  */

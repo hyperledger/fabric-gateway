@@ -9,7 +9,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/gateway"
@@ -44,13 +43,10 @@ func (proposal *Proposal) TransactionID() string {
 }
 
 // Endorse the proposal to obtain an endorsed transaction for submission to the orderer.
-func (proposal *Proposal) Endorse() (*Transaction, error) {
+func (proposal *Proposal) Endorse(ctx context.Context) (*Transaction, error) {
 	if err := proposal.sign(); err != nil {
 		return nil, err
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
 
 	endorseRequest := &gateway.EndorseRequest{
 		TransactionId:          proposal.proposedTransaction.GetTransactionId(),
@@ -78,13 +74,10 @@ func (proposal *Proposal) Endorse() (*Transaction, error) {
 }
 
 // Evaluate the proposal to obtain a transaction result. This is effectively a query.
-func (proposal *Proposal) Evaluate() ([]byte, error) {
+func (proposal *Proposal) Evaluate(ctx context.Context) ([]byte, error) {
 	if err := proposal.sign(); err != nil {
 		return nil, err
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
 
 	evaluateRequest := &gateway.EvaluateRequest{
 		TransactionId:       proposal.proposedTransaction.GetTransactionId(),

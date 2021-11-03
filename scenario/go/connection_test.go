@@ -243,7 +243,7 @@ func (connection *GatewayConnection) PrepareTransaction(txnType TransactionType,
 		return nil, fmt.Errorf("no contract selected")
 	}
 
-	return NewTransaction(connection.network, connection.contract, txnType, name), nil
+	return NewTransaction(connection.ctx, connection.network, connection.contract, txnType, name), nil
 }
 
 func (connection *GatewayConnection) ListenForChaincodeEvents(listenerName string, chaincodeName string) error {

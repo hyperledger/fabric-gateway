@@ -18,6 +18,7 @@ func ExampleNetwork_ChaincodeEvents() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	events, err := network.ChaincodeEvents(ctx, "chaincodeName", client.WithStartBlock(101))
 	if err != nil {
 		panic(err)
@@ -25,5 +26,6 @@ func ExampleNetwork_ChaincodeEvents() {
 
 	for event := range events {
 		fmt.Printf("Event: %#v\n", event)
+		// Break when done reading.
 	}
 }

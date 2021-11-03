@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
@@ -72,7 +73,10 @@ func (contract *Contract) Evaluate(transactionName string, options ...ProposalOp
 		return nil, err
 	}
 
-	return proposal.Evaluate()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	return proposal.Evaluate(ctx)
 }
 
 // SubmitTransaction will submit a transaction to the ledger and return its result only after it is committed to the
@@ -96,7 +100,10 @@ func (contract *Contract) Submit(transactionName string, options ...ProposalOpti
 		return result, err
 	}
 
-	status, err := commit.Status()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	status, err := commit.Status(ctx)
 	if err != nil {
 		return result, err
 	}
@@ -116,14 +123,20 @@ func (contract *Contract) SubmitAsync(transactionName string, options ...Proposa
 		return nil, nil, err
 	}
 
-	transaction, err := proposal.Endorse()
+	endorseCtx, cancelEndorse := context.WithCancel(context.Background())
+	defer cancelEndorse()
+
+	transaction, err := proposal.Endorse(endorseCtx)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	result := transaction.Result()
 
-	commit, err := transaction.Submit()
+	submitCtx, cancelSubmit := context.WithCancel(context.Background())
+	defer cancelSubmit()
+
+	commit, err := transaction.Submit(submitCtx)
 	if err != nil {
 		return result, nil, err
 	}
