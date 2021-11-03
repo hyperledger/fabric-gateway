@@ -256,10 +256,32 @@ stages:
           GATEWAY_VERSION: $(GATEWAY_VERSION)
           BUILD_DATE: $(BUILD_DATE)
           BUILD_NUMBER: $(BUILD_NUMBER)
-      # TODO Remove after deprecation!!!
+  # TODO Remove after deprecation!!!
+  - job: DeprecateNodeModule
+    pool:
+      vmImage: ubuntu-20.04
+    steps:
+      - download: current
+        artifact: NodeBuild
+      - task: NodeTool@0
+        inputs:
+          versionSpec: 16.13.0
+      - script: |
+          touch $(Agent.TempDirectory)/.npmrc
+          echo '##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$(Agent.TempDirectory)/.npmrc'
+        displayName: 'create user .npmrc file'
+      - script: |
+          npm config set registry https://registry.npmjs.org/
+          npm config set git-tag-version false
+          npm config ls
+        displayName: set npm config
+      - task: npmAuthenticate@0
+        inputs:
+          workingFile: '$(Agent.TempDirectory)/.npmrc'
+          customEndpoint: 'npm'
       - script: |
           npm deprecate fabric-gateway "Use @hyperledger/fabric-gateway"
-        displayName: npm publish
+        displayName: npm deprecate
         workingDirectory: $(Pipeline.Workspace)/NodeBuild
         env:
           GATEWAY_VERSION: $(GATEWAY_VERSION)
