@@ -16,7 +16,7 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.3.0",
     "jsrsasign": "^10.3.0",
-    "fabric-gateway": "../../node/fabric-gateway-dev.tgz"
+    "@hyperledger/fabric-gateway": "../../node/fabric-gateway-dev.tgz"
   },
   "devDependencies": {
     "@tsconfig/node12": "^1.0.7",

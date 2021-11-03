@@ -183,10 +183,11 @@ stages:
           make run-samples-java
         displayName: Run Java SDK samples
 
-# Only publish on scheduled builds
+# TODO Only publish on scheduled builds
 - stage: Publish
   dependsOn: Test
-  condition: and(succeeded('Test'), eq(variables['Build.Reason'], 'Schedule'))
+  condition: and(succeeded('Test'),eq(variables['Build.Reason'], 'IndividualCI'))
+  #condition: and(succeeded('Test'), eq(variables['Build.Reason'], 'Schedule'))
   jobs:
   - job: PublishDocs
     pool:
@@ -247,10 +248,17 @@ stages:
           GATEWAY_VERSION: $(GATEWAY_VERSION)
           BUILD_DATE: $(BUILD_DATE)
           BUILD_NUMBER: $(BUILD_NUMBER)
-      # Only add latest tag here while there are no release builds!
       - script: |
-          npm publish --tag unstable
-          npm dist-tag add fabric-gateway@${GATEWAY_VERSION}-dev.${BUILD_DATE}.${BUILD_NUMBER} latest
+          npm publish --access public --tag unstable
+        displayName: npm publish
+        workingDirectory: $(Pipeline.Workspace)/NodeBuild
+        env:
+          GATEWAY_VERSION: $(GATEWAY_VERSION)
+          BUILD_DATE: $(BUILD_DATE)
+          BUILD_NUMBER: $(BUILD_NUMBER)
+      # TODO Remove after deprecation!!!
+      - script: |
+          npm deprecate fabric-gateway "Use @hyperledger/fabric-gateway"
         displayName: npm publish
         workingDirectory: $(Pipeline.Workspace)/NodeBuild
         env:

@@ -15,7 +15,7 @@
     "author": "",
     "license": "Apache-2.0",
     "dependencies": {
-        "fabric-gateway": "file:../../node/fabric-gateway-dev.tgz"
+        "@hyperledger/fabric-gateway": "file:../../node/fabric-gateway-dev.tgz"
     },
     "devDependencies": {
         "@cucumber/cucumber": "^7.0.0",

@@ -17,7 +17,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@grpc/grpc-js": "^1.4.1",
-    "fabric-gateway": "../../node/fabric-gateway-dev.tgz"
+    "@hyperledger/fabric-gateway": "../../node/fabric-gateway-dev.tgz"
   },
   "devDependencies": {
     "@tsconfig/node12": "^1.0.9",

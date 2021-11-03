@@ -16,7 +16,7 @@ The following complete example shows how to connect to a Fabric network, submit 
 
     import * as grpc from '@grpc/grpc-js';
     import * as crypto from 'crypto';
-    import { connect, Identity, signers } from 'fabric-gateway';
+    import { connect, Identity, signers } from '@hyperledger/fabric-gateway';
     import { promises as fs } from 'fs';
     import { TextDecoder } from 'util';
 
