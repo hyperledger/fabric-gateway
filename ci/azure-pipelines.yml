@@ -37,6 +37,8 @@ variables:
     value: 1.16.7
   - name: NODEVER
     value: 14.x
+  - name: JAVAVER
+    value: 8
 
 stages:
 - stage: VerifyVersions
@@ -137,6 +139,11 @@ stages:
     steps:
     - template: install_deps.yml
     - checkout: self
+    - task: NodeTool@0
+      inputs:
+        versionSpec: $(NODEVER)
+    - script: node --version
+      displayName: node version DELETE ME
     - script: make unit-test-node
       displayName: Run Node unit tests
     - publish: $(System.DefaultWorkingDirectory)/node
@@ -149,6 +156,13 @@ stages:
     steps:
     - template: install_deps.yml
     - checkout: self
+    - task: JavaToolInstaller@0
+      inputs:
+        versionSpec: $(JAVAVER)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+    - script: java -version
+      displayName: java version DELETE ME
     - script: make unit-test-java
       displayName: Run Java unit tests
   #   - script: bash <(curl https://codecov.io/bash) -t $CODECOV_UPLOAD_TOKEN
@@ -178,6 +192,9 @@ stages:
     steps:
     - template: install_deps.yml
     - checkout: self
+    - task: NodeTool@0
+      inputs:
+        versionSpec: $(NODEVER)
     - script: make pull-latest-peer scenario-test-node
       displayName: Run Node SDK scenario tests
       env:
@@ -192,6 +209,11 @@ stages:
     steps:
       - template: install_deps.yml
       - checkout: self
+      - task: JavaToolInstaller@0
+        inputs:
+          versionSpec: $(JAVAVER)
+          jdkArchitectureOption: 'x64'
+          jdkSourceOption: 'PreInstalled'
       - script: make pull-latest-peer scenario-test-java
         displayName: Run Java SDK scenario tests
         env:
@@ -220,6 +242,9 @@ stages:
     steps:
       - template: install_deps.yml
       - checkout: self
+      - task: NodeTool@0
+        inputs:
+          versionSpec: $(NODEVER)
       - script: |
           make sample-network
           make run-samples-node
@@ -327,6 +352,11 @@ stages:
     pool:
       vmImage: ubuntu-20.04
     steps:
+      - task: JavaToolInstaller@0
+        inputs:
+          versionSpec: $(JAVAVER)
+          jdkArchitectureOption: 'x64'
+          jdkSourceOption: 'PreInstalled'
       - task: DownloadSecureFile@1
         name: privateKey
         displayName: Download private key
