@@ -95,6 +95,8 @@ stages:
     - checkout: self
     - script: make unit-test-java
       displayName: Run Java unit tests
+    - publish: $(System.DefaultWorkingDirectory)/java
+      artifact: JavaBuild
   #   - script: bash <(curl https://codecov.io/bash) -t $CODECOV_UPLOAD_TOKEN
   #     env:
   #       CODECOV_UPLOAD_TOKEN: $(CODECOV_UPLOAD_TOKEN)
