@@ -22,7 +22,7 @@ import (
 // WithClient uses the supplied client for the Gateway. Allows a stub implementation to be used for testing.
 func WithClient(client proto.GatewayClient) ConnectOption {
 	return func(gateway *Gateway) error {
-		gateway.client = client
+		gateway.client.grpcClient = client
 		return nil
 	}
 }

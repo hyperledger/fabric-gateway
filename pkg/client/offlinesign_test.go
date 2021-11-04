@@ -19,9 +19,6 @@ import (
 )
 
 func TestOfflineSign(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	evaluateResponse := gateway.EvaluateResponse{
 		Result: &peer.Response{
 			Payload: nil,
@@ -66,7 +63,7 @@ func TestOfflineSign(t *testing.T) {
 			proposal, err := contract.NewProposal("transaction")
 			require.NoError(t, err)
 
-			_, err = proposal.Evaluate(ctx)
+			_, err = proposal.Evaluate()
 			require.Error(t, err)
 		})
 
@@ -92,7 +89,7 @@ func TestOfflineSign(t *testing.T) {
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, expected)
 			require.NoError(t, err)
 
-			_, err = signedProposal.Evaluate(ctx)
+			_, err = signedProposal.Evaluate()
 			require.NoError(t, err)
 
 			require.EqualValues(t, expected, actual)
@@ -121,7 +118,7 @@ func TestOfflineSign(t *testing.T) {
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("SIGNATURE"))
 			require.NoError(t, err)
 
-			_, err = signedProposal.Evaluate(ctx)
+			_, err = signedProposal.Evaluate()
 			require.NoError(t, err)
 
 			require.EqualValues(t, expected, actual)
@@ -140,7 +137,7 @@ func TestOfflineSign(t *testing.T) {
 			proposal, err := contract.NewProposal("transaction")
 			require.NoError(t, err)
 
-			_, err = proposal.Endorse(ctx)
+			_, err = proposal.Endorse()
 			require.Error(t, err)
 		})
 
@@ -166,7 +163,7 @@ func TestOfflineSign(t *testing.T) {
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, expected)
 			require.NoError(t, err)
 
-			_, err = signedProposal.Endorse(ctx)
+			_, err = signedProposal.Endorse()
 			require.NoError(t, err)
 
 			require.EqualValues(t, expected, actual)
@@ -195,7 +192,7 @@ func TestOfflineSign(t *testing.T) {
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("SIGNATURE"))
 			require.NoError(t, err)
 
-			_, err = signedProposal.Endorse(ctx)
+			_, err = signedProposal.Endorse()
 			require.NoError(t, err)
 
 			require.EqualValues(t, expected, actual)
@@ -223,10 +220,10 @@ func TestOfflineSign(t *testing.T) {
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
 			require.NoError(t, err)
 
-			transaction, err := signedProposal.Endorse(ctx)
+			transaction, err := signedProposal.Endorse()
 			require.NoError(t, err)
 
-			_, err = transaction.Submit(ctx)
+			_, err = transaction.Submit()
 			require.Error(t, err)
 		})
 
@@ -254,7 +251,7 @@ func TestOfflineSign(t *testing.T) {
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, expected)
 			require.NoError(t, err)
 
-			unsignedTransaction, err := signedProposal.Endorse(ctx)
+			unsignedTransaction, err := signedProposal.Endorse()
 			require.NoError(t, err)
 
 			transactionBytes, err := unsignedTransaction.Bytes()
@@ -263,7 +260,7 @@ func TestOfflineSign(t *testing.T) {
 			signedTransaction, err := contract.NewSignedTransaction(transactionBytes, expected)
 			require.NoError(t, err)
 
-			_, err = signedTransaction.Submit(ctx)
+			_, err = signedTransaction.Submit()
 			require.NoError(t, err)
 
 			require.EqualValues(t, expected, actual)
@@ -294,7 +291,7 @@ func TestOfflineSign(t *testing.T) {
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
 			require.NoError(t, err)
 
-			unsignedTransaction, err := signedProposal.Endorse(ctx)
+			unsignedTransaction, err := signedProposal.Endorse()
 			require.NoError(t, err)
 
 			transactionBytes, err := unsignedTransaction.Bytes()
@@ -303,10 +300,10 @@ func TestOfflineSign(t *testing.T) {
 			signedTransaction, err := contract.NewSignedTransaction(transactionBytes, []byte("signature"))
 			require.NoError(t, err)
 
-			commit, err := signedTransaction.Submit(ctx)
+			commit, err := signedTransaction.Submit()
 			require.NoError(t, err)
 
-			_, err = commit.Status(ctx)
+			_, err = commit.Status()
 			require.Error(t, err)
 		})
 
@@ -338,7 +335,7 @@ func TestOfflineSign(t *testing.T) {
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, expected)
 			require.NoError(t, err)
 
-			unsignedTransaction, err := signedProposal.Endorse(ctx)
+			unsignedTransaction, err := signedProposal.Endorse()
 			require.NoError(t, err)
 
 			transactionBytes, err := unsignedTransaction.Bytes()
@@ -347,7 +344,7 @@ func TestOfflineSign(t *testing.T) {
 			signedTransaction, err := contract.NewSignedTransaction(transactionBytes, expected)
 			require.NoError(t, err)
 
-			unsignedCommit, err := signedTransaction.Submit(ctx)
+			unsignedCommit, err := signedTransaction.Submit()
 			require.NoError(t, err)
 
 			commitBytes, err := unsignedCommit.Bytes()
@@ -356,7 +353,7 @@ func TestOfflineSign(t *testing.T) {
 			signedCommit, err := network.NewSignedCommit(commitBytes, expected)
 			require.NoError(t, err)
 
-			_, err = signedCommit.Status(ctx)
+			_, err = signedCommit.Status()
 			require.NoError(t, err)
 
 			require.EqualValues(t, expected, actual)
@@ -419,7 +416,7 @@ func TestOfflineSign(t *testing.T) {
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
 			require.NoError(t, err)
 
-			unsignedTransaction, err := signedProposal.Endorse(ctx)
+			unsignedTransaction, err := signedProposal.Endorse()
 			require.NoError(t, err)
 
 			transactionBytes, err := unsignedTransaction.Bytes()
@@ -455,7 +452,7 @@ func TestOfflineSign(t *testing.T) {
 			signedProposal, err := contract.NewSignedProposal(proposalBytes, []byte("signature"))
 			require.NoError(t, err)
 
-			unsignedTransaction, err := signedProposal.Endorse(ctx)
+			unsignedTransaction, err := signedProposal.Endorse()
 			require.NoError(t, err)
 
 			transactionBytes, err := unsignedTransaction.Bytes()
@@ -464,7 +461,7 @@ func TestOfflineSign(t *testing.T) {
 			signedTransaction, err := contract.NewSignedTransaction(transactionBytes, []byte("signature"))
 			require.NoError(t, err)
 
-			unsignedCommit, err := signedTransaction.Submit(ctx)
+			unsignedCommit, err := signedTransaction.Submit()
 			require.NoError(t, err)
 
 			commitBytes, err := unsignedCommit.Bytes()

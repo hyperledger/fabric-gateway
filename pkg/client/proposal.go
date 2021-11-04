@@ -12,11 +12,12 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/gateway"
+	"google.golang.org/grpc"
 )
 
 // Proposal represents a transaction proposal that can be sent to peers for endorsement or evaluated as a query.
 type Proposal struct {
-	client              gateway.GatewayClient
+	client              *gatewayClient
 	signingID           *signingIdentity
 	channelID           string
 	proposedTransaction *gateway.ProposedTransaction
@@ -42,8 +43,24 @@ func (proposal *Proposal) TransactionID() string {
 	return proposal.proposedTransaction.GetTransactionId()
 }
 
-// Endorse the proposal to obtain an endorsed transaction for submission to the orderer.
-func (proposal *Proposal) Endorse(ctx context.Context) (*Transaction, error) {
+// Endorse the proposal and obtain an endorsed transaction for submission to the orderer.
+func (proposal *Proposal) Endorse() (*Transaction, error) {
+	return proposal.endorse(proposal.client.Endorse)
+}
+
+// EndorseWithContext uses ths supplied context to endorse the proposal and obtain an endorsed transaction for
+// submission to the orderer.
+func (proposal *Proposal) EndorseWithContext(ctx context.Context) (*Transaction, error) {
+	return proposal.endorse(
+		func(in *gateway.EndorseRequest, opts ...grpc.CallOption) (*gateway.EndorseResponse, error) {
+			return proposal.client.EndorseWithContext(ctx, in, opts...)
+		},
+	)
+}
+
+func (proposal *Proposal) endorse(
+	call func(in *gateway.EndorseRequest, opts ...grpc.CallOption) (*gateway.EndorseResponse, error),
+) (*Transaction, error) {
 	if err := proposal.sign(); err != nil {
 		return nil, err
 	}
@@ -54,7 +71,7 @@ func (proposal *Proposal) Endorse(ctx context.Context) (*Transaction, error) {
 		ProposedTransaction:    proposal.proposedTransaction.GetProposal(),
 		EndorsingOrganizations: proposal.proposedTransaction.GetEndorsingOrganizations(),
 	}
-	response, err := proposal.client.Endorse(ctx, endorseRequest)
+	response, err := call(endorseRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +90,24 @@ func (proposal *Proposal) Endorse(ctx context.Context) (*Transaction, error) {
 	return result, nil
 }
 
-// Evaluate the proposal to obtain a transaction result. This is effectively a query.
-func (proposal *Proposal) Evaluate(ctx context.Context) ([]byte, error) {
+// Evaluate the proposal and obtain a transaction result. This is effectively a query.
+func (proposal *Proposal) Evaluate() ([]byte, error) {
+	return proposal.evaluate(proposal.client.Evaluate)
+}
+
+// EvaluateWithContext uses ths supplied context to evaluate the proposal and obtain a transaction result. This is
+// effectively a query.
+func (proposal *Proposal) EvaluateWithContext(ctx context.Context) ([]byte, error) {
+	return proposal.evaluate(
+		func(in *gateway.EvaluateRequest, opts ...grpc.CallOption) (*gateway.EvaluateResponse, error) {
+			return proposal.client.EvaluateWithContext(ctx, in, opts...)
+		},
+	)
+}
+
+func (proposal *Proposal) evaluate(
+	call func(in *gateway.EvaluateRequest, opts ...grpc.CallOption) (*gateway.EvaluateResponse, error),
+) ([]byte, error) {
 	if err := proposal.sign(); err != nil {
 		return nil, err
 	}
@@ -85,7 +118,7 @@ func (proposal *Proposal) Evaluate(ctx context.Context) ([]byte, error) {
 		ProposedTransaction: proposal.proposedTransaction.GetProposal(),
 		TargetOrganizations: proposal.proposedTransaction.GetEndorsingOrganizations(),
 	}
-	response, err := proposal.client.Evaluate(ctx, evaluateRequest)
+	response, err := call(evaluateRequest)
 	if err != nil {
 		return nil, err
 	}

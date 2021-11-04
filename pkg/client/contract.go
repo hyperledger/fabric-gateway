@@ -35,12 +35,11 @@ import (
 // using the Contract's NewSignedProposal() or NewSignedTransaction() methods respectively, or creating a signed
 // commit using the Network's NewSignedCommit() method.
 type Contract struct {
-	client        gateway.GatewayClient
+	client        *gatewayClient
 	signingID     *signingIdentity
 	channelName   string
 	chaincodeName string
 	contractName  string
-	contexts      *contextFactory
 }
 
 // ChaincodeName of the chaincode that contains this smart contract.
@@ -73,10 +72,7 @@ func (contract *Contract) Evaluate(transactionName string, options ...ProposalOp
 		return nil, err
 	}
 
-	ctx, cancel := contract.contexts.Evaluate()
-	defer cancel()
-
-	return proposal.Evaluate(ctx)
+	return proposal.Evaluate()
 }
 
 // SubmitTransaction will submit a transaction to the ledger and return its result only after it is committed to the
@@ -100,10 +96,7 @@ func (contract *Contract) Submit(transactionName string, options ...ProposalOpti
 		return result, err
 	}
 
-	ctx, cancel := contract.contexts.CommitStatus()
-	defer cancel()
-
-	status, err := commit.Status(ctx)
+	status, err := commit.Status()
 	if err != nil {
 		return result, err
 	}
@@ -123,20 +116,14 @@ func (contract *Contract) SubmitAsync(transactionName string, options ...Proposa
 		return nil, nil, err
 	}
 
-	endorseCtx, cancelEndorse := contract.contexts.Endorse()
-	defer cancelEndorse()
-
-	transaction, err := proposal.Endorse(endorseCtx)
+	transaction, err := proposal.Endorse()
 	if err != nil {
 		return nil, nil, err
 	}
 
 	result := transaction.Result()
 
-	submitCtx, cancelSubmit := contract.contexts.Submit()
-	defer cancelSubmit()
-
-	commit, err := transaction.Submit(submitCtx)
+	commit, err := transaction.Submit()
 	if err != nil {
 		return result, nil, err
 	}

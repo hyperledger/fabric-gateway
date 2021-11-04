@@ -17,10 +17,9 @@ import (
 // Network represents a blockchain network, or Fabric channel. The Network can be used to access deployed smart
 // contracts, and to listen for events emitted when blocks are committed to the ledger.
 type Network struct {
-	client    gateway.GatewayClient
+	client    *gatewayClient
 	signingID *signingIdentity
 	name      string
-	contexts  *contextFactory
 }
 
 // Name of the Fabric channel this network represents.
@@ -41,7 +40,6 @@ func (network *Network) GetContractWithName(chaincodeName string, contractName s
 		channelName:   network.name,
 		chaincodeName: chaincodeName,
 		contractName:  contractName,
-		contexts:      network.contexts,
 	}
 }
 

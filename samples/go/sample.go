@@ -128,9 +128,7 @@ func exampleSubmitAsync(gateway *client.Gateway) {
 	fmt.Printf("Submit result: %s\n", string(submitResult))
 	fmt.Println("Waiting for transaction commit")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
-	if status, err := commit.Status(ctx); err != nil {
+	if status, err := commit.Status(); err != nil {
 		panic(fmt.Errorf("failed to get commit status: %w", err))
 	} else if !status.Successful {
 		panic(fmt.Errorf("transaction %s, failed to commit with status: %d", status.TransactionID, int32(status.Code)))
@@ -312,9 +310,7 @@ func exampleChaincodeEventReplay(gateway *client.Gateway) {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
 
-	statusCtx, cancelStatus := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancelStatus()
-	status, err := commit.Status(statusCtx)
+	status, err := commit.Status()
 	if err != nil {
 		panic(fmt.Errorf("failed to get commit status: %w", err))
 	}
@@ -323,9 +319,9 @@ func exampleChaincodeEventReplay(gateway *client.Gateway) {
 	}
 
 	fmt.Printf("Read chaincode events starting at block number %d\n", status.BlockNumber)
-	eventsCtx, cancelEvents := context.WithCancel(context.Background())
-	defer cancelEvents()
-	events, err := network.ChaincodeEvents(eventsCtx, "basic", client.WithStartBlock(status.BlockNumber))
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	events, err := network.ChaincodeEvents(ctx, "basic", client.WithStartBlock(status.BlockNumber))
 	if err != nil {
 		panic(fmt.Errorf("failed to read chaincode events: %w", err))
 	}

@@ -13,18 +13,19 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"google.golang.org/grpc"
 )
 
 // Commit provides access to a committed transaction.
 type Commit struct {
-	client        gateway.GatewayClient
+	client        *gatewayClient
 	signingID     *signingIdentity
 	transactionID string
 	signedRequest *gateway.SignedCommitStatusRequest
 }
 
 func newCommit(
-	client gateway.GatewayClient,
+	client *gatewayClient,
 	signingID *signingIdentity,
 	transactionID string,
 	signedRequest *gateway.SignedCommitStatusRequest,
@@ -59,12 +60,28 @@ func (commit *Commit) TransactionID() string {
 
 // Status of the committed transaction. If the transaction has not yet committed, this call blocks until the commit
 // occurs.
-func (commit *Commit) Status(ctx context.Context) (*Status, error) {
+func (commit *Commit) Status() (*Status, error) {
+	return commit.status(commit.client.CommitStatus)
+}
+
+// StatusWithContext uses the supplied context to get the status of the committed transaction. If the transaction has
+// not yet committed, this call blocks until the commit occurs.
+func (commit *Commit) StatusWithContext(ctx context.Context) (*Status, error) {
+	return commit.status(
+		func(in *gateway.SignedCommitStatusRequest, opts ...grpc.CallOption) (*gateway.CommitStatusResponse, error) {
+			return commit.client.CommitStatusWithContext(ctx, in, opts...)
+		},
+	)
+}
+
+func (commit *Commit) status(
+	call func(in *gateway.SignedCommitStatusRequest, opts ...grpc.CallOption) (*gateway.CommitStatusResponse, error),
+) (*Status, error) {
 	if err := commit.sign(); err != nil {
 		return nil, err
 	}
 
-	response, err := commit.client.CommitStatus(ctx, commit.signedRequest)
+	response, err := call(commit.signedRequest)
 	if err != nil {
 		return nil, err
 	}
