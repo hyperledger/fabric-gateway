@@ -34,7 +34,58 @@ variables:
     value: 12.16.1
 
 stages:
+- stage: VerifyVersions
+  jobs:
+  - job: VerifyNodeModuleVersion
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    steps:
+      - checkout: self
+      - script: |
+          PACKAGE_GATEWAY_VERSION=$(jq --raw-output .version package.json)
+          echo "Expected version: ${GATEWAY_VERSION}"
+          echo "pom.xml version: ${PACKAGE_GATEWAY_VERSION}"
+          [ "${PACKAGE_GATEWAY_VERSION}" = "${GATEWAY_VERSION}" ] || exit 1
+        displayName: Check Node package version
+        workingDirectory: $(System.DefaultWorkingDirectory)/node
+        env:
+          GATEWAY_VERSION: $(GATEWAY_VERSION)
+  - job: VerifyJavaArtifactVersion
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    steps:
+      - checkout: self
+      - script: |
+          POM_GATEWAY_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "Expected version: ${GATEWAY_VERSION}"
+          echo "pom.xml version: ${POM_GATEWAY_VERSION}"
+          [ "${POM_GATEWAY_VERSION%-SNAPSHOT}" = "${GATEWAY_VERSION}" ] || exit 1
+        displayName: Check Java artifact version
+        workingDirectory: $(System.DefaultWorkingDirectory)/java
+        env:
+          GATEWAY_VERSION: $(GATEWAY_VERSION)
+  # The Go module version is the git tag
+  - job: VerifyGoModuleVersion
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags')
+    steps:
+      - checkout: self
+      - script: |
+          echo "Build source branch: ${SOURCE_BRANCH}"
+          GO_GATEWAY_VERSION=${Build.SourceBranch#refs/tags/v}
+          echo "Expected version: ${GATEWAY_VERSION}"
+          echo "Go module version (git tag): ${GO_GATEWAY_VERSION}"
+          [ "${GO_GATEWAY_VERSION}" = "${GATEWAY_VERSION}" ] || exit 1
+        displayName: Check Go module version
+        env:
+          GATEWAY_VERSION: $(GATEWAY_VERSION)
+          SOURCE_BRANCH: $(Build.SourceBranch)
 - stage: Docs
+  dependsOn: VerifyVersions
   jobs:
   - job: GenerateNodeDocs
     pool:
@@ -61,7 +112,7 @@ stages:
     - publish: $(System.DefaultWorkingDirectory)/java/target/site/apidocs
       artifact: JavaDocs
 - stage: Test
-  dependsOn: []
+  dependsOn: VerifyVersions
   jobs:
   - job: UnitTestGo
     pool:
@@ -183,10 +234,10 @@ stages:
           make run-samples-java
         displayName: Run Java SDK samples
 
-# Only publish on scheduled builds
+# Only publish on scheduled builds and tagged releases
 - stage: Publish
   dependsOn: Test
-  condition: and(succeeded('Test'), eq(variables['Build.Reason'], 'Schedule'))
+  condition: and(succeeded('Test'), or(eq(variables['Build.Reason'], 'Schedule'), startsWith(variables['Build.SourceBranch'], 'refs/tags')))
   jobs:
   - job: PublishDocs
     pool:
@@ -240,8 +291,10 @@ stages:
         inputs:
           workingFile: '$(Agent.TempDirectory)/.npmrc'
           customEndpoint: 'npm'
+      # DO NOT set prerelease version for tagged releases!
       - script: npm version ${GATEWAY_VERSION}-dev.${BUILD_DATE}.${BUILD_NUMBER}
         displayName: Set prerelease version
+        condition: not(startsWith(variables['Build.SourceBranch'], 'refs/tags'))
         workingDirectory: $(Pipeline.Workspace)/NodeBuild
         env:
           GATEWAY_VERSION: $(GATEWAY_VERSION)
@@ -249,7 +302,17 @@ stages:
           BUILD_NUMBER: $(BUILD_NUMBER)
       - script: |
           npm publish --access public --tag unstable
-        displayName: npm publish
+        displayName: npm publish unstable
+        condition: not(startsWith(variables['Build.SourceBranch'], 'refs/tags'))
+        workingDirectory: $(Pipeline.Workspace)/NodeBuild
+        env:
+          GATEWAY_VERSION: $(GATEWAY_VERSION)
+          BUILD_DATE: $(BUILD_DATE)
+          BUILD_NUMBER: $(BUILD_NUMBER)
+      - script: |
+          npm publish --access public --tag latest
+        displayName: npm publish latest
+        condition: startsWith(variables['Build.SourceBranch'], 'refs/tags')
         workingDirectory: $(Pipeline.Workspace)/NodeBuild
         env:
           GATEWAY_VERSION: $(GATEWAY_VERSION)
@@ -276,8 +339,18 @@ stages:
           mavenServiceConnections: maven-artifactory
       - script: make fabric-protos
         displayName: Fetch fabric protos
+      # DO NOT set prerelease version for tagged releases!
       - script: mvn --batch-mode versions:set -DnewVersion=${GATEWAY_VERSION}-dev-${BUILD_DATE}-${BUILD_NUMBER}
         displayName: Set prerelease version
+        condition: not(startsWith(variables['Build.SourceBranch'], 'refs/tags'))
+        workingDirectory: $(System.DefaultWorkingDirectory)/java
+        env:
+          GATEWAY_VERSION: $(GATEWAY_VERSION)
+          BUILD_DATE: $(BUILD_DATE)
+          BUILD_NUMBER: $(BUILD_NUMBER)
+      - script: mvn --batch-mode versions:set -DnewVersion=${GATEWAY_VERSION}
+        displayName: Set release version
+        condition: startsWith(variables['Build.SourceBranch'], 'refs/tags')
         workingDirectory: $(System.DefaultWorkingDirectory)/java
         env:
           GATEWAY_VERSION: $(GATEWAY_VERSION)
