@@ -16,7 +16,7 @@ import (
 
 // ChaincodeEventsRequest delivers events emitted by transaction functions in a specific chaincode.
 type ChaincodeEventsRequest struct {
-	client        gateway.GatewayClient
+	client        *gatewayClient
 	signingID     *signingIdentity
 	signedRequest *gateway.SignedChaincodeEventsRequest
 }

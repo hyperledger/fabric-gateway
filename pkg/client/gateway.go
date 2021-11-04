@@ -29,9 +29,8 @@ import (
 // Gateway representing the connection of a specific client identity to a Fabric Gateway.
 type Gateway struct {
 	signingID *signingIdentity
-	client    proto.GatewayClient
+	client    *gatewayClient
 	cancel    context.CancelFunc
-	contexts  *contextFactory
 }
 
 // Connect to a Fabric Gateway using a client identity, gRPC connection and signing implementation.
@@ -39,10 +38,12 @@ func Connect(id identity.Identity, options ...ConnectOption) (*Gateway, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	gateway := &Gateway{
 		signingID: newSigningIdentity(id),
-		cancel:    cancel,
-		contexts: &contextFactory{
-			ctx: ctx,
+		client: &gatewayClient{
+			contexts: &contextFactory{
+				ctx: ctx,
+			},
 		},
+		cancel: cancel,
 	}
 
 	if err := gateway.applyConnectOptions(options); err != nil {
@@ -50,7 +51,7 @@ func Connect(id identity.Identity, options ...ConnectOption) (*Gateway, error) {
 		return nil, err
 	}
 
-	if nil == gateway.client {
+	if gateway.client.grpcClient == nil {
 		cancel()
 		return nil, errors.New("no connection details supplied")
 	}
@@ -92,7 +93,7 @@ func WithHash(hash hash.Hash) ConnectOption {
 // is closed.
 func WithClientConnection(clientConnection *grpc.ClientConn) ConnectOption {
 	return func(gateway *Gateway) error {
-		gateway.client = proto.NewGatewayClient(clientConnection)
+		gateway.client.grpcClient = proto.NewGatewayClient(clientConnection)
 		return nil
 	}
 }
@@ -100,7 +101,7 @@ func WithClientConnection(clientConnection *grpc.ClientConn) ConnectOption {
 // WithEvaluateTimeout specifies the default timeout for evaluating transactions.
 func WithEvaluateTimeout(timeout time.Duration) ConnectOption {
 	return func(gateway *Gateway) error {
-		gateway.contexts.evaluate = func(parent context.Context) (context.Context, context.CancelFunc) {
+		gateway.client.contexts.evaluate = func(parent context.Context) (context.Context, context.CancelFunc) {
 			return context.WithTimeout(parent, timeout)
 		}
 		return nil
@@ -110,7 +111,7 @@ func WithEvaluateTimeout(timeout time.Duration) ConnectOption {
 // WithEndorseTimeout specifies the default timeout for endorsements.
 func WithEndorseTimeout(timeout time.Duration) ConnectOption {
 	return func(gateway *Gateway) error {
-		gateway.contexts.endorse = func(parent context.Context) (context.Context, context.CancelFunc) {
+		gateway.client.contexts.endorse = func(parent context.Context) (context.Context, context.CancelFunc) {
 			return context.WithTimeout(parent, timeout)
 		}
 		return nil
@@ -120,7 +121,7 @@ func WithEndorseTimeout(timeout time.Duration) ConnectOption {
 // WithSubmitTimeout specifies the default timeout for submit of transactions to the orderer.
 func WithSubmitTimeout(timeout time.Duration) ConnectOption {
 	return func(gateway *Gateway) error {
-		gateway.contexts.submit = func(parent context.Context) (context.Context, context.CancelFunc) {
+		gateway.client.contexts.submit = func(parent context.Context) (context.Context, context.CancelFunc) {
 			return context.WithTimeout(parent, timeout)
 		}
 		return nil
@@ -130,7 +131,7 @@ func WithSubmitTimeout(timeout time.Duration) ConnectOption {
 // WithCommitStatusTimeout specifies the default timeout for retrieving transaction commit status.
 func WithCommitStatusTimeout(timeout time.Duration) ConnectOption {
 	return func(gateway *Gateway) error {
-		gateway.contexts.commitStatus = func(parent context.Context) (context.Context, context.CancelFunc) {
+		gateway.client.contexts.commitStatus = func(parent context.Context) (context.Context, context.CancelFunc) {
 			return context.WithTimeout(parent, timeout)
 		}
 		return nil
@@ -155,6 +156,5 @@ func (gateway *Gateway) GetNetwork(name string) *Network {
 		client:    gateway.client,
 		signingID: gateway.signingID,
 		name:      name,
-		contexts:  gateway.contexts,
 	}
 }

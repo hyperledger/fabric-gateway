@@ -23,9 +23,6 @@ import (
 )
 
 func TestSubmitTransaction(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	newEndorseResponse := func(value string) *gateway.EndorseResponse {
 		return &gateway.EndorseResponse{
 			PreparedTransaction: &common.Envelope{},
@@ -297,7 +294,7 @@ func TestSubmitTransaction(t *testing.T) {
 
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
-		_, err = proposal.Endorse(ctx)
+		_, err = proposal.Endorse()
 		require.NoError(t, err, "Endorse")
 
 		require.Equal(t, proposal.TransactionID(), actual)
@@ -318,7 +315,7 @@ func TestSubmitTransaction(t *testing.T) {
 
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
-		_, err = proposal.Endorse(ctx)
+		_, err = proposal.Endorse()
 		require.NoError(t, err, "Endorse")
 
 		require.Equal(t, proposal.TransactionID(), actual)
@@ -528,7 +525,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, commit, err := contract.SubmitAsync("transaction")
 		require.NoError(t, err)
 
-		status, err := commit.Status(ctx)
+		status, err := commit.Status()
 		require.NoError(t, err)
 
 		require.Equal(t, peer.TxValidationCode_MVCC_READ_CONFLICT, status.Code)
@@ -548,7 +545,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, commit, err := contract.SubmitAsync("transaction")
 		require.NoError(t, err, "submit")
 
-		status, err := commit.Status(ctx)
+		status, err := commit.Status()
 		require.NoError(t, err, "commit status")
 
 		require.True(t, status.Successful)
@@ -568,7 +565,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, commit, err := contract.SubmitAsync("transaction")
 		require.NoError(t, err, "submit")
 
-		status, err := commit.Status(ctx)
+		status, err := commit.Status()
 		require.NoError(t, err, "commit status")
 
 		require.False(t, status.Successful)
@@ -589,7 +586,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, commit, err := contract.SubmitAsync("transaction")
 		require.NoError(t, err, "submit")
 
-		status, err := commit.Status(ctx)
+		status, err := commit.Status()
 		require.NoError(t, err, "commit status")
 
 		require.Equal(t, expectedBlockNumber, status.BlockNumber)
@@ -597,7 +594,9 @@ func TestSubmitTransaction(t *testing.T) {
 
 	t.Run("Uses specified context for endorse", func(t *testing.T) {
 		var actual context.Context
-		endorseCtx, cancelCtx := context.WithCancel(ctx)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
@@ -612,11 +611,11 @@ func TestSubmitTransaction(t *testing.T) {
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
 
-		_, err = proposal.Endorse(endorseCtx)
+		_, err = proposal.EndorseWithContext(ctx)
 		require.NoError(t, err, "Endorse")
 
 		require.Nil(t, actual.Err(), "context not done before explicit cancel")
-		cancelCtx()
+		cancel()
 		require.NotNil(t, actual.Err(), "context done after explicit cancel")
 	})
 
@@ -649,7 +648,9 @@ func TestSubmitTransaction(t *testing.T) {
 
 	t.Run("Uses specified context for submit", func(t *testing.T) {
 		var actual context.Context
-		submitCtx, cancelCtx := context.WithCancel(ctx)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
@@ -666,14 +667,14 @@ func TestSubmitTransaction(t *testing.T) {
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
 
-		transaction, err := proposal.Endorse(ctx)
+		transaction, err := proposal.Endorse()
 		require.NoError(t, err, "Endorse")
 
-		_, err = transaction.Submit(submitCtx)
+		_, err = transaction.SubmitWithContext(ctx)
 		require.NoError(t, err, "Submit")
 
 		require.Nil(t, actual.Err(), "context not done before explicit cancel")
-		cancelCtx()
+		cancel()
 		require.NotNil(t, actual.Err(), "context done after explicit cancel")
 	})
 
@@ -705,7 +706,9 @@ func TestSubmitTransaction(t *testing.T) {
 
 	t.Run("Uses specified context for commit status", func(t *testing.T) {
 		var actual context.Context
-		commitCtx, cancelCtx := context.WithCancel(ctx)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
@@ -724,17 +727,17 @@ func TestSubmitTransaction(t *testing.T) {
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
 
-		transaction, err := proposal.Endorse(ctx)
+		transaction, err := proposal.Endorse()
 		require.NoError(t, err, "Endorse")
 
-		commit, err := transaction.Submit(ctx)
+		commit, err := transaction.Submit()
 		require.NoError(t, err, "Submit")
 
-		_, err = commit.Status(commitCtx)
+		_, err = commit.StatusWithContext(ctx)
 		require.NoError(t, err, "CommitStatus")
 
 		require.Nil(t, actual.Err(), "context not done before explicit cancel")
-		cancelCtx()
+		cancel()
 		require.NotNil(t, actual.Err(), "context done after explicit cancel")
 	})
 

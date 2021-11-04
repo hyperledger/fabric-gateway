@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package scenario
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
@@ -18,7 +17,6 @@ import (
 )
 
 type Transaction struct {
-	ctx         context.Context
 	network     *client.Network
 	contract    *client.Contract
 	txType      TransactionType
@@ -30,9 +28,8 @@ type Transaction struct {
 	blockNumber uint64
 }
 
-func NewTransaction(ctx context.Context, network *client.Network, contract *client.Contract, txType TransactionType, name string) *Transaction {
+func NewTransaction(network *client.Network, contract *client.Contract, txType TransactionType, name string) *Transaction {
 	return &Transaction{
-		ctx:      ctx,
 		network:  network,
 		contract: contract,
 		txType:   txType,
@@ -93,7 +90,7 @@ func (transaction *Transaction) evaluate() ([]byte, error) {
 		return nil, err
 	}
 
-	return proposal.Evaluate(transaction.ctx)
+	return proposal.Evaluate()
 }
 
 func (transaction *Transaction) submit() ([]byte, error) {
@@ -107,7 +104,7 @@ func (transaction *Transaction) submit() ([]byte, error) {
 		return nil, err
 	}
 
-	unsignedTransaction, err := proposal.Endorse(transaction.ctx)
+	unsignedTransaction, err := proposal.Endorse()
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +116,7 @@ func (transaction *Transaction) submit() ([]byte, error) {
 
 	result := signedTransaction.Result()
 
-	unsignedCommit, err := signedTransaction.Submit(transaction.ctx)
+	unsignedCommit, err := signedTransaction.Submit()
 	if err != nil {
 		return result, err
 	}
@@ -129,7 +126,7 @@ func (transaction *Transaction) submit() ([]byte, error) {
 		return result, err
 	}
 
-	status, err := signedCommit.Status(transaction.ctx)
+	status, err := signedCommit.Status()
 	if err != nil {
 		return result, err
 	}

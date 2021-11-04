@@ -12,11 +12,12 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/gateway"
+	"google.golang.org/grpc"
 )
 
 // Transaction represents an endorsed transaction that can be submitted to the orderer for commit to the ledger.
 type Transaction struct {
-	client              gateway.GatewayClient
+	client              *gatewayClient
 	signingID           *signingIdentity
 	channelID           string
 	preparedTransaction *gateway.PreparedTransaction
@@ -48,7 +49,22 @@ func (transaction *Transaction) TransactionID() string {
 }
 
 // Submit the transaction to the orderer for commit to the ledger.
-func (transaction *Transaction) Submit(ctx context.Context) (*Commit, error) {
+func (transaction *Transaction) Submit() (*Commit, error) {
+	return transaction.submit(transaction.client.Submit)
+}
+
+// SubmitWithContext uses the supplied context to submit the transaction to the orderer for commit to the ledger.
+func (transaction *Transaction) SubmitWithContext(ctx context.Context) (*Commit, error) {
+	return transaction.submit(
+		func(in *gateway.SubmitRequest, opts ...grpc.CallOption) (*gateway.SubmitResponse, error) {
+			return transaction.client.SubmitWithContext(ctx, in, opts...)
+		},
+	)
+}
+
+func (transaction *Transaction) submit(
+	call func(in *gateway.SubmitRequest, opts ...grpc.CallOption) (*gateway.SubmitResponse, error),
+) (*Commit, error) {
 	if err := transaction.sign(); err != nil {
 		return nil, err
 	}
@@ -64,7 +80,7 @@ func (transaction *Transaction) Submit(ctx context.Context) (*Commit, error) {
 		ChannelId:           transaction.channelID,
 		PreparedTransaction: transaction.preparedTransaction.GetEnvelope(),
 	}
-	_, err = transaction.client.Submit(ctx, submitRequest)
+	_, err = call(submitRequest)
 	if err != nil {
 		return nil, err
 	}

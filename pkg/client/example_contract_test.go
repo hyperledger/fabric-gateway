@@ -7,9 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package client_test
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
@@ -68,11 +66,8 @@ func ExampleContract_SubmitAsync() {
 	// Use transaction result to update UI or return REST response after successful submit to the orderer.
 	fmt.Printf("Result: %s", result)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
-
 	// Wait for transaction commit.
-	status, err := commit.Status(ctx)
+	status, err := commit.Status()
 	if err != nil {
 		panic(err)
 	}
@@ -107,11 +102,8 @@ func ExampleContract_offlineSign() {
 		panic(err)
 	}
 
-	endorseCtx, cancelEndorse := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancelEndorse()
-
 	// Endorse proposal to create an endorsed transaction.
-	unsignedTransaction, err := signedProposal.Endorse(endorseCtx)
+	unsignedTransaction, err := signedProposal.Endorse()
 	if err != nil {
 		panic(err)
 	}
@@ -131,11 +123,8 @@ func ExampleContract_offlineSign() {
 		panic(err)
 	}
 
-	submitCtx, cancelSubmit := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancelSubmit()
-
 	// Submit transaction to the orderer.
-	unsignedCommit, err := signedTransaction.Submit(submitCtx)
+	unsignedCommit, err := signedTransaction.Submit()
 	if err != nil {
 		panic(err)
 	}
@@ -152,11 +141,8 @@ func ExampleContract_offlineSign() {
 	}
 	signedCommit, err := network.NewSignedCommit(commitBytes, commitSignature)
 
-	statusCtx, cancelStatus := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancelStatus()
-
 	// Wait for transaction commit.
-	status, err := signedCommit.Status(statusCtx)
+	status, err := signedCommit.Status()
 	if err != nil {
 		panic(err)
 	}

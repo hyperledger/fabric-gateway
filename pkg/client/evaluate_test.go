@@ -31,9 +31,6 @@ func NewStatusError(t *testing.T, code codes.Code, message string, details ...pr
 }
 
 func TestEvaluateTransaction(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	newEvaluateResponse := func(value []byte) *gateway.EvaluateResponse {
 		return &gateway.EvaluateResponse{
 			Result: &peer.Response{
@@ -200,7 +197,7 @@ func TestEvaluateTransaction(t *testing.T) {
 
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
-		_, err = proposal.Evaluate(ctx)
+		_, err = proposal.Evaluate()
 		require.NoError(t, err, "Evaluate")
 
 		require.Equal(t, proposal.TransactionID(), actual)
@@ -220,7 +217,7 @@ func TestEvaluateTransaction(t *testing.T) {
 
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
-		_, err = proposal.Evaluate(ctx)
+		_, err = proposal.Evaluate()
 		require.NoError(t, err, "Evaluate")
 
 		require.Equal(t, proposal.TransactionID(), actual)
@@ -299,8 +296,9 @@ func TestEvaluateTransaction(t *testing.T) {
 
 	t.Run("Uses specified context", func(t *testing.T) {
 		var actual context.Context
-		evaluateCtx, cancelCtx := context.WithCancel(ctx)
-		defer cancelCtx()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
@@ -314,11 +312,11 @@ func TestEvaluateTransaction(t *testing.T) {
 
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
-		_, err = proposal.Evaluate(evaluateCtx)
+		_, err = proposal.EvaluateWithContext(ctx)
 		require.NoError(t, err, "Evaluate")
 
 		require.Nil(t, actual.Err(), "context not done before explicit cancel")
-		cancelCtx()
+		cancel()
 		require.NotNil(t, actual.Err(), "context done after explicit cancel")
 	})
 

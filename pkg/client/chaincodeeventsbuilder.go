@@ -15,7 +15,7 @@ import (
 )
 
 type chaincodeEventsBuilder struct {
-	client        gateway.GatewayClient
+	client        *gatewayClient
 	signingID     *signingIdentity
 	channelName   string
 	chaincodeName string
