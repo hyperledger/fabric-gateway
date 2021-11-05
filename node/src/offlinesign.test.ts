@@ -9,7 +9,7 @@ import { Contract } from './contract';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { Envelope } from './protos/common/common_pb';
+import { ChannelHeader, Envelope, Header, Payload } from './protos/common/common_pb';
 import { CommitStatusResponse, EndorseResponse, EvaluateResponse } from './protos/gateway/gateway_pb';
 import { Response } from './protos/peer/proposal_response_pb';
 import { TxValidationCode } from './protos/peer/transaction_pb';
@@ -35,11 +35,20 @@ describe('Offline sign', () => {
 
         client.mockEvaluateResponse(evaluateResult);
 
-        const preparedTx = new Envelope();
-        preparedTx.setPayload(Buffer.from('PAYLOAD'));
+        const channelHeader = new ChannelHeader();
+        channelHeader.setChannelId('CHANNEL');
+
+        const header = new Header();
+        header.setChannelHeader(channelHeader.serializeBinary());
+
+        const payload = new Payload();
+        payload.setHeader(header);
+
+        const txEnvelope = new Envelope();
+        txEnvelope.setPayload(payload.serializeBinary());
 
         const endorseResult = new EndorseResponse();
-        endorseResult.setPreparedTransaction(preparedTx);
+        endorseResult.setPreparedTransaction(txEnvelope);
         endorseResult.setResult(txResult)
 
         client.mockEndorseResponse(endorseResult);
@@ -74,7 +83,7 @@ describe('Offline sign', () => {
             const expected = Buffer.from('MY_SIGNATURE');
 
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
-            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), expected);
+            const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), expected);
             await signedProposal.evaluate();
     
             const evaluateRequest = client.getEvaluateRequests()[0];
@@ -86,7 +95,7 @@ describe('Offline sign', () => {
             const expected = Buffer.from('MY_SIGNATURE');
 
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME', {endorsingOrganizations: ['org3', 'org5']});
-            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), expected);
+            const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), expected);
             await signedProposal.evaluate();
 
             const evaluateRequest = client.getEvaluateRequests()[0];
@@ -106,7 +115,7 @@ describe('Offline sign', () => {
             const expected = Buffer.from('MY_SIGNATURE');
 
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
-            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), expected);
+            const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), expected);
             await signedProposal.endorse();
     
             const endorseRequest = client.getEndorseRequests()[0];
@@ -118,7 +127,7 @@ describe('Offline sign', () => {
             const expected = Buffer.from('MY_SIGNATURE');
 
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME', {endorsingOrganizations: ['org3', 'org5']});
-            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), expected);
+            const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), expected);
             await signedProposal.endorse();
 
             const endorseRequest = client.getEndorseRequests()[0];
@@ -130,7 +139,7 @@ describe('Offline sign', () => {
     describe('submit', () => {
         it('throws with no signer and no explicit signing', async () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
-            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const transaction = await signedProposal.endorse();
 
             await expect(transaction.submit()).rejects.toThrow(undefinedSignerMessage);
@@ -140,9 +149,9 @@ describe('Offline sign', () => {
             const expected = Buffer.from('MY_SIGNATURE');
 
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
-            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedTransaction = await signedProposal.endorse();
-            const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), expected);
+            const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), expected);
             await signedTransaction.submit();
     
             const submitRequest = client.getSubmitRequests()[0];
@@ -154,9 +163,9 @@ describe('Offline sign', () => {
     describe('commit', () => {
         it('throws with no signer and no explicit signing', async () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
-            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedTransaction = await signedProposal.endorse();
-            const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
+            const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
             const commit = await signedTransaction.submit();
 
             await expect(commit.getStatus()).rejects.toThrow(undefinedSignerMessage);
@@ -166,11 +175,11 @@ describe('Offline sign', () => {
             const expected = Buffer.from('MY_SIGNATURE');
 
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
-            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedTransaction = await signedProposal.endorse();
-            const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
+            const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedCommit = await signedTransaction.submit();
-            const signedCommit = network.newSignedCommit(unsignedCommit.getBytes(), expected);
+            const signedCommit = gateway.newSignedCommit(unsignedCommit.getBytes(), expected);
             await signedCommit.getStatus();
     
             const commitRequest = client.getCommitStatusRequests()[0];
@@ -184,7 +193,7 @@ describe('Offline sign', () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
             const expected = unsignedProposal.getTransactionId();
 
-            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const actual = signedProposal.getTransactionId();
     
             expect(actual).toBe(expected);
@@ -194,7 +203,7 @@ describe('Offline sign', () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
             const expected = unsignedProposal.getDigest();
 
-            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const actual = signedProposal.getDigest();
     
             expect(actual).toEqual(expected);
@@ -202,11 +211,11 @@ describe('Offline sign', () => {
 
         it('transaction keeps same digest', async () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
-            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedTransaction = await signedProposal.endorse();
             const expected = unsignedTransaction.getDigest();
 
-            const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), expected);
+            const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), expected);
             const actual = signedTransaction.getDigest();
     
             expect(actual).toEqual(expected);
@@ -214,11 +223,11 @@ describe('Offline sign', () => {
 
         it('transaction keeps same transaction ID', async () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
-            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedTransaction = await signedProposal.endorse();
             const expected = unsignedTransaction.getTransactionId();
 
-            const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
+            const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
             const actual = signedTransaction.getTransactionId();
     
             expect(actual).toEqual(expected);
@@ -226,13 +235,13 @@ describe('Offline sign', () => {
 
         it('commit keeps same transaction ID', async () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
-            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedTransaction = await signedProposal.endorse();
-            const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
+            const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedCommit = await signedTransaction.submit();
             const expected = unsignedCommit.getTransactionId();
 
-            const signedCommit = network.newSignedCommit(unsignedCommit.getBytes(), Buffer.from('SIGNATURE'))
+            const signedCommit = gateway.newSignedCommit(unsignedCommit.getBytes(), Buffer.from('SIGNATURE'))
             const actual = signedCommit.getTransactionId();
     
             expect(actual).toEqual(expected);
@@ -240,13 +249,13 @@ describe('Offline sign', () => {
 
         it('commit keeps same digest', async () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
-            const signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
+            const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedTransaction = await signedProposal.endorse();
-            const signedTransaction = contract.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
+            const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedCommit = await signedTransaction.submit();
             const expected = unsignedCommit.getDigest();
 
-            const signedCommit = network.newSignedCommit(unsignedCommit.getBytes(), expected)
+            const signedCommit = gateway.newSignedCommit(unsignedCommit.getBytes(), expected)
             const actual = signedCommit.getDigest();
     
             expect(actual).toEqual(expected);

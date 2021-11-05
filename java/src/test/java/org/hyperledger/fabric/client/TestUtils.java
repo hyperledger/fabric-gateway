@@ -77,8 +77,8 @@ public final class TestUtils {
                 .signer(signer);
     }
     
-    public EndorseResponse newEndorseResponse(String value) {
-        PreparedTransaction preparedTransaction = newPreparedTransaction(value);
+    public EndorseResponse newEndorseResponse(String value, String channelName) {
+        PreparedTransaction preparedTransaction = newPreparedTransaction(value, channelName);
         return EndorseResponse.newBuilder()
                 .setPreparedTransaction(preparedTransaction.getEnvelope())
                 .setResult(preparedTransaction.getResult())
@@ -102,14 +102,23 @@ public final class TestUtils {
                 .build();
     }
 
-    public PreparedTransaction newPreparedTransaction(String payload) {
+    public PreparedTransaction newPreparedTransaction(String responsePayload, String channelName) {
+        Common.ChannelHeader channelHeader = Common.ChannelHeader.newBuilder()
+                .setChannelId(channelName)
+                .build();
+        Common.Header header = Common.Header.newBuilder()
+                .setChannelHeader(channelHeader.toByteString())
+                .build();
+        Common.Payload payload = Common.Payload.newBuilder()
+                .setHeader(header)
+                .build();
         Common.Envelope envelope = Common.Envelope.newBuilder()
-                .setPayload(ByteString.copyFromUtf8(payload))
+                .setPayload(payload.toByteString())
                 .build();
         return PreparedTransaction.newBuilder()
                 .setTransactionId(newFakeTransactionId())
                 .setEnvelope(envelope)
-                .setResult(newResponse(payload))
+                .setResult(newResponse(responsePayload))
                 .build();
     }
 

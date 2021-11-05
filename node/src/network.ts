@@ -6,11 +6,9 @@
 
 import { ChaincodeEvent } from './chaincodeevent';
 import { ChaincodeEventsBuilder, ChaincodeEventsOptions } from './chaincodeeventsbuilder';
-import { ChaincodeEventsRequest, ChaincodeEventsRequestImpl } from './chaincodeeventsrequest';
+import { ChaincodeEventsRequest } from './chaincodeeventsrequest';
 import { CloseableAsyncIterable, GatewayClient } from './client';
-import { Commit, CommitImpl } from './commit';
 import { Contract, ContractImpl } from './contract';
-import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, CommitStatusRequest, SignedCommitStatusRequest } from './protos/gateway/gateway_pb';
 import { SigningIdentity } from './signingidentity';
 
 /**
@@ -30,15 +28,6 @@ export interface Network {
      * @param contractName - Smart contract name.
      */
     getContract(chaincodeName: string, contractName?: string): Contract;
-
-    /**
-     * Create a commit with the specified digital signature, which can be used to access information about a
-     * transaction that is committed to the ledger. Supports off-line signing flow.
-     * @param bytes - Serialized commit status request.
-     * @param signature - Digital signature.
-     * @returns A signed commit status request.
-     */
-    newSignedCommit(bytes: Uint8Array, signature: Uint8Array): Commit;
 
     /**
      * Get chaincode events emitted by transaction functions of a specific chaincode.
@@ -66,14 +55,6 @@ export interface Network {
      * @returns A chaincode events request.
      */
     newChaincodeEventsRequest(chaincodeName: string, options?: ChaincodeEventsOptions): ChaincodeEventsRequest;
-
-    /**
-     * Create a chaincode events request with the specified digital signature. Supports off-line signing flow.
-     * @param bytes - Serialized chaincode events request.
-     * @param signature - Digital signature.
-     * @returns A signed chaincode events request.
-     */
-    newSignedChaincodeEventsRequest(bytes: Uint8Array, signature: Uint8Array): ChaincodeEventsRequest;
 }
 
 export interface NetworkOptions {
@@ -107,21 +88,6 @@ export class NetworkImpl implements Network {
         });
     }
 
-    newSignedCommit(bytes: Uint8Array, signature: Uint8Array): Commit {
-        const signedRequest = SignedCommitStatusRequest.deserializeBinary(bytes);
-        const request = CommitStatusRequest.deserializeBinary(signedRequest.getRequest_asU8());
-
-        const result = new CommitImpl({
-            client: this.#client,
-            signingIdentity: this.#signingIdentity,
-            transactionId: request.getTransactionId(),
-            signedRequest: signedRequest,
-        });
-        result.setSignature(signature);
-
-        return result;
-    }
-
     async getChaincodeEvents(chaincodeName: string, options?: Readonly<ChaincodeEventsOptions>): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
         return this.newChaincodeEventsRequest(chaincodeName, options).getEvents();
     }
@@ -137,18 +103,5 @@ export class NetworkImpl implements Network {
                 signingIdentity: this.#signingIdentity,
             },
         )).build();
-    }
-
-    newSignedChaincodeEventsRequest(bytes: Uint8Array, signature: Uint8Array): ChaincodeEventsRequest {
-        const request = ChaincodeEventsRequestProto.deserializeBinary(bytes);
-
-        const result = new ChaincodeEventsRequestImpl({
-            client: this.#client,
-            signingIdentity: this.#signingIdentity,
-            request,
-        });
-        result.setSignature(signature);
-
-        return result;
     }
 }

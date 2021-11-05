@@ -6,13 +6,21 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.function.Function;
-
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.Channel;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
+import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
+import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
+import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
+import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
+import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
+import org.hyperledger.fabric.protos.peer.ProposalPackage;
+
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.function.Function;
 
 final class GatewayImpl implements Gateway {
     public static final class Builder implements Gateway.Builder {
@@ -111,5 +119,63 @@ final class GatewayImpl implements Gateway {
     @Override
     public Network getNetwork(final String networkName) {
         return new NetworkImpl(client, signingIdentity, networkName);
+    }
+
+    @Override
+    public Proposal newSignedProposal(final byte[] bytes, final byte[] signature) {
+        try {
+            ProposedTransaction proposedTransaction = ProposedTransaction.parseFrom(bytes);
+            ProposalPackage.Proposal proposal = ProposalPackage.Proposal.parseFrom(proposedTransaction.getProposal().getProposalBytes());
+            Common.Header header = Common.Header.parseFrom(proposal.getHeader());
+            Common.ChannelHeader channelHeader = Common.ChannelHeader.parseFrom(header.getChannelHeader());
+
+            ProposalImpl result = new ProposalImpl(client, signingIdentity, channelHeader.getChannelId(), proposedTransaction);
+            result.setSignature(signature);
+            return result;
+        } catch (InvalidProtocolBufferException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    @Override
+    public Transaction newSignedTransaction(final byte[] bytes, final byte[] signature) {
+        try {
+            PreparedTransaction preparedTransaction = PreparedTransaction.parseFrom(bytes);
+            Common.Payload payload = Common.Payload.parseFrom(preparedTransaction.getEnvelope().getPayload());
+            Common.ChannelHeader channelHeader = Common.ChannelHeader.parseFrom(payload.getHeader().getChannelHeader());
+
+            TransactionImpl transaction = new TransactionImpl(client, signingIdentity, channelHeader.getChannelId(), preparedTransaction);
+            transaction.setSignature(signature);
+            return transaction;
+        } catch (InvalidProtocolBufferException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    @Override
+    public Commit newSignedCommit(final byte[] bytes, final byte[] signature) {
+        try {
+            SignedCommitStatusRequest signedRequest = SignedCommitStatusRequest.parseFrom(bytes);
+            CommitStatusRequest request = CommitStatusRequest.parseFrom(signedRequest.getRequest());
+
+            CommitImpl commit = new CommitImpl(client, signingIdentity, request.getTransactionId(), signedRequest);
+            commit.setSignature(signature);
+            return commit;
+        } catch (InvalidProtocolBufferException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    @Override
+    public ChaincodeEventsRequest newSignedChaincodeEventsRequest(final byte[] bytes, final byte[] signature) {
+        try {
+            SignedChaincodeEventsRequest signedRequest = SignedChaincodeEventsRequest.parseFrom(bytes);
+
+            ChaincodeEventsRequestImpl result = new ChaincodeEventsRequestImpl(client, signingIdentity, signedRequest);
+            result.setSignature(signature);
+            return result;
+        } catch (InvalidProtocolBufferException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 }

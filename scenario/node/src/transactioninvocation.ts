@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Contract, Network, ProposalOptions, Signable, Signer, StatusCode } from '@hyperledger/fabric-gateway';
+import { Contract, Gateway, ProposalOptions, Signable, Signer, StatusCode } from '@hyperledger/fabric-gateway';
 import { bytesAsString, toError, toString } from './utils';
 
 export class TransactionInvocation {
     readonly options: ProposalOptions = {};
 
     private readonly name: string;
-    private readonly network: Network;
+    private readonly gateway: Gateway;
     private readonly contract: Contract;
     private readonly invoke: () => Promise<Uint8Array>;
     private offlineSigner?: Signer;
@@ -19,8 +19,8 @@ export class TransactionInvocation {
     private error?: Error;
     private blockNumber = BigInt(0);
 
-    constructor(type: string, network: Network, contract: Contract, name: string) {
-        this.network = network;
+    constructor(type: string, gateway: Gateway, contract: Contract, name: string) {
+        this.gateway = gateway;
         this.contract = contract;
         this.name = name;
         this.invoke = this.getInvoke(type).bind(this);
@@ -70,20 +70,20 @@ export class TransactionInvocation {
 
     private async evaluate(): Promise<Uint8Array> {
         let proposal = this.contract.newProposal(this.name, this.options);
-        proposal = await this.sign(proposal, this.contract.newSignedProposal.bind(this.contract));
+        proposal = await this.sign(proposal, this.gateway.newSignedProposal.bind(this.gateway));
  
         return await proposal.evaluate();
     }
     
     private async submit(): Promise<Uint8Array> {
         const unsignedProposal = this.contract.newProposal(this.name, this.options);
-        const signedProposal = await this.sign(unsignedProposal, this.contract.newSignedProposal.bind(this.contract));
+        const signedProposal = await this.sign(unsignedProposal, this.gateway.newSignedProposal.bind(this.gateway));
         
         const unsignedTransaction = await signedProposal.endorse();
-        const signedTransaction = await this.sign(unsignedTransaction, this.contract.newSignedTransaction.bind(this.contract));
+        const signedTransaction = await this.sign(unsignedTransaction, this.gateway.newSignedTransaction.bind(this.gateway));
     
         const submitted = await signedTransaction.submit();
-        const signedCommit = await this.sign(submitted, this.network.newSignedCommit.bind(this.network));
+        const signedCommit = await this.sign(submitted, this.gateway.newSignedCommit.bind(this.gateway));
 
         const status = await signedCommit.getStatus();
 

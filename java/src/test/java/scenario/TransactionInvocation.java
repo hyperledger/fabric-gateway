@@ -13,7 +13,7 @@ import java.util.concurrent.Callable;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.hyperledger.fabric.client.Commit;
 import org.hyperledger.fabric.client.Contract;
-import org.hyperledger.fabric.client.Network;
+import org.hyperledger.fabric.client.Gateway;
 import org.hyperledger.fabric.client.Proposal;
 import org.hyperledger.fabric.client.Status;
 import org.hyperledger.fabric.client.SubmittedTransaction;
@@ -23,7 +23,7 @@ import org.hyperledger.fabric.client.identity.Signer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class TransactionInvocation {
-    private final Network network;
+    private final Gateway gateway;
     private final Contract contract;
     private final Proposal.Builder proposalBuilder;
     private Callable<byte[]> action;
@@ -32,8 +32,8 @@ public final class TransactionInvocation {
     private Throwable error;
     private long blockNumber;
 
-    private TransactionInvocation(final Network network, final Contract contract, final String transactionName) {
-        this.network = network;
+    private TransactionInvocation(final Gateway gateway, final Contract contract, final String transactionName) {
+        this.gateway = gateway;
         this.contract = contract;
         proposalBuilder = contract.newProposal(transactionName);
     }
@@ -46,14 +46,14 @@ public final class TransactionInvocation {
         proposalBuilder.setEndorsingOrganizations(orgs);
     }
 
-    public static TransactionInvocation prepareToSubmit(final Network network, final Contract contract, final String transactionName) {
-        TransactionInvocation invocation = new TransactionInvocation(network, contract, transactionName);
+    public static TransactionInvocation prepareToSubmit(final Gateway gateway, final Contract contract, final String transactionName) {
+        TransactionInvocation invocation = new TransactionInvocation(gateway, contract, transactionName);
         invocation.action = invocation::submit;
         return invocation;
     }
 
-    public static TransactionInvocation prepareToEvaluate(final Network network, final Contract contract, final String transactionName) {
-        TransactionInvocation invocation = new TransactionInvocation(network, contract, transactionName);
+    public static TransactionInvocation prepareToEvaluate(final Gateway gateway, final Contract contract, final String transactionName) {
+        TransactionInvocation invocation = new TransactionInvocation(gateway, contract, transactionName);
         invocation.action = invocation::evaluate;
         return invocation;
     }
@@ -101,7 +101,7 @@ public final class TransactionInvocation {
         }
 
         byte[] signature = offlineSigner.sign(proposal.getDigest());
-        return contract.newSignedProposal(proposal.getBytes(), signature);
+        return gateway.newSignedProposal(proposal.getBytes(), signature);
     }
 
     private Transaction offlineSign(final Transaction transaction) throws GeneralSecurityException, InvalidProtocolBufferException {
@@ -110,7 +110,7 @@ public final class TransactionInvocation {
         }
 
         byte[] signature = offlineSigner.sign(transaction.getDigest());
-        return contract.newSignedTransaction(transaction.getBytes(), signature);
+        return gateway.newSignedTransaction(transaction.getBytes(), signature);
     }
 
     private Commit offlineSign(final Commit commit) throws InvalidProtocolBufferException, GeneralSecurityException {
@@ -119,7 +119,7 @@ public final class TransactionInvocation {
         }
 
         byte[] signature = offlineSigner.sign(commit.getDigest());
-        return network.newSignedCommit(commit.getBytes(), signature);
+        return gateway.newSignedCommit(commit.getBytes(), signature);
     }
 
     private byte[] evaluate() throws InvalidProtocolBufferException, GeneralSecurityException {

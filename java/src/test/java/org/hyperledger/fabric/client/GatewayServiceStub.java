@@ -31,7 +31,7 @@ public class GatewayServiceStub {
     private static final TestUtils utils = TestUtils.getInstance();
 
     public EndorseResponse endorse(final EndorseRequest request) {
-        return utils.newEndorseResponse("PAYLOAD");
+        return utils.newEndorseResponse("PAYLOAD", request.getChannelId());
     }
 
     public SubmitResponse submit(final SubmitRequest request) {

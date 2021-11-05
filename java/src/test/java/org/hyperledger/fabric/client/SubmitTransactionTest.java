@@ -81,7 +81,7 @@ public final class SubmitTransactionTest {
 
     @Test
     void returns_gateway_response() throws Exception {
-        doReturn(utils.newEndorseResponse("MY_RESULT"))
+        doReturn(utils.newEndorseResponse("MY_RESULT", "CHANNEL_NAME"))
                 .when(stub).endorse(any());
 
         Contract contract = network.getContract("CHAINCODE_NAME");
@@ -183,20 +183,6 @@ public final class SubmitTransactionTest {
                 .build()
                 .endorse()
                 .submit();
-
-        EndorseRequest request = mocker.captureEndorse();
-        List<String> endorsingOrgs = request.getEndorsingOrganizationsList();
-        assertThat(endorsingOrgs).containsExactlyInAnyOrder("Org1MSP", "Org3MSP");
-    }
-
-    @Test
-    void sets_endorsing_orgs_offline_signing() throws Exception {
-        Contract contract = network.getContract("CHAINCODE_NAME");
-        Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME")
-                .setEndorsingOrganizations("Org1MSP", "Org3MSP")
-                .build();
-        Proposal signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
-        signedProposal.endorse().submit();
 
         EndorseRequest request = mocker.captureEndorse();
         List<String> endorsingOrgs = request.getEndorsingOrganizationsList();
