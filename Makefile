@@ -93,10 +93,10 @@ run-hsm-samples-go: enroll-hsm-user
 	cd $(hsm_samples_dir)/go; SOFTHSM2_CONF=${HOME}/softhsm2.conf go run -tags pkcs11 hsm-sample.go
 
 run-hsm-samples-node: build-node enroll-hsm-user
-	cd $(hsm_samples_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; npm run build; npm start
+	cd $(hsm_samples_dir)/node; rm -rf package-lock.json node_modules; npm install; npm run build; npm start
 
 run-samples-node: build-node
-	cd $(samples_dir)/node; npm install; npm run build; npm start
+	cd $(samples_dir)/node; rm -rf package-lock.json node_modules; npm install; npm run build; npm start
 
 run-samples-java: build-java
 	cd $(samples_dir)/java; mvn clean compile exec:java -Dexec.mainClass='com.example.Sample'
@@ -112,7 +112,7 @@ scenario-test-go: vendor-chaincode
 	cd $(scenario_dir)/go; SOFTHSM2_CONF=${HOME}/softhsm2.conf go test -tags pkcs11 -v -args $(scenario_dir)/features/
 
 scenario-test-node: vendor-chaincode build-node
-	cd $(scenario_dir)/node; rm -f package-lock.json; rm -rf node_modules; npm install; SOFTHSM2_CONF=${HOME}/softhsm2.conf npm test
+	cd $(scenario_dir)/node; rm -rf package-lock.json node_modules; npm install; SOFTHSM2_CONF=${HOME}/softhsm2.conf npm test
 
 scenario-test-java: vendor-chaincode build-protos
 	cd $(java_dir); mvn verify

@@ -106,8 +106,8 @@ async function exampleSubmitAsync(gateway: Gateway) {
     const timestamp = new Date().toISOString();
     console.log('Submitting "put" transaction asynchronously with arguments: async,', timestamp);
 
-	// Submit transaction asynchronously, blocking until the transaction has been sent to the orderer, and allowing
-	// this thread to process the chaincode response (e.g. update a UI) without waiting for the commit notification
+    // Submit transaction asynchronously, blocking until the transaction has been sent to the orderer, and allowing
+    // this thread to process the chaincode response (e.g. update a UI) without waiting for the commit notification
     const commit = await contract.submitAsync('put', {
         arguments: ['async', timestamp],
     });
