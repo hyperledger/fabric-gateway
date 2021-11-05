@@ -19,13 +19,13 @@ export interface SubmittedTransaction extends Commit {
 }
 
 export interface SubmittedTransactionImplOptions extends CommitImplOptions {
-    readonly result: Uint8Array;
+    result: Uint8Array;
 }
 
 export class SubmittedTransactionImpl extends CommitImpl {
     #result: Uint8Array;
 
-    constructor(options: SubmittedTransactionImplOptions) {
+    constructor(options: Readonly<SubmittedTransactionImplOptions>) {
         super(options);
         this.#result = options.result;
     }

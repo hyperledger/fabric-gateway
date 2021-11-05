@@ -38,10 +38,10 @@ export interface Transaction extends Signable {
 }
 
 export interface TransactionImplOptions {
-    readonly client: GatewayClient;
-    readonly signingIdentity: SigningIdentity;
-    readonly channelName: string;
-    readonly preparedTransaction: PreparedTransaction;
+    client: GatewayClient;
+    signingIdentity: SigningIdentity;
+    channelName: string;
+    preparedTransaction: PreparedTransaction;
 }
 
 export class TransactionImpl implements Transaction {
@@ -51,7 +51,7 @@ export class TransactionImpl implements Transaction {
     readonly #preparedTransaction: PreparedTransaction;
     readonly #envelope: Envelope;
 
-    constructor(options: TransactionImplOptions) {
+    constructor(options: Readonly<TransactionImplOptions>) {
         this.#client = options.client;
         this.#signingIdentity = options.signingIdentity;
         this.#channelName = options.channelName;
@@ -82,15 +82,15 @@ export class TransactionImpl implements Transaction {
         return this.#preparedTransaction.getTransactionId();
     }
 
-    async submit(options?: CallOptions): Promise<SubmittedTransaction> {
-        await this.sign();
-        await this.#client.submit(this.newSubmitRequest(), options);
+    async submit(options?: Readonly<CallOptions>): Promise<SubmittedTransaction> {
+        await this.#sign();
+        await this.#client.submit(this.#newSubmitRequest(), options);
 
         return new SubmittedTransactionImpl({
             client: this.#client,
             signingIdentity: this.#signingIdentity,
             transactionId: this.getTransactionId(),
-            signedRequest: this.newSignedCommitStatusRequest(),
+            signedRequest: this.#newSignedCommitStatusRequest(),
             result: this.getResult(),
         })
     }
@@ -99,8 +99,8 @@ export class TransactionImpl implements Transaction {
         this.#envelope.setSignature(signature);
     }
 
-    private async sign(): Promise<void> {
-        if (this.isSigned()) {
+    async #sign(): Promise<void> {
+        if (this.#isSigned()) {
             return;
         }
 
@@ -108,12 +108,12 @@ export class TransactionImpl implements Transaction {
         this.setSignature(signature);
     }
 
-    private isSigned(): boolean {
+    #isSigned(): boolean {
         const signatureLength = this.#envelope.getSignature_asU8()?.length || 0;
         return signatureLength > 0;
     }
 
-    private newSubmitRequest(): SubmitRequest {
+    #newSubmitRequest(): SubmitRequest {
         const result = new SubmitRequest();
         result.setTransactionId(this.getTransactionId());
         result.setChannelId(this.#channelName);
@@ -121,13 +121,13 @@ export class TransactionImpl implements Transaction {
         return result;
     }
 
-    private newSignedCommitStatusRequest(): SignedCommitStatusRequest {
+    #newSignedCommitStatusRequest(): SignedCommitStatusRequest {
         const result = new SignedCommitStatusRequest();
-        result.setRequest(this.newCommitStatusRequest().serializeBinary());
+        result.setRequest(this.#newCommitStatusRequest().serializeBinary());
         return result;
     }
 
-    private newCommitStatusRequest(): CommitStatusRequest {
+    #newCommitStatusRequest(): CommitStatusRequest {
         const result = new CommitStatusRequest();
         result.setChannelId(this.#channelName);
         result.setTransactionId(this.getTransactionId());

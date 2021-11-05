@@ -16,25 +16,25 @@ type MockUnaryRequest<RequestType, ResponseType> = jest.Mock<grpc.ClientUnaryCal
 type MockServerStreamRequest<RequestType, ResponseType> = jest.Mock<ServerStreamResponse<ResponseType>, [RequestType, grpc.CallOptions]>;
 
 export class MockGatewayGrpcClient implements GatewayGrpcClient {
-    readonly chaincodeEventsMock = jest.fn() as MockServerStreamRequest<SignedChaincodeEventsRequest, ChaincodeEventsResponse>;
-    readonly commitStatusMock = jest.fn() as MockUnaryRequest<SignedCommitStatusRequest, CommitStatusResponse>;
-    readonly endorseMock = jest.fn() as MockUnaryRequest<EndorseRequest, EndorseResponse>;
-    readonly evaluateMock = jest.fn() as MockUnaryRequest<EvaluateRequest, EvaluateResponse>;
-    readonly submitMock = jest.fn() as MockUnaryRequest<SubmitRequest, SubmitResponse>;
+    readonly #chaincodeEventsMock = jest.fn() as MockServerStreamRequest<SignedChaincodeEventsRequest, ChaincodeEventsResponse>;
+    readonly #commitStatusMock = jest.fn() as MockUnaryRequest<SignedCommitStatusRequest, CommitStatusResponse>;
+    readonly #endorseMock = jest.fn() as MockUnaryRequest<EndorseRequest, EndorseResponse>;
+    readonly #evaluateMock = jest.fn() as MockUnaryRequest<EvaluateRequest, EvaluateResponse>;
+    readonly #submitMock = jest.fn() as MockUnaryRequest<SubmitRequest, SubmitResponse>;
 
     #unaryMocks = {
-        [commitStatusMethod]: this.commitStatusMock,
-        [endorseMethod]: this.endorseMock,
-        [evaluateMethod]: this.evaluateMock,
-        [submitMethod]: this.submitMock,
+        [commitStatusMethod]: this.#commitStatusMock,
+        [endorseMethod]: this.#endorseMock,
+        [evaluateMethod]: this.#evaluateMock,
+        [submitMethod]: this.#submitMock,
     };
     #serverStreamMocks = {
-        [chaincodeEventsMethod]: this.chaincodeEventsMock,
+        [chaincodeEventsMethod]: this.#chaincodeEventsMock,
     };
 
     constructor() {
         // Default empty responses
-        this.chaincodeEventsMock.mockReturnValue({
+        this.#chaincodeEventsMock.mockReturnValue({
             async* [Symbol.asyncIterator]() {
                 // Nothing
             },
@@ -80,79 +80,79 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
     }
 
     getChaincodeEventsRequests(): SignedChaincodeEventsRequest[] {
-        return this.chaincodeEventsMock.mock.calls.map(call => call[0]);
+        return this.#chaincodeEventsMock.mock.calls.map(call => call[0]);
     }
 
     getCommitStatusRequests(): SignedCommitStatusRequest[] {
-        return this.commitStatusMock.mock.calls.map(call => call[0]);
+        return this.#commitStatusMock.mock.calls.map(call => call[0]);
     }
 
     getEndorseRequests(): EndorseRequest[] {
-        return this.endorseMock.mock.calls.map(call => call[0]);
+        return this.#endorseMock.mock.calls.map(call => call[0]);
     }
 
     getEvaluateRequests(): EvaluateRequest[] {
-        return this.evaluateMock.mock.calls.map(call => call[0]);
+        return this.#evaluateMock.mock.calls.map(call => call[0]);
     }
 
     getSubmitRequests(): SubmitRequest[] {
-        return this.submitMock.mock.calls.map(call => call[0]);
+        return this.#submitMock.mock.calls.map(call => call[0]);
     }
 
     getChaincodeEventsOptions(): grpc.CallOptions[] {
-        return this.chaincodeEventsMock.mock.calls.map(call => call[1]);
+        return this.#chaincodeEventsMock.mock.calls.map(call => call[1]);
     }
 
     getCommitStatusOptions(): grpc.CallOptions[] {
-        return this.commitStatusMock.mock.calls.map(call => call[1]);
+        return this.#commitStatusMock.mock.calls.map(call => call[1]);
     }
 
     getEndorseOptions(): grpc.CallOptions[] {
-        return this.endorseMock.mock.calls.map(call => call[1]);
+        return this.#endorseMock.mock.calls.map(call => call[1]);
     }
 
     getEvaluateOptions(): grpc.CallOptions[] {
-        return this.evaluateMock.mock.calls.map(call => call[1]);
+        return this.#evaluateMock.mock.calls.map(call => call[1]);
     }
 
     getSubmitOptions(): grpc.CallOptions[] {
-        return this.submitMock.mock.calls.map(call => call[1]);
+        return this.#submitMock.mock.calls.map(call => call[1]);
     }
 
     mockCommitStatusResponse(response: CommitStatusResponse): void {
-        this.commitStatusMock.mockImplementation(fakeUnaryCall(undefined, response));
+        this.#commitStatusMock.mockImplementation(fakeUnaryCall(undefined, response));
     }
 
     mockCommitStatusError(err: grpc.ServiceError): void {
-        this.commitStatusMock.mockImplementation(fakeUnaryCall(err, undefined));
+        this.#commitStatusMock.mockImplementation(fakeUnaryCall(err, undefined));
     }
 
     mockEndorseResponse(response: EndorseResponse): void {
-        this.endorseMock.mockImplementation(fakeUnaryCall(undefined, response));
+        this.#endorseMock.mockImplementation(fakeUnaryCall(undefined, response));
     }
 
     mockEndorseError(err: grpc.ServiceError): void {
-        this.endorseMock.mockImplementation(fakeUnaryCall(err, undefined));
+        this.#endorseMock.mockImplementation(fakeUnaryCall(err, undefined));
     }
 
     mockEvaluateResponse(response: EvaluateResponse): void {
-        this.evaluateMock.mockImplementation(fakeUnaryCall(undefined, response));
+        this.#evaluateMock.mockImplementation(fakeUnaryCall(undefined, response));
     }
 
     mockEvaluateError(err: grpc.ServiceError): void {
-        this.evaluateMock.mockImplementation(fakeUnaryCall(err, undefined));
+        this.#evaluateMock.mockImplementation(fakeUnaryCall(err, undefined));
     }
 
     mockSubmitResponse(response: SubmitResponse): void {
-        this.submitMock.mockImplementation(fakeUnaryCall(undefined, response));
+        this.#submitMock.mockImplementation(fakeUnaryCall(undefined, response));
     }
 
     mockSubmitError(err: grpc.ServiceError): void {
-        this.submitMock.mockImplementation(fakeUnaryCall(err, undefined));
+        this.#submitMock.mockImplementation(fakeUnaryCall(err, undefined));
     }
 
     mockChaincodeEventsResponse(stream: ServerStreamResponse<ChaincodeEventsResponse>): void {
-        this.chaincodeEventsMock.mockReturnValue(stream);
+        this.#chaincodeEventsMock.mockReturnValue(stream);
     }
 }
 

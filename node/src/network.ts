@@ -77,9 +77,9 @@ export interface Network {
 }
 
 export interface NetworkOptions {
-    readonly client: GatewayClient;
-    readonly signingIdentity: SigningIdentity;
-    readonly channelName: string;
+    client: GatewayClient;
+    signingIdentity: SigningIdentity;
+    channelName: string;
 }
 
 export class NetworkImpl implements Network {
@@ -87,7 +87,7 @@ export class NetworkImpl implements Network {
     readonly #signingIdentity: SigningIdentity;
     readonly #channelName: string;
 
-    constructor(options: NetworkOptions) {
+    constructor(options: Readonly<NetworkOptions>) {
         this.#client = options.client;
         this.#signingIdentity = options.signingIdentity;
         this.#channelName = options.channelName;
@@ -122,19 +122,20 @@ export class NetworkImpl implements Network {
         return result;
     }
 
-    async getChaincodeEvents(chaincodeName: string, options?: ChaincodeEventsOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
+    async getChaincodeEvents(chaincodeName: string, options?: Readonly<ChaincodeEventsOptions>): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
         return this.newChaincodeEventsRequest(chaincodeName, options).getEvents();
     }
 
-    newChaincodeEventsRequest(chaincodeName: string, options: ChaincodeEventsOptions = {}): ChaincodeEventsRequest {
+    newChaincodeEventsRequest(chaincodeName: string, options: Readonly<ChaincodeEventsOptions> = {}): ChaincodeEventsRequest {
         return new ChaincodeEventsBuilder(Object.assign(
+            {},
+            options,
             {
                 chaincodeName: chaincodeName,
                 channelName: this.#channelName,
                 client: this.#client,
                 signingIdentity: this.#signingIdentity,
             },
-            options,
         )).build();
     }
 

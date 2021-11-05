@@ -88,7 +88,7 @@ export interface ConnectOptions {
  * @param options - Connection options.
  * @returns A connected gateway.
  */
-export function connect(options: ConnectOptions): Gateway {
+export function connect(options: Readonly<ConnectOptions>): Gateway {
     return internalConnect(options);
 }
 
@@ -96,7 +96,7 @@ export interface InternalConnectOptions extends Omit<ConnectOptions, 'client'> {
     client: GatewayGrpcClient;
 }
 
-export function internalConnect(options: InternalConnectOptions): Gateway {
+export function internalConnect(options: Readonly<InternalConnectOptions>): Gateway {
     if (!options.client) {
         throw new Error('No client connection supplied');
     }
