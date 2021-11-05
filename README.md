@@ -18,10 +18,10 @@ See the [gateway.proto file](https://github.com/hyperledger/fabric-protos/blob/m
 
 This repo comprises the Gateway server (written in Go) and three SDKs (written in Go, Typescript and Java).
 In order to build these components, the following needs to be installed and available in the PATH:
-- Go (v1.14)
-- Node (optional for Node SDK)
+- Go 1.16.7
+- Node 14.x (optional for Node SDK)
 - Typescript (optional for Node SDK)
-- Java 11 (optional for Java SDK)
+- Java 8 (optional for Java SDK)
 - Docker
 - Protobuf compiler (https://developers.google.com/protocol-buffers/docs/downloads)
 - Some Go tools:
