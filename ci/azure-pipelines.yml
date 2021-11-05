@@ -81,7 +81,7 @@ stages:
       - checkout: self
       - script: |
           echo "Build source branch: ${SOURCE_BRANCH}"
-          GO_GATEWAY_VERSION=${Build.SourceBranch#refs/tags/v}
+          GO_GATEWAY_VERSION=${SOURCE_BRANCH#refs/tags/v}
           echo "Expected version: ${GATEWAY_VERSION}"
           echo "Go module version (git tag): ${GO_GATEWAY_VERSION}"
           [ "${GO_GATEWAY_VERSION}" = "${GATEWAY_VERSION}" ] || exit 1
