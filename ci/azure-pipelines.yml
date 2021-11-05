@@ -4,7 +4,12 @@
 
 name: $(SourceBranchName)-$(Date:yyyyMMdd)$(Rev:.rrr)
 trigger:
-- main
+  branches:
+    include:
+      - main
+  tags:
+    include:
+    - v*
 pr:
 - main
 
