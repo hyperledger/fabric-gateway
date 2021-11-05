@@ -31,7 +31,7 @@ variables:
   - name: GOVER
     value: 1.16.7
   - name: NODEVER
-    value: 12.16.1
+    value: 14.x
 
 stages:
 - stage: VerifyVersions

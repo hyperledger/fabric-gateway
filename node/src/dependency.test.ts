@@ -8,7 +8,7 @@ import { generateKeyPairSync } from 'crypto';
 
 function isLoaded(moduleName: string): boolean {
     const moduleFile = require.resolve(moduleName);
-    return !!Object.values(require.cache).find(m => m.filename === moduleFile);
+    return !!Object.values(require.cache).find(m => m?.filename === moduleFile);
 }
 
 describe('optional pkcs11js dependency', () => {
