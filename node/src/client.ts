@@ -57,7 +57,7 @@ class GatewayClientImpl implements GatewayClient {
     readonly #client: GatewayGrpcClient;
     readonly #defaultOptions: Readonly<DefaultCallOptions>;
 
-    constructor(client: GatewayGrpcClient, defaultOptions: DefaultCallOptions) {
+    constructor(client: GatewayGrpcClient, defaultOptions: Readonly<DefaultCallOptions>) {
         this.#client = client;
         this.#defaultOptions = Object.assign({}, defaultOptions);
     }

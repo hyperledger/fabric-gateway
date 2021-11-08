@@ -35,9 +35,9 @@ export interface ChaincodeEventsRequest extends Signable {
 }
 
 export interface ChaincodeEventsRequestOptions {
-    readonly client: GatewayClient;
-    readonly signingIdentity: SigningIdentity;
-    readonly request: ChaincodeEventsRequestProto;
+    client: GatewayClient;
+    signingIdentity: SigningIdentity;
+    request: ChaincodeEventsRequestProto;
 }
 
 export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
@@ -45,7 +45,7 @@ export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
     readonly #signingIdentity: SigningIdentity;
     readonly #signedRequest: SignedChaincodeEventsRequestProto;
 
-    constructor(options: ChaincodeEventsRequestOptions) {
+    constructor(options: Readonly<ChaincodeEventsRequestOptions>) {
         this.#client = options.client;
         this.#signingIdentity = options.signingIdentity;
         this.#signedRequest = new SignedChaincodeEventsRequestProto();
@@ -53,7 +53,7 @@ export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
     }
 
     async getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
-        await this.sign();
+        await this.#sign();
         const responses = this.#client.chaincodeEvents(this.#signedRequest, options);
         return newChaincodeEvents(responses);
     }
@@ -70,8 +70,8 @@ export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
         this.#signedRequest.setSignature(signature);
     }
 
-    private async sign(): Promise<void> {
-        if (this.isSigned()) {
+    async #sign(): Promise<void> {
+        if (this.#isSigned()) {
             return;
         }
 
@@ -79,7 +79,7 @@ export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
         this.setSignature(signature);
     }
 
-    private isSigned(): boolean {
+    #isSigned(): boolean {
         const signatureLength = this.#signedRequest.getSignature()?.length || 0;
         return signatureLength > 0;
     }

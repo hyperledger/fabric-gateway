@@ -20,17 +20,17 @@ export interface ChaincodeEventsOptions {
     startBlock?: bigint;
 }
 
-export interface ChaincodeEventsBuilderOptions extends Readonly<ChaincodeEventsOptions> {
-    readonly client: GatewayClient;
-    readonly signingIdentity: SigningIdentity;
-    readonly channelName: string;
-    readonly chaincodeName: string;
+export interface ChaincodeEventsBuilderOptions extends ChaincodeEventsOptions {
+    client: GatewayClient;
+    signingIdentity: SigningIdentity;
+    channelName: string;
+    chaincodeName: string;
 }
 
 export class ChaincodeEventsBuilder {
-    readonly #options: ChaincodeEventsBuilderOptions;
+    readonly #options: Readonly<ChaincodeEventsBuilderOptions>;
 
-    constructor(options: ChaincodeEventsBuilderOptions) {
+    constructor(options: Readonly<ChaincodeEventsBuilderOptions>) {
         this.#options = options;
     }
 
@@ -38,21 +38,21 @@ export class ChaincodeEventsBuilder {
         return new ChaincodeEventsRequestImpl({
             client: this.#options.client,
             signingIdentity: this.#options.signingIdentity,
-            request: this.newChaincodeEventsRequestProto(),
+            request: this.#newChaincodeEventsRequestProto(),
         });
     }
 
-    private newChaincodeEventsRequestProto(): ChaincodeEventsRequestProto {
+    #newChaincodeEventsRequestProto(): ChaincodeEventsRequestProto {
         const result = new ChaincodeEventsRequestProto();
         result.setChannelId(this.#options.channelName);
         result.setChaincodeId(this.#options.chaincodeName);
         result.setIdentity(this.#options.signingIdentity.getCreator());
-        result.setStartPosition(this.getStartPosition());
+        result.setStartPosition(this.#getStartPosition());
 
         return result;
     }
 
-    private getStartPosition(): SeekPosition {
+    #getStartPosition(): SeekPosition {
         const result = new SeekPosition();
 
         const startBlock = this.#options.startBlock;

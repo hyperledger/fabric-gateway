@@ -32,10 +32,10 @@ export interface Commit extends Signable {
 }
 
 export interface CommitImplOptions {
-    readonly client: GatewayClient;
-    readonly signingIdentity: SigningIdentity;
-    readonly transactionId: string;
-    readonly signedRequest: SignedCommitStatusRequest;
+    client: GatewayClient;
+    signingIdentity: SigningIdentity;
+    transactionId: string;
+    signedRequest: SignedCommitStatusRequest;
 }
 
 export class CommitImpl implements Commit {
@@ -44,7 +44,7 @@ export class CommitImpl implements Commit {
     readonly #transactionId: string;
     readonly #signedRequest: SignedCommitStatusRequest;
 
-    constructor(options: CommitImplOptions) {
+    constructor(options: Readonly<CommitImplOptions>) {
         this.#client = options.client;
         this.#signingIdentity = options.signingIdentity;
         this.#transactionId = options.transactionId;
@@ -65,9 +65,9 @@ export class CommitImpl implements Commit {
     }
 
     async getStatus(options?: CallOptions): Promise<Status> {
-        await this.sign();
+        await this.#sign();
         const response = await this.#client.commitStatus(this.#signedRequest, options);
-        return this.newStatus(response);
+        return this.#newStatus(response);
     }
 
     getTransactionId(): string {
@@ -78,8 +78,8 @@ export class CommitImpl implements Commit {
         this.#signedRequest.setSignature(signature);
     }
 
-    private async sign(): Promise<void> {
-        if (this.isSigned()) {
+    async #sign(): Promise<void> {
+        if (this.#isSigned()) {
             return;
         }
 
@@ -87,13 +87,13 @@ export class CommitImpl implements Commit {
         this.setSignature(signature);
     }
 
-    private isSigned(): boolean {
+    #isSigned(): boolean {
         const signatureLength = this.#signedRequest.getSignature()?.length || 0;
         return signatureLength > 0;
     }
 
 
-    private newStatus(response: CommitStatusResponse): Status {
+    #newStatus(response: CommitStatusResponse): Status {
         const code = response.getResult() ?? StatusCode.INVALID_OTHER_REASON;
         return {
             blockNumber: BigInt(response.getBlockNumber()),

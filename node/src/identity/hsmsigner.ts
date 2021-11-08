@@ -67,7 +67,7 @@ export interface HSMSignerFactory {
 }
 
 export class HSMSignerFactoryImpl implements HSMSignerFactory {
-    #pkcs11: pkcs11js.PKCS11;
+    readonly #pkcs11: pkcs11js.PKCS11;
 
     constructor(library: string) {
         this.#pkcs11 = new pkcs11js.PKCS11();
@@ -79,30 +79,32 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
         this.#pkcs11.C_Finalize();
     }
 
-    newSigner(hsmSignerOptions: HSMSignerOptions): HSMSigner {
-        if (!hsmSignerOptions.label || hsmSignerOptions.label.trim() === '') {
+    newSigner(hsmSignerOptions: Readonly<HSMSignerOptions>): HSMSigner {
+        const options = Object.assign<object, HSMSignerOptions>({}, hsmSignerOptions);
+        
+        if (!options.label || options.label.trim() === '') {
             throw new Error('label property must be provided');
         }
 
-        if (!hsmSignerOptions.pin || hsmSignerOptions.pin.trim() === '') {
+        if (!options.pin || options.pin.trim() === '') {
             throw new Error('pin property must be provided');
         }
 
-        if (!hsmSignerOptions.identifier || hsmSignerOptions.identifier.toString().trim() === '') {
+        if (!options.identifier || options.identifier.toString().trim() === '') {
             throw new Error('identifier property must be provided');
         }
 
-        if (!hsmSignerOptions.userType) {
-            hsmSignerOptions.userType = pkcs11js.CKU_USER;
+        if (!options.userType) {
+            options.userType = pkcs11js.CKU_USER;
         }
 
         const supportedKeySize = 256;
         const pkcs11 = this.#pkcs11;
-        const slot = this.findSlotForLabel(hsmSignerOptions.label);
+        const slot = this.#findSlotForLabel(options.label);
         const session = pkcs11.C_OpenSession(slot, pkcs11js.CKF_SERIAL_SESSION);
 
         try {
-            pkcs11.C_Login(session, hsmSignerOptions.userType, hsmSignerOptions.pin);
+            pkcs11.C_Login(session, options.userType, options.pin);
         } catch(err) {
             const pkcs11err = err as pkcs11js.Pkcs11Error;
             if (pkcs11err.code !== pkcs11js.CKR_USER_ALREADY_LOGGED_IN) {
@@ -113,7 +115,7 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
 
         let privateKeyHandle: Buffer;
         try {
-            privateKeyHandle = this.findObjectInHSM(session, pkcs11js.CKO_PRIVATE_KEY, hsmSignerOptions.identifier);
+            privateKeyHandle = this.#findObjectInHSM(session, pkcs11js.CKO_PRIVATE_KEY, options.identifier);
         } catch(err) {
             pkcs11.C_CloseSession(session);
             throw err;
@@ -148,7 +150,7 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
         return { signer, close };
     }
 
-    private findSlotForLabel(pkcs11Label: string): Buffer {
+    #findSlotForLabel(pkcs11Label: string): Buffer {
         const slots = this.#pkcs11.C_GetSlotList(true);
 
         if (!slots || slots.length === 0) {
@@ -167,7 +169,7 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
         return slot;
     }
 
-    private findObjectInHSM(session: Buffer, keytype: number, identifier: string | Buffer): Buffer {
+    #findObjectInHSM(session: Buffer, keytype: number, identifier: string | Buffer): Buffer {
         const pkcs11Template: pkcs11js.Template = [
             { type: pkcs11js.CKA_ID, value: identifier },
             { type: pkcs11js.CKA_CLASS, value: keytype },

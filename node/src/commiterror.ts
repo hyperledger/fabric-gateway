@@ -21,7 +21,7 @@ export class CommitError extends Error {
      */
     transactionId: string;
 
-    constructor(properties: Omit<CommitError, keyof Error> & Partial<Pick<Error, 'message'>>) {
+    constructor(properties: Readonly<Omit<CommitError, keyof Error> & Partial<Pick<Error, 'message'>>>) {
         super(properties.message);
 
         this.name = CommitError.name;

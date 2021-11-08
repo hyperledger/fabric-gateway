@@ -46,10 +46,10 @@ export interface Proposal extends Signable {
 }
 
 export interface ProposalImplOptions {
-    readonly client: GatewayClient;
-    readonly signingIdentity: SigningIdentity;
-    readonly channelName: string;
-    readonly proposedTransaction: ProposedTransaction;
+    client: GatewayClient;
+    signingIdentity: SigningIdentity;
+    channelName: string;
+    proposedTransaction: ProposedTransaction;
 }
 
 export class ProposalImpl implements Proposal {
@@ -59,7 +59,7 @@ export class ProposalImpl implements Proposal {
     readonly #proposedTransaction: ProposedTransaction;
     readonly #proposal: SignedProposal;
 
-    constructor(options: ProposalImplOptions) {
+    constructor(options: Readonly<ProposalImplOptions>) {
         this.#client = options.client;
         this.#signingIdentity = options.signingIdentity;
         this.#channelName = options.channelName;
@@ -85,17 +85,17 @@ export class ProposalImpl implements Proposal {
         return this.#proposedTransaction.getTransactionId();
     }
 
-    async evaluate(options?: CallOptions): Promise<Uint8Array> {
-        await this.sign();
-        const evaluateResponse = await this.#client.evaluate(this.newEvaluateRequest(), options);
+    async evaluate(options?: Readonly<CallOptions>): Promise<Uint8Array> {
+        await this.#sign();
+        const evaluateResponse = await this.#client.evaluate(this.#newEvaluateRequest(), options);
         const result = evaluateResponse.getResult();
 
         return result?.getPayload_asU8() || new Uint8Array(0);
     }
 
-    async endorse(options?: CallOptions): Promise<Transaction> {
-        await this.sign();
-        const endorseResponse = await this.#client.endorse(this.newEndorseRequest(), options);
+    async endorse(options?: Readonly<CallOptions>): Promise<Transaction> {
+        await this.#sign();
+        const endorseResponse = await this.#client.endorse(this.#newEndorseRequest(), options);
 
         const preparedTx = endorseResponse.getPreparedTransaction();
         const response = endorseResponse.getResult();
@@ -107,7 +107,7 @@ export class ProposalImpl implements Proposal {
             client: this.#client,
             signingIdentity: this.#signingIdentity,
             channelName: this.#channelName,
-            preparedTransaction: this.newPreparedTransaction(preparedTx, response)
+            preparedTransaction: this.#newPreparedTransaction(preparedTx, response)
         });
     }
 
@@ -115,8 +115,8 @@ export class ProposalImpl implements Proposal {
         this.#proposal.setSignature(signature);
     }
 
-    private async sign(): Promise<void> {
-        if (this.isSigned()) {
+    async #sign(): Promise<void> {
+        if (this.#isSigned()) {
             return;
         }
 
@@ -124,12 +124,12 @@ export class ProposalImpl implements Proposal {
         this.setSignature(signature);
     }
 
-    private isSigned(): boolean {
+    #isSigned(): boolean {
         const signatureLength = this.#proposal.getSignature_asU8().length;
         return signatureLength > 0;
     }
 
-    private newEvaluateRequest(): EvaluateRequest {
+    #newEvaluateRequest(): EvaluateRequest {
         const result = new EvaluateRequest();
         result.setTransactionId(this.#proposedTransaction.getTransactionId());
         result.setChannelId(this.#channelName);
@@ -138,7 +138,7 @@ export class ProposalImpl implements Proposal {
         return result;
     }
 
-    private newEndorseRequest(): EndorseRequest {
+    #newEndorseRequest(): EndorseRequest {
         const result = new EndorseRequest();
         result.setTransactionId(this.#proposedTransaction.getTransactionId())
         result.setChannelId(this.#channelName);
@@ -147,7 +147,7 @@ export class ProposalImpl implements Proposal {
         return result;
     }
 
-    private newPreparedTransaction(envelope: Envelope, response: Response): PreparedTransaction {
+    #newPreparedTransaction(envelope: Envelope, response: Response): PreparedTransaction {
         const result = new PreparedTransaction();
         result.setEnvelope(envelope);
         result.setResult(response);

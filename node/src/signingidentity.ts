@@ -25,7 +25,7 @@ export class SigningIdentity {
     readonly #hash: Hash;
     readonly #sign: Signer;
 
-    constructor(options: SigningIdentityOptions) {
+    constructor(options: Readonly<SigningIdentityOptions>) {
         this.#identity = {
             mspId: options.identity.mspId,
             credentials: Uint8Array.from(options.identity.credentials)

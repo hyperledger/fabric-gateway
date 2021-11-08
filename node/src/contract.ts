@@ -199,11 +199,11 @@ export interface Contract {
 }
 
 export interface ContractOptions {
-    readonly client: GatewayClient;
-    readonly signingIdentity: SigningIdentity;
-    readonly channelName: string;
-    readonly chaincodeName: string;
-    readonly contractName?: string;
+    client: GatewayClient;
+    signingIdentity: SigningIdentity;
+    channelName: string;
+    chaincodeName: string;
+    contractName?: string;
 }
 
 export class ContractImpl implements Contract {
@@ -213,7 +213,7 @@ export class ContractImpl implements Contract {
     readonly #chaincodeName: string;
     readonly #contractName?: string;
 
-    constructor(options: ContractOptions) {
+    constructor(options: Readonly<ContractOptions>) {
         this.#client = options.client;
         this.#signingIdentity = options.signingIdentity;
         this.#channelName = options.channelName;
@@ -252,21 +252,22 @@ export class ContractImpl implements Contract {
         return submitted.getResult();
     }
 
-    async submitAsync(transactionName: string, options?: ProposalOptions): Promise<SubmittedTransaction> {
+    async submitAsync(transactionName: string, options?: Readonly<ProposalOptions>): Promise<SubmittedTransaction> {
         const transaction = await this.newProposal(transactionName, options).endorse();
         return await transaction.submit();
     }
 
-    newProposal(transactionName: string, options: ProposalOptions = {}): Proposal {
+    newProposal(transactionName: string, options: Readonly<ProposalOptions> = {}): Proposal {
         return new ProposalBuilder(Object.assign(
+            {},
+            options,
             {
                 client: this.#client,
                 signingIdentity: this.#signingIdentity,
                 channelName: this.#channelName,
                 chaincodeName: this.#chaincodeName,
-                transactionName: this.getQualifiedTransactionName(transactionName),
+                transactionName: this.#getQualifiedTransactionName(transactionName),
             },
-            options,
         )).build();
     }
 
@@ -298,7 +299,7 @@ export class ContractImpl implements Contract {
         return result;
     }
 
-    private getQualifiedTransactionName(transactionName: string) {
+    #getQualifiedTransactionName(transactionName: string) {
         return this.#contractName ? `${this.#contractName}:${transactionName}` : transactionName;
     }
 }
