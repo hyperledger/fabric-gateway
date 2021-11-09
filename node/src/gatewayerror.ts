@@ -39,17 +39,24 @@ export class GatewayError extends Error {
      * @see {@link https://grpc.github.io/grpc/core/md_doc_statuscodes.html} for descriptions of status codes.
      */
     code: number;
+
     /**
      * gRPC error details.
      */
     details: ErrorDetail[];
+
+    /**
+     * Raw underlying gRPC error.
+     */
+    cause: ServiceError;
 
     constructor(properties: Readonly<Omit<GatewayError, keyof Error> & Partial<Pick<Error, 'message'>>>) {
         super(properties.message);
 
         this.name = GatewayError.name;
         this.code = properties.code;
-        this.details = properties.details
+        this.details = properties.details;
+        this.cause = properties.cause;
     }
 }
 
@@ -71,5 +78,6 @@ export function newGatewayError(err: ServiceError): GatewayError {
         message: err.message,
         code: err.code,
         details,
+        cause: err,
     });
 }

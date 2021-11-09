@@ -7,6 +7,7 @@
 import { CallOptions, Metadata, ServiceError } from '@grpc/grpc-js';
 import { MockGatewayGrpcClient } from './client.test';
 import { CommitError } from './commiterror';
+import { CommitStatusError } from './commitstatuserror';
 import { Contract } from './contract';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
@@ -15,6 +16,7 @@ import { Envelope, Status } from './protos/common/common_pb';
 import { CommitStatusResponse, EndorseResponse } from './protos/gateway/gateway_pb';
 import { Response } from './protos/peer/proposal_response_pb';
 import { TxValidationCode } from './protos/peer/transaction_pb';
+import { SubmitError } from './submiterror';
 
 describe('Transaction', () => {
     const expectedResult = 'TX_RESULT';
@@ -88,9 +90,35 @@ describe('Transaction', () => {
 
     it('throws on submit error', async () => {
         client.mockSubmitError(serviceError);
+        const transaction = await contract.newProposal('TRANSACTION_NAME').endorse();
+        const transactionId = transaction.getTransactionId();
 
-        await expect(contract.submitTransaction('TRANSACTION_NAME'))
-            .rejects.toThrow(serviceError.message);
+        const t = transaction.submit();
+
+        await expect(t).rejects.toThrow(SubmitError);
+        await expect(t).rejects.toThrow(serviceError.message);
+        await expect(t).rejects.toMatchObject({
+            name: SubmitError.name,
+            transactionId,
+            cause: serviceError,
+        });
+    });
+
+    it('throws on commit status error', async () => {
+        client.mockCommitStatusError(serviceError);
+        const transaction = await contract.newProposal('TRANSACTION_NAME').endorse();
+        const commit = await transaction.submit();
+        const transactionId = commit.getTransactionId();
+
+        const t = commit.getStatus();
+
+        await expect(t).rejects.toThrow(CommitStatusError);
+        await expect(t).rejects.toThrow(serviceError.message);
+        await expect(t).rejects.toMatchObject({
+            name: CommitStatusError.name,
+            transactionId,
+            cause: serviceError,
+        });
     });
 
     it('throws CommitError on commit failure', async () => {
@@ -100,8 +128,8 @@ describe('Transaction', () => {
 
         const t = contract.submitTransaction('TRANSACTION_NAME');
 
-        await expect(t).rejects.toThrow('MVCC_READ_CONFLICT');
         await expect(t).rejects.toThrow(CommitError);
+        await expect(t).rejects.toThrow('MVCC_READ_CONFLICT');
     });
 
     it('returns result', async () => {
@@ -112,7 +140,7 @@ describe('Transaction', () => {
     });
 
     it('sets endorsing orgs', async () => {
-        await contract.submit('TRANSACTION_NAME', { endorsingOrganizations: ['org1', 'org3']});
+        await contract.submit('TRANSACTION_NAME', { endorsingOrganizations: ['org1', 'org3'] });
         const actualOrgs = client.getEndorseRequests()[0].getEndorsingOrganizationsList();
         expect(actualOrgs).toStrictEqual(['org1', 'org3']);
     });

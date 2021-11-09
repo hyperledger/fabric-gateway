@@ -6,9 +6,12 @@
 
 import { CallOptions, ClientUnaryCall, requestCallback } from '@grpc/grpc-js';
 import { Message } from 'google-protobuf';
+import { CommitStatusError } from './commitstatuserror';
+import { EndorseError } from './endorseerror';
 import { ConnectOptions } from './gateway';
-import { newGatewayError } from './gatewayerror';
-import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
+import { GatewayError, newGatewayError } from './gatewayerror';
+import { ChaincodeEventsResponse, CommitStatusRequest, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
+import { SubmitError } from './submiterror';
 
 const servicePath = '/gateway.Gateway/';
 export const evaluateMethod = servicePath + 'Evaluate';
@@ -80,7 +83,11 @@ class GatewayClientImpl implements GatewayClient {
             deserializeEndorseResponse,
             request,
             buildOptions(this.#defaultOptions.endorseOptions, options),
-            newUnaryCallback(resolve, reject)
+            newUnaryCallback(
+                resolve,
+                reject,
+                err => new EndorseError(Object.assign(err, { transactionId: request.getTransactionId() }))
+            ),
         ));
     }
 
@@ -91,7 +98,11 @@ class GatewayClientImpl implements GatewayClient {
             deserializeSubmitResponse,
             request,
             buildOptions(this.#defaultOptions.submitOptions, options),
-            newUnaryCallback(resolve, reject)
+            newUnaryCallback(
+                resolve,
+                reject,
+                err => new SubmitError(Object.assign(err, { transactionId: request.getTransactionId() })),
+            ),
         ));
     }
 
@@ -102,7 +113,14 @@ class GatewayClientImpl implements GatewayClient {
             deserializeCommitStatusResponse,
             request,
             buildOptions(this.#defaultOptions.commitStatusOptions, options),
-            newUnaryCallback(resolve, reject)
+            newUnaryCallback(
+                resolve,
+                reject,
+                err => {
+                    const req = CommitStatusRequest.deserializeBinary(request.getRequest_asU8());
+                    return new CommitStatusError(Object.assign(err, { transactionId: req.getTransactionId() }));
+                },
+            )
         ));
     }
 
@@ -126,10 +144,10 @@ function buildOptions(defaultOptions: (() => CallOptions) | undefined, options?:
     return Object.assign({}, defaultOptions?.(), options);
 }
 
-function newUnaryCallback<T>(resolve: (value: T) => void, reject: (reason: Error) => void): requestCallback<T> {
+function newUnaryCallback<T>(resolve: (value: T) => void, reject: (reason: Error) => void, wrap: (err: GatewayError) => GatewayError = (err => err)): requestCallback<T> {
     return (err, value) => {
         if (err) {
-            return reject(newGatewayError(err));
+            return reject(wrap(newGatewayError(err)));
         }
         if (value == null) {
             return reject(new Error('No result returned'));

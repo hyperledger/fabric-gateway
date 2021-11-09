@@ -7,6 +7,7 @@
 import { CallOptions, Metadata, ServiceError } from '@grpc/grpc-js';
 import { MockGatewayGrpcClient } from './client.test';
 import { Contract } from './contract';
+import { EndorseError } from './endorseerror';
 import { Gateway, internalConnect } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
@@ -360,8 +361,18 @@ describe('Proposal', () => {
 
         it('throws on endorse error', async () => {
             client.mockEndorseError(serviceError);
+            const proposal = contract.newProposal('TRANSACTION_NAME');
+            const transactionId = proposal.getTransactionId();
 
-            await expect(contract.submitTransaction('TRANSACTION_NAME')).rejects.toThrow(serviceError.message);
+            const t = proposal.endorse();
+
+            await expect(t).rejects.toThrow(EndorseError);
+            await expect(t).rejects.toThrow(serviceError.message);
+            await expect(t).rejects.toMatchObject({
+                name: EndorseError.name,
+                transactionId,
+                cause: serviceError,
+            });
         });
 
         it('includes channel name in proposal', async () => {

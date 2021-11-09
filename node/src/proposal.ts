@@ -39,7 +39,7 @@ export interface Proposal extends Signable {
      * Obtain endorsement for the transaction proposal from sufficient peers to allow it to be committed to the ledger.
      * @param options - gRPC call options.
      * @returns An endorsed transaction that can be submitted to the ledger.
-     * @throws {@link GatewayError}
+     * @throws {@link EndorseError}
      * Thrown if the gRPC service invocation fails.
      */
     endorse(options?: CallOptions): Promise<Transaction>;
