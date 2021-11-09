@@ -7,6 +7,17 @@
     "engines": {
         "node": "^14.15.0 || ^16.13.0"
     },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/hyperledger/fabric-gateway"
+    },
+    "bugs": "https://github.com/hyperledger/fabric-gateway/issues",
+    "homepage": "https://hyperledger.github.io/fabric-gateway/",
+    "author": {
+        "name": "hyperledger/fabric",
+        "email": "fabric@lists.hyperledger.org",
+        "url": "https://www.hyperledger.org/use/fabric"
+    },
     "scripts": {
         "build": "npm-run-all clean proto:prepare proto:gen proto:googlegen compile lint copy-non-ts-source",
         "clean": "rm -rf apidocs dist src/protos",
@@ -19,7 +30,6 @@
         "proto:googlegen": "grpc_tools_node_protoc --proto_path=../google-protos --js_out=import_style=commonjs,binary:src/protos --ts_out=service=grpc-node,mode=grpc-js:src/protos --grpc_out=grpc_js:src/protos $(find ../google-protos -name *.proto -type f -print)",
         "test": "jest"
     },
-    "author": "",
     "license": "Apache-2.0",
     "dependencies": {
         "@grpc/grpc-js": "^1.4.2",
