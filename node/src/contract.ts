@@ -126,8 +126,12 @@ export interface Contract {
      * @param name - Name of the transaction to be invoked.
      * @param args - Transaction arguments.
      * @returns The result returned by the transaction function.
-     * @throws {@link GatewayError}
-     * Thrown if the gRPC service invocation fails.
+     * @throws {@link EndorseError}
+     * Thrown if the endorse invocation fails.
+     * @throws {@link SubmitError}
+     * Thrown if the submit invocation fails.
+     * @throws {@link CommitStatusError}
+     * Thrown if the commit status invocation fails.
      * @throws {@link CommitError}
      * Thrown if the transaction commits unsuccessfully.
      */
@@ -152,8 +156,12 @@ export interface Contract {
      * @param transactionName - Name of the transaction to invoke.
      * @param options - Transaction invocation options.
      * @returns The result returned by the transaction function.
-     * @throws {@link GatewayError}
-     * Thrown if the gRPC service invocation fails.
+     * @throws {@link EndorseError}
+     * Thrown if the endorse invocation fails.
+     * @throws {@link SubmitError}
+     * Thrown if the submit invocation fails.
+     * @throws {@link CommitStatusError}
+     * Thrown if the commit status invocation fails.
      * @throws {@link CommitError}
      * Thrown if the transaction commits unsuccessfully.
      */

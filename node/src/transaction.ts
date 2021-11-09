@@ -31,7 +31,7 @@ export interface Transaction extends Signable {
      /**
      * Submit the transaction to the orderer to be committed to the ledger.
      * @param options - gRPC call options.
-     * @throws {@link GatewayError}
+     * @throws {@link SubmitError}
      * Thrown if the gRPC service invocation fails.
      */
     submit(options?: CallOptions): Promise<SubmittedTransaction>;
