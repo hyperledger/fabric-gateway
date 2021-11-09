@@ -33,6 +33,8 @@ export interface Network {
      * Get chaincode events emitted by transaction functions of a specific chaincode.
      * @param chaincodeName - A chaincode name.
      * @returns Chaincode events.
+     * @throws {@link GatewayError}
+     * Thrown by the iterator if the gRPC service invocation fails.
      * @example
      * ```
      * const events = await network.getChaincodeEvents(chaincodeName, { startBlock: BigInt(101) });

@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CallOptions } from '@grpc/grpc-js';
+import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
 import { ChaincodeEvent } from './chaincodeevent';
 import { ServerStreamResponse } from './client';
 import { MockGatewayGrpcClient } from './client.test';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
+import { GatewayError } from './gatewayerror';
 import { Identity } from './identity/identity';
 import { Network } from './network';
 import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, ChaincodeEventsResponse, SignedChaincodeEventsRequest } from './protos/gateway/gateway_pb';
@@ -31,10 +32,13 @@ function newChaincodeEvent(blockNumber: number, event: ChaincodeEventProto): Cha
     };
 }
 
-function newServerStreamResponse<T>(values: T[]): ServerStreamResponse<T> & { cancel: jest.Mock<void, void[]> } {
+function newServerStreamResponse<T>(values: (T | ServiceError)[]): ServerStreamResponse<T> & { cancel: jest.Mock<void, void[]> } {
     return {
         async* [Symbol.asyncIterator]() { // eslint-disable-line @typescript-eslint/require-await
             for (const value of values) {
+                if (value instanceof Error) {
+                    throw value;
+                }
                 yield value;
             }
         },
@@ -58,6 +62,12 @@ async function readElements<T>(iter: AsyncIterable<T>, count: number): Promise<T
 describe('Chaincode Events', () => {
     const channelName = 'CHANNEL_NAME';
     const signature = Buffer.from('SIGNATURE');
+    const serviceError: ServiceError = Object.assign(new Error('ERROR_MESSAGE'), {
+        code: status.UNAVAILABLE,
+        details: 'DETAILS',
+        metadata: new Metadata(),
+    });
+
 
     let chaincodeEventsOptions: () => CallOptions;
     let client: MockGatewayGrpcClient;
@@ -165,6 +175,18 @@ describe('Chaincode Events', () => {
             expect(chaincodeEventsOptions().deadline).toBe(expected);
         });
 
+        it('throws GatewayError on call ServiceError', async () => {
+            client.mockChaincodeEventsError(serviceError);
+
+            const t = network.getChaincodeEvents('CHAINCODE');
+
+            await expect(t).rejects.toThrow(GatewayError);
+            await expect(t).rejects.toThrow(serviceError.message);
+            await expect(t).rejects.toMatchObject({
+                code: serviceError.code,
+                cause: serviceError,
+            })
+        });
     });
 
     describe('event delivery', () => {
@@ -217,6 +239,20 @@ describe('Chaincode Events', () => {
             events.close();
 
             expect(iterable.cancel).toBeCalled();
+        });
+
+        it('throws GatewayError on call ServiceError', async () => {
+            client.mockChaincodeEventsResponse(newServerStreamResponse<ChaincodeEventsResponse>([ serviceError ]));
+
+            const events = await network.getChaincodeEvents('CHAINCODE');
+            const t = readElements(events, 1);
+
+            await expect(t).rejects.toThrow(GatewayError);
+            await expect(t).rejects.toThrow(serviceError.message);
+            await expect(t).rejects.toMatchObject({
+                code: serviceError.code,
+                cause: serviceError,
+            })
         });
     })
 });

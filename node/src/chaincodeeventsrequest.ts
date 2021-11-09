@@ -19,6 +19,8 @@ export interface ChaincodeEventsRequest extends Signable {
      * Get chaincode events emitted by transaction functions of a specific chaincode.
      * @param options - gRPC call options.
      * @returns Chaincode events.
+     * @throws {@link GatewayError}
+     * Thrown by the iterator if the gRPC service invocation fails.
      * @example
      * ```
      * const events = await request.getEvents();
