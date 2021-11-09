@@ -97,9 +97,9 @@ export class ProposalImpl implements Proposal {
         await this.#sign();
         const endorseResponse = await this.#client.endorse(this.#newEndorseRequest(), options);
 
-        const preparedTx = endorseResponse.getPreparedTransaction();
+        const txEnvelope = endorseResponse.getPreparedTransaction();
         const response = endorseResponse.getResult();
-        if (!preparedTx || !response) {
+        if (!txEnvelope || !response) {
             throw new Error(`Invalid endorsement response: ${inspect(endorseResponse)}`)
         }
 
@@ -107,7 +107,7 @@ export class ProposalImpl implements Proposal {
             client: this.#client,
             signingIdentity: this.#signingIdentity,
             channelName: this.#channelName,
-            preparedTransaction: this.#newPreparedTransaction(preparedTx, response)
+            preparedTransaction: this.#newPreparedTransaction(txEnvelope, response)
         });
     }
 

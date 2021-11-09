@@ -301,20 +301,6 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sets_endorsing_orgs_offline_signing() throws Exception {
-        Contract contract = network.getContract("CHAINCODE_NAME");
-        Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME")
-                .setEndorsingOrganizations("Org1MSP", "Org3MSP")
-                .build();
-        Proposal signedProposal = contract.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
-        signedProposal.evaluate();
-
-        EvaluateRequest request = mocker.captureEvaluate();
-        List<String> endorsingOrgs = request.getTargetOrganizationsList();
-        assertThat(endorsingOrgs).containsExactlyInAnyOrder("Org1MSP", "Org3MSP");
-    }
-
-    @Test
     void uses_specified_call_options() {
         Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
         CallOption option = CallOption.deadline(expected);

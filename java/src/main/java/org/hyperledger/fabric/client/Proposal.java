@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * A Fabric Gateway transaction proposal, which can be used to evaluate a transaction to query ledger state, or obtain
  * endorsements so that the transaction can be submitted to update ledger state. Supports off-line signing flow using
- * {@link Network#newSignedChaincodeEventsRequest(byte[], byte[])}.
+ * {@link Gateway#newSignedChaincodeEventsRequest(byte[], byte[])}.
  */
 public interface Proposal extends Signable {
     /**

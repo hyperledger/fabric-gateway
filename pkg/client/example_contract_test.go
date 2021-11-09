@@ -77,7 +77,7 @@ func ExampleContract_SubmitAsync() {
 }
 
 func ExampleContract_offlineSign() {
-	var network *client.Network   // Obtained from Gateway.
+	var gateway *client.Gateway
 	var contract *client.Contract // Obtained from Network.
 	var sign identity.Sign        // Signing function.
 
@@ -97,7 +97,7 @@ func ExampleContract_offlineSign() {
 	if err != nil {
 		panic(err)
 	}
-	signedProposal, err := contract.NewSignedProposal(proposalBytes, proposalSignature)
+	signedProposal, err := gateway.NewSignedProposal(proposalBytes, proposalSignature)
 	if err != nil {
 		panic(err)
 	}
@@ -118,7 +118,7 @@ func ExampleContract_offlineSign() {
 	if err != nil {
 		panic(err)
 	}
-	signedTransaction, err := contract.NewSignedTransaction(transactionBytes, transactionSignature)
+	signedTransaction, err := gateway.NewSignedTransaction(transactionBytes, transactionSignature)
 	if err != nil {
 		panic(err)
 	}
@@ -139,7 +139,7 @@ func ExampleContract_offlineSign() {
 	if err != nil {
 		panic(err)
 	}
-	signedCommit, err := network.NewSignedCommit(commitBytes, commitSignature)
+	signedCommit, err := gateway.NewSignedCommit(commitBytes, commitSignature)
 
 	// Wait for transaction commit.
 	status, err := signedCommit.Status()

@@ -6,8 +6,6 @@
 
 package org.hyperledger.fabric.client;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 /**
  * The Network represents a Fabric network (channel). Network instances are obtained from a Gateway using the
  * {@link Gateway#getNetwork(String)} method.
@@ -68,16 +66,6 @@ public interface Network {
     String getName();
 
     /**
-     * Create a commit with the specified digital signature, which can be used to access information about a
-     * transaction that is committed to the ledger. Supports off-line signing flow.
-     * @param bytes Serialized commit status request.
-     * @param signature Digital signature.
-     * @return A signed commit status request.
-     * @throws InvalidProtocolBufferException if the supplied commit bytes are not a valid commit.
-     */
-    Commit newSignedCommit(byte[] bytes, byte[] signature) throws InvalidProtocolBufferException;
-
-    /**
      * Get events emitted by transaction functions of a specific chaincode from the next committed block. The Java gRPC
      * implementation may not begin reading events until the first use of the returned iterator.
      * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC connection error
@@ -98,14 +86,4 @@ public interface Network {
      * @throws NullPointerException if the chaincode name is null.
      */
     ChaincodeEventsRequest.Builder newChaincodeEventsRequest(String chaincodeName);
-
-    /**
-     * Create a chaincode events request with the specified digital signature, which can be used to obtain events
-     * emitted by transaction functions of a specific chaincode. Supports off-line signing flow.
-     * @param bytes Serialized chaincode events request.
-     * @param signature Digital signature.
-     * @return A signed chaincode events request.
-     * @throws InvalidProtocolBufferException if the supplied chaincode events request bytes are not valid.
-     */
-    ChaincodeEventsRequest newSignedChaincodeEventsRequest(byte[] bytes, byte[] signature) throws InvalidProtocolBufferException;
 }

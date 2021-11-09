@@ -53,9 +53,9 @@ public class GatewayContext {
 
     public TransactionInvocation newTransaction(String action, String transactionName) {
         if (action.equals("submit")) {
-            return TransactionInvocation.prepareToSubmit(network, contract, transactionName);
+            return TransactionInvocation.prepareToSubmit(gateway, contract, transactionName);
         } else {
-            return TransactionInvocation.prepareToEvaluate(network, contract, transactionName);
+            return TransactionInvocation.prepareToEvaluate(gateway, contract, transactionName);
         }
     }
 

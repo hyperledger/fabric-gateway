@@ -46,7 +46,7 @@ export class GatewayContext {
     }
 
     newTransaction(action: string, transactionName: string): TransactionInvocation {
-        return new TransactionInvocation(action, this.getNetwork(), this.getContract(), transactionName);
+        return new TransactionInvocation(action, this.getGateway(), this.getContract(), transactionName);
     }
 
     async listenForChaincodeEvents(listenerName: string, chaincodeName: string, options?: ChaincodeEventsOptions): Promise<void> {

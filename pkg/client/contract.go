@@ -9,8 +9,6 @@ package client
 import (
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
 )
 
@@ -31,9 +29,8 @@ import (
 // 1. Returning the serialized proposal, transaction or commit status message along with its digest to the client for
 // them to generate a signature.
 //
-// 2. With the serialized message and signature received from the client to create a signed proposal or transaction
-// using the Contract's NewSignedProposal() or NewSignedTransaction() methods respectively, or creating a signed
-// commit using the Network's NewSignedCommit() method.
+// 2. With the serialized message and signature received from the client to create a signed proposal, transaction or
+// commit using the Gateway's NewSignedProposal(), NewSignedTransaction() or NewSignedCommit() methods respectively.
 type Contract struct {
 	client        *gatewayClient
 	signingID     *signingIdentity
@@ -148,43 +145,6 @@ func (contract *Contract) NewProposal(transactionName string, options ...Proposa
 	}
 
 	return builder.build()
-}
-
-// NewSignedProposal creates a transaction proposal with signature, which can be sent to peers for endorsement.
-func (contract *Contract) NewSignedProposal(bytes []byte, signature []byte) (*Proposal, error) {
-	proposedTransaction := &gateway.ProposedTransaction{}
-	if err := proto.Unmarshal(bytes, proposedTransaction); err != nil {
-		return nil, fmt.Errorf("failed to deserialize proposal: %w", err)
-	}
-
-	proposal := &Proposal{
-		client:              contract.client,
-		signingID:           contract.signingID,
-		channelID:           contract.channelName,
-		proposedTransaction: proposedTransaction,
-	}
-	proposal.setSignature(signature)
-
-	return proposal, nil
-}
-
-// NewSignedTransaction creates an endorsed transaction with signature, which can be submitted to the orderer for commit
-// to the ledger.
-func (contract *Contract) NewSignedTransaction(bytes []byte, signature []byte) (*Transaction, error) {
-	preparedTransaction := &gateway.PreparedTransaction{}
-	if err := proto.Unmarshal(bytes, preparedTransaction); err != nil {
-		return nil, fmt.Errorf("failed to deserialize transaction: %w", err)
-	}
-
-	transaction := &Transaction{
-		client:              contract.client,
-		signingID:           contract.signingID,
-		channelID:           contract.channelName,
-		preparedTransaction: preparedTransaction,
-	}
-	transaction.setSignature(signature)
-
-	return transaction, nil
 }
 
 func (contract *Contract) qualifiedTransactionName(name string) string {

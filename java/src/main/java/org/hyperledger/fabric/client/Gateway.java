@@ -6,11 +6,11 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.Function;
-
 import io.grpc.Channel;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
+
+import java.util.function.Function;
 
 /**
  * The Gateway provides the connection point for an application to access the Fabric network as a specific user. It is
@@ -64,6 +64,44 @@ public interface Gateway extends AutoCloseable {
      * @throws NullPointerException if the network name is null.
      */
     Network getNetwork(String networkName);
+
+    /**
+     * Create a proposal with the specified digital signature. Supports off-line signing flow.
+     * @param proposalBytes The proposal.
+     * @param signature A digital signature.
+     * @return A signed proposal.
+     * @throws IllegalArgumentException if the supplied proposal bytes are not a valid proposal.
+     */
+    Proposal newSignedProposal(byte[] proposalBytes, byte[] signature);
+
+    /**
+     * Create a transaction with the specified digital signature. Supports off-line signing flow.
+     * @param transactionBytes The transaction.
+     * @param signature A digital signature.
+     * @return A signed transaction.
+     * @throws IllegalArgumentException if the supplied transaction bytes are not a valid transaction.
+     */
+    Transaction newSignedTransaction(byte[] transactionBytes, byte[] signature);
+
+    /**
+     * Create a commit with the specified digital signature, which can be used to access information about a
+     * transaction that is committed to the ledger. Supports off-line signing flow.
+     * @param bytes Serialized commit status request.
+     * @param signature Digital signature.
+     * @return A signed commit status request.
+     * @throws IllegalArgumentException if the supplied commit bytes are not a valid commit.
+     */
+    Commit newSignedCommit(byte[] bytes, byte[] signature);
+
+    /**
+     * Create a chaincode events request with the specified digital signature, which can be used to obtain events
+     * emitted by transaction functions of a specific chaincode. Supports off-line signing flow.
+     * @param bytes Serialized chaincode events request.
+     * @param signature Digital signature.
+     * @return A signed chaincode events request.
+     * @throws IllegalArgumentException if the supplied chaincode events request bytes are not valid.
+     */
+    ChaincodeEventsRequest newSignedChaincodeEventsRequest(byte[] bytes, byte[] signature);
 
     /**
      * Close the gateway connection and all associated resources, including removing listeners attached to networks and

@@ -8,8 +8,6 @@ package org.hyperledger.fabric.client;
 
 import java.util.Optional;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 /**
  * Represents a smart contract instance in a network.
  * Applications should get a Contract instance from a Network using the
@@ -72,10 +70,10 @@ import com.google.protobuf.InvalidProtocolBufferException;
  * <ol>
  *     <li>Returning the serialized proposal, transaction or commit status message along with its digest to the client
  *     for them to generate a signature.</li>
- *     <li>On receipt of the serialized message and signature from the client, creating a signed proposal or transaction
- *     using the Contract's {@link #newSignedProposal(byte[], byte[])} or {@link #newSignedTransaction(byte[], byte[])}
- *     methods respectively,  or creating a signed commit using the Network's
- *     {@link Network#newSignedCommit(byte[], byte[])} method.</li>
+ *     <li>On receipt of the serialized message and signature from the client, creating a signed proposal, transaction
+ *     or commit using the Gateway's {@link Gateway#newSignedProposal(byte[], byte[])},
+ *     {@link Gateway#newSignedTransaction(byte[], byte[])} or {@link Gateway#newSignedCommit(byte[], byte[])} methods
+ *     respectively.</li>
  * </ol>
  *
  * <h3>Off-line signing examples</h3>
@@ -85,7 +83,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
  *     byte[] proposalBytes = unsignedProposal.getBytes();
  *     byte[] proposalDigest = unsignedProposal.getDigest();
  *     // Generate signature from digest
- *     Proposal signedProposal = contract.newSignedProposal(proposalBytes, proposalSignature);
+ *     Proposal signedProposal = gateway.newSignedProposal(proposalBytes, proposalSignature);
  * }</pre>
  *
  * <p>Signing of an endorsed transaction that can then be submitted to the orderer:</p>
@@ -94,7 +92,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
  *     byte[] transactionBytes = unsignedTransaction.getBytes();
  *     byte[] transactionDigest = unsignedTransaction.getDigest();
  *     // Generate signature from digest
- *     Transaction signedTransaction = contract.newSignedTransaction(transactionBytes, transactionSignature);
+ *     Transaction signedTransaction = gateway.newSignedTransaction(transactionBytes, transactionSignature);
  * }</pre>
  *
  * <p>Signing of a commit that can be used to obtain the status of a submitted transaction:</p>
@@ -103,7 +101,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
  *     byte[] commitBytes = unsignedCommit.getBytes();
  *     byte[] commitDigest = unsignedCommit.getDigest();
  *     // Generate signature from digest
- *     Commit signedCommit = network.newSignedCommit(commitBytes, commitDigest);
+ *     Commit signedCommit = gateway.newSignedCommit(commitBytes, commitDigest);
  *
  *     byte[] result = signedTransaction.getResult();
  *     Status status = signedCommit.getStatus();
@@ -248,22 +246,4 @@ public interface Contract {
      * @throws NullPointerException if the transaction name is null.
      */
     Proposal.Builder newProposal(String transactionName);
-
-    /**
-     * Create a proposal with the specified digital signature. Supports off-line signing flow.
-     * @param proposalBytes The proposal.
-     * @param signature A digital signature.
-     * @return A signed proposal.
-     * @throws InvalidProtocolBufferException if the supplied proposal bytes are not a valid proposal.
-     */
-    Proposal newSignedProposal(byte[] proposalBytes, byte[] signature) throws InvalidProtocolBufferException;
-
-    /**
-     * Create a transaction with the specified digital signature. Supports off-line signing flow.
-     * @param transactionBytes The transaction.
-     * @param signature A digital signature.
-     * @return A signed transaction.
-     * @throws InvalidProtocolBufferException if the supplied transaction bytes are not a valid transaction.
-     */
-    Transaction newSignedTransaction(byte[] transactionBytes, byte[] signature) throws InvalidProtocolBufferException;
 }

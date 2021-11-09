@@ -8,10 +8,6 @@ package client
 
 import (
 	"context"
-	"fmt"
-
-	"github.com/golang/protobuf/proto"
-	"github.com/hyperledger/fabric-protos-go/gateway"
 )
 
 // Network represents a blockchain network, or Fabric channel. The Network can be used to access deployed smart
@@ -43,24 +39,6 @@ func (network *Network) GetContractWithName(chaincodeName string, contractName s
 	}
 }
 
-// NewSignedCommit creates an commit with signature, which can be used to access a committed transaction.
-func (network *Network) NewSignedCommit(bytes []byte, signature []byte) (*Commit, error) {
-	signedRequest := &gateway.SignedCommitStatusRequest{}
-	if err := proto.Unmarshal(bytes, signedRequest); err != nil {
-		return nil, fmt.Errorf("failed to deserialize signed commit status request: %w", err)
-	}
-
-	request := &gateway.CommitStatusRequest{}
-	if err := proto.Unmarshal(signedRequest.Request, request); err != nil {
-		return nil, fmt.Errorf("failed to deserialize commit status request: %w", err)
-	}
-
-	commit := newCommit(network.client, network.signingID, request.TransactionId, signedRequest)
-	commit.setSignature(signature)
-
-	return commit, nil
-}
-
 // ChaincodeEvents returns a channel from which chaincode events emitted by transaction functions in the specified
 // chaincode can be read.
 func (network *Network) ChaincodeEvents(ctx context.Context, chaincodeName string, options ...ChaincodeEventsOption) (<-chan *ChaincodeEvent, error) {
@@ -89,19 +67,4 @@ func (network *Network) NewChaincodeEventsRequest(chaincodeName string, options 
 	}
 
 	return builder.build()
-}
-
-// NewSignedChaincodeEventsRequest creates a signed request to read events emitted by a specific chaincode.
-func (network *Network) NewSignedChaincodeEventsRequest(bytes []byte, signature []byte) (*ChaincodeEventsRequest, error) {
-	request := &gateway.SignedChaincodeEventsRequest{}
-	if err := proto.Unmarshal(bytes, request); err != nil {
-		return nil, fmt.Errorf("failed to deserialize signed chaincode events request: %w", err)
-	}
-
-	result := &ChaincodeEventsRequest{
-		client:        network.client,
-		signingID:     network.signingID,
-		signedRequest: request,
-	}
-	return result, nil
 }

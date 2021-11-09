@@ -17,7 +17,7 @@ import (
 )
 
 type Transaction struct {
-	network     *client.Network
+	gateway     *client.Gateway
 	contract    *client.Contract
 	txType      TransactionType
 	name        string
@@ -28,9 +28,9 @@ type Transaction struct {
 	blockNumber uint64
 }
 
-func NewTransaction(network *client.Network, contract *client.Contract, txType TransactionType, name string) *Transaction {
+func NewTransaction(gateway *client.Gateway, contract *client.Contract, txType TransactionType, name string) *Transaction {
 	return &Transaction{
-		network:  network,
+		gateway:  gateway,
 		contract: contract,
 		txType:   txType,
 		name:     name,
@@ -150,7 +150,7 @@ func (transaction *Transaction) offlineSignProposal(proposal *client.Proposal) (
 		return nil, err
 	}
 
-	proposal, err = transaction.contract.NewSignedProposal(bytes, signature)
+	proposal, err = transaction.gateway.NewSignedProposal(bytes, signature)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +168,7 @@ func (transaction *Transaction) offlineSignTransaction(clientTransaction *client
 		return nil, err
 	}
 
-	clientTransaction, err = transaction.contract.NewSignedTransaction(bytes, signature)
+	clientTransaction, err = transaction.gateway.NewSignedTransaction(bytes, signature)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +186,7 @@ func (transaction *Transaction) offlineSignCommit(commit *client.Commit) (*clien
 		return nil, err
 	}
 
-	commit, err = transaction.network.NewSignedCommit(bytes, signature)
+	commit, err = transaction.gateway.NewSignedCommit(bytes, signature)
 	if err != nil {
 		return nil, err
 	}

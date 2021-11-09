@@ -9,10 +9,6 @@ package org.hyperledger.fabric.client;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
-import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
-
 final class ContractImpl implements Contract {
     private final GatewayClient client;
     private final SigningIdentity signingIdentity;
@@ -88,24 +84,6 @@ final class ContractImpl implements Contract {
     public Proposal.Builder newProposal(final String transactionName) {
         String qualifiedTxName = qualifiedTransactionName(transactionName);
         return new ProposalBuilder(client, signingIdentity, channelName, chaincodeName, qualifiedTxName);
-    }
-
-    @Override
-    public Proposal newSignedProposal(final byte[] proposalBytes, final byte[] signature) throws InvalidProtocolBufferException {
-        ProposedTransaction proposedTransaction = ProposedTransaction.parseFrom(proposalBytes);
-
-        ProposalImpl proposal = new ProposalImpl(client, signingIdentity, channelName, proposedTransaction);
-        proposal.setSignature(signature);
-        return proposal;
-    }
-
-    @Override
-    public Transaction newSignedTransaction(final byte[] transactionBytes, final byte[] signature) throws InvalidProtocolBufferException {
-        PreparedTransaction preparedTransaction = PreparedTransaction.parseFrom(transactionBytes);
-
-        TransactionImpl transaction = new TransactionImpl(client, signingIdentity, channelName, preparedTransaction);
-        transaction.setSignature(signature);
-        return transaction;
     }
 
     @Override

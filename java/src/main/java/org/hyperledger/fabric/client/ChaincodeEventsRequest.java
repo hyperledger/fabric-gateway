@@ -8,7 +8,7 @@ package org.hyperledger.fabric.client;
 
 /**
  * A Fabric Gateway call to obtain chaincode events. Supports off-line signing flow using
- * {@link Network#newSignedChaincodeEventsRequest(byte[], byte[])}.
+ * {@link Gateway#newSignedChaincodeEventsRequest(byte[], byte[])}.
  */
 public interface ChaincodeEventsRequest extends Signable {
     /**

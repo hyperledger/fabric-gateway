@@ -52,7 +52,7 @@ export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
         this.#signedRequest.setRequest(options.request.serializeBinary())
     }
 
-    async getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
+    async getEvents(options?: Readonly<CallOptions>): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
         await this.#sign();
         const responses = this.#client.chaincodeEvents(this.#signedRequest, options);
         return newChaincodeEvents(responses);
