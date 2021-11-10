@@ -11,14 +11,15 @@ import io.grpc.StatusRuntimeException;
 /**
  * Thrown when a failure occurs endorsing a transaction proposal.
  */
-public class EndorseException extends GatewayException {
+public class EndorseException extends TransactionException {
     private static final long serialVersionUID = 1L;
 
     /**
      * Constructs a new exception with the specified cause.
+     * @param transactionId a transaction ID.
      * @param cause the cause.
      */
-    public EndorseException(final StatusRuntimeException cause) {
-        super(cause);
+    public EndorseException(final String transactionId, final StatusRuntimeException cause) {
+        super(transactionId, cause);
     }
 }

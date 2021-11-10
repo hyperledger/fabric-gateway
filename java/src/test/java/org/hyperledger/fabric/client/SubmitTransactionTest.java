@@ -314,38 +314,50 @@ public final class SubmitTransactionTest {
 
     @Test
     void throws_on_endorse_connection_error() {
-        doThrow(new StatusRuntimeException(io.grpc.Status.UNAVAILABLE)).when(stub).endorse(any());
+        StatusRuntimeException expected = new StatusRuntimeException(io.grpc.Status.UNAVAILABLE);
+        doThrow(expected).when(stub).endorse(any());
 
-        Contract contract = network.getContract("CHAINCODE_NAME");
+        Proposal proposal = network.getContract("CHAINCODE_NAME")
+                .newProposal("TRANSACTION_NAME")
+                .build();
 
-        assertThatThrownBy(() -> contract.submitTransaction("TRANSACTION_NAME"))
-                .isInstanceOf(EndorseException.class)
-                .extracting(t -> ((GatewayException) t).getStatus())
-                .isEqualTo(io.grpc.Status.UNAVAILABLE);
+        EndorseException e = catchThrowableOfType(proposal::endorse, EndorseException.class);
+        assertThat(e.getTransactionId()).isEqualTo(proposal.getTransactionId());
+        assertThat(e.getStatus()).isEqualTo(expected.getStatus());
+        assertThat(e).hasCauseInstanceOf(StatusRuntimeException.class);
     }
 
     @Test
-    void throws_on_submit_connection_error() {
-        doThrow(new StatusRuntimeException(io.grpc.Status.UNAVAILABLE)).when(stub).submit(any());
+    void throws_on_submit_connection_error() throws EndorseException {
+        StatusRuntimeException expected = new StatusRuntimeException(io.grpc.Status.UNAVAILABLE);
+        doThrow(expected).when(stub).submit(any());
 
-        Contract contract = network.getContract("CHAINCODE_NAME");
+        Transaction transaction = network.getContract("CHAINCODE_NAME")
+                .newProposal("TRANSACTION_NAME")
+                .build()
+                .endorse();
 
-        assertThatThrownBy(() -> contract.submitTransaction("TRANSACTION_NAME"))
-                .isInstanceOf(SubmitException.class)
-                .extracting(t -> ((GatewayException) t).getStatus())
-                .isEqualTo(io.grpc.Status.UNAVAILABLE);
+        SubmitException e = catchThrowableOfType(transaction::submit, SubmitException.class);
+        assertThat(e.getTransactionId()).isEqualTo(transaction.getTransactionId());
+        assertThat(e.getStatus()).isEqualTo(expected.getStatus());
+        assertThat(e).hasCauseInstanceOf(StatusRuntimeException.class);
     }
 
     @Test
-    void throws_on_commit_status_connection_error() {
-        doThrow(new StatusRuntimeException(io.grpc.Status.UNAVAILABLE)).when(stub).commitStatus(any());
+    void throws_on_commit_status_connection_error() throws EndorseException, SubmitException {
+        StatusRuntimeException expected = new StatusRuntimeException(io.grpc.Status.UNAVAILABLE);
+        doThrow(expected).when(stub).commitStatus(any());
 
-        Contract contract = network.getContract("CHAINCODE_NAME");
+        SubmittedTransaction commit = network.getContract("CHAINCODE_NAME")
+                .newProposal("TRANSACTION_NAME")
+                .build()
+                .endorse()
+                .submitAsync();
 
-        assertThatThrownBy(() -> contract.submitTransaction("TRANSACTION_NAME"))
-                .isInstanceOf(CommitStatusException.class)
-                .extracting(t -> ((GatewayException) t).getStatus())
-                .isEqualTo(io.grpc.Status.UNAVAILABLE);
+        CommitStatusException e = catchThrowableOfType(commit::getStatus, CommitStatusException.class);
+        assertThat(e.getTransactionId()).isEqualTo(commit.getTransactionId());
+        assertThat(e.getStatus()).isEqualTo(expected.getStatus());
+        assertThat(e).hasCauseInstanceOf(StatusRuntimeException.class);
     }
 
     @Test
