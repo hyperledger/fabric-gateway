@@ -10,11 +10,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.Channel;
 import io.grpc.Context;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.AbstractStub;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
+import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EndorseResponse;
@@ -52,7 +54,7 @@ final class GatewayClient {
         try {
             return stub.endorse(request);
         } catch (StatusRuntimeException e) {
-            throw new EndorseException(e);
+            throw new EndorseException(request.getTransactionId(), e);
         }
     }
 
@@ -61,7 +63,7 @@ final class GatewayClient {
         try {
             return stub.submit(request);
         } catch (StatusRuntimeException e) {
-            throw new SubmitException(e);
+            throw new SubmitException(request.getTransactionId(), e);
         }
     }
 
@@ -70,7 +72,15 @@ final class GatewayClient {
         try {
             return stub.commitStatus(request);
         } catch (StatusRuntimeException e) {
-            throw new CommitStatusException(e);
+            try {
+                CommitStatusRequest req = CommitStatusRequest.parseFrom(request.getRequest());
+                throw new CommitStatusException(req.getTransactionId(), e);
+            } catch (InvalidProtocolBufferException protoEx) {
+                // Should never happen
+                CommitStatusException commitEx = new CommitStatusException("", e);
+                commitEx.addSuppressed(protoEx);
+                throw commitEx;
+            }
         }
     }
 

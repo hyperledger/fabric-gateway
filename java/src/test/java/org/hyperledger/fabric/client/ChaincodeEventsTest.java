@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -66,15 +67,19 @@ public final class ChaincodeEventsTest {
 
     @Test
     void throws_on_connection_error() {
-        doThrow(new StatusRuntimeException(Status.UNAVAILABLE)).when(stub).chaincodeEvents(any());
+        StatusRuntimeException expected = new StatusRuntimeException(Status.UNAVAILABLE);
+        doThrow(expected).when(stub).chaincodeEvents(any());
 
-        assertThatThrownBy(() -> {
-            try (CloseableIterator<ChaincodeEvent> events = network.getChaincodeEvents("CHAINCODE_NAME")) {
-                events.forEachRemaining(event -> { });
-            }
-        }).isInstanceOf(GatewayRuntimeException.class)
-                .extracting(t -> ((GatewayRuntimeException) t).getStatus())
-                .isEqualTo(Status.UNAVAILABLE);
+        GatewayRuntimeException e = catchThrowableOfType(
+                () -> {
+                    try (CloseableIterator<ChaincodeEvent> events = network.getChaincodeEvents("CHAINCODE_NAME")) {
+                        events.forEachRemaining(event -> { });
+                    }
+                },
+                GatewayRuntimeException.class
+        );
+        assertThat(e.getStatus()).isEqualTo(expected.getStatus());
+        assertThat(e).hasCauseInstanceOf(StatusRuntimeException.class);
     }
 
     @Test
@@ -201,10 +206,12 @@ public final class ChaincodeEventsTest {
             eventIter.close();
         }
 
-        assertThatThrownBy(() -> eventIter.forEachRemaining(event -> { }))
-                .isInstanceOf(GatewayRuntimeException.class)
-                .extracting(t -> ((GatewayRuntimeException) t).getStatus().getCode())
-                .isEqualTo(Status.Code.CANCELLED);
+        GatewayRuntimeException e = catchThrowableOfType(
+                () -> eventIter.forEachRemaining(event -> { }),
+                GatewayRuntimeException.class
+        );
+        assertThat(e).hasCauseInstanceOf(StatusRuntimeException.class);
+        assertThat(e.getStatus().getCode()).isEqualTo(Status.Code.CANCELLED);
     }
 
     @Test
