@@ -45,7 +45,7 @@ final class ProposalImpl implements Proposal {
     }
 
     @Override
-    public byte[] evaluate(final CallOption... options) {
+    public byte[] evaluate(final CallOption... options) throws GatewayException {
         sign();
         final EvaluateRequest evaluateRequest = EvaluateRequest.newBuilder()
                 .setTransactionId(proposedTransaction.getTransactionId())
@@ -60,7 +60,7 @@ final class ProposalImpl implements Proposal {
     }
 
     @Override
-    public Transaction endorse(final CallOption... options) {
+    public Transaction endorse(final CallOption... options) throws EndorseException {
         sign();
         final EndorseRequest endorseRequest = EndorseRequest.newBuilder()
                 .setTransactionId(proposedTransaction.getTransactionId())

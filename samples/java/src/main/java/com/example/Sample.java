@@ -32,10 +32,14 @@ import org.hyperledger.fabric.client.ChaincodeEvent;
 import org.hyperledger.fabric.client.ChaincodeEventsRequest;
 import org.hyperledger.fabric.client.CloseableIterator;
 import org.hyperledger.fabric.client.CommitException;
+import org.hyperledger.fabric.client.CommitStatusException;
 import org.hyperledger.fabric.client.Contract;
+import org.hyperledger.fabric.client.EndorseException;
 import org.hyperledger.fabric.client.Gateway;
+import org.hyperledger.fabric.client.GatewayException;
 import org.hyperledger.fabric.client.Network;
 import org.hyperledger.fabric.client.Status;
+import org.hyperledger.fabric.client.SubmitException;
 import org.hyperledger.fabric.client.SubmittedTransaction;
 import org.hyperledger.fabric.client.identity.Identities;
 import org.hyperledger.fabric.client.identity.Identity;
@@ -106,7 +110,7 @@ public class Sample {
         System.exit(0);
     }
 
-    private static void exampleSubmit(Gateway gateway) throws CommitException {
+    private static void exampleSubmit(Gateway gateway) throws GatewayException, CommitException {
         Network network = gateway.getNetwork("mychannel");
         Contract contract = network.getContract("basic");
 
@@ -123,7 +127,7 @@ public class Sample {
         System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
     }
 
-    private static void exampleSubmitAsync(Gateway gateway) {
+    private static void exampleSubmitAsync(Gateway gateway) throws GatewayException {
         Network network = gateway.getNetwork("mychannel");
         Contract contract = network.getContract("basic");
 
@@ -153,7 +157,7 @@ public class Sample {
         System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
     }
 
-    private static void exampleSubmitPrivateData(Gateway gateway) throws CommitException {
+    private static void exampleSubmitPrivateData(Gateway gateway) throws GatewayException, CommitException {
         Network network = gateway.getNetwork("mychannel");
         Contract contract = network.getContract("private");
 
@@ -179,7 +183,7 @@ public class Sample {
         System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
     }
 
-    private static void exampleSubmitPrivateData2(Gateway gateway) throws CommitException {
+    private static void exampleSubmitPrivateData2(Gateway gateway) throws GatewayException, CommitException {
         Network network = gateway.getNetwork("mychannel");
         Contract contract = network.getContract("private");
 
@@ -205,7 +209,7 @@ public class Sample {
         System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
     }
 
-    private static void exampleStateBasedEndorsement(Gateway gateway) throws CommitException {
+    private static void exampleStateBasedEndorsement(Gateway gateway) throws GatewayException, CommitException {
         Network network = gateway.getNetwork("mychannel");
         Contract contract = network.getContract("private");
 
@@ -247,7 +251,7 @@ public class Sample {
         System.out.println("Query result: " + new String(evaluateResult, StandardCharsets.UTF_8));
     }
 
-    private static void exampleChaincodeEvents(Gateway gateway) throws CommitException, ExecutionException, InterruptedException {
+    private static void exampleChaincodeEvents(Gateway gateway) throws GatewayException, CommitException, ExecutionException, InterruptedException {
         Network network = gateway.getNetwork("mychannel");
         Contract contract = network.getContract("basic");
 
@@ -267,7 +271,7 @@ public class Sample {
         }
 }
 
-    private static void exampleChaincodeEventReplay(Gateway gateway) {
+    private static void exampleChaincodeEventReplay(Gateway gateway) throws GatewayException {
         Network network = gateway.getNetwork("mychannel");
         Contract contract = network.getContract("basic");
 
@@ -297,7 +301,7 @@ public class Sample {
         }
     }
 
-    private static void exampleErrorHandling(Gateway gateway) throws CommitException, InvalidProtocolBufferException {
+    private static void exampleErrorHandling(Gateway gateway) {
         Network network = gateway.getNetwork("mychannel");
         Contract contract = network.getContract("basic");
 
@@ -305,15 +309,15 @@ public class Sample {
             System.out.println("Submitting \"put\" transaction without arguments");
             // Submit transaction, passing in the wrong number of arguments.
             contract.submitTransaction("put");
-        } catch (io.grpc.StatusRuntimeException ex) {
+        } catch (EndorseException | SubmitException | CommitStatusException e) {
             // Any error that originates from a peer or orderer node external to the gateway will have its details
-            // embedded within the grpc status error.  The following code shows how to extract that.
-            com.google.rpc.Status status = StatusProto.fromThrowable(ex);
-            for (Any any : status.getDetailsList()) {
-                ErrorDetail ee = ErrorDetail.parseFrom(any.getValue());
-                System.out.println("Error from endpoint: " + ee.getAddress() +
-                        ",  mspId: " + ee.getMspId() + ", message:" + ee.getMessage());
+            // embedded within the grpc status error. The following code shows how to extract that.
+            for (ErrorDetail detail : e.getDetails()) {
+                System.out.println("Error from endpoint: " + detail.getAddress() +
+                        ",  mspId: " + detail.getMspId() + ", message:" + detail.getMessage());
             }
+        } catch (CommitException e) {
+            System.err.println("Transaction " + e.getTransactionId() + " failed to commit with status code: " + e.getCode());
         }
     }
 

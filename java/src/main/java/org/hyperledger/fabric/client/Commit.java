@@ -21,7 +21,7 @@ public interface Commit extends Signable {
      * the commit occurs.
      * @param options Call options.
      * @return Transaction commit status.
-     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
+     * @throws CommitStatusException if the gRPC service invocation fails.
      */
-    Status getStatus(CallOption... options);
+    Status getStatus(CallOption... options) throws CommitStatusException;
 }

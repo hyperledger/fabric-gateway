@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 IBM All Rights Reserved.
+ * Copyright 2021 IBM All Rights Reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -16,7 +16,7 @@ import org.hyperledger.fabric.protos.gateway.ErrorDetail;
  * of the processing to other nodes (endorsing peers and orderers), then the error could have originated from one or
  * more of those nodes. In that case, the details will contain errors information from those nodes.
  */
-public class GatewayRuntimeException extends RuntimeException {
+public class GatewayException extends Exception {
     private static final long serialVersionUID = 1L;
 
     private final GrpcStatus grpcStatus;
@@ -25,7 +25,7 @@ public class GatewayRuntimeException extends RuntimeException {
      * Constructs a new exception with the specified cause.
      * @param cause the cause.
      */
-    public GatewayRuntimeException(final StatusRuntimeException cause) {
+    public GatewayException(final StatusRuntimeException cause) {
         super(cause);
         grpcStatus = new GrpcStatus(cause.getStatus(), cause.getTrailers());
     }

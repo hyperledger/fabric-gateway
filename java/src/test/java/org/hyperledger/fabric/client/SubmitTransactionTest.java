@@ -319,7 +319,9 @@ public final class SubmitTransactionTest {
         Contract contract = network.getContract("CHAINCODE_NAME");
 
         assertThatThrownBy(() -> contract.submitTransaction("TRANSACTION_NAME"))
-                .isInstanceOf(StatusRuntimeException.class);
+                .isInstanceOf(EndorseException.class)
+                .extracting(t -> ((GatewayException) t).getStatus())
+                .isEqualTo(io.grpc.Status.UNAVAILABLE);
     }
 
     @Test
@@ -329,11 +331,25 @@ public final class SubmitTransactionTest {
         Contract contract = network.getContract("CHAINCODE_NAME");
 
         assertThatThrownBy(() -> contract.submitTransaction("TRANSACTION_NAME"))
-                .isInstanceOf(StatusRuntimeException.class);
+                .isInstanceOf(SubmitException.class)
+                .extracting(t -> ((GatewayException) t).getStatus())
+                .isEqualTo(io.grpc.Status.UNAVAILABLE);
     }
 
     @Test
-    void throws_on_commit_failure() {
+    void throws_on_commit_status_connection_error() {
+        doThrow(new StatusRuntimeException(io.grpc.Status.UNAVAILABLE)).when(stub).commitStatus(any());
+
+        Contract contract = network.getContract("CHAINCODE_NAME");
+
+        assertThatThrownBy(() -> contract.submitTransaction("TRANSACTION_NAME"))
+                .isInstanceOf(CommitStatusException.class)
+                .extracting(t -> ((GatewayException) t).getStatus())
+                .isEqualTo(io.grpc.Status.UNAVAILABLE);
+    }
+
+    @Test
+    void throws_on_commit_failure() throws EndorseException {
         doReturn(utils.newCommitStatusResponse(TxValidationCode.MVCC_READ_CONFLICT))
                 .when(stub).commitStatus(any());
 
@@ -382,7 +398,7 @@ public final class SubmitTransactionTest {
     }
 
     @Test
-    void commit_returns_transaction_validation_code() {
+    void commit_returns_transaction_validation_code() throws EndorseException, SubmitException, CommitStatusException {
         doReturn(utils.newCommitStatusResponse(TxValidationCode.MVCC_READ_CONFLICT))
                 .when(stub).commitStatus(any());
 
@@ -397,7 +413,7 @@ public final class SubmitTransactionTest {
     }
 
     @Test
-    void commit_returns_successful_for_successful_transaction() {
+    void commit_returns_successful_for_successful_transaction() throws EndorseException, SubmitException, CommitStatusException {
         Contract contract = network.getContract("CHAINCODE_NAME");
         Status status = contract.newProposal("TRANSACTION_NAME")
                 .build()
@@ -409,7 +425,7 @@ public final class SubmitTransactionTest {
     }
 
     @Test
-    void commit_returns_unsuccessful_for_failed_transaction() {
+    void commit_returns_unsuccessful_for_failed_transaction() throws EndorseException, SubmitException, CommitStatusException {
         doReturn(utils.newCommitStatusResponse(TxValidationCode.MVCC_READ_CONFLICT))
                 .when(stub).commitStatus(any());
 
@@ -424,7 +440,7 @@ public final class SubmitTransactionTest {
     }
 
     @Test
-    void commit_returns_block_number() {
+    void commit_returns_block_number() throws EndorseException, SubmitException, CommitStatusException {
         doReturn(utils.newCommitStatusResponse(TxValidationCode.MVCC_READ_CONFLICT, 101))
                 .when(stub).commitStatus(any());
 
@@ -439,7 +455,7 @@ public final class SubmitTransactionTest {
     }
 
     @Test
-    void endorse_uses_specified_call_options() {
+    void endorse_uses_specified_call_options() throws EndorseException {
         Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
         CallOption option = CallOption.deadline(expected);
         Contract contract = network.getContract("MY_CHAINCODE");
@@ -456,7 +472,7 @@ public final class SubmitTransactionTest {
     }
 
     @Test
-    void endorse_uses_default_call_options() {
+    void endorse_uses_default_call_options() throws EndorseException {
         Contract contract = network.getContract("MY_CHAINCODE");
 
         contract.newProposal("TRANSACTION_NAME")
@@ -471,7 +487,7 @@ public final class SubmitTransactionTest {
     }
 
     @Test
-    void submit_uses_specified_call_options_for_submit_and_commitStatus() throws CommitException {
+    void submit_uses_specified_call_options_for_submit_and_commitStatus() throws CommitException, EndorseException, SubmitException, CommitStatusException {
         Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
         CallOption option = CallOption.deadline(expected);
         Contract contract = network.getContract("MY_CHAINCODE");
@@ -490,7 +506,7 @@ public final class SubmitTransactionTest {
     }
 
     @Test
-    void submit_uses_default_call_options_for_submit_and_commitStatus() throws CommitException {
+    void submit_uses_default_call_options_for_submit_and_commitStatus() throws CommitException, EndorseException, SubmitException, CommitStatusException {
         Contract contract = network.getContract("MY_CHAINCODE");
         Transaction transaction = contract.newProposal("TRANSACTION_NAME")
                 .build()

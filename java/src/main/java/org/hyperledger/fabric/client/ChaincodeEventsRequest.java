@@ -15,7 +15,7 @@ public interface ChaincodeEventsRequest extends Signable {
      * Get events emitted by transaction functions of a specific chaincode. The Java gRPC implementation may not begin
      * reading events until the first use of the returned iterator.
      * <p>Note that the returned iterator may
-     * throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC connection error occurs.</p>
+     * throw {@link GatewayRuntimeException} during iteration if a gRPC connection error occurs.</p>
      * @param options Call options.
      * @return Ordered sequence of events.
      */

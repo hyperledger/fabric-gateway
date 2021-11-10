@@ -30,10 +30,11 @@ public interface Transaction extends Signable {
      * has been successfully committed to the ledger.
      * @param options Call options.
      * @return A transaction result.
-     * @throws CommitException if the transaction fails to commit successfully.
-     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
+     * @throws SubmitException if the submit invocation fails.
+     * @throws CommitStatusException if the commit status invocation fails.
+     * @throws CommitException if the transaction commits unsuccessfully.
      */
-    byte[] submit(CallOption... options) throws CommitException;
+    byte[] submit(CallOption... options) throws SubmitException, CommitStatusException, CommitException;
 
     /**
      * Submit the transaction to the orderer to be committed to the ledger. This method returns immediately after the
@@ -41,7 +42,7 @@ public interface Transaction extends Signable {
      * for the transaction to be committed to the ledger.
      * @param options Call options.
      * @return A transaction commit.
-     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
+     * @throws SubmitException if the gRPC service invocation fails.
      */
-    SubmittedTransaction submitAsync(CallOption... options);
+    SubmittedTransaction submitAsync(CallOption... options) throws SubmitException;
 }

@@ -32,7 +32,7 @@ final class ContractImpl implements Contract {
     }
 
     @Override
-    public byte[] submitTransaction(final String name) throws CommitException {
+    public byte[] submitTransaction(final String name) throws EndorseException, CommitException, SubmitException, CommitStatusException {
         return newProposal(name)
                 .build()
                 .endorse()
@@ -40,16 +40,7 @@ final class ContractImpl implements Contract {
     }
 
     @Override
-    public byte[] submitTransaction(final String name, final String... args) throws CommitException {
-        return newProposal(name)
-                .addArguments(args)
-                .build()
-                .endorse()
-                .submit();
-    }
-
-    @Override
-    public byte[] submitTransaction(final String name, final byte[]... args) throws CommitException {
+    public byte[] submitTransaction(final String name, final String... args) throws EndorseException, CommitException, SubmitException, CommitStatusException {
         return newProposal(name)
                 .addArguments(args)
                 .build()
@@ -58,14 +49,23 @@ final class ContractImpl implements Contract {
     }
 
     @Override
-    public byte[] evaluateTransaction(final String name) {
+    public byte[] submitTransaction(final String name, final byte[]... args) throws EndorseException, CommitException, SubmitException, CommitStatusException {
+        return newProposal(name)
+                .addArguments(args)
+                .build()
+                .endorse()
+                .submit();
+    }
+
+    @Override
+    public byte[] evaluateTransaction(final String name) throws GatewayException {
         return newProposal(name)
                 .build()
                 .evaluate();
     }
 
     @Override
-    public byte[] evaluateTransaction(final String name, final String... args) {
+    public byte[] evaluateTransaction(final String name, final String... args) throws GatewayException {
         return newProposal(name)
                 .addArguments(args)
                 .build()
@@ -73,7 +73,7 @@ final class ContractImpl implements Contract {
     }
 
     @Override
-    public byte[] evaluateTransaction(final String name, final byte[]... args) {
+    public byte[] evaluateTransaction(final String name, final byte[]... args) throws GatewayException {
         return newProposal(name)
                 .addArguments(args)
                 .build()

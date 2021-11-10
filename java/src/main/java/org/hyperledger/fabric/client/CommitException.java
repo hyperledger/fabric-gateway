@@ -32,16 +32,6 @@ public final class CommitException extends Exception {
     }
 
     /**
-     * Constructs a new commit exception for the specified transaction.
-     * @param status Transaction commit status.
-     * @param cause the cause.
-     */
-    CommitException(final Status status, final Throwable cause) {
-        super(message(status), cause);
-        this.status = status;
-    }
-
-    /**
      * Get the ID of the transaction.
      * @return transaction ID.
      */

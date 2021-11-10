@@ -72,7 +72,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void returns_gateway_response() {
+    void returns_gateway_response() throws GatewayException {
         doReturn(utils.newEvaluateResponse("MY_RESULT"))
                 .when(stub).evaluate(any());
 
@@ -83,7 +83,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_chaincode_name() throws InvalidProtocolBufferException {
+    void sends_chaincode_name() throws InvalidProtocolBufferException, GatewayException {
         Contract contract = network.getContract("MY_CHAINCODE_NAME");
         contract.evaluateTransaction("TRANSACTION_NAME");
 
@@ -94,7 +94,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_transaction_name_for_default_contract() throws InvalidProtocolBufferException {
+    void sends_transaction_name_for_default_contract() throws InvalidProtocolBufferException, GatewayException {
         Contract contract = network.getContract("CHAINCODE_NAME");
         contract.evaluateTransaction("MY_TRANSACTION_NAME");
 
@@ -107,7 +107,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_transaction_name_for_specified_contract() throws InvalidProtocolBufferException {
+    void sends_transaction_name_for_specified_contract() throws InvalidProtocolBufferException, GatewayException {
         Contract contract = network.getContract("CHAINCODE_NAME", "MY_CONTRACT");
         contract.evaluateTransaction("MY_TRANSACTION_NAME");
 
@@ -120,7 +120,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_transaction_string_arguments() throws InvalidProtocolBufferException {
+    void sends_transaction_string_arguments() throws InvalidProtocolBufferException, GatewayException {
         Contract contract = network.getContract("CHAINCODE_NAME");
         contract.evaluateTransaction("TRANSACTION_NAME", "one", "two", "three");
 
@@ -134,7 +134,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_transaction_byte_array_arguments() throws InvalidProtocolBufferException {
+    void sends_transaction_byte_array_arguments() throws InvalidProtocolBufferException, GatewayException {
         byte[][] arguments = Stream.of("one", "two", "three")
                 .map(s -> s.getBytes(StandardCharsets.UTF_8))
                 .toArray(byte[][]::new);
@@ -151,7 +151,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void uses_signer() {
+    void uses_signer() throws GatewayException {
         Signer signer = (digest) -> "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
         try (Gateway gateway = mocker.getGatewayBuilder().signer(signer).connect()) {
             network = gateway.getNetwork("NETWORK");
@@ -167,7 +167,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void uses_hash() {
+    void uses_hash() throws GatewayException {
         AtomicReference<String> actual = new AtomicReference<>();
         Function<byte[], byte[]> hash = (message) -> "MY_DIGEST".getBytes(StandardCharsets.UTF_8);
         Signer signer = (digest) -> {
@@ -192,7 +192,9 @@ public final class EvaluateTransactionTest {
         Contract contract = network.getContract("CHAINCODE_NAME");
 
         assertThatThrownBy(() -> contract.evaluateTransaction("TRANSACTION_NAME"))
-                .isInstanceOf(StatusRuntimeException.class);
+                .isInstanceOf(GatewayException.class)
+                .extracting(t -> ((GatewayException) t).getStatus())
+                .isEqualTo(io.grpc.Status.UNAVAILABLE);
     }
 
     @Test
@@ -213,7 +215,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_network_name_in_proposal() throws InvalidProtocolBufferException {
+    void sends_network_name_in_proposal() throws InvalidProtocolBufferException, GatewayException {
         network = gateway.getNetwork("MY_NETWORK");
 
         Contract contract = network.getContract("CHAINCODE_NAME");
@@ -226,7 +228,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_network_name_in_proposed_transaction() {
+    void sends_network_name_in_proposed_transaction() throws GatewayException {
         network = gateway.getNetwork("MY_NETWORK");
 
         Contract contract = network.getContract("CHAINCODE_NAME");
@@ -239,7 +241,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_transaction_ID_in_proposed_transaction() {
+    void sends_transaction_ID_in_proposed_transaction() throws GatewayException {
         network = gateway.getNetwork("MY_NETWORK");
         Contract contract = network.getContract("CHAINCODE_NAME");
         Proposal proposal = contract.newProposal("TRANSACTION_NAME").build();
@@ -288,7 +290,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sets_endorsing_orgs() {
+    void sets_endorsing_orgs() throws GatewayException {
         Contract contract = network.getContract("CHAINCODE_NAME");
         contract.newProposal("TRANSACTION_NAME")
                 .setEndorsingOrganizations("Org1MSP", "Org3MSP")
@@ -301,7 +303,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void uses_specified_call_options() {
+    void uses_specified_call_options() throws GatewayException {
         Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
         CallOption option = CallOption.deadline(expected);
         Contract contract = network.getContract("MY_CHAINCODE");
@@ -317,7 +319,7 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void uses_default_call_options() {
+    void uses_default_call_options() throws GatewayException {
         Contract contract = network.getContract("MY_CHAINCODE");
 
         contract.newProposal("TRANSACTION_NAME")
