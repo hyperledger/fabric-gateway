@@ -42,7 +42,6 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.json.JsonString;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.docstring.DocString;
@@ -54,8 +53,8 @@ import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
-import io.grpc.protobuf.StatusProto;
 import org.hyperledger.fabric.client.ChaincodeEvent;
+import org.hyperledger.fabric.client.GatewayException;
 import org.hyperledger.fabric.client.identity.Identities;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
@@ -438,16 +437,19 @@ public class ScenarioSteps {
 
     @Then("the error details should be")
     public void assertErrorDetails(Map<String, List<String>> table) throws InvalidProtocolBufferException {
-        com.google.rpc.Status status = StatusProto.fromThrowable(transactionInvocation.getError());
+        Throwable t = transactionInvocation.getError();
+        assertThat(t).isInstanceOf(GatewayException.class);
+
         Map<String, List<String>> expected = new HashMap<>(table);
 
-        for (Any detail : status.getDetailsList()) {
-            ErrorDetail ee = ErrorDetail.parseFrom(detail.getValue());
-            List<String> row = expected.get(ee.getAddress());
+        for (ErrorDetail detail : ((GatewayException) t).getDetails()) {
+            String address = detail.getAddress();
+            List<String> row = expected.get(address);
             assertThat(row).isNotNull();
-            assertThat(ee.getMessage()).contains(row.get(1));
-            expected.remove(ee.getAddress());
+            assertThat(detail.getMessage()).contains(row.get(1));
+            expected.remove(address);
         }
+
         assertThat(expected).isEmpty();
     }
 

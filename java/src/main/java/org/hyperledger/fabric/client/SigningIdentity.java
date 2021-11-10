@@ -42,7 +42,7 @@ final class SigningIdentity {
         try {
             return signer.sign(digest);
         } catch (GeneralSecurityException e) {
-            throw new GatewayRuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 

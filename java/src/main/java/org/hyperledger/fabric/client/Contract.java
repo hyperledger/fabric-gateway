@@ -134,11 +134,13 @@ public interface Contract {
      * }</pre>
      * @param name Transaction function name.
      * @return Payload response from the transaction function.
-     * @throws CommitException if the transaction fails to commit successfully.
-     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
+     * @throws EndorseException if the endorse invocation fails.
+     * @throws SubmitException if the submit invocation fails.
+     * @throws CommitStatusException if the commit status invocation fails.
+     * @throws CommitException if the transaction commits unsuccessfully.
      * @throws NullPointerException if the transaction name is null.
      */
-    byte[] submitTransaction(String name) throws CommitException;
+    byte[] submitTransaction(String name) throws EndorseException, CommitException, SubmitException, CommitStatusException;
 
     /**
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
@@ -154,11 +156,13 @@ public interface Contract {
      * @param name Transaction function name.
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
-     * @throws CommitException if the transaction fails to commit successfully.
-     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
+     * @throws EndorseException if the endorse invocation fails.
+     * @throws SubmitException if the submit invocation fails.
+     * @throws CommitStatusException if the commit status invocation fails.
+     * @throws CommitException if the transaction commits unsuccessfully.
      * @throws NullPointerException if the transaction name is null.
      */
-    byte[] submitTransaction(String name, String... args) throws CommitException;
+    byte[] submitTransaction(String name, String... args) throws EndorseException, SubmitException, CommitStatusException, CommitException;
 
     /**
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
@@ -175,11 +179,13 @@ public interface Contract {
      * @param name Transaction function name.
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
-     * @throws CommitException if the transaction fails to commit successfully.
-     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
+     * @throws EndorseException if the endorse invocation fails.
+     * @throws SubmitException if the submit invocation fails.
+     * @throws CommitStatusException if the commit status invocation fails.
+     * @throws CommitException if the transaction commits unsuccessfully.
      * @throws NullPointerException if the transaction name is null.
      */
-    byte[] submitTransaction(String name, byte[]... args) throws CommitException;
+    byte[] submitTransaction(String name, byte[]... args) throws EndorseException, CommitException, SubmitException, CommitStatusException;
 
     /**
      * Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
@@ -194,10 +200,10 @@ public interface Contract {
      * }</pre>
      * @param name Transaction function name.
      * @return Payload response from the transaction function.
-     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
+     * @throws GatewayException if the gRPC service invocation fails.
      * @throws NullPointerException if the transaction name is null.
      */
-    byte[] evaluateTransaction(String name);
+    byte[] evaluateTransaction(String name) throws GatewayException;
 
     /**
      * Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
@@ -214,10 +220,10 @@ public interface Contract {
      * @param name Transaction function name.
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
-     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
+     * @throws GatewayException if the gRPC service invocation fails.
      * @throws NullPointerException if the transaction name is null.
      */
-    byte[] evaluateTransaction(String name, String... args);
+    byte[] evaluateTransaction(String name, String... args) throws GatewayException;
 
     /**
      * Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
@@ -233,10 +239,10 @@ public interface Contract {
      * @param name Transaction function name.
      * @param args Transaction function arguments.
      * @return Payload response from the transaction function.
-     * @throws io.grpc.StatusRuntimeException if the gRPC service invocation fails.
+     * @throws GatewayException if the gRPC service invocation fails.
      * @throws NullPointerException if the transaction name is null.
      */
-    byte[] evaluateTransaction(String name, byte[]... args);
+    byte[] evaluateTransaction(String name, byte[]... args) throws GatewayException;
 
     /**
      * Build a new proposal that can be evaluated or sent to peers for endorsement. Supports both asynchronous submit

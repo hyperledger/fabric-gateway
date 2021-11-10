@@ -72,7 +72,9 @@ public final class ChaincodeEventsTest {
             try (CloseableIterator<ChaincodeEvent> events = network.getChaincodeEvents("CHAINCODE_NAME")) {
                 events.forEachRemaining(event -> { });
             }
-        }).isInstanceOf(StatusRuntimeException.class);
+        }).isInstanceOf(GatewayRuntimeException.class)
+                .extracting(t -> ((GatewayRuntimeException) t).getStatus())
+                .isEqualTo(Status.UNAVAILABLE);
     }
 
     @Test
@@ -200,7 +202,9 @@ public final class ChaincodeEventsTest {
         }
 
         assertThatThrownBy(() -> eventIter.forEachRemaining(event -> { }))
-                .isInstanceOf(StatusRuntimeException.class);
+                .isInstanceOf(GatewayRuntimeException.class)
+                .extracting(t -> ((GatewayRuntimeException) t).getStatus().getCode())
+                .isEqualTo(Status.Code.CANCELLED);
     }
 
     @Test

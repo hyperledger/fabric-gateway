@@ -12,6 +12,7 @@ import java.util.function.Function;
 
 import io.grpc.Channel;
 import io.grpc.Context;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.AbstractStub;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
@@ -37,24 +38,40 @@ final class GatewayClient {
         this.defaultOptions = defaultOptions;
     }
 
-    public EvaluateResponse evaluate(final EvaluateRequest request, final CallOption... options) {
+    public EvaluateResponse evaluate(final EvaluateRequest request, final CallOption... options) throws GatewayException {
         GatewayGrpc.GatewayBlockingStub stub = applyOptions(blockingStub, defaultOptions.getEvaluate(options));
-        return stub.evaluate(request);
+        try {
+            return stub.evaluate(request);
+        } catch (StatusRuntimeException e) {
+            throw new GatewayException(e);
+        }
     }
 
-    public EndorseResponse endorse(final EndorseRequest request, final CallOption... options) {
+    public EndorseResponse endorse(final EndorseRequest request, final CallOption... options) throws EndorseException {
         GatewayGrpc.GatewayBlockingStub stub = applyOptions(blockingStub, defaultOptions.getEndorse(options));
-        return stub.endorse(request);
+        try {
+            return stub.endorse(request);
+        } catch (StatusRuntimeException e) {
+            throw new EndorseException(e);
+        }
     }
 
-    public SubmitResponse submit(final SubmitRequest request, final CallOption... options) {
+    public SubmitResponse submit(final SubmitRequest request, final CallOption... options) throws SubmitException {
         GatewayGrpc.GatewayBlockingStub stub = applyOptions(blockingStub, defaultOptions.getSubmit(options));
-        return stub.submit(request);
+        try {
+            return stub.submit(request);
+        } catch (StatusRuntimeException e) {
+            throw new SubmitException(e);
+        }
     }
 
-    public CommitStatusResponse commitStatus(final SignedCommitStatusRequest request, final CallOption... options) {
+    public CommitStatusResponse commitStatus(final SignedCommitStatusRequest request, final CallOption... options) throws CommitStatusException {
         GatewayGrpc.GatewayBlockingStub stub = applyOptions(blockingStub, defaultOptions.getCommitStatus(options));
-        return stub.commitStatus(request);
+        try {
+            return stub.commitStatus(request);
+        } catch (StatusRuntimeException e) {
+            throw new CommitStatusException(e);
+        }
     }
 
     public CloseableIterator<ChaincodeEventsResponse> chaincodeEvents(final SignedChaincodeEventsRequest request, final CallOption... options) {
@@ -78,6 +95,9 @@ final class GatewayClient {
         try {
             Iterator<Response> iterator = context.wrap(() -> call.apply(request)).call();
             return new ResponseIterator<>(context, iterator);
+        } catch (StatusRuntimeException e) {
+            context.cancel(e);
+            throw new GatewayRuntimeException(e);
         } catch (RuntimeException e) {
             context.cancel(e);
             throw e;
@@ -104,12 +124,20 @@ final class GatewayClient {
 
         @Override
         public boolean hasNext() {
-            return iterator.hasNext();
+            try {
+                return iterator.hasNext();
+            } catch (StatusRuntimeException e) {
+                throw new GatewayRuntimeException(e);
+            }
         }
 
         @Override
         public T next() {
-            return iterator.next();
+            try {
+                return iterator.next();
+            } catch (StatusRuntimeException e) {
+                throw new GatewayRuntimeException(e);
+            }
         }
     }
 }

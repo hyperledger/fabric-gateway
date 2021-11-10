@@ -6,6 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.X509Identity;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
@@ -16,9 +19,6 @@ import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -68,7 +68,7 @@ public final class OfflineSignTest {
     }
 
     @Test
-    void evaluate_uses_offline_signature() {
+    void evaluate_uses_offline_signature() throws GatewayException {
         byte[] expected = "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
 
         Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
@@ -90,7 +90,7 @@ public final class OfflineSignTest {
     }
 
     @Test
-    void endorse_uses_offline_signature() {
+    void endorse_uses_offline_signature() throws EndorseException {
         byte[] expected = "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
 
         Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
@@ -104,7 +104,7 @@ public final class OfflineSignTest {
     }
 
     @Test
-    void submit_throws_with_no_signer_and_no_explicit_signing() {
+    void submit_throws_with_no_signer_and_no_explicit_signing() throws EndorseException {
         Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
         Proposal signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
         Transaction transaction = signedProposal.endorse();
@@ -114,7 +114,7 @@ public final class OfflineSignTest {
     }
 
     @Test
-    void submit_uses_offline_signature() {
+    void submit_uses_offline_signature() throws EndorseException, SubmitException {
         byte[] expected = "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
 
         Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
@@ -130,7 +130,7 @@ public final class OfflineSignTest {
     }
 
     @Test
-    void commit_throws_with_no_signer_and_no_explicit_signing() {
+    void commit_throws_with_no_signer_and_no_explicit_signing() throws EndorseException, SubmitException {
         Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
         Proposal signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
         Transaction transaction = signedProposal.endorse();
@@ -143,7 +143,7 @@ public final class OfflineSignTest {
     }
 
     @Test
-    void commit_uses_offline_signature() {
+    void commit_uses_offline_signature() throws EndorseException, SubmitException, CommitStatusException {
         byte[] expected = "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
 
         Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
@@ -184,7 +184,7 @@ public final class OfflineSignTest {
     }
 
     @Test
-    void signed_proposal_keeps_same_endorsing_orgs() {
+    void signed_proposal_keeps_same_endorsing_orgs() throws GatewayException {
         Contract contract = network.getContract("CHAINCODE_NAME");
         Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME")
                 .setEndorsingOrganizations("Org1MSP", "Org3MSP")
@@ -200,7 +200,7 @@ public final class OfflineSignTest {
 
 
     @Test
-    void signed_transaction_keeps_same_transaction_ID() {
+    void signed_transaction_keeps_same_transaction_ID() throws EndorseException {
         Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
         Proposal signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
         Transaction unsignedTransaction = signedProposal.endorse();
@@ -213,7 +213,7 @@ public final class OfflineSignTest {
     }
 
     @Test
-    void signed_transaction_keeps_same_digest() {
+    void signed_transaction_keeps_same_digest() throws EndorseException {
         Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
         Proposal signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
         Transaction unsignedTransaction = signedProposal.endorse();
@@ -226,7 +226,7 @@ public final class OfflineSignTest {
     }
 
     @Test
-    void signed_commit_keeps_same_transaction_ID() {
+    void signed_commit_keeps_same_transaction_ID() throws EndorseException, SubmitException {
         Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
         Proposal signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
         Transaction unsignedTransaction = signedProposal.endorse();
@@ -241,7 +241,7 @@ public final class OfflineSignTest {
     }
 
     @Test
-    void signed_commit_keeps_same_digest() {
+    void signed_commit_keeps_same_digest() throws EndorseException, SubmitException {
         Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
         Proposal signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
         Transaction unsignedTransaction = signedProposal.endorse();

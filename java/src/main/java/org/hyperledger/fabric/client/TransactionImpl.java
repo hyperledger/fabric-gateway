@@ -51,7 +51,7 @@ final class TransactionImpl implements Transaction {
     }
 
     @Override
-    public SubmittedTransaction submitAsync(final CallOption... options) {
+    public SubmittedTransaction submitAsync(final CallOption... options) throws SubmitException {
         sign();
         SubmitRequest submitRequest = SubmitRequest.newBuilder()
                 .setTransactionId(preparedTransaction.getTransactionId())
@@ -64,7 +64,7 @@ final class TransactionImpl implements Transaction {
     }
 
     @Override
-    public byte[] submit(final CallOption... options) throws CommitException {
+    public byte[] submit(final CallOption... options) throws CommitException, SubmitException, CommitStatusException {
         Status status = submitAsync(options).getStatus(options);
         if (!status.isSuccessful()) {
             throw new CommitException(status);

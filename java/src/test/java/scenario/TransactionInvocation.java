@@ -12,10 +12,14 @@ import java.util.concurrent.Callable;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.hyperledger.fabric.client.Commit;
+import org.hyperledger.fabric.client.CommitStatusException;
 import org.hyperledger.fabric.client.Contract;
+import org.hyperledger.fabric.client.EndorseException;
 import org.hyperledger.fabric.client.Gateway;
+import org.hyperledger.fabric.client.GatewayException;
 import org.hyperledger.fabric.client.Proposal;
 import org.hyperledger.fabric.client.Status;
+import org.hyperledger.fabric.client.SubmitException;
 import org.hyperledger.fabric.client.SubmittedTransaction;
 import org.hyperledger.fabric.client.Transaction;
 import org.hyperledger.fabric.client.identity.Signer;
@@ -75,7 +79,7 @@ public final class TransactionInvocation {
         }
     }
 
-    private byte[] submit() throws InvalidProtocolBufferException, GeneralSecurityException {
+    private byte[] submit() throws InvalidProtocolBufferException, GeneralSecurityException, EndorseException, SubmitException, CommitStatusException {
         Proposal unsignedProposal = proposalBuilder.build();
         Proposal signedProposal = offlineSign(unsignedProposal);
 
@@ -122,7 +126,7 @@ public final class TransactionInvocation {
         return gateway.newSignedCommit(commit.getBytes(), signature);
     }
 
-    private byte[] evaluate() throws InvalidProtocolBufferException, GeneralSecurityException {
+    private byte[] evaluate() throws InvalidProtocolBufferException, GeneralSecurityException, GatewayException {
         Proposal unsignedProposal = proposalBuilder.build();
         Proposal signedProposal = offlineSign(unsignedProposal);
 
