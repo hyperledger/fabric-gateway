@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CallOptions, Metadata, ServiceError } from '@grpc/grpc-js';
+import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
 import { MockGatewayGrpcClient } from './client.test';
 import { CommitError } from './commiterror';
 import { CommitStatusError } from './commitstatuserror';
@@ -12,7 +12,7 @@ import { Contract } from './contract';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { Envelope, Status } from './protos/common/common_pb';
+import { Envelope } from './protos/common/common_pb';
 import { CommitStatusResponse, EndorseResponse } from './protos/gateway/gateway_pb';
 import { Response } from './protos/peer/proposal_response_pb';
 import { TxValidationCode } from './protos/peer/transaction_pb';
@@ -21,7 +21,7 @@ import { SubmitError } from './submiterror';
 describe('Transaction', () => {
     const expectedResult = 'TX_RESULT';
     const serviceError: ServiceError = Object.assign(new Error('ERROR_MESSAGE'), {
-        code: Status.SERVICE_UNAVAILABLE,
+        code: status.UNAVAILABLE,
         details: 'DETAILS',
         metadata: new Metadata(),
     });
@@ -100,6 +100,7 @@ describe('Transaction', () => {
         await expect(t).rejects.toMatchObject({
             name: SubmitError.name,
             transactionId,
+            code: serviceError.code,
             cause: serviceError,
         });
     });
@@ -117,6 +118,7 @@ describe('Transaction', () => {
         await expect(t).rejects.toMatchObject({
             name: CommitStatusError.name,
             transactionId,
+            code: serviceError.code,
             cause: serviceError,
         });
     });

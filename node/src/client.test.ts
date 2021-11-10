@@ -154,6 +154,12 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
     mockChaincodeEventsResponse(stream: ServerStreamResponse<ChaincodeEventsResponse>): void {
         this.#chaincodeEventsMock.mockReturnValue(stream);
     }
+
+    mockChaincodeEventsError(err: grpc.ServiceError): void {
+        this.#chaincodeEventsMock.mockImplementation(() => {
+            throw err;
+        });
+    }
 }
 
 function fakeUnaryCall<ResponseType>(err: grpc.ServiceError | undefined, response: ResponseType | undefined) {

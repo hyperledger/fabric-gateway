@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CallOptions, ClientUnaryCall, requestCallback } from '@grpc/grpc-js';
+import { CallOptions, ClientUnaryCall, Metadata, requestCallback, ServiceError } from '@grpc/grpc-js';
 import { Message } from 'google-protobuf';
 import { CommitStatusError } from './commitstatuserror';
 import { EndorseError } from './endorseerror';
@@ -125,26 +125,46 @@ class GatewayClientImpl implements GatewayClient {
     }
 
     chaincodeEvents(request: SignedChaincodeEventsRequest, options?: Readonly<CallOptions>): CloseableAsyncIterable<ChaincodeEventsResponse> {
-        const serverStream = this.#client.makeServerStreamRequest(
+        return this.#makeServerStreamRequest(
             chaincodeEventsMethod,
             serialize,
             deserializeChaincodeEventsResponse,
             request,
             buildOptions(this.#defaultOptions.chaincodeEventsOptions, options)
         );
-        return {
-            [Symbol.asyncIterator]: () => serverStream[Symbol.asyncIterator](),
-            close: () => serverStream.cancel(),
-        }
     }
 
+    #makeServerStreamRequest<RequestType, ResponseType>(
+        method: string,
+        serialize: (value: RequestType) => Buffer,
+        deserialize: (value: Buffer) => ResponseType,
+        argument: RequestType,
+        options?: CallOptions
+    ): CloseableAsyncIterable<ResponseType> {
+        try {
+            const serverStream = this.#client.makeServerStreamRequest(method, serialize, deserialize, argument, options);
+            return {
+                [Symbol.asyncIterator]: () => wrapAsyncIterator(serverStream[Symbol.asyncIterator]()),
+                close: () => serverStream.cancel(),
+            }
+        } catch (err) {
+            if (isServiceError(err)) {
+                throw newGatewayError(err);
+            }
+            throw err;
+        }
+    }
 }
 
 function buildOptions(defaultOptions: (() => CallOptions) | undefined, options?: Readonly<CallOptions>): CallOptions {
     return Object.assign({}, defaultOptions?.(), options);
 }
 
-function newUnaryCallback<T>(resolve: (value: T) => void, reject: (reason: Error) => void, wrap: (err: GatewayError) => GatewayError = (err => err)): requestCallback<T> {
+function newUnaryCallback<T>(
+    resolve: (value: T) => void,
+    reject: (reason: Error) => void,
+    wrap: (err: GatewayError) => GatewayError = (err => err)
+): requestCallback<T> {
     return (err, value) => {
         if (err) {
             return reject(wrap(newGatewayError(err)));
@@ -154,6 +174,28 @@ function newUnaryCallback<T>(resolve: (value: T) => void, reject: (reason: Error
         }
         return resolve(value);
     }
+}
+
+function wrapAsyncIterator<T>(iterator: AsyncIterator<T>): AsyncIterator<T> {
+    return {
+        next: async (...args) => {
+            try {
+                return await iterator.next(...args);
+            } catch (err) {
+                if (isServiceError(err)) {
+                    throw newGatewayError(err);
+                }
+                throw err;
+            }
+        }
+    };
+}
+
+function isServiceError(err: unknown): err is ServiceError {
+    return typeof (err as ServiceError).code === 'number' &&
+        typeof (err as ServiceError).details === 'string' &&
+        (err as ServiceError).metadata instanceof Metadata &&
+        err instanceof Error;
 }
 
 function serialize(message: Message): Buffer {

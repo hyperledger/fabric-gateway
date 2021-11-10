@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CallOptions, Metadata, ServiceError } from '@grpc/grpc-js';
+import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
 import { MockGatewayGrpcClient } from './client.test';
 import { Contract } from './contract';
 import { EndorseError } from './endorseerror';
 import { Gateway, internalConnect } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { ChannelHeader, Envelope, Header, SignatureHeader, Status } from './protos/common/common_pb';
+import { ChannelHeader, Envelope, Header, SignatureHeader } from './protos/common/common_pb';
 import { CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse } from './protos/gateway/gateway_pb';
 import { SerializedIdentity } from './protos/msp/identities_pb';
 import { ChaincodeInvocationSpec, ChaincodeSpec } from './protos/peer/chaincode_pb';
@@ -64,7 +64,7 @@ function assertDecodeChannelHeader(proposal: ProposalProto): ChannelHeader {
 
 describe('Proposal', () => {
     const serviceError: ServiceError = Object.assign(new Error('ERROR_MESSAGE'), {
-        code: Status.SERVICE_UNAVAILABLE,
+        code: status.UNAVAILABLE,
         details: 'DETAILS',
         metadata: new Metadata(),
     });
@@ -371,6 +371,7 @@ describe('Proposal', () => {
             await expect(t).rejects.toMatchObject({
                 name: EndorseError.name,
                 transactionId,
+                code: serviceError.code,
                 cause: serviceError,
             });
         });
