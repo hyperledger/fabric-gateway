@@ -25,7 +25,7 @@ In order to build these components, the following needs to be installed and avai
 - Docker
 - Protobuf compiler (https://developers.google.com/protocol-buffers/docs/downloads)
 - Some Go tools:
-  - `GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.10.0`
+  - `go install github.com/cucumber/godog/cmd/godog@v0.12.1`
   - `go get -u golang.org/x/lint/golint`
   - `go get -u golang.org/x/tools/cmd/goimports`
   - `go get google.golang.org/grpc google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc`
@@ -33,36 +33,40 @@ In order to build these components, the following needs to be installed and avai
   - `go get github.com/golang/mock/mockgen`
 - pkcs11 enabled fabric-ca-client
   - `go get -tags 'pkcs11' github.com/hyperledger/fabric-ca/cmd/fabric-ca-client`
-- SoftHSM which can be installed using the package manager for your host system:
-* Ubuntu: `sudo apt install softhsm2`
-* macOS: `brew install softhsm`
-* Windows: **unsupported**
-
-Or compiled and installed from source:
-
-1. install openssl 1.0.0+ or botan 1.10.0+
-2. download the source code from <https://dist.opendnssec.org/source/softhsm-2.5.0.tar.gz>
-3. `tar -xvf softhsm-2.5.0.tar.gz`
-4. `cd softhsm-2.5.0`
-5. `./configure --disable-gost` (would require additional libraries, turn it off unless you need 'gost' algorithm support for the Russian market)
-6. `make`
-7. `sudo make install`
+- SoftHSM which can be:
+  - installed using the package manager for your host system:
+    - Ubuntu: `sudo apt install softhsm2`
+    - macOS: `brew install softhsm`
+    - Windows: **unsupported**
+  - or compiled and installed from source:
+    1. install openssl 1.0.0+ or botan 1.10.0+
+    2. download the source code from <https://dist.opendnssec.org/source/softhsm-2.5.0.tar.gz>
+    3. `tar -xvf softhsm-2.5.0.tar.gz`
+    4. `cd softhsm-2.5.0`
+    5. `./configure --disable-gost` (would require additional libraries, turn it off unless you need 'gost' algorithm support for the Russian market)
+    6. `make`
+    7. `sudo make install`
 
 ### Build using make
 
 The following Makefile targets are available
-- `make build-go` - compile the gateway server executable
-- `make pull-latest-peer` - fetch the latest peer docker image containing the gateway server
+- `make generate` - generate mock implementations used by unit tests
 - `make unit-test-go` - run unit tests for the gateway server and Go SDK
 - `make unit-test-node` - run unit tests for the Node SDK
 - `make unit-test-java` - run unit tests for the Java SDK
 - `make unit-test` - run unit tests for the gateway server and all three SDKs
+- `make pull-latest-peer` - fetch the latest peer docker image containing the gateway server
 - `make scenario-test-go` - run the scenario (end to end integration) tests for Go SDK
 - `make scenario-test-node` - run the scenario tests for Node SDK
 - `make scenario-test-java` - run the scenario tests for Java SDK
 - `make scenario-test` - run the scenario tests for all SDKs
 - `make test` - run all unit and scenario tests
-- `make generate` - generate mock implementations used by unit tests
+- `make sample-network` - create the sample network used to run samples
+- `make sample-network-clean` - remove the sample network
+- `make run-samples-go` - run the samples for the Go SDK
+- `make run-samples-node` - run the samples for the Node SDK
+- `make run-samples-java` - run the samples for the Java SDK
+- `make run-samples` - create the sample network, run samples for all three SDKs, and remove the sample network
 
 Note that immediately after creating a fresh copy of this repository, auto-generated test mocks will not be preset so
 Go code will show errors. Running the `unit-test` make target will generate the required mock implementations, and they

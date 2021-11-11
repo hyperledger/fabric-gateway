@@ -29,7 +29,7 @@ MARCH=$(shell go env GOOS)-$(shell go env GOARCH)
 GO_VER = 1.16.7
 GO_TAGS ?=
 
-build: build-protos build-go build-node
+build: build-go build-node build-java
 
 fabric_protos_commit = 9c69228417592158899cb0dd4a77a3eedf25225f
 pb_files = protos/gateway/gateway.pb.go protos/gateway/gateway_grpc.pb.go
@@ -46,8 +46,7 @@ $(pb_files): fabric-protos
 	mkdir -p protos
 	protoc -I./fabric-protos --go_out=paths=source_relative:./protos --go-grpc_out=require_unimplemented_servers=false,paths=source_relative:./protos fabric-protos/gateway/gateway.proto
 
-build-go:
-	go build -o bin/gateway cmd/gateway/*.go
+build-go: build-protos
 
 build-node: build-protos
 	cd $(node_dir); npm install; npm run build; rm -f fabric-gateway-dev.tgz; mv $$(npm pack) fabric-gateway-dev.tgz
