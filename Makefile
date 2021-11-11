@@ -53,7 +53,7 @@ build-node: build-protos
 	cd $(node_dir); npm install; npm run build; rm -f fabric-gateway-dev.tgz; mv $$(npm pack) fabric-gateway-dev.tgz
 
 build-java: build-protos
-	cd $(java_dir); mvn install -DskipTests -Dmaven.javadoc.skip=true
+	cd $(java_dir); mvn install -DskipTests
 
 unit-test: generate unit-test-go unit-test-node unit-test-java
 
@@ -99,7 +99,7 @@ run-samples-node: build-node
 	cd $(samples_dir)/node; rm -rf package-lock.json node_modules; npm install; npm run build; npm start
 
 run-samples-java: build-java
-	cd $(samples_dir)/java; mvn clean compile exec:java -Dexec.mainClass='com.example.Sample' -Dmaven.javadoc.skip=true
+	cd $(samples_dir)/java; mvn clean compile exec:java -Dexec.mainClass='com.example.Sample'
 
 generate:
 	go generate ./pkg/...
@@ -115,7 +115,7 @@ scenario-test-node: vendor-chaincode build-node
 	cd $(scenario_dir)/node; rm -rf package-lock.json node_modules; npm install; SOFTHSM2_CONF=${HOME}/softhsm2.conf npm test
 
 scenario-test-java: vendor-chaincode build-java
-	cd $(java_dir); mvn verify -Dmaven.javadoc.skip=true
+	cd $(java_dir); mvn verify
 
 scenario-test: scenario-test-go scenario-test-node scenario-test-java
 

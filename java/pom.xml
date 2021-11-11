@@ -40,6 +40,7 @@
         <protobufVersion>3.17.2</protobufVersion> <!-- keep in step with the version used by io.grpc:grpc-protobuf -->
         <cucumberVersion>7.0.0</cucumberVersion>
         <junitVersion>5.8.1</junitVersion>
+        <enforceJavaVersion>1.8</enforceJavaVersion> <!-- this is overridden in the release profile -->
     </properties>
 
     <repositories>
@@ -156,84 +157,114 @@
                 <version>1.6.2</version>
             </extension>
         </extensions>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.1</version>
-                    <configuration>
-                        <source>${javaVersion}</source>
-                        <target>${javaVersion}</target>
-                        <showDeprecation>true</showDeprecation>
-                        <showWarnings>true</showWarnings>
-                        <compilerArgs>
-                            <arg>-Xlint</arg>
-                            <!-- Disable command line warnings, seen when building against multiple releases: -->
-                            <arg>-Xlint:-options</arg>
-                            <arg>-Xlint:-processing</arg>
-                            <arg>-Werror</arg>
-                        </compilerArgs>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.0.0-M5</version>
-                    <configuration>
-                        <excludes>
-                            <exclude>**/scenario/**</exclude>
-                        </excludes>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>scenarios</id>
-                            <phase>integration-test</phase>
-                            <goals>
-                                <goal>test</goal>
-                            </goals>
-                            <configuration>
-                                <excludes>
-                                    <exclude>none</exclude>
-                                </excludes>
-                                <includes>
-                                    <include>**/RunScenarioTest</include>
-                                </includes>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>setup</id>
-                            <phase>pre-integration-test</phase>
-                            <goals>
-                                <goal>test</goal>
-                            </goals>
-                            <configuration>
-                                <excludes>
-                                    <exclude>none</exclude>
-                                </excludes>
-                                <includes>
-                                    <include>**/SetupScenarioTest</include>
-                                </includes>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>cleanup</id>
-                            <phase>post-integration-test</phase>
-                            <goals>
-                                <goal>test</goal>
-                            </goals>
-                            <configuration>
-                                <excludes>
-                                    <exclude>none</exclude>
-                                </excludes>
-                                <includes>
-                                    <include>**/CleanupScenarioTest</include>
-                                </includes>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>enforce-version</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>${enforceJavaVersion}</version>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-help-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>show-profiles</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>active-profiles</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${javaVersion}</source>
+                    <target>${javaVersion}</target>
+                    <showDeprecation>true</showDeprecation>
+                    <showWarnings>true</showWarnings>
+                    <compilerArgs>
+                        <arg>-Xlint</arg>
+                        <!-- Disable command line warnings, seen when building against multiple releases: -->
+                        <arg>-Xlint:-options</arg>
+                        <arg>-Xlint:-processing</arg>
+                        <arg>-Werror</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M5</version>
+                <configuration>
+                    <excludes>
+                        <exclude>**/scenario/**</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>scenarios</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>none</exclude>
+                            </excludes>
+                            <includes>
+                                <include>**/RunScenarioTest</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>setup</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>none</exclude>
+                            </excludes>
+                            <includes>
+                                <include>**/SetupScenarioTest</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>cleanup</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>none</exclude>
+                            </excludes>
+                            <includes>
+                                <include>**/CleanupScenarioTest</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -252,7 +283,7 @@
                     <source>${javaVersion}</source>
                     <detectJavaApiLink>false</detectJavaApiLink>
                     <additionalJOptions>
-                        <additionalJOption>--no-module-directories</additionalJOption>
+                        <additionalJOption>${additionalJavadocOpts}</additionalJOption>
                     </additionalJOptions>
                 </configuration>
                 <executions>
@@ -332,6 +363,15 @@
     </distributionManagement>
     <profiles>
         <profile>
+            <id>javadoc-no-module-directories</id>
+            <activation>
+                <jdk>[11,)</jdk>
+            </activation>
+            <properties>
+                <additionalJavadocOpts>--no-module-directories</additionalJavadocOpts>
+            </properties>
+        </profile>
+        <profile>
             <id>owasp</id>
             <build>
                 <plugins>
@@ -358,6 +398,9 @@
         </profile>
         <profile>
             <id>release</id>
+            <properties>
+                <enforceJavaVersion>[1.8,1.9)</enforceJavaVersion> <!-- must use 1.8 JDK for release build -->
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -408,32 +451,6 @@
                                 <id>attach-sources</id>
                                 <goals>
                                     <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.2.0</version>
-                        <configuration>
-                            <excludePackageNames>
-                                org.hyperledger.fabric.protos.gateway.impl:org.hyperledger.fabric.protos.*
-                            </excludePackageNames>
-                            <show>public</show>
-                            <doctitle>Hyperledger Fabric Gateway SDK for Java</doctitle>
-                            <nohelp>true</nohelp>
-                            <failOnError>true</failOnError>
-                            <failOnWarnings>true</failOnWarnings>
-                            <additionalJOptions>
-                                <additionalJOption>--no-module-directories</additionalJOption>
-                            </additionalJOptions>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
                                 </goals>
                             </execution>
                         </executions>
