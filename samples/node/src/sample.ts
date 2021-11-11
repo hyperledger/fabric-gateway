@@ -5,8 +5,8 @@
  */
 
 import * as grpc from '@grpc/grpc-js';
+import { CommitError, CommitStatusError, connect, EndorseError, Gateway, Identity, Signer, signers, SubmitError } from '@hyperledger/fabric-gateway';
 import * as crypto from 'crypto';
-import { connect, Gateway, GatewayError, Identity, Signer, signers } from '@hyperledger/fabric-gateway';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { TextDecoder } from 'util';
@@ -282,13 +282,15 @@ async function exampleErrorHandling(gateway: Gateway) {
     // Submit transaction, passing in the wrong number of arguments.
     try {
         await contract.submitTransaction('put');
-    } catch (e) {
-        console.log(e)
+    } catch (err) {
+        console.log(err)
         // Any error that originates from a peer or orderer node external to the gateway will have its details
         // embedded within the error.
-        if (e instanceof GatewayError) {
-            e.details.forEach(detail =>
+        if (err instanceof EndorseError || err instanceof SubmitError || err instanceof CommitStatusError) {
+            err.details.forEach(detail =>
                 console.log(`Error from endpoint: ${detail.address}, mspId: ${detail.mspId}, message: ${detail.message}`));
+        } else if (err instanceof CommitError) {
+            console.error(`Transaction ${err.transactionId} failed to commit with status code: ${err.code}`);
         }
     }
 }
