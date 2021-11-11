@@ -9,6 +9,7 @@ package client
 import (
 	"context"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"google.golang.org/grpc"
 )
@@ -25,7 +26,13 @@ func (client *gatewayClient) Endorse(in *gateway.EndorseRequest, opts ...grpc.Ca
 }
 
 func (client *gatewayClient) EndorseWithContext(ctx context.Context, in *gateway.EndorseRequest, opts ...grpc.CallOption) (*gateway.EndorseResponse, error) {
-	return client.grpcClient.Endorse(ctx, in, opts...)
+	response, err := client.grpcClient.Endorse(ctx, in, opts...)
+	if err != nil {
+		txErr := newTransactionError(err, in.GetTransactionId())
+		return nil, &EndorseError{txErr}
+	}
+
+	return response, nil
 }
 
 func (client *gatewayClient) Submit(in *gateway.SubmitRequest, opts ...grpc.CallOption) (*gateway.SubmitResponse, error) {
@@ -35,7 +42,13 @@ func (client *gatewayClient) Submit(in *gateway.SubmitRequest, opts ...grpc.Call
 }
 
 func (client *gatewayClient) SubmitWithContext(ctx context.Context, in *gateway.SubmitRequest, opts ...grpc.CallOption) (*gateway.SubmitResponse, error) {
-	return client.grpcClient.Submit(ctx, in, opts...)
+	response, err := client.grpcClient.Submit(ctx, in, opts...)
+	if err != nil {
+		txErr := newTransactionError(err, in.GetTransactionId())
+		return nil, &SubmitError{txErr}
+	}
+
+	return response, nil
 }
 
 func (client *gatewayClient) CommitStatus(in *gateway.SignedCommitStatusRequest, opts ...grpc.CallOption) (*gateway.CommitStatusResponse, error) {
@@ -45,7 +58,15 @@ func (client *gatewayClient) CommitStatus(in *gateway.SignedCommitStatusRequest,
 }
 
 func (client *gatewayClient) CommitStatusWithContext(ctx context.Context, in *gateway.SignedCommitStatusRequest, opts ...grpc.CallOption) (*gateway.CommitStatusResponse, error) {
-	return client.grpcClient.CommitStatus(ctx, in, opts...)
+	response, err := client.grpcClient.CommitStatus(ctx, in, opts...)
+	if err != nil {
+		request := &gateway.CommitStatusRequest{}
+		proto.Unmarshal(in.Request, request)
+		txErr := newTransactionError(err, request.GetTransactionId())
+		return nil, &CommitStatusError{txErr}
+	}
+
+	return response, nil
 }
 
 func (client *gatewayClient) Evaluate(in *gateway.EvaluateRequest, opts ...grpc.CallOption) (*gateway.EvaluateResponse, error) {

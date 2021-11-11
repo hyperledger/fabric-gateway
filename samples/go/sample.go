@@ -9,6 +9,7 @@ package main
 import (
 	"context"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"time"
@@ -131,7 +132,7 @@ func exampleSubmitAsync(gateway *client.Gateway) {
 	if status, err := commit.Status(); err != nil {
 		panic(fmt.Errorf("failed to get commit status: %w", err))
 	} else if !status.Successful {
-		panic(fmt.Errorf("transaction %s, failed to commit with status: %d", status.TransactionID, int32(status.Code)))
+		panic(fmt.Errorf("transaction %s failed to commit with status: %d", status.TransactionID, int32(status.Code)))
 	}
 
 	fmt.Printf("Transaction committed successfully\n")
@@ -343,9 +344,23 @@ func exampleErrorHandling(gateway *client.Gateway) {
 	// Submit transaction, passing in the wrong number of arguments.
 	_, err := contract.SubmitTransaction("put")
 	if err != nil {
-		fmt.Printf("Error: %s\n", err)
+		switch err := err.(type) {
+		case *client.EndorseError:
+			fmt.Printf("Endorse error with gRPC status %v: %s\n", status.Code(err), err)
+		case *client.SubmitError:
+			fmt.Printf("Submit error with gRPC status %v: %s\n", status.Code(err), err)
+		case *client.CommitStatusError:
+			if errors.Is(err, context.DeadlineExceeded) {
+				fmt.Printf("Timeout waiting for transaction %s commit status: %s", err.TransactionID, err)
+			} else {
+				fmt.Printf("Error obtaining commit status with gRPC status %v: %s\n", status.Code(err), err)
+			}
+		case *client.CommitError:
+			fmt.Printf("Transaction %s failed to commit with status %d: %s\n", err.TransactionID, int32(err.Code), err)
+		}
+
 		// Any error that originates from a peer or orderer node external to the gateway will have its details
-		// embedded within the grpc status error.  The following code shows how to extract that.
+		// embedded within the gRPC status error. The following code shows how to extract that.
 		statusErr := status.Convert(err)
 		for _, detail := range statusErr.Details() {
 			errDetail := detail.(*gwproto.ErrorDetail)

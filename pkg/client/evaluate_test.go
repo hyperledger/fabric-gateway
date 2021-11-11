@@ -8,7 +8,6 @@ package client
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -39,7 +38,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		}
 	}
 
-	t.Run("Returns evaluate error without wrapping to allow gRPC status to be interrogated", func(t *testing.T) {
+	t.Run("Returns evaluate error", func(t *testing.T) {
 		expected := NewStatusError(t, codes.Aborted, "EVALUATE_ERROR")
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
@@ -49,7 +48,8 @@ func TestEvaluateTransaction(t *testing.T) {
 
 		_, err := contract.EvaluateTransaction("transaction")
 
-		require.Equal(t, expected, err)
+		require.Errorf(t, err, expected.Error(), "error message")
+		require.Equal(t, status.Code(expected), status.Code(err), "status code")
 	})
 
 	t.Run("Returns result", func(t *testing.T) {
@@ -321,8 +321,6 @@ func TestEvaluateTransaction(t *testing.T) {
 	})
 
 	t.Run("Uses default context", func(t *testing.T) {
-		expected := errors.New("EXPECTED_ERROR")
-
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, _ *gateway.EvaluateRequest, _ ...grpc.CallOption) (*gateway.EvaluateResponse, error) {
@@ -330,7 +328,7 @@ func TestEvaluateTransaction(t *testing.T) {
 				case <-time.After(1 * time.Second):
 					return newEvaluateResponse(nil), nil
 				case <-ctx.Done(): // Zero timeout context should cancel immediately, selecting this case
-					return nil, expected
+					return nil, ctx.Err()
 				}
 			})
 
@@ -338,6 +336,6 @@ func TestEvaluateTransaction(t *testing.T) {
 
 		_, err := contract.Evaluate("transaction")
 
-		require.ErrorIs(t, err, expected)
+		require.ErrorIs(t, err, context.DeadlineExceeded)
 	})
 }
