@@ -373,7 +373,7 @@ func exampleErrorHandling(gateway *client.Gateway) {
 func newGrpcConnection() *grpc.ClientConn {
 	certificate, err := loadCertificate(tlsCertPath)
 	if err != nil {
-		panic(fmt.Errorf("failed to obtain commit status: %w", err))
+		panic(err)
 	}
 
 	certPool := x509.NewCertPool()
@@ -382,7 +382,7 @@ func newGrpcConnection() *grpc.ClientConn {
 
 	connection, err := grpc.Dial(peerEndpoint, grpc.WithTransportCredentials(transportCredentials))
 	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+		panic(fmt.Errorf("failed to create gRPC connection: %w", err))
 	}
 
 	return connection
@@ -407,7 +407,7 @@ func newIdentity() *identity.X509Identity {
 func newSign() identity.Sign {
 	privateKeyPEM, err := ioutil.ReadFile(keyPath)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to read private key file: %w", err))
 	}
 
 	privateKey, err := identity.PrivateKeyFromPEM(privateKeyPEM)
@@ -426,7 +426,7 @@ func newSign() identity.Sign {
 func loadCertificate(filename string) (*x509.Certificate, error) {
 	certificatePEM, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read certificate file: %w", err)
 	}
 
 	return identity.CertificateFromPEM(certificatePEM)
