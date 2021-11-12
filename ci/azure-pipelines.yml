@@ -142,8 +142,6 @@ stages:
     - task: NodeTool@0
       inputs:
         versionSpec: $(NODEVER)
-    - script: node --version
-      displayName: node version DELETE ME
     - script: make unit-test-node
       displayName: Run Node unit tests
     - publish: $(System.DefaultWorkingDirectory)/node
@@ -161,8 +159,6 @@ stages:
         versionSpec: $(JAVAVER)
         jdkArchitectureOption: 'x64'
         jdkSourceOption: 'PreInstalled'
-    - script: java -version
-      displayName: java version DELETE ME
     - script: make unit-test-java
       displayName: Run Java unit tests
   #   - script: bash <(curl https://codecov.io/bash) -t $CODECOV_UPLOAD_TOKEN
