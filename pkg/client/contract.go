@@ -6,12 +6,6 @@ SPDX-License-Identifier: Apache-2.0
 
 package client
 
-import (
-	"fmt"
-
-	"github.com/hyperledger/fabric-protos-go/peer"
-)
-
 // Contract represents a smart contract, and allows applications to:
 //
 // - Evaluate transactions that query state from the ledger using the EvaluateTransaction() method.
@@ -76,6 +70,9 @@ func (contract *Contract) Evaluate(transactionName string, options ...ProposalOp
 // ledger. The transaction function will be evaluated on endorsing peers and then submitted to the ordering service to
 // be committed to the ledger.
 //
+// This method may return different error types depending on the point in the transaction invocation that a failure
+// occurs. The error can be inspected with errors.Is or errors.As.
+//
 // This method is equivalent to:
 //
 //     contract.Submit(name, client.WithArguments(args...))
@@ -87,6 +84,9 @@ func (contract *Contract) SubmitTransaction(name string, args ...string) ([]byte
 // provides greater control over the transaction proposal content and the endorsing peers on which it is evaluated. This
 // allows transaction functions to be submitted where the proposal must include transient data, or that will access
 // ledger data with key-based endorsement policies.
+//
+// This method may return different error types depending on the point in the transaction invocation that a failure
+// occurs. The error can be inspected with errors.Is or errors.As.
 func (contract *Contract) Submit(transactionName string, options ...ProposalOption) ([]byte, error) {
 	result, commit, err := contract.SubmitAsync(transactionName, options...)
 	if err != nil {
@@ -99,7 +99,7 @@ func (contract *Contract) Submit(transactionName string, options ...ProposalOpti
 	}
 
 	if !status.Successful {
-		return nil, fmt.Errorf("transaction %s failed to commit with status code %d (%s)", status.TransactionID, int32(status.Code), peer.TxValidationCode_name[int32(status.Code)])
+		return nil, newCommitError(status.TransactionID, status.Code)
 	}
 
 	return result, nil
@@ -107,6 +107,9 @@ func (contract *Contract) Submit(transactionName string, options ...ProposalOpti
 
 // SubmitAsync submits a transaction to the ledger and returns its result immediately after successfully sending to the
 // orderer, along with a Commit that can be used to wait for it to be committed to the ledger.
+//
+// This method may return different error types depending on the point in the transaction invocation that a failure
+// occurs. The error can be inspected with errors.Is or errors.As.
 func (contract *Contract) SubmitAsync(transactionName string, options ...ProposalOption) ([]byte, *Commit, error) {
 	proposal, err := contract.NewProposal(transactionName, options...)
 	if err != nil {

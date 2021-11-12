@@ -7,10 +7,13 @@ SPDX-License-Identifier: Apache-2.0
 package client_test
 
 import (
+	"context"
+	"errors"
 	"fmt"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
+	"google.golang.org/grpc/status"
 )
 
 func ExampleContract_Evaluate() {
@@ -25,6 +28,21 @@ func ExampleContract_Evaluate() {
 	fmt.Printf("Result: %s, Err: %v", result, err)
 }
 
+func ExampleContract_Evaluate_errorHandling() {
+	var contract *client.Contract // Obtained from Network.
+
+	result, err := contract.Evaluate("transactionName")
+	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			panic(fmt.Errorf("timeout: %w", err))
+		} else {
+			panic(fmt.Errorf("gRPC status %v: %w", status.Code(err), err))
+		}
+	}
+
+	fmt.Printf("Result: %s, Err: %v", result, err)
+}
+
 func ExampleContract_Submit() {
 	var contract *client.Contract // Obtained from Network.
 
@@ -33,6 +51,32 @@ func ExampleContract_Submit() {
 		client.WithArguments("one", "two"),
 		// Specify additional proposal options, such as transient data.
 	)
+
+	fmt.Printf("Result: %s, Err: %v", result, err)
+}
+
+func ExampleContract_Submit_errorHandling() {
+	var contract *client.Contract // Obtained from Network.
+
+	result, err := contract.Submit("transactionName")
+	if err != nil {
+		switch err := err.(type) {
+		case *client.EndorseError:
+			panic(fmt.Errorf("transaction %s failed to endrose with gRPC status %v: %w", err.TransactionID, status.Code(err), err))
+		case *client.SubmitError:
+			panic(fmt.Errorf("transaction %s failed to submit to the orderer with gRPC status %v: %w", err.TransactionID, status.Code(err), err))
+		case *client.CommitStatusError:
+			if errors.Is(err, context.DeadlineExceeded) {
+				panic(fmt.Errorf("timeout waiting for transaction %s commit status: %w", err.TransactionID, err))
+			} else {
+				panic(fmt.Errorf("transaction %s failed to obtain commit status with gRPC status %v: %w", err.TransactionID, status.Code(err), err))
+			}
+		case *client.CommitError:
+			panic(fmt.Errorf("transaction %s failed to commit with status %d: %w", err.TransactionID, int32(err.Code), err))
+		default:
+			panic(err)
+		}
+	}
 
 	fmt.Printf("Result: %s, Err: %v", result, err)
 }

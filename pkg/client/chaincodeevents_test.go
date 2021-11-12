@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 //go:generate mockgen -destination ./chaincodeevents_mock_test.go -package ${GOPACKAGE} github.com/hyperledger/fabric-protos-go/gateway Gateway_ChaincodeEventsClient
@@ -44,7 +45,7 @@ func TestChaincodeEvents(t *testing.T) {
 		}
 	}
 
-	t.Run("Returns connect error without wrapping to allow gRPC status to be interrogated", func(t *testing.T) {
+	t.Run("Returns connect error", func(t *testing.T) {
 		expected := NewStatusError(t, codes.Aborted, "CHAINCODE_EVENTS_ERROR")
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().ChaincodeEvents(gomock.Any(), gomock.Any()).
@@ -56,7 +57,8 @@ func TestChaincodeEvents(t *testing.T) {
 		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
 		_, err := network.ChaincodeEvents(ctx, "CHAINCODE")
 
-		require.Equal(t, expected, err)
+		require.Equal(t, status.Code(expected), status.Code(err), "status code")
+		require.Errorf(t, err, expected.Error(), "error message")
 	})
 
 	t.Run("Sends valid request with default start position", func(t *testing.T) {

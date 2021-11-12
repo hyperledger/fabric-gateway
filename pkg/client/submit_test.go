@@ -8,7 +8,6 @@ package client
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -20,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestSubmitTransaction(t *testing.T) {
@@ -39,20 +39,26 @@ func TestSubmitTransaction(t *testing.T) {
 		}
 	}
 
-	t.Run("Returns endorse error without wrapping to allow gRPC status to be interrogated", func(t *testing.T) {
+	t.Run("Returns endorse error", func(t *testing.T) {
 		expected := NewStatusError(t, codes.Aborted, "ENDORSE_ERROR")
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Return(nil, expected)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
 
-		_, err := contract.SubmitTransaction("transaction")
+		_, err = proposal.Endorse()
 
-		require.Equal(t, expected, err)
+		require.Errorf(t, err, expected.Error(), "error message")
+		require.Equal(t, status.Code(expected), status.Code(err), "status code")
+		var actual *EndorseError
+		require.ErrorAsf(t, err, &actual, "error type: %T", err)
+		require.Equal(t, proposal.TransactionID(), actual.TransactionID, "transaction ID")
 	})
 
-	t.Run("Returns submit error without wrapping to allow gRPC status to be interrogated", func(t *testing.T) {
+	t.Run("Returns submit error", func(t *testing.T) {
 		expected := NewStatusError(t, codes.Aborted, "SUBMIT_ERROR")
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
@@ -61,13 +67,21 @@ func TestSubmitTransaction(t *testing.T) {
 			Return(nil, expected)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+		transaction, err := proposal.Endorse()
+		require.NoError(t, err, "Endorse")
 
-		_, err := contract.SubmitTransaction("transaction")
+		_, err = transaction.Submit()
 
-		require.Equal(t, expected, err)
+		require.Errorf(t, err, expected.Error(), "error message")
+		require.Equal(t, status.Code(expected), status.Code(err), "status code")
+		var actual *SubmitError
+		require.ErrorAsf(t, err, &actual, "error type: %T", err)
+		require.Equal(t, proposal.TransactionID(), actual.TransactionID, "transaction ID")
 	})
 
-	t.Run("Returns commit error without wrapping to allow gRPC status to be interrogated", func(t *testing.T) {
+	t.Run("Returns commit status error", func(t *testing.T) {
 		expected := NewStatusError(t, codes.Aborted, "COMMIT_ERROR")
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
@@ -78,10 +92,20 @@ func TestSubmitTransaction(t *testing.T) {
 			Return(nil, expected)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+		transaction, err := proposal.Endorse()
+		require.NoError(t, err, "Endorse")
+		commit, err := transaction.Submit()
+		require.NoError(t, err, "Submit")
 
-		_, err := contract.SubmitTransaction("transaction")
+		_, err = commit.Status()
 
-		require.Equal(t, expected, err)
+		require.Errorf(t, err, expected.Error(), "error message")
+		require.Equal(t, status.Code(expected), status.Code(err), "status code")
+		var actual *CommitStatusError
+		require.ErrorAsf(t, err, &actual, "error type: %T", err)
+		require.Equal(t, proposal.TransactionID(), actual.TransactionID, "transaction ID")
 	})
 
 	t.Run("Returns result for committed transaction", func(t *testing.T) {
@@ -102,7 +126,7 @@ func TestSubmitTransaction(t *testing.T) {
 		require.Equal(t, expected, actual)
 	})
 
-	t.Run("Returns error with status code for commit failure", func(t *testing.T) {
+	t.Run("Returns commit error for invalid commit status", func(t *testing.T) {
 		expectedError := peer.TxValidationCode_name[int32(peer.TxValidationCode_MVCC_READ_CONFLICT)]
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
@@ -116,26 +140,11 @@ func TestSubmitTransaction(t *testing.T) {
 
 		_, err := contract.SubmitTransaction("transaction")
 
-		require.Error(t, err)
-		require.Contains(t, err.Error(), expectedError)
-	})
-
-	t.Run("Returns error with details on communication failure getting transaction commit status", func(t *testing.T) {
-		expectedError := "COMMIT_STATUS_ERROR"
-		mockClient := NewMockGatewayClient(gomock.NewController(t))
-		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
-		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(nil, nil)
-		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
-			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), errors.New(expectedError))
-
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
-
-		_, err := contract.SubmitTransaction("transaction")
-
-		require.Error(t, err)
-		require.Contains(t, err.Error(), expectedError)
+		require.Errorf(t, err, expectedError, "error message")
+		var actual *CommitError
+		require.ErrorAsf(t, err, &actual, "error type: %T", err)
+		require.NotEmpty(t, actual.TransactionID, "transaction ID")
+		require.Equal(t, peer.TxValidationCode_MVCC_READ_CONFLICT, actual.Code, "validation code")
 	})
 
 	t.Run("Includes channel name in proposal", func(t *testing.T) {
@@ -620,8 +629,6 @@ func TestSubmitTransaction(t *testing.T) {
 	})
 
 	t.Run("Uses default context for endorse", func(t *testing.T) {
-		expected := errors.New("EXPECTED_ERROR")
-
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, _ *gateway.EndorseRequest, _ ...grpc.CallOption) (*gateway.EndorseResponse, error) {
@@ -629,7 +636,7 @@ func TestSubmitTransaction(t *testing.T) {
 				case <-time.After(1 * time.Second):
 					return newEndorseResponse("TRANSACTION_RESULT"), nil
 				case <-ctx.Done(): // Zero timeout context should cancel immediately, selecting this case
-					return nil, expected
+					return nil, ctx.Err()
 				}
 			})
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
@@ -643,7 +650,7 @@ func TestSubmitTransaction(t *testing.T) {
 
 		_, err := contract.Submit("transaction")
 
-		require.ErrorIs(t, err, expected)
+		require.ErrorIs(t, err, context.DeadlineExceeded)
 	})
 
 	t.Run("Uses specified context for submit", func(t *testing.T) {
@@ -679,8 +686,6 @@ func TestSubmitTransaction(t *testing.T) {
 	})
 
 	t.Run("Uses default context for submit", func(t *testing.T) {
-		expected := errors.New("EXPECTED_ERROR")
-
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
@@ -690,7 +695,7 @@ func TestSubmitTransaction(t *testing.T) {
 				case <-time.After(1 * time.Second):
 					return nil, nil
 				case <-ctx.Done(): // Zero timeout context should cancel immediately, selecting this case
-					return nil, expected
+					return nil, ctx.Err()
 				}
 			})
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
@@ -701,7 +706,7 @@ func TestSubmitTransaction(t *testing.T) {
 
 		_, err := contract.Submit("transaction")
 
-		require.ErrorIs(t, err, expected)
+		require.ErrorIs(t, err, context.DeadlineExceeded)
 	})
 
 	t.Run("Uses specified context for commit status", func(t *testing.T) {
@@ -742,8 +747,6 @@ func TestSubmitTransaction(t *testing.T) {
 	})
 
 	t.Run("Uses default context for commit status", func(t *testing.T) {
-		expected := errors.New("EXPECTED_ERROR")
-
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
@@ -756,7 +759,7 @@ func TestSubmitTransaction(t *testing.T) {
 				case <-time.After(1 * time.Second):
 					return nil, nil
 				case <-ctx.Done(): // Zero timeout context should cancel immediately, selecting this case
-					return nil, expected
+					return nil, ctx.Err()
 				}
 			})
 
@@ -764,6 +767,6 @@ func TestSubmitTransaction(t *testing.T) {
 
 		_, err := contract.Submit("transaction")
 
-		require.ErrorIs(t, err, expected)
+		require.ErrorIs(t, err, context.DeadlineExceeded)
 	})
 }

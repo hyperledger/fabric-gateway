@@ -311,7 +311,7 @@ public class Sample {
             contract.submitTransaction("put");
         } catch (EndorseException | SubmitException | CommitStatusException e) {
             // Any error that originates from a peer or orderer node external to the gateway will have its details
-            // embedded within the grpc status error. The following code shows how to extract that.
+            // embedded within the gRPC status error. The following code shows how to extract that.
             for (ErrorDetail detail : e.getDetails()) {
                 System.out.println("Error from endpoint: " + detail.getAddress() +
                         ",  mspId: " + detail.getMspId() + ", message:" + detail.getMessage());

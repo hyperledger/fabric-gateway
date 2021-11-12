@@ -21,7 +21,9 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/sykesm/zap-logfmt v0.0.4 // indirect
 	go.uber.org/zap v1.16.0 // indirect
-	google.golang.org/grpc v1.40.0
+	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
+	golang.org/x/sys v0.0.0-20211110154304-99a53858aa08 // indirect
+	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
