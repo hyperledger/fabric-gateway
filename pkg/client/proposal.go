@@ -79,15 +79,8 @@ func (proposal *Proposal) endorse(
 	preparedTransaction := &gateway.PreparedTransaction{
 		TransactionId: proposal.proposedTransaction.GetTransactionId(),
 		Envelope:      response.GetPreparedTransaction(),
-		Result:        response.GetResult(),
 	}
-	result := &Transaction{
-		client:              proposal.client,
-		signingID:           proposal.signingID,
-		channelID:           proposal.channelID,
-		preparedTransaction: preparedTransaction,
-	}
-	return result, nil
+	return newTransaction(proposal.client, proposal.signingID, preparedTransaction)
 }
 
 // Evaluate the proposal and obtain a transaction result. This is effectively a query.

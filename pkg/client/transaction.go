@@ -15,17 +15,34 @@ import (
 	"google.golang.org/grpc"
 )
 
+func newTransaction(client *gatewayClient, signingID *signingIdentity, preparedTransaction *gateway.PreparedTransaction) (*Transaction, error) {
+	txInfo, err := parseTransactionEnvelope(preparedTransaction.GetEnvelope())
+	if err != nil {
+		return nil, err
+	}
+
+	transaction := &Transaction{
+		client:              client,
+		signingID:           signingID,
+		channelID:           txInfo.ChannelName,
+		preparedTransaction: preparedTransaction,
+		result:              txInfo.Result,
+	}
+	return transaction, nil
+}
+
 // Transaction represents an endorsed transaction that can be submitted to the orderer for commit to the ledger.
 type Transaction struct {
 	client              *gatewayClient
 	signingID           *signingIdentity
 	channelID           string
 	preparedTransaction *gateway.PreparedTransaction
+	result              []byte
 }
 
 // Result of the proposed transaction invocation.
 func (transaction *Transaction) Result() []byte {
-	return transaction.preparedTransaction.GetResult().GetPayload()
+	return transaction.result
 }
 
 // Bytes of the serialized transaction.

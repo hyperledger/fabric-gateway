@@ -5,12 +5,11 @@
  */
 
 import { CallOptions } from '@grpc/grpc-js';
-import { inspect } from 'util';
 import { GatewayClient } from './client';
+import { assertDefined } from './gateway';
 import { Envelope } from './protos/common/common_pb';
 import { EndorseRequest, EvaluateRequest, PreparedTransaction, ProposedTransaction } from './protos/gateway/gateway_pb';
 import { SignedProposal } from './protos/peer/proposal_pb';
-import { Response } from './protos/peer/proposal_response_pb';
 import { Signable } from './signable';
 import { SigningIdentity } from './signingidentity';
 import { Transaction, TransactionImpl } from './transaction';
@@ -64,12 +63,7 @@ export class ProposalImpl implements Proposal {
         this.#signingIdentity = options.signingIdentity;
         this.#channelName = options.channelName;
         this.#proposedTransaction = options.proposedTransaction;
-
-        const proposal = options.proposedTransaction.getProposal();
-        if (!proposal) {
-            throw new Error(`Proposal not defined: ${inspect(options.proposedTransaction)}`);
-        }
-        this.#proposal = proposal;
+        this.#proposal = assertDefined(options.proposedTransaction.getProposal(), 'Missing signed proposal');
     }
 
     getBytes(): Uint8Array {
@@ -97,17 +91,12 @@ export class ProposalImpl implements Proposal {
         await this.#sign();
         const endorseResponse = await this.#client.endorse(this.#newEndorseRequest(), options);
 
-        const txEnvelope = endorseResponse.getPreparedTransaction();
-        const response = endorseResponse.getResult();
-        if (!txEnvelope || !response) {
-            throw new Error(`Invalid endorsement response: ${inspect(endorseResponse)}`)
-        }
+        const txEnvelope = assertDefined(endorseResponse.getPreparedTransaction(), 'Missing transaction envelope');
 
         return new TransactionImpl({
             client: this.#client,
             signingIdentity: this.#signingIdentity,
-            channelName: this.#channelName,
-            preparedTransaction: this.#newPreparedTransaction(txEnvelope, response)
+            preparedTransaction: this.#newPreparedTransaction(txEnvelope)
         });
     }
 
@@ -147,10 +136,9 @@ export class ProposalImpl implements Proposal {
         return result;
     }
 
-    #newPreparedTransaction(envelope: Envelope, response: Response): PreparedTransaction {
+    #newPreparedTransaction(envelope: Envelope): PreparedTransaction {
         const result = new PreparedTransaction();
         result.setEnvelope(envelope);
-        result.setResult(response);
         result.setTransactionId(this.#proposedTransaction.getTransactionId());
         return result;
     }

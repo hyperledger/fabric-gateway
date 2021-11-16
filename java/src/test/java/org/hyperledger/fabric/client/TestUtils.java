@@ -31,6 +31,8 @@ import org.hyperledger.fabric.protos.gateway.EvaluateResponse;
 import org.hyperledger.fabric.protos.gateway.GatewayGrpc;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
 import org.hyperledger.fabric.protos.gateway.SubmitResponse;
+import org.hyperledger.fabric.protos.peer.ProposalPackage;
+import org.hyperledger.fabric.protos.peer.ProposalResponsePackage;
 import org.hyperledger.fabric.protos.peer.ProposalResponsePackage.Response;
 import org.hyperledger.fabric.protos.peer.TransactionPackage;
 
@@ -81,7 +83,6 @@ public final class TestUtils {
         PreparedTransaction preparedTransaction = newPreparedTransaction(value, channelName);
         return EndorseResponse.newBuilder()
                 .setPreparedTransaction(preparedTransaction.getEnvelope())
-                .setResult(preparedTransaction.getResult())
                 .build();
     }
     
@@ -102,23 +103,45 @@ public final class TestUtils {
                 .build();
     }
 
-    public PreparedTransaction newPreparedTransaction(String responsePayload, String channelName) {
+    public PreparedTransaction newPreparedTransaction(String result, String channelName) {
         Common.ChannelHeader channelHeader = Common.ChannelHeader.newBuilder()
                 .setChannelId(channelName)
                 .build();
         Common.Header header = Common.Header.newBuilder()
                 .setChannelHeader(channelHeader.toByteString())
                 .build();
+
+        ProposalPackage.ChaincodeAction chaincodeAction = ProposalPackage.ChaincodeAction.newBuilder()
+                .setResponse(newResponse(result))
+                .build();
+        ProposalResponsePackage.ProposalResponsePayload responsePayload = ProposalResponsePackage.ProposalResponsePayload.newBuilder()
+                .setExtension(chaincodeAction.toByteString())
+                .build();
+        TransactionPackage.ChaincodeEndorsedAction endorsedAction = TransactionPackage.ChaincodeEndorsedAction.newBuilder()
+                .setProposalResponsePayload(responsePayload.toByteString())
+                .build();
+        TransactionPackage.ChaincodeActionPayload actionPayload = TransactionPackage.ChaincodeActionPayload.newBuilder()
+                .setAction(endorsedAction)
+                .build();
+        TransactionPackage.TransactionAction transactionAction = TransactionPackage.TransactionAction.newBuilder()
+                .setPayload(actionPayload.toByteString())
+                .build();
+        TransactionPackage.Transaction transaction = TransactionPackage.Transaction.newBuilder()
+                .addActions(transactionAction)
+                .build();
+
         Common.Payload payload = Common.Payload.newBuilder()
                 .setHeader(header)
+                .setData(transaction.toByteString())
                 .build();
+
         Common.Envelope envelope = Common.Envelope.newBuilder()
                 .setPayload(payload.toByteString())
                 .build();
+
         return PreparedTransaction.newBuilder()
                 .setTransactionId(newFakeTransactionId())
                 .setEnvelope(envelope)
-                .setResult(newResponse(responsePayload))
                 .build();
     }
 

@@ -5,13 +5,14 @@
  */
 
 import { CallOptions } from '@grpc/grpc-js';
-import { inspect } from 'util';
 import { GatewayClient } from './client';
+import { assertDefined } from './gateway';
 import { Envelope } from './protos/common/common_pb';
 import { CommitStatusRequest, PreparedTransaction, SignedCommitStatusRequest, SubmitRequest } from './protos/gateway/gateway_pb';
 import { Signable } from './signable';
 import { SigningIdentity } from './signingidentity';
 import { SubmittedTransaction, SubmittedTransactionImpl } from './submittedtransaction';
+import { parseTransactionEnvelope } from './transactionparser';
 
 /**
  * Represents an endorsed transaction that can be submitted to the orderer for commit to the ledger.
@@ -40,7 +41,6 @@ export interface Transaction extends Signable {
 export interface TransactionImplOptions {
     client: GatewayClient;
     signingIdentity: SigningIdentity;
-    channelName: string;
     preparedTransaction: PreparedTransaction;
 }
 
@@ -50,18 +50,19 @@ export class TransactionImpl implements Transaction {
     readonly #channelName: string;
     readonly #preparedTransaction: PreparedTransaction;
     readonly #envelope: Envelope;
+    readonly #result: Uint8Array;
 
     constructor(options: Readonly<TransactionImplOptions>) {
         this.#client = options.client;
         this.#signingIdentity = options.signingIdentity;
-        this.#channelName = options.channelName;
         this.#preparedTransaction = options.preparedTransaction;
 
-        const envelope = options.preparedTransaction.getEnvelope();
-        if (!envelope) {
-            throw new Error(`Envelope not defined: ${inspect(options.preparedTransaction)}`);
-        }
+        const envelope = assertDefined(options.preparedTransaction.getEnvelope(), 'Missing envelope');
         this.#envelope = envelope;
+
+        const { channelName, result } = parseTransactionEnvelope(envelope);
+        this.#channelName = channelName;
+        this.#result = result;
     }
 
     getBytes(): Uint8Array {
@@ -74,8 +75,7 @@ export class TransactionImpl implements Transaction {
     }
 
     getResult(): Uint8Array {
-        const result = this.#preparedTransaction.getResult();
-        return result?.getPayload_asU8() || new Uint8Array(0);
+        return this.#result;
     }
 
     getTransactionId(): string {

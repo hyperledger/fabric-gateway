@@ -6,6 +6,10 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.function.Function;
+
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.Channel;
 import org.hyperledger.fabric.client.identity.Identity;
@@ -17,10 +21,6 @@ import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.peer.ProposalPackage;
-
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.function.Function;
 
 final class GatewayImpl implements Gateway {
     public static final class Builder implements Gateway.Builder {
@@ -141,10 +141,7 @@ final class GatewayImpl implements Gateway {
     public Transaction newSignedTransaction(final byte[] bytes, final byte[] signature) {
         try {
             PreparedTransaction preparedTransaction = PreparedTransaction.parseFrom(bytes);
-            Common.Payload payload = Common.Payload.parseFrom(preparedTransaction.getEnvelope().getPayload());
-            Common.ChannelHeader channelHeader = Common.ChannelHeader.parseFrom(payload.getHeader().getChannelHeader());
-
-            TransactionImpl transaction = new TransactionImpl(client, signingIdentity, channelHeader.getChannelId(), preparedTransaction);
+            TransactionImpl transaction = new TransactionImpl(client, signingIdentity, preparedTransaction);
             transaction.setSignature(signature);
             return transaction;
         } catch (InvalidProtocolBufferException e) {

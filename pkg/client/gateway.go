@@ -204,22 +204,11 @@ func (gw *Gateway) NewSignedTransaction(bytes []byte, signature []byte) (*Transa
 		return nil, fmt.Errorf("failed to deserialize prepared transaction: %w", err)
 	}
 
-	payload := &common.Payload{}
-	if err := proto.Unmarshal(preparedTransaction.GetEnvelope().GetPayload(), payload); err != nil {
-		return nil, fmt.Errorf("failed to deserialize payload: %w", err)
+	transaction, err := newTransaction(gw.client, gw.signingID, preparedTransaction)
+	if err != nil {
+		return nil, err
 	}
 
-	channelHeader := &common.ChannelHeader{}
-	if err := proto.Unmarshal(payload.GetHeader().GetChannelHeader(), channelHeader); err != nil {
-		return nil, fmt.Errorf("failed to deserialize channel header: %w", err)
-	}
-
-	transaction := &Transaction{
-		client:              gw.client,
-		signingID:           gw.signingID,
-		channelID:           channelHeader.GetChannelId(),
-		preparedTransaction: preparedTransaction,
-	}
 	transaction.setSignature(signature)
 
 	return transaction, nil

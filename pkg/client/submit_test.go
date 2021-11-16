@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/gateway"
@@ -22,16 +23,44 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func TestSubmitTransaction(t *testing.T) {
-	newEndorseResponse := func(value string) *gateway.EndorseResponse {
-		return &gateway.EndorseResponse{
-			PreparedTransaction: &common.Envelope{},
-			Result: &peer.Response{
-				Payload: []byte(value),
-			},
-		}
-	}
+func AssertMarshal(t *testing.T, message proto.Message, msgAndArgs ...interface{}) []byte {
+	bytes, err := proto.Marshal(message)
+	require.NoError(t, err, msgAndArgs...)
+	return bytes
+}
 
+func AssertNewEndorseResponse(t *testing.T, result string, channelName string) *gateway.EndorseResponse {
+	return &gateway.EndorseResponse{
+		PreparedTransaction: &common.Envelope{
+			Payload: AssertMarshal(t, &common.Payload{
+				Header: &common.Header{
+					ChannelHeader: AssertMarshal(t, &common.ChannelHeader{
+						ChannelId: channelName,
+					}),
+				},
+				Data: AssertMarshal(t, &peer.Transaction{
+					Actions: []*peer.TransactionAction{
+						{
+							Payload: AssertMarshal(t, &peer.ChaincodeActionPayload{
+								Action: &peer.ChaincodeEndorsedAction{
+									ProposalResponsePayload: AssertMarshal(t, &peer.ProposalResponsePayload{
+										Extension: AssertMarshal(t, &peer.ChaincodeAction{
+											Response: &peer.Response{
+												Payload: []byte(result),
+											},
+										}),
+									}),
+								},
+							}),
+						},
+					},
+				}),
+			}),
+		},
+	}
+}
+
+func TestSubmitTransaction(t *testing.T) {
 	newCommitStatusResponse := func(status peer.TxValidationCode, blockNumber uint64) *gateway.CommitStatusResponse {
 		return &gateway.CommitStatusResponse{
 			Result:      status,
@@ -62,7 +91,7 @@ func TestSubmitTransaction(t *testing.T) {
 		expected := NewStatusError(t, codes.Aborted, "SUBMIT_ERROR")
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, expected)
 
@@ -85,7 +114,7 @@ func TestSubmitTransaction(t *testing.T) {
 		expected := NewStatusError(t, codes.Aborted, "COMMIT_ERROR")
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
@@ -112,7 +141,7 @@ func TestSubmitTransaction(t *testing.T) {
 		expected := []byte("TRANSACTION_RESULT")
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
@@ -130,7 +159,7 @@ func TestSubmitTransaction(t *testing.T) {
 		expectedError := peer.TxValidationCode_name[int32(peer.TxValidationCode_MVCC_READ_CONFLICT)]
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
@@ -154,7 +183,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
 				actual = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).ChannelId
 			}).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
@@ -177,7 +206,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
 				actual = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.ChaincodeId.Name
 			}).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
@@ -200,7 +229,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
 				args = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
 			}).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
@@ -224,7 +253,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
 				args = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
 			}).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
@@ -248,7 +277,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
 				args = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
 			}).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
@@ -272,7 +301,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
 				actual = in.ChannelId
 			}).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
@@ -296,7 +325,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
 				actual = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).TxId
 			}).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
@@ -317,7 +346,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
 				actual = in.TransactionId
 			}).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
@@ -334,7 +363,7 @@ func TestSubmitTransaction(t *testing.T) {
 		var actual string
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
@@ -363,7 +392,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
 				expected = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).TxId
 			}).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
@@ -394,7 +423,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
 				actual = in.ProposedTransaction.Signature
 			}).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
@@ -417,7 +446,7 @@ func TestSubmitTransaction(t *testing.T) {
 		}
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.SubmitRequest, _ ...grpc.CallOption) {
 				actual = in.PreparedTransaction.Signature
@@ -447,7 +476,7 @@ func TestSubmitTransaction(t *testing.T) {
 				transient := test.AssertUnmarshallProposalPayload(t, in.ProposedTransaction).TransientMap
 				actualPrice = transient["price"]
 			}).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
@@ -475,7 +504,7 @@ func TestSubmitTransaction(t *testing.T) {
 		}
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
@@ -505,7 +534,7 @@ func TestSubmitTransaction(t *testing.T) {
 		}
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
@@ -523,7 +552,7 @@ func TestSubmitTransaction(t *testing.T) {
 	t.Run("Commit returns transaction status", func(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
@@ -543,7 +572,7 @@ func TestSubmitTransaction(t *testing.T) {
 	t.Run("Commit returns successful for successful transaction", func(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
@@ -563,7 +592,7 @@ func TestSubmitTransaction(t *testing.T) {
 	t.Run("Commit returns unsuccessful for failed transaction", func(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
@@ -584,7 +613,7 @@ func TestSubmitTransaction(t *testing.T) {
 		expectedBlockNumber := uint64(101)
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
@@ -612,7 +641,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Do(func(ctx context.Context, _ *gateway.EndorseRequest, _ ...grpc.CallOption) {
 				actual = ctx
 			}).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
 
 		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
@@ -634,7 +663,7 @@ func TestSubmitTransaction(t *testing.T) {
 			DoAndReturn(func(ctx context.Context, _ *gateway.EndorseRequest, _ ...grpc.CallOption) (*gateway.EndorseResponse, error) {
 				select {
 				case <-time.After(1 * time.Second):
-					return newEndorseResponse("TRANSACTION_RESULT"), nil
+					return AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil
 				case <-ctx.Done(): // Zero timeout context should cancel immediately, selecting this case
 					return nil, ctx.Err()
 				}
@@ -661,7 +690,7 @@ func TestSubmitTransaction(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, _ *gateway.SubmitRequest, _ ...grpc.CallOption) {
 				actual = ctx
@@ -688,7 +717,7 @@ func TestSubmitTransaction(t *testing.T) {
 	t.Run("Uses default context for submit", func(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, _ *gateway.SubmitRequest, _ ...grpc.CallOption) (*gateway.SubmitResponse, error) {
 				select {
@@ -717,7 +746,7 @@ func TestSubmitTransaction(t *testing.T) {
 
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
@@ -749,7 +778,7 @@ func TestSubmitTransaction(t *testing.T) {
 	t.Run("Uses default context for commit status", func(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(newEndorseResponse("TRANSACTION_RESULT"), nil)
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, nil)
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).

@@ -18,20 +18,21 @@ final class TransactionImpl implements Transaction {
     private final SigningIdentity signingIdentity;
     private final String channelName;
     private PreparedTransaction preparedTransaction;
+    private final ByteString result;
 
-    TransactionImpl(final GatewayClient client, final SigningIdentity signingIdentity,
-            final String channelName, final PreparedTransaction preparedTransaction) {
+    TransactionImpl(final GatewayClient client, final SigningIdentity signingIdentity, final PreparedTransaction preparedTransaction) {
         this.client = client;
         this.signingIdentity = signingIdentity;
-        this.channelName = channelName;
         this.preparedTransaction = preparedTransaction;
+
+        TransactionEnvelopeParser parser = new TransactionEnvelopeParser(preparedTransaction.getEnvelope());
+        this.channelName = parser.getChannelName();
+        this.result = parser.getResult();
     }
 
     @Override
     public byte[] getResult() {
-        return preparedTransaction.getResult()
-                .getPayload()
-                .toByteArray();
+        return result.toByteArray();
     }
 
     @Override
