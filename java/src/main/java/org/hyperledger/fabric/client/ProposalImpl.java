@@ -73,7 +73,6 @@ final class ProposalImpl implements Proposal {
         PreparedTransaction preparedTransaction = PreparedTransaction.newBuilder()
                 .setTransactionId(proposedTransaction.getTransactionId())
                 .setEnvelope(endorseResponse.getPreparedTransaction())
-                .setResult(endorseResponse.getResult())
                 .build();
         return new TransactionImpl(client, signingIdentity, preparedTransaction);
     }
