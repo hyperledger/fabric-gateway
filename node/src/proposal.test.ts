@@ -5,14 +5,14 @@
  */
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
-import { MockGatewayGrpcClient } from './client.test';
+import { MockGatewayGrpcClient, newEndorseResponse } from './client.test';
 import { Contract } from './contract';
 import { EndorseError } from './endorseerror';
 import { Gateway, internalConnect } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { ChannelHeader, Envelope, Header, SignatureHeader } from './protos/common/common_pb';
-import { CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse } from './protos/gateway/gateway_pb';
+import { ChannelHeader, Header, SignatureHeader } from './protos/common/common_pb';
+import { CommitStatusResponse, EndorseRequest, EvaluateRequest, EvaluateResponse } from './protos/gateway/gateway_pb';
 import { SerializedIdentity } from './protos/msp/identities_pb';
 import { ChaincodeInvocationSpec, ChaincodeSpec } from './protos/peer/chaincode_pb';
 import { ChaincodeProposalPayload, Proposal as ProposalProto } from './protos/peer/proposal_pb';
@@ -341,21 +341,13 @@ describe('Proposal', () => {
 
     describe('endorse', () => {
         beforeEach(() => {
-            const txResult = new Response()
-            txResult.setPayload(Buffer.from('TX_RESULT'));
-    
-            const preparedTx = new Envelope();
-            preparedTx.setPayload(Buffer.from('PAYLOAD'));
-    
-            const endorseResult = new EndorseResponse();
-            endorseResult.setPreparedTransaction(preparedTx);
-            endorseResult.setResult(txResult)
-
+            const endorseResult = newEndorseResponse({
+                result: Buffer.from('TX_RESULT'),
+            });
             client.mockEndorseResponse(endorseResult);
 
             const commitResult = new CommitStatusResponse();
             commitResult.setResult(TxValidationCode.VALID);
-
             client.mockCommitStatusResponse(commitResult);
         });
 

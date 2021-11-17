@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/stretchr/testify/require"
@@ -32,15 +31,6 @@ func TestOfflineSign(t *testing.T) {
 		contract := gateway.GetNetwork("network").GetContract("contract")
 
 		return gateway, contract
-	}
-
-	newEndorseResponse := func(value string) *gateway.EndorseResponse {
-		return &gateway.EndorseResponse{
-			PreparedTransaction: &common.Envelope{},
-			Result: &peer.Response{
-				Payload: []byte(value),
-			},
-		}
 	}
 
 	newCommitStatusResponse := func(value peer.TxValidationCode) *gateway.CommitStatusResponse {
@@ -127,7 +117,7 @@ func TestOfflineSign(t *testing.T) {
 		t.Run("Returns error with no signer and no explicit signing", func(t *testing.T) {
 			mockClient := NewMockGatewayClient(gomock.NewController(t))
 			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-				Return(newEndorseResponse("result"), nil).
+				Return(AssertNewEndorseResponse(t, "result", "network"), nil).
 				AnyTimes()
 
 			_, contract := newContractWithNoSign(t, WithClient(mockClient))
@@ -147,7 +137,7 @@ func TestOfflineSign(t *testing.T) {
 				Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
 					actual = in.ProposedTransaction.Signature
 				}).
-				Return(newEndorseResponse("result"), nil).
+				Return(AssertNewEndorseResponse(t, "result", "network"), nil).
 				Times(1)
 
 			gateway, contract := newContractWithNoSign(t, WithClient(mockClient))
@@ -176,7 +166,7 @@ func TestOfflineSign(t *testing.T) {
 				Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
 					actual = in.EndorsingOrganizations
 				}).
-				Return(newEndorseResponse("result"), nil).
+				Return(AssertNewEndorseResponse(t, "result", "network"), nil).
 				Times(1)
 
 			gateway, contract := newContractWithNoSign(t, WithClient(mockClient))
@@ -201,7 +191,7 @@ func TestOfflineSign(t *testing.T) {
 		t.Run("Returns error with no signer and no explicit signing", func(t *testing.T) {
 			mockClient := NewMockGatewayClient(gomock.NewController(t))
 			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-				Return(newEndorseResponse("result"), nil).
+				Return(AssertNewEndorseResponse(t, "result", "network"), nil).
 				AnyTimes()
 			mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 				Return(nil, nil).
@@ -230,7 +220,7 @@ func TestOfflineSign(t *testing.T) {
 			var actual []byte
 			mockClient := NewMockGatewayClient(gomock.NewController(t))
 			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-				Return(newEndorseResponse("result"), nil)
+				Return(AssertNewEndorseResponse(t, "result", "network"), nil)
 			mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 				Do(func(_ context.Context, in *gateway.SubmitRequest, _ ...grpc.CallOption) {
 					actual = in.PreparedTransaction.Signature
@@ -269,7 +259,7 @@ func TestOfflineSign(t *testing.T) {
 		t.Run("Returns error with no signer and no explicit signing", func(t *testing.T) {
 			mockClient := NewMockGatewayClient(gomock.NewController(t))
 			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-				Return(newEndorseResponse("result"), nil).
+				Return(AssertNewEndorseResponse(t, "result", "network"), nil).
 				AnyTimes()
 			mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 				Return(nil, nil).
@@ -310,7 +300,7 @@ func TestOfflineSign(t *testing.T) {
 			var actual []byte
 			mockClient := NewMockGatewayClient(gomock.NewController(t))
 			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-				Return(newEndorseResponse("result"), nil)
+				Return(AssertNewEndorseResponse(t, "result", "network"), nil)
 			mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 				Return(nil, nil).
 				AnyTimes()
@@ -399,7 +389,7 @@ func TestOfflineSign(t *testing.T) {
 		t.Run("Transaction keeps same digest", func(t *testing.T) {
 			mockClient := NewMockGatewayClient(gomock.NewController(t))
 			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-				Return(newEndorseResponse("result"), nil).
+				Return(AssertNewEndorseResponse(t, "result", "network"), nil).
 				Times(1)
 
 			gateway, contract := newContractWithNoSign(t, WithClient(mockClient))
@@ -431,7 +421,7 @@ func TestOfflineSign(t *testing.T) {
 		t.Run("Commit keeps same digest", func(t *testing.T) {
 			mockClient := NewMockGatewayClient(gomock.NewController(t))
 			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-				Return(newEndorseResponse("result"), nil).
+				Return(AssertNewEndorseResponse(t, "result", "network"), nil).
 				Times(1)
 			mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 				Return(nil, nil).

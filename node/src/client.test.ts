@@ -10,7 +10,11 @@ import * as grpc from '@grpc/grpc-js';
 import { UnaryCallback } from '@grpc/grpc-js/build/src/client';
 import { chaincodeEventsMethod, commitStatusMethod, endorseMethod, evaluateMethod, GatewayClient, GatewayGrpcClient, newGatewayClient, ServerStreamResponse, submitMethod } from './client';
 import { GatewayError } from './gatewayerror';
+import { ChannelHeader, Envelope, Header, Payload } from './protos/common/common_pb';
 import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
+import { ChaincodeAction } from './protos/peer/proposal_pb';
+import { ProposalResponsePayload, Response } from './protos/peer/proposal_response_pb';
+import { ChaincodeActionPayload, ChaincodeEndorsedAction, Transaction, TransactionAction } from './protos/peer/transaction_pb';
 
 type MockUnaryRequest<RequestType, ResponseType> = jest.Mock<grpc.ClientUnaryCall, [RequestType, grpc.CallOptions, UnaryCallback<ResponseType>]>;
 type MockServerStreamRequest<RequestType, ResponseType> = jest.Mock<ServerStreamResponse<ResponseType>, [RequestType, grpc.CallOptions]>;
@@ -167,6 +171,51 @@ function fakeUnaryCall<ResponseType>(err: grpc.ServiceError | undefined, respons
         setImmediate(() => callback(err || null, response))
         return {} as grpc.ClientUnaryCall;
     };
+}
+
+export function newEndorseResponse(options: {
+    result: Uint8Array,
+    channelName?: string,
+}): EndorseResponse {
+    const chaincodeResponse = new Response();
+    chaincodeResponse.setPayload(options.result);
+
+    const chaincodeAction = new ChaincodeAction();
+    chaincodeAction.setResponse(chaincodeResponse);
+
+    const responsePayload = new ProposalResponsePayload();
+    responsePayload.setExtension$(chaincodeAction.serializeBinary());
+
+    const endorsedAction = new ChaincodeEndorsedAction();
+    endorsedAction.setProposalResponsePayload(responsePayload.serializeBinary());
+
+    const actionPayload = new ChaincodeActionPayload();
+    actionPayload.setAction(endorsedAction);
+
+    const transactionAction = new TransactionAction();
+    transactionAction.setPayload(actionPayload.serializeBinary());
+
+    const transaction = new Transaction();
+    transaction.setActionsList([transactionAction]);
+
+    const payload = new Payload();
+    payload.setData(transaction.serializeBinary());
+
+    const channelHeader = new ChannelHeader();
+    channelHeader.setChannelId(options.channelName ?? 'network');
+
+    const header = new Header();
+    header.setChannelHeader(channelHeader.serializeBinary());
+
+    payload.setHeader(header);
+
+    const envelope = new Envelope();
+    envelope.setPayload(payload.serializeBinary());
+
+    const endorseResponse = new EndorseResponse();
+    endorseResponse.setPreparedTransaction(envelope);
+
+    return endorseResponse;
 }
 
 describe('client', () => {

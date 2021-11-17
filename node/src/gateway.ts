@@ -14,7 +14,7 @@ import { Identity } from './identity/identity';
 import { Signer } from './identity/signer';
 import { Network, NetworkImpl } from './network';
 import { ProposalImpl } from './proposal';
-import { ChannelHeader, Header, Payload } from './protos/common/common_pb';
+import { ChannelHeader, Header } from './protos/common/common_pb';
 import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, CommitStatusRequest, PreparedTransaction, ProposedTransaction, SignedCommitStatusRequest } from './protos/gateway/gateway_pb';
 import { Proposal as ProposalProto } from './protos/peer/proposal_pb';
 import { SigningIdentity } from './signingidentity';
@@ -197,7 +197,7 @@ class GatewayImpl {
 
     newSignedProposal(bytes: Uint8Array, signature: Uint8Array): Proposal {
         const proposedTransaction = ProposedTransaction.deserializeBinary(bytes);
-        const signedProposal = assertDefined(proposedTransaction.getProposal(), 'Missing proposal');
+        const signedProposal = assertDefined(proposedTransaction.getProposal(), 'Missing signed proposal');
         const proposal = ProposalProto.deserializeBinary(signedProposal.getProposalBytes_asU8());
         const header = Header.deserializeBinary(proposal.getHeader_asU8());
         const channelHeader = ChannelHeader.deserializeBinary(header.getChannelHeader_asU8());
@@ -215,15 +215,10 @@ class GatewayImpl {
 
     newSignedTransaction(bytes: Uint8Array, signature: Uint8Array): Transaction {
         const preparedTransaction = PreparedTransaction.deserializeBinary(bytes);
-        const envelope = assertDefined(preparedTransaction.getEnvelope(), 'Missing transaction envelope');
-        const payload = Payload.deserializeBinary(envelope.getPayload_asU8());
-        const header = assertDefined(payload.getHeader(), 'Missing header');
-        const channelHeader = ChannelHeader.deserializeBinary(header.getChannelHeader_asU8());
 
         const result = new TransactionImpl({
             client: this.#client,
             signingIdentity: this.#signingIdentity,
-            channelName: channelHeader.getChannelId(),
             preparedTransaction,
         });
         result.setSignature(signature);
@@ -264,7 +259,7 @@ class GatewayImpl {
     }
 }
 
-function assertDefined<T>(value: T | null | undefined, message: string): T {
+export function assertDefined<T>(value: T | null | undefined, message: string): T {
     if (value == undefined) {
         throw new Error(message)
     }

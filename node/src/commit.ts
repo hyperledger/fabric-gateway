@@ -5,7 +5,6 @@
  */
 
 import { CallOptions } from '@grpc/grpc-js';
-import { inspect } from 'util';
 import { GatewayClient } from './client';
 import { CommitStatusResponse, SignedCommitStatusRequest } from './protos/gateway/gateway_pb';
 import { Signable } from './signable';
@@ -57,10 +56,6 @@ export class CommitImpl implements Commit {
 
     getDigest(): Uint8Array {
         const request = this.#signedRequest.getRequest_asU8();
-        if (!request) {
-            throw new Error(`Request not defined: ${inspect(this.#signedRequest)}`);
-        }
-
         return this.#signingIdentity.hash(request);
     }
 

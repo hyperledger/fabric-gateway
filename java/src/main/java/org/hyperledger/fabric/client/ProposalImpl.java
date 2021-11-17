@@ -75,7 +75,7 @@ final class ProposalImpl implements Proposal {
                 .setEnvelope(endorseResponse.getPreparedTransaction())
                 .setResult(endorseResponse.getResult())
                 .build();
-        return new TransactionImpl(client, signingIdentity, channelName, preparedTransaction);
+        return new TransactionImpl(client, signingIdentity, preparedTransaction);
     }
 
     void setSignature(final byte[] signature) {

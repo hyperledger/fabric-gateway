@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MockGatewayGrpcClient } from './client.test';
+import { MockGatewayGrpcClient, newEndorseResponse } from './client.test';
 import { Contract } from './contract';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { ChannelHeader, Envelope, Header, Payload } from './protos/common/common_pb';
-import { CommitStatusResponse, EndorseResponse, EvaluateResponse } from './protos/gateway/gateway_pb';
+import { CommitStatusResponse, EvaluateResponse } from './protos/gateway/gateway_pb';
 import { Response } from './protos/peer/proposal_response_pb';
 import { TxValidationCode } from './protos/peer/transaction_pb';
 import { undefinedSignerMessage } from './signingidentity';
@@ -35,23 +34,11 @@ describe('Offline sign', () => {
 
         client.mockEvaluateResponse(evaluateResult);
 
-        const channelHeader = new ChannelHeader();
-        channelHeader.setChannelId('CHANNEL');
-
-        const header = new Header();
-        header.setChannelHeader(channelHeader.serializeBinary());
-
-        const payload = new Payload();
-        payload.setHeader(header);
-
-        const txEnvelope = new Envelope();
-        txEnvelope.setPayload(payload.serializeBinary());
-
-        const endorseResult = new EndorseResponse();
-        endorseResult.setPreparedTransaction(txEnvelope);
-        endorseResult.setResult(txResult)
-
-        client.mockEndorseResponse(endorseResult);
+        const endorseResponse = newEndorseResponse({
+            result: Buffer.from(expectedResult),
+            channelName: 'CHANNEL',
+        });
+        client.mockEndorseResponse(endorseResponse);
 
         const commitResult = new CommitStatusResponse();
         commitResult.setResult(TxValidationCode.VALID);
