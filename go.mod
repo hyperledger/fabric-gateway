@@ -13,7 +13,7 @@ require (
 	github.com/hashicorp/go-version v1.0.0 // indirect
 	github.com/hyperledger/fabric v2.1.1+incompatible
 	github.com/hyperledger/fabric-amcl v0.0.0-20200424173818-327c9e2cf77a // indirect
-	github.com/hyperledger/fabric-protos-go v0.0.0-20211006172752-14f4318ce71c
+	github.com/hyperledger/fabric-protos-go v0.0.0-20211118165945-23d738fc3553
 	github.com/miekg/pkcs11 v1.0.3
 	github.com/mitchellh/mapstructure v1.4.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
