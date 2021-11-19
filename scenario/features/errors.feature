@@ -16,7 +16,7 @@ Feature: Errors
     Scenario: Evaluate fails with incorrect arguments
         When I prepare to evaluate an exists transaction
         Then the transaction invocation should fail
-        And the error message should contain "evaluate call to endorser returned error: error in simulation: transaction returned with failure: Error: Expected 1 parameters, but 0 have been supplied"
+        And the error message should contain "evaluate call to endorser returned error: chaincode response 500, Expected 1 parameters, but 0 have been supplied"
 
     Scenario: Submit fails with incorrect chaincode name
         When I use the nonexistent contract
@@ -29,15 +29,19 @@ Feature: Errors
         Then the transaction invocation should fail
         And the error message should contain "failed to endorse transaction, see attached details for more info"
         And the error details should be
-            | peer0.org1.example.com:7051 | Org1MSP | error in simulation: transaction returned with failure: Error: You've asked to invoke a function that does not exist: nonexistent |
-            | peer1.org1.example.com:9051 | Org1MSP | error in simulation: transaction returned with failure: Error: You've asked to invoke a function that does not exist: nonexistent |
+            | peer0.org1.example.com:7051 | Org1MSP | chaincode response 500, You've asked to invoke a function that does not exist: nonexistent |
+            | peer1.org1.example.com:9051 | Org1MSP | chaincode response 500, You've asked to invoke a function that does not exist: nonexistent |
 
     Scenario: Evaluate crash chaincode
         When I prepare to evaluate a crash transaction
         Then the transaction invocation should fail
-        And the error message should contain "error sending: chaincode stream terminated"
+        And the error message should contain "failed to evaluate transaction, see attached details for more info"
         And the error details should be
-            | peer0.org1.example.com:7051 | Org1MSP | error sending: chaincode stream terminated |
+            | peer0.org1.example.com:7051 | Org1MSP | chaincode stream terminated |
+            | peer1.org1.example.com:9051 | Org1MSP | chaincode stream terminated |
+            | peer0.org2.example.com:8051 | Org2MSP | chaincode stream terminated |
+            | peer1.org2.example.com:10051 | Org2MSP | chaincode stream terminated |
+            | peer0.org3.example.com:11051 | Org3MSP | chaincode stream terminated |
 
     Scenario: Evaluate with signer from unauthorized MSP
         When I prepare to evaluate an exists transaction
@@ -45,6 +49,14 @@ Feature: Errors
         And I do off-line signing as user User1 in MSP Org3MSP
         Then the transaction invocation should fail
         And the error message should contain "evaluate call to endorser returned error: error validating proposal: access denied: channel [mychannel] creator org [Org1MSP]"
+        And the error details should be
+            | peer0.org1.example.com:7051 | Org1MSP | error validating proposal: access denied: channel [mychannel] creator org [Org1MSP] |
+
+    Scenario: Org3 fails to evaluate
+        When I prepare to evaluate an orgsFail transaction
+        And I set the transaction arguments to ["[\"Org1MSP\"]"]
+        Then the transaction invocation should fail
+        And the error message should contain "evaluate call to endorser returned error: chaincode response 500, Org1MSP refuses to endorse this"
 
     Scenario: Org3 fails to endorse
         When I prepare to submit an orgsFail transaction
