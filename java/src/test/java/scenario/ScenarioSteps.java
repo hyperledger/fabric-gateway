@@ -50,6 +50,7 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.grpc.ManagedChannel;
+import io.grpc.Status;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
@@ -451,6 +452,19 @@ public class ScenarioSteps {
         }
 
         assertThat(expected).isEmpty();
+    }
+
+    @Then("the error status should be {word}")
+    public void assertErrorStatus(String expected) {
+        Status.Code expectedCode = Status.Code.valueOf(expected);
+
+        Throwable t = transactionInvocation.getError();
+        assertThat(t).isInstanceOf(GatewayException.class);
+
+        GatewayException e = (GatewayException) t;
+        Status.Code actual = e.getStatus().getCode();
+
+        assertThat(actual).isEqualTo(expectedCode);
     }
 
     @Then("I should receive a chaincode event named {string} with payload {string}")
