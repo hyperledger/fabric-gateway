@@ -1,50 +1,74 @@
 # Fabric Gateway Samples
 
-The samples in this repo show how to create client applications that invoke transactions using the new embedded Gateway
-in Fabric.
+The samples in this repository show how to create client applications that invoke transactions using the new embedded
+Gateway in Fabric.
+
+# Pre-reqs
+
+Install the following pre-reqs to run the sample client applications:
+
+- Go v1.16 (required for sample Fabric network and Go sample)
+- Node 14.x or 16.x (required for Node sample)
+- Java 11 (required for Java sample)
+- Docker (required for sample Fabric network)
+- Make (required to run Makefile targets, used to simplify set up and run of the samples)
+
+In addition, you will need the `godog` tool to use the sample Fabric network, which can be installed with:
+
+```sh
+go install github.com/cucumber/godog/cmd/godog@v0.12.1
+```
+
+Make sure you can run `godog --version` after installing. If the command is not found, add the Go bin directory to your
+path using: 
+
+```sh
+export PATH="${PATH}:$(go env GOPATH)/bin"
+```
 
 # Setup
 
-The samples will only run against the latest version of Fabric - v2.4.0-beta.  The easiest way of setting up a gateway
-enabled Fabric network is to use the scenario test framework that is part of this `fabric-gateway` repository.
-After cloning the `fabric-gateway` repository, from the `fabric-gateway` directory run the following commands:
+The samples will only run against Fabric v2.4. The easiest way of setting up a gateway enabled Fabric network is to use
+the scenario test framework that is part of this `fabric-gateway` repository. After cloning the `fabric-gateway`
+repository, from the `fabric-gateway` directory run the following command:
 
-```
-export PEER_IMAGE_PULL=hyperledger/fabric-peer:2.4.0-beta
+```sh
 make sample-network
 ```
 
-This will create a local docker network comprising five peers across three organisations and a single ordering node.
-Each of the peers have been configured with the gateway enabled. Bringing the network up will take
-several minutes because chaincodes will be installed and built on each of the peers, and deployed to the test channel.
+This will create a local Docker network comprising five peers across three organisations and a single ordering node.
+Each of the peers have been configured with the gateway enabled. Bringing the network up will take several minutes
+because chaincodes will be installed and built on each of the peers, and deployed to the test channel.
 
-A simple smart contract (named `basic`) will have been deployed on all the peers.
-Additionally, a smart contract with private data (named `private`) will have been deployed on all the peers.
-The source code for the smart
-contracts can examined for the [basic](https://github.com/hyperledger/fabric-gateway/blob/main/scenario/fixtures/chaincode/golang/basic/main.go)
-and [private](https://github.com/hyperledger/fabric-gateway/blob/main/scenario/fixtures/chaincode/golang/private/private.go) smart contracts.
+A simple smart contract (named `basic`) will have been deployed on all the peers. Additionally, a smart contract with
+private data (named `private`) will have been deployed on all the peers. The source code for the smart contracts can be
+examined for the [basic](https://github.com/hyperledger/fabric-gateway/blob/main/scenario/fixtures/chaincode/golang/basic/main.go)
+and [private](https://github.com/hyperledger/fabric-gateway/blob/main/scenario/fixtures/chaincode/golang/private/private.go)
+smart contracts.
 
 # Sample client applications
 
-A sample client application is provided for each of the supported SDKs.
-Note that the SDKs implement the Fabric 'Gateway' programming model which has been in use since
-Fabric v1.4, but these are new implementations that target the embedded peer gateway and they share no common code with existing Fabric SDKs.
+A sample client application is provided for each of the supported SDKs. Note that the SDKs implement the Fabric Gateway
+programming model which has been in use since Fabric v1.4, but these are new implementations that target the embedded
+peer gateway and they share no common code with existing Fabric SDKs.
 
-In each of the language samples, the client application demonstrates the various transaction submit and evaluate patterns supported by the gateway.
+In each of the language samples, the client application demonstrates the various transaction submit and evaluate
+patterns supported by the gateway.
 
 ## Sample scenarios
 
-In each sample a client from Org1MSP interacts with their organization's trusted peer `peer0.org1.example.com`
-to gather endorsements for chaincode invocations. The gateway typically works by first executing the chaincode on the local peer,
-and then based on the writeset in the execution results (writes to chaincode namespaces, private data collections, and keys with state-based endorsement policies),
-the peer checks the endorsement plan from the discovery service and determines which others organizations are required to endorse the transaction
-to ensure that the transaction will ultimately get validated. The gateway then collects the required endorsements
-from peers that are available from the required organizations, and finally submits the endorsed transaction for ordering and commit.
+In each sample a client from Org1MSP interacts with their organization's trusted peer `peer0.org1.example.com` to
+gather endorsements for chaincode invocations. The gateway typically works by first executing the chaincode on the
+local peer, and then based on the writeset in the execution results (writes to chaincode namespaces, private data
+collections, and keys with state-based endorsement policies), the peer checks the endorsement plan from the discovery
+service and determines which others organizations are required to endorse the transaction to ensure that the
+transaction will ultimately get validated. The gateway then collects the required endorsements from peers that are
+available from the required organizations, and finally submits the endorsed transaction for ordering and commit.
 
-The gateway and discovery service work together to automatically collect the required endorsements so that client applications
-can focus on application logic rather than Fabric transaction mechanics. The application can however dictate
-endorsement logic to the gateway in certain scenarios, for example it can dictate the set of organizations to endorse
-a transaction when known.
+The gateway and discovery service work together to automatically collect the required endorsements so that client
+applications can focus on application logic rather than Fabric transaction mechanics. The application can however
+dictate endorsement logic to the gateway in certain scenarios. For example, it can dictate the set of organizations to
+endorse a transaction when known.
 
 Each of the language samples implement the following client application scenarios:
 
@@ -85,29 +109,31 @@ Each of the language samples implement the following client application scenario
   first scenarios, the gateway gathers endorsements from Org1MSP and Org2MSP, and when
   the transaction is submitted and committed, the client application receives the chaincode event.
 
+* **exampleChaincodeEventReplay** - In this scenario the client application invokes the basic chaincode and then
+  registers a chaincode event listener to replay the event emitted by the transaction invocation. This is achieved by
+  noting the block number in which the transaction commits, and then starting event listening from that block number.
+
+* **exampleErrorHandling** = This scenario demonstrates the different types of errors that can occur during submit of
+  a transaction, and how the client application can distinguish between them in order to react appropriately.
+
 ## Running the samples
 
-### Go SDK
+### Go
 
-```
-cd <base-path>/fabric-gateway/samples/go
-go run sample.go
+```sh
+make run-samples-go
 ```
 
-### Node SDK
+### Node
 
-```
-cd <base-path>/fabric-gateway/samples/node
-npm install
-npm run build
-npm start
+```sh
+make run-samples-node
 ```
 
 ### Java
 
-```
-cd <base-path>/fabric-gateway/samples/java
-mvn test
+```sh
+make run-samples-java
 ```
 
 ## Additional investigation
@@ -126,4 +152,6 @@ docker logs peer0.org1.example.com
 
 When you are finished running the samples, the local docker network can be brought down with the following command:
 
-`docker rm -f $(docker ps -aq) && docker network prune --force`
+```sh
+make sample-network-clean
+```
