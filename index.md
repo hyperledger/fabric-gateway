@@ -7,9 +7,9 @@ By using the Gateway, client applications only need to connect to a single endpo
 
 The Gateway SDKs implement the Fabric programming model as described in the [Developing Applications](https://hyperledger-fabric.readthedocs.io/en/latest/developapps/developing_applications.html) chapter of the Fabric documentation.
 
-## Fabric Gateway Beta
+## Fabric Gateway v1.0
 
-❇️ There are [samples for Go, Node, and Java](https://github.com/hyperledger/fabric-gateway/blob/main/samples/README.md) which are a great place to start if you want to try out the Fabric Gateway Beta.
+❇️ There are [samples for Go, Node, and Java](https://github.com/hyperledger/fabric-gateway/blob/main/samples/README.md) which are a great place to start if you want to try out the new Fabric Gateway!
 
 ❇️ Make sure you [install the pre-reqs](#pre-reqs) before you begin.
 
@@ -48,10 +48,10 @@ See the following for more details:
 
 Install the following pre-reqs to develop client applications using the Gateway SDK:
 
-- Go v1.14 (required for sample Fabric network)
-- Node (optional for Node SDK)
-- Typescript (optional for Node SDK)
-- Java 11 (optional for Java SDK)
+- Go v1.16.7 (required sample Fabric network and Go SDK)
+- Node 14.x (required for Node SDK)
+- Typescript (required for Node SDK)
+- Java 8 (required for Java SDK)
 - Docker (required for sample Fabric network)
 
 In addition, you will need the `godog` tool to use the sample Fabric network, which can be installed with:
