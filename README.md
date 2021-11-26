@@ -16,13 +16,13 @@ See the [gateway.proto file](https://github.com/hyperledger/fabric-protos/blob/m
 
 ### Install pre-reqs
 
-This repo comprises the Gateway server (written in Go) and three SDKs (written in Go, Typescript and Java).
-In order to build these components, the following needs to be installed and available in the PATH:
-- Go 1.16.7
-- Node 14.x (optional for Node SDK)
-- Typescript (optional for Node SDK)
-- Java 8 (optional for Java SDK)
+This repository comprises three functionally equivalent client APIs, written in Go, Typescript, and Java. In order to
+build these components, the following needs to be installed and available in the PATH:
+- Go 1.16
+- Node 14
+- Java 8
 - Docker
+- Make
 - Protobuf compiler (https://developers.google.com/protocol-buffers/docs/downloads)
 - Some Go tools:
   - `go install github.com/cucumber/godog/cmd/godog@v0.12.1`
@@ -33,7 +33,7 @@ In order to build these components, the following needs to be installed and avai
   - `go get github.com/golang/mock/mockgen`
 - pkcs11 enabled fabric-ca-client
   - `go get -tags 'pkcs11' github.com/hyperledger/fabric-ca/cmd/fabric-ca-client`
-- SoftHSM which can be:
+- SoftHSM, which can either be:
   - installed using the package manager for your host system:
     - Ubuntu: `sudo apt install softhsm2`
     - macOS: `brew install softhsm`
