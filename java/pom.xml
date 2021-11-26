@@ -12,7 +12,7 @@
 
     <name>fabric-gateway</name>
     <description>Simple API for interacting with Hyperledger Fabric blockchain networks</description>
-    <url>https://hyperledger.github.io/fabric-gateway-java/</url>
+    <url>https://hyperledger.github.io/fabric-gateway/</url>
 
     <licenses>
         <license>
@@ -29,8 +29,8 @@
     </developers>
 
     <scm>
-        <connection>scm:git:https://github.com/hyperledger/fabric-gateway-java.git</connection>
-        <url>https://github.com/hyperledger/fabric-gateway-java</url>
+        <connection>scm:git:https://github.com/hyperledger/fabric-gateway.git</connection>
+        <url>https://github.com/hyperledger/fabric-gateway</url>
     </scm>
 
     <properties>
