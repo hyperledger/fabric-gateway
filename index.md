@@ -2,66 +2,41 @@
 layout: home
 ---
 
-The Fabric Gateway is a core component of a Fabric blockchain network and coordinates the actions required to submit transactions and query ledger state on behalf of client applications.
-By using the Gateway, client applications only need to connect to a single endpoint in the Fabric network.
+The Fabric Gateway is a core component of a Hyperledger Fabric blockchain network, and coordinates the actions required to submit transactions and query ledger state on behalf of client applications. By using the Gateway, client applications only need to connect to a single endpoint in a Fabric network.
 
-The Gateway SDKs implement the Fabric programming model as described in the [Developing Applications](https://hyperledger-fabric.readthedocs.io/en/latest/developapps/developing_applications.html) chapter of the Fabric documentation.
+The Fabric Gateway client API implements the Fabric programming model as described in the [Developing Applications](https://hyperledger-fabric.readthedocs.io/en/latest/developapps/developing_applications.html) chapter of the Fabric documentation.
 
 ## Fabric Gateway v1.0
 
-❇️ There are [samples for Go, Node, and Java](https://github.com/hyperledger/fabric-gateway/blob/main/samples/README.md) which are a great place to start if you want to try out the new Fabric Gateway!
+There are [samples for Go, Node, and Java](https://github.com/hyperledger/fabric-gateway/blob/main/samples/README.md) which are a great place to start if you want to try out the new Fabric Gateway!
 
-❇️ Make sure you [install the pre-reqs](#pre-reqs) before you begin.
+## Client API
 
-## Client SDKs
+The Fabric Gateway client API is available for several programming languages to support the development of client applications that interact with a Fabric network using the Gateway.  
 
-Three SDKs are available to support the development of client applications that interact with the Fabric network via the Gateway.  
-
-### Go SDK
-
-The Go SDK provides a high-level API for client applications written in Go.
-
-See the following for more details:
+### Go
 
 - [Quickstart guide](https://github.com/hyperledger/fabric-gateway/blob/main/pkg/client/README.md) 
 - [API documentation](https://pkg.go.dev/github.com/hyperledger/fabric-gateway/pkg/client)
 
-### Node SDK
-
-The Node SDK provides a high-level API for client applications written in Javascript or Typescript.
-
-See the following for more details:
+### Node
 
 - [Quickstart guide](https://github.com/hyperledger/fabric-gateway/blob/main/node/README.md) 
 - [API documentation](https://hyperledger.github.io/fabric-gateway/main/api/node/)
 
-### Java SDK
-
-The Java SDK provides a high-level API for client applications written in Java.
-
-See the following for more details:
+### Java
 
 - [Quickstart guide](https://github.com/hyperledger/fabric-gateway/blob/main/java/README.md) 
 - [API documentation](https://hyperledger.github.io/fabric-gateway/main/api/java/)
 
-## Pre-reqs
+## Compatibility
 
-Install the following pre-reqs to develop client applications using the Gateway SDK:
+The following table shows versions of Fabric, programming language runtimes, and other dependencies that are explicitly tested and that are supported for use with the Fabric Gateway client API.
 
-- Go v1.16.7 (required sample Fabric network and Go SDK)
-- Node 14.x (required for Node SDK)
-- Typescript (required for Node SDK)
-- Java 8 (required for Java SDK)
-- Docker (required for sample Fabric network)
-
-In addition, you will need the `godog` tool to use the sample Fabric network, which can be installed with:
-
-```
-GO111MODULE=on go get github.com/cucumber/godog/cmd/godog@v0.10.0
-```
-
-Make sure you can run `godog --version` after installing. If the command is not found, add the Go bin directory to your path using: 
-
-```
-export PATH=$PATH:$(go env GOPATH)/bin
-```
+|     | Tested | Supported |
+| --- | ------ | --------- |
+| **Fabric** | 2.4 | 2.4 |
+| **Go** | 1.16 | 1.16 |
+| **Node** | 14, 16 | 14 LTS, 16 LTS |
+| **Java** | 8 | 8, 11 |
+| **Platform** | Ubuntu 20.04 | |
