@@ -23,6 +23,7 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 )
@@ -79,6 +80,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^the transaction invocation should fail$`, theTransactionShouldFail)
 	s.Step(`^the error message should contain "([^"]*)"$`, theErrorMessageShouldContain)
 	s.Step(`^the error details should be$`, theErrorDetailsShouldBe)
+	s.Step(`^the error status should be (\S+)$`, theErrorStatusShouldBe)
 	s.Step(`^I listen for chaincode events from (\S+)$`, listenForChaincodeEvents)
 	s.Step(`^I listen for chaincode events from (\S+) on a listener named "([^"]*)"$`, listenForChaincodeEventsOnListener)
 	s.Step(`^I replay chaincode events from (\S+) starting at last committed block$`, replayChaincodeEventsFromLastBlock)
@@ -355,6 +357,20 @@ func theErrorDetailsShouldBe(table *messages.PickleTable) error {
 		}
 		return fmt.Errorf("expected error details from endpoint(s): %v", keys)
 	}
+	return nil
+}
+
+func theErrorStatusShouldBe(expected string) error {
+	var expectedCode codes.Code
+	if err := expectedCode.UnmarshalJSON([]byte("\"" + expected + "\"")); err != nil {
+		return err
+	}
+
+	actual := status.Code(transaction.Err())
+	if actual != expectedCode {
+		return fmt.Errorf("expected status %v, got %v: %w", expectedCode, actual, transaction.Err())
+	}
+
 	return nil
 }
 

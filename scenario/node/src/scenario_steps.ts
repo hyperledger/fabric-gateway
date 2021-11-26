@@ -5,8 +5,9 @@
  */
 
 import { After, AfterAll, BeforeAll, DataTable, Given, setDefaultTimeout, Then, When } from '@cucumber/cucumber';
-import expect from 'expect';
+import { status } from '@grpc/grpc-js';
 import { ErrorDetail, GatewayError } from '@hyperledger/fabric-gateway';
+import expect from 'expect';
 import { CustomWorld } from './customworld';
 import { Fabric } from './fabric';
 import { bytesAsString, toError } from './utils';
@@ -185,6 +186,14 @@ Then('the error details should be', function(this: CustomWorld, dataTable: DataT
         expectedDetails.delete(actual.address);
     });
     expect(Object.keys(expectedDetails)).toHaveLength(0);
+});
+
+Then('the error status should be {word}', function(this: CustomWorld, expected: keyof typeof status): void {
+    const expectedCode = status[expected];
+    const actual = this.getErrorOfType(GatewayError);
+    expect(actual).toMatchObject({
+        code: expectedCode,
+    });
 });
 
 Then('I should receive a chaincode event named {string} with payload {string}', async function(this: CustomWorld, eventName: string, payload: string): Promise<void> {
