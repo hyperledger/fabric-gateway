@@ -29,7 +29,7 @@
     import org.hyperledger.fabric.client.*;
     import org.hyperledger.fabric.client.identity.*;
 
-    public static void main(final String[] args) throws CommitException, InterruptedException {
+    public static void main(final String[] args) throws CommitException, GatewayException, InterruptedException {
         Reader certReader = Files.newBufferedReader(certificatePath);
         X509Certificate certificate = Identities.readX509Certificate(certReader);
         Identity identity = new X509Identity("mspId", certificate);
