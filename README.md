@@ -25,9 +25,7 @@ build these components, the following needs to be installed and available in the
 - Make
 - Protobuf compiler (https://developers.google.com/protocol-buffers/docs/downloads)
 - Some Go tools:
-  - `go install github.com/cucumber/godog/cmd/godog@v0.12.1`
-  - `go get -u golang.org/x/lint/golint`
-  - `go get -u golang.org/x/tools/cmd/goimports`
+  - `go install github.com/cucumber/godog/cmd/godog@v0.12.2`
   - `go get google.golang.org/grpc google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc`
   - `go get honnef.co/go/tools/cmd/staticcheck`
   - `go get github.com/golang/mock/mockgen`

@@ -56,10 +56,10 @@ build-java: build-protos
 
 unit-test: generate unit-test-go unit-test-node unit-test-java
 
-unit-test-go: lint staticcheck
+unit-test-go: lint
 	go test -timeout 10s -coverprofile=$(base_dir)/cover.out $(base_dir)/pkg/...
 
-unit-test-go-pkcs11: lint staticcheck
+unit-test-go-pkcs11: lint
 	SOFTHSM2_CONF=${HOME}/softhsm2.conf go test -tags pkcs11 -timeout 10s -coverprofile=$(base_dir)/cover.out $(base_dir)/pkg/...
 
 unit-test-node: build-node
@@ -69,10 +69,8 @@ unit-test-java: build-protos
 	cd $(java_dir); mvn test
 
 lint:
-	golint -set_exit_status $(base_dir)/pkg/... $(scenario_dir)/go
-
-staticcheck:
-	staticcheck -tags="pkcs11" $(base_dir)/pkg/... $(scenario_dir)/go
+	staticcheck -tags="pkcs11" $(base_dir)/pkg/... $(scenario_dir)/go $(samples_dir)/go $(hsm_samples_dir)/go
+	go vet -tags pkcs11 $(base_dir)/pkg/... $(scenario_dir)/go $(samples_dir)/go $(hsm_samples_dir)/go
 
 sample-network: pull-latest-peer vendor-chaincode
 	cd $(scenario_dir)/go; GATEWAY_NO_SHUTDOWN=TRUE go test -tags pkcs11 -v -args $(scenario_dir)/features/transactions.feature $(scenario_dir)/features/privatedata.feature
@@ -85,7 +83,7 @@ sample-network-clean:
 
 run-samples: | sample-network run-samples-go run-samples-node run-samples-java sample-network-clean
 
-run-samples-go:
+run-samples-go: build-go
 	cd $(samples_dir)/go; go run sample.go
 
 run-hsm-samples-go: enroll-hsm-user

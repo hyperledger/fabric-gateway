@@ -213,10 +213,7 @@ func deployChaincode(ccType, ccName, version, channelName, signaturePolicy strin
 		sequence = fmt.Sprintf("%d", i+1)
 	}
 
-	ccPath := "github.com/chaincode/" + ccType + "/" + ccName
-	if ccType != "golang" {
-		ccPath = "/opt/gopath/src/" + ccPath
-	}
+	ccPath := "/opt/gopath/src/github.com/chaincode/" + ccType + "/" + ccName
 	ccLabel := ccName + "v" + version
 	ccPackage := ccName + ".tar.gz"
 
