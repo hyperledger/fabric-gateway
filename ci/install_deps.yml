@@ -15,8 +15,6 @@ steps:
       version: $(GOVER)
       goPath:  $(GOPATH)
     displayName: Install Go $(GOVER)
-  - script: GO111MODULE=off go get -u github.com/myitcv/gobin
-    displayName: Install gobin
   - script: |
       echo directories.tokendir = /tmp > $HOME/softhsm2.conf
       export SOFTHSM2_CONF=$HOME/softhsm2.conf
@@ -25,9 +23,7 @@ steps:
   - script: go get -tags 'pkcs11' github.com/hyperledger/fabric-ca/cmd/fabric-ca-client
     displayName: Install Fabric-ca-client with HSM Support
   - script: |
-      go install github.com/cucumber/godog/cmd/godog@v0.12.1
-      go get -u golang.org/x/lint/golint
-      go get -u golang.org/x/tools/cmd/goimports
+      go install github.com/cucumber/godog/cmd/godog@v0.12.2
       go get google.golang.org/grpc google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc
       go get honnef.co/go/tools/cmd/staticcheck
       go get github.com/golang/mock/mockgen

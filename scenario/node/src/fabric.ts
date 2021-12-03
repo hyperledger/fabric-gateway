@@ -190,10 +190,7 @@ export class Fabric {
             sequence = (Number.parseInt(match[1]) + 1).toString();
         }
 
-        let ccPath = `github.com/chaincode/${ccType}/${ccName}`;
-        if (ccType != 'golang') {
-            ccPath = `/opt/gopath/src/${ccPath}`;
-        }
+        const ccPath = `/opt/gopath/src/github.com/chaincode/${ccType}/${ccName}`;
         const ccLabel = `${ccName}v${version}`;
         const ccPackage = `${ccName}.tar.gz`;
 

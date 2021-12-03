@@ -43,8 +43,9 @@ github.com/golang/protobuf v1.3.2 h1:6nsPYzhq5kReh6QImI3k5qWzO4PEbvbIW2cwSfR/6xs
 github.com/golang/protobuf v1.3.2/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
 github.com/hashicorp/hcl v1.0.0/go.mod h1:E5yfLk+7swimpb2L/Alb/PJmXilQ/rhwaUYs4T20WEQ=
-github.com/hyperledger/fabric-chaincode-go v0.0.0-20200424173110-d7076418f212 h1:1i4lnpV8BDgKOLi1hgElfBqdHXjXieSuj8629mwBZ8o=
 github.com/hyperledger/fabric-chaincode-go v0.0.0-20200424173110-d7076418f212/go.mod h1:N7H3sA7Tx4k/YzFq7U0EPdqJtqvM4Kild0JoCc7C0Dc=
+github.com/hyperledger/fabric-chaincode-go v0.0.0-20210718160520-38d29fabecb9 h1:1cAZHHrBYFrX3bwQGhOZtOB4sCM9QWVppd81O8vsPXs=
+github.com/hyperledger/fabric-chaincode-go v0.0.0-20210718160520-38d29fabecb9/go.mod h1:N7H3sA7Tx4k/YzFq7U0EPdqJtqvM4Kild0JoCc7C0Dc=
 github.com/hyperledger/fabric-contract-api-go v1.1.1 h1:gDhOC18gjgElNZ85kFWsbCQq95hyUP/21n++m0Sv6B0=
 github.com/hyperledger/fabric-contract-api-go v1.1.1/go.mod h1:+39cWxbh5py3NtXpRA63rAH7NzXyED+QJx1EZr0tJPo=
 github.com/hyperledger/fabric-protos-go v0.0.0-20190919234611-2a87503ac7c9/go.mod h1:xVYTjK4DtZRBxZ2D9aE4y6AbLaPwue2o/criQyQbVD0=
