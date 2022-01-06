@@ -88,4 +88,8 @@ Feature: Errors
         When I prepare to submit a nondet transaction
         Then the transaction invocation should fail
         And the error status should be ABORTED
-        And the error message should contain "failed to assemble transaction: ProposalResponsePayloads do not match"
+        And the error message should contain "failed to collect enough transaction endorsements"
+        And the error details should be
+            | peer0.org2.example.com:8051 | Org2MSP | ProposalResponsePayloads do not match |
+            | peer1.org2.example.com:10051 | Org2MSP | ProposalResponsePayloads do not match |
+            | peer0.org3.example.com:11051 | Org3MSP | ProposalResponsePayloads do not match |
