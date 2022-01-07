@@ -42,7 +42,6 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.json.JsonString;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.docstring.DocString;
 import io.cucumber.java.After;
@@ -437,7 +436,7 @@ public class ScenarioSteps {
     }
 
     @Then("the error details should be")
-    public void assertErrorDetails(Map<String, List<String>> table) throws InvalidProtocolBufferException {
+    public void assertErrorDetails(Map<String, List<String>> table) {
         Throwable t = transactionInvocation.getError();
         assertThat(t).isInstanceOf(GatewayException.class);
 

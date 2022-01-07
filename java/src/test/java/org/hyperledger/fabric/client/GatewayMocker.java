@@ -70,7 +70,7 @@ public final class GatewayMocker implements AutoCloseable {
     }
 
     public void close() {
-        GatewayUtils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
+        utils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
         mockitoSession.finishMocking();
     }
 
@@ -121,8 +121,7 @@ public final class GatewayMocker implements AutoCloseable {
 
     public ProposalPackage.ChaincodeProposalPayload getProposalPayload(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
         ProposalPackage.Proposal proposal = getProposal(proposedTransaction);
-        ProposalPackage.ChaincodeProposalPayload chaincodeProposalPayload = ProposalPackage.ChaincodeProposalPayload.parseFrom(proposal.getPayload());
-        return chaincodeProposalPayload;
+        return ProposalPackage.ChaincodeProposalPayload.parseFrom(proposal.getPayload());
     }
 
     public ProposalPackage.Proposal getProposal(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {

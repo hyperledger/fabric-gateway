@@ -32,7 +32,7 @@ public final class OfflineSignTest {
     private Contract contract;
 
     @BeforeEach
-    void beforeEach() throws Exception {
+    void beforeEach() {
         mocker = new GatewayMocker(newBuilderWithoutSigner());
         gateway = mocker.getGatewayBuilder().connect();
         network = gateway.getNetwork("NETWORK");
@@ -109,7 +109,7 @@ public final class OfflineSignTest {
         Proposal signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
         Transaction transaction = signedProposal.endorse();
 
-        assertThatThrownBy(() -> transaction.submitAsync())
+        assertThatThrownBy(transaction::submitAsync)
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
@@ -133,12 +133,11 @@ public final class OfflineSignTest {
     void commit_throws_with_no_signer_and_no_explicit_signing() throws EndorseException, SubmitException {
         Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
         Proposal signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
-        Transaction transaction = signedProposal.endorse();
         Transaction unsignedTransaction = signedProposal.endorse();
         Transaction signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
         Commit commit = signedTransaction.submitAsync();
 
-        assertThatThrownBy(() -> commit.getStatus())
+        assertThatThrownBy(commit::getStatus)
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
@@ -148,7 +147,6 @@ public final class OfflineSignTest {
 
         Proposal unsignedProposal = contract.newProposal("TRANSACTION_NAME").build();
         Proposal signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
-        Transaction transaction = signedProposal.endorse();
         Transaction unsignedTransaction = signedProposal.endorse();
         Transaction signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
         Commit unsignedCommit = signedTransaction.submitAsync();

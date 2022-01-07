@@ -6,7 +6,6 @@
 
 package org.hyperledger.fabric.client;
 
-import java.security.interfaces.ECPrivateKey;
 import java.util.concurrent.TimeUnit;
 
 import io.grpc.ManagedChannel;
@@ -26,7 +25,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public final class GatewayTest {
     private static final X509Credentials credentials = new X509Credentials();
     private static final Identity identity = new X509Identity("MSP_ID", credentials.getCertificate());
-    private static final Signer signer = Signers.newPrivateKeySigner((ECPrivateKey) credentials.getPrivateKey());
+    private static final Signer signer = Signers.newPrivateKeySigner(credentials.getPrivateKey());
+    private static final TestUtils utils = TestUtils.getInstance();
 
     private Gateway gateway;
     private ManagedChannel channel;
@@ -41,7 +41,7 @@ public final class GatewayTest {
         if (gateway != null) {
             gateway.close();
         }
-        GatewayUtils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
+        utils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
     }
 
     @Test
@@ -64,7 +64,7 @@ public final class GatewayTest {
     }
 
     @Test
-    void uses_supplied_identity() throws Exception {
+    void uses_supplied_identity() {
         gateway = Gateway.newInstance()
                 .identity(identity)
                 .connection(channel)
@@ -76,7 +76,7 @@ public final class GatewayTest {
     }
 
     @Test
-    void can_connect_using_gRPC_channel() throws Exception {
+    void can_connect_using_gRPC_channel() {
         gateway = Gateway.newInstance()
                 .identity(identity)
                 .signer(signer)
@@ -87,7 +87,7 @@ public final class GatewayTest {
     }
 
     @Test
-    void close_does_not_shutdown_supplied_gRPC_channel() throws Exception {
+    void close_does_not_shutdown_supplied_gRPC_channel() {
         gateway = Gateway.newInstance()
                 .identity(identity)
                 .signer(signer)
@@ -100,7 +100,7 @@ public final class GatewayTest {
     }
 
     @Test
-    void getNetwork_returns_correctly_named_network() throws Exception {
+    void getNetwork_returns_correctly_named_network() {
         gateway = Gateway.newInstance()
                 .identity(identity)
                 .signer(signer)

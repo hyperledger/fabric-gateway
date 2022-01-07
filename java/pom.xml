@@ -36,10 +36,10 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <grpcVersion>1.42.0</grpcVersion>
-        <protobufVersion>3.17.2</protobufVersion> <!-- keep in step with the version used by io.grpc:grpc-protobuf -->
-        <cucumberVersion>7.0.0</cucumberVersion>
-        <junitVersion>5.8.1</junitVersion>
+        <grpcVersion>1.43.2</grpcVersion>
+        <protobufVersion>3.19.2</protobufVersion> <!-- keep in step with the version used by io.grpc:grpc-protobuf -->
+        <cucumberVersion>7.2.1</cucumberVersion>
+        <junitVersion>5.8.2</junitVersion>
         <enforceJavaVersion>1.8</enforceJavaVersion> <!-- this is overridden in the release profile -->
     </properties>
 
@@ -84,13 +84,13 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.21.0</version>
+            <version>3.22.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>4.0.0</version>
+            <version>4.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -120,7 +120,7 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk15on</artifactId>
-            <version>1.69</version>
+            <version>1.70</version>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
@@ -268,7 +268,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.1</version>
                 <configuration>
                     <excludePackageNames>
                         org.hyperledger.fabric.protos.*
@@ -319,7 +319,7 @@
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>9.1</version>
+                        <version>9.2.1</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -378,7 +378,7 @@
                     <plugin>
                         <groupId>org.owasp</groupId>
                         <artifactId>dependency-check-maven</artifactId>
-                        <version>6.4.1</version>
+                        <version>6.5.2</version>
                         <configuration>
                             <skipProvidedScope>true</skipProvidedScope>
                             <skipTestScope>true</skipTestScope>
@@ -431,7 +431,7 @@
                                 <arg>loopback</arg>
                             </gpgArguments>
                         </configuration>
-                        <version>1.6</version>
+                        <version>3.0.1</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>

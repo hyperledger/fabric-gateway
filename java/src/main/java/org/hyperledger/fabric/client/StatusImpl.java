@@ -37,12 +37,12 @@ final class StatusImpl implements Status {
     @Override
     public TxValidationCode getCode() {
         return code;
-    };
+    }
 
     @Override
     public boolean isSuccessful() {
         return code == TxValidationCode.VALID;
-    };
+    }
 
     @Override
     public String toString() {

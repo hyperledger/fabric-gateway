@@ -261,6 +261,27 @@ stages:
           make run-samples-java
         displayName: Run Java SDK samples
 
+# Only run security vulnerability scans on scheduled builds
+- stage: Scan
+  dependsOn: VerifyVersions
+  condition: eq(variables['Build.Reason'], 'Schedule')
+  jobs:
+  - job: ScanJava
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+    - template: install_deps.yml
+    - checkout: self
+    - task: JavaToolInstaller@0
+      inputs:
+        versionSpec: $(JAVAVER)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+    - script: make scan-java
+      displayName: 'Run Java security vulnerability scan'
+      
 # Only publish on scheduled builds and tagged releases
 - stage: Publish
   dependsOn: Test
