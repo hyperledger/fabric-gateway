@@ -75,7 +75,10 @@ lint:
 	staticcheck -tags="pkcs11" $(base_dir)/pkg/... $(scenario_dir)/go $(samples_dir)/go $(hsm_samples_dir)/go
 	go vet -tags pkcs11 $(base_dir)/pkg/... $(scenario_dir)/go $(samples_dir)/go $(hsm_samples_dir)/go
 
-scan: scan-java
+scan: scan-node scan-java
+
+scan-node:
+	cd $(node_dir); npm install --package-lock-only; npm audit --production
 
 scan-java: build-protos
 	cd $(java_dir); mvn verify -DskipTests -P owasp
