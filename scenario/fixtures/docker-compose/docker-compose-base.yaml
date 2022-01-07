@@ -44,7 +44,7 @@ services:
 
   orderer:
     container_name: orderer
-    image: hyperledger/fabric-orderer:${ORDER_IMAGE_TAG}
+    image: hyperledger/fabric-orderer:${ORDERER_IMAGE_TAG}
     environment:
       - ORDERER_GENERAL_LOGLEVEL=${DOCKER_DEBUG}
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
