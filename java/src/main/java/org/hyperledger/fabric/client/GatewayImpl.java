@@ -29,11 +29,10 @@ final class GatewayImpl implements Gateway {
         };
 
         private Channel grpcChannel;
-        private GatewayClient client;
         private Identity identity;
         private Signer signer = UNDEFINED_SIGNER; // No signer implementation is required if only offline signing is used
         private Function<byte[], byte[]> hash = Hash::sha256;
-        private CallOptions.Builder optionsBuilder = CallOptions.newBuiler();
+        private final CallOptions.Builder optionsBuilder = CallOptions.newBuiler();
 
         @Override
         public Builder connection(final Channel grpcChannel) {

@@ -33,7 +33,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 public final class ChaincodeEventsTest {
-    private static final TestUtils utils = TestUtils.getInstance();
     private static final Deadline defaultDeadline = Deadline.after(1, TimeUnit.DAYS);
 
     private GatewayMocker mocker;

@@ -25,7 +25,7 @@ public final class NetworkTest {
     private ManagedChannel channel;
 
     @BeforeEach
-    void beforeEach() throws Exception {
+    void beforeEach() {
         channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
         gateway = testUtils.newGatewayBuilder().connection(channel).connect();
         network = gateway.getNetwork("ch1");
@@ -34,7 +34,7 @@ public final class NetworkTest {
     @AfterEach
     void afterEach() {
         gateway.close();
-        GatewayUtils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
+        testUtils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
     }
 
     @Test

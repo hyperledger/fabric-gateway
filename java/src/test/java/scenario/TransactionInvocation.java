@@ -10,7 +10,6 @@ import java.security.GeneralSecurityException;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import org.hyperledger.fabric.client.Commit;
 import org.hyperledger.fabric.client.CommitStatusException;
 import org.hyperledger.fabric.client.Contract;
@@ -28,7 +27,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public final class TransactionInvocation {
     private final Gateway gateway;
-    private final Contract contract;
     private final Proposal.Builder proposalBuilder;
     private Callable<byte[]> action;
     private Signer offlineSigner;
@@ -38,12 +36,11 @@ public final class TransactionInvocation {
 
     private TransactionInvocation(final Gateway gateway, final Contract contract, final String transactionName) {
         this.gateway = gateway;
-        this.contract = contract;
         proposalBuilder = contract.newProposal(transactionName);
     }
 
     public void setTransient(final Map<String, String> transientData) {
-        transientData.forEach((key, value) -> proposalBuilder.putTransient(key, value));
+        transientData.forEach(proposalBuilder::putTransient);
     }
 
     public void setEndorsingOrgs(final String[] orgs) {
@@ -79,7 +76,7 @@ public final class TransactionInvocation {
         }
     }
 
-    private byte[] submit() throws InvalidProtocolBufferException, GeneralSecurityException, EndorseException, SubmitException, CommitStatusException {
+    private byte[] submit() throws GeneralSecurityException, EndorseException, SubmitException, CommitStatusException {
         Proposal unsignedProposal = proposalBuilder.build();
         Proposal signedProposal = offlineSign(unsignedProposal);
 
@@ -99,7 +96,7 @@ public final class TransactionInvocation {
         return submitted.getResult();
     }
 
-    private Proposal offlineSign(final Proposal proposal) throws GeneralSecurityException, InvalidProtocolBufferException {
+    private Proposal offlineSign(final Proposal proposal) throws GeneralSecurityException {
         if (null == offlineSigner) {
             return proposal;
         }
@@ -108,7 +105,7 @@ public final class TransactionInvocation {
         return gateway.newSignedProposal(proposal.getBytes(), signature);
     }
 
-    private Transaction offlineSign(final Transaction transaction) throws GeneralSecurityException, InvalidProtocolBufferException {
+    private Transaction offlineSign(final Transaction transaction) throws GeneralSecurityException {
         if (null == offlineSigner) {
             return transaction;
         }
@@ -117,7 +114,7 @@ public final class TransactionInvocation {
         return gateway.newSignedTransaction(transaction.getBytes(), signature);
     }
 
-    private Commit offlineSign(final Commit commit) throws InvalidProtocolBufferException, GeneralSecurityException {
+    private Commit offlineSign(final Commit commit) throws GeneralSecurityException {
         if (null == offlineSigner) {
             return commit;
         }
@@ -126,7 +123,7 @@ public final class TransactionInvocation {
         return gateway.newSignedCommit(commit.getBytes(), signature);
     }
 
-    private byte[] evaluate() throws InvalidProtocolBufferException, GeneralSecurityException, GatewayException {
+    private byte[] evaluate() throws GeneralSecurityException, GatewayException {
         Proposal unsignedProposal = proposalBuilder.build();
         Proposal signedProposal = offlineSign(unsignedProposal);
 
