@@ -74,6 +74,7 @@ unit-test-java: build-protos
 lint:
 	staticcheck -tags="pkcs11" $(base_dir)/pkg/... $(scenario_dir)/go $(samples_dir)/go $(hsm_samples_dir)/go
 	go vet -tags pkcs11 $(base_dir)/pkg/... $(scenario_dir)/go $(samples_dir)/go $(hsm_samples_dir)/go
+	gosec -tags pkcs11 -exclude-generated $(base_dir)/pkg/... $(samples_dir)/go $(hsm_samples_dir)/go
 
 scan: scan-node scan-java
 

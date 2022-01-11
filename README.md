@@ -23,12 +23,13 @@ build these components, the following needs to be installed and available in the
 - Java 8
 - Docker
 - Make
-- Protobuf compiler (https://developers.google.com/protocol-buffers/docs/downloads)
-- Some Go tools:
-  - `go install github.com/cucumber/godog/cmd/godog@v0.12.2`
-  - `go get google.golang.org/grpc google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc`
-  - `go get honnef.co/go/tools/cmd/staticcheck`
-  - `go get github.com/golang/mock/mockgen`
+- Go tools:
+  - `go install github.com/cucumber/godog/cmd/godog@v0.12`
+  - `go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27`
+  - `go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2`
+  - `go install honnef.co/go/tools/cmd/staticcheck@latest`
+  - `go install github.com/golang/mock/mockgen@v1.6`
+  - `go install github.com/securego/gosec/v2/cmd/gosec@latest`
 - pkcs11 enabled fabric-ca-client
   - `go get -tags 'pkcs11' github.com/hyperledger/fabric-ca/cmd/fabric-ca-client`
 - SoftHSM, which can either be:
