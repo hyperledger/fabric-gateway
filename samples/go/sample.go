@@ -424,7 +424,7 @@ func newSign() identity.Sign {
 }
 
 func loadCertificate(filename string) (*x509.Certificate, error) {
-	certificatePEM, err := ioutil.ReadFile(filename)
+	certificatePEM, err := ioutil.ReadFile(filename) //#nosec G304
 	if err != nil {
 		return nil, fmt.Errorf("failed to read certificate file: %w", err)
 	}

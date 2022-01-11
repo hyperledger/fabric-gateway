@@ -60,9 +60,8 @@ func (client *gatewayClient) CommitStatus(in *gateway.SignedCommitStatusRequest,
 func (client *gatewayClient) CommitStatusWithContext(ctx context.Context, in *gateway.SignedCommitStatusRequest, opts ...grpc.CallOption) (*gateway.CommitStatusResponse, error) {
 	response, err := client.grpcClient.CommitStatus(ctx, in, opts...)
 	if err != nil {
-		request := &gateway.CommitStatusRequest{}
-		proto.Unmarshal(in.Request, request)
-		txErr := newTransactionError(err, request.GetTransactionId())
+		transactionId := getTransactionIdFromSignedCommitStatusRequest(in)
+		txErr := newTransactionError(err, transactionId)
 		return nil, &CommitStatusError{txErr}
 	}
 
@@ -81,4 +80,13 @@ func (client *gatewayClient) EvaluateWithContext(ctx context.Context, in *gatewa
 
 func (client *gatewayClient) ChaincodeEvents(ctx context.Context, in *gateway.SignedChaincodeEventsRequest, opts ...grpc.CallOption) (gateway.Gateway_ChaincodeEventsClient, error) {
 	return client.grpcClient.ChaincodeEvents(ctx, in, opts...)
+}
+
+func getTransactionIdFromSignedCommitStatusRequest(in *gateway.SignedCommitStatusRequest) string {
+	request := &gateway.CommitStatusRequest{}
+	err := proto.Unmarshal(in.GetRequest(), request)
+	if err != nil {
+		return "?"
+	}
+	return request.GetTransactionId()
 }

@@ -1,3 +1,6 @@
+//go:build pkcs11
+// +build pkcs11
+
 /*
 Copyright IBM Corp. All Rights Reserved.
 
@@ -143,7 +146,7 @@ func newHSMSign(h *identity.HSMSignerFactory, certPEM []byte) (identity.Sign, id
 }
 
 func loadCertificate(filename string) (*x509.Certificate, error) {
-	certificatePEM, err := ioutil.ReadFile(filename)
+	certificatePEM, err := ioutil.ReadFile(filename) //#nosec G304
 	if err != nil {
 		return nil, err
 	}
