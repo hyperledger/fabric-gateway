@@ -128,7 +128,7 @@ stages:
     dependsOn: []
     timeoutInMinutes: 60
     steps:
-    - template: install_deps.yml
+    - template: install_deps_hsm.yml
     - checkout: self
     - script: make generate unit-test-go-pkcs11
       displayName: Run Go unit tests with pkcs11
@@ -173,7 +173,7 @@ stages:
     dependsOn: []
     timeoutInMinutes: 60
     steps:
-    - template: install_deps.yml
+    - template: install_deps_hsm_ca.yml
     - checkout: self
     - script: make pull-latest-peer scenario-test-go
       displayName: Run Go SDK scenario tests
@@ -187,11 +187,13 @@ stages:
     dependsOn: []
     timeoutInMinutes: 60
     steps:
-    - template: install_deps.yml
+    - template: install_deps_hsm_ca.yml
     - checkout: self
     - task: NodeTool@0
       inputs:
         versionSpec: $(NODEVER)
+    - script: go install -tags pkcs11 github.com/hyperledger/fabric-ca/cmd/fabric-ca-client@latest
+      displayName: Install Fabric-ca-client with HSM Support
     - script: make pull-latest-peer scenario-test-node
       displayName: Run Node SDK scenario tests
       env:
@@ -223,7 +225,7 @@ stages:
     dependsOn: []
     timeoutInMinutes: 60
     steps:
-      - template: install_deps.yml
+      - template: install_deps_hsm_ca.yml
       - checkout: self
       - script: |
           make sample-network
@@ -237,7 +239,7 @@ stages:
     dependsOn: []
     timeoutInMinutes: 60
     steps:
-      - template: install_deps.yml
+      - template: install_deps_hsm_ca.yml
       - checkout: self
       - task: NodeTool@0
         inputs:
@@ -266,6 +268,32 @@ stages:
   dependsOn: VerifyVersions
   condition: eq(variables['Build.Reason'], 'Schedule')
   jobs:
+  - job: ScanGo
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+    - task: GoTool@0
+      inputs:
+        version: $(GOVER)
+        goPath:  $(GOPATH)
+      displayName: Install Go $(GOVER)
+    - checkout: self
+    - script: make scan-go
+      displayName: 'Run Go security vulnerability scan'
+  - job: ScanNode
+    pool:
+      vmImage: ubuntu-20.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+    - checkout: self
+    - task: NodeTool@0
+      inputs:
+        versionSpec: $(NODEVER)
+    - script: make scan-node
+      displayName: 'Run Node security vulnerability scan'
   - job: ScanJava
     pool:
       vmImage: ubuntu-20.04
@@ -281,19 +309,6 @@ stages:
         jdkSourceOption: 'PreInstalled'
     - script: make scan-java
       displayName: 'Run Java security vulnerability scan'
-  - job: ScanNode
-    pool:
-      vmImage: ubuntu-20.04
-    dependsOn: []
-    timeoutInMinutes: 60
-    steps:
-    - template: install_deps.yml
-    - checkout: self
-    - task: NodeTool@0
-      inputs:
-        versionSpec: $(NODEVER)
-    - script: make scan-node
-      displayName: 'Run Node security vulnerability scan'
       
 # Only publish on scheduled builds and tagged releases
 - stage: Publish

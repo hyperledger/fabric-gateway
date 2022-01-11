@@ -76,7 +76,10 @@ lint:
 	go vet -tags pkcs11 $(base_dir)/pkg/... $(scenario_dir)/go $(samples_dir)/go $(hsm_samples_dir)/go
 	gosec -tags pkcs11 -exclude-generated $(base_dir)/pkg/... $(samples_dir)/go $(hsm_samples_dir)/go
 
-scan: scan-node scan-java
+scan: scan-go scan-node scan-java
+
+scan-go:
+	go list -json -deps ./pkg/... | docker run --rm --interactive sonatypecommunity/nancy:latest sleuth
 
 scan-node:
 	cd $(node_dir); npm install --package-lock-only; npm audit --production
