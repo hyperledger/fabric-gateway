@@ -23,6 +23,7 @@ build these components, the following needs to be installed and available in the
 - Java 8
 - Docker
 - Make
+- Protobuf compiler (https://grpc.io/docs/protoc-installation/)
 - Go tools:
   - `go install github.com/cucumber/godog/cmd/godog@v0.12`
   - `go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27`
