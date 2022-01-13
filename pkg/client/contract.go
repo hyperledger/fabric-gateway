@@ -133,12 +133,15 @@ func (contract *Contract) SubmitAsync(transactionName string, options ...Proposa
 
 // NewProposal creates a proposal that can be sent to peers for endorsement. Supports off-line signing transaction flow.
 func (contract *Contract) NewProposal(transactionName string, options ...ProposalOption) (*Proposal, error) {
-	builder := &proposalBuilder{
-		client:          contract.client,
-		signingID:       contract.signingID,
-		channelName:     contract.channelName,
-		chaincodeName:   contract.chaincodeName,
-		transactionName: contract.qualifiedTransactionName(transactionName),
+	builder, err := newProposalBuilder(
+		contract.client,
+		contract.signingID,
+		contract.channelName,
+		contract.chaincodeName,
+		contract.qualifiedTransactionName(transactionName),
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	for _, option := range options {

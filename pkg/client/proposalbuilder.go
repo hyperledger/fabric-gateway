@@ -7,13 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"fmt"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
-	"github.com/hyperledger/fabric/protoutil"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type proposalBuilder struct {
@@ -22,67 +20,129 @@ type proposalBuilder struct {
 	channelName     string
 	chaincodeName   string
 	transactionName string
+	transactionCtx  *transactionContext
 	transient       map[string][]byte
 	endorsingOrgs   []string
 	args            [][]byte
 }
 
+func newProposalBuilder(
+	client *gatewayClient,
+	signingID *signingIdentity,
+	channelName string,
+	chaincodeName string,
+	transactionName string,
+) (*proposalBuilder, error) {
+	transactionCtx, err := newTransactionContext(signingID)
+	if err != nil {
+		return nil, err
+	}
+
+	builder := &proposalBuilder{
+		client:          client,
+		signingID:       signingID,
+		channelName:     channelName,
+		chaincodeName:   chaincodeName,
+		transactionName: transactionName,
+		transactionCtx:  transactionCtx,
+	}
+	return builder, nil
+}
+
 func (builder *proposalBuilder) build() (*Proposal, error) {
-	proposalProto, transactionID, err := builder.newProposalProto()
+	proposalBytes, err := builder.proposalBytes()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Proposal protobuf: %w", err)
-	}
-
-	proposalBytes, err := proto.Marshal(proposalProto)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshall Proposal protobuf: %w", err)
-	}
-
-	signedProposalProto := &peer.SignedProposal{
-		ProposalBytes: proposalBytes,
-	}
-
-	proposedTransaction := &gateway.ProposedTransaction{
-		TransactionId:          transactionID,
-		Proposal:               signedProposalProto,
-		EndorsingOrganizations: builder.endorsingOrgs,
+		return nil, err
 	}
 
 	proposal := &Proposal{
-		client:              builder.client,
-		signingID:           builder.signingID,
-		channelID:           builder.channelName,
-		proposedTransaction: proposedTransaction,
+		client:    builder.client,
+		signingID: builder.signingID,
+		channelID: builder.channelName,
+		proposedTransaction: &gateway.ProposedTransaction{
+			TransactionId: builder.transactionCtx.TransactionID,
+			Proposal: &peer.SignedProposal{
+				ProposalBytes: proposalBytes,
+			},
+			EndorsingOrganizations: builder.endorsingOrgs,
+		},
 	}
 	return proposal, nil
 }
 
-func (builder *proposalBuilder) newProposalProto() (*peer.Proposal, string, error) {
-	invocationSpec := &peer.ChaincodeInvocationSpec{
-		ChaincodeSpec: &peer.ChaincodeSpec{
-			Type:        peer.ChaincodeSpec_NODE,
-			ChaincodeId: &peer.ChaincodeID{Name: builder.chaincodeName},
-			Input:       &peer.ChaincodeInput{Args: builder.chaincodeArgs()},
+func (builder *proposalBuilder) proposalBytes() ([]byte, error) {
+	headerBytes, err := builder.headerBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	chaincodeProposalBytes, err := builder.chaincodeProposalPayloadBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	return proto.Marshal(&peer.Proposal{
+		Header:  headerBytes,
+		Payload: chaincodeProposalBytes,
+	})
+}
+
+func (builder *proposalBuilder) headerBytes() ([]byte, error) {
+	channelHeaderBytes, err := builder.channelHeaderBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	signatureHeaderBytes, err := proto.Marshal(builder.transactionCtx.SignatureHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return proto.Marshal(&common.Header{
+		ChannelHeader:   channelHeaderBytes,
+		SignatureHeader: signatureHeaderBytes,
+	})
+}
+
+func (builder *proposalBuilder) channelHeaderBytes() ([]byte, error) {
+	extensionBytes, err := proto.Marshal(&peer.ChaincodeHeaderExtension{
+		ChaincodeId: &peer.ChaincodeID{
+			Name: builder.chaincodeName,
 		},
-	}
-
-	creator, err := builder.signingID.Creator()
+	})
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to serialize identity: %w", err)
+		return nil, err
 	}
 
-	result, transactionID, err := protoutil.CreateChaincodeProposalWithTransient(
-		common.HeaderType_ENDORSER_TRANSACTION,
-		builder.channelName,
-		invocationSpec,
-		creator,
-		builder.transient,
-	)
+	return proto.Marshal(&common.ChannelHeader{
+		Type:      int32(common.HeaderType_ENDORSER_TRANSACTION),
+		Timestamp: timestamppb.Now(),
+		ChannelId: builder.channelName,
+		TxId:      builder.transactionCtx.TransactionID,
+		Epoch:     0,
+		Extension: extensionBytes,
+	})
+}
+
+func (builder *proposalBuilder) chaincodeProposalPayloadBytes() ([]byte, error) {
+	invocationSpecBytes, err := proto.Marshal(&peer.ChaincodeInvocationSpec{
+		ChaincodeSpec: &peer.ChaincodeSpec{
+			ChaincodeId: &peer.ChaincodeID{
+				Name: builder.chaincodeName,
+			},
+			Input: &peer.ChaincodeInput{
+				Args: builder.chaincodeArgs(),
+			},
+		},
+	})
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to create chaincode proposal: %w", err)
+		return nil, err
 	}
 
-	return result, transactionID, nil
+	return proto.Marshal(&peer.ChaincodeProposalPayload{
+		Input:        invocationSpecBytes,
+		TransientMap: builder.transient,
+	})
 }
 
 func (builder *proposalBuilder) chaincodeArgs() [][]byte {
