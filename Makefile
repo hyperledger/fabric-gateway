@@ -32,7 +32,7 @@ MARCH=$(shell go env GOOS)-$(shell go env GOARCH)
 GO_VER = 1.16.7
 GO_TAGS ?=
 
-build: build-go build-node build-java
+build: build-node build-java
 
 fabric_protos_commit = c6ece3f9b7f977fd83b243af9dc8e5dd7c926f52
 pb_files = protos/gateway/gateway.pb.go protos/gateway/gateway_grpc.pb.go
@@ -45,11 +45,6 @@ fabric-protos:
 	cd fabric-protos && git checkout "$(fabric_protos_commit)"
 
 $(pb_files): fabric-protos
-	protoc --version
-	mkdir -p protos
-	protoc -I./fabric-protos --go_out=paths=source_relative:./protos --go-grpc_out=require_unimplemented_servers=false,paths=source_relative:./protos fabric-protos/gateway/gateway.proto
-
-build-go: build-protos
 
 build-node: build-protos
 	cd $(node_dir); npm install; npm run build; rm -f fabric-gateway-dev.tgz; mv $$(npm pack) fabric-gateway-dev.tgz
@@ -98,7 +93,7 @@ sample-network-clean:
 
 run-samples: | sample-network run-samples-go run-samples-node run-samples-java sample-network-clean
 
-run-samples-go: build-go
+run-samples-go:
 	cd $(samples_dir)/go; go run sample.go
 
 run-hsm-samples-go: enroll-hsm-user

@@ -6,7 +6,6 @@ steps:
   - script: |
       sudo apt-get clean
       sudo apt-get update
-      sudo apt-get install -y autoconf automake libtool curl g++ unzip gcc make protobuf-compiler libprotobuf-dev
       echo "vsts  hard  nofile  65535" | sudo tee -a /etc/security/limits.conf
       echo "vsts  soft  nofile  65535" | sudo tee -a /etc/security/limits.conf
     displayName: Install Dependencies
@@ -17,8 +16,6 @@ steps:
     displayName: Install Go $(GOVER)
   - script: |
       go install github.com/cucumber/godog/cmd/godog@v0.12
-      go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27
-      go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
       go install honnef.co/go/tools/cmd/staticcheck@latest
       go install github.com/golang/mock/mockgen@v1.6
       go install github.com/securego/gosec/v2/cmd/gosec@latest

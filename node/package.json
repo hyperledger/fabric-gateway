@@ -19,15 +19,16 @@
         "url": "https://www.hyperledger.org/use/fabric"
     },
     "scripts": {
-        "build": "npm-run-all clean proto:prepare proto:gen proto:googlegen compile lint copy-non-ts-source",
+        "build": "npm-run-all clean proto compile lint copy-non-ts-source",
         "clean": "rm -rf apidocs dist src/protos",
         "compile": "tsc",
         "copy-non-ts-source": "rsync -rv --prune-empty-dirs --include='*.d.ts' --exclude='*.ts' src/ dist",
         "generate-apidoc": "typedoc --treatWarningsAsErrors --out apidocs src/index.ts",
         "lint": "eslint . --ext .ts",
+        "proto": "npm-run-all proto:prepare proto:gen:fabric proto:gen:google",
+        "proto:gen:fabric": "grpc_tools_node_protoc --proto_path=../fabric-protos --js_out=import_style=commonjs,binary:src/protos --ts_out=service=grpc-node,mode=grpc-js:src/protos --grpc_out=grpc_js:src/protos $(find ../fabric-protos -name *.proto -type f -print)",
+        "proto:gen:google": "grpc_tools_node_protoc --proto_path=../google-protos --js_out=import_style=commonjs,binary:src/protos --ts_out=service=grpc-node,mode=grpc-js:src/protos --grpc_out=grpc_js:src/protos $(find ../google-protos -name *.proto -type f -print)",
         "proto:prepare": "mkdir -p src/protos",
-        "proto:gen": "grpc_tools_node_protoc --proto_path=../fabric-protos --js_out=import_style=commonjs,binary:src/protos --ts_out=service=grpc-node,mode=grpc-js:src/protos --grpc_out=grpc_js:src/protos $(find ../fabric-protos -name *.proto -type f -print)",
-        "proto:googlegen": "grpc_tools_node_protoc --proto_path=../google-protos --js_out=import_style=commonjs,binary:src/protos --ts_out=service=grpc-node,mode=grpc-js:src/protos --grpc_out=grpc_js:src/protos $(find ../google-protos -name *.proto -type f -print)",
         "test": "jest"
     },
     "license": "Apache-2.0",
