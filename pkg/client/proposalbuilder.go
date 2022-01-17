@@ -81,10 +81,11 @@ func (builder *proposalBuilder) proposalBytes() ([]byte, error) {
 		return nil, err
 	}
 
-	return proto.Marshal(&peer.Proposal{
+	proposal := &peer.Proposal{
 		Header:  headerBytes,
 		Payload: chaincodeProposalBytes,
-	})
+	}
+	return proto.Marshal(proposal)
 }
 
 func (builder *proposalBuilder) headerBytes() ([]byte, error) {
@@ -98,10 +99,11 @@ func (builder *proposalBuilder) headerBytes() ([]byte, error) {
 		return nil, err
 	}
 
-	return proto.Marshal(&common.Header{
+	header := &common.Header{
 		ChannelHeader:   channelHeaderBytes,
 		SignatureHeader: signatureHeaderBytes,
-	})
+	}
+	return proto.Marshal(header)
 }
 
 func (builder *proposalBuilder) channelHeaderBytes() ([]byte, error) {
@@ -114,14 +116,15 @@ func (builder *proposalBuilder) channelHeaderBytes() ([]byte, error) {
 		return nil, err
 	}
 
-	return proto.Marshal(&common.ChannelHeader{
+	channelHeader := &common.ChannelHeader{
 		Type:      int32(common.HeaderType_ENDORSER_TRANSACTION),
 		Timestamp: timestamppb.Now(),
 		ChannelId: builder.channelName,
 		TxId:      builder.transactionCtx.TransactionID,
 		Epoch:     0,
 		Extension: extensionBytes,
-	})
+	}
+	return proto.Marshal(channelHeader)
 }
 
 func (builder *proposalBuilder) chaincodeProposalPayloadBytes() ([]byte, error) {
@@ -139,10 +142,11 @@ func (builder *proposalBuilder) chaincodeProposalPayloadBytes() ([]byte, error) 
 		return nil, err
 	}
 
-	return proto.Marshal(&peer.ChaincodeProposalPayload{
+	chaincodeProposalPayload := &peer.ChaincodeProposalPayload{
 		Input:        invocationSpecBytes,
 		TransientMap: builder.transient,
-	})
+	}
+	return proto.Marshal(chaincodeProposalPayload)
 }
 
 func (builder *proposalBuilder) chaincodeArgs() [][]byte {

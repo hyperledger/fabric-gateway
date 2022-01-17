@@ -6,15 +6,15 @@
 
 package org.hyperledger.fabric.client;
 
+import com.google.protobuf.ByteString;
+import org.hyperledger.fabric.client.identity.Identity;
+import org.hyperledger.fabric.protos.msp.Identities;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-
-import com.google.protobuf.ByteString;
-import org.hyperledger.fabric.client.identity.Identity;
-import org.hyperledger.fabric.protos.msp.Identities;
 
 /**
  * Utility functions.
