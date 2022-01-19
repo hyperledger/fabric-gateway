@@ -27,7 +27,7 @@ import java.util.Optional;
  * also be used to asynchronously submit transactions, which allows the transaction result to be accessed prior to its
  * commit to the ledger.</p>
  *
- * <h3>Evaluate transaction example</h3>
+ * <p>Evaluate transaction example:</p>
  * <pre>{@code
  *     byte[] result = contract.newProposal("transactionName")
  *             .addArguments("one", "two")
@@ -36,7 +36,7 @@ import java.util.Optional;
  *             .evaluate();
  * }</pre>
  *
- * <h3>Submit transaction example</h3>
+ * <p>Submit transaction example:</p>
  * <pre>{@code
  *     byte[] result = contract.newProposal("transactionName")
  *             .addArguments("one", "two")
@@ -46,7 +46,7 @@ import java.util.Optional;
  *             .submit();
  * }</pre>
  *
- * <h3>Async submit example</h3>
+ * <p>Async submit example</p>
  * <pre>{@code
  *     SubmittedTransaction commit = contract.newProposal("transactionName")
  *             .build()
@@ -76,7 +76,6 @@ import java.util.Optional;
  *     respectively.</li>
  * </ol>
  *
- * <h3>Off-line signing examples</h3>
  * <p>Signing of a proposal that can then be evaluated or endorsed:</p>
  * <pre>{@code
  *     Proposal unsignedProposal = contract.newProposal("transactionName").build();
