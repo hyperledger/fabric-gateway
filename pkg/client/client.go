@@ -9,7 +9,7 @@ package client
 import (
 	"context"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"google.golang.org/grpc"
 )
@@ -84,7 +84,7 @@ func (client *gatewayClient) ChaincodeEvents(ctx context.Context, in *gateway.Si
 
 func getTransactionIdFromSignedCommitStatusRequest(in *gateway.SignedCommitStatusRequest) string {
 	request := &gateway.CommitStatusRequest{}
-	err := proto.Unmarshal(in.GetRequest(), request)
+	err := util.Unmarshal(in.GetRequest(), request)
 	if err != nil {
 		return "?"
 	}

@@ -3,7 +3,7 @@ module github.com/hyperledger/fabric-gateway
 go 1.16
 
 require (
-	github.com/cucumber/godog v0.12.3
+	github.com/cucumber/godog v0.12.4
 	github.com/cucumber/messages-go/v16 v16.0.1
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2

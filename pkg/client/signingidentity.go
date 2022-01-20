@@ -9,9 +9,9 @@ package client
 import (
 	"errors"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
+	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
 	"github.com/hyperledger/fabric-protos-go/msp"
 )
 
@@ -48,5 +48,5 @@ func (signingID *signingIdentity) Creator() ([]byte, error) {
 		Mspid:   signingID.id.MspID(),
 		IdBytes: signingID.id.Credentials(),
 	}
-	return proto.Marshal(serializedIdentity)
+	return util.Marshal(serializedIdentity)
 }
