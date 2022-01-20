@@ -18,7 +18,7 @@ package org.hyperledger.fabric.client;
  *     {@link #getChaincodeEvents(String, CallOption...)} or {@link #newChaincodeEventsRequest(String)}.</li>
  * </ul>
  *
- * <h3>Chaincode events example</h3>
+ * <p>Chaincode events example:</p>
  * <pre>{@code
  *     try (CloseableIterator<ChaincodeEvent> events = network.getChaincodeEvents("chaincodeName")) {
  *         events.forEachRemaining(event -> {
@@ -27,7 +27,7 @@ package org.hyperledger.fabric.client;
  *     }
  * }</pre>
  * *
- * <h3>Chaincode event replay example</h3>
+ * <p>Chaincode event replay example</p>
  * <pre>{@code
  *     ChaincodeEventsRequest request = network.newChaincodeEventsRequest("chaincodeName")
  *             .startBlock(blockNumber)

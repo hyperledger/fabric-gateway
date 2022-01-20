@@ -312,7 +312,7 @@ stages:
       
 # Only publish on scheduled builds and tagged releases
 - stage: Publish
-  dependsOn: Test
+  dependsOn: [Test, Docs]
   condition: and(succeeded('Test'), or(eq(variables['Build.Reason'], 'Schedule'), startsWith(variables['Build.SourceBranch'], 'refs/tags')))
   jobs:
   - job: PublishDocs
