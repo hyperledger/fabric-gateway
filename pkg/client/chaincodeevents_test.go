@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/orderer"
 	"github.com/hyperledger/fabric-protos-go/peer"
@@ -70,7 +70,7 @@ func TestChaincodeEvents(t *testing.T) {
 		mockClient.EXPECT().ChaincodeEvents(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.SignedChaincodeEventsRequest, _ ...grpc.CallOption) {
 				request := &gateway.ChaincodeEventsRequest{}
-				err := proto.Unmarshal(in.GetRequest(), request)
+				err := util.Unmarshal(in.GetRequest(), request)
 				require.NoError(t, err)
 				actual = request
 			}).
@@ -101,7 +101,7 @@ func TestChaincodeEvents(t *testing.T) {
 				},
 			},
 		}
-		require.True(t, proto.Equal(expected, actual), "Expected %v, got %v", expected, actual)
+		require.True(t, util.ProtoEqual(expected, actual), "Expected %v, got %v", expected, actual)
 	})
 
 	t.Run("Sends valid request with specified start block number", func(t *testing.T) {
@@ -113,7 +113,7 @@ func TestChaincodeEvents(t *testing.T) {
 		mockClient.EXPECT().ChaincodeEvents(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.SignedChaincodeEventsRequest, _ ...grpc.CallOption) {
 				request := &gateway.ChaincodeEventsRequest{}
-				err := proto.Unmarshal(in.GetRequest(), request)
+				err := util.Unmarshal(in.GetRequest(), request)
 				require.NoError(t, err)
 				actual = request
 			}).
@@ -146,7 +146,7 @@ func TestChaincodeEvents(t *testing.T) {
 				},
 			},
 		}
-		require.True(t, proto.Equal(expected, actual), "Expected %v, got %v", expected, actual)
+		require.True(t, util.ProtoEqual(expected, actual), "Expected %v, got %v", expected, actual)
 	})
 
 	t.Run("Defaults to next commit as start position", func(t *testing.T) {
@@ -158,7 +158,7 @@ func TestChaincodeEvents(t *testing.T) {
 		mockClient.EXPECT().ChaincodeEvents(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.SignedChaincodeEventsRequest, _ ...grpc.CallOption) {
 				request := &gateway.ChaincodeEventsRequest{}
-				err := proto.Unmarshal(in.GetRequest(), request)
+				err := util.Unmarshal(in.GetRequest(), request)
 				require.NoError(t, err)
 
 				actual = &gateway.ChaincodeEventsRequest{
@@ -184,7 +184,7 @@ func TestChaincodeEvents(t *testing.T) {
 			ChannelId:   "NETWORK",
 			ChaincodeId: "CHAINCODE",
 		}
-		require.True(t, proto.Equal(expected, actual), "Expected %v, got %v", expected, actual)
+		require.True(t, util.ProtoEqual(expected, actual), "Expected %v, got %v", expected, actual)
 	})
 
 	t.Run("Closes event channel on receive error", func(t *testing.T) {

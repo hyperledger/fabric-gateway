@@ -10,7 +10,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 )
 
@@ -23,7 +23,7 @@ type ChaincodeEventsRequest struct {
 
 // Bytes of the serialized chaincode events request.
 func (events *ChaincodeEventsRequest) Bytes() ([]byte, error) {
-	requestBytes, err := proto.Marshal(events.signedRequest)
+	requestBytes, err := util.Marshal(events.signedRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshall SignedChaincodeEventsRequest protobuf: %w", err)
 	}

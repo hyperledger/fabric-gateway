@@ -10,7 +10,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"google.golang.org/grpc"
 )
@@ -47,7 +47,7 @@ func (transaction *Transaction) Result() []byte {
 
 // Bytes of the serialized transaction.
 func (transaction *Transaction) Bytes() ([]byte, error) {
-	transactionBytes, err := proto.Marshal(transaction.preparedTransaction)
+	transactionBytes, err := util.Marshal(transaction.preparedTransaction)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshall PreparedTransaction protobuf: %w", err)
 	}
@@ -141,7 +141,7 @@ func (transaction *Transaction) newSignedCommitStatusRequest() (*gateway.SignedC
 		Identity:      creator,
 	}
 
-	requestBytes, err := proto.Marshal(request)
+	requestBytes, err := util.Marshal(request)
 	if err != nil {
 		return nil, err
 	}

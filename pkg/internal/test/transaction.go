@@ -9,15 +9,16 @@ package test
 import (
 	"testing"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/runtime/protoiface"
 )
 
 // AssertUnmarshall ensures that a protobuf is umarshalled without error
-func AssertUnmarshall(t *testing.T, b []byte, m proto.Message) {
-	err := proto.Unmarshal(b, m)
+func AssertUnmarshall(t *testing.T, b []byte, m protoiface.MessageV1) {
+	err := util.Unmarshal(b, m)
 	require.NoError(t, err)
 }
 

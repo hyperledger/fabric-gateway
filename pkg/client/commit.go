@@ -10,7 +10,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"google.golang.org/grpc"
@@ -40,7 +40,7 @@ func newCommit(
 
 // Bytes of the serialized commit.
 func (commit *Commit) Bytes() ([]byte, error) {
-	requestBytes, err := proto.Marshal(commit.signedRequest)
+	requestBytes, err := util.Marshal(commit.signedRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshall SignedCommitStatusRequest protobuf: %w", err)
 	}

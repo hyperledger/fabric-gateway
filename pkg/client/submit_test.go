@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
+	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
@@ -21,10 +21,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/runtime/protoiface"
 )
 
-func AssertMarshal(t *testing.T, message proto.Message, msgAndArgs ...interface{}) []byte {
-	bytes, err := proto.Marshal(message)
+func AssertMarshal(t *testing.T, message protoiface.MessageV1, msgAndArgs ...interface{}) []byte {
+	bytes, err := util.Marshal(message)
 	require.NoError(t, err, msgAndArgs...)
 	return bytes
 }

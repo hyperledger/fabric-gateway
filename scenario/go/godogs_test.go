@@ -14,7 +14,7 @@ var opts = godog.Options{
 }
 
 func init() {
-	godog.BindFlags("godog.", flag.CommandLine, &opts) // godog v0.10.0 and earlier
+	godog.BindCommandLineFlags("godog.", &opts)
 }
 
 func TestMain(m *testing.M) {

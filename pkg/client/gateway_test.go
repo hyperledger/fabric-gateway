@@ -12,7 +12,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	proto "github.com/hyperledger/fabric-protos-go/gateway"
+	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 )
@@ -20,7 +20,7 @@ import (
 //go:generate mockgen -destination ./gateway_mock_test.go -package ${GOPACKAGE} github.com/hyperledger/fabric-protos-go/gateway GatewayClient
 
 // WithClient uses the supplied client for the Gateway. Allows a stub implementation to be used for testing.
-func WithClient(client proto.GatewayClient) ConnectOption {
+func WithClient(client gateway.GatewayClient) ConnectOption {
 	return func(gateway *Gateway) error {
 		gateway.client.grpcClient = client
 		return nil

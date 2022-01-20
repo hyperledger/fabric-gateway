@@ -10,7 +10,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"google.golang.org/grpc"
 )
@@ -25,7 +25,7 @@ type Proposal struct {
 
 // Bytes of the serialized proposal message.
 func (proposal *Proposal) Bytes() ([]byte, error) {
-	transactionBytes, err := proto.Marshal(proposal.proposedTransaction)
+	transactionBytes, err := util.Marshal(proposal.proposedTransaction)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshall Proposal protobuf: %w", err)
 	}

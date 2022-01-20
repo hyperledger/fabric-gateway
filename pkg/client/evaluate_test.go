@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
@@ -20,9 +19,10 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/runtime/protoiface"
 )
 
-func NewStatusError(t *testing.T, code codes.Code, message string, details ...proto.Message) error {
+func NewStatusError(t *testing.T, code codes.Code, message string, details ...protoiface.MessageV1) error {
 	s, err := status.New(code, message).WithDetails(details...)
 	require.NoError(t, err)
 

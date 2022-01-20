@@ -9,7 +9,7 @@ package client
 import (
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/peer"
 )
@@ -21,7 +21,7 @@ type transactionInfo struct {
 
 func parseTransactionEnvelope(envelope *common.Envelope) (*transactionInfo, error) {
 	payload := &common.Payload{}
-	if err := proto.Unmarshal(envelope.GetPayload(), payload); err != nil {
+	if err := util.Unmarshal(envelope.GetPayload(), payload); err != nil {
 		return nil, fmt.Errorf("failed to deserialize payload: %w", err)
 	}
 
@@ -44,7 +44,7 @@ func parseTransactionEnvelope(envelope *common.Envelope) (*transactionInfo, erro
 
 func parseChannelNameFromHeader(header *common.Header) (string, error) {
 	channelHeader := &common.ChannelHeader{}
-	if err := proto.Unmarshal(header.GetChannelHeader(), channelHeader); err != nil {
+	if err := util.Unmarshal(header.GetChannelHeader(), channelHeader); err != nil {
 		return "", fmt.Errorf("failed to deserialize channel header: %w", err)
 	}
 
@@ -53,7 +53,7 @@ func parseChannelNameFromHeader(header *common.Header) (string, error) {
 
 func parseResultFromPayload(payload *common.Payload) ([]byte, error) {
 	transaction := &peer.Transaction{}
-	if err := proto.Unmarshal(payload.GetData(), transaction); err != nil {
+	if err := util.Unmarshal(payload.GetData(), transaction); err != nil {
 		return nil, fmt.Errorf("failed to deserialize transaction: %w", err)
 	}
 
@@ -73,17 +73,17 @@ func parseResultFromPayload(payload *common.Payload) ([]byte, error) {
 
 func parseResultFromTransactionAction(transactionAction *peer.TransactionAction) ([]byte, error) {
 	actionPayload := &peer.ChaincodeActionPayload{}
-	if err := proto.Unmarshal(transactionAction.GetPayload(), actionPayload); err != nil {
+	if err := util.Unmarshal(transactionAction.GetPayload(), actionPayload); err != nil {
 		return nil, fmt.Errorf("failed to deserialize chaincode action payload: %w", err)
 	}
 
 	responsePayload := &peer.ProposalResponsePayload{}
-	if err := proto.Unmarshal(actionPayload.GetAction().GetProposalResponsePayload(), responsePayload); err != nil {
+	if err := util.Unmarshal(actionPayload.GetAction().GetProposalResponsePayload(), responsePayload); err != nil {
 		return nil, fmt.Errorf("failed to deserialize proposal response payload: %w", err)
 	}
 
 	chaincodeAction := &peer.ChaincodeAction{}
-	if err := proto.Unmarshal(responsePayload.GetExtension(), chaincodeAction); err != nil {
+	if err := util.Unmarshal(responsePayload.GetExtension(), chaincodeAction); err != nil {
 		return nil, fmt.Errorf("failed to deserialize chaincode action: %w", err)
 	}
 

@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/peer"
@@ -85,7 +85,7 @@ func (builder *proposalBuilder) proposalBytes() ([]byte, error) {
 		Header:  headerBytes,
 		Payload: chaincodeProposalBytes,
 	}
-	return proto.Marshal(proposal)
+	return util.Marshal(proposal)
 }
 
 func (builder *proposalBuilder) headerBytes() ([]byte, error) {
@@ -94,7 +94,7 @@ func (builder *proposalBuilder) headerBytes() ([]byte, error) {
 		return nil, err
 	}
 
-	signatureHeaderBytes, err := proto.Marshal(builder.transactionCtx.SignatureHeader)
+	signatureHeaderBytes, err := util.Marshal(builder.transactionCtx.SignatureHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -103,11 +103,11 @@ func (builder *proposalBuilder) headerBytes() ([]byte, error) {
 		ChannelHeader:   channelHeaderBytes,
 		SignatureHeader: signatureHeaderBytes,
 	}
-	return proto.Marshal(header)
+	return util.Marshal(header)
 }
 
 func (builder *proposalBuilder) channelHeaderBytes() ([]byte, error) {
-	extensionBytes, err := proto.Marshal(&peer.ChaincodeHeaderExtension{
+	extensionBytes, err := util.Marshal(&peer.ChaincodeHeaderExtension{
 		ChaincodeId: &peer.ChaincodeID{
 			Name: builder.chaincodeName,
 		},
@@ -124,11 +124,11 @@ func (builder *proposalBuilder) channelHeaderBytes() ([]byte, error) {
 		Epoch:     0,
 		Extension: extensionBytes,
 	}
-	return proto.Marshal(channelHeader)
+	return util.Marshal(channelHeader)
 }
 
 func (builder *proposalBuilder) chaincodeProposalPayloadBytes() ([]byte, error) {
-	invocationSpecBytes, err := proto.Marshal(&peer.ChaincodeInvocationSpec{
+	invocationSpecBytes, err := util.Marshal(&peer.ChaincodeInvocationSpec{
 		ChaincodeSpec: &peer.ChaincodeSpec{
 			ChaincodeId: &peer.ChaincodeID{
 				Name: builder.chaincodeName,
@@ -146,7 +146,7 @@ func (builder *proposalBuilder) chaincodeProposalPayloadBytes() ([]byte, error) 
 		Input:        invocationSpecBytes,
 		TransientMap: builder.transient,
 	}
-	return proto.Marshal(chaincodeProposalPayload)
+	return util.Marshal(chaincodeProposalPayload)
 }
 
 func (builder *proposalBuilder) chaincodeArgs() [][]byte {

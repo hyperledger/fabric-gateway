@@ -13,11 +13,12 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func Example() {
 	// Create gRPC client connection, which should be shared by all gateway connections to this endpoint.
-	clientConnection, err := grpc.Dial("gateway.example.org:1337", grpc.WithInsecure())
+	clientConnection, err := grpc.Dial("gateway.example.org:1337", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		panic(err)
 	}

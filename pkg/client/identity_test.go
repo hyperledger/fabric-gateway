@@ -11,9 +11,9 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
+	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/msp"
 	"github.com/hyperledger/fabric-protos-go/peer"
@@ -35,7 +35,7 @@ func TestIdentity(t *testing.T) {
 		Mspid:   id.MspID(),
 		IdBytes: id.Credentials(),
 	}
-	creator, err := proto.Marshal(serializedIdentity)
+	creator, err := util.Marshal(serializedIdentity)
 	require.NoError(t, err)
 
 	t.Run("Evaluate uses client identity for proposals", func(t *testing.T) {
