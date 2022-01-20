@@ -10,6 +10,8 @@ The Fabric Gateway client API implements the Fabric programming model as describ
 
 There are [samples for Go, Node, and Java](https://github.com/hyperledger/fabric-gateway/blob/main/samples/README.md) which are a great place to start if you want to try out the new Fabric Gateway!
 
+If migrating an existing application from one of the legacy Fabric client SDKs, consult the [migration guide](migration).
+
 ## Client API
 
 The Fabric Gateway client API is available for several programming languages to support the development of client applications that interact with a Fabric network using the Gateway.  
