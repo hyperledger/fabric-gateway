@@ -1,4 +1,6 @@
-# Migration guide
+---
+title: "Migration guide"
+---
 
 This page documents key considerations when rewriting an existing application, written using legacy Hyperledger Fabric client SDKs, to the Fabric Gateway client API.
 
