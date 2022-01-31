@@ -23,7 +23,7 @@ final class NetworkImpl implements Network {
 
     @Override
     public Contract getContract(final String chaincodeName, final String contractName) {
-        return new ContractImpl(client, signingIdentity, contractName, chaincodeName, contractName);
+        return new ContractImpl(client, signingIdentity, channelName, chaincodeName, contractName);
     }
 
     @Override
