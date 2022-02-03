@@ -7,9 +7,10 @@ The Gateway client API implements the Fabric programming model as described in t
 
 ## How to use
 
-Samples showing how to create a client application that updates and queries the ledger are available for each of the supported programming languages here:
+Samples showing how to create a client application that updates and queries the ledger, and listens for events, are available in the [fabric-samples](https://github.com/hyperledger/fabric-samples) repository:
 
-* https://github.com/hyperledger/fabric-gateway/tree/main/samples
+* [fabric-samples/asset-transfer-basic](https://github.com/hyperledger/fabric-samples/tree/main/asset-transfer-basic)
+* [fabric-samples/asset-transfer-events](https://github.com/hyperledger/fabric-samples/tree/main/asset-transfer-events)
 
 ## API documentation
 

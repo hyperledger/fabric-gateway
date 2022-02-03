@@ -44,7 +44,7 @@ The following tasks are required after releasing:
 
 # Versioning
 
-The Hyperledger Fabric Gateway SDKs follow the [Go module version numbering system](https://go.dev/doc/modules/version-numbers)
+The Hyperledger Fabric Gateway client APIs follow the [Go module version numbering system](https://go.dev/doc/modules/version-numbers)
 
 ## Updating version numbers
 

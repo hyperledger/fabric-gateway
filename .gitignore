@@ -7,3 +7,4 @@ protos/
 vendor/
 **/*_mock_test.go
 .DS_Store
+*.iml
