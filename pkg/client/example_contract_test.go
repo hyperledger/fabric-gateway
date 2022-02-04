@@ -101,7 +101,7 @@ func ExampleContract_Submit_privateData() {
 func ExampleContract_SubmitAsync() {
 	var contract *client.Contract // Obtained from Network.
 
-	// Create a transaction proposal.
+	// Submit transaction to the orderer.
 	result, commit, err := contract.SubmitAsync("transactionName", client.WithArguments("one", "two"))
 	if err != nil {
 		panic(err)
@@ -118,6 +118,32 @@ func ExampleContract_SubmitAsync() {
 	if !status.Successful {
 		panic(fmt.Errorf("transaction %s failed to commit with status code %d", status.TransactionID, int32(status.Code)))
 	}
+}
+
+func ExampleContract_NewProposal() {
+	var contract *client.Contract // Obtained from Network.
+
+	proposal, err := contract.NewProposal("transactionName", client.WithArguments("one", "two"))
+	if err != nil {
+		panic(err)
+	}
+
+	transaction, err := proposal.Endorse()
+	if err != nil {
+		panic(err)
+	}
+
+	commit, err := transaction.Submit()
+	if err != nil {
+		panic(err)
+	}
+
+	status, err := commit.Status()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Commit status code: %d, Result: %s\n", int32(status.Code), transaction.Result())
 }
 
 func ExampleContract_offlineSign() {
@@ -194,5 +220,5 @@ func ExampleContract_offlineSign() {
 		panic(fmt.Errorf("transaction %s failed to commit with status code %d", status.TransactionID, int32(status.Code)))
 	}
 
-	fmt.Printf("Result: %s, Err: %v", signedTransaction.Result(), err)
+	fmt.Printf("Result: %s\n", signedTransaction.Result())
 }

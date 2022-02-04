@@ -1,14 +1,14 @@
 # Hyperledger Fabric Gateway
 
-For information on using the Gateway, including client SDK API references, please visit the [Fabric Gateway documentation](https://hyperledger.github.io/fabric-gateway/).
+For information on using the Fabric Gateway, including client API documentation, please visit the [Fabric Gateway documentation](https://hyperledger.github.io/fabric-gateway/).
 
 ## Overview
 
 The original proposal is described in the [Fabric Gateway RFC](https://hyperledger.github.io/fabric-rfcs/text/0000-fabric-gateway.html).
-Adding a Gateway component to the Fabric Peer provides a single entry point to a Fabric network, and removes much of the transaction submission logic from the client application.
+Adding a gateway component to the Fabric peer provides a single entry point to a Fabric network, and removes much of the transaction submission logic from the client application.
 
 The Gateway component in the Fabric Peer exposes a simple gRPC interface to client applications and manages the lifecycle of transaction invocation on behalf of the client.
-This minimises the network traffic passing between the client and the blockchain network as well as minimising the number of network ports that need to be opened.
+This minimises the network traffic passing between the client and the blockchain network, as well as minimising the number of network ports that need to be opened.
 
 See the [gateway.proto file](https://github.com/hyperledger/fabric-protos/blob/main/gateway/gateway.proto) for details of the gRPC interface.
 
@@ -48,22 +48,22 @@ build these components, the following needs to be installed and available in the
 
 The following Makefile targets are available
 - `make generate` - generate mock implementations used by unit tests
-- `make unit-test-go` - run unit tests for the gateway server and Go SDK
-- `make unit-test-node` - run unit tests for the Node SDK
-- `make unit-test-java` - run unit tests for the Java SDK
-- `make unit-test` - run unit tests for the gateway server and all three SDKs
+- `make unit-test-go` - run unit tests for the Go client API
+- `make unit-test-node` - run unit tests for the Node client API
+- `make unit-test-java` - run unit tests for the Java client API
+- `make unit-test` - run unit tests for all client language implementations
 - `make pull-latest-peer` - fetch the latest peer docker image containing the gateway server
-- `make scenario-test-go` - run the scenario (end to end integration) tests for Go SDK
-- `make scenario-test-node` - run the scenario tests for Node SDK
-- `make scenario-test-java` - run the scenario tests for Java SDK
-- `make scenario-test` - run the scenario tests for all SDKs
+- `make scenario-test-go` - run the scenario (end to end integration) tests for Go client API
+- `make scenario-test-node` - run the scenario tests for Node client API
+- `make scenario-test-java` - run the scenario tests for Java client API
+- `make scenario-test` - run the scenario tests for all client language implementations
 - `make test` - run all unit and scenario tests
 - `make sample-network` - create the sample network used to run samples
 - `make sample-network-clean` - remove the sample network
-- `make run-samples-go` - run the samples for the Go SDK
-- `make run-samples-node` - run the samples for the Node SDK
-- `make run-samples-java` - run the samples for the Java SDK
-- `make run-samples` - create the sample network, run samples for all three SDKs, and remove the sample network
+- `make run-samples-go` - run the samples for the Go client API
+- `make run-samples-node` - run the samples for the Node client API
+- `make run-samples-java` - run the samples for the Java client API
+- `make run-samples` - create the sample network, run samples for all client language implementations, and remove the sample network
 
 Note that immediately after creating a fresh copy of this repository, auto-generated test mocks will not be preset so
 Go code will show errors. Running the `unit-test` make target will generate the required mock implementations, and they
@@ -75,4 +75,4 @@ The scenario tests create a Fabric network comprising two orgs (one peer in each
 of docker containers.  The clients connect to the gateway to submit transactions and query the ledger state.
 
 The tests are defined as feature files using the Cucumber BDD framework.  The same set of feature files
-is used across all three SDKs to ensure consistency of behaviour.
+is used across all three client language implementations to ensure consistency of behaviour.

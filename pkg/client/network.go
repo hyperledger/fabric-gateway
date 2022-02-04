@@ -10,8 +10,9 @@ import (
 	"context"
 )
 
-// Network represents a blockchain network, or Fabric channel. The Network can be used to access deployed smart
-// contracts, and to listen for events emitted when blocks are committed to the ledger.
+// Network represents a network of nodes that are members of a specific Fabric channel. The Network can be used to
+// access deployed smart contracts, and to listen for events emitted when blocks are committed to the ledger. Network
+// instances are obtained from a Gateway using the Gateway's GetNetwork() method.
 type Network struct {
 	client    *gatewayClient
 	signingID *signingIdentity

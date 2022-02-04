@@ -7,8 +7,8 @@
 package org.hyperledger.fabric.client;
 
 /**
- * The Network represents a Fabric network (channel). Network instances are obtained from a Gateway using the
- * {@link Gateway#getNetwork(String)} method.
+ * Network represents a network of nodes that are members of a specific Fabric channel. Network instances are obtained
+ * from a Gateway using the {@link Gateway#getNetwork(String)} method.
  *
  * <p>The Network provides the ability for applications to:</p>
  * <ul>

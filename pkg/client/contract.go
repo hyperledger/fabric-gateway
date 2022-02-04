@@ -16,6 +16,9 @@ package client
 // submitted using the Evaluate() or Submit() methods respectively. The result of a submitted transaction can be
 // accessed prior to its commit to the ledger using SubmitAsync().
 //
+// A finer-grained transaction flow can be employed by using NewProposal(). This allows retry of individual steps in
+// the flow in response to errors.
+//
 // By default, proposal, transaction and commit status messages will be signed using the signing implementation
 // specified when connecting the Gateway. In cases where an external client holds the signing credentials, a signing
 // implementation can be omitted when connecting the Gateway and off-line signing can be carried out by:

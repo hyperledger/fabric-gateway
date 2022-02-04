@@ -19,6 +19,9 @@ import { SubmittedTransaction } from './submittedtransaction';
  * For more complex transaction invocations, such as including private data, transactions can be evaluated or
  * submitted using {@link evaluate} or {@link submit} respectively. The result of a submitted transaction can be
  * accessed prior to its commit to the ledger using {@link submitAsync}.
+ * 
+ * A finer-grained transaction flow can be employed by using {@link newProposal}. This allows retry of individual steps
+ * in the flow in response to errors.
  *
  * By default, proposal, transaction and commit status messages will be signed using the signing implementation
  * specified when connecting the Gateway. In cases where an external client holds the signing credentials, a default
@@ -60,6 +63,16 @@ import { SubmittedTransaction } from './submittedtransaction';
  * }
  * ```
  *
+ * @example Fine-grained submit transaction
+ * ```
+ * const proposal = contract.newProposal('transactionName');
+ * const transaction = await proposal.endorse();
+ * const commit = await proposal.submit();
+ * 
+ * const result = transaction.getResult();
+ * const status = await commit.getStatus();
+ * ```
+ * 
  * @example Off-line signing
  * ```
  * const unsignedProposal = contract.newProposal('transactionName');
@@ -74,7 +87,7 @@ import { SubmittedTransaction } from './submittedtransaction';
  * // Generate signature from digest
  * const signedTransaction = gateway.newSignedTransaction(transactionBytes, transactionDigest);
  * 
- * const unsignedCommit = signedTransaction.submit();
+ * const unsignedCommit = await signedTransaction.submit();
  * const commitBytes = unsignedCommit.getBytes();
  * const commitDigest = unsignedCommit.getDigest();
  * // Generate signature from digest
