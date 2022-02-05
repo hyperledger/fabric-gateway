@@ -8,7 +8,10 @@ The Fabric Gateway client API implements the Fabric programming model as describ
 
 ## Fabric Gateway v1.0
 
-There are [samples for Go, Node, and Java](https://github.com/hyperledger/fabric-gateway/blob/main/samples/README.md) which are a great place to start if you want to try out the new Fabric Gateway!
+There are samples for Go, Node, and Java in the [fabric-samples](https://github.com/hyperledger/fabric-samples) repository, which are a great place to start if you want to try out the new Fabric Gateway!
+
+- [fabric-samples/asset-transfer-basic](https://github.com/hyperledger/fabric-samples/tree/main/asset-transfer-basic)
+- [fabric-samples/asset-transfer-events](https://github.com/hyperledger/fabric-samples/tree/main/asset-transfer-events)
 
 If migrating an existing application from one of the legacy Fabric client SDKs, consult the [migration guide](migration).
 
@@ -39,6 +42,6 @@ The following table shows versions of Fabric, programming language runtimes, and
 | --- | ------ | --------- |
 | **Fabric** | 2.4 | 2.4 |
 | **Go** | 1.16 | 1.16 |
-| **Node** | 14, 16 | 14 LTS, 16 LTS |
-| **Java** | 8 | 8, 11 |
+| **Node** | 14, 16 | 14, 16 |
+| **Java** | 8, 11, 17 | 8, 11, 17 |
 | **Platform** | Ubuntu 20.04 | |
