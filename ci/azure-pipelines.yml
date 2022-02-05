@@ -115,6 +115,11 @@ stages:
     steps:
     - template: install_deps.yml
     - checkout: self
+    - task: JavaToolInstaller@0
+      inputs:
+        versionSpec: 17
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
     - script: make generate-docs-java
       displayName: Generate Java docs
     - publish: $(System.DefaultWorkingDirectory)/java/target/site/apidocs

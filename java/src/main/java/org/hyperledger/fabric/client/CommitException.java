@@ -11,7 +11,7 @@ import org.hyperledger.fabric.protos.peer.TransactionPackage;
 /**
  * Thrown when a transaction fails to commit successfully.
  */
-public final class CommitException extends Exception {
+public class CommitException extends Exception {
     private static final long serialVersionUID = 1L;
 
     private final Status status;
