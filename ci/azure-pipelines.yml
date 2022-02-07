@@ -25,7 +25,7 @@ variables:
   - group: credentials
   - group: JARSigningPublish
   - name: GATEWAY_VERSION
-    value: 1.0.0
+    value: 1.0.1
   - name: BUILD_DATE
     value: $[format('{0:yyyyMMdd}', pipeline.startTime)]
   - name: BUILD_NUMBER
@@ -53,7 +53,7 @@ stages:
       - script: |
           PACKAGE_GATEWAY_VERSION=$(jq --raw-output .version package.json)
           echo "Expected version: ${GATEWAY_VERSION}"
-          echo "pom.xml version: ${PACKAGE_GATEWAY_VERSION}"
+          echo "package.json version: ${PACKAGE_GATEWAY_VERSION}"
           [ "${PACKAGE_GATEWAY_VERSION}" = "${GATEWAY_VERSION}" ] || exit 1
         displayName: Check Node package version
         workingDirectory: $(System.DefaultWorkingDirectory)/node
