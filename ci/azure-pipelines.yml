@@ -205,6 +205,14 @@ stages:
       vmImage: ubuntu-20.04
     dependsOn: []
     timeoutInMinutes: 60
+    strategy:
+      matrix:
+        Java8:
+          JAVAVER: 8
+        Java11:
+          JAVAVER: 11
+        Java17:
+          JAVAVER: 17
     steps:
       - template: install_deps.yml
       - checkout: self
