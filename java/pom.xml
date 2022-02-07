@@ -11,7 +11,7 @@
     <packaging>jar</packaging>
 
     <name>fabric-gateway</name>
-    <description>Simple API for interacting with Hyperledger Fabric blockchain networks</description>
+    <description>Hyperledger Fabric Gateway client API for Java</description>
     <url>https://hyperledger.github.io/fabric-gateway/</url>
 
     <licenses>
@@ -36,7 +36,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <grpcVersion>1.43.2</grpcVersion>
+        <grpcVersion>1.44.0</grpcVersion>
         <protobufVersion>3.19.2</protobufVersion> <!-- keep in step with the version used by io.grpc:grpc-protobuf -->
         <enforceJavaVersion>1.8</enforceJavaVersion> <!-- this is overridden in the release profile -->
     </properties>
@@ -117,7 +117,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>4.2.0</version>
+            <version>4.3.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -295,7 +295,7 @@
                         org.hyperledger.fabric.protos.*
                     </excludePackageNames>
                     <show>public</show>
-                    <doctitle>Hyperledger Fabric Gateway SDK for Java</doctitle>
+                    <doctitle>Hyperledger Fabric Gateway client API for Java</doctitle>
                     <nohelp>true</nohelp>
                     <failOnError>true</failOnError>
                     <links>
@@ -340,7 +340,7 @@
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>9.2.1</version>
+                        <version>9.3</version>
                     </dependency>
                 </dependencies>
             </plugin>
