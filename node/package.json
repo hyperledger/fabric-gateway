@@ -1,7 +1,7 @@
 {
     "name": "@hyperledger/fabric-gateway",
-    "version": "1.0.0",
-    "description": "Node SDK client library for Hyperledger Fabric Gateway",
+    "version": "1.0.1",
+    "description": "Hyperledger Fabric Gateway client API for Node",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "engines": {
@@ -50,7 +50,7 @@
         "@typescript-eslint/eslint-plugin": "^5.3.0",
         "@typescript-eslint/parser": "^5.3.0",
         "eslint": "^8.1.0",
-        "eslint-plugin-jest": "^25.2.2",
+        "eslint-plugin-jest": "^26.1.0",
         "eslint-plugin-tsdoc": "^0.2.14",
         "grpc-tools": "^1.11.2",
         "jest": "^27.3.1",
