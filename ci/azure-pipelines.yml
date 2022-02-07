@@ -186,6 +186,12 @@ stages:
       vmImage: ubuntu-20.04
     dependsOn: []
     timeoutInMinutes: 60
+    strategy:
+      matrix:
+        Node14:
+          NODEVER: 14.x
+        Node16:
+          NODEVER: 16.x
     steps:
     - template: install_deps_hsm_ca.yml
     - checkout: self
