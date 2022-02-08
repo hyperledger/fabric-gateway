@@ -4,10 +4,7 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package client enables Go developers to build client applications using the Hyperledger Fabric programming model as
-// described in the Developing Applications chapter of the Fabric documentation:
-//
-// https://hyperledger-fabric.readthedocs.io/en/latest/developapps/developing_applications.html
+// Package client enables Go developers to build client applications using the Hyperledger Fabric programming model.
 //
 // Client applications interact with the blockchain network using a Fabric Gateway. A client connection to a Fabric
 // Gateway is established by calling client.Connect() with a client identity, client signing implementation, and client
