@@ -4,8 +4,6 @@ layout: home
 
 The Fabric Gateway is a core component of a Hyperledger Fabric blockchain network, and coordinates the actions required to submit transactions and query ledger state on behalf of client applications. By using the Gateway, client applications only need to connect to a single endpoint in a Fabric network.
 
-The Fabric Gateway client API implements the Fabric programming model as described in the [Developing Applications](https://hyperledger-fabric.readthedocs.io/en/latest/developapps/developing_applications.html) chapter of the Fabric documentation.
-
 ## Fabric Gateway v1.0
 
 There are samples for Go, Node, and Java in the [fabric-samples](https://github.com/hyperledger/fabric-samples) repository, which are a great place to start if you want to try out the new Fabric Gateway!
