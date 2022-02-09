@@ -11,15 +11,11 @@ import (
 
 	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
 	"github.com/hyperledger/fabric-protos-go/gateway"
-	"github.com/hyperledger/fabric-protos-go/orderer"
 )
 
 type chaincodeEventsBuilder struct {
-	client        *gatewayClient
-	signingID     *signingIdentity
-	channelName   string
+	*eventsBuilder
 	chaincodeName string
-	startPosition *orderer.SeekPosition
 }
 
 func (builder *chaincodeEventsBuilder) build() (*ChaincodeEventsRequest, error) {
@@ -66,33 +62,4 @@ func (builder *chaincodeEventsBuilder) newChaincodeEventsRequestProto() (*gatewa
 		StartPosition: builder.getStartPosition(),
 	}
 	return request, nil
-}
-
-func (builder *chaincodeEventsBuilder) getStartPosition() *orderer.SeekPosition {
-	if builder.startPosition != nil {
-		return builder.startPosition
-	}
-
-	return &orderer.SeekPosition{
-		Type: &orderer.SeekPosition_NextCommit{
-			NextCommit: &orderer.SeekNextCommit{},
-		},
-	}
-}
-
-// ChaincodeEventsOption implements an option for a chaincode events request.
-type ChaincodeEventsOption = func(builder *chaincodeEventsBuilder) error
-
-// WithStartBlock reads chaincode events starting at the specified block number.
-func WithStartBlock(blockNumber uint64) ChaincodeEventsOption {
-	return func(builder *chaincodeEventsBuilder) error {
-		builder.startPosition = &orderer.SeekPosition{
-			Type: &orderer.SeekPosition_Specified{
-				Specified: &orderer.SeekSpecified{
-					Number: blockNumber,
-				},
-			},
-		}
-		return nil
-	}
 }

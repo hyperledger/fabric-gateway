@@ -22,7 +22,7 @@ func TestNetwork(t *testing.T) {
 	t.Run("GetContract returns correctly named Contract", func(t *testing.T) {
 		chaincodeName := "chaincode"
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
-		network := AssertNewTestNetwork(t, "network", WithClient(mockClient))
+		network := AssertNewTestNetwork(t, "network", WithGatewayClient(mockClient))
 
 		contract := network.GetContract(chaincodeName)
 
@@ -35,7 +35,7 @@ func TestNetwork(t *testing.T) {
 		chaincodeName := "chaincode"
 		contractName := "contract"
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
-		network := AssertNewTestNetwork(t, "network", WithClient(mockClient))
+		network := AssertNewTestNetwork(t, "network", WithGatewayClient(mockClient))
 
 		contract := network.GetContractWithName(chaincodeName, contractName)
 

@@ -11,12 +11,7 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
 )
 
-type testCredentials struct {
-	identity identity.Identity
-	sign     identity.Sign
-}
-
-var TestCredentials testCredentials
+var TestCredentials *signingIdentity
 
 func init() {
 	privateKey, err := test.NewECDSAPrivateKey()
@@ -39,8 +34,6 @@ func init() {
 		panic(err)
 	}
 
-	TestCredentials = testCredentials{
-		identity: id,
-		sign:     sign,
-	}
+	TestCredentials = newSigningIdentity(id)
+	TestCredentials.sign = sign
 }

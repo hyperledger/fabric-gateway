@@ -42,7 +42,7 @@ func TestSign(t *testing.T) {
 			Return(evaluateResponse, nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
+		contract := AssertNewTestContract(t, "contract", WithGatewayClient(mockClient), WithSign(sign))
 
 		_, err := contract.EvaluateTransaction("transaction")
 		require.NoError(t, err)
@@ -68,7 +68,7 @@ func TestSign(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(statusResponse, nil)
 
-		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
+		contract := AssertNewTestContract(t, "contract", WithGatewayClient(mockClient), WithSign(sign))
 
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
@@ -94,7 +94,7 @@ func TestSign(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(statusResponse, nil)
 
-		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithSign(sign))
+		contract := AssertNewTestContract(t, "contract", WithGatewayClient(mockClient), WithSign(sign))
 
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
@@ -108,7 +108,9 @@ func TestSign(t *testing.T) {
 			Return(evaluateResponse, nil).
 			AnyTimes()
 
-		gateway, err := Connect(TestCredentials.identity, WithClient(mockClient))
+		mockDeliver := NewMockDeliverClient(gomock.NewController(t))
+
+		gateway, err := Connect(TestCredentials.Identity(), WithGatewayClient(mockClient), WithDeliverClient(mockDeliver))
 		require.NoError(t, err)
 
 		contract := gateway.GetNetwork("network").GetContract("chaincode")

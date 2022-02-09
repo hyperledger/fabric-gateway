@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
+	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/orderer"
 	"github.com/hyperledger/fabric-protos-go/peer"
@@ -21,8 +21,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
-
-//go:generate mockgen -destination ./chaincodeevents_mock_test.go -package ${GOPACKAGE} github.com/hyperledger/fabric-protos-go/gateway Gateway_ChaincodeEventsClient
 
 func TestChaincodeEvents(t *testing.T) {
 	newChaincodeEventsResponse := func(events []*ChaincodeEvent) *gateway.ChaincodeEventsResponse {
@@ -54,7 +52,7 @@ func TestChaincodeEvents(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
+		network := AssertNewTestNetwork(t, "NETWORK", WithGatewayClient(mockClient))
 		_, err := network.ChaincodeEvents(ctx, "CHAINCODE")
 
 		require.Equal(t, status.Code(expected), status.Code(err), "status code")
@@ -70,8 +68,7 @@ func TestChaincodeEvents(t *testing.T) {
 		mockClient.EXPECT().ChaincodeEvents(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.SignedChaincodeEventsRequest, _ ...grpc.CallOption) {
 				request := &gateway.ChaincodeEventsRequest{}
-				err := util.Unmarshal(in.GetRequest(), request)
-				require.NoError(t, err)
+				test.AssertUnmarshal(t, in.GetRequest(), request)
 				actual = request
 			}).
 			Return(mockEvents, nil).
@@ -84,7 +81,7 @@ func TestChaincodeEvents(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
+		network := AssertNewTestNetwork(t, "NETWORK", WithGatewayClient(mockClient))
 		_, err := network.ChaincodeEvents(ctx, "CHAINCODE")
 		require.NoError(t, err)
 
@@ -101,7 +98,7 @@ func TestChaincodeEvents(t *testing.T) {
 				},
 			},
 		}
-		require.True(t, util.ProtoEqual(expected, actual), "Expected %v, got %v", expected, actual)
+		test.AssertProtoEqual(t, expected, actual)
 	})
 
 	t.Run("Sends valid request with specified start block number", func(t *testing.T) {
@@ -113,8 +110,7 @@ func TestChaincodeEvents(t *testing.T) {
 		mockClient.EXPECT().ChaincodeEvents(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.SignedChaincodeEventsRequest, _ ...grpc.CallOption) {
 				request := &gateway.ChaincodeEventsRequest{}
-				err := util.Unmarshal(in.GetRequest(), request)
-				require.NoError(t, err)
+				test.AssertUnmarshal(t, in.GetRequest(), request)
 				actual = request
 			}).
 			Return(mockEvents, nil).
@@ -127,7 +123,7 @@ func TestChaincodeEvents(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
+		network := AssertNewTestNetwork(t, "NETWORK", WithGatewayClient(mockClient))
 		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithStartBlock(418))
 		require.NoError(t, err)
 
@@ -146,45 +142,7 @@ func TestChaincodeEvents(t *testing.T) {
 				},
 			},
 		}
-		require.True(t, util.ProtoEqual(expected, actual), "Expected %v, got %v", expected, actual)
-	})
-
-	t.Run("Defaults to next commit as start position", func(t *testing.T) {
-		controller := gomock.NewController(t)
-		mockClient := NewMockGatewayClient(controller)
-		mockEvents := NewMockGateway_ChaincodeEventsClient(controller)
-
-		var actual *gateway.ChaincodeEventsRequest
-		mockClient.EXPECT().ChaincodeEvents(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, in *gateway.SignedChaincodeEventsRequest, _ ...grpc.CallOption) {
-				request := &gateway.ChaincodeEventsRequest{}
-				err := util.Unmarshal(in.GetRequest(), request)
-				require.NoError(t, err)
-
-				actual = &gateway.ChaincodeEventsRequest{
-					ChannelId:   request.ChannelId,
-					ChaincodeId: request.ChaincodeId,
-				}
-			}).
-			Return(mockEvents, nil).
-			Times(1)
-
-		mockEvents.EXPECT().Recv().
-			Return(nil, errors.New("fake")).
-			AnyTimes()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
-		_, err := network.ChaincodeEvents(ctx, "CHAINCODE")
-		require.NoError(t, err)
-
-		expected := &gateway.ChaincodeEventsRequest{
-			ChannelId:   "NETWORK",
-			ChaincodeId: "CHAINCODE",
-		}
-		require.True(t, util.ProtoEqual(expected, actual), "Expected %v, got %v", expected, actual)
+		test.AssertProtoEqual(t, expected, actual)
 	})
 
 	t.Run("Closes event channel on receive error", func(t *testing.T) {
@@ -202,7 +160,7 @@ func TestChaincodeEvents(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
+		network := AssertNewTestNetwork(t, "NETWORK", WithGatewayClient(mockClient))
 		receive, err := network.ChaincodeEvents(ctx, "CHAINCODE")
 		require.NoError(t, err)
 
@@ -262,7 +220,7 @@ func TestChaincodeEvents(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		network := AssertNewTestNetwork(t, "NETWORK", WithClient(mockClient))
+		network := AssertNewTestNetwork(t, "NETWORK", WithGatewayClient(mockClient))
 		receive, err := network.ChaincodeEvents(ctx, "CHAINCODE")
 		require.NoError(t, err)
 

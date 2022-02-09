@@ -75,7 +75,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Return(nil, expected)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
 
@@ -96,7 +96,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 			Return(nil, expected)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
 		transaction, err := proposal.Endorse()
@@ -121,7 +121,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(nil, expected)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
 		transaction, err := proposal.Endorse()
@@ -148,7 +148,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		actual, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
@@ -166,7 +166,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(newCommitStatusResponse(peer.TxValidationCode_MVCC_READ_CONFLICT, 1), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
 
@@ -182,7 +182,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
-				actual = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).ChannelId
+				actual = test.AssertUnmarshalChannelheader(t, in.ProposedTransaction).ChannelId
 			}).
 			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
@@ -191,7 +191,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
@@ -205,7 +205,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
-				actual = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.ChaincodeId.Name
+				actual = test.AssertUnmarshalInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.ChaincodeId.Name
 			}).
 			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
@@ -214,7 +214,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
@@ -228,7 +228,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
-				args = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
+				args = test.AssertUnmarshalInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
 			}).
 			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
@@ -237,7 +237,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		expected := "TRANSACTION_NAME"
 		_, err := contract.SubmitTransaction(expected)
@@ -252,7 +252,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
-				args = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
+				args = test.AssertUnmarshalInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
 			}).
 			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
@@ -261,7 +261,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil)
 
-		contract := AssertNewTestContractWithName(t, "chaincode", "CONTRACT_NAME", WithClient(mockClient))
+		contract := AssertNewTestContractWithName(t, "chaincode", "CONTRACT_NAME", WithGatewayClient(mockClient))
 
 		_, err := contract.SubmitTransaction("TRANSACTION_NAME")
 		require.NoError(t, err)
@@ -276,7 +276,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
-				args = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
+				args = test.AssertUnmarshalInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
 			}).
 			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
@@ -285,7 +285,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		expected := []string{"one", "two", "three"}
 		_, err := contract.SubmitTransaction("transaction", expected...)
@@ -309,7 +309,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
@@ -324,12 +324,12 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
-				actual = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).TxId
+				actual = test.AssertUnmarshalChannelheader(t, in.ProposedTransaction).TxId
 			}).
 			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
@@ -350,7 +350,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
@@ -370,13 +370,13 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.SignedCommitStatusRequest, _ ...grpc.CallOption) {
 				request := &gateway.CommitStatusRequest{}
-				test.AssertUnmarshall(t, in.Request, request)
+				test.AssertUnmarshal(t, in.Request, request)
 				actual = request.ChannelId
 			}).
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
@@ -391,7 +391,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
-				expected = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).TxId
+				expected = test.AssertUnmarshalChannelheader(t, in.ProposedTransaction).TxId
 			}).
 			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
 		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
@@ -399,13 +399,13 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.SignedCommitStatusRequest, _ ...grpc.CallOption) {
 				request := &gateway.CommitStatusRequest{}
-				test.AssertUnmarshall(t, in.Request, request)
+				test.AssertUnmarshal(t, in.Request, request)
 				actual = request.TransactionId
 			}).
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
@@ -431,7 +431,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSign(sign))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient), WithSign(sign))
 
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
@@ -457,7 +457,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSign(sign))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient), WithSign(sign))
 
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
@@ -474,7 +474,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
 				actualOrgs = in.EndorsingOrganizations
-				transient := test.AssertUnmarshallProposalPayload(t, in.ProposedTransaction).TransientMap
+				transient := test.AssertUnmarshalProposalPayload(t, in.ProposedTransaction).TransientMap
 				actualPrice = transient["price"]
 			}).
 			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
@@ -484,7 +484,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		privateData := map[string][]byte{
 			"price": []byte("3000"),
@@ -515,7 +515,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSign(sign))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient), WithSign(sign))
 
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
@@ -541,7 +541,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSign(sign), WithHash(hash))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient), WithSign(sign), WithHash(hash))
 
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
@@ -559,7 +559,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(newCommitStatusResponse(peer.TxValidationCode_MVCC_READ_CONFLICT, 1), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		_, commit, err := contract.SubmitAsync("transaction")
 		require.NoError(t, err)
@@ -579,7 +579,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		_, commit, err := contract.SubmitAsync("transaction")
 		require.NoError(t, err, "submit")
@@ -599,7 +599,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(newCommitStatusResponse(peer.TxValidationCode_MVCC_READ_CONFLICT, 1), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		_, commit, err := contract.SubmitAsync("transaction")
 		require.NoError(t, err, "submit")
@@ -620,7 +620,7 @@ func TestSubmitTransaction(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(newCommitStatusResponse(peer.TxValidationCode_MVCC_READ_CONFLICT, expectedBlockNumber), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		_, commit, err := contract.SubmitAsync("transaction")
 		require.NoError(t, err, "submit")
@@ -645,7 +645,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
@@ -676,7 +676,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil).
 			AnyTimes()
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithEndorseTimeout(0))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient), WithEndorseTimeout(0))
 
 		_, err := contract.Submit("transaction")
 
@@ -699,7 +699,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Return(nil, nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
@@ -732,7 +732,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil).
 			AnyTimes()
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSubmitTimeout(0))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient), WithSubmitTimeout(0))
 
 		_, err := contract.Submit("transaction")
 
@@ -757,7 +757,7 @@ func TestSubmitTransaction(t *testing.T) {
 			Return(newCommitStatusResponse(peer.TxValidationCode_MVCC_READ_CONFLICT, 101), nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
@@ -793,7 +793,7 @@ func TestSubmitTransaction(t *testing.T) {
 				}
 			})
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithCommitStatusTimeout(0))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient), WithCommitStatusTimeout(0))
 
 		_, err := contract.Submit("transaction")
 
