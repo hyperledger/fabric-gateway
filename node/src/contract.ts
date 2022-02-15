@@ -67,7 +67,7 @@ import { SubmittedTransaction } from './submittedtransaction';
  * ```
  * const proposal = contract.newProposal('transactionName');
  * const transaction = await proposal.endorse();
- * const commit = await proposal.submit();
+ * const commit = await transaction.submit();
  * 
  * const result = transaction.getResult();
  * const status = await commit.getStatus();
