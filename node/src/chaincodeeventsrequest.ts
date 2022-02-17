@@ -18,7 +18,7 @@ export interface ChaincodeEventsRequest extends Signable {
     /**
      * Get chaincode events emitted by transaction functions of a specific chaincode.
      * @param options - gRPC call options.
-     * @returns Chaincode events.
+     * @returns The iterator should be closed after use to complete the eventing session.
      * @throws {@link GatewayError}
      * Thrown by the iterator if the gRPC service invocation fails.
      * @example

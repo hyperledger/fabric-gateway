@@ -5,7 +5,6 @@
  */
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
-import { MockGatewayGrpcClient, newEndorseResponse } from './client.test';
 import { CommitError } from './commiterror';
 import { CommitStatusError } from './commitstatuserror';
 import { Contract } from './contract';
@@ -15,6 +14,7 @@ import { Network } from './network';
 import { CommitStatusResponse } from './protos/gateway/gateway_pb';
 import { TxValidationCode } from './protos/peer/transaction_pb';
 import { SubmitError } from './submiterror';
+import { MockGatewayGrpcClient, newEndorseResponse } from './testutils.test';
 
 describe('Transaction', () => {
     const expectedResult = 'TX_RESULT';

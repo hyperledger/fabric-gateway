@@ -22,7 +22,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func AssertValidEventRequestHeader(t *testing.T, payload *common.Payload, expectedChannel string) {
+func AssertValidBlockEventRequestHeader(t *testing.T, payload *common.Payload, expectedChannel string) {
 	channelHeader := &common.ChannelHeader{}
 	test.AssertUnmarshal(t, payload.GetHeader().GetChannelHeader(), channelHeader)
 
@@ -83,7 +83,7 @@ func TestBlockEvents(t *testing.T) {
 		_, err := network.BlockEvents(ctx)
 		require.NoError(t, err)
 
-		AssertValidEventRequestHeader(t, payload, network.Name())
+		AssertValidBlockEventRequestHeader(t, payload, network.Name())
 		actual := &orderer.SeekInfo{}
 		test.AssertUnmarshal(t, payload.GetData(), actual)
 
@@ -125,7 +125,7 @@ func TestBlockEvents(t *testing.T) {
 		_, err := network.BlockEvents(ctx, WithStartBlock(418))
 		require.NoError(t, err)
 
-		AssertValidEventRequestHeader(t, payload, network.Name())
+		AssertValidBlockEventRequestHeader(t, payload, network.Name())
 		actual := &orderer.SeekInfo{}
 		test.AssertUnmarshal(t, payload.GetData(), actual)
 

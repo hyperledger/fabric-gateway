@@ -89,6 +89,21 @@ export interface ConnectOptions {
      * Supplier of default call options for chaincode events.
      */
     chaincodeEventsOptions?: () => CallOptions;
+
+    /**
+     * Supplier of default call options for block events.
+     */
+    blockEventsOptions?: () => CallOptions;
+
+    /**
+     * Supplier of default call options for filtered block events.
+     */
+     filteredBlockEventsOptions?: () => CallOptions;
+    
+    /**
+     * Supplier of default call options for block events with private data.
+     */
+    blockEventsWithPrivateDataOptions?: () => CallOptions;
 }
 
 /**

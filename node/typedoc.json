@@ -1,0 +1,13 @@
+{
+    "entryPoints": [
+        "src/index.ts"
+    ],
+    "intentionallyNotExported": [
+        "TxValidationCodeMap",
+        "Block",
+        "BlockAndPrivateData",
+        "FilteredBlock"
+    ],
+    "out": "apidocs",
+    "treatWarningsAsErrors": true
+}

@@ -6,19 +6,14 @@
 
 import { ChaincodeEventsRequest, ChaincodeEventsRequestImpl } from './chaincodeeventsrequest';
 import { GatewayClient } from './client';
+import { EventsBuilder, EventsOptions } from './eventsbuilder';
 import { ChaincodeEventsRequest as ChaincodeEventsRequestProto } from './protos/gateway/gateway_pb';
-import { SeekNextCommit, SeekPosition, SeekSpecified } from './protos/orderer/ab_pb';
 import { SigningIdentity } from './signingidentity';
 
 /**
  * Options used when requesting chaincode events.
  */
-export interface ChaincodeEventsOptions {
-    /**
-     * Block number at which to start reading chaincode events.
-     */
-    startBlock?: bigint;
-}
+export type ChaincodeEventsOptions = EventsOptions;
 
 export interface ChaincodeEventsBuilderOptions extends ChaincodeEventsOptions {
     client: GatewayClient;
@@ -29,9 +24,11 @@ export interface ChaincodeEventsBuilderOptions extends ChaincodeEventsOptions {
 
 export class ChaincodeEventsBuilder {
     readonly #options: Readonly<ChaincodeEventsBuilderOptions>;
+    readonly #eventsBuilder: EventsBuilder;
 
     constructor(options: Readonly<ChaincodeEventsBuilderOptions>) {
         this.#options = options;
+        this.#eventsBuilder = new EventsBuilder(options);
     }
 
     build(): ChaincodeEventsRequest {
@@ -47,25 +44,8 @@ export class ChaincodeEventsBuilder {
         result.setChannelId(this.#options.channelName);
         result.setChaincodeId(this.#options.chaincodeName);
         result.setIdentity(this.#options.signingIdentity.getCreator());
-        result.setStartPosition(this.#getStartPosition());
+        result.setStartPosition(this.#eventsBuilder.getStartPosition());
 
-        return result;
-    }
-
-    #getStartPosition(): SeekPosition {
-        const result = new SeekPosition();
-
-        const startBlock = this.#options.startBlock;
-        if (startBlock != undefined) {
-            const specified = new SeekSpecified();
-            specified.setNumber(Number(startBlock));
-
-            result.setSpecified(specified);
-
-            return result;
-        }
-
-        result.setNextCommit(new SeekNextCommit());
         return result;
     }
 }

@@ -10,15 +10,19 @@ import { CommitStatusError } from './commitstatuserror';
 import { EndorseError } from './endorseerror';
 import { ConnectOptions } from './gateway';
 import { GatewayError, newGatewayError } from './gatewayerror';
+import { Envelope } from './protos/common/common_pb';
 import { ChaincodeEventsResponse, CommitStatusRequest, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
+import { DeliverResponse } from './protos/peer/events_pb';
 import { SubmitError } from './submiterror';
 
-const servicePath = '/gateway.Gateway/';
-export const evaluateMethod = servicePath + 'Evaluate';
-export const endorseMethod = servicePath + 'Endorse';
-export const submitMethod = servicePath + 'Submit';
-export const commitStatusMethod = servicePath + 'CommitStatus';
-export const chaincodeEventsMethod = servicePath + 'ChaincodeEvents';
+export const evaluateMethod = '/gateway.Gateway/Evaluate';
+export const endorseMethod = '/gateway.Gateway/Endorse';
+export const submitMethod = '/gateway.Gateway/Submit';
+export const commitStatusMethod = '/gateway.Gateway/CommitStatus';
+export const chaincodeEventsMethod = '/gateway.Gateway/ChaincodeEvents';
+export const deliverMethod = '/protos.Deliver/Deliver';
+export const deliverFilteredMethod = '/protos.Deliver/DeliverFiltered';
+export const deliverWithPrivateDataMethod = '/protos.Deliver/DeliverWithPrivateData';
 
 export interface GatewayClient {
     evaluate(request: EvaluateRequest, options?: CallOptions): Promise<EvaluateResponse>;
@@ -26,6 +30,9 @@ export interface GatewayClient {
     submit(request: SubmitRequest, options?: CallOptions): Promise<SubmitResponse>;
     commitStatus(request: SignedCommitStatusRequest, options?: CallOptions): Promise<CommitStatusResponse>;
     chaincodeEvents(request: SignedChaincodeEventsRequest, options?: CallOptions): CloseableAsyncIterable<ChaincodeEventsResponse>;
+    blockEvents(request: Envelope, options?: CallOptions): CloseableAsyncIterable<DeliverResponse>;
+    filteredBlockEvents(request: Envelope, options?: CallOptions): CloseableAsyncIterable<DeliverResponse>;
+    blockEventsWithPrivateData(request: Envelope, options?: CallOptions): CloseableAsyncIterable<DeliverResponse>;
 }
 
 /**
@@ -47,14 +54,22 @@ export interface ServerStreamResponse<T> extends AsyncIterable<T> {
 }
 
 /**
+ * Subset of grpc-js ClientDuplexStream used by GatewayClient to aid mocking.
+ */
+export interface DuplexStreamResponse<RequestType, ResponseType> extends ServerStreamResponse<ResponseType> {
+    write(chunk: RequestType): boolean;
+}
+
+/**
  * Subset of the grpc-js Client used by GatewayClient to aid mocking.
  */
 export interface GatewayGrpcClient {
     makeUnaryRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, options: CallOptions, callback: requestCallback<ResponseType>): ClientUnaryCall;
-    makeServerStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, options?: CallOptions): ServerStreamResponse<ResponseType>;
+    makeServerStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, options: CallOptions): ServerStreamResponse<ResponseType>;
+    makeBidiStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, options: CallOptions): DuplexStreamResponse<RequestType, ResponseType>
 }
 
-type DefaultCallOptions = Pick<ConnectOptions, 'commitStatusOptions' | 'endorseOptions' | 'evaluateOptions' | 'submitOptions' | 'chaincodeEventsOptions'>;
+type DefaultCallOptions = Pick<ConnectOptions, 'commitStatusOptions' | 'endorseOptions' | 'evaluateOptions' | 'submitOptions' | 'chaincodeEventsOptions' | 'blockEventsOptions' | 'filteredBlockEventsOptions' | 'blockEventsWithPrivateDataOptions'>;
 
 class GatewayClientImpl implements GatewayClient {
     readonly #client: GatewayGrpcClient;
@@ -127,19 +142,17 @@ class GatewayClientImpl implements GatewayClient {
     chaincodeEvents(request: SignedChaincodeEventsRequest, options?: Readonly<CallOptions>): CloseableAsyncIterable<ChaincodeEventsResponse> {
         return this.#makeServerStreamRequest(
             chaincodeEventsMethod,
-            serialize,
             deserializeChaincodeEventsResponse,
             request,
-            buildOptions(this.#defaultOptions.chaincodeEventsOptions, options)
+            buildOptions(this.#defaultOptions.chaincodeEventsOptions, options),
         );
     }
 
-    #makeServerStreamRequest<RequestType, ResponseType>(
+    #makeServerStreamRequest<RequestType extends Message, ResponseType>(
         method: string,
-        serialize: (value: RequestType) => Buffer,
         deserialize: (value: Buffer) => ResponseType,
         argument: RequestType,
-        options?: CallOptions
+        options: CallOptions
     ): CloseableAsyncIterable<ResponseType> {
         try {
             const serverStream = this.#client.makeServerStreamRequest(method, serialize, deserialize, argument, options);
@@ -148,10 +161,52 @@ class GatewayClientImpl implements GatewayClient {
                 close: () => serverStream.cancel(),
             }
         } catch (err) {
-            if (isServiceError(err)) {
-                throw newGatewayError(err);
+            rethrowGrpcError(err);
+        }
+    }
+
+    blockEvents(request: Envelope, options?: CallOptions): CloseableAsyncIterable<DeliverResponse> {
+        return this.#makeBidiStreamRequest(
+            deliverMethod,
+            deserializeDeliverResponse,
+            request,
+            buildOptions(this.#defaultOptions.blockEventsOptions, options),
+        );
+    }
+
+    filteredBlockEvents(request: Envelope, options?: CallOptions): CloseableAsyncIterable<DeliverResponse> {
+        return this.#makeBidiStreamRequest(
+            deliverFilteredMethod,
+            deserializeDeliverResponse,
+            request,
+            buildOptions(this.#defaultOptions.filteredBlockEventsOptions, options),
+        );
+    }
+
+    blockEventsWithPrivateData(request: Envelope, options?: CallOptions): CloseableAsyncIterable<DeliverResponse> {
+        return this.#makeBidiStreamRequest(
+            deliverWithPrivateDataMethod,
+            deserializeDeliverResponse,
+            request,
+            buildOptions(this.#defaultOptions.blockEventsWithPrivateDataOptions, options),
+        );
+    }
+
+    #makeBidiStreamRequest<RequestType extends Message, ResponseType>(
+        method: string,
+        deserialize: (value: Buffer) => ResponseType,
+        request: RequestType,
+        options: CallOptions
+    ): CloseableAsyncIterable<ResponseType> {
+        try {
+            const duplexStream = this.#client.makeBidiStreamRequest(method, serialize, deserialize, options);
+            duplexStream.write(request);
+            return {
+                [Symbol.asyncIterator]: () => wrapAsyncIterator(duplexStream[Symbol.asyncIterator]()),
+                close: () => duplexStream.cancel(),
             }
-            throw err;
+        } catch (err) {
+            rethrowGrpcError(err);
         }
     }
 }
@@ -182,13 +237,17 @@ function wrapAsyncIterator<T>(iterator: AsyncIterator<T>): AsyncIterator<T> {
             try {
                 return await iterator.next(...args);
             } catch (err) {
-                if (isServiceError(err)) {
-                    throw newGatewayError(err);
-                }
-                throw err;
+                rethrowGrpcError(err);
             }
         }
     };
+}
+
+function rethrowGrpcError(err: unknown): never {
+    if (isServiceError(err)) {
+        throw newGatewayError(err);
+    }
+    throw err;
 }
 
 function isServiceError(err: unknown): err is ServiceError {
@@ -221,6 +280,10 @@ function deserializeCommitStatusResponse(bytes: Uint8Array): CommitStatusRespons
 
 function deserializeChaincodeEventsResponse(bytes: Uint8Array): ChaincodeEventsResponse {
     return ChaincodeEventsResponse.deserializeBinary(bytes);
+}
+
+function deserializeDeliverResponse(bytes: Uint8Array): DeliverResponse {
+    return DeliverResponse.deserializeBinary(bytes);
 }
 
 export function newGatewayClient(client: GatewayGrpcClient, defaultOptions: DefaultCallOptions): GatewayClient {
