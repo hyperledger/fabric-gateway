@@ -44,7 +44,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
 			Return(nil, expected)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		_, err := contract.EvaluateTransaction("transaction")
 
@@ -58,7 +58,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
 			Return(newEvaluateResponse(expected), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		actual, err := contract.EvaluateTransaction("transaction")
 		require.NoError(t, err)
@@ -71,12 +71,12 @@ func TestEvaluateTransaction(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
-				actual = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).ChannelId
+				actual = test.AssertUnmarshalChannelheader(t, in.ProposedTransaction).ChannelId
 			}).
 			Return(newEvaluateResponse(nil), nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		_, err := contract.EvaluateTransaction("transaction")
 		require.NoError(t, err)
@@ -90,12 +90,12 @@ func TestEvaluateTransaction(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
-				actual = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.ChaincodeId.Name
+				actual = test.AssertUnmarshalInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.ChaincodeId.Name
 			}).
 			Return(newEvaluateResponse(nil), nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		_, err := contract.EvaluateTransaction("transaction")
 		require.NoError(t, err)
@@ -109,12 +109,12 @@ func TestEvaluateTransaction(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
-				args = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
+				args = test.AssertUnmarshalInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
 			}).
 			Return(newEvaluateResponse(nil), nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		expected := "TRANSACTION_NAME"
 		_, err := contract.EvaluateTransaction(expected)
@@ -129,12 +129,12 @@ func TestEvaluateTransaction(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
-				args = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
+				args = test.AssertUnmarshalInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
 			}).
 			Return(newEvaluateResponse(nil), nil).
 			Times(1)
 
-		contract := AssertNewTestContractWithName(t, "chaincode", "CONTRACT_NAME", WithClient(mockClient))
+		contract := AssertNewTestContractWithName(t, "chaincode", "CONTRACT_NAME", WithGatewayClient(mockClient))
 
 		_, err := contract.EvaluateTransaction("TRANSACTION_NAME")
 		require.NoError(t, err)
@@ -149,12 +149,12 @@ func TestEvaluateTransaction(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
-				args = test.AssertUnmarshallInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
+				args = test.AssertUnmarshalInvocationSpec(t, in.ProposedTransaction).ChaincodeSpec.Input.Args
 			}).
 			Return(newEvaluateResponse(nil), nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		expected := []string{"one", "two", "three"}
 		_, err := contract.EvaluateTransaction("transaction", expected...)
@@ -174,7 +174,7 @@ func TestEvaluateTransaction(t *testing.T) {
 			Return(newEvaluateResponse(nil), nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		_, err := contract.EvaluateTransaction("transaction")
 		require.NoError(t, err)
@@ -188,12 +188,12 @@ func TestEvaluateTransaction(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
-				actual = test.AssertUnmarshallChannelheader(t, in.ProposedTransaction).TxId
+				actual = test.AssertUnmarshalChannelheader(t, in.ProposedTransaction).TxId
 			}).
 			Return(newEvaluateResponse(nil), nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
@@ -213,7 +213,7 @@ func TestEvaluateTransaction(t *testing.T) {
 			Return(newEvaluateResponse(nil), nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
@@ -237,7 +237,7 @@ func TestEvaluateTransaction(t *testing.T) {
 			Return(newEvaluateResponse(nil), nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSign(sign))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient), WithSign(sign))
 
 		_, err := contract.EvaluateTransaction("transaction")
 		require.NoError(t, err)
@@ -259,7 +259,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
 			Return(newEvaluateResponse(nil), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithSign(sign), WithHash(hash))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient), WithSign(sign), WithHash(hash))
 
 		_, err := contract.EvaluateTransaction("transaction")
 		require.NoError(t, err)
@@ -276,12 +276,12 @@ func TestEvaluateTransaction(t *testing.T) {
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
 				actualOrgs = in.TargetOrganizations
-				transient := test.AssertUnmarshallProposalPayload(t, in.ProposedTransaction).TransientMap
+				transient := test.AssertUnmarshalProposalPayload(t, in.ProposedTransaction).TransientMap
 				actualPrice = transient["price"]
 			}).
 			Return(newEvaluateResponse(nil), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		privateData := map[string][]byte{
 			"price": []byte("3000"),
@@ -308,7 +308,7 @@ func TestEvaluateTransaction(t *testing.T) {
 			Return(newEvaluateResponse(nil), nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
@@ -332,7 +332,7 @@ func TestEvaluateTransaction(t *testing.T) {
 				}
 			})
 
-		contract := AssertNewTestContract(t, "chaincode", WithClient(mockClient), WithEvaluateTimeout(0))
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient), WithEvaluateTimeout(0))
 
 		_, err := contract.Evaluate("transaction")
 

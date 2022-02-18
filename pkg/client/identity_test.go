@@ -48,12 +48,12 @@ func TestIdentity(t *testing.T) {
 		}
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
-				actual = test.AssertUnmarshallSignatureHeader(t, in.ProposedTransaction).Creator
+				actual = test.AssertUnmarshalSignatureHeader(t, in.ProposedTransaction).Creator
 			}).
 			Return(evaluateResponse, nil).
 			Times(1)
 
-		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithIdentity(id))
+		contract := AssertNewTestContract(t, "contract", WithGatewayClient(mockClient), WithIdentity(id))
 
 		_, err := contract.EvaluateTransaction("transaction")
 		require.NoError(t, err)
@@ -70,7 +70,7 @@ func TestIdentity(t *testing.T) {
 		}
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 			Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
-				actual = test.AssertUnmarshallSignatureHeader(t, in.ProposedTransaction).Creator
+				actual = test.AssertUnmarshalSignatureHeader(t, in.ProposedTransaction).Creator
 			}).
 			Return(endorseResponse, nil).
 			Times(1)
@@ -79,7 +79,7 @@ func TestIdentity(t *testing.T) {
 		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 			Return(statusResponse, nil)
 
-		contract := AssertNewTestContract(t, "contract", WithClient(mockClient), WithIdentity(id))
+		contract := AssertNewTestContract(t, "contract", WithGatewayClient(mockClient), WithIdentity(id))
 
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)

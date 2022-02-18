@@ -25,7 +25,11 @@ func TestOfflineSign(t *testing.T) {
 	}
 
 	newContractWithNoSign := func(t *testing.T, options ...ConnectOption) (*Gateway, *Contract) {
-		gateway, err := Connect(TestCredentials.identity, options...)
+		defaultOptions := []ConnectOption{
+			WithDeliverClient(NewMockDeliverClient(gomock.NewController(t))),
+		}
+		options = append(defaultOptions, options...)
+		gateway, err := Connect(TestCredentials.Identity(), options...)
 		require.NoError(t, err)
 
 		contract := gateway.GetNetwork("network").GetContract("contract")
@@ -46,7 +50,7 @@ func TestOfflineSign(t *testing.T) {
 				Return(&evaluateResponse, nil).
 				AnyTimes()
 
-			_, contract := newContractWithNoSign(t, WithClient(mockClient))
+			_, contract := newContractWithNoSign(t, WithGatewayClient(mockClient))
 
 			proposal, err := contract.NewProposal("transaction")
 			require.NoError(t, err)
@@ -66,7 +70,7 @@ func TestOfflineSign(t *testing.T) {
 				Return(&evaluateResponse, nil).
 				Times(1)
 
-			gateway, contract := newContractWithNoSign(t, WithClient(mockClient))
+			gateway, contract := newContractWithNoSign(t, WithGatewayClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
 			require.NoError(t, err)
@@ -95,7 +99,7 @@ func TestOfflineSign(t *testing.T) {
 				Return(&evaluateResponse, nil).
 				Times(1)
 
-			gateway, contract := newContractWithNoSign(t, WithClient(mockClient))
+			gateway, contract := newContractWithNoSign(t, WithGatewayClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction", WithEndorsingOrganizations("MY_ORG"))
 			require.NoError(t, err)
@@ -120,7 +124,7 @@ func TestOfflineSign(t *testing.T) {
 				Return(AssertNewEndorseResponse(t, "result", "network"), nil).
 				AnyTimes()
 
-			_, contract := newContractWithNoSign(t, WithClient(mockClient))
+			_, contract := newContractWithNoSign(t, WithGatewayClient(mockClient))
 
 			proposal, err := contract.NewProposal("transaction")
 			require.NoError(t, err)
@@ -140,7 +144,7 @@ func TestOfflineSign(t *testing.T) {
 				Return(AssertNewEndorseResponse(t, "result", "network"), nil).
 				Times(1)
 
-			gateway, contract := newContractWithNoSign(t, WithClient(mockClient))
+			gateway, contract := newContractWithNoSign(t, WithGatewayClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
 			require.NoError(t, err)
@@ -169,7 +173,7 @@ func TestOfflineSign(t *testing.T) {
 				Return(AssertNewEndorseResponse(t, "result", "network"), nil).
 				Times(1)
 
-			gateway, contract := newContractWithNoSign(t, WithClient(mockClient))
+			gateway, contract := newContractWithNoSign(t, WithGatewayClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction", WithEndorsingOrganizations("MY_ORG"))
 			require.NoError(t, err)
@@ -197,7 +201,7 @@ func TestOfflineSign(t *testing.T) {
 				Return(nil, nil).
 				AnyTimes()
 
-			gateway, contract := newContractWithNoSign(t, WithClient(mockClient))
+			gateway, contract := newContractWithNoSign(t, WithGatewayClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
 			require.NoError(t, err)
@@ -228,7 +232,7 @@ func TestOfflineSign(t *testing.T) {
 				Return(nil, nil).
 				Times(1)
 
-			gateway, contract := newContractWithNoSign(t, WithClient(mockClient))
+			gateway, contract := newContractWithNoSign(t, WithGatewayClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
 			require.NoError(t, err)
@@ -268,7 +272,7 @@ func TestOfflineSign(t *testing.T) {
 				Return(nil, nil).
 				AnyTimes()
 
-			gateway, contract := newContractWithNoSign(t, WithClient(mockClient))
+			gateway, contract := newContractWithNoSign(t, WithGatewayClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
 			require.NoError(t, err)
@@ -311,7 +315,7 @@ func TestOfflineSign(t *testing.T) {
 				Return(newCommitStatusResponse(peer.TxValidationCode_VALID), nil).
 				Times(1)
 
-			gateway, contract := newContractWithNoSign(t, WithClient(mockClient))
+			gateway, contract := newContractWithNoSign(t, WithGatewayClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
 			require.NoError(t, err)
@@ -350,7 +354,7 @@ func TestOfflineSign(t *testing.T) {
 	t.Run("Serialization", func(t *testing.T) {
 		t.Run("Proposal keeps same digest", func(t *testing.T) {
 			mockClient := NewMockGatewayClient(gomock.NewController(t))
-			gateway, contract := newContractWithNoSign(t, WithClient(mockClient))
+			gateway, contract := newContractWithNoSign(t, WithGatewayClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
 			require.NoError(t, err)
@@ -369,7 +373,7 @@ func TestOfflineSign(t *testing.T) {
 
 		t.Run("Proposal keeps same transaction ID", func(t *testing.T) {
 			mockClient := NewMockGatewayClient(gomock.NewController(t))
-			gateway, contract := newContractWithNoSign(t, WithClient(mockClient))
+			gateway, contract := newContractWithNoSign(t, WithGatewayClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
 			require.NoError(t, err)
@@ -392,7 +396,7 @@ func TestOfflineSign(t *testing.T) {
 				Return(AssertNewEndorseResponse(t, "result", "network"), nil).
 				Times(1)
 
-			gateway, contract := newContractWithNoSign(t, WithClient(mockClient))
+			gateway, contract := newContractWithNoSign(t, WithGatewayClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
 			require.NoError(t, err)
@@ -427,7 +431,7 @@ func TestOfflineSign(t *testing.T) {
 				Return(nil, nil).
 				Times(1)
 
-			gateway, contract := newContractWithNoSign(t, WithClient(mockClient))
+			gateway, contract := newContractWithNoSign(t, WithGatewayClient(mockClient))
 
 			unsignedProposal, err := contract.NewProposal("transaction")
 			require.NoError(t, err)

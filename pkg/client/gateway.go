@@ -52,9 +52,14 @@ func Connect(id identity.Identity, options ...ConnectOption) (*Gateway, error) {
 		return nil, err
 	}
 
-	if gw.client.grpcClient == nil {
+	if gw.client.grpcGatewayClient == nil {
 		cancel()
-		return nil, errors.New("no connection details supplied")
+		return nil, errors.New("no gateway connection details supplied")
+	}
+
+	if gw.client.grpcDeliverClient == nil {
+		cancel()
+		return nil, errors.New("no deliver connection details supplied")
 	}
 
 	return gw, nil
@@ -94,7 +99,8 @@ func WithHash(hash hash.Hash) ConnectOption {
 // is closed.
 func WithClientConnection(clientConnection *grpc.ClientConn) ConnectOption {
 	return func(gw *Gateway) error {
-		gw.client.grpcClient = gateway.NewGatewayClient(clientConnection)
+		gw.client.grpcGatewayClient = gateway.NewGatewayClient(clientConnection)
+		gw.client.grpcDeliverClient = peer.NewDeliverClient(clientConnection)
 		return nil
 	}
 }

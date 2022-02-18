@@ -20,7 +20,7 @@ type ChaincodeEventListener struct {
 	events <-chan *client.ChaincodeEvent
 }
 
-func NewChaincodeEventListener(parentCtx context.Context, network *client.Network, chaincodeName string, options ...client.ChaincodeEventsOption) (*ChaincodeEventListener, error) {
+func NewChaincodeEventListener(parentCtx context.Context, network *client.Network, chaincodeName string, options ...client.EventOption) (*ChaincodeEventListener, error) {
 	ctx, cancel := context.WithCancel(parentCtx)
 
 	events, err := network.ChaincodeEvents(ctx, chaincodeName, options...)

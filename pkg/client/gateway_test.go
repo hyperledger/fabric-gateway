@@ -13,16 +13,26 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/hyperledger/fabric-protos-go/gateway"
+	"github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 )
 
-//go:generate mockgen -destination ./gateway_mock_test.go -package ${GOPACKAGE} github.com/hyperledger/fabric-protos-go/gateway GatewayClient
+//go:generate mockgen -destination ./gateway_mock_test.go -package ${GOPACKAGE} github.com/hyperledger/fabric-protos-go/gateway GatewayClient,Gateway_ChaincodeEventsClient
+//go:generate mockgen -destination ./deliver_mock_test.go -package ${GOPACKAGE} github.com/hyperledger/fabric-protos-go/peer DeliverClient,Deliver_DeliverClient,Deliver_DeliverFilteredClient,Deliver_DeliverWithPrivateDataClient
 
-// WithClient uses the supplied client for the Gateway. Allows a stub implementation to be used for testing.
-func WithClient(client gateway.GatewayClient) ConnectOption {
+// WithGatewayClient uses the supplied client for the Gateway. Allows a stub implementation to be used for testing.
+func WithGatewayClient(client gateway.GatewayClient) ConnectOption {
 	return func(gateway *Gateway) error {
-		gateway.client.grpcClient = client
+		gateway.client.grpcGatewayClient = client
+		return nil
+	}
+}
+
+// WithDeliverClient uses the supplied client for the Deliver service. Allows a stub implementation to be used for testing.
+func WithDeliverClient(client peer.DeliverClient) ConnectOption {
+	return func(gateway *Gateway) error {
+		gateway.client.grpcDeliverClient = client
 		return nil
 	}
 }
@@ -36,16 +46,21 @@ func WithIdentity(id identity.Identity) ConnectOption {
 }
 
 func AssertNewTestGateway(t *testing.T, options ...ConnectOption) *Gateway {
-	options = append([]ConnectOption{WithSign(TestCredentials.sign)}, options...)
-	gateway, err := Connect(TestCredentials.identity, options...)
+	defaultOptions := []ConnectOption{
+		WithSign(TestCredentials.sign),
+		WithGatewayClient(NewMockGatewayClient(gomock.NewController(t))),
+		WithDeliverClient(NewMockDeliverClient(gomock.NewController(t))),
+	}
+	options = append(defaultOptions, options...)
+	gateway, err := Connect(TestCredentials.Identity(), options...)
 	require.NoError(t, err)
 
 	return gateway
 }
 
 func TestGateway(t *testing.T) {
-	id := TestCredentials.identity
-	sign := TestCredentials.sign
+	id := TestCredentials.Identity()
+	sign := TestCredentials.Sign
 
 	t.Run("Connect Gateway with no endpoint returns error", func(t *testing.T) {
 		_, err := Connect(id, WithSign(sign))
@@ -83,7 +98,7 @@ func TestGateway(t *testing.T) {
 	t.Run("GetNetwork returns correctly named Network", func(t *testing.T) {
 		networkName := "network"
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
-		gateway := AssertNewTestGateway(t, WithClient(mockClient))
+		gateway := AssertNewTestGateway(t, WithGatewayClient(mockClient))
 
 		network := gateway.GetNetwork(networkName)
 
@@ -93,7 +108,7 @@ func TestGateway(t *testing.T) {
 
 	t.Run("Identity returns connecting identity", func(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
-		gateway := AssertNewTestGateway(t, WithIdentity(id), WithClient(mockClient))
+		gateway := AssertNewTestGateway(t, WithIdentity(id), WithGatewayClient(mockClient))
 
 		result := gateway.Identity()
 
