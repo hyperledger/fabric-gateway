@@ -4,11 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { BlockEventsBuilder, BlockEventsOptions, BlockEventsWithPrivateDataBuilder, FilteredBlockEventsBuilder } from './blockeventsbuilder';
+import { BlockEventsRequest, BlockEventsWithPrivateDataRequest, FilteredBlockEventsRequest } from './blockeventsrequest';
 import { ChaincodeEvent } from './chaincodeevent';
 import { ChaincodeEventsBuilder, ChaincodeEventsOptions } from './chaincodeeventsbuilder';
 import { ChaincodeEventsRequest } from './chaincodeeventsrequest';
 import { CloseableAsyncIterable, GatewayClient } from './client';
 import { Contract, ContractImpl } from './contract';
+import { Block } from './protos/common/common_pb';
+import { BlockAndPrivateData, FilteredBlock } from './protos/peer/events_pb';
 import { SigningIdentity } from './signingidentity';
 
 /**
@@ -33,7 +37,8 @@ export interface Network {
     /**
      * Get chaincode events emitted by transaction functions of a specific chaincode.
      * @param chaincodeName - A chaincode name.
-     * @returns Chaincode events.
+     * @param options - Event listening options.
+     * @returns The iterator should be closed after use to complete the eventing session.
      * @throws {@link GatewayError}
      * Thrown by the iterator if the gRPC service invocation fails.
      * @example
@@ -55,9 +60,89 @@ export interface Network {
      * off-line signing flow.
      * @param chaincodeName - Chaincode name.
      * @param options - Event listening options.
-     * @returns A chaincode events request.
      */
     newChaincodeEventsRequest(chaincodeName: string, options?: ChaincodeEventsOptions): ChaincodeEventsRequest;
+
+    /**
+     * Get block events.
+     * @param options - Event listening options.
+     * @returns Block protocol buffer messages. The iterator should be closed after use to complete the eventing session.
+
+     * @throws {@link GatewayError}
+     * Thrown by the iterator if the gRPC service invocation fails.
+     * @example
+     * ```
+     * const blocks = await network.getBlockEvents();
+     * try {
+     *     for async (const block of blocks) {
+     *         // Process block
+     *     }
+     * } finally {
+     *     blocks.close();
+     * }
+     * ```
+     */
+     getBlockEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<Block>>
+
+     /**
+      * Create a request to receive block events. Supports off-line signing flow.
+      * @param options - Event listening options.
+      */
+     newBlockEventsRequest(options?: BlockEventsOptions): BlockEventsRequest;
+
+    /**
+     * Get filtered block events.
+     * @param options - Event listening options.
+     * @returns Filtered block protocol buffer messages. The iterator should be closed after use to complete the
+     * eventing session.
+     * @throws {@link GatewayError}
+     * Thrown by the iterator if the gRPC service invocation fails.
+     * @example
+     * ```
+     * const blocks = await network.getFilteredBlockEvents();
+     * try {
+     *     for async (const block of blocks) {
+     *         // Process block
+     *     }
+     * } finally {
+     *     blocks.close();
+     * }
+     * ```
+     */
+     getFilteredBlockEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<FilteredBlock>>
+
+     /**
+      * Create a request to receive filtered block events. Supports off-line signing flow.
+      * @param options - Event listening options.
+      */
+     newFilteredBlockEventsRequest(options?: BlockEventsOptions): FilteredBlockEventsRequest;
+
+    /**
+     * Get block events with private data.
+     * @param options - Event listening options.
+     * @returns Blocks with private data protocol buffer messages. The iterator should be closed after use to complete
+     * the eventing session.
+     * @throws {@link GatewayError}
+     * Thrown by the iterator if the gRPC service invocation fails.
+     * @example
+     * ```
+     * const blocks = await network.getBlockEventsWithPrivateData();
+     * try {
+     *     for async (const block of blocks) {
+     *         // Process block
+     *     }
+     * } finally {
+     *     blocks.close();
+     * }
+     * ```
+     */
+     getBlockEventsWithPrivateData(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<BlockAndPrivateData>>
+
+     /**
+      * Create a request to receive block events with private data. Supports off-line signing flow.
+      * @param options - Event listening options.
+      */
+     newBlockEventsWithPrivateDataRequest(options?: BlockEventsOptions): BlockEventsWithPrivateDataRequest;
 }
 
 export interface NetworkOptions {
@@ -101,6 +186,54 @@ export class NetworkImpl implements Network {
             options,
             {
                 chaincodeName: chaincodeName,
+                channelName: this.#channelName,
+                client: this.#client,
+                signingIdentity: this.#signingIdentity,
+            },
+        )).build();
+    }
+
+    async getBlockEvents(options?: Readonly<BlockEventsOptions>): Promise<CloseableAsyncIterable<Block>> {
+        return this.newBlockEventsRequest(options).getEvents();
+    }
+
+    newBlockEventsRequest(options: Readonly<BlockEventsOptions> = {}): BlockEventsRequest {
+        return new BlockEventsBuilder(Object.assign(
+            {},
+            options,
+            {
+                channelName: this.#channelName,
+                client: this.#client,
+                signingIdentity: this.#signingIdentity,
+            },
+        )).build();
+    }
+
+    async getFilteredBlockEvents(options?: Readonly<BlockEventsOptions>): Promise<CloseableAsyncIterable<FilteredBlock>> {
+        return this.newFilteredBlockEventsRequest(options).getEvents();
+    }
+
+    newFilteredBlockEventsRequest(options: Readonly<BlockEventsOptions> = {}): FilteredBlockEventsRequest {
+        return new FilteredBlockEventsBuilder(Object.assign(
+            {},
+            options,
+            {
+                channelName: this.#channelName,
+                client: this.#client,
+                signingIdentity: this.#signingIdentity,
+            },
+        )).build();
+    }
+
+    async getBlockEventsWithPrivateData(options?: Readonly<BlockEventsOptions>): Promise<CloseableAsyncIterable<BlockAndPrivateData>> {
+        return this.newBlockEventsWithPrivateDataRequest(options).getEvents();
+    }
+
+    newBlockEventsWithPrivateDataRequest(options: Readonly<BlockEventsOptions> = {}): BlockEventsWithPrivateDataRequest {
+        return new BlockEventsWithPrivateDataBuilder(Object.assign(
+            {},
+            options,
+            {
                 channelName: this.#channelName,
                 client: this.#client,
                 signingIdentity: this.#signingIdentity,

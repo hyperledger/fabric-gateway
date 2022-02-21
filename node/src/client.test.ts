@@ -7,216 +7,11 @@
 /* eslint-disable jest/no-export */
 
 import * as grpc from '@grpc/grpc-js';
-import { UnaryCallback } from '@grpc/grpc-js/build/src/client';
-import { chaincodeEventsMethod, commitStatusMethod, endorseMethod, evaluateMethod, GatewayClient, GatewayGrpcClient, newGatewayClient, ServerStreamResponse, submitMethod } from './client';
+import { GatewayClient, newGatewayClient } from './client';
 import { GatewayError } from './gatewayerror';
-import { ChannelHeader, Envelope, Header, Payload } from './protos/common/common_pb';
-import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
-import { ChaincodeAction } from './protos/peer/proposal_pb';
-import { ProposalResponsePayload, Response } from './protos/peer/proposal_response_pb';
-import { ChaincodeActionPayload, ChaincodeEndorsedAction, Transaction, TransactionAction } from './protos/peer/transaction_pb';
-
-type MockUnaryRequest<RequestType, ResponseType> = jest.Mock<grpc.ClientUnaryCall, [RequestType, grpc.CallOptions, UnaryCallback<ResponseType>]>;
-type MockServerStreamRequest<RequestType, ResponseType> = jest.Mock<ServerStreamResponse<ResponseType>, [RequestType, grpc.CallOptions]>;
-
-export class MockGatewayGrpcClient implements GatewayGrpcClient {
-    readonly #chaincodeEventsMock = jest.fn() as MockServerStreamRequest<SignedChaincodeEventsRequest, ChaincodeEventsResponse>;
-    readonly #commitStatusMock = jest.fn() as MockUnaryRequest<SignedCommitStatusRequest, CommitStatusResponse>;
-    readonly #endorseMock = jest.fn() as MockUnaryRequest<EndorseRequest, EndorseResponse>;
-    readonly #evaluateMock = jest.fn() as MockUnaryRequest<EvaluateRequest, EvaluateResponse>;
-    readonly #submitMock = jest.fn() as MockUnaryRequest<SubmitRequest, SubmitResponse>;
-
-    #unaryMocks = {
-        [commitStatusMethod]: this.#commitStatusMock,
-        [endorseMethod]: this.#endorseMock,
-        [evaluateMethod]: this.#evaluateMock,
-        [submitMethod]: this.#submitMock,
-    };
-    #serverStreamMocks = {
-        [chaincodeEventsMethod]: this.#chaincodeEventsMock,
-    };
-
-    constructor() {
-        // Default empty responses
-        this.#chaincodeEventsMock.mockReturnValue({
-            async* [Symbol.asyncIterator]() {
-                // Nothing
-            },
-            cancel(): void {
-                // Nothing
-            },
-        });
-        this.mockCommitStatusResponse(new CommitStatusResponse());
-        this.mockEndorseResponse(new EndorseResponse());
-        this.mockEvaluateResponse(new EvaluateResponse());
-        this.mockSubmitResponse(new SubmitResponse());
-    }
-
-    makeUnaryRequest<RequestType, ResponseType>(
-        method: string,
-        serialize: (value: RequestType) => Buffer,
-        deserialize: (value: Buffer) => ResponseType,
-        argument: RequestType,
-        options: grpc.CallOptions,
-        callback: grpc.requestCallback<ResponseType>
-    ): grpc.ClientUnaryCall {
-        const mock = this.#unaryMocks[method];
-        if (!mock) {
-            throw new Error(`No unary mock for ${method}`);
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-explicit-any
-        return mock(argument as any, options, callback as any);
-    }
-
-    makeServerStreamRequest<RequestType, ResponseType>(
-        method: string,
-        serialize: (value: RequestType) => Buffer,
-        deserialize: (value: Buffer) => ResponseType,
-        argument: RequestType,
-        options: grpc.CallOptions
-    ): ServerStreamResponse<ResponseType> {
-        const mock = this.#serverStreamMocks[method];
-        if (!mock) {
-            throw new Error(`No server stream mock for ${method}`);
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-argument,@typescript-eslint/no-explicit-any
-        return mock(argument as any, options) as any;
-    }
-
-    getChaincodeEventsRequests(): SignedChaincodeEventsRequest[] {
-        return this.#chaincodeEventsMock.mock.calls.map(call => call[0]);
-    }
-
-    getCommitStatusRequests(): SignedCommitStatusRequest[] {
-        return this.#commitStatusMock.mock.calls.map(call => call[0]);
-    }
-
-    getEndorseRequests(): EndorseRequest[] {
-        return this.#endorseMock.mock.calls.map(call => call[0]);
-    }
-
-    getEvaluateRequests(): EvaluateRequest[] {
-        return this.#evaluateMock.mock.calls.map(call => call[0]);
-    }
-
-    getSubmitRequests(): SubmitRequest[] {
-        return this.#submitMock.mock.calls.map(call => call[0]);
-    }
-
-    getChaincodeEventsOptions(): grpc.CallOptions[] {
-        return this.#chaincodeEventsMock.mock.calls.map(call => call[1]);
-    }
-
-    getCommitStatusOptions(): grpc.CallOptions[] {
-        return this.#commitStatusMock.mock.calls.map(call => call[1]);
-    }
-
-    getEndorseOptions(): grpc.CallOptions[] {
-        return this.#endorseMock.mock.calls.map(call => call[1]);
-    }
-
-    getEvaluateOptions(): grpc.CallOptions[] {
-        return this.#evaluateMock.mock.calls.map(call => call[1]);
-    }
-
-    getSubmitOptions(): grpc.CallOptions[] {
-        return this.#submitMock.mock.calls.map(call => call[1]);
-    }
-
-    mockCommitStatusResponse(response: CommitStatusResponse): void {
-        this.#commitStatusMock.mockImplementation(fakeUnaryCall(undefined, response));
-    }
-
-    mockCommitStatusError(err: grpc.ServiceError): void {
-        this.#commitStatusMock.mockImplementation(fakeUnaryCall(err, undefined));
-    }
-
-    mockEndorseResponse(response: EndorseResponse): void {
-        this.#endorseMock.mockImplementation(fakeUnaryCall(undefined, response));
-    }
-
-    mockEndorseError(err: grpc.ServiceError): void {
-        this.#endorseMock.mockImplementation(fakeUnaryCall(err, undefined));
-    }
-
-    mockEvaluateResponse(response: EvaluateResponse): void {
-        this.#evaluateMock.mockImplementation(fakeUnaryCall(undefined, response));
-    }
-
-    mockEvaluateError(err: grpc.ServiceError): void {
-        this.#evaluateMock.mockImplementation(fakeUnaryCall(err, undefined));
-    }
-
-    mockSubmitResponse(response: SubmitResponse): void {
-        this.#submitMock.mockImplementation(fakeUnaryCall(undefined, response));
-    }
-
-    mockSubmitError(err: grpc.ServiceError): void {
-        this.#submitMock.mockImplementation(fakeUnaryCall(err, undefined));
-    }
-
-    mockChaincodeEventsResponse(stream: ServerStreamResponse<ChaincodeEventsResponse>): void {
-        this.#chaincodeEventsMock.mockReturnValue(stream);
-    }
-
-    mockChaincodeEventsError(err: grpc.ServiceError): void {
-        this.#chaincodeEventsMock.mockImplementation(() => {
-            throw err;
-        });
-    }
-}
-
-function fakeUnaryCall<ResponseType>(err: grpc.ServiceError | undefined, response: ResponseType | undefined) {
-    return (request: unknown, options: grpc.CallOptions, callback: UnaryCallback<ResponseType>) => {
-        setImmediate(() => callback(err || null, response))
-        return {} as grpc.ClientUnaryCall;
-    };
-}
-
-export function newEndorseResponse(options: {
-    result: Uint8Array,
-    channelName?: string,
-}): EndorseResponse {
-    const chaincodeResponse = new Response();
-    chaincodeResponse.setPayload(options.result);
-
-    const chaincodeAction = new ChaincodeAction();
-    chaincodeAction.setResponse(chaincodeResponse);
-
-    const responsePayload = new ProposalResponsePayload();
-    responsePayload.setExtension$(chaincodeAction.serializeBinary());
-
-    const endorsedAction = new ChaincodeEndorsedAction();
-    endorsedAction.setProposalResponsePayload(responsePayload.serializeBinary());
-
-    const actionPayload = new ChaincodeActionPayload();
-    actionPayload.setAction(endorsedAction);
-
-    const transactionAction = new TransactionAction();
-    transactionAction.setPayload(actionPayload.serializeBinary());
-
-    const transaction = new Transaction();
-    transaction.setActionsList([transactionAction]);
-
-    const payload = new Payload();
-    payload.setData(transaction.serializeBinary());
-
-    const channelHeader = new ChannelHeader();
-    channelHeader.setChannelId(options.channelName ?? 'network');
-
-    const header = new Header();
-    header.setChannelHeader(channelHeader.serializeBinary());
-
-    payload.setHeader(header);
-
-    const envelope = new Envelope();
-    envelope.setPayload(payload.serializeBinary());
-
-    const endorseResponse = new EndorseResponse();
-    endorseResponse.setPreparedTransaction(envelope);
-
-    return endorseResponse;
-}
+import { Envelope } from './protos/common/common_pb';
+import { EndorseRequest, EvaluateRequest, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest } from './protos/gateway/gateway_pb';
+import { MockGatewayGrpcClient } from './testutils.test';
 
 describe('client', () => {
     describe('throws GatewayError on gRPC error', () => {
@@ -268,6 +63,42 @@ describe('client', () => {
 
             await expect(t).rejects.toThrow(grpcError.message);
             await expect(t).rejects.toThrow(GatewayError);
+        });
+
+        it('chaincode events', () => {
+            grpcClient.mockChaincodeEventsError(grpcError);
+
+            const t = () => gatewayClient.chaincodeEvents(new SignedChaincodeEventsRequest());
+
+            expect(t).toThrow(grpcError.message);
+            expect(t).toThrow(GatewayError);
+        });
+
+        it('block events', () => {
+            grpcClient.mockBlockEventsError(grpcError);
+
+            const t = () => gatewayClient.blockEvents(new Envelope());
+
+            expect(t).toThrow(grpcError.message);
+            expect(t).toThrow(GatewayError);
+        });
+
+        it('filtered block events', () => {
+            grpcClient.mockFilteredBlockEventsError(grpcError);
+
+            const t = () => gatewayClient.filteredBlockEvents(new Envelope());
+
+            expect(t).toThrow(grpcError.message);
+            expect(t).toThrow(GatewayError);
+        });
+
+        it('block events with private data', () => {
+            grpcClient.mockBlockEventsWithPrivateDataError(grpcError);
+
+            const t = () => gatewayClient.blockEventsWithPrivateData(new Envelope());
+
+            expect(t).toThrow(grpcError.message);
+            expect(t).toThrow(GatewayError);
         });
     });
 });

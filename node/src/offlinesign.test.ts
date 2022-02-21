@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MockGatewayGrpcClient, newEndorseResponse } from './client.test';
 import { Contract } from './contract';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
@@ -13,6 +12,7 @@ import { CommitStatusResponse, EvaluateResponse } from './protos/gateway/gateway
 import { Response } from './protos/peer/proposal_response_pb';
 import { TxValidationCode } from './protos/peer/transaction_pb';
 import { undefinedSignerMessage } from './signingidentity';
+import { MockGatewayGrpcClient, newEndorseResponse } from './testutils.test';
 
 describe('Offline sign', () => {
     const expectedResult = 'TX_RESULT';

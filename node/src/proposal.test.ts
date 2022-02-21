@@ -5,7 +5,6 @@
  */
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
-import { MockGatewayGrpcClient, newEndorseResponse } from './client.test';
 import { Contract } from './contract';
 import { EndorseError } from './endorseerror';
 import { Gateway, internalConnect } from './gateway';
@@ -18,6 +17,7 @@ import { ChaincodeInvocationSpec, ChaincodeSpec } from './protos/peer/chaincode_
 import { ChaincodeProposalPayload, Proposal as ProposalProto } from './protos/peer/proposal_pb';
 import { Response } from './protos/peer/proposal_response_pb';
 import { TxValidationCode } from './protos/peer/transaction_pb';
+import { MockGatewayGrpcClient, newEndorseResponse } from './testutils.test';
 
 function assertDecodeEvaluateRequest(request: EvaluateRequest): ProposalProto {
     const proposalBytes = request.getProposedTransaction()?.getProposalBytes_asU8();

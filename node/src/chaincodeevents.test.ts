@@ -6,8 +6,6 @@
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
 import { ChaincodeEvent } from './chaincodeevent';
-import { ServerStreamResponse } from './client';
-import { MockGatewayGrpcClient } from './client.test';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { GatewayError } from './gatewayerror';
 import { Identity } from './identity/identity';
@@ -15,6 +13,7 @@ import { Network } from './network';
 import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, ChaincodeEventsResponse, SignedChaincodeEventsRequest } from './protos/gateway/gateway_pb';
 import { SeekPosition } from './protos/orderer/ab_pb';
 import { ChaincodeEvent as ChaincodeEventProto } from './protos/peer/chaincode_event_pb';
+import { MockGatewayGrpcClient, newServerStreamResponse, readElements } from './testutils.test';
 
 function assertDecodeChaincodeEventsRequest(signedRequest: SignedChaincodeEventsRequest): ChaincodeEventsRequestProto {
     const requestBytes = signedRequest.getRequest_asU8();
@@ -30,33 +29,6 @@ function newChaincodeEvent(blockNumber: number, event: ChaincodeEventProto): Cha
         transactionId: event.getTxId() ?? '',
         payload: event.getPayload_asU8() ?? new Uint8Array(),
     };
-}
-
-function newServerStreamResponse<T>(values: (T | ServiceError)[]): ServerStreamResponse<T> & { cancel: jest.Mock<void, void[]> } {
-    return {
-        async* [Symbol.asyncIterator]() { // eslint-disable-line @typescript-eslint/require-await
-            for (const value of values) {
-                if (value instanceof Error) {
-                    throw value;
-                }
-                yield value;
-            }
-        },
-        cancel: jest.fn(),
-    }
-}
-
-async function readElements<T>(iter: AsyncIterable<T>, count: number): Promise<T[]> {
-    const elements: T[] = [];
-    for await (const element of iter) {
-        elements.push(element);
-
-        if (--count <= 0) {
-            break;
-        }
-    }
-
-    return elements;
 }
 
 describe('Chaincode Events', () => {
@@ -252,7 +224,7 @@ describe('Chaincode Events', () => {
             await expect(t).rejects.toMatchObject({
                 code: serviceError.code,
                 cause: serviceError,
-            })
+            });
         });
     })
 });

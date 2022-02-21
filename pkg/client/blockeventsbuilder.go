@@ -15,10 +15,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type blockEventsBuilder struct {
-	eventsBuilder *eventsBuilder
-}
-
 func seekLargestBlockNumber() *orderer.SeekPosition {
 	return &orderer.SeekPosition{
 		Type: &orderer.SeekPosition_Specified{
@@ -27,6 +23,10 @@ func seekLargestBlockNumber() *orderer.SeekPosition {
 			},
 		},
 	}
+}
+
+type blockEventsBuilder struct {
+	eventsBuilder *eventsBuilder
 }
 
 func (builder *blockEventsBuilder) payloadBytes() ([]byte, error) {
@@ -75,7 +75,6 @@ func (builder *blockEventsBuilder) signatureHeaderBytes() ([]byte, error) {
 
 	signatureHeader := &common.SignatureHeader{
 		Creator: creator,
-		Nonce:   nil,
 	}
 
 	return util.Marshal(signatureHeader)
@@ -100,15 +99,13 @@ func (builder *filteredBlockEventsBuilder) build() (*FilteredBlockEventsRequest,
 		return nil, err
 	}
 
-	signedRequest := &common.Envelope{
-		Payload: payload,
-	}
-
 	result := &FilteredBlockEventsRequest{
 		blockEventsRequest: &blockEventsRequest{
-			client:        builder.blockBuilder.eventsBuilder.client,
-			signingID:     builder.blockBuilder.eventsBuilder.signingID,
-			signedRequest: signedRequest,
+			client:    builder.blockBuilder.eventsBuilder.client,
+			signingID: builder.blockBuilder.eventsBuilder.signingID,
+			signedRequest: &common.Envelope{
+				Payload: payload,
+			},
 		},
 	}
 	return result, nil
@@ -124,15 +121,13 @@ func (builder *fullBlockEventsBuilder) build() (*FullBlockEventsRequest, error) 
 		return nil, err
 	}
 
-	signedRequest := &common.Envelope{
-		Payload: payload,
-	}
-
 	result := &FullBlockEventsRequest{
 		blockEventsRequest: &blockEventsRequest{
-			client:        builder.blockBuilder.eventsBuilder.client,
-			signingID:     builder.blockBuilder.eventsBuilder.signingID,
-			signedRequest: signedRequest,
+			client:    builder.blockBuilder.eventsBuilder.client,
+			signingID: builder.blockBuilder.eventsBuilder.signingID,
+			signedRequest: &common.Envelope{
+				Payload: payload,
+			},
 		},
 	}
 	return result, nil
@@ -148,15 +143,13 @@ func (builder *blockEventsWithPrivateDataBuilder) build() (*BlockEventsWithPriva
 		return nil, err
 	}
 
-	signedRequest := &common.Envelope{
-		Payload: payload,
-	}
-
 	result := &BlockEventsWithPrivateDataRequest{
 		blockEventsRequest: &blockEventsRequest{
-			client:        builder.blockBuilder.eventsBuilder.client,
-			signingID:     builder.blockBuilder.eventsBuilder.signingID,
-			signedRequest: signedRequest,
+			client:    builder.blockBuilder.eventsBuilder.client,
+			signingID: builder.blockBuilder.eventsBuilder.signingID,
+			signedRequest: &common.Envelope{
+				Payload: payload,
+			},
 		},
 	}
 	return result, nil

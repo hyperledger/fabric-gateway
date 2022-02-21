@@ -64,7 +64,7 @@ func TestFilteredBlockEvents(t *testing.T) {
 		_, err := network.FilteredBlockEvents(ctx)
 		require.NoError(t, err)
 
-		AssertValidEventRequestHeader(t, payload, network.Name())
+		AssertValidBlockEventRequestHeader(t, payload, network.Name())
 		actual := &orderer.SeekInfo{}
 		test.AssertUnmarshal(t, payload.GetData(), actual)
 
@@ -106,7 +106,7 @@ func TestFilteredBlockEvents(t *testing.T) {
 		_, err := network.FilteredBlockEvents(ctx, WithStartBlock(418))
 		require.NoError(t, err)
 
-		AssertValidEventRequestHeader(t, payload, network.Name())
+		AssertValidBlockEventRequestHeader(t, payload, network.Name())
 		actual := &orderer.SeekInfo{}
 		test.AssertUnmarshal(t, payload.GetData(), actual)
 

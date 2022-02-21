@@ -65,7 +65,7 @@ func TestBlockEventsWithPrivateData(t *testing.T) {
 		_, err := network.BlockEventsWithPrivateData(ctx)
 		require.NoError(t, err)
 
-		AssertValidEventRequestHeader(t, payload, network.Name())
+		AssertValidBlockEventRequestHeader(t, payload, network.Name())
 		actual := &orderer.SeekInfo{}
 		test.AssertUnmarshal(t, payload.GetData(), actual)
 
@@ -107,7 +107,7 @@ func TestBlockEventsWithPrivateData(t *testing.T) {
 		_, err := network.BlockEventsWithPrivateData(ctx, WithStartBlock(418))
 		require.NoError(t, err)
 
-		AssertValidEventRequestHeader(t, payload, network.Name())
+		AssertValidBlockEventRequestHeader(t, payload, network.Name())
 		actual := &orderer.SeekInfo{}
 		test.AssertUnmarshal(t, payload.GetData(), actual)
 
