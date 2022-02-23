@@ -8,7 +8,7 @@ import { CallOptions } from '@grpc/grpc-js';
 import { CloseableAsyncIterable, GatewayClient } from './client';
 import { assertDefined } from './gateway';
 import { Block, Envelope } from './protos/common/common_pb';
-import { BlockAndPrivateData, FilteredBlock } from './protos/peer/events_pb';
+import { BlockAndPrivateData, DeliverResponse, FilteredBlock } from './protos/peer/events_pb';
 import { Signable } from './signable';
 import { SigningIdentity } from './signingidentity';
 
@@ -146,10 +146,10 @@ export class BlockEventsRequestImpl extends SignableBlockEventsRequest implement
         const signedRequest = await this.getSignedRequest();
         const responses = this.#client.blockEvents(signedRequest, options);
         return {
-            [Symbol.asyncIterator]: () => mapAsyncIterator(responses[Symbol.asyncIterator](), (response) => {
-                const block = response.getBlock();
-                return assertDefined(block, `Unexpected deliver response type: ${response.getTypeCase()}`);
-            }),
+            [Symbol.asyncIterator]: () => mapAsyncIterator(
+                responses[Symbol.asyncIterator](),
+                response => getBlock(response, () => response.getBlock()),
+            ),
             close: () => responses.close(),
         }
     }
@@ -167,10 +167,10 @@ export class FilteredBlockEventsRequestImpl extends SignableBlockEventsRequest i
         const signedRequest = await this.getSignedRequest();
         const responses = this.#client.filteredBlockEvents(signedRequest, options);
         return {
-            [Symbol.asyncIterator]: () => mapAsyncIterator(responses[Symbol.asyncIterator](), (response) => {
-                const block = response.getFilteredBlock();
-                return assertDefined(block, `Unexpected deliver response type: ${response.getTypeCase()}`);
-            }),
+            [Symbol.asyncIterator]: () => mapAsyncIterator(
+                responses[Symbol.asyncIterator](),
+                response => getBlock(response, () => response.getFilteredBlock()),
+            ),
             close: () => responses.close(),
         }
     }
@@ -188,10 +188,10 @@ export class BlockEventsWithPrivateDataRequestImpl extends SignableBlockEventsRe
         const signedRequest = await this.getSignedRequest();
         const responses = this.#client.blockEventsWithPrivateData(signedRequest, options);
         return {
-            [Symbol.asyncIterator]: () => mapAsyncIterator(responses[Symbol.asyncIterator](), (response) => {
-                const block = response.getBlockAndPrivateData();
-                return assertDefined(block, `Unexpected deliver response type: ${response.getTypeCase()}`);
-            }),
+            [Symbol.asyncIterator]: () => mapAsyncIterator(
+                responses[Symbol.asyncIterator](),
+                response => getBlock(response, () => response.getBlockAndPrivateData()),
+            ),
             close: () => responses.close(),
         }
     }
@@ -207,4 +207,12 @@ function mapAsyncIterator<T, R>(iterator: AsyncIterator<T>, map: (element: T) =>
             };
         }
     };
+}
+
+function getBlock<T>(response: DeliverResponse, getter: () => T | null | undefined): T {
+    if (response.getTypeCase() === DeliverResponse.TypeCase.STATUS) {
+        throw new Error(`Unexpected status response: ${response.getStatus()}`);
+    }
+    const block = getter();
+    return assertDefined(block, `Unexpected deliver response type: ${response.getTypeCase()}`);
 }

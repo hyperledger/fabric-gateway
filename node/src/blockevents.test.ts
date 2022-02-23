@@ -19,26 +19,6 @@ import { SeekInfo, SeekPosition } from './protos/orderer/ab_pb';
 import { BlockAndPrivateData, DeliverResponse, FilteredBlock } from './protos/peer/events_pb';
 import { DuplexStreamResponseStub, MockGatewayGrpcClient, newDuplexStreamResponse, readElements } from './testutils.test';
 
-interface ExpectedHeaderProperties {
-    channelName: string,
-    creator: Identity,
-}
-
-function assertValidBlockEventsRequestHeader(payload: Payload, expected: ExpectedHeaderProperties): void {
-    const header = assertDefined(payload.getHeader(), 'header');
-    const channelHeader = ChannelHeader.deserializeBinary(header.getChannelHeader_asU8());
-    const signatureHeader = SignatureHeader.deserializeBinary(header.getSignatureHeader_asU8());
-    const creator = SerializedIdentity.deserializeBinary(signatureHeader.getCreator_asU8());
-
-    const actualCreator: Identity = {
-        credentials: creator.getIdBytes_asU8(),
-        mspId: creator.getMspid(),
-    };
-
-    expect(channelHeader.getChannelId()).toBe(expected.channelName);
-    expect(actualCreator).toEqual(expected.creator);
-}
-
 describe('Block Events', () => {
     const channelName = 'CHANNEL_NAME';
     const signature = Buffer.from('SIGNATURE');
@@ -47,7 +27,6 @@ describe('Block Events', () => {
         details: 'DETAILS',
         metadata: new Metadata(),
     });
-
 
     let defaultOptions: () => CallOptions;
     let client: MockGatewayGrpcClient;
@@ -87,6 +66,21 @@ describe('Block Events', () => {
         network = gateway.getNetwork(channelName);
     });
 
+    function assertValidBlockEventsRequestHeader(payload: Payload): void {
+        const header = assertDefined(payload.getHeader(), 'header');
+        const channelHeader = ChannelHeader.deserializeBinary(header.getChannelHeader_asU8());
+        const signatureHeader = SignatureHeader.deserializeBinary(header.getSignatureHeader_asU8());
+        const creator = SerializedIdentity.deserializeBinary(signatureHeader.getCreator_asU8());
+    
+        const actualCreator: Identity = {
+            credentials: creator.getIdBytes_asU8(),
+            mspId: creator.getMspid(),
+        };
+    
+        expect(channelHeader.getChannelId()).toBe(network.getName());
+        expect(actualCreator).toEqual(gateway.getIdentity());
+    }
+    
     interface TestCase {
         description: string;
         mockResponse(stream: DuplexStreamResponseStub<Envelope, DeliverResponse>): void;
@@ -212,10 +206,7 @@ describe('Block Events', () => {
             const request = stream.write.mock.calls[0][0];
 
             const payload = Payload.deserializeBinary(request.getPayload_asU8());
-            assertValidBlockEventsRequestHeader(payload, {
-                channelName,
-                creator: identity,
-            });
+            assertValidBlockEventsRequestHeader(payload);
 
             const seekInfo = SeekInfo.deserializeBinary(payload.getData_asU8());
             const start = seekInfo.getStart();
@@ -247,10 +238,7 @@ describe('Block Events', () => {
             const request = stream.write.mock.calls[0][0];
 
             const payload = Payload.deserializeBinary(request.getPayload_asU8());
-            assertValidBlockEventsRequestHeader(payload, {
-                channelName,
-                creator: identity,
-            });
+            assertValidBlockEventsRequestHeader(payload);
 
             const seekInfo = SeekInfo.deserializeBinary(payload.getData_asU8());
             const start = seekInfo.getStart();
@@ -319,16 +307,27 @@ describe('Block Events', () => {
             });
         });
 
-        it('throws on receive of non-block message', async () => {
-            const statusMessage = new DeliverResponse();
-            statusMessage.setStatus(Status.SERVICE_UNAVAILABLE);
-            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([statusMessage]);
+        it('throws on receive of status message', async () => {
+            const response = new DeliverResponse();
+            response.setStatus(Status.SERVICE_UNAVAILABLE);
+            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([response]);
             testCase.mockResponse(stream);
 
             const events = await testCase.getEvents();
             const t = readElements(events, 1);
 
-            await expect(t).rejects.toThrow(String(DeliverResponse.TypeCase.STATUS));
+            await expect(t).rejects.toThrow(String(Status.SERVICE_UNAVAILABLE));
+        });
+
+        it('throws on receive of unexpected message type', async () => {
+            const response = new DeliverResponse();
+            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([response]);
+            testCase.mockResponse(stream);
+
+            const events = await testCase.getEvents();
+            const t = readElements(events, 1);
+
+            await expect(t).rejects.toThrow(String(response.getTypeCase()));
         });
 
         it('receives events', async () => {

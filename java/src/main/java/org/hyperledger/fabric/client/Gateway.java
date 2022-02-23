@@ -6,11 +6,11 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.function.Function;
+
 import io.grpc.Channel;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
-
-import java.util.function.Function;
 
 /**
  * The Gateway provides the connection point for an application to access the Fabric network as a specific user. It is
@@ -180,6 +180,27 @@ public interface Gateway extends AutoCloseable {
          * @return The builder instance, allowing multiple configuration options to be chained.
          */
         Builder chaincodeEventsOptions(CallOption... options);
+
+        /**
+         * Specify the default call options for block events.
+         * @param options Call options.
+         * @return The builder instance, allowing multiple configuration options to be chained.
+         */
+        Builder blockEventsOptions(CallOption... options);
+
+        /**
+         * Specify the default call options for filtered block events.
+         * @param options Call options.
+         * @return The builder instance, allowing multiple configuration options to be chained.
+         */
+        Builder filteredBlockEventsOptions(CallOption... options);
+
+        /**
+         * Specify the default call options for block events with private data.
+         * @param options Call options.
+         * @return The builder instance, allowing multiple configuration options to be chained.
+         */
+        Builder blockEventsWithPrivateDataOptions(CallOption... options);
 
         /**
          * Connects to the gateway using the specified options.

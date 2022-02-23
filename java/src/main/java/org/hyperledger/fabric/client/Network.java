@@ -6,6 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
+import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.peer.EventsPackage;
+
 /**
  * Network represents a network of nodes that are members of a specific Fabric channel. Network instances are obtained
  * from a Gateway using the {@link Gateway#getNetwork(String)} method.
@@ -86,4 +89,61 @@ public interface Network {
      * @throws NullPointerException if the chaincode name is null.
      */
     ChaincodeEventsRequest.Builder newChaincodeEventsRequest(String chaincodeName);
+
+    /**
+     * Get block events. The Java gRPC implementation may not begin reading events until the first use of the returned
+     * iterator.
+     * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC
+     * connection error occurs.</p>
+     * @param options Call options.
+     * @return Ordered sequence of events.
+     * @see #newBlockEventsRequest()
+     */
+    CloseableIterator<Common.Block> getBlockEvents(CallOption... options);
+
+    /**
+     * Build a request to receive block events. This can be used to specify a specific ledger start position. Supports
+     * offline signing flow.
+     * @return A block events request builder.
+     * @throws NullPointerException if the chaincode name is null.
+     */
+    BlockEventsRequest.Builder newBlockEventsRequest();
+
+    /**
+     * Get filtered block events. The Java gRPC implementation may not begin reading events until the first use of the
+     * returned iterator.
+     * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC
+     * connection error occurs.</p>
+     * @param options Call options.
+     * @return Ordered sequence of events.
+     * @see #newFilteredBlockEventsRequest()
+     */
+    CloseableIterator<EventsPackage.FilteredBlock> getFilteredBlockEvents(CallOption... options);
+
+    /**
+     * Build a request to receive filtered block events. This can be used to specify a specific ledger start position.
+     * Supports offline signing flow.
+     * @return A filtered block events request builder.
+     * @throws NullPointerException if the chaincode name is null.
+     */
+    FilteredBlockEventsRequest.Builder newFilteredBlockEventsRequest();
+
+    /**
+     * Get block events with private data. The Java gRPC implementation may not begin reading events until the first
+     * use of the* returned iterator.
+     * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC
+     * connection error occurs.</p>
+     * @param options Call options.
+     * @return Ordered sequence of events.
+     * @see #newBlockEventsWithPrivateDataRequest()
+     */
+    CloseableIterator<EventsPackage.BlockAndPrivateData> getBlockEventsWithPrivateData(CallOption... options);
+
+    /**
+     * Build a request to receive block events with private data. This can be used to specify a specific ledger start
+     * position. Supports offline signing flow.
+     * @return A block events with private data request builder.
+     * @throws NullPointerException if the chaincode name is null.
+     */
+    BlockEventsWithPrivateDataRequest.Builder newBlockEventsWithPrivateDataRequest();
 }

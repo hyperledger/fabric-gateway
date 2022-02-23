@@ -8,6 +8,9 @@ package org.hyperledger.fabric.client;
 
 import java.util.Objects;
 
+import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.peer.EventsPackage;
+
 final class NetworkImpl implements Network {
     private final GatewayClient client;
     private final SigningIdentity signingIdentity;
@@ -44,5 +47,35 @@ final class NetworkImpl implements Network {
     @Override
     public ChaincodeEventsRequest.Builder newChaincodeEventsRequest(final String chaincodeName) {
         return new ChaincodeEventsBuilder(client, signingIdentity, channelName, chaincodeName);
+    }
+
+    @Override
+    public CloseableIterator<Common.Block> getBlockEvents(final CallOption... options) {
+        return newBlockEventsRequest().build().getEvents(options);
+    }
+
+    @Override
+    public BlockEventsRequest.Builder newBlockEventsRequest() {
+        return new BlockEventsBuilder(client, signingIdentity, channelName);
+    }
+
+    @Override
+    public CloseableIterator<EventsPackage.FilteredBlock> getFilteredBlockEvents(final CallOption... options) {
+        return newFilteredBlockEventsRequest().build().getEvents(options);
+    }
+
+    @Override
+    public FilteredBlockEventsRequest.Builder newFilteredBlockEventsRequest() {
+        return new FilteredBlockEventsBuilder(client, signingIdentity, channelName);
+    }
+
+    @Override
+    public CloseableIterator<EventsPackage.BlockAndPrivateData> getBlockEventsWithPrivateData(final CallOption... options) {
+        return newBlockEventsWithPrivateDataRequest().build().getEvents(options);
+    }
+
+    @Override
+    public BlockEventsWithPrivateDataRequest.Builder newBlockEventsWithPrivateDataRequest() {
+        return new BlockEventsWithPrivateDataBuilder(client, signingIdentity, channelName);
     }
 }

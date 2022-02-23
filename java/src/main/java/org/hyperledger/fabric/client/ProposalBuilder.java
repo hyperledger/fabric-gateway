@@ -6,20 +6,18 @@
 
 package org.hyperledger.fabric.client;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.Timestamp;
-import org.hyperledger.fabric.protos.common.Common;
-import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
-import org.hyperledger.fabric.protos.peer.Chaincode;
-import org.hyperledger.fabric.protos.peer.ProposalPackage;
-
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import com.google.protobuf.ByteString;
+import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
+import org.hyperledger.fabric.protos.peer.Chaincode;
+import org.hyperledger.fabric.protos.peer.ProposalPackage;
 
 final class ProposalBuilder implements Proposal.Builder {
     private final GatewayClient client;
@@ -118,16 +116,10 @@ final class ProposalBuilder implements Proposal.Builder {
     }
 
     private Common.ChannelHeader newChannelHeader(final TransactionContext context) {
-        Instant now = Instant.now();
-        Timestamp timestamp = Timestamp.newBuilder()
-                .setSeconds(now.getEpochSecond())
-                .setNanos(now.getNano())
-                .build();
-
         return Common.ChannelHeader.newBuilder()
                 .setType(Common.HeaderType.ENDORSER_TRANSACTION.getNumber())
                 .setTxId(context.getTransactionId())
-                .setTimestamp(timestamp)
+                .setTimestamp(GatewayUtils.getCurrentTimestamp())
                 .setChannelId(channelName)
                 .setExtension(newChaincodeHeaderExtension().toByteString())
                 .setEpoch(0)

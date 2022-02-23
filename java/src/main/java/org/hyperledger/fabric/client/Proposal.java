@@ -41,7 +41,7 @@ public interface Proposal extends Signable {
     /**
      * Builder used to create a new transaction proposal.
      */
-    interface Builder {
+    interface Builder extends org.hyperledger.fabric.client.Builder<Proposal> {
         /**
          * Add transactions arguments to the proposal. These extend any previously added arguments.
          * @param args Transaction arguments.
@@ -94,6 +94,7 @@ public interface Proposal extends Signable {
          * each invocation of this method.
          * @return A proposal.
          */
+        @Override
         Proposal build();
     }
 }

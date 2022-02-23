@@ -43,7 +43,7 @@ public final class ChaincodeEventsTest {
     @BeforeEach
     void beforeEach() {
         mocker = new GatewayMocker();
-        stub = mocker.getServiceStubSpy();
+        stub = mocker.getGatewayServiceStubSpy();
 
         gateway = mocker.getGatewayBuilder()
                 .chaincodeEventsOptions(CallOption.deadline(defaultDeadline))
@@ -99,7 +99,7 @@ public final class ChaincodeEventsTest {
     @Test
     void sends_valid_request_with_specified_start_block_number() throws Exception {
         long startBlock = 101;
-        org.hyperledger.fabric.client.ChaincodeEventsRequest eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
+        EventsRequest<ChaincodeEvent> eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
                 .startBlock(startBlock)
                 .build();
 
@@ -120,7 +120,7 @@ public final class ChaincodeEventsTest {
     @Test
     void sends_valid_request_with_specified_start_block_number_using_sign_bit_for_unsigned_64bit_value() throws Exception {
         long startBlock = -1;
-        org.hyperledger.fabric.client.ChaincodeEventsRequest eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
+        EventsRequest<ChaincodeEvent> eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
                 .startBlock(startBlock)
                 .build();
 
@@ -178,7 +178,9 @@ public final class ChaincodeEventsTest {
                     new ChaincodeEventImpl(1, event2),
                     new ChaincodeEventImpl(2, event3)
             );
-            assertThat(Stream.generate(actual::next).limit(3)).hasSameElementsAs(expected);
+            assertThat(actual)
+                    .toIterable()
+                    .hasSameElementsAs(expected);
         }
     }
 

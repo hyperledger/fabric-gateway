@@ -49,7 +49,7 @@ public final class EvaluateTransactionTest {
     @BeforeEach
     void beforeEach() {
         mocker = new GatewayMocker();
-        stub = mocker.getServiceStubSpy();
+        stub = mocker.getGatewayServiceStubSpy();
 
         gateway = mocker.getGatewayBuilder()
                 .evaluateOptions(CallOption.deadline(defaultDeadline))
