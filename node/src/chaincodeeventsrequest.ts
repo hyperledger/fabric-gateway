@@ -6,6 +6,7 @@
 
 import { CallOptions } from '@grpc/grpc-js';
 import { ChaincodeEvent, newChaincodeEvents } from './chaincodeevent';
+import { ChaincodeEventsOptions } from './chaincodeeventsbuilder';
 import { CloseableAsyncIterable, GatewayClient } from './client';
 import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, SignedChaincodeEventsRequest as SignedChaincodeEventsRequestProto } from './protos/gateway/gateway_pb';
 import { Signable } from './signable';
@@ -33,7 +34,7 @@ export interface ChaincodeEventsRequest extends Signable {
      * }
      * ```
      */
-     getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>>;
+     getEvents(options?: CallOptions, eventOptions?:Readonly<ChaincodeEventsOptions>): Promise<CloseableAsyncIterable<ChaincodeEvent>>;
 }
 
 export interface ChaincodeEventsRequestOptions {
@@ -54,10 +55,10 @@ export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
         this.#signedRequest.setRequest(options.request.serializeBinary())
     }
 
-    async getEvents(options?: Readonly<CallOptions>): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
+    async getEvents(options?: Readonly<CallOptions>, eventOptions?:Readonly<ChaincodeEventsOptions>): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
         await this.#sign();
-        const responses = this.#client.chaincodeEvents(this.#signedRequest, options);
-        return newChaincodeEvents(responses);
+        const responses = this.#client.chaincodeEvents(this.#signedRequest, options); // ?? use of options here
+        return newChaincodeEvents(responses, eventOptions);
     }
 
     getBytes(): Uint8Array {

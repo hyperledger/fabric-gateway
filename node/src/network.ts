@@ -57,7 +57,7 @@ export interface Network {
      * @param options - Event listening options.
      * @returns A chaincode events request.
      */
-    newChaincodeEventsRequest(chaincodeName: string, options?: ChaincodeEventsOptions): ChaincodeEventsRequest;
+    newChaincodeEventsRequest(chaincodeName: string, options?: ChaincodeEventsOptions): Promise<ChaincodeEventsRequest>;
 }
 
 export interface NetworkOptions {
@@ -92,11 +92,12 @@ export class NetworkImpl implements Network {
     }
 
     async getChaincodeEvents(chaincodeName: string, options?: Readonly<ChaincodeEventsOptions>): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
-        return this.newChaincodeEventsRequest(chaincodeName, options).getEvents();
+
+        return (await this.newChaincodeEventsRequest(chaincodeName, options)).getEvents(undefined,options);
     }
 
-    newChaincodeEventsRequest(chaincodeName: string, options: Readonly<ChaincodeEventsOptions> = {}): ChaincodeEventsRequest {
-        return new ChaincodeEventsBuilder(Object.assign(
+    async newChaincodeEventsRequest(chaincodeName: string, options: Readonly<ChaincodeEventsOptions> = {}): Promise<ChaincodeEventsRequest> {
+        const builder= new ChaincodeEventsBuilder(Object.assign(
             {},
             options,
             {
@@ -105,6 +106,8 @@ export class NetworkImpl implements Network {
                 client: this.#client,
                 signingIdentity: this.#signingIdentity,
             },
-        )).build();
+        ))
+        const eventRequest = await builder.build();
+        return eventRequest;
     }
 }

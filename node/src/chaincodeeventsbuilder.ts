@@ -9,7 +9,7 @@ import { GatewayClient } from './client';
 import { ChaincodeEventsRequest as ChaincodeEventsRequestProto } from './protos/gateway/gateway_pb';
 import { SeekNextCommit, SeekPosition, SeekSpecified } from './protos/orderer/ab_pb';
 import { SigningIdentity } from './signingidentity';
-
+import { CheckPointer } from './checkpointer'
 /**
  * Options used when requesting chaincode events.
  */
@@ -18,6 +18,7 @@ export interface ChaincodeEventsOptions {
      * Block number at which to start reading chaincode events.
      */
     startBlock?: bigint;
+    checkPointer?: CheckPointer
 }
 
 export interface ChaincodeEventsBuilderOptions extends ChaincodeEventsOptions {
@@ -34,38 +35,48 @@ export class ChaincodeEventsBuilder {
         this.#options = options;
     }
 
-    build(): ChaincodeEventsRequest {
+    async build(): Promise<ChaincodeEventsRequest> {
         return new ChaincodeEventsRequestImpl({
             client: this.#options.client,
             signingIdentity: this.#options.signingIdentity,
-            request: this.#newChaincodeEventsRequestProto(),
+            request: await this.#newChaincodeEventsRequestProto(),
         });
     }
 
-    #newChaincodeEventsRequestProto(): ChaincodeEventsRequestProto {
+   async  #newChaincodeEventsRequestProto(): Promise<ChaincodeEventsRequestProto> {
         const result = new ChaincodeEventsRequestProto();
         result.setChannelId(this.#options.channelName);
         result.setChaincodeId(this.#options.chaincodeName);
         result.setIdentity(this.#options.signingIdentity.getCreator());
-        result.setStartPosition(this.#getStartPosition());
+        result.setStartPosition(await this.#getStartPosition());
 
         return result;
     }
 
-    #getStartPosition(): SeekPosition {
+    async #getStartPosition(): Promise<SeekPosition> {
         const result = new SeekPosition();
+        if(this.#options !== undefined ){
 
-        const startBlock = this.#options.startBlock;
-        if (startBlock != undefined) {
             const specified = new SeekSpecified();
-            specified.setNumber(Number(startBlock));
+            if(this.#options.checkPointer !== undefined) {
 
-            result.setSpecified(specified);
+                const currentBlock = await this.#options.checkPointer?.getBlockNumber();
+                    if(currentBlock) {
 
-            return result;
-        }
+                            specified.setNumber(Number(currentBlock));
+                            result.setSpecified(specified);
+                            return result;
+                    }
 
-        result.setNextCommit(new SeekNextCommit());
-        return result;
+
+            }
+            if(this.#options.startBlock){
+                specified.setNumber(Number(this.#options.startBlock));
+                result.setSpecified(specified);
+                return result;
+            }
     }
+    result.setNextCommit(new SeekNextCommit());
+    return result;
+}
 }
