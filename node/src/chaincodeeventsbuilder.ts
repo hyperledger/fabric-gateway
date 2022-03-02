@@ -15,7 +15,7 @@ import { SigningIdentity } from './signingidentity';
  */
 export type ChaincodeEventsOptions = EventsOptions;
 
-export interface ChaincodeEventsBuilderOptions extends ChaincodeEventsOptions {
+export interface ChaincodeEventsBuilderOptions extends EventsOptions {
     client: GatewayClient;
     signingIdentity: SigningIdentity;
     channelName: string;

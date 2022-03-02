@@ -78,20 +78,20 @@ import { SubmittedTransaction } from './submittedtransaction';
  * const unsignedProposal = contract.newProposal('transactionName');
  * const proposalBytes = unsignedProposal.getBytes();
  * const proposalDigest = unsignedProposal.getDigest();
- * // Generate signature from digest
+ * const proposalSignature = // Generate signature from digest
  * const signedProposal = gateway.newSignedProposal(proposalBytes, proposalSignature);
  *
  * const unsignedTransaction = await signedProposal.endorse();
  * const transactionBytes = unsignedTransaction.getBytes();
  * const transactionDigest = unsignedTransaction.getDigest();
- * // Generate signature from digest
- * const signedTransaction = gateway.newSignedTransaction(transactionBytes, transactionDigest);
+ * const transactionSignature = // Generate signature from digest
+ * const signedTransaction = gateway.newSignedTransaction(transactionBytes, transactionSignature);
  *
  * const unsignedCommit = await signedTransaction.submit();
  * const commitBytes = unsignedCommit.getBytes();
  * const commitDigest = unsignedCommit.getDigest();
- * // Generate signature from digest
- * const signedCommit = gateway.newSignedCommit(commitBytes, commitDigest);
+ * const commitSignature = // Generate signature from digest
+ * const signedCommit = gateway.newSignedCommit(commitBytes, commitSignature);
  *
  * const result = signedTransaction.getResult();
  * const status = await signedCommit.getStatus();

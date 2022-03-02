@@ -8,6 +8,8 @@ export { BlockEventsOptions } from './blockeventsbuilder';
 export { BlockEventsRequest, BlockEventsWithPrivateDataRequest, FilteredBlockEventsRequest } from './blockeventsrequest';
 export { ChaincodeEvent } from './chaincodeevent';
 export { ChaincodeEventsOptions } from './chaincodeeventsbuilder';
+export { Checkpointer ,CheckpointAsyncIterable } from './checkpointer';
+export * as checkpointers from './checkpointers';
 export { ChaincodeEventsRequest } from './chaincodeeventsrequest';
 export { CloseableAsyncIterable } from './client';
 export { Commit } from './commit';
