@@ -17,6 +17,9 @@ final class CallOptions {
     private final List<CallOption> submit;
     private final List<CallOption> commitStatus;
     private final List<CallOption> chaincodeEvents;
+    private final List<CallOption> blockEvents;
+    private final List<CallOption> filteredBlockEvents;
+    private final List<CallOption> blockEventsWithPrivateData;
 
     private CallOptions(final Builder builder) {
         this.evaluate = Collections.unmodifiableList(new ArrayList<>(builder.evaluate));
@@ -24,6 +27,9 @@ final class CallOptions {
         this.submit = Collections.unmodifiableList(new ArrayList<>(builder.submit));
         this.commitStatus = Collections.unmodifiableList(new ArrayList<>(builder.commitStatus));
         this.chaincodeEvents = Collections.unmodifiableList(new ArrayList<>(builder.chaincodeEvents));
+        this.blockEvents = Collections.unmodifiableList(new ArrayList<>(builder.blockEvents));
+        this.filteredBlockEvents = Collections.unmodifiableList(new ArrayList<>(builder.filteredBlockEvents));
+        this.blockEventsWithPrivateData = Collections.unmodifiableList(new ArrayList<>(builder.blockEventsWithPrivateData));
     }
 
     public static Builder newBuiler() {
@@ -56,12 +62,27 @@ final class CallOptions {
         return append(chaincodeEvents, additional);
     }
 
+    public List<CallOption> getBlockEvents(final CallOption... additional) {
+        return append(blockEvents, additional);
+    }
+
+    public List<CallOption> getFilteredBlockEvents(final CallOption... additional) {
+        return append(filteredBlockEvents, additional);
+    }
+
+    public List<CallOption> getBlockEventsWithPrivateData(final CallOption... additional) {
+        return append(blockEventsWithPrivateData, additional);
+    }
+
     public static final class Builder {
         private List<CallOption> evaluate = Collections.emptyList();
         private List<CallOption> endorse = Collections.emptyList();
         private List<CallOption> submit = Collections.emptyList();
         private List<CallOption> commitStatus = Collections.emptyList();
         private List<CallOption> chaincodeEvents = Collections.emptyList();
+        private List<CallOption> blockEvents = Collections.emptyList();
+        private List<CallOption> filteredBlockEvents = Collections.emptyList();
+        private List<CallOption> blockEventsWithPrivateData = Collections.emptyList();
 
         private Builder() {
             // Nothing to do
@@ -94,6 +115,24 @@ final class CallOptions {
         public Builder chaincodeEvents(final List<CallOption> options) {
             Objects.requireNonNull(options, "chaincodeEvents");
             chaincodeEvents = options;
+            return this;
+        }
+
+        public Builder blockEvents(final List<CallOption> options) {
+            Objects.requireNonNull(options, "blockEvents");
+            blockEvents = options;
+            return this;
+        }
+
+        public Builder filteredBlockEvents(final List<CallOption> options) {
+            Objects.requireNonNull(options, "filteredBlockEvents");
+            filteredBlockEvents = options;
+            return this;
+        }
+
+        public Builder blockEventsWithPrivateData(final List<CallOption> options) {
+            Objects.requireNonNull(options, "blockEventsWithPrivateData");
+            blockEventsWithPrivateData = options;
             return this;
         }
 

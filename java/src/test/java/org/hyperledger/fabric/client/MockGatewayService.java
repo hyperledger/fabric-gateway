@@ -19,14 +19,13 @@ import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitResponse;
 
-public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
-    private static final GatewayServiceStub DEFAULT_STUB = new GatewayServiceStub();
+/**
+ * Mock Gateway gRPC service that acts as an adapter for a stub implementation.
+ */
+public final class MockGatewayService extends GatewayGrpc.GatewayImplBase {
+    private static final TestUtils testUtils = TestUtils.getInstance();
 
     private final GatewayServiceStub stub;
-
-    public MockGatewayService() {
-        this(DEFAULT_STUB);
-    }
 
     public MockGatewayService(final GatewayServiceStub stub) {
         this.stub = stub;
@@ -34,55 +33,27 @@ public class MockGatewayService extends GatewayGrpc.GatewayImplBase {
 
     @Override
     public void endorse(final EndorseRequest request, final StreamObserver<EndorseResponse> responseObserver) {
-        try {
-            EndorseResponse response = stub.endorse(request);
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } catch (Exception e) {
-            responseObserver.onError(e);
-        }
+        testUtils.invokeStubUnaryCall(stub::endorse, request, responseObserver);
     }
 
     @Override
     public void submit(final SubmitRequest request, final StreamObserver<SubmitResponse> responseObserver) {
-        try {
-            SubmitResponse response = stub.submit(request);
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } catch (Exception e) {
-            responseObserver.onError(e);
-        }
+        testUtils.invokeStubUnaryCall(stub::submit, request, responseObserver);
     }
 
     @Override
     public void evaluate(final EvaluateRequest request, final StreamObserver<EvaluateResponse> responseObserver) {
-        try {
-            EvaluateResponse response = stub.evaluate(request);
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } catch (Exception e) {
-            responseObserver.onError(e);
-        }
+        testUtils.invokeStubUnaryCall(stub::evaluate, request, responseObserver);
     }
 
     @Override
     public void commitStatus(final SignedCommitStatusRequest request, final StreamObserver<CommitStatusResponse> responseObserver) {
-        try {
-            CommitStatusResponse response = stub.commitStatus(request);
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } catch (Exception e) {
-            responseObserver.onError(e);
-        }
+        testUtils.invokeStubUnaryCall(stub::commitStatus, request, responseObserver);
     }
 
     @Override
     public void chaincodeEvents(final SignedChaincodeEventsRequest request, final StreamObserver<ChaincodeEventsResponse> responseObserver) {
-        try {
-            stub.chaincodeEvents(request).forEachOrdered(responseObserver::onNext);
-            responseObserver.onCompleted();
-        } catch (Throwable t) {
-            responseObserver.onError(t);
-        }
+        testUtils.invokeStubServerStreamingCall(stub::chaincodeEvents, request, responseObserver);
     }
+
 }

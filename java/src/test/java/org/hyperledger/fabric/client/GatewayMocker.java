@@ -8,6 +8,7 @@ package org.hyperledger.fabric.client;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.CallOptions;
@@ -30,12 +31,17 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.spy;
 
+/**
+ * Registers mock Gateway and Deliver gRPC services with a real gRPC channel, and connects a Gateway instance to that
+ * channel, for use in unit tests. Provides access to the Gateway and Deliver service implementation stubs so that
+ * mock return values can be specified, and methods to capture request parameters passed to gRPC service methods.
+ */
 public final class GatewayMocker implements AutoCloseable {
     private static final TestUtils utils = TestUtils.getInstance();
-    private static final GatewayServiceStub STUB = new GatewayServiceStub();
 
-    private final GatewayServiceStub stub;
-    private final ManagedChannel channel;
+    private final GatewayServiceStub gatewaySpy;
+    private final DeliverServiceStub deliverSpy;
+    private final ManagedChannel channelSpy;
     private final Gateway.Builder builder;
 
     private final MockitoSession mockitoSession;
@@ -44,6 +50,9 @@ public final class GatewayMocker implements AutoCloseable {
     @Captor private ArgumentCaptor<SubmitRequest> submitRequestCaptor;
     @Captor private ArgumentCaptor<SignedCommitStatusRequest> commitStatusRequestCaptor;
     @Captor private ArgumentCaptor<SignedChaincodeEventsRequest> chaincodeEventsRequestCaptor;
+    @Captor private ArgumentCaptor<Stream<Common.Envelope>> deliverRequestCaptor;
+    @Captor private ArgumentCaptor<Stream<Common.Envelope>> deliverFilteredRequestCaptor;
+    @Captor private ArgumentCaptor<Stream<Common.Envelope>> deliverWithPrivateDataRequestCaptor;
     @Captor private ArgumentCaptor<CallOptions> callOptionsCaptor;
 
     public GatewayMocker() {
@@ -56,26 +65,34 @@ public final class GatewayMocker implements AutoCloseable {
                 .initMocks(this)
                 .startMocking();
 
-        stub = spy(STUB);
-        MockGatewayService service = new MockGatewayService(stub);
-        channel = spy(new WrappedManagedChannel(utils.newChannelForService(service)));
-        builder.connection(channel);
+        gatewaySpy = spy(new GatewayServiceStub());
+        MockGatewayService gatewayService = new MockGatewayService(gatewaySpy);
+
+        deliverSpy = spy(new DeliverServiceStub());
+        MockDeliverService deliverService = new MockDeliverService(deliverSpy);
+
+        channelSpy = spy(new WrappedManagedChannel(utils.newChannelForServices(gatewayService, deliverService)));
+        builder.connection(channelSpy);
     }
 
     /**
      * Reset stubs/spies.
      */
     public void reset() {
-        Mockito.reset(stub, channel);
+        Mockito.reset(gatewaySpy, channelSpy);
     }
 
     public void close() {
-        utils.shutdownChannel(channel, 5, TimeUnit.SECONDS);
+        utils.shutdownChannel(channelSpy, 5, TimeUnit.SECONDS);
         mockitoSession.finishMocking();
     }
 
-    public GatewayServiceStub getServiceStubSpy() {
-        return stub;
+    public GatewayServiceStub getGatewayServiceStubSpy() {
+        return gatewaySpy;
+    }
+
+    public DeliverServiceStub getDeliverServiceStubSpy() {
+        return deliverSpy;
     }
 
     public Gateway.Builder getGatewayBuilder() {
@@ -83,32 +100,47 @@ public final class GatewayMocker implements AutoCloseable {
     }
 
     public EndorseRequest captureEndorse() {
-        Mockito.verify(stub).endorse(endorseRequestCaptor.capture());
+        Mockito.verify(gatewaySpy).endorse(endorseRequestCaptor.capture());
         return endorseRequestCaptor.getValue();
     }
 
     public EvaluateRequest captureEvaluate() {
-        Mockito.verify(stub).evaluate(evaluateRequestCaptor.capture());
+        Mockito.verify(gatewaySpy).evaluate(evaluateRequestCaptor.capture());
         return evaluateRequestCaptor.getValue();
     }
 
     public SubmitRequest captureSubmit() {
-        Mockito.verify(stub).submit(submitRequestCaptor.capture());
+        Mockito.verify(gatewaySpy).submit(submitRequestCaptor.capture());
         return submitRequestCaptor.getValue();
     }
 
     public SignedCommitStatusRequest captureCommitStatus() {
-        Mockito.verify(stub).commitStatus(commitStatusRequestCaptor.capture());
+        Mockito.verify(gatewaySpy).commitStatus(commitStatusRequestCaptor.capture());
         return commitStatusRequestCaptor.getValue();
     }
 
     public SignedChaincodeEventsRequest captureChaincodeEvents() {
-        Mockito.verify(stub).chaincodeEvents(chaincodeEventsRequestCaptor.capture());
+        Mockito.verify(gatewaySpy).chaincodeEvents(chaincodeEventsRequestCaptor.capture());
         return chaincodeEventsRequestCaptor.getValue();
     }
 
+    public Stream<Common.Envelope> captureBlockEvents() {
+        Mockito.verify(deliverSpy).blockEvents(deliverRequestCaptor.capture());
+        return deliverRequestCaptor.getValue();
+    }
+
+    public Stream<Common.Envelope> captureFilteredBlockEvents() {
+        Mockito.verify(deliverSpy).filteredBlockEvents(deliverFilteredRequestCaptor.capture());
+        return deliverFilteredRequestCaptor.getValue();
+    }
+
+    public Stream<Common.Envelope> captureBlockEventsWithPrivateData() {
+        Mockito.verify(deliverSpy).blockEventsWithPrivateData(deliverWithPrivateDataRequestCaptor.capture());
+        return deliverWithPrivateDataRequestCaptor.getValue();
+    }
+
     public List<CallOptions> captureCallOptions() {
-        Mockito.verify(channel, atLeastOnce()).newCall(any(), callOptionsCaptor.capture());
+        Mockito.verify(channelSpy, atLeastOnce()).newCall(any(), callOptionsCaptor.capture());
         return callOptionsCaptor.getAllValues();
     }
 

@@ -10,15 +10,13 @@ import java.util.Objects;
 
 import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
-import org.hyperledger.fabric.protos.orderer.Ab;
 
 final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
     private final GatewayClient client;
     private final SigningIdentity signingIdentity;
     private final String channelName;
     private final String chaincodeName;
-    private final Ab.SeekPosition.Builder startPositionBuilder = Ab.SeekPosition.newBuilder()
-            .setNextCommit(Ab.SeekNextCommit.getDefaultInstance());
+    private final StartPositionBuilder startPositionBuilder = new StartPositionBuilder();
 
     ChaincodeEventsBuilder(final GatewayClient client, final SigningIdentity signingIdentity, final String channelName,
                            final String chaincodeName) {
@@ -33,25 +31,24 @@ final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
 
     @Override
     public ChaincodeEventsRequest.Builder startBlock(final long blockNumber) {
-        Ab.SeekSpecified specified = Ab.SeekSpecified.newBuilder().setNumber(blockNumber).build();
-        startPositionBuilder.setSpecified(specified);
+        startPositionBuilder.startBlock(blockNumber);
         return this;
     }
 
     @Override
     public ChaincodeEventsRequest build() {
-        SignedChaincodeEventsRequest signedRequest = newSignedChaincodeEventsRequestProto(chaincodeName);
+        SignedChaincodeEventsRequest signedRequest = newSignedChaincodeEventsRequestProto();
         return new ChaincodeEventsRequestImpl(client, signingIdentity, signedRequest);
     }
 
-    private SignedChaincodeEventsRequest newSignedChaincodeEventsRequestProto(final String chaincodeName) {
-        org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest request = newChaincodeEventsRequestProto(chaincodeName);
+    private SignedChaincodeEventsRequest newSignedChaincodeEventsRequestProto() {
+        org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest request = newChaincodeEventsRequestProto();
         return SignedChaincodeEventsRequest.newBuilder()
                 .setRequest(request.toByteString())
                 .build();
     }
 
-    private org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest newChaincodeEventsRequestProto(final String chaincodeName) {
+    private org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest newChaincodeEventsRequestProto() {
         ByteString creator = ByteString.copyFrom(signingIdentity.getCreator());
         return org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest.newBuilder()
                 .setChannelId(channelName)

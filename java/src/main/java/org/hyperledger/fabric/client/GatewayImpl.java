@@ -93,6 +93,24 @@ final class GatewayImpl implements Gateway {
         }
 
         @Override
+        public Gateway.Builder blockEventsOptions(final CallOption... options) {
+            optionsBuilder.blockEvents(Arrays.asList(options));
+            return this;
+        }
+
+        @Override
+        public Gateway.Builder filteredBlockEventsOptions(final CallOption... options) {
+            optionsBuilder.filteredBlockEvents(Arrays.asList(options));
+            return this;
+        }
+
+        @Override
+        public Gateway.Builder blockEventsWithPrivateDataOptions(final CallOption... options) {
+            optionsBuilder.blockEventsWithPrivateData(Arrays.asList(options));
+            return this;
+        }
+
+        @Override
         public GatewayImpl connect() {
             return new GatewayImpl(this);
         }

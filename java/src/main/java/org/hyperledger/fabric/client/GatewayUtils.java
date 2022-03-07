@@ -7,12 +7,15 @@
 package org.hyperledger.fabric.client;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Timestamp;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.protos.msp.Identities;
+import org.hyperledger.fabric.protos.orderer.Ab;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -56,5 +59,23 @@ final class GatewayUtils {
         if (null == value) {
             throw new IllegalArgumentException(message);
         }
+    }
+
+    public static Timestamp getCurrentTimestamp() {
+        Instant now = Instant.now();
+        return Timestamp.newBuilder()
+                .setSeconds(now.getEpochSecond())
+                .setNanos(now.getNano())
+                .build();
+    }
+
+    public static Ab.SeekPosition seekLargestBlockNumber() {
+        Ab.SeekSpecified largestBlockNumber = Ab.SeekSpecified.newBuilder()
+                .setNumber(Long.MAX_VALUE)
+                .build();
+
+        return Ab.SeekPosition.newBuilder()
+                .setSpecified(largestBlockNumber)
+                .build();
     }
 }

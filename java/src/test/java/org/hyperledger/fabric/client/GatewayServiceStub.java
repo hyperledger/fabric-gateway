@@ -27,6 +27,9 @@ import org.hyperledger.fabric.protos.peer.ProposalPackage;
 import org.hyperledger.fabric.protos.peer.ProposalPackage.SignedProposal;
 import org.hyperledger.fabric.protos.peer.TransactionPackage;
 
+/**
+ * Simplified stub implementation for Gateway gRPC service, to be used as a spy by unit tests.
+ */
 public class GatewayServiceStub {
     private static final TestUtils utils = TestUtils.getInstance();
 

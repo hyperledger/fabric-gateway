@@ -55,7 +55,7 @@ public final class SubmitTransactionTest {
     @BeforeEach
     void beforeEach() {
         mocker = new GatewayMocker();
-        stub = mocker.getServiceStubSpy();
+        stub = mocker.getGatewayServiceStubSpy();
 
         gateway = mocker.getGatewayBuilder()
                 .endorseOptions(CallOption.deadline(defaultEndorseDeadline))
