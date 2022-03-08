@@ -6,6 +6,7 @@
 
 package org.hyperledger.fabric.client;
 
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.peer.DeliverGrpc;
@@ -25,16 +26,16 @@ public final class MockDeliverService extends DeliverGrpc.DeliverImplBase {
 
     @Override
     public StreamObserver<Common.Envelope> deliver(final StreamObserver<EventsPackage.DeliverResponse> responseObserver) {
-        return testUtils.invokeStubDuplexCall(stub::blockEvents, responseObserver, 1);
+        return testUtils.invokeStubDuplexCall(stub::blockEvents, (ServerCallStreamObserver<EventsPackage.DeliverResponse>) responseObserver, 1);
     }
 
     @Override
     public StreamObserver<Common.Envelope> deliverFiltered(final StreamObserver<EventsPackage.DeliverResponse> responseObserver) {
-        return testUtils.invokeStubDuplexCall(stub::filteredBlockEvents, responseObserver, 1);
+        return testUtils.invokeStubDuplexCall(stub::filteredBlockEvents, (ServerCallStreamObserver<EventsPackage.DeliverResponse>) responseObserver, 1);
     }
 
     @Override
     public StreamObserver<Common.Envelope> deliverWithPrivateData(final StreamObserver<EventsPackage.DeliverResponse> responseObserver) {
-        return testUtils.invokeStubDuplexCall(stub::blockEventsWithPrivateData, responseObserver, 1);
+        return testUtils.invokeStubDuplexCall(stub::blockEventsWithPrivateData, (ServerCallStreamObserver<EventsPackage.DeliverResponse>) responseObserver, 1);
     }
 }
