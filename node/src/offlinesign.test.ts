@@ -26,11 +26,11 @@ describe('Offline sign', () => {
     beforeEach(() => {
         client = new MockGatewayGrpcClient();
 
-        const txResult = new Response()
+        const txResult = new Response();
         txResult.setPayload(Buffer.from(expectedResult));
 
         const evaluateResult = new EvaluateResponse();
-        evaluateResult.setResult(txResult)
+        evaluateResult.setResult(txResult);
 
         client.mockEvaluateResponse(evaluateResult);
 
@@ -48,7 +48,7 @@ describe('Offline sign', () => {
         identity = {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
-        }
+        };
 
         const options: InternalConnectOptions = {
             identity,
@@ -65,16 +65,16 @@ describe('Offline sign', () => {
 
             await expect(proposal.evaluate()).rejects.toThrow(undefinedSignerMessage);
         });
-    
+
         it('uses offline signature', async () => {
             const expected = Buffer.from('MY_SIGNATURE');
 
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
             const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), expected);
             await signedProposal.evaluate();
-    
+
             const evaluateRequest = client.getEvaluateRequests()[0];
-            const actual = Buffer.from(evaluateRequest.getProposedTransaction()?.getSignature_asU8() || '').toString();
+            const actual = Buffer.from(evaluateRequest.getProposedTransaction()?.getSignature_asU8() ?? '').toString();
             expect(actual).toBe(expected.toString());
         });
 
@@ -97,16 +97,16 @@ describe('Offline sign', () => {
 
             await expect(proposal.endorse()).rejects.toThrow(undefinedSignerMessage);
         });
-    
+
         it('uses offline signature', async () => {
             const expected = Buffer.from('MY_SIGNATURE');
 
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
             const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), expected);
             await signedProposal.endorse();
-    
+
             const endorseRequest = client.getEndorseRequests()[0];
-            const actual = Buffer.from(endorseRequest.getProposedTransaction()?.getSignature_asU8() || '').toString();
+            const actual = Buffer.from(endorseRequest.getProposedTransaction()?.getSignature_asU8() ?? '').toString();
             expect(actual).toBe(expected.toString());
         });
 
@@ -131,7 +131,7 @@ describe('Offline sign', () => {
 
             await expect(transaction.submit()).rejects.toThrow(undefinedSignerMessage);
         });
-    
+
         it('uses offline signature', async () => {
             const expected = Buffer.from('MY_SIGNATURE');
 
@@ -140,9 +140,9 @@ describe('Offline sign', () => {
             const unsignedTransaction = await signedProposal.endorse();
             const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), expected);
             await signedTransaction.submit();
-    
+
             const submitRequest = client.getSubmitRequests()[0];
-            const actual = Buffer.from(submitRequest.getPreparedTransaction()?.getSignature_asU8() || '').toString();
+            const actual = Buffer.from(submitRequest.getPreparedTransaction()?.getSignature_asU8() ?? '').toString();
             expect(actual).toBe(expected.toString());
         });
     });
@@ -168,7 +168,7 @@ describe('Offline sign', () => {
             const unsignedCommit = await signedTransaction.submit();
             const signedCommit = gateway.newSignedCommit(unsignedCommit.getBytes(), expected);
             await signedCommit.getStatus();
-    
+
             const commitRequest = client.getCommitStatusRequests()[0];
             const actual = Buffer.from(commitRequest.getSignature_asU8() ?? '').toString();
             expect(actual).toBe(expected.toString());
@@ -182,7 +182,7 @@ describe('Offline sign', () => {
 
             const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const actual = signedProposal.getTransactionId();
-    
+
             expect(actual).toBe(expected);
         });
 
@@ -192,7 +192,7 @@ describe('Offline sign', () => {
 
             const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const actual = signedProposal.getDigest();
-    
+
             expect(actual).toEqual(expected);
         });
 
@@ -204,7 +204,7 @@ describe('Offline sign', () => {
 
             const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), expected);
             const actual = signedTransaction.getDigest();
-    
+
             expect(actual).toEqual(expected);
         });
 
@@ -216,7 +216,7 @@ describe('Offline sign', () => {
 
             const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
             const actual = signedTransaction.getTransactionId();
-    
+
             expect(actual).toEqual(expected);
         });
 
@@ -228,9 +228,9 @@ describe('Offline sign', () => {
             const unsignedCommit = await signedTransaction.submit();
             const expected = unsignedCommit.getTransactionId();
 
-            const signedCommit = gateway.newSignedCommit(unsignedCommit.getBytes(), Buffer.from('SIGNATURE'))
+            const signedCommit = gateway.newSignedCommit(unsignedCommit.getBytes(), Buffer.from('SIGNATURE'));
             const actual = signedCommit.getTransactionId();
-    
+
             expect(actual).toEqual(expected);
         });
 
@@ -242,9 +242,9 @@ describe('Offline sign', () => {
             const unsignedCommit = await signedTransaction.submit();
             const expected = unsignedCommit.getDigest();
 
-            const signedCommit = gateway.newSignedCommit(unsignedCommit.getBytes(), expected)
+            const signedCommit = gateway.newSignedCommit(unsignedCommit.getBytes(), expected);
             const actual = signedCommit.getDigest();
-    
+
             expect(actual).toEqual(expected);
         });
     });

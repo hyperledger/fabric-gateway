@@ -84,7 +84,7 @@ export class ProposalImpl implements Proposal {
         const evaluateResponse = await this.#client.evaluate(this.#newEvaluateRequest(), options);
         const result = evaluateResponse.getResult();
 
-        return result?.getPayload_asU8() || new Uint8Array(0);
+        return result?.getPayload_asU8() ?? new Uint8Array(0);
     }
 
     async endorse(options?: Readonly<CallOptions>): Promise<Transaction> {
@@ -129,7 +129,7 @@ export class ProposalImpl implements Proposal {
 
     #newEndorseRequest(): EndorseRequest {
         const result = new EndorseRequest();
-        result.setTransactionId(this.#proposedTransaction.getTransactionId())
+        result.setTransactionId(this.#proposedTransaction.getTransactionId());
         result.setChannelId(this.#channelName);
         result.setProposedTransaction(this.#proposal);
         result.setEndorsingOrganizationsList(this.#proposedTransaction.getEndorsingOrganizationsList());

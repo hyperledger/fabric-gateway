@@ -40,14 +40,14 @@ describe('Block Events', () => {
         const now = new Date();
         const callOptions = {
             deadline: now.setHours(now.getHours() + 1),
-        }
+        };
         defaultOptions = () => callOptions; // Return a specific object to test modification
-        
+
         client = new MockGatewayGrpcClient();
         identity = {
             mspId: 'MSP_ID',
             credentials: new Uint8Array(Buffer.from('CERTIFICATE')),
-        }
+        };
         signer = jest.fn(undefined);
         signer.mockResolvedValue(signature);
         hash = jest.fn(undefined);
@@ -71,16 +71,16 @@ describe('Block Events', () => {
         const channelHeader = ChannelHeader.deserializeBinary(header.getChannelHeader_asU8());
         const signatureHeader = SignatureHeader.deserializeBinary(header.getSignatureHeader_asU8());
         const creator = SerializedIdentity.deserializeBinary(signatureHeader.getCreator_asU8());
-    
+
         const actualCreator: Identity = {
             credentials: creator.getIdBytes_asU8(),
             mspId: creator.getMspid(),
         };
-    
+
         expect(channelHeader.getChannelId()).toBe(network.getName());
         expect(actualCreator).toEqual(gateway.getIdentity());
     }
-    
+
     interface TestCase {
         description: string;
         mockResponse(stream: DuplexStreamResponseStub<Envelope, DeliverResponse>): void;
@@ -289,7 +289,7 @@ describe('Block Events', () => {
             await expect(t).rejects.toMatchObject({
                 code: serviceError.code,
                 cause: serviceError,
-            })
+            });
         });
 
         it('throws GatewayError on receive ServiceError', async () => {

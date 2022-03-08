@@ -110,12 +110,12 @@ async function newHSMSigner(user: string): Promise<HSMSigner> {
         label: 'ForFabric',
         pin: '98765432',
         identifier: ski
-    }
+    };
     return hsmSignerFactory.newSigner(hsmConfigOptions);
 }
 
 async function readHSMCertificate(user: string): Promise<Buffer> {
-    const certPath = path.join(fixturesDir, 'crypto-material', 'hsm', user, 'signcerts', 'cert.pem' );
+    const certPath = path.join(fixturesDir, 'crypto-material', 'hsm', user, 'signcerts', 'cert.pem');
     return await fs.readFile(certPath);
 }
 
@@ -163,7 +163,7 @@ export class CustomWorld {
     async connect(address: string): Promise<void> {
         // address is the name of the peer, lookup the connection info
         const peer = peerConnectionInfo[address];
-        const tlsRootCert = await fs.readFile(peer.tlsRootCertPath)
+        const tlsRootCert = await fs.readFile(peer.tlsRootCertPath);
         const credentials = grpc.credentials.createSsl(tlsRootCert);
         let grpcOptions: Record<string, unknown> = {};
         if (peer.serverNameOverride) {
@@ -172,7 +172,7 @@ export class CustomWorld {
             };
         }
         const client = new grpc.Client(peer.url, credentials, grpcOptions);
-        await this.getCurrentGateway().connect(client);
+        this.getCurrentGateway().connect(client);
     }
 
     prepareTransaction(action: string, transactionName: string): void {
@@ -180,7 +180,7 @@ export class CustomWorld {
     }
 
     setArguments(jsonArgs: string): void {
-        const args = JSON.parse(jsonArgs);
+        const args = JSON.parse(jsonArgs) as string[];
         this.getTransaction().options.arguments = args;
     }
 
@@ -189,7 +189,7 @@ export class CustomWorld {
     }
 
     setEndorsingOrgs(jsonOrgs: string): void {
-        const orgs = JSON.parse(jsonOrgs);
+        const orgs = JSON.parse(jsonOrgs) as string[];
         this.getTransaction().options.endorsingOrganizations = orgs;
     }
 
@@ -238,7 +238,7 @@ export class CustomWorld {
         const err = this.getTransaction().getError();
 
         if (!isInstanceOf(err, type)) {
-            throw new TypeError(`Error is not a ${type}: ${err}`);
+            throw new TypeError(`Error is not a ${String(type)}: ${String(err)}`);
         }
 
         return err;

@@ -9,7 +9,7 @@ import { connect, ConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
 
-describe ('Network', () => {
+describe('Network', () => {
     let network: Network;
     let client: grpc.Client;
 
@@ -17,7 +17,7 @@ describe ('Network', () => {
         const identity: Identity = {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
-        }
+        };
         client = new grpc.Client('example.org:1337', grpc.credentials.createInsecure());
         const options: ConnectOptions = {
             identity,

@@ -53,14 +53,14 @@ describe('Chaincode Events', () => {
         const now = new Date();
         const callOptions = {
             deadline: now.setHours(now.getHours() + 1),
-        }
+        };
         chaincodeEventsOptions = () => callOptions; // Return a specific object to test modification
-        
+
         client = new MockGatewayGrpcClient();
         identity = {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
-        }
+        };
         signer = jest.fn(undefined);
         signer.mockResolvedValue(signature);
         hash = jest.fn(undefined);
@@ -80,15 +80,15 @@ describe('Chaincode Events', () => {
     describe('request', () => {
         it('sends valid request with default start position', async () => {
             await network.getChaincodeEvents('CHAINCODE');
-    
+
             const signedRequest = client.getChaincodeEventsRequests()[0];
             expect(signedRequest.getSignature()).toEqual(signature);
-    
+
             const request = assertDecodeChaincodeEventsRequest(signedRequest);
-    
+
             expect(request.getChannelId()).toBe(channelName);
             expect(request.getChaincodeId()).toBe('CHAINCODE');
-    
+
             const startPosition = request.getStartPosition();
             expect(startPosition).toBeDefined();
             expect(startPosition?.getTypeCase()).toBe(SeekPosition.TypeCase.NEXT_COMMIT);
@@ -105,15 +105,15 @@ describe('Chaincode Events', () => {
         it('sends valid request with specified start block number', async () => {
             const startBlock = BigInt(418);
             await network.getChaincodeEvents('CHAINCODE', { startBlock });
-    
+
             const signedRequest = client.getChaincodeEventsRequests()[0];
             expect(signedRequest.getSignature()).toEqual(signature);
-    
+
             const request = assertDecodeChaincodeEventsRequest(signedRequest);
-    
+
             expect(request.getChannelId()).toBe(channelName);
             expect(request.getChaincodeId()).toBe('CHAINCODE');
-    
+
             const startPosition = request.getStartPosition();
             expect(startPosition).toBeDefined();
             expect(startPosition?.getTypeCase()).toBe(SeekPosition.TypeCase.SPECIFIED);
@@ -157,7 +157,7 @@ describe('Chaincode Events', () => {
             await expect(t).rejects.toMatchObject({
                 code: serviceError.code,
                 cause: serviceError,
-            })
+            });
         });
     });
 
@@ -167,46 +167,46 @@ describe('Chaincode Events', () => {
         event1.setTxId('tx1');
         event1.setEventName('event1'),
         event1.setPayload(Buffer.from('payload1'));
-    
+
         const event2 = new ChaincodeEventProto();
         event2.setChaincodeId('CHAINCODE');
         event2.setTxId('tx2');
         event2.setEventName('event2'),
         event2.setPayload(Buffer.from('payload2'));
-    
+
         const event3 = new ChaincodeEventProto();
         event3.setChaincodeId('CHAINCODE');
         event3.setTxId('tx3');
         event3.setEventName('event3'),
         event3.setPayload(Buffer.from('payload3'));
-    
+
         const response1 = new ChaincodeEventsResponse();
         response1.setBlockNumber(1);
         response1.setEventsList([ event1, event2 ]);
-    
+
         const response2 = new ChaincodeEventsResponse();
         response2.setBlockNumber(2);
         response2.setEventsList([ event3 ]);
-    
+
         const expectedEvents: ChaincodeEvent[] = [
             newChaincodeEvent(1, event1),
             newChaincodeEvent(1, event2),
             newChaincodeEvent(2, event3),
         ];
-    
+
         it('returns events as AsyncIterable', async () => {
             client.mockChaincodeEventsResponse(newServerStreamResponse([ response1, response2 ]));
-    
+
             const events = await network.getChaincodeEvents('CHAINCODE');
-    
+
             const actualEvents = await readElements(events, expectedEvents.length);
             expect(actualEvents).toEqual(expectedEvents);
         });
 
         it('closing iterator cancels gRPC client stream', async () => {
-            const iterable = newServerStreamResponse([ response1, response2 ])
+            const iterable = newServerStreamResponse([ response1, response2 ]);
             client.mockChaincodeEventsResponse(iterable);
-    
+
             const events = await network.getChaincodeEvents('CHAINCODE');
             events.close();
 
@@ -226,5 +226,5 @@ describe('Chaincode Events', () => {
                 cause: serviceError,
             });
         });
-    })
+    });
 });

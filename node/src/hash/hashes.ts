@@ -12,4 +12,4 @@ import { Hash } from './hash';
  */
 export const sha256: Hash = (message) => {
     return createHash('sha256').update(message).digest();
-}
+};

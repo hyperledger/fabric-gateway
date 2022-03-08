@@ -15,7 +15,7 @@ export const undefinedSignerMessage = 'No signing implementation';
 
 const undefinedSigner: Signer = () => {
     throw new Error(undefinedSignerMessage);
-}
+};
 
 type SigningIdentityOptions = Pick<ConnectOptions, 'identity' | 'signer' | 'hash'>;
 
@@ -36,8 +36,8 @@ export class SigningIdentity {
         serializedIdentity.setIdBytes(options.identity.credentials);
         this.#creator = serializedIdentity.serializeBinary();
 
-        this.#hash = options.hash || sha256;
-        this.#sign = options.signer || undefinedSigner;
+        this.#hash = options.hash ?? sha256;
+        this.#sign = options.signer ?? undefinedSigner;
     }
 
     getIdentity(): Identity {

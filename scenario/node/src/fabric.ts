@@ -65,11 +65,11 @@ export function findSoftHSMPKCS11Lib(): string {
 
     for (const pathnameToTry of commonSoftHSMPathNames) {
         if (fs.existsSync(pathnameToTry)) {
-            return pathnameToTry
+            return pathnameToTry;
         }
     }
 
-    throw new Error('Unable to find PKCS11 library')
+    throw new Error('Unable to find PKCS11 library');
 }
 
 function dockerCommand(...args: string[]): string {
@@ -87,6 +87,13 @@ function dockerCommandWithTLS(...args: string[]): string {
 
 async function sleep(ms: number): Promise<void> {
     await new Promise<void>(resolve => setTimeout(resolve, ms));
+}
+
+interface ChaincodeDefinition {
+    package: string;
+    type: string;
+    label: string;
+    path: string;
 }
 
 export class Fabric {
@@ -124,7 +131,7 @@ export class Fabric {
         await sleep(20000);
     }
 
-    generateHSMUser(hsmuserid: string):void {
+    generateHSMUser(hsmuserid: string): void {
         const generateOut = execFileSync('./generate-hsm-user.sh', [hsmuserid], { cwd: fixturesDir });
         console.log(generateOut.toString());
     }
@@ -169,7 +176,7 @@ export class Fabric {
 
     async deployChaincode(ccType: string, ccName: string, version: string, channelName: string, signaturePolicy: string): Promise<void> {
         let exists = false;
-        let sequence = '1'
+        let sequence = '1';
         const mangledName = ccName + version + channelName;
         const policy = this.runningChaincodes[mangledName];
         if (typeof policy !== 'undefined') {
@@ -178,7 +185,7 @@ export class Fabric {
             }
             // Already exists but different signature policy...
             // No need to re-install, just increment the sequence number and approve/commit new signature policy
-            exists = true
+            exists = true;
             const out = dockerCommandWithTLS(
                 'exec', 'org1_cli', 'peer', 'lifecycle', 'chaincode', 'querycommitted',
                 '-o', 'orderer.example.com:7050', '--channelID', channelName, '--name', ccName);
@@ -198,23 +205,19 @@ export class Fabric {
         let collectionsConfig: string[] = [];
         const collectionsFile = `chaincode/${ccType}/${ccName}/collections_config.json`;
         if (fs.existsSync(path.join(fixturesDir, collectionsFile))) {
-            collectionsConfig = ['--collections-config', path.join('/opt/gopath/src/github.com', collectionsFile)]
+            collectionsConfig = ['--collections-config', path.join('/opt/gopath/src/github.com', collectionsFile)];
+        }
+
+        if (!exists) {
+            await this.installChaincode({
+                package: ccPackage,
+                type: ccType,
+                label: ccLabel,
+                path: ccPath,
+            });
         }
 
         for (const [orgName, orgInfo] of Object.entries(orgs)) {
-            if (!exists) {
-                dockerCommand(
-                    'exec', orgInfo.cli, 'peer', 'lifecycle', 'chaincode', 'package', ccPackage,
-                    '--lang', ccType,
-                    '--label', ccLabel,
-                    '--path', ccPath);
-
-                for (const peer of orgInfo.peers) {
-                    const env = 'CORE_PEER_ADDRESS=' + peer;
-                    dockerCommand('exec', '-e', env, orgInfo.cli, 'peer', 'lifecycle', 'chaincode', 'install', ccPackage);
-                }
-            }
-
             const out = dockerCommand('exec', orgInfo.cli, 'peer', 'lifecycle', 'chaincode', 'queryinstalled');
 
             const pattern = new RegExp('.*Package ID: (.*), Label: ' + ccLabel + '.*');
@@ -259,6 +262,27 @@ export class Fabric {
 
         this.runningChaincodes[mangledName] = signaturePolicy;
         await sleep(10000);
+    }
+
+    private async installChaincode(chaincode: ChaincodeDefinition): Promise<void> {
+        const orgInstalls = Object.values(orgs).map(orgInfo => this.installChaincodeToOrg(chaincode, orgInfo));
+        await Promise.all(orgInstalls);
+    }
+
+    private async installChaincodeToOrg(chaincode: ChaincodeDefinition, orgInfo: OrgInfo): Promise<void> {
+        dockerCommand(
+            'exec', orgInfo.cli, 'peer', 'lifecycle', 'chaincode', 'package', chaincode.package,
+            '--lang', chaincode.type,
+            '--label', chaincode.label,
+            '--path', chaincode.path,
+        );
+
+        const peerInstalls = orgInfo.peers.map(peer => {
+            const env = 'CORE_PEER_ADDRESS=' + peer;
+            dockerCommand('exec', '-e', env, orgInfo.cli, 'peer', 'lifecycle', 'chaincode', 'install', chaincode.package);
+        });
+
+        await Promise.all(peerInstalls);
     }
 
     stopPeer(peer: string): void {

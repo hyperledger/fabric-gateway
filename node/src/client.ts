@@ -66,7 +66,7 @@ export interface DuplexStreamResponse<RequestType, ResponseType> extends ServerS
 export interface GatewayGrpcClient {
     makeUnaryRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, options: CallOptions, callback: requestCallback<ResponseType>): ClientUnaryCall;
     makeServerStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, options: CallOptions): ServerStreamResponse<ResponseType>;
-    makeBidiStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, options: CallOptions): DuplexStreamResponse<RequestType, ResponseType>
+    makeBidiStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, options: CallOptions): DuplexStreamResponse<RequestType, ResponseType>;
 }
 
 type DefaultCallOptions = Pick<ConnectOptions, 'commitStatusOptions' | 'endorseOptions' | 'evaluateOptions' | 'submitOptions' | 'chaincodeEventsOptions' | 'blockEventsOptions' | 'filteredBlockEventsOptions' | 'blockEventsWithPrivateDataOptions'>;
@@ -159,7 +159,7 @@ class GatewayClientImpl implements GatewayClient {
             return {
                 [Symbol.asyncIterator]: () => wrapAsyncIterator(serverStream[Symbol.asyncIterator]()),
                 close: () => serverStream.cancel(),
-            }
+            };
         } catch (err) {
             rethrowGrpcError(err);
         }
@@ -204,7 +204,7 @@ class GatewayClientImpl implements GatewayClient {
             return {
                 [Symbol.asyncIterator]: () => wrapAsyncIterator(duplexStream[Symbol.asyncIterator]()),
                 close: () => duplexStream.cancel(),
-            }
+            };
         } catch (err) {
             rethrowGrpcError(err);
         }
@@ -228,7 +228,7 @@ function newUnaryCallback<T>(
             return reject(new Error('No result returned'));
         }
         return resolve(value);
-    }
+    };
 }
 
 function wrapAsyncIterator<T>(iterator: AsyncIterator<T>): AsyncIterator<T> {

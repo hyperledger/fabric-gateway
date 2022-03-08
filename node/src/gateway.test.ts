@@ -16,7 +16,7 @@ describe('Gateway', () => {
         identity = {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
-        }
+        };
         client = new grpc.Client('example.org:1337', grpc.credentials.createInsecure());
     });
 
@@ -34,7 +34,6 @@ describe('Gateway', () => {
             } as ConnectOptions;
             expect(() => connect(options)).toThrow();
         });
-
     });
 
     describe('getNetwork', () => {

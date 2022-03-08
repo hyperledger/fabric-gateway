@@ -38,11 +38,11 @@ describe('Transaction', () => {
         const now = new Date();
         const submitCallOptions = {
             deadline: now.setHours(now.getHours() + 1),
-        }
+        };
         submitOptions = () => submitCallOptions; // Return a specific object to test modification
         const commitStatusCallOptions = {
             deadline: now.setHours(now.getHours() + 1),
-        }
+        };
         commitStatusOptions = () => commitStatusCallOptions; // Return a specific object to test modification
 
         client = new MockGatewayGrpcClient();
@@ -59,7 +59,7 @@ describe('Transaction', () => {
         identity = {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
-        }
+        };
         signer = jest.fn(undefined);
         signer.mockResolvedValue(Buffer.from('SIGNATURE'));
         hash = jest.fn(undefined);
@@ -155,7 +155,7 @@ describe('Transaction', () => {
         await contract.submitTransaction('TRANSACTION_NAME');
 
         const submitRequest = client.getSubmitRequests()[0];
-        const signature = Buffer.from(submitRequest.getPreparedTransaction()?.getSignature_asU8() || '').toString();
+        const signature = Buffer.from(submitRequest.getPreparedTransaction()?.getSignature_asU8() ?? '').toString();
         expect(signature).toBe('MY_SIGNATURE');
     });
 
@@ -165,7 +165,7 @@ describe('Transaction', () => {
         await contract.submitTransaction('TRANSACTION_NAME');
 
         const statusRequest = client.getCommitStatusRequests()[0];
-        const signature = Buffer.from(statusRequest.getSignature() || '').toString();
+        const signature = Buffer.from(statusRequest.getSignature() ?? '').toString();
         expect(signature).toBe('MY_SIGNATURE');
     });
 

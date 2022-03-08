@@ -19,7 +19,7 @@ import { SubmittedTransaction } from './submittedtransaction';
  * For more complex transaction invocations, such as including private data, transactions can be evaluated or
  * submitted using {@link evaluate} or {@link submit} respectively. The result of a submitted transaction can be
  * accessed prior to its commit to the ledger using {@link submitAsync}.
- * 
+ *
  * A finer-grained transaction flow can be employed by using {@link newProposal}. This allows retry of individual steps
  * in the flow in response to errors.
  *
@@ -31,7 +31,7 @@ import { SubmittedTransaction } from './submittedtransaction';
  * 1. With the serialized message and signature received from the client to create a signed proposal, transaction or
  * commit using the Gateway's {@link Gateway.newSignedProposal}, {@link Gateway.newSignedTransaction} or
  * {@link Gateway.newSignedCommit} methods respectively.
- * 
+ *
  * @example Evaluate transaction
  * ```
  * const result = await contract.evaluate('transactionName', {
@@ -39,7 +39,7 @@ import { SubmittedTransaction } from './submittedtransaction';
  *     // Specify additional proposal options here
  * });
  * ```
- * 
+ *
  * @example Submit transaction
  * ```
  * const result = await contract.submit('transactionName', {
@@ -47,16 +47,16 @@ import { SubmittedTransaction } from './submittedtransaction';
  *     // Specify additional proposal options here
  * });
  * ```
- * 
+ *
  * @example Async submit
  * ```
  * const commit = await contract.submitAsync('transactionName', {
  *     arguments: ['one', 'two']
  * });
  * const result = commit.getResult();
- * 
+ *
  * // Update UI or reply to REST request before waiting for commit status
- * 
+ *
  * const status = await commit.getStatus();
  * if (!status.successful) {
  *     throw new Error(`transaction ${status.transactionId} failed with status code ${status.code}`);
@@ -68,11 +68,11 @@ import { SubmittedTransaction } from './submittedtransaction';
  * const proposal = contract.newProposal('transactionName');
  * const transaction = await proposal.endorse();
  * const commit = await transaction.submit();
- * 
+ *
  * const result = transaction.getResult();
  * const status = await commit.getStatus();
  * ```
- * 
+ *
  * @example Off-line signing
  * ```
  * const unsignedProposal = contract.newProposal('transactionName');
@@ -80,19 +80,19 @@ import { SubmittedTransaction } from './submittedtransaction';
  * const proposalDigest = unsignedProposal.getDigest();
  * // Generate signature from digest
  * const signedProposal = gateway.newSignedProposal(proposalBytes, proposalSignature);
- * 
+ *
  * const unsignedTransaction = await signedProposal.endorse();
  * const transactionBytes = unsignedTransaction.getBytes();
  * const transactionDigest = unsignedTransaction.getDigest();
  * // Generate signature from digest
  * const signedTransaction = gateway.newSignedTransaction(transactionBytes, transactionDigest);
- * 
+ *
  * const unsignedCommit = await signedTransaction.submit();
  * const commitBytes = unsignedCommit.getBytes();
  * const commitDigest = unsignedCommit.getDigest();
  * // Generate signature from digest
  * const signedCommit = gateway.newSignedCommit(commitBytes, commitDigest);
- * 
+ *
  * const result = signedTransaction.getResult();
  * const status = await signedCommit.getStatus();
  * ```
@@ -103,7 +103,7 @@ export interface Contract {
      * @returns The chaincode name.
      */
     getChaincodeName(): string;
-    
+
     /**
      * Get the name of the smart contract within the chaincode.
      * @returns The contract name, or `undefined` for the default smart contract.
@@ -114,7 +114,7 @@ export interface Contract {
      * Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing
      * peers but the transaction will not be sent to the ordering service and so will not be committed to the ledger.
      * This can be used for querying the world state.
-     * 
+     *
      * This method is equivalent to:
      * ```
      * contract.evaluate(name, { arguments: [ arg1, arg2 ] });
@@ -131,7 +131,7 @@ export interface Contract {
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
      * transaction function will be evaluated on endorsing peers and then submitted to the ordering service to be
      * committed to the ledger.
-     * 
+     *
      * This method is equivalent to:
      * ```
      * contract.submit(name, { arguments: [ arg1, arg2 ] });
@@ -274,7 +274,7 @@ export class ContractImpl implements Contract {
         )).build();
     }
 
-    #getQualifiedTransactionName(transactionName: string) {
+    #getQualifiedTransactionName(transactionName: string): string {
         return this.#contractName ? `${this.#contractName}:${transactionName}` : transactionName;
     }
 }

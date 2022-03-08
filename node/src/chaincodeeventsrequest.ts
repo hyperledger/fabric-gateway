@@ -33,7 +33,7 @@ export interface ChaincodeEventsRequest extends Signable {
      * }
      * ```
      */
-     getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>>;
+    getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>>;
 }
 
 export interface ChaincodeEventsRequestOptions {
@@ -51,7 +51,7 @@ export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
         this.#client = options.client;
         this.#signingIdentity = options.signingIdentity;
         this.#signedRequest = new SignedChaincodeEventsRequestProto();
-        this.#signedRequest.setRequest(options.request.serializeBinary())
+        this.#signedRequest.setRequest(options.request.serializeBinary());
     }
 
     async getEvents(options?: Readonly<CallOptions>): Promise<CloseableAsyncIterable<ChaincodeEvent>> {

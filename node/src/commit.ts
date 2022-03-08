@@ -39,7 +39,7 @@ export interface CommitImplOptions {
 
 export class CommitImpl implements Commit {
     readonly #client: GatewayClient;
-    readonly #signingIdentity: SigningIdentity
+    readonly #signingIdentity: SigningIdentity;
     readonly #transactionId: string;
     readonly #signedRequest: SignedCommitStatusRequest;
 
@@ -66,7 +66,7 @@ export class CommitImpl implements Commit {
     }
 
     getTransactionId(): string {
-        return this.#transactionId
+        return this.#transactionId;
     }
 
     setSignature(signature: Uint8Array): void {

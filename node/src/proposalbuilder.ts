@@ -22,7 +22,7 @@ export interface ProposalOptions {
      * Arguments passed to the transaction function.
      */
     arguments?: (string | Uint8Array)[];
-    
+
     /**
      * Private data passed to the transaction function but not recorded on the ledger.
      */
@@ -153,13 +153,12 @@ export class ProposalBuilder {
     #getTransientData(): Record<string, Uint8Array> {
         const result: Record<string, Uint8Array> = {};
 
-        for (const [key, value] of Object.entries(this.#options.transientData || {})) {
+        for (const [key, value] of Object.entries(this.#options.transientData ?? {})) {
             result[key] = asBytes(value);
         }
 
         return result;
     }
-
 }
 
 function asBytes(value: string | Uint8Array): Uint8Array {

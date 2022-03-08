@@ -68,7 +68,7 @@ describe('Proposal', () => {
         details: 'DETAILS',
         metadata: new Metadata(),
     });
-    
+
     let evaluateOptions: () => CallOptions;
     let endorseOptions: () => CallOptions;
     let client: MockGatewayGrpcClient;
@@ -83,18 +83,18 @@ describe('Proposal', () => {
         const now = new Date();
         const evaluateCallOptions = {
             deadline: now.setHours(now.getHours() + 1),
-        }
+        };
         evaluateOptions = () => evaluateCallOptions; // Return a specific object to test modification
         const endorseCallOptions = {
             deadline: now.setHours(now.getHours() + 1),
-        }
+        };
         endorseOptions = () => endorseCallOptions; // Return a specific object to test modification
 
         client = new MockGatewayGrpcClient();
         identity = {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
-        }
+        };
         signer = jest.fn(undefined);
         signer.mockResolvedValue(Buffer.from('SIGNATURE'));
         hash = jest.fn(undefined);
@@ -116,12 +116,12 @@ describe('Proposal', () => {
         const expectedResult = 'TX_RESULT';
 
         beforeEach(() => {
-            const txResult = new Response()
+            const txResult = new Response();
             txResult.setPayload(Buffer.from(expectedResult));
-    
+
             const evaluateResult = new EvaluateResponse();
-            evaluateResult.setResult(txResult)
-    
+            evaluateResult.setResult(txResult);
+
             client.mockEvaluateResponse(evaluateResult);
         });
 
@@ -210,7 +210,7 @@ describe('Proposal', () => {
             await contract.evaluate('TRANSACTION_NAME', { transientData });
 
             const evaluateRequest = client.getEvaluateRequests()[0];
-            const proposal_bytes = evaluateRequest.getProposedTransaction()?.getProposalBytes_asU8() || Buffer.from('');
+            const proposal_bytes = evaluateRequest.getProposedTransaction()?.getProposalBytes_asU8() ?? Buffer.from('');
             const proposal = ProposalProto.deserializeBinary(proposal_bytes);
             const payload = ChaincodeProposalPayload.deserializeBinary(proposal.getPayload_asU8());
 
@@ -227,15 +227,15 @@ describe('Proposal', () => {
             await contract.evaluate('TRANSACTION_NAME', { transientData });
 
             const evaluateRequest = client.getEvaluateRequests()[0];
-            const proposal_bytes = evaluateRequest.getProposedTransaction()?.getProposalBytes_asU8() || Buffer.from('');
+            const proposal_bytes = evaluateRequest.getProposedTransaction()?.getProposalBytes_asU8() ?? Buffer.from('');
             const proposal = ProposalProto.deserializeBinary(proposal_bytes);
             const payload = ChaincodeProposalPayload.deserializeBinary(proposal.getPayload_asU8());
 
             const actual = Object.fromEntries(payload.getTransientmapMap().getEntryList());
-            const expected: Record<string, Uint8Array> = {}
+            const expected: Record<string, Uint8Array> = {};
             Object.entries(transientData).forEach(([k, v]) => expected[k] = new Uint8Array(Buffer.from(v)));
 
-            expect(actual).toEqual(expected)
+            expect(actual).toEqual(expected);
         });
 
         it('sets endorsing orgs', async () => {
@@ -252,7 +252,7 @@ describe('Proposal', () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
             const evaluateRequest = client.getEvaluateRequests()[0];
-            const signature = Buffer.from(evaluateRequest.getProposedTransaction()?.getSignature_asU8() || '').toString();
+            const signature = Buffer.from(evaluateRequest.getProposedTransaction()?.getSignature_asU8() ?? '').toString();
             expect(signature).toBe('MY_SIGNATURE');
         });
 
@@ -438,7 +438,7 @@ describe('Proposal', () => {
             await contract.submitTransaction('TRANSACTION_NAME');
 
             const endorseRequest = client.getEndorseRequests()[0];
-            const signature = Buffer.from(endorseRequest.getProposedTransaction()?.getSignature_asU8() || '').toString();
+            const signature = Buffer.from(endorseRequest.getProposedTransaction()?.getSignature_asU8() ?? '').toString();
             expect(signature).toBe('MY_SIGNATURE');
         });
 
