@@ -25,6 +25,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.Server;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
@@ -229,7 +230,7 @@ public final class TestUtils {
 
     public <Request, Response> StreamObserver<Request> invokeStubDuplexCall(
             final Function<Stream<Request>, Stream<Response>> stubCall,
-            final StreamObserver<Response> responseObserver,
+            final ServerCallStreamObserver<Response> responseObserver,
             final int initialRequestCount
     ) {
         BlockingQueue<Request> requestQueue = new LinkedBlockingQueue<>();
@@ -252,6 +253,7 @@ public final class TestUtils {
         }
 
         CompletableFuture<Void> finalResponseFuture = responseFuture;
+        responseObserver.setOnCancelHandler(() -> finalResponseFuture.cancel(true)); // Avoids gRPC error if cancel is called more than once
         return streamObserverFromQueue(
                 requestQueue,
                 request -> requestCountLatch.countDown(),
