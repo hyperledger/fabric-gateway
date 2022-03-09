@@ -67,7 +67,6 @@ export interface Network {
      * Get block events.
      * @param options - Event listening options.
      * @returns Block protocol buffer messages. The iterator should be closed after use to complete the eventing session.
-
      * @throws {@link GatewayError}
      * Thrown by the iterator if the gRPC service invocation fails.
      * @example
@@ -177,7 +176,7 @@ export class NetworkImpl implements Network {
     }
 
     async getChaincodeEvents(chaincodeName: string, options?: Readonly<ChaincodeEventsOptions>): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
-        return this.newChaincodeEventsRequest(chaincodeName, options).getEvents();
+        return  this.newChaincodeEventsRequest(chaincodeName, options).getEvents();
     }
 
     newChaincodeEventsRequest(chaincodeName: string, options: Readonly<ChaincodeEventsOptions> = {}): ChaincodeEventsRequest {
