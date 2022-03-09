@@ -13,7 +13,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.function.Function;
@@ -46,7 +45,6 @@ final class GatewayClient {
     private final GatewayGrpc.GatewayBlockingStub gatewayBlockingStub;
     private final DeliverGrpc.DeliverStub deliverAsyncStub;
     private final CallOptions defaultOptions;
-    private final ExecutorService executor = ForkJoinPool.commonPool();
 
     GatewayClient(final Channel channel, final CallOptions defaultOptions) {
         GatewayUtils.requireNonNullArgument(channel, "No connection details supplied");
@@ -191,13 +189,11 @@ final class GatewayClient {
             final Function<StreamObserver<Response>, StreamObserver<Request>> call,
             final Request request
     ) {
-        Context.CancellableContext context = Context.current().withCancellation();
         ResponseObserver<Response> responseObserver = new ResponseObserver<>();
-        // Complete response observer if client cancels the context
-        context.addListener(
-                context1 -> responseObserver.onCompleted(),
-                executor
-        );
+
+        Context.CancellableContext context = Context.current().withCancellation();
+        // Complete response observer synchronously if client cancels the context
+        context.addListener(context1 -> responseObserver.onCompleted(), Runnable::run);
 
         return invokeStreamingCall(context, () -> {
             StreamObserver<Request> requestObserver = call.apply(responseObserver);
@@ -216,10 +212,8 @@ final class GatewayClient {
             Future<?> future = executor.submit(() -> transfer(response));
             try {
                 future.get();
-            } catch (CancellationException ignored) {
+            } catch (CancellationException | InterruptedException ignored) {
                 // Ignore cancellation
-            } catch (InterruptedException ignored) {
-                Thread.currentThread().interrupt(); // Preserve interrupt status
             } catch (ExecutionException e) {
                 // Should never happen
                 throw new RuntimeException(e);
@@ -236,11 +230,11 @@ final class GatewayClient {
 
         @Override
         public void onError(final Throwable t) {
-            final RuntimeException err;
-            if (t instanceof RuntimeException) {
-                err = (RuntimeException) t;
+            final StatusRuntimeException err;
+            if (t instanceof StatusRuntimeException) {
+                err = (StatusRuntimeException) t;
             } else {
-                err = new RuntimeException(t);
+                err = io.grpc.Status.fromThrowable(t).asRuntimeException();
             }
 
             queue.put(() -> {
