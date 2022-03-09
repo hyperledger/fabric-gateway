@@ -12,15 +12,15 @@ export class EventListener<T> {
 
     constructor(events: CloseableAsyncIterable<T>) {
         this.#iterator = events[Symbol.asyncIterator]();
-        this.#close = events.close;
+        this.#close = () => events.close();
     }
 
     async next(): Promise<T> {
         const result = await this.#iterator.next();
-        return result.value;
+        return result.value as T;
     }
 
-    close() {
+    close(): void {
         this.#close();
     }
 }

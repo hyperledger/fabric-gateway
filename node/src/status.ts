@@ -18,7 +18,7 @@ export const StatusNames = Object.freeze(
             .map(([name, code]) => [code, name])
     ) as { [P in keyof typeof StatusCode as typeof StatusCode[P]]: P }
 );
- 
+
 /**
  * Status of a transaction that is committed to the ledger.
  */
@@ -26,7 +26,7 @@ export interface Status {
     /**
      * Block number in which the transaction committed.
      */
-     blockNumber: bigint;
+    blockNumber: bigint;
 
     /**
      * Transaction validation status code. The value corresponds to one of the values enumerated by {@link StatusCode}.

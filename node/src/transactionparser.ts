@@ -12,9 +12,9 @@ import { ProposalResponsePayload } from './protos/peer/proposal_response_pb';
 import { ChaincodeActionPayload, Transaction, TransactionAction } from './protos/peer/transaction_pb';
 
 export function parseTransactionEnvelope(envelope: Envelope): {
-    channelName: string,
-    result: Uint8Array,
- } {
+    channelName: string;
+    result: Uint8Array;
+} {
     const payload = Payload.deserializeBinary(envelope.getPayload_asU8());
     const header = assertDefined(payload.getHeader(), 'Missing header');
 
@@ -36,7 +36,7 @@ function parseResultFromPayload(payload: Payload): Uint8Array {
 
     for (const transactionAction of transaction.getActionsList()) {
         try {
-            return parseResultFromTransactionAction(transactionAction)
+            return parseResultFromTransactionAction(transactionAction);
         } catch (err) {
             errors.push(err);
         }

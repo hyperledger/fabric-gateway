@@ -29,7 +29,7 @@ export interface Transaction extends Signable {
      */
     getTransactionId(): string;
 
-     /**
+    /**
      * Submit the transaction to the orderer to be committed to the ledger.
      * @param options - gRPC call options.
      * @throws {@link SubmitError}
@@ -92,7 +92,7 @@ export class TransactionImpl implements Transaction {
             transactionId: this.getTransactionId(),
             signedRequest: this.#newSignedCommitStatusRequest(),
             result: this.getResult(),
-        })
+        });
     }
 
     setSignature(signature: Uint8Array): void {

@@ -26,14 +26,14 @@ export class GatewayContext {
         this.#signerClose = signerClose;
     }
 
-    async connect(client: grpc.Client): Promise<void> {
+    connect(client: grpc.Client): void {
         this.#client = client;
         const options: ConnectOptions = {
             signer: this.#signer,
             identity: this.#identity,
             client,
         };
-        this.#gateway = await connect(options);
+        this.#gateway = connect(options);
     }
 
     useNetwork(channelName: string): void {

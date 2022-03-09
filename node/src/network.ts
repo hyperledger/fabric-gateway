@@ -53,7 +53,7 @@ export interface Network {
      * }
      * ```
      */
-    getChaincodeEvents(chaincodeName: string, options?: ChaincodeEventsOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>>
+    getChaincodeEvents(chaincodeName: string, options?: ChaincodeEventsOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>>;
 
     /**
      * Create a request to receive chaincode events emitted by transaction functions of a specific chaincode. Supports
@@ -82,13 +82,13 @@ export interface Network {
      * }
      * ```
      */
-     getBlockEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<Block>>
+    getBlockEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<Block>>;
 
-     /**
+    /**
       * Create a request to receive block events. Supports off-line signing flow.
       * @param options - Event listening options.
       */
-     newBlockEventsRequest(options?: BlockEventsOptions): BlockEventsRequest;
+    newBlockEventsRequest(options?: BlockEventsOptions): BlockEventsRequest;
 
     /**
      * Get filtered block events.
@@ -109,13 +109,13 @@ export interface Network {
      * }
      * ```
      */
-     getFilteredBlockEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<FilteredBlock>>
+    getFilteredBlockEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<FilteredBlock>>;
 
-     /**
+    /**
       * Create a request to receive filtered block events. Supports off-line signing flow.
       * @param options - Event listening options.
       */
-     newFilteredBlockEventsRequest(options?: BlockEventsOptions): FilteredBlockEventsRequest;
+    newFilteredBlockEventsRequest(options?: BlockEventsOptions): FilteredBlockEventsRequest;
 
     /**
      * Get block events with private data.
@@ -136,13 +136,13 @@ export interface Network {
      * }
      * ```
      */
-     getBlockEventsWithPrivateData(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<BlockAndPrivateData>>
+    getBlockEventsWithPrivateData(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<BlockAndPrivateData>>;
 
-     /**
+    /**
       * Create a request to receive block events with private data. Supports off-line signing flow.
       * @param options - Event listening options.
       */
-     newBlockEventsWithPrivateDataRequest(options?: BlockEventsOptions): BlockEventsWithPrivateDataRequest;
+    newBlockEventsWithPrivateDataRequest(options?: BlockEventsOptions): BlockEventsWithPrivateDataRequest;
 }
 
 export interface NetworkOptions {

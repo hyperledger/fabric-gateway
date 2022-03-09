@@ -17,7 +17,7 @@ const namedCurves: Record<string, EC> = {
 
 /**
  * Create a new signing implementation that uses the supplied private key to sign messages.
- * 
+ *
  * Currently supported private key types are:
  * - NIST P-256 elliptic curve.
  * - NIST P-384 elliptic curve.
@@ -46,7 +46,7 @@ function newECPrivateKeySigner(key: KeyObject): Signer {
         const signature = curve.sign(digest, keyPair, { canonical: true });
         const signatureBytes = new Uint8Array(signature.toDER());
         return Promise.resolve(signatureBytes);
-    }
+    };
 }
 
 function getCurve(objectIdBytes: number[]): EC {

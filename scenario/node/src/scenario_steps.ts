@@ -64,8 +64,8 @@ Given(/^I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organiza
         await fabric.deployChaincode(ccType, ccName, version, channelName, signaturePolicy);
     });
 
-Given('I register and enroll an HSM user {word} in MSP Org1MSP', async function(this: CustomWorld, user: string): Promise<void> {
-    await fabric.generateHSMUser(user);
+Given('I register and enroll an HSM user {word} in MSP Org1MSP', function(this: CustomWorld, user: string): void {
+    fabric.generateHSMUser(user);
 });
 
 Given('I create a gateway named {word} for user {word} in MSP {word}', async function(this: CustomWorld, name: string, user: string, mspId: string): Promise<void> {
@@ -80,15 +80,15 @@ Given('I create a gateway named {word} without signer for user {word} in MSP {wo
     await this.createGatewayWithoutSigner(name, user, mspId);
 });
 
-Given('I use the gateway named {word}', async function(this: CustomWorld, name: string): Promise<void> {
-    await this.useGateway(name);
+Given('I use the gateway named {word}', function(this: CustomWorld, name: string): void {
+    this.useGateway(name);
 });
 
 Given('I connect the gateway to {word}', async function(this: CustomWorld, address: string): Promise<void> {
     await this.connect(address);
 });
 
-When('I use the {word} network', function (this: CustomWorld, channelName: string): void {
+When('I use the {word} network', function(this: CustomWorld, channelName: string): void {
     this.useNetwork(channelName);
 });
 
@@ -122,7 +122,7 @@ When(/I set the endorsing organizations? to (.+)/, function(this: CustomWorld, j
 
 When('I do off-line signing as user {word} in MSP {word}', async function(this: CustomWorld, user: string, mspId: string): Promise<void> {
     await this.setOfflineSigner(user, mspId);
-})
+});
 
 When('I invoke the transaction', async function(this: CustomWorld): Promise<void> {
     await this.invokeSuccessfulTransaction();
@@ -137,7 +137,7 @@ When('I listen for chaincode events from {word} on a listener named {string}', a
 });
 
 When('I replay chaincode events from {word} starting at last committed block', async function(this: CustomWorld, chaincodeName: string): Promise<void> {
-    await this.replayChaincodeEvents(DEFAULT_LISTENER_NAME, chaincodeName, this.getLastCommittedBlockNumber())
+    await this.replayChaincodeEvents(DEFAULT_LISTENER_NAME, chaincodeName, this.getLastCommittedBlockNumber());
 });
 
 When('I stop listening for chaincode events', function(this: CustomWorld): void {
@@ -198,12 +198,12 @@ Then('the error status should be {word}', function(this: CustomWorld, expected: 
 
 Then('I should receive a chaincode event named {string} with payload {string}', async function(this: CustomWorld, eventName: string, payload: string): Promise<void> {
     const event = await this.nextChaincodeEvent(DEFAULT_LISTENER_NAME);
-    const actual = Object.assign({}, event, { payload: bytesAsString(event.payload)})
+    const actual = Object.assign({}, event, { payload: bytesAsString(event.payload)});
     expect(actual).toMatchObject({ eventName, payload });
 });
 
 Then('I should receive a chaincode event named {string} with payload {string} on {string}', async function(this: CustomWorld, eventName: string, payload: string, listenerName: string): Promise<void> {
     const event = await this.nextChaincodeEvent(listenerName);
-    const actual = Object.assign({}, event, { payload: bytesAsString(event.payload)})
+    const actual = Object.assign({}, event, { payload: bytesAsString(event.payload)});
     expect(actual).toMatchObject({ eventName, payload });
 });

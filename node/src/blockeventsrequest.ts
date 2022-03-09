@@ -18,7 +18,7 @@ import { SigningIdentity } from './signingidentity';
 export interface BlockEventsRequest extends Signable {
     /**
      * Get block events.
-     * @param options - gRPC call 
+     * @param options - gRPC call
      * @returns Block protocol buffer messages. The iterator should be closed after use to complete the eventing
      * session.
      * @throws {@link GatewayError}
@@ -35,7 +35,7 @@ export interface BlockEventsRequest extends Signable {
      * }
      * ```
      */
-     getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<Block>>;
+    getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<Block>>;
 }
 
 /**
@@ -44,7 +44,7 @@ export interface BlockEventsRequest extends Signable {
 export interface FilteredBlockEventsRequest extends Signable {
     /**
      * Get filtered block events.
-     * @param options - gRPC call 
+     * @param options - gRPC call
      * @returns Filtered block protocol buffer messages. The iterator should be closed after use to complete the
      * eventing session.
      * @throws {@link GatewayError}
@@ -61,7 +61,7 @@ export interface FilteredBlockEventsRequest extends Signable {
      * }
      * ```
      */
-     getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<FilteredBlock>>;
+    getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<FilteredBlock>>;
 }
 
 /**
@@ -70,7 +70,7 @@ export interface FilteredBlockEventsRequest extends Signable {
 export interface BlockEventsWithPrivateDataRequest extends Signable {
     /**
      * Get block events with private data.
-     * @param options - gRPC call 
+     * @param options - gRPC call
      * @returns Blocks with private data protocol buffer messages. The iterator should be closed after use to complete
      * the eventing session.
      * @throws {@link GatewayError}
@@ -87,7 +87,7 @@ export interface BlockEventsWithPrivateDataRequest extends Signable {
      * }
      * ```
      */
-     getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<BlockAndPrivateData>>;
+    getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<BlockAndPrivateData>>;
 }
 
 export interface BlockEventsRequestOptions {
@@ -151,7 +151,7 @@ export class BlockEventsRequestImpl extends SignableBlockEventsRequest implement
                 response => getBlock(response, () => response.getBlock()),
             ),
             close: () => responses.close(),
-        }
+        };
     }
 }
 
@@ -172,7 +172,7 @@ export class FilteredBlockEventsRequestImpl extends SignableBlockEventsRequest i
                 response => getBlock(response, () => response.getFilteredBlock()),
             ),
             close: () => responses.close(),
-        }
+        };
     }
 }
 
@@ -193,7 +193,7 @@ export class BlockEventsWithPrivateDataRequestImpl extends SignableBlockEventsRe
                 response => getBlock(response, () => response.getBlockAndPrivateData()),
             ),
             close: () => responses.close(),
-        }
+        };
     }
 }
 

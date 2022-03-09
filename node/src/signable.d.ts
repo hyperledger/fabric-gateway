@@ -11,10 +11,10 @@ export interface Signable {
     /**
      * Get the serialized commit status request message.
      */
-     getBytes(): Uint8Array;
+    getBytes(): Uint8Array;
 
-     /**
+    /**
       * Get the digest of the commit status request. This is used to generate a digital signature.
       */
-     getDigest(): Uint8Array;
- }
+    getDigest(): Uint8Array;
+}

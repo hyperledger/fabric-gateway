@@ -48,7 +48,7 @@ export class TransactionInvocation {
 
     getError(): Error {
         if (!this.error) {
-            throw new Error(`No transaction error. Result is: ${bytesAsString(this.result)}`)
+            throw new Error(`No transaction error. Result is: ${bytesAsString(this.result)}`);
         }
 
         return this.error;
@@ -60,10 +60,10 @@ export class TransactionInvocation {
 
     private getInvoke(type: string): () => Promise<Uint8Array> {
         if (type === 'evaluate') {
-            return this.evaluate;
+            return () => this.evaluate();
         }
         if (type === 'submit') {
-            return this.submit;
+            return () => this.submit();
         }
         throw new Error(`Unknown invocation type: ${type}`);
     }
@@ -71,17 +71,17 @@ export class TransactionInvocation {
     private async evaluate(): Promise<Uint8Array> {
         let proposal = this.contract.newProposal(this.name, this.options);
         proposal = await this.sign(proposal, this.gateway.newSignedProposal.bind(this.gateway));
- 
+
         return await proposal.evaluate();
     }
-    
+
     private async submit(): Promise<Uint8Array> {
         const unsignedProposal = this.contract.newProposal(this.name, this.options);
         const signedProposal = await this.sign(unsignedProposal, this.gateway.newSignedProposal.bind(this.gateway));
-        
+
         const unsignedTransaction = await signedProposal.endorse();
         const signedTransaction = await this.sign(unsignedTransaction, this.gateway.newSignedTransaction.bind(this.gateway));
-    
+
         const submitted = await signedTransaction.submit();
         const signedCommit = await this.sign(submitted, this.gateway.newSignedCommit.bind(this.gateway));
 
@@ -90,7 +90,7 @@ export class TransactionInvocation {
         this.blockNumber = status.blockNumber;
 
         if (status.code !== StatusCode.VALID) {
-            throw new Error(`Transaction commit failed with status: ${status.code}`)
+            throw new Error(`Transaction commit failed with status: ${status.code}`);
         }
 
         return submitted.getResult();

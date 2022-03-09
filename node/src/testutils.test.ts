@@ -250,14 +250,14 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
 
 function fakeUnaryCall<ResponseType>(err: grpc.ServiceError | undefined, response: ResponseType | undefined) {
     return (request: unknown, options: grpc.CallOptions, callback: grpc.requestCallback<ResponseType>) => {
-        setImmediate(() => callback(err || null, response))
+        setImmediate(() => callback(err ?? null, response));
         return {} as grpc.ClientUnaryCall;
     };
 }
 
 export function newEndorseResponse(options: {
-    result: Uint8Array,
-    channelName?: string,
+    result: Uint8Array;
+    channelName?: string;
 }): EndorseResponse {
     const chaincodeResponse = new Response();
     chaincodeResponse.setPayload(options.result);
@@ -328,7 +328,7 @@ export function newServerStreamResponse<T>(values: (T | grpc.ServiceError)[]): S
             }
         },
         cancel: jest.fn<void, void[]>(),
-    }
+    };
 }
 
 export interface DuplexStreamResponseStub<RequestType, ResponseType> extends DuplexStreamResponse<RequestType, ResponseType> {

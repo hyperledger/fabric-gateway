@@ -1,38 +1,18 @@
 env:
-    node: true
-    es2020: true
-    jest: true
+  jest: true
 root: true
 ignorePatterns:
-    - src/protos/
-    - dist/
+  - src/protos/
+  - dist/
 extends:
-    - eslint:recommended
-rules:
-    indent:
-        - error
-        - 4
-    quotes:
-        - error
-        - single
+  - ./.eslintrc.base.yaml
 overrides:
-    - files:
-          - "**/*.ts"
-      parser: "@typescript-eslint/parser"
-      parserOptions:
-          sourceType: module
-          ecmaFeatures:
-              impliedStrict: true
-          project:
-              - "./tsconfig.json"
-      plugins:
-          - "@typescript-eslint"
-          - jest
-          - "eslint-plugin-tsdoc"
-      extends:
-          - eslint:recommended
-          - plugin:@typescript-eslint/recommended
-          - plugin:@typescript-eslint/recommended-requiring-type-checking
-          - plugin:jest/recommended
-      rules:
-          tsdoc/syntax: error
+  - files:
+      - "**/*.ts"
+    plugins:
+      - jest
+      - "eslint-plugin-tsdoc"
+    extends:
+      - plugin:jest/recommended
+    rules:
+      tsdoc/syntax: error

@@ -74,17 +74,17 @@ export interface ConnectOptions {
      * Supplier of default call options for evaluating transactions.
      */
     evaluateOptions?: () => CallOptions;
- 
+
     /**
      * Supplier of default call options for submit of transactions to the orderer.
      */
     submitOptions?: () => CallOptions;
- 
+
     /**
      * Supplier of default call options for retrieving transaction commit status.
      */
     commitStatusOptions?: () => CallOptions;
- 
+
     /**
      * Supplier of default call options for chaincode events.
      */
@@ -98,8 +98,8 @@ export interface ConnectOptions {
     /**
      * Supplier of default call options for filtered block events.
      */
-     filteredBlockEventsOptions?: () => CallOptions;
-    
+    filteredBlockEventsOptions?: () => CallOptions;
+
     /**
      * Supplier of default call options for block events with private data.
      */
@@ -276,7 +276,7 @@ class GatewayImpl {
 
 export function assertDefined<T>(value: T | null | undefined, message: string): T {
     if (value == undefined) {
-        throw new Error(message)
+        throw new Error(message);
     }
 
     return value;
