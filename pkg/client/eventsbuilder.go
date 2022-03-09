@@ -29,11 +29,10 @@ func (builder *eventsBuilder) getStartPosition() *orderer.SeekPosition {
 	}
 }
 
-// EventOption implements an option for an event request.
-type EventOption = func(builder *eventsBuilder) error
+type eventOption = func(builder *eventsBuilder) error
 
 // WithStartBlock reads events starting at the specified block number.
-func WithStartBlock(blockNumber uint64) EventOption {
+func WithStartBlock(blockNumber uint64) eventOption {
 	return func(builder *eventsBuilder) error {
 		builder.startPosition = &orderer.SeekPosition{
 			Type: &orderer.SeekPosition_Specified{

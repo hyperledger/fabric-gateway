@@ -247,5 +247,64 @@ func (gw *Gateway) NewSignedChaincodeEventsRequest(bytes []byte, signature []byt
 		signingID:     gw.signingID,
 		signedRequest: request,
 	}
+	result.setSignature(signature)
+
+	return result, nil
+}
+
+// NewSignedBlockEventsRequest creates a signed request to read block events.
+func (gw *Gateway) NewSignedBlockEventsRequest(bytes []byte, signature []byte) (*BlockEventsRequest, error) {
+	request := &common.Envelope{}
+	if err := util.Unmarshal(bytes, request); err != nil {
+		return nil, fmt.Errorf("failed to deserialize block events request envelope: %w", err)
+	}
+
+	result := &BlockEventsRequest{
+		baseBlockEventsRequest{
+			client:    gw.client,
+			signingID: gw.signingID,
+			request:   request,
+		},
+	}
+	result.setSignature(signature)
+
+	return result, nil
+}
+
+// NewSignedFilteredBlockEventsRequest creates a signed request to read filtered block events.
+func (gw *Gateway) NewSignedFilteredBlockEventsRequest(bytes []byte, signature []byte) (*FilteredBlockEventsRequest, error) {
+	request := &common.Envelope{}
+	if err := util.Unmarshal(bytes, request); err != nil {
+		return nil, fmt.Errorf("failed to deserialize block events request envelope: %w", err)
+	}
+
+	result := &FilteredBlockEventsRequest{
+		baseBlockEventsRequest{
+			client:    gw.client,
+			signingID: gw.signingID,
+			request:   request,
+		},
+	}
+	result.setSignature(signature)
+
+	return result, nil
+}
+
+// NewSignedBlockEventsWithPrivateDataRequest creates a signed request to read block events with private data.
+func (gw *Gateway) NewSignedBlockEventsWithPrivateDataRequest(bytes []byte, signature []byte) (*BlockEventsWithPrivateDataRequest, error) {
+	request := &common.Envelope{}
+	if err := util.Unmarshal(bytes, request); err != nil {
+		return nil, fmt.Errorf("failed to deserialize block events request envelope: %w", err)
+	}
+
+	result := &BlockEventsWithPrivateDataRequest{
+		baseBlockEventsRequest{
+			client:    gw.client,
+			signingID: gw.signingID,
+			request:   request,
+		},
+	}
+	result.setSignature(signature)
+
 	return result, nil
 }
