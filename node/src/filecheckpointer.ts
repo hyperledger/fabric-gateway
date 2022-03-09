@@ -11,8 +11,8 @@ import { Checkpointer } from './checkpointer';
  * Interface to store checkpointer state during file read write operations .
  */
 interface CheckpointerState {
-  blockNumber?: string;
-  transactionIDs: string[];
+    blockNumber?: string;
+    transactionIDs: string[];
 }
 
 /**
@@ -63,18 +63,17 @@ export class FileCheckPointer implements Checkpointer {
     }
 
     async #readFile(): Promise<Buffer| undefined> {
-        try{
+        try {
             return await fs.promises.readFile(this.#path);
-        }catch(e){
-            //ignore file not exist error.
+        } catch (e) {
+            // ignore file not exist error.
         }
-        return
+        return;
     }
 
     #setState(state: CheckpointerState): void {
         this.#blockNumber = state.blockNumber ? BigInt(state.blockNumber) : undefined;
         this.#transactionIDs = new Set(state.transactionIDs);
-
     }
     #getState(): CheckpointerState {
         return {

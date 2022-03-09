@@ -190,7 +190,6 @@ export class NetworkImpl implements Network {
                 signingIdentity: this.#signingIdentity,
             },
         )).build();
-
     }
 
     async getBlockEvents(options?: Readonly<BlockEventsOptions>): Promise<CloseableAsyncIterable<Block>> {

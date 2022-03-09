@@ -200,7 +200,6 @@ describe('Chaincode Events', () => {
     });
 
     describe('event delivery', () => {
-
         const response1 = new ChaincodeEventsResponse();
         response1.setBlockNumber(1);
         response1.setEventsList([ event1, event2 ]);
@@ -250,7 +249,6 @@ describe('Chaincode Events', () => {
     });
 
     describe('checkpoint Events', () => {
-
         it('Fresh checkpointer gives all the events emitted', async () => {
             const eventsInput: ChaincodeEvent[] = [
                 newChaincodeEvent(10, event1),
@@ -260,9 +258,9 @@ describe('Chaincode Events', () => {
 
             const eventsIterator = getEventsIterable(eventsInput);
             const checkPointerInstance = Checkpointers.inMemory();
-            const checkpointChaincodeEvents = Checkpointers.checkpointChaincodeEvents(eventsIterator,checkPointerInstance);
+            const checkpointChaincodeEvents = Checkpointers.checkpointChaincodeEvents(eventsIterator, checkPointerInstance);
             const expectedEventsLength = 3;
-            const actualEvents = await readElements(checkpointChaincodeEvents,expectedEventsLength );
+            const actualEvents = await readElements(checkpointChaincodeEvents, expectedEventsLength);
             expect(actualEvents).toEqual(eventsInput);
         });
 
@@ -274,14 +272,14 @@ describe('Chaincode Events', () => {
             ];
             const eventsIterator = getEventsIterable(eventsInput);
             const checkPointerInstance = Checkpointers.inMemory();
-            const checkpointChaincodeEvents1 = Checkpointers.checkpointChaincodeEvents(eventsIterator,checkPointerInstance);
+            const checkpointChaincodeEvents1 = Checkpointers.checkpointChaincodeEvents(eventsIterator, checkPointerInstance);
             const eventsToCheckpoint = 1;
             await readEventsAndCheckpoint(checkpointChaincodeEvents1, eventsToCheckpoint);
 
-            const checkpointChaincodeEvents2 = Checkpointers.checkpointChaincodeEvents(eventsIterator,checkPointerInstance);
+            const checkpointChaincodeEvents2 = Checkpointers.checkpointChaincodeEvents(eventsIterator, checkPointerInstance);
 
             const expectedEventsLength = 2;
-            const eventsReceived = await readElements(checkpointChaincodeEvents2,expectedEventsLength );
+            const eventsReceived = await readElements(checkpointChaincodeEvents2, expectedEventsLength);
             expect(eventsReceived[0].blockNumber).toEqual(BigInt(10));
             expect(eventsReceived[0].transactionId).toEqual('tx-10-2');
         });
@@ -294,14 +292,14 @@ describe('Chaincode Events', () => {
             ];
             const eventsIterator = getEventsIterable(eventsInput);
             const checkPointerInstance = Checkpointers.inMemory();
-            const checkpointChaincodeEvents1 = Checkpointers.checkpointChaincodeEvents(eventsIterator,checkPointerInstance);
+            const checkpointChaincodeEvents1 = Checkpointers.checkpointChaincodeEvents(eventsIterator, checkPointerInstance);
             const eventsToCheckpoint = 2;
             await readEventsAndCheckpoint(checkpointChaincodeEvents1, eventsToCheckpoint);
 
-            const checkpointChaincodeEvents2 = Checkpointers.checkpointChaincodeEvents(eventsIterator,checkPointerInstance);
+            const checkpointChaincodeEvents2 = Checkpointers.checkpointChaincodeEvents(eventsIterator, checkPointerInstance);
 
             const expectedEventsLength = 2;
-            const eventsReceived = await readElements(checkpointChaincodeEvents2,expectedEventsLength );
+            const eventsReceived = await readElements(checkpointChaincodeEvents2, expectedEventsLength);
 
             expect(eventsReceived[0].blockNumber).toEqual(BigInt(20));
             expect(eventsReceived[0].transactionId).toEqual('tx-20-1');
@@ -315,14 +313,14 @@ describe('Chaincode Events', () => {
             ];
             const eventsIterator = getEventsIterable(eventsInput);
             const checkPointerInstance = Checkpointers.inMemory();
-            const checkpointChaincodeEvents1 = Checkpointers.checkpointChaincodeEvents(eventsIterator,checkPointerInstance);
+            const checkpointChaincodeEvents1 = Checkpointers.checkpointChaincodeEvents(eventsIterator, checkPointerInstance);
             const eventsToCheckpoint = 2;
             await readEventsAndCheckpoint(checkpointChaincodeEvents1, eventsToCheckpoint);
 
-            const checkpointChaincodeEvents2 = Checkpointers.checkpointChaincodeEvents(eventsIterator,checkPointerInstance);
+            const checkpointChaincodeEvents2 = Checkpointers.checkpointChaincodeEvents(eventsIterator, checkPointerInstance);
 
             const expectedEventsLength = 1;
-            const eventsReceived = await readElements(checkpointChaincodeEvents2,expectedEventsLength );
+            const eventsReceived = await readElements(checkpointChaincodeEvents2, expectedEventsLength);
 
             expect(eventsReceived[0].blockNumber).toEqual(BigInt(20));
             expect(eventsReceived[0].transactionId).toEqual('tx-20-2');
@@ -337,7 +335,7 @@ describe('Chaincode Events', () => {
             const eventsIterator = getEventsIterable(eventsInput);
 
             const checkPointerInstance = Checkpointers.inMemory();
-            const checkpointChaincodeEvents = Checkpointers.checkpointChaincodeEvents(eventsIterator,checkPointerInstance);
+            const checkpointChaincodeEvents = Checkpointers.checkpointChaincodeEvents(eventsIterator, checkPointerInstance);
             const eventsToCheckpoint = 1;
             await readEventsAndCheckpoint(checkpointChaincodeEvents, eventsToCheckpoint);
 
@@ -346,10 +344,9 @@ describe('Chaincode Events', () => {
         });
 
         it('Resume eventing correctly after an error thrown,', async () => {
-
             const response1 = new ChaincodeEventsResponse();
             response1.setBlockNumber(10);
-            response1.setEventsList([ event1,event2 ]);
+            response1.setEventsList([ event1, event2 ]);
 
             const response2 = new ChaincodeEventsResponse();
             response2.setBlockNumber(20);
@@ -380,7 +377,6 @@ describe('Chaincode Events', () => {
 
             expect(eventsReceived2[0].blockNumber).toEqual(BigInt(20));
             expect(eventsReceived2[0].transactionId).toEqual('tx-20-1');
-
         });
-    })
-})
+    });
+});

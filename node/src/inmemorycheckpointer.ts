@@ -11,7 +11,6 @@ import { Checkpointer } from './checkpointer';
  */
 
 export class InMemoryCheckPointer implements Checkpointer {
-
     #blockNumber?: bigint;
     #transactionIDs: Set<string> = new Set();
 
@@ -26,7 +25,7 @@ export class InMemoryCheckPointer implements Checkpointer {
         return Promise.resolve();
     }
 
-    getBlockNumber(): bigint | undefined{
+    getBlockNumber(): bigint | undefined {
         return this.#blockNumber;
     }
 

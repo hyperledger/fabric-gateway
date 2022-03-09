@@ -6,12 +6,12 @@
 
 import * as checkpointers from './checkpointers';
 import fs from 'fs';
-import { createTempDir,rmdir } from './testutils.test';
+import { createTempDir, rmdir } from './testutils.test';
 import path from 'path';
 import { Checkpointer } from './checkpointer';
 
 describe('Checkpointers', () => {
-    let filePath:string;
+    let filePath: string;
     function getInmemoryInstance(): Promise<Checkpointer> {
         return Promise.resolve(checkpointers.inMemory());
     }
@@ -23,28 +23,27 @@ describe('Checkpointers', () => {
         filePath = path.join(dir, 'checkpoint.json');
         return dir;
     }
-    async  function cleanup(dir:string):Promise<void>{
+    async  function cleanup(dir: string): Promise<void> {
         await rmdir(dir);
     }
 
-    function noOperation():Promise<void> {
+    function noOperation(): Promise<void> {
         return Promise.resolve();
     }
     const checkpointerTypes = [
-        { getInstance: getInmemoryInstance, description: 'In-memory checkpointer',createFile: noOperation ,cleanup: noOperation},
-        { getInstance: getFileCheckpointerInstance, description: 'File checkpointer',createFile: createCheckpointerFile ,cleanup: cleanup},
+        { getInstance: getInmemoryInstance, description: 'In-memory checkpointer', createFile: noOperation, cleanup: noOperation},
+        { getInstance: getFileCheckpointerInstance, description: 'File checkpointer', createFile: createCheckpointerFile, cleanup: cleanup},
     ];
     checkpointerTypes.forEach(checkpointer => {
-        describe(`${checkpointer.description}`,() => {
-            let dir:string|void;
+        describe(`${checkpointer.description}`, () => {
+            let dir: string|void;
 
-            beforeEach(async() => {
+            beforeEach(async () => {
                 dir = await checkpointer.createFile();
             });
-            afterEach(async() => {
-                if(dir){
+            afterEach(async () => {
+                if (dir) {
                     await checkpointer.cleanup(dir);
-
                 }
             });
 
@@ -104,15 +103,15 @@ describe('Checkpointers', () => {
                 );
             });
         });
-    })
+    });
     describe('File Checkpointer: Test file creation and initialization', () => {
-        let dir:string;
-        let checkpointerPath:string;
-        beforeEach(async() => {
+        let dir: string;
+        let checkpointerPath: string;
+        beforeEach(async () => {
             dir = await createTempDir();
-            checkpointerPath = path.join(dir, 'checkpoint.json')
+            checkpointerPath = path.join(dir, 'checkpoint.json');
         });
-        afterEach(async() => {
+        afterEach(async () => {
             await rmdir(dir);
         });
 
@@ -123,12 +122,12 @@ describe('Checkpointers', () => {
         });
 
         it('checkpointer loads the already existing state', async () => {
-            //load file checkpointer with checkpointer state
+            // load file checkpointer with checkpointer state
             const blockNumber = BigInt('101');
-            const checkPointerInstance1 = await checkpointers.file(checkpointerPath)
+            const checkPointerInstance1 = await checkpointers.file(checkpointerPath);
             await checkPointerInstance1.checkpoint(blockNumber);
 
-            const checkPointerInstance2 = await checkpointers.file(checkpointerPath)
+            const checkPointerInstance2 = await checkpointers.file(checkpointerPath);
             expect(checkPointerInstance2.getBlockNumber()).toEqual(blockNumber);
             expect(checkPointerInstance2.getTransactionIds().size).toEqual(0);
         });
@@ -141,4 +140,4 @@ describe('Checkpointers', () => {
             expect(checkPointerInstance1.getBlockNumber()).toEqual(checkPointerInstance2.getBlockNumber());
         });
     });
-})
+});

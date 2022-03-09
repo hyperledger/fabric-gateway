@@ -334,7 +334,7 @@ export interface CloseableAsyncIterableStub<T> extends CloseableAsyncIterable<T>
     close: jest.Mock<void, void[]>;
 }
 
-export function getEventsIterable(values: ChaincodeEvent[]): CloseableAsyncIterableStub<ChaincodeEvent>{
+export function getEventsIterable(values: ChaincodeEvent[]): CloseableAsyncIterableStub<ChaincodeEvent> {
     return {
         async* [Symbol.asyncIterator]() { // eslint-disable-line @typescript-eslint/require-await
             for (const value of values) {
@@ -342,7 +342,7 @@ export function getEventsIterable(values: ChaincodeEvent[]): CloseableAsyncItera
             }
         },
         close: jest.fn<void, void[]>(),
-    }
+    };
 }
 
 export interface ServerStreamResponseStub<T> extends ServerStreamResponse<T> {
@@ -380,5 +380,5 @@ export async function createTempDir(): Promise<string> {
 }
 
 export async function rmdir(directory: string): Promise<void> {
-    await fs.promises.rm(directory, { recursive: true })
+    await fs.promises.rm(directory, { recursive: true });
 }

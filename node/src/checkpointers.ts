@@ -15,7 +15,7 @@ import { InMemoryCheckPointer } from './inmemorycheckpointer';
  * @param path - Path to a file holding persistent checkpoint state.
  * @returns Promise<FileCheckPointer> A file checkpointer.
  */
-export async function file(path: string):Promise<Checkpointer>{
+export async function file(path: string): Promise<Checkpointer> {
     const filecheckpointer = new FileCheckPointer(path);
     await filecheckpointer.init();
     return filecheckpointer;
@@ -25,7 +25,7 @@ export async function file(path: string):Promise<Checkpointer>{
  *
  * @returns InMemoryCheckPointer An in-memory checkpointer.
  */
-export function inMemory():Checkpointer{
+export function inMemory(): Checkpointer {
     return new InMemoryCheckPointer();
 }
 
@@ -36,7 +36,7 @@ export function inMemory():Checkpointer{
  * @returns
  */
 export function checkpointChaincodeEvents(events: CloseableAsyncIterable<ChaincodeEvent>, checkpointer: Checkpointer): CheckpointAsyncIterable<ChaincodeEvent> {
-    function isCheckpointed(event: ChaincodeEvent) {
+    function isCheckpointed(event: ChaincodeEvent): boolean {
         const checkpointBlockNumber = checkpointer.getBlockNumber();
         if (checkpointBlockNumber && checkpointBlockNumber > event.blockNumber) {
             return true;
@@ -53,7 +53,7 @@ function newCheckpointedIterable<T>(events: CloseableAsyncIterable<T>, isCheckpo
         async* [Symbol.asyncIterator]() { // eslint-disable-line @typescript-eslint/require-await
             for await (const event of events) {
                 if (!isCheckpointed(event)) {
-                    lastEvent = event
+                    lastEvent = event;
                     yield event;
                 }
             }
@@ -61,7 +61,7 @@ function newCheckpointedIterable<T>(events: CloseableAsyncIterable<T>, isCheckpo
         close: () => {
             events.close();
         },
-        //checkpoints the last yielded event
+        // checkpoints the last yielded event
         checkpoint: async () => {
             if (lastEvent) {
                 await checkpoint(lastEvent);
