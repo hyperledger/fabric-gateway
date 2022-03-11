@@ -254,7 +254,7 @@ func (connection *GatewayConnection) ReplayChaincodeEvents(listenerName string, 
 	return connection.receiveChaincodeEvents(listenerName, chaincodeName, client.WithStartBlock(startBlock))
 }
 
-func (connection *GatewayConnection) receiveChaincodeEvents(listenerName string, chaincodeName string, options ...client.EventOption) error {
+func (connection *GatewayConnection) receiveChaincodeEvents(listenerName string, chaincodeName string, options ...client.ChaincodeEventsOption) error {
 	if connection.network == nil {
 		return fmt.Errorf("no network selected")
 	}

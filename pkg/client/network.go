@@ -43,9 +43,12 @@ func (network *Network) GetContractWithName(chaincodeName string, contractName s
 	}
 }
 
+// ChaincodeEventsOption implements an option for a chaincode events request.
+type ChaincodeEventsOption eventOption
+
 // ChaincodeEvents returns a channel from which chaincode events emitted by transaction functions in the specified
 // chaincode can be read.
-func (network *Network) ChaincodeEvents(ctx context.Context, chaincodeName string, options ...EventOption) (<-chan *ChaincodeEvent, error) {
+func (network *Network) ChaincodeEvents(ctx context.Context, chaincodeName string, options ...ChaincodeEventsOption) (<-chan *ChaincodeEvent, error) {
 	events, err := network.NewChaincodeEventsRequest(chaincodeName, options...)
 	if err != nil {
 		return nil, err
@@ -56,9 +59,9 @@ func (network *Network) ChaincodeEvents(ctx context.Context, chaincodeName strin
 
 // NewChaincodeEventsRequest creates a request to read events emitted by the specified chaincode. Supports off-line
 // signing flow.
-func (network *Network) NewChaincodeEventsRequest(chaincodeName string, options ...EventOption) (*ChaincodeEventsRequest, error) {
+func (network *Network) NewChaincodeEventsRequest(chaincodeName string, options ...ChaincodeEventsOption) (*ChaincodeEventsRequest, error) {
 	builder := &chaincodeEventsBuilder{
-		eventsBuilder: &eventsBuilder{
+		eventsBuilder: eventsBuilder{
 			signingID:   network.signingID,
 			channelName: network.name,
 			client:      network.client,
@@ -67,7 +70,7 @@ func (network *Network) NewChaincodeEventsRequest(chaincodeName string, options 
 	}
 
 	for _, option := range options {
-		if err := option(builder.eventsBuilder); err != nil {
+		if err := option(&builder.eventsBuilder); err != nil {
 			return nil, err
 		}
 	}
@@ -75,8 +78,11 @@ func (network *Network) NewChaincodeEventsRequest(chaincodeName string, options 
 	return builder.build()
 }
 
+// BlockEventsOption implements an option for a block events request.
+type BlockEventsOption eventOption
+
 // BlockEvents returns a channel from which block events can be read.
-func (network *Network) BlockEvents(ctx context.Context, options ...EventOption) (<-chan *common.Block, error) {
+func (network *Network) BlockEvents(ctx context.Context, options ...BlockEventsOption) (<-chan *common.Block, error) {
 	events, err := network.NewBlockEventsRequest(options...)
 	if err != nil {
 		return nil, err
@@ -86,10 +92,10 @@ func (network *Network) BlockEvents(ctx context.Context, options ...EventOption)
 }
 
 // NewBlockEventsRequest creates a request to read block events. Supports off-line signing flow.
-func (network *Network) NewBlockEventsRequest(options ...EventOption) (*FullBlockEventsRequest, error) {
-	builder := &fullBlockEventsBuilder{
-		blockBuilder: &blockEventsBuilder{
-			eventsBuilder: &eventsBuilder{
+func (network *Network) NewBlockEventsRequest(options ...BlockEventsOption) (*BlockEventsRequest, error) {
+	builder := &blockEventsBuilder{
+		baseBlockEventsBuilder{
+			eventsBuilder{
 				signingID:   network.signingID,
 				channelName: network.name,
 				client:      network.client,
@@ -98,7 +104,7 @@ func (network *Network) NewBlockEventsRequest(options ...EventOption) (*FullBloc
 	}
 
 	for _, option := range options {
-		if err := option(builder.blockBuilder.eventsBuilder); err != nil {
+		if err := option(&builder.eventsBuilder); err != nil {
 			return nil, err
 		}
 	}
@@ -107,7 +113,7 @@ func (network *Network) NewBlockEventsRequest(options ...EventOption) (*FullBloc
 }
 
 // FilteredBlockEvents returns a channel from which filtered block events can be read.
-func (network *Network) FilteredBlockEvents(ctx context.Context, options ...EventOption) (<-chan *peer.FilteredBlock, error) {
+func (network *Network) FilteredBlockEvents(ctx context.Context, options ...BlockEventsOption) (<-chan *peer.FilteredBlock, error) {
 	events, err := network.NewFilteredBlockEventsRequest(options...)
 	if err != nil {
 		return nil, err
@@ -117,10 +123,10 @@ func (network *Network) FilteredBlockEvents(ctx context.Context, options ...Even
 }
 
 // NewFilteredBlockEventsRequest creates a request to read filtered block events. Supports off-line signing flow.
-func (network *Network) NewFilteredBlockEventsRequest(options ...EventOption) (*FilteredBlockEventsRequest, error) {
+func (network *Network) NewFilteredBlockEventsRequest(options ...BlockEventsOption) (*FilteredBlockEventsRequest, error) {
 	builder := &filteredBlockEventsBuilder{
-		blockBuilder: &blockEventsBuilder{
-			eventsBuilder: &eventsBuilder{
+		baseBlockEventsBuilder{
+			eventsBuilder{
 				signingID:   network.signingID,
 				channelName: network.name,
 				client:      network.client,
@@ -129,7 +135,7 @@ func (network *Network) NewFilteredBlockEventsRequest(options ...EventOption) (*
 	}
 
 	for _, option := range options {
-		if err := option(builder.blockBuilder.eventsBuilder); err != nil {
+		if err := option(&builder.eventsBuilder); err != nil {
 			return nil, err
 		}
 	}
@@ -138,8 +144,8 @@ func (network *Network) NewFilteredBlockEventsRequest(options ...EventOption) (*
 }
 
 // FilteredBlockEvents returns a channel from which filtered block events can be read.
-func (network *Network) BlockEventsWithPrivateData(ctx context.Context, options ...EventOption) (<-chan *peer.BlockAndPrivateData, error) {
-	events, err := network.NewBlockEventsWithPrivateData(options...)
+func (network *Network) BlockEventsWithPrivateData(ctx context.Context, options ...BlockEventsOption) (<-chan *peer.BlockAndPrivateData, error) {
+	events, err := network.NewBlockEventsWithPrivateDataRequest(options...)
 	if err != nil {
 		return nil, err
 	}
@@ -147,11 +153,11 @@ func (network *Network) BlockEventsWithPrivateData(ctx context.Context, options 
 	return events.Events(ctx)
 }
 
-// NewBlockEventsWithPrivateData creates a request to read filtered block events. Supports off-line signing flow.
-func (network *Network) NewBlockEventsWithPrivateData(options ...EventOption) (*BlockEventsWithPrivateDataRequest, error) {
+// NewBlockEventsWithPrivateDataRequest creates a request to read filtered block events. Supports off-line signing flow.
+func (network *Network) NewBlockEventsWithPrivateDataRequest(options ...BlockEventsOption) (*BlockEventsWithPrivateDataRequest, error) {
 	builder := &blockEventsWithPrivateDataBuilder{
-		blockBuilder: &blockEventsBuilder{
-			eventsBuilder: &eventsBuilder{
+		baseBlockEventsBuilder{
+			eventsBuilder{
 				signingID:   network.signingID,
 				channelName: network.name,
 				client:      network.client,
@@ -160,7 +166,7 @@ func (network *Network) NewBlockEventsWithPrivateData(options ...EventOption) (*
 	}
 
 	for _, option := range options {
-		if err := option(builder.blockBuilder.eventsBuilder); err != nil {
+		if err := option(&builder.eventsBuilder); err != nil {
 			return nil, err
 		}
 	}

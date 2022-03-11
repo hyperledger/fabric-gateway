@@ -25,11 +25,11 @@ func seekLargestBlockNumber() *orderer.SeekPosition {
 	}
 }
 
-type blockEventsBuilder struct {
-	eventsBuilder *eventsBuilder
+type baseBlockEventsBuilder struct {
+	eventsBuilder
 }
 
-func (builder *blockEventsBuilder) payloadBytes() ([]byte, error) {
+func (builder *baseBlockEventsBuilder) payloadBytes() ([]byte, error) {
 	channelHeader, err := builder.channelHeaderBytes()
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func (builder *blockEventsBuilder) payloadBytes() ([]byte, error) {
 	return util.Marshal(payload)
 }
 
-func (builder *blockEventsBuilder) channelHeaderBytes() ([]byte, error) {
+func (builder *baseBlockEventsBuilder) channelHeaderBytes() ([]byte, error) {
 	channelHeader := &common.ChannelHeader{
 		Type:      int32(common.HeaderType_DELIVER_SEEK_INFO),
 		Timestamp: timestamppb.Now(),
@@ -67,8 +67,8 @@ func (builder *blockEventsBuilder) channelHeaderBytes() ([]byte, error) {
 	return util.Marshal(channelHeader)
 }
 
-func (builder *blockEventsBuilder) signatureHeaderBytes() ([]byte, error) {
-	creator, err := builder.eventsBuilder.signingID.Creator()
+func (builder *baseBlockEventsBuilder) signatureHeaderBytes() ([]byte, error) {
+	creator, err := builder.signingID.Creator()
 	if err != nil {
 		return nil, err
 	}
@@ -80,9 +80,9 @@ func (builder *blockEventsBuilder) signatureHeaderBytes() ([]byte, error) {
 	return util.Marshal(signatureHeader)
 }
 
-func (builder *blockEventsBuilder) dataBytes() ([]byte, error) {
+func (builder *baseBlockEventsBuilder) dataBytes() ([]byte, error) {
 	data := &orderer.SeekInfo{
-		Start: builder.eventsBuilder.getStartPosition(),
+		Start: builder.getStartPosition(),
 		Stop:  seekLargestBlockNumber(),
 	}
 
@@ -90,20 +90,20 @@ func (builder *blockEventsBuilder) dataBytes() ([]byte, error) {
 }
 
 type filteredBlockEventsBuilder struct {
-	blockBuilder *blockEventsBuilder
+	baseBlockEventsBuilder
 }
 
 func (builder *filteredBlockEventsBuilder) build() (*FilteredBlockEventsRequest, error) {
-	payload, err := builder.blockBuilder.payloadBytes()
+	payload, err := builder.payloadBytes()
 	if err != nil {
 		return nil, err
 	}
 
 	result := &FilteredBlockEventsRequest{
-		blockEventsRequest: &blockEventsRequest{
-			client:    builder.blockBuilder.eventsBuilder.client,
-			signingID: builder.blockBuilder.eventsBuilder.signingID,
-			signedRequest: &common.Envelope{
+		baseBlockEventsRequest{
+			client:    builder.client,
+			signingID: builder.signingID,
+			request: &common.Envelope{
 				Payload: payload,
 			},
 		},
@@ -111,21 +111,21 @@ func (builder *filteredBlockEventsBuilder) build() (*FilteredBlockEventsRequest,
 	return result, nil
 }
 
-type fullBlockEventsBuilder struct {
-	blockBuilder *blockEventsBuilder
+type blockEventsBuilder struct {
+	baseBlockEventsBuilder
 }
 
-func (builder *fullBlockEventsBuilder) build() (*FullBlockEventsRequest, error) {
-	payload, err := builder.blockBuilder.payloadBytes()
+func (builder *blockEventsBuilder) build() (*BlockEventsRequest, error) {
+	payload, err := builder.payloadBytes()
 	if err != nil {
 		return nil, err
 	}
 
-	result := &FullBlockEventsRequest{
-		blockEventsRequest: &blockEventsRequest{
-			client:    builder.blockBuilder.eventsBuilder.client,
-			signingID: builder.blockBuilder.eventsBuilder.signingID,
-			signedRequest: &common.Envelope{
+	result := &BlockEventsRequest{
+		baseBlockEventsRequest{
+			client:    builder.client,
+			signingID: builder.signingID,
+			request: &common.Envelope{
 				Payload: payload,
 			},
 		},
@@ -134,20 +134,20 @@ func (builder *fullBlockEventsBuilder) build() (*FullBlockEventsRequest, error) 
 }
 
 type blockEventsWithPrivateDataBuilder struct {
-	blockBuilder *blockEventsBuilder
+	baseBlockEventsBuilder
 }
 
 func (builder *blockEventsWithPrivateDataBuilder) build() (*BlockEventsWithPrivateDataRequest, error) {
-	payload, err := builder.blockBuilder.payloadBytes()
+	payload, err := builder.payloadBytes()
 	if err != nil {
 		return nil, err
 	}
 
 	result := &BlockEventsWithPrivateDataRequest{
-		blockEventsRequest: &blockEventsRequest{
-			client:    builder.blockBuilder.eventsBuilder.client,
-			signingID: builder.blockBuilder.eventsBuilder.signingID,
-			signedRequest: &common.Envelope{
+		baseBlockEventsRequest{
+			client:    builder.client,
+			signingID: builder.signingID,
+			request: &common.Envelope{
 				Payload: payload,
 			},
 		},

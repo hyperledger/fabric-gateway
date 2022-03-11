@@ -15,16 +15,15 @@ import (
 	"github.com/hyperledger/fabric-protos-go/peer"
 )
 
-// blockEventsRequest delivers block events.
-type blockEventsRequest struct {
-	client        *gatewayClient
-	signingID     *signingIdentity
-	signedRequest *common.Envelope
+type baseBlockEventsRequest struct {
+	client    *gatewayClient
+	signingID *signingIdentity
+	request   *common.Envelope
 }
 
 // Bytes of the serialized block events request.
-func (events *blockEventsRequest) Bytes() ([]byte, error) {
-	requestBytes, err := util.Marshal(events.signedRequest)
+func (events *baseBlockEventsRequest) Bytes() ([]byte, error) {
+	requestBytes, err := util.Marshal(events.request)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshall Envelope protobuf: %w", err)
 	}
@@ -33,11 +32,11 @@ func (events *blockEventsRequest) Bytes() ([]byte, error) {
 }
 
 // Digest of the block events request. This is used to generate a digital signature.
-func (events *blockEventsRequest) Digest() []byte {
-	return events.signingID.Hash(events.signedRequest.GetPayload())
+func (events *baseBlockEventsRequest) Digest() []byte {
+	return events.signingID.Hash(events.request.GetPayload())
 }
 
-func (events *blockEventsRequest) sign() error {
+func (events *baseBlockEventsRequest) sign() error {
 	if events.isSigned() {
 		return nil
 	}
@@ -53,17 +52,17 @@ func (events *blockEventsRequest) sign() error {
 	return nil
 }
 
-func (events *blockEventsRequest) isSigned() bool {
-	return len(events.signedRequest.Signature) > 0
+func (events *baseBlockEventsRequest) isSigned() bool {
+	return len(events.request.Signature) > 0
 }
 
-func (events *blockEventsRequest) setSignature(signature []byte) {
-	events.signedRequest.Signature = signature
+func (events *baseBlockEventsRequest) setSignature(signature []byte) {
+	events.request.Signature = signature
 }
 
 // FilteredBlockEventsRequest delivers filtered block events.
 type FilteredBlockEventsRequest struct {
-	*blockEventsRequest
+	baseBlockEventsRequest
 }
 
 // Events returns a channel from which filtered block events can be read.
@@ -72,7 +71,7 @@ func (events *FilteredBlockEventsRequest) Events(ctx context.Context) (<-chan *p
 		return nil, err
 	}
 
-	eventsClient, err := events.client.FilteredBlockEvents(ctx, events.signedRequest)
+	eventsClient, err := events.client.FilteredBlockEvents(ctx, events.request)
 	if err != nil {
 		return nil, err
 	}
@@ -96,17 +95,17 @@ func (events *FilteredBlockEventsRequest) Events(ctx context.Context) (<-chan *p
 }
 
 // BlockEventsRequest delivers block events.
-type FullBlockEventsRequest struct {
-	*blockEventsRequest
+type BlockEventsRequest struct {
+	baseBlockEventsRequest
 }
 
 // Events returns a channel from which block events can be read.
-func (events *FullBlockEventsRequest) Events(ctx context.Context) (<-chan *common.Block, error) {
+func (events *BlockEventsRequest) Events(ctx context.Context) (<-chan *common.Block, error) {
 	if err := events.sign(); err != nil {
 		return nil, err
 	}
 
-	eventsClient, err := events.client.BlockEvents(ctx, events.signedRequest)
+	eventsClient, err := events.client.BlockEvents(ctx, events.request)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +130,7 @@ func (events *FullBlockEventsRequest) Events(ctx context.Context) (<-chan *commo
 
 // BlockEventsWithPrivateDataRequest delivers block events.
 type BlockEventsWithPrivateDataRequest struct {
-	*blockEventsRequest
+	baseBlockEventsRequest
 }
 
 // Events returns a channel from which block events with private data can be read.
@@ -140,7 +139,7 @@ func (events *BlockEventsWithPrivateDataRequest) Events(ctx context.Context) (<-
 		return nil, err
 	}
 
-	eventsClient, err := events.client.BlockEventsWithPrivateData(ctx, events.signedRequest)
+	eventsClient, err := events.client.BlockEventsWithPrivateData(ctx, events.request)
 	if err != nil {
 		return nil, err
 	}

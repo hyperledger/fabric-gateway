@@ -14,7 +14,7 @@ import (
 )
 
 type chaincodeEventsBuilder struct {
-	*eventsBuilder
+	eventsBuilder
 	chaincodeName string
 }
 
