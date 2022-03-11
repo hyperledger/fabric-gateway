@@ -13,7 +13,6 @@ import { InMemoryCheckPointer } from './inmemorycheckpointer';
 /**
  * Create a checkpointer that uses the specified file to store persistent state.
  * @param path - Path to a file holding persistent checkpoint state.
- * @returns Promise<FileCheckPointer> A file checkpointer.
  */
 export async function file(path: string): Promise<Checkpointer> {
     const filecheckpointer = new FileCheckPointer(path);
@@ -22,31 +21,38 @@ export async function file(path: string): Promise<Checkpointer> {
 }
 
 /**
- *
- * @returns InMemoryCheckPointer An in-memory checkpointer.
+ * Create a checkpointer that stores its state in memory only.
  */
 export function inMemory(): Checkpointer {
     return new InMemoryCheckPointer();
 }
 
 /**
- *
- * @param events - An async iterator of events
- * @param checkpointer - A checkpointer instance to checkpoint the processed events.
- * @returns
+ * Wraps a chaincode event iterable with one that can be used to checkpoint processed events. Closing this async
+ * iterable closes the wrapped iterable.
+ * @param events - Chaincode events.
+ * @param checkpointer - A checkpointer used to record processed events.
  */
 export function checkpointChaincodeEvents(events: CloseableAsyncIterable<ChaincodeEvent>, checkpointer: Checkpointer): CheckpointAsyncIterable<ChaincodeEvent> {
-    function isCheckpointed(event: ChaincodeEvent): boolean {
-        const checkpointBlockNumber = checkpointer.getBlockNumber();
-        if (checkpointBlockNumber && checkpointBlockNumber > event.blockNumber) {
-            return true;
-        }
-        return checkpointer.getTransactionIds().has(event.transactionId);
-    }
-    return newCheckpointedIterable(events, isCheckpointed, event => checkpointer.checkpoint(event.blockNumber, event.transactionId));
+    return newCheckpointAsyncIterable(
+        events,
+        event => {
+            const checkpointBlockNumber = checkpointer.getBlockNumber();
+            if (checkpointBlockNumber == undefined || event.blockNumber > checkpointBlockNumber) {
+                return false;
+            }
+            return event.blockNumber < checkpointBlockNumber ||
+                checkpointer.getTransactionIds().has(event.transactionId);
+        },
+        event => checkpointer.checkpoint(event.blockNumber, event.transactionId)
+    );
 }
 
-function newCheckpointedIterable<T>(events: CloseableAsyncIterable<T>, isCheckpointed: (event: T) => boolean, checkpoint: (event: T) => Promise<void>): CheckpointAsyncIterable<T> {
+function newCheckpointAsyncIterable<T>(
+    events: CloseableAsyncIterable<T>,
+    isCheckpointed: (event: T) => boolean,
+    checkpoint: (event: T) => Promise<void>
+): CheckpointAsyncIterable<T> {
     let lastEvent: T | undefined;
 
     return {
@@ -61,7 +67,6 @@ function newCheckpointedIterable<T>(events: CloseableAsyncIterable<T>, isCheckpo
         close: () => {
             events.close();
         },
-        // checkpoints the last yielded event
         checkpoint: async () => {
             if (lastEvent) {
                 await checkpoint(lastEvent);

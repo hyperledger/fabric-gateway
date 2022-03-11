@@ -8,11 +8,13 @@ import { Contract } from './contract';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
+import { Envelope } from './protos/common/common_pb';
 import { CommitStatusResponse, EvaluateResponse } from './protos/gateway/gateway_pb';
+import { DeliverResponse } from './protos/peer/events_pb';
 import { Response } from './protos/peer/proposal_response_pb';
 import { TxValidationCode } from './protos/peer/transaction_pb';
 import { undefinedSignerMessage } from './signingidentity';
-import { MockGatewayGrpcClient, newEndorseResponse } from './testutils.test';
+import { MockGatewayGrpcClient, newDuplexStreamResponse, newEndorseResponse } from './testutils.test';
 
 describe('Offline sign', () => {
     const expectedResult = 'TX_RESULT';
@@ -78,7 +80,7 @@ describe('Offline sign', () => {
             expect(actual).toBe(expected.toString());
         });
 
-        it('uses offline signature and selected orgs', async () => {
+        it('retains endorsing orgs', async () => {
             const expected = Buffer.from('MY_SIGNATURE');
 
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME', {endorsingOrganizations: ['org3', 'org5']});
@@ -110,7 +112,7 @@ describe('Offline sign', () => {
             expect(actual).toBe(expected.toString());
         });
 
-        it('uses offline signature and selected orgs', async () => {
+        it('retains endorsing orgs', async () => {
             const expected = Buffer.from('MY_SIGNATURE');
 
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME', {endorsingOrganizations: ['org3', 'org5']});
@@ -171,6 +173,95 @@ describe('Offline sign', () => {
 
             const commitRequest = client.getCommitStatusRequests()[0];
             const actual = Buffer.from(commitRequest.getSignature_asU8() ?? '').toString();
+            expect(actual).toBe(expected.toString());
+        });
+    });
+
+    describe('chaincode events', () => {
+        it('throws with no signer and no explicit signing', async () => {
+            const unsignedRequest = network.newChaincodeEventsRequest('CHAINCODE_NAME');
+
+            await expect(unsignedRequest.getEvents()).rejects.toThrow(undefinedSignerMessage);
+        });
+
+        it('uses offline signature', async () => {
+            const expected = Buffer.from('MY_SIGNATURE');
+
+            const unsignedRequest = network.newChaincodeEventsRequest('CHAINCODE_NAME');
+            const signedRequest = gateway.newSignedChaincodeEventsRequest(unsignedRequest.getBytes(), expected);
+            await signedRequest.getEvents();
+
+            const eventsRequest = client.getChaincodeEventsRequests()[0];
+            const actual = Buffer.from(eventsRequest.getSignature_asU8() ?? '').toString();
+            expect(actual).toBe(expected.toString());
+        });
+    });
+
+    describe('block events', () => {
+        it('throws with no signer and no explicit signing', async () => {
+            const unsignedRequest = network.newBlockEventsRequest();
+
+            await expect(unsignedRequest.getEvents()).rejects.toThrow(undefinedSignerMessage);
+        });
+
+        it('uses offline signature', async () => {
+            const expected = Buffer.from('MY_SIGNATURE');
+            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([]);
+            client.mockBlockEventsResponse(stream);
+
+            const unsignedRequest = network.newBlockEventsRequest();
+            const signedRequest = gateway.newSignedBlockEventsRequest(unsignedRequest.getBytes(), expected);
+            await signedRequest.getEvents();
+
+            expect(stream.write.mock.calls.length).toBe(1);
+            const eventsRequest = stream.write.mock.calls[0][0];
+            const actual = Buffer.from(eventsRequest.getSignature_asU8() ?? '').toString();
+            expect(actual).toBe(expected.toString());
+        });
+    });
+
+    describe('filtered block events', () => {
+        it('throws with no signer and no explicit signing', async () => {
+            const unsignedRequest = network.newFilteredBlockEventsRequest();
+
+            await expect(unsignedRequest.getEvents()).rejects.toThrow(undefinedSignerMessage);
+        });
+
+        it('uses offline signature', async () => {
+            const expected = Buffer.from('MY_SIGNATURE');
+            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([]);
+            client.mockFilteredBlockEventsResponse(stream);
+
+            const unsignedRequest = network.newFilteredBlockEventsRequest();
+            const signedRequest = gateway.newSignedFilteredBlockEventsRequest(unsignedRequest.getBytes(), expected);
+            await signedRequest.getEvents();
+
+            expect(stream.write.mock.calls.length).toBe(1);
+            const eventsRequest = stream.write.mock.calls[0][0];
+            const actual = Buffer.from(eventsRequest.getSignature_asU8() ?? '').toString();
+            expect(actual).toBe(expected.toString());
+        });
+    });
+
+    describe('block events with private data', () => {
+        it('throws with no signer and no explicit signing', async () => {
+            const unsignedRequest = network.newBlockEventsWithPrivateDataRequest();
+
+            await expect(unsignedRequest.getEvents()).rejects.toThrow(undefinedSignerMessage);
+        });
+
+        it('uses offline signature', async () => {
+            const expected = Buffer.from('MY_SIGNATURE');
+            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([]);
+            client.mockBlockEventsWithPrivateDataResponse(stream);
+
+            const unsignedRequest = network.newBlockEventsWithPrivateDataRequest();
+            const signedRequest = gateway.newSignedBlockEventsWithPrivateDataRequest(unsignedRequest.getBytes(), expected);
+            await signedRequest.getEvents();
+
+            expect(stream.write.mock.calls.length).toBe(1);
+            const eventsRequest = stream.write.mock.calls[0][0];
+            const actual = Buffer.from(eventsRequest.getSignature_asU8() ?? '').toString();
             expect(actual).toBe(expected.toString());
         });
     });
@@ -244,6 +335,46 @@ describe('Offline sign', () => {
 
             const signedCommit = gateway.newSignedCommit(unsignedCommit.getBytes(), expected);
             const actual = signedCommit.getDigest();
+
+            expect(actual).toEqual(expected);
+        });
+
+        it('chaincode events request keeps same digest', () => {
+            const unsignedRequest = network.newChaincodeEventsRequest('CHAINCODE_NAME');
+            const expected = unsignedRequest.getDigest();
+
+            const signedRequest = gateway.newSignedChaincodeEventsRequest(unsignedRequest.getBytes(), expected);
+            const actual = signedRequest.getDigest();
+
+            expect(actual).toEqual(expected);
+        });
+
+        it('block events request keeps same digest', () => {
+            const unsignedRequest = network.newBlockEventsRequest();
+            const expected = unsignedRequest.getDigest();
+
+            const signedRequest = gateway.newSignedBlockEventsRequest(unsignedRequest.getBytes(), expected);
+            const actual = signedRequest.getDigest();
+
+            expect(actual).toEqual(expected);
+        });
+
+        it('filtered block events request keeps same digest', () => {
+            const unsignedRequest = network.newFilteredBlockEventsRequest();
+            const expected = unsignedRequest.getDigest();
+
+            const signedRequest = gateway.newSignedFilteredBlockEventsRequest(unsignedRequest.getBytes(), expected);
+            const actual = signedRequest.getDigest();
+
+            expect(actual).toEqual(expected);
+        });
+
+        it('block events with private data request keeps same digest', () => {
+            const unsignedRequest = network.newBlockEventsWithPrivateDataRequest();
+            const expected = unsignedRequest.getDigest();
+
+            const signedRequest = gateway.newSignedBlockEventsWithPrivateDataRequest(unsignedRequest.getBytes(), expected);
+            const actual = signedRequest.getDigest();
 
             expect(actual).toEqual(expected);
         });

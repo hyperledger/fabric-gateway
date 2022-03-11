@@ -6,6 +6,7 @@
 
 import { CallOptions, Client } from '@grpc/grpc-js';
 import { ChaincodeEventsRequest, Commit, Proposal, Transaction } from '.';
+import { BlockEventsRequest, BlockEventsRequestImpl, BlockEventsWithPrivateDataRequest, BlockEventsWithPrivateDataRequestImpl, FilteredBlockEventsRequest, FilteredBlockEventsRequestImpl } from './blockeventsrequest';
 import { ChaincodeEventsRequestImpl } from './chaincodeeventsrequest';
 import { GatewayClient, GatewayGrpcClient, newGatewayClient } from './client';
 import { CommitImpl } from './commit';
@@ -14,7 +15,7 @@ import { Identity } from './identity/identity';
 import { Signer } from './identity/signer';
 import { Network, NetworkImpl } from './network';
 import { ProposalImpl } from './proposal';
-import { ChannelHeader, Header } from './protos/common/common_pb';
+import { ChannelHeader, Envelope, Header } from './protos/common/common_pb';
 import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, CommitStatusRequest, PreparedTransaction, ProposedTransaction, SignedCommitStatusRequest } from './protos/gateway/gateway_pb';
 import { Proposal as ProposalProto } from './protos/peer/proposal_pb';
 import { SigningIdentity } from './signingidentity';
@@ -183,6 +184,31 @@ export interface Gateway {
     newSignedChaincodeEventsRequest(bytes: Uint8Array, signature: Uint8Array): ChaincodeEventsRequest;
 
     /**
+     * Create a block events request with the specified digital signature. Supports off-line signing flow.
+     * @param bytes - Serialized block events request.
+     * @param signature - Digital signature.
+     * @returns A signed block events request.
+     */
+    newSignedBlockEventsRequest(bytes: Uint8Array, signature: Uint8Array): BlockEventsRequest;
+
+    /**
+     * Create a filtered block events request with the specified digital signature. Supports off-line signing flow.
+     * @param bytes - Serialized filtered block events request.
+     * @param signature - Digital signature.
+     * @returns A signed filtered block events request.
+     */
+    newSignedFilteredBlockEventsRequest(bytes: Uint8Array, signature: Uint8Array): FilteredBlockEventsRequest;
+
+    /**
+     * Create a block events with private data request with the specified digital signature. Supports off-line signing
+     * flow.
+     * @param bytes - Serialized block events with private data request.
+     * @param signature - Digital signature.
+     * @returns A signed filtered block events with private data request.
+     */
+    newSignedBlockEventsWithPrivateDataRequest(bytes: Uint8Array, signature: Uint8Array): BlockEventsWithPrivateDataRequest;
+
+    /**
      * Close the gateway when it is no longer required. This releases all resources associated with networks and
      * contracts obtained using the Gateway, including removing event listeners.
      */
@@ -260,6 +286,45 @@ class GatewayImpl {
         const request = ChaincodeEventsRequestProto.deserializeBinary(bytes);
 
         const result = new ChaincodeEventsRequestImpl({
+            client: this.#client,
+            signingIdentity: this.#signingIdentity,
+            request,
+        });
+        result.setSignature(signature);
+
+        return result;
+    }
+
+    newSignedBlockEventsRequest(bytes: Uint8Array, signature: Uint8Array): BlockEventsRequest {
+        const request = Envelope.deserializeBinary(bytes);
+
+        const result = new BlockEventsRequestImpl({
+            client: this.#client,
+            signingIdentity: this.#signingIdentity,
+            request,
+        });
+        result.setSignature(signature);
+
+        return result;
+    }
+
+    newSignedFilteredBlockEventsRequest(bytes: Uint8Array, signature: Uint8Array): FilteredBlockEventsRequest {
+        const request = Envelope.deserializeBinary(bytes);
+
+        const result = new FilteredBlockEventsRequestImpl({
+            client: this.#client,
+            signingIdentity: this.#signingIdentity,
+            request,
+        });
+        result.setSignature(signature);
+
+        return result;
+    }
+
+    newSignedBlockEventsWithPrivateDataRequest(bytes: Uint8Array, signature: Uint8Array): BlockEventsWithPrivateDataRequest {
+        const request = Envelope.deserializeBinary(bytes);
+
+        const result = new BlockEventsWithPrivateDataRequestImpl({
             client: this.#client,
             signingIdentity: this.#signingIdentity,
             request,

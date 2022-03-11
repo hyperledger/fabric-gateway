@@ -20,11 +20,7 @@ import (
 )
 
 func TestOfflineSign(t *testing.T) {
-	evaluateResponse := gateway.EvaluateResponse{
-		Result: &peer.Response{
-			Payload: nil,
-		},
-	}
+	var signature []byte
 
 	newGatewayWithNoSign := func(t *testing.T, options ...ConnectOption) *Gateway {
 		defaultOptions := []ConnectOption{
@@ -35,6 +31,22 @@ func TestOfflineSign(t *testing.T) {
 		require.NoError(t, err)
 
 		return gateway
+	}
+
+	newMockDeliverEvents := func(controller *gomock.Controller) *MockDeliver_DeliverClient {
+		mockEvents := NewMockDeliver_DeliverClient(controller)
+
+		mockEvents.EXPECT().Send(gomock.Any()).
+			Do(func(in *common.Envelope) {
+				signature = in.GetSignature()
+			}).
+			Return(nil).
+			AnyTimes()
+		mockEvents.EXPECT().Recv().
+			Return(nil, errors.New("fake")).
+			AnyTimes()
+
+		return mockEvents
 	}
 
 	type Invocation struct {
@@ -79,9 +91,11 @@ func TestOfflineSign(t *testing.T) {
 			State: struct {
 				Digest        []byte
 				TransactionID string
+				EndorsingOrgs []string
 			}{
 				Digest:        proposal.Digest(),
 				TransactionID: proposal.TransactionID(),
+				EndorsingOrgs: proposal.proposedTransaction.GetEndorsingOrganizations(),
 			},
 		}
 	}
@@ -281,8 +295,6 @@ func TestOfflineSign(t *testing.T) {
 		Create      func(*testing.T) *Signable
 	}
 
-	var signature []byte
-
 	tests := []TableTest{
 		{
 			Description: "Proposal",
@@ -290,13 +302,17 @@ func TestOfflineSign(t *testing.T) {
 				mockClient := NewMockGatewayClient(gomock.NewController(t))
 				mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
 					Do(func(_ context.Context, in *gateway.EvaluateRequest, _ ...grpc.CallOption) {
-						signature = in.ProposedTransaction.Signature
+						signature = in.GetProposedTransaction().GetSignature()
 					}).
-					Return(&evaluateResponse, nil).
+					Return(&gateway.EvaluateResponse{
+						Result: &peer.Response{
+							Payload: nil,
+						},
+					}, nil).
 					AnyTimes()
 				mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 					Do(func(_ context.Context, in *gateway.EndorseRequest, _ ...grpc.CallOption) {
-						signature = in.ProposedTransaction.Signature
+						signature = in.GetProposedTransaction().GetSignature()
 					}).
 					Return(AssertNewEndorseResponse(t, "result", "network"), nil).
 					AnyTimes()
@@ -318,7 +334,7 @@ func TestOfflineSign(t *testing.T) {
 					Return(AssertNewEndorseResponse(t, "result", "network"), nil)
 				mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
 					Do(func(_ context.Context, in *gateway.SubmitRequest, _ ...grpc.CallOption) {
-						signature = in.PreparedTransaction.Signature
+						signature = in.GetPreparedTransaction().GetSignature()
 					}).
 					Return(nil, nil).
 					AnyTimes()
@@ -352,7 +368,7 @@ func TestOfflineSign(t *testing.T) {
 					AnyTimes()
 				mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
 					Do(func(_ context.Context, in *gateway.SignedCommitStatusRequest, _ ...grpc.CallOption) {
-						signature = in.Signature
+						signature = in.GetSignature()
 					}).
 					Return(&gateway.CommitStatusResponse{
 						Result: peer.TxValidationCode_VALID,
@@ -395,7 +411,7 @@ func TestOfflineSign(t *testing.T) {
 
 				mockClient.EXPECT().ChaincodeEvents(gomock.Any(), gomock.Any()).
 					Do(func(_ context.Context, in *gateway.SignedChaincodeEventsRequest, _ ...grpc.CallOption) {
-						signature = in.Signature
+						signature = in.GetSignature()
 					}).
 					Return(mockEvents, nil).
 					AnyTimes()
@@ -418,20 +434,10 @@ func TestOfflineSign(t *testing.T) {
 			Create: func(t *testing.T) *Signable {
 				controller := gomock.NewController(t)
 				mockClient := NewMockDeliverClient(controller)
-				mockEvents := NewMockDeliver_DeliverClient(controller)
+				mockEvents := newMockDeliverEvents(controller)
 
 				mockClient.EXPECT().Deliver(gomock.Any(), gomock.Any()).
 					Return(mockEvents, nil).
-					AnyTimes()
-
-				mockEvents.EXPECT().Send(gomock.Any()).
-					Do(func(in *common.Envelope) {
-						signature = in.Signature
-					}).
-					Return(nil).
-					AnyTimes()
-				mockEvents.EXPECT().Recv().
-					Return(nil, errors.New("fake")).
 					AnyTimes()
 
 				gateway := newGatewayWithNoSign(t, WithGatewayClient(NewMockGatewayClient(controller)), WithDeliverClient(mockClient))
@@ -448,20 +454,10 @@ func TestOfflineSign(t *testing.T) {
 			Create: func(t *testing.T) *Signable {
 				controller := gomock.NewController(t)
 				mockClient := NewMockDeliverClient(controller)
-				mockEvents := NewMockDeliver_DeliverClient(controller)
+				mockEvents := newMockDeliverEvents(controller)
 
 				mockClient.EXPECT().DeliverFiltered(gomock.Any(), gomock.Any()).
 					Return(mockEvents, nil).
-					AnyTimes()
-
-				mockEvents.EXPECT().Send(gomock.Any()).
-					Do(func(in *common.Envelope) {
-						signature = in.Signature
-					}).
-					Return(nil).
-					AnyTimes()
-				mockEvents.EXPECT().Recv().
-					Return(nil, errors.New("fake")).
 					AnyTimes()
 
 				gateway := newGatewayWithNoSign(t, WithGatewayClient(NewMockGatewayClient(controller)), WithDeliverClient(mockClient))
@@ -478,20 +474,10 @@ func TestOfflineSign(t *testing.T) {
 			Create: func(t *testing.T) *Signable {
 				controller := gomock.NewController(t)
 				mockClient := NewMockDeliverClient(controller)
-				mockEvents := NewMockDeliver_DeliverClient(controller)
+				mockEvents := newMockDeliverEvents(controller)
 
 				mockClient.EXPECT().DeliverWithPrivateData(gomock.Any(), gomock.Any()).
 					Return(mockEvents, nil).
-					AnyTimes()
-
-				mockEvents.EXPECT().Send(gomock.Any()).
-					Do(func(in *common.Envelope) {
-						signature = in.Signature
-					}).
-					Return(nil).
-					AnyTimes()
-				mockEvents.EXPECT().Recv().
-					Return(nil, errors.New("fake")).
 					AnyTimes()
 
 				gateway := newGatewayWithNoSign(t, WithGatewayClient(NewMockGatewayClient(controller)), WithDeliverClient(mockClient))

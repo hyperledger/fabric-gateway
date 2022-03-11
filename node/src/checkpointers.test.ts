@@ -4,140 +4,124 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as checkpointers from './checkpointers';
-import fs from 'fs';
-import { createTempDir, rmdir } from './testutils.test';
-import path from 'path';
+import { promises as fs } from 'fs';
+import * as path from 'path';
 import { Checkpointer } from './checkpointer';
+import * as checkpointers from './checkpointers';
+import { createTempDir } from './testutils.test';
+
+/* eslint-disable jest/expect-expect */
 
 describe('Checkpointers', () => {
-    let filePath: string;
-    function getInmemoryInstance(): Promise<Checkpointer> {
-        return Promise.resolve(checkpointers.inMemory());
-    }
-    async function getFileCheckpointerInstance(): Promise<Checkpointer> {
-        return await checkpointers.file(filePath);
-    }
-    async function createCheckpointerFile(): Promise<string> {
-        const dir = await createTempDir();
-        filePath = path.join(dir, 'checkpoint.json');
-        return dir;
-    }
-    async  function cleanup(dir: string): Promise<void> {
-        await rmdir(dir);
+    let tempDir: string;
+    let checkpointFile: string;
+
+    beforeAll(async () => {
+        tempDir = await createTempDir();
+        checkpointFile = path.join(tempDir, 'checkpoint.json');
+    });
+
+    afterAll(async () => {
+        await fs.rm(tempDir, { recursive: true, force: true });
+    });
+
+    function assertState(checkpointer: Checkpointer, blockNumber: bigint | undefined, ...transactionIds: string[]): void {
+        expect(checkpointer.getBlockNumber()).toBe(blockNumber);
+        expect(checkpointer.getTransactionIds()).toEqual(new Set(transactionIds));
     }
 
-    function noOperation(): Promise<void> {
-        return Promise.resolve();
-    }
-    const checkpointerTypes = [
-        { getInstance: getInmemoryInstance, description: 'In-memory checkpointer', createFile: noOperation, cleanup: noOperation},
-        { getInstance: getFileCheckpointerInstance, description: 'File checkpointer', createFile: createCheckpointerFile, cleanup: cleanup},
+    const testCases = [
+        {
+            description: 'In-memory',
+            after: () => Promise.resolve(),
+            newCheckpointer: () => Promise.resolve(checkpointers.inMemory()),
+        },
+        {
+            description: 'File',
+            after: () => fs.rm(checkpointFile, { force: true }),
+            newCheckpointer: () => checkpointers.file(checkpointFile),
+        },
     ];
-    checkpointerTypes.forEach(checkpointer => {
-        describe(`${checkpointer.description}`, () => {
-            let dir: string|void;
+
+    testCases.forEach(testCase => {
+        describe(`${testCase.description} common behaviour`, () => {
+            let checkpointer: Checkpointer;
 
             beforeEach(async () => {
-                dir = await checkpointer.createFile();
+                checkpointer = await testCase.newCheckpointer();
             });
+
             afterEach(async () => {
-                if (dir) {
-                    await checkpointer.cleanup(dir);
-                }
+                await testCase.after();
             });
 
-            it('Initializes default checkpointer state when no checkpointer already exist', async () => {
-                const checkPointerInstance = await checkpointer.getInstance();
-                expect(checkPointerInstance.getBlockNumber()).toBeUndefined();
-                expect(checkPointerInstance.getTransactionIds().size).toEqual(0);
+            it('Initial state is undefined block and no transactions', () => {
+                assertState(checkpointer, undefined);
             });
 
-            it('Checkpointing only a block number in a fresh checkpointer gives block number & no transactions', async () => {
-                const blockNumber = BigInt(101);
-                const checkPointerInstance = await checkpointer.getInstance();
-                await checkPointerInstance.checkpoint(blockNumber);
-                expect(checkPointerInstance.getBlockNumber()).toEqual(blockNumber);
-                expect(checkPointerInstance.getTransactionIds().size).toEqual(0);
-            });
-            it('Checkpointing same block number and new transaction in used checkpointer gives block number and expected transactions', async () => {
-                const blockNumber = BigInt(101);
-                const checkPointerInstance = await checkpointer.getInstance();
-                await checkPointerInstance.checkpoint(blockNumber);
-                await checkPointerInstance.checkpoint(blockNumber, 'txn1');
-                expect(checkPointerInstance.getTransactionIds()).toStrictEqual(
-                    new Set(['txn1'])
-                );
-            });
-            it('Checkpointing block and transaction in a fresh checkpointer, gives block number and transaction', async () => {
-                const blockNumber = BigInt(101);
-                const checkPointerInstance = await checkpointer.getInstance();
-                await checkPointerInstance.checkpoint(blockNumber, 'txn1');
-                expect(checkPointerInstance.getBlockNumber()).toEqual(blockNumber);
-                return expect(checkPointerInstance.getTransactionIds()).toStrictEqual(
-                    new Set(['txn1'])
-                );
+            it('Checkpoint only block stores block and no transactions', async () => {
+                await checkpointer.checkpoint(1n);
+
+                assertState(checkpointer, 1n);
             });
 
-            it('Checkpointing only a new block in used checkpointer gives new block number and no transactions', async () => {
-                const blockNumber1 = BigInt(101);
-                const blockNumber2 = BigInt(102);
-                const checkPointerInstance = await checkpointer.getInstance();
-                await checkPointerInstance.checkpoint(blockNumber1, 'txn1');
-                await checkPointerInstance.checkpoint(blockNumber2);
-                expect(checkPointerInstance.getBlockNumber()).toStrictEqual(blockNumber2);
-                expect(checkPointerInstance.getTransactionIds()).toStrictEqual(new Set());
+            it('Checkpoint block and transaction stores block and transaction', async () => {
+                await checkpointer.checkpoint(1n, 'tx1');
+
+                assertState(checkpointer, 1n, 'tx1');
             });
 
-            it('Checkpointing new block and transaction in used checkpointer gives new block and only new transaction', async () => {
-                const blockNumber1 = BigInt(101);
-                const blockNumber2 = BigInt(102);
-                const checkPointerInstance = await checkpointer.getInstance();
+            it('Checkpoint same block and new transactions stores transactions', async () => {
+                await checkpointer.checkpoint(1n);
+                await checkpointer.checkpoint(1n, 'tx1');
+                await checkpointer.checkpoint(1n, 'tx2');
 
-                await checkPointerInstance.checkpoint(blockNumber1, 'txn1');
-                await checkPointerInstance.checkpoint(blockNumber2, 'txn2');
-                await checkPointerInstance.checkpoint(blockNumber2, 'txn3');
-                expect(checkPointerInstance.getBlockNumber()).toStrictEqual(blockNumber2);
-                expect(checkPointerInstance.getTransactionIds()).toStrictEqual(
-                    new Set(['txn2', 'txn3'])
-                );
+                assertState(checkpointer, 1n, 'tx1', 'tx2');
+            });
+
+            it('Checkpoint new block clears existing transactions', async () => {
+                await checkpointer.checkpoint(1n, 'tx1');
+                await checkpointer.checkpoint(2n);
+
+                assertState(checkpointer, 2n);
+            });
+
+            it('Checkpoint new block and transaction clears existing transactions', async () => {
+                await checkpointer.checkpoint(1n, 'tx1');
+                await checkpointer.checkpoint(2n, 'tx2');
+
+                assertState(checkpointer, 2n, 'tx2');
             });
         });
     });
-    describe('File Checkpointer: Test file creation and initialization', () => {
-        let dir: string;
-        let checkpointerPath: string;
-        beforeEach(async () => {
-            dir = await createTempDir();
-            checkpointerPath = path.join(dir, 'checkpoint.json');
-        });
+
+    describe('File-specific behaviour', () => {
         afterEach(async () => {
-            await rmdir(dir);
+            await fs.rm(checkpointFile, { force: true });
         });
 
-        it('In the absence of a checkpointer file , a new one gets generated', async () => {
-            expect(fs.existsSync(checkpointerPath)).toEqual(false);
-            await checkpointers.file(checkpointerPath);
-            expect(fs.existsSync(checkpointerPath)).toEqual(true);
+        it('throws on unwritable file location', async () => {
+            const badFile = path.join(tempDir, 'MISSING_DIRECTORY', 'checkpoint.json');
+            await expect(checkpointers.file(badFile)).rejects.toThrow();
         });
 
-        it('checkpointer loads the already existing state', async () => {
-            // load file checkpointer with checkpointer state
-            const blockNumber = BigInt('101');
-            const checkPointerInstance1 = await checkpointers.file(checkpointerPath);
-            await checkPointerInstance1.checkpoint(blockNumber);
+        it('state is persisted', async () => {
+            const expected = await checkpointers.file(checkpointFile);
+            await expected.checkpoint(1n, 'tx1');
 
-            const checkPointerInstance2 = await checkpointers.file(checkpointerPath);
-            expect(checkPointerInstance2.getBlockNumber()).toEqual(blockNumber);
-            expect(checkPointerInstance2.getTransactionIds().size).toEqual(0);
+            const actual = await checkpointers.file(checkpointFile);
+
+            expect(actual.getBlockNumber()).toBe(expected.getBlockNumber());
+            expect(actual.getTransactionIds()).toEqual(expected.getTransactionIds());
         });
 
-        it('Checkpointing block number zero in a fresh checkpointer sets the state as zero', async () => {
-            const blockNumber = BigInt(0);
-            const checkPointerInstance1 = await checkpointers.file(checkpointerPath);
-            await checkPointerInstance1.checkpoint(blockNumber);
-            const checkPointerInstance2 = await checkpointers.file(checkpointerPath);
-            expect(checkPointerInstance1.getBlockNumber()).toEqual(checkPointerInstance2.getBlockNumber());
+        it('block number zero is persisted correctly', async () => {
+            const expected = await checkpointers.file(checkpointFile);
+            await expected.checkpoint(0n);
+
+            const actual = await checkpointers.file(checkpointFile);
+
+            expect(actual.getBlockNumber()).toBe(0n);
         });
     });
 });
