@@ -5,6 +5,10 @@
  */
 
 import * as grpc from '@grpc/grpc-js';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import { CheckpointAsyncIterable } from './checkpointer';
 import { chaincodeEventsMethod, CloseableAsyncIterable, commitStatusMethod, deliverFilteredMethod, deliverMethod, deliverWithPrivateDataMethod, DuplexStreamResponse, endorseMethod, evaluateMethod, GatewayGrpcClient, ServerStreamResponse, submitMethod } from './client';
 import { ChannelHeader, Envelope, Header, Payload } from './protos/common/common_pb';
 import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
@@ -12,11 +16,6 @@ import { DeliverResponse } from './protos/peer/events_pb';
 import { ChaincodeAction } from './protos/peer/proposal_pb';
 import { ProposalResponsePayload, Response } from './protos/peer/proposal_response_pb';
 import { ChaincodeActionPayload, ChaincodeEndorsedAction, Transaction, TransactionAction } from './protos/peer/transaction_pb';
-import { CheckpointAsyncIterable } from './checkpointer';
-import { ChaincodeEvent } from './chaincodeevent';
-import path from 'path';
-import fs from 'fs';
-import os from 'os';
 /* eslint-disable jest/no-export */
 
 it('Test utilities', () => { // eslint-disable-line jest/expect-expect
@@ -304,10 +303,19 @@ export function newEndorseResponse(options: {
     return endorseResponse;
 }
 
-export async function readElements<T>(iter: AsyncIterable<T>, count: number): Promise<T[]> {
+export function checkpointReadEvents<T>(iter: CheckpointAsyncIterable<T>, count: number): Promise<T[]> {
+    return readElements(iter, count, () => iter.checkpoint());
+}
+
+export async function readElements<T>(
+    iter: AsyncIterable<T>,
+    count: number,
+    onRead?: (element: T) => Promise<void>,
+): Promise<T[]> {
     const elements: T[] = [];
     for await (const element of iter) {
         elements.push(element);
+        await onRead?.(element);
 
         if (--count <= 0) {
             break;
@@ -317,39 +325,27 @@ export async function readElements<T>(iter: AsyncIterable<T>, count: number): Pr
     return elements;
 }
 
-export async function readEventsAndCheckpoint<T>(iter: CheckpointAsyncIterable<T>, count: number): Promise<T[]> {
-    const events: T[] = [];
-    for await (const event of iter) {
-        events.push(event);
-        await iter.checkpoint();
-        if (--count <= 0) {
-            break;
-        }
-    }
-
-    return events;
-}
-
 export interface CloseableAsyncIterableStub<T> extends CloseableAsyncIterable<T> {
     close: jest.Mock<void, void[]>;
 }
 
-export function getEventsIterable(values: ChaincodeEvent[]): CloseableAsyncIterableStub<ChaincodeEvent> {
-    return {
-        async* [Symbol.asyncIterator]() { // eslint-disable-line @typescript-eslint/require-await
-            for (const value of values) {
-                yield value;
-            }
-        },
+export function newCloseableAsyncIterable<T>(values: T[]): CloseableAsyncIterableStub<T> {
+    return Object.assign(newAsyncIterable(values), {
         close: jest.fn<void, void[]>(),
-    };
+    });
 }
 
 export interface ServerStreamResponseStub<T> extends ServerStreamResponse<T> {
     cancel: jest.Mock<void, void[]>;
 }
 
-export function newServerStreamResponse<T>(values: (T | grpc.ServiceError)[]): ServerStreamResponseStub<T> {
+export function newServerStreamResponse<T>(values: (T | Error)[]): ServerStreamResponseStub<T> {
+    return Object.assign(newAsyncIterable(values), {
+        cancel: jest.fn<void, void[]>(),
+    });
+}
+
+function newAsyncIterable<T>(values: (T | Error)[]): AsyncIterable<T> {
     return {
         async* [Symbol.asyncIterator]() { // eslint-disable-line @typescript-eslint/require-await
             for (const value of values) {
@@ -358,8 +354,7 @@ export function newServerStreamResponse<T>(values: (T | grpc.ServiceError)[]): S
                 }
                 yield value;
             }
-        },
-        cancel: jest.fn<void, void[]>(),
+        }
     };
 }
 
@@ -368,7 +363,7 @@ export interface DuplexStreamResponseStub<RequestType, ResponseType> extends Dup
     write: jest.Mock<boolean, RequestType[]>;
 }
 
-export function newDuplexStreamResponse<RequestType, ResponseType>(values: (ResponseType | grpc.ServiceError)[]): DuplexStreamResponseStub<RequestType, ResponseType> {
+export function newDuplexStreamResponse<RequestType, ResponseType>(values: (ResponseType | Error)[]): DuplexStreamResponseStub<RequestType, ResponseType> {
     return Object.assign(newServerStreamResponse(values), {
         write: jest.fn<boolean, RequestType[]>(),
     });
@@ -377,8 +372,4 @@ export function newDuplexStreamResponse<RequestType, ResponseType>(values: (Resp
 export async function createTempDir(): Promise<string> {
     const prefix = `${os.tmpdir()}${path.sep}`;
     return await fs.promises.mkdtemp(prefix);
-}
-
-export async function rmdir(directory: string): Promise<void> {
-    await fs.promises.rm(directory, { recursive: true });
 }

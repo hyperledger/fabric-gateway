@@ -9,26 +9,30 @@ import { CloseableAsyncIterable } from './client';
 export interface Checkpointer {
 
     /**
-    * To checkpoint the blocknumber and transaction ID of the event.
-    */
+     * Checkpoint the block number and transaction ID of an event. Checkpointing a different block number from the one
+     * currently stored clears all previous transaction IDs.
+     * @param blockNumber - a block number.
+     * @param transactionId - a transaction ID.
+     */
     checkpoint(blockNumber: bigint, transactionId?: string): Promise<void>;
 
     /**
-    * Get the current block number, or undefined if there is no previously saved state.
-    */
+     * Get the current block number, or undefined if there is no previously saved state.
+     */
     getBlockNumber(): bigint | undefined;
+
     /**
-    * Get the transaction IDs processed within the current block.
-    */
+     * Get the transaction IDs processed within the current block.
+     */
     getTransactionIds(): Set<string>;
 }
 
 /**
- * An async iterable that can be used to iterate over the events and checkpoint the events after processing.
+ * An async iterable that can checkpoint events after they are processed.
  */
 export interface CheckpointAsyncIterable<T> extends CloseableAsyncIterable<T> {
     /**
-    * To checkpoint the events after processing.
-    */
+     * Checkpoint the last read event. This should be called immediately after the event is successfully processed.
+     */
     checkpoint(): Promise<void>;
 }

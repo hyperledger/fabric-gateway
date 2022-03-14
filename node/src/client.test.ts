@@ -7,11 +7,10 @@
 /* eslint-disable jest/no-export */
 
 import * as grpc from '@grpc/grpc-js';
-import { CloseableAsyncIterable, GatewayClient, newGatewayClient } from './client';
+import { GatewayClient, newGatewayClient } from './client';
 import { GatewayError } from './gatewayerror';
 import { Envelope } from './protos/common/common_pb';
-import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
-import { DeliverResponse } from './protos/peer/events_pb';
+import { EndorseRequest, EvaluateRequest, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest } from './protos/gateway/gateway_pb';
 import { MockGatewayGrpcClient } from './testutils.test';
 
 describe('client', () => {
@@ -33,7 +32,7 @@ describe('client', () => {
         it('evaluate', async () => {
             grpcClient.mockEvaluateError(grpcError);
 
-            const t: () => Promise<EvaluateResponse> = () => gatewayClient.evaluate(new EvaluateRequest());
+            const t = gatewayClient.evaluate(new EvaluateRequest());
 
             await expect(t).rejects.toThrow(grpcError.message);
             await expect(t).rejects.toThrow(GatewayError);
@@ -42,7 +41,7 @@ describe('client', () => {
         it('endorse', async () => {
             grpcClient.mockEndorseError(grpcError);
 
-            const t: () => Promise<EndorseResponse> = () => gatewayClient.endorse(new EndorseRequest());
+            const t = gatewayClient.endorse(new EndorseRequest());
 
             await expect(t).rejects.toThrow(grpcError.message);
             await expect(t).rejects.toThrow(GatewayError);
@@ -51,7 +50,7 @@ describe('client', () => {
         it('submit', async () => {
             grpcClient.mockSubmitError(grpcError);
 
-            const t: () => Promise<SubmitResponse> = () => gatewayClient.submit(new SubmitRequest());
+            const t = gatewayClient.submit(new SubmitRequest());
 
             await expect(t).rejects.toThrow(grpcError.message);
             await expect(t).rejects.toThrow(GatewayError);
@@ -60,7 +59,7 @@ describe('client', () => {
         it('commit status', async () => {
             grpcClient.mockCommitStatusError(grpcError);
 
-            const t: () => Promise<CommitStatusResponse> = () => gatewayClient.commitStatus(new SignedCommitStatusRequest());
+            const t = gatewayClient.commitStatus(new SignedCommitStatusRequest());
 
             await expect(t).rejects.toThrow(grpcError.message);
             await expect(t).rejects.toThrow(GatewayError);
@@ -69,7 +68,7 @@ describe('client', () => {
         it('chaincode events', () => {
             grpcClient.mockChaincodeEventsError(grpcError);
 
-            const t: () => CloseableAsyncIterable<ChaincodeEventsResponse> = () => gatewayClient.chaincodeEvents(new SignedChaincodeEventsRequest());
+            const t: () => void = () => gatewayClient.chaincodeEvents(new SignedChaincodeEventsRequest());
 
             expect(t).toThrow(grpcError.message);
             expect(t).toThrow(GatewayError);
@@ -78,7 +77,7 @@ describe('client', () => {
         it('block events', () => {
             grpcClient.mockBlockEventsError(grpcError);
 
-            const t: () => CloseableAsyncIterable<DeliverResponse> = () => gatewayClient.blockEvents(new Envelope());
+            const t: () => void = () => gatewayClient.blockEvents(new Envelope());
 
             expect(t).toThrow(grpcError.message);
             expect(t).toThrow(GatewayError);
@@ -87,7 +86,7 @@ describe('client', () => {
         it('filtered block events', () => {
             grpcClient.mockFilteredBlockEventsError(grpcError);
 
-            const t: () => CloseableAsyncIterable<DeliverResponse> = () => gatewayClient.filteredBlockEvents(new Envelope());
+            const t: () => void = () => gatewayClient.filteredBlockEvents(new Envelope());
 
             expect(t).toThrow(grpcError.message);
             expect(t).toThrow(GatewayError);
@@ -96,7 +95,7 @@ describe('client', () => {
         it('block events with private data', () => {
             grpcClient.mockBlockEventsWithPrivateDataError(grpcError);
 
-            const t: () => CloseableAsyncIterable<DeliverResponse> = () => gatewayClient.blockEventsWithPrivateData(new Envelope());
+            const t: () => void = () => gatewayClient.blockEventsWithPrivateData(new Envelope());
 
             expect(t).toThrow(grpcError.message);
             expect(t).toThrow(GatewayError);
