@@ -15,6 +15,7 @@ type eventsBuilder struct {
 	signingID     *signingIdentity
 	channelName   string
 	startPosition *orderer.SeekPosition
+	previousTransactionID string
 }
 
 func (builder *eventsBuilder) getStartPosition() *orderer.SeekPosition {
@@ -41,6 +42,14 @@ func WithStartBlock(blockNumber uint64) eventOption {
 				},
 			},
 		}
+		return nil
+	}
+}
+
+// WithTransactionID reads events starting at the specified transaction ID.
+func WithTransactionID(transactionID string) eventOption {
+	return func(builder *eventsBuilder) error {
+		builder.previousTransactionID = transactionID
 		return nil
 	}
 }
