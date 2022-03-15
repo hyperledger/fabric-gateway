@@ -25,9 +25,9 @@ describe('Checkpointers', () => {
         await fs.rm(tempDir, { recursive: true, force: true });
     });
 
-    function assertState(checkpointer: Checkpointer, blockNumber: bigint | undefined, ...transactionIds: string[]): void {
+    function assertState(checkpointer: Checkpointer, blockNumber: bigint | undefined, transactionId?: string ): void {
         expect(checkpointer.getBlockNumber()).toBe(blockNumber);
-        expect(checkpointer.getTransactionIds()).toEqual(new Set(transactionIds));
+        expect(checkpointer.getTransactionId()).toEqual(transactionId);
     }
 
     const testCases = [
@@ -76,7 +76,7 @@ describe('Checkpointers', () => {
                 await checkpointer.checkpoint(1n, 'tx1');
                 await checkpointer.checkpoint(1n, 'tx2');
 
-                assertState(checkpointer, 1n, 'tx1', 'tx2');
+                assertState(checkpointer, 1n, 'tx2');
             });
 
             it('Checkpoint new block clears existing transactions', async () => {
@@ -112,7 +112,7 @@ describe('Checkpointers', () => {
             const actual = await checkpointers.file(checkpointFile);
 
             expect(actual.getBlockNumber()).toBe(expected.getBlockNumber());
-            expect(actual.getTransactionIds()).toEqual(expected.getTransactionIds());
+            expect(actual.getTransactionId()).toEqual(expected.getTransactionId());
         });
 
         it('block number zero is persisted correctly', async () => {

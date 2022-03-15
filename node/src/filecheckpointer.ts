@@ -12,7 +12,7 @@ import { Checkpointer } from './checkpointer';
  */
 interface CheckpointerState {
     blockNumber?: string;
-    transactionIDs: string[];
+    transactionID?: string;
 }
 
 /**
@@ -21,7 +21,7 @@ interface CheckpointerState {
 export class FileCheckPointer implements Checkpointer {
     #path: string;
     #blockNumber?: bigint;
-    #transactionIDs: Set<string> = new Set();
+    #transactionID?: string;
 
     constructor(path: string) {
         this.#path = path;
@@ -35,10 +35,10 @@ export class FileCheckPointer implements Checkpointer {
     async checkpoint(blockNumber: bigint, transactionId?: string): Promise<void> {
         if (blockNumber !== this.#blockNumber) {
             this.#blockNumber = blockNumber;
-            this.#transactionIDs.clear();
+            this.#transactionID = undefined;
         }
         if (transactionId) {
-            this.#transactionIDs.add(transactionId);
+            this.#transactionID = transactionId;
         }
         await this.#saveToFile();
     }
@@ -47,8 +47,8 @@ export class FileCheckPointer implements Checkpointer {
         return this.#blockNumber;
     }
 
-    getTransactionIds(): Set<string> {
-        return this.#transactionIDs;
+    getTransactionId(): string | undefined {
+        return this.#transactionID;
     }
 
     async #loadFromFile(): Promise<void> {
@@ -73,12 +73,13 @@ export class FileCheckPointer implements Checkpointer {
 
     #setState(state: CheckpointerState): void {
         this.#blockNumber = state.blockNumber ? BigInt(state.blockNumber) : undefined;
-        this.#transactionIDs = new Set(state.transactionIDs);
+        this.#transactionID = state.transactionID
     }
+
     #getState(): CheckpointerState {
         return {
             blockNumber: (this.#blockNumber !== undefined) ? this.#blockNumber.toString() : undefined,
-            transactionIDs: Array.from(this.#transactionIDs),
+            transactionID: this.#transactionID,
         };
     }
 

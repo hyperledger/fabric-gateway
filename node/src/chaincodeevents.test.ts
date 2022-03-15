@@ -6,7 +6,6 @@
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
 import { ChaincodeEvent } from './chaincodeevent';
-import * as Checkpointers from './checkpointers';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { GatewayError } from './gatewayerror';
 import { Identity } from './identity/identity';
@@ -14,7 +13,7 @@ import { Network } from './network';
 import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, ChaincodeEventsResponse, SignedChaincodeEventsRequest } from './protos/gateway/gateway_pb';
 import { SeekPosition } from './protos/orderer/ab_pb';
 import { ChaincodeEvent as ChaincodeEventProto } from './protos/peer/chaincode_event_pb';
-import { checkpointReadEvents, MockGatewayGrpcClient, newCloseableAsyncIterable, newServerStreamResponse, readElements } from './testutils.test';
+import { MockGatewayGrpcClient, newServerStreamResponse, readElements } from './testutils.test';
 
 function assertDecodeChaincodeEventsRequest(signedRequest: SignedChaincodeEventsRequest): ChaincodeEventsRequestProto {
     const requestBytes = signedRequest.getRequest_asU8();
@@ -131,6 +130,26 @@ describe('Chaincode Events', () => {
             expect(startPosition?.getSpecified()?.getNumber()).toBe(Number(startBlock));
         });
 
+        it('sends valid request with specified start block number and previous processed transaction Id', async () => {
+            const startBlock = BigInt(418);
+            await network.getChaincodeEvents('CHAINCODE', { startBlock , previousTransactionID: 'txn1' });
+
+            const signedRequest = client.getChaincodeEventsRequests()[0];
+            expect(signedRequest.getSignature()).toEqual(signature);
+
+            const request = assertDecodeChaincodeEventsRequest(signedRequest);
+
+            expect(request.getChannelId()).toBe(channelName);
+            expect(request.getChaincodeId()).toBe('CHAINCODE');
+
+            const startPosition = request.getStartPosition();
+
+            expect(startPosition).toBeDefined();
+            expect(startPosition?.getTypeCase()).toBe(SeekPosition.TypeCase.SPECIFIED);
+            expect(startPosition?.getSpecified()?.getNumber()).toBe(Number(startBlock));
+            expect(request.getTransactionId()).toEqual('txn1');
+        });
+
         it('uses specified call options', async () => {
             const deadline = Date.now() + 1000;
 
@@ -221,89 +240,4 @@ describe('Chaincode Events', () => {
         });
     });
 
-    describe('checkpoint', () => {
-        it('new checkpointer gives all the events emitted', async () => {
-            const eventsInput: ChaincodeEvent[] = [
-                newChaincodeEvent(10, event1),
-                newChaincodeEvent(10, event2),
-                newChaincodeEvent(20, event3),
-            ];
-            const events = newCloseableAsyncIterable(eventsInput);
-            const checkpointer = Checkpointers.inMemory();
-
-            const checkpointEvents = Checkpointers.checkpointChaincodeEvents(events, checkpointer);
-
-            const actualEvents = await checkpointReadEvents(checkpointEvents, eventsInput.length);
-            expect(actualEvents).toEqual(eventsInput);
-        });
-
-        it('used checkpointer does not emit duplicate events if checkpointed within first block', async () => {
-            const eventsInput: ChaincodeEvent[] = [
-                newChaincodeEvent(10, event1),
-                newChaincodeEvent(10, event2),
-                newChaincodeEvent(20, event3),
-            ];
-            const events = newCloseableAsyncIterable(eventsInput);
-            const checkpointer = Checkpointers.inMemory();
-
-            const checkpointEvents1 = Checkpointers.checkpointChaincodeEvents(events, checkpointer);
-            await checkpointReadEvents(checkpointEvents1, 1);
-
-            const checkpointEvents2 = Checkpointers.checkpointChaincodeEvents(events, checkpointer);
-            const actualEvents = await checkpointReadEvents(checkpointEvents2, 2);
-
-            expect(actualEvents).toEqual(eventsInput.slice(1));
-        });
-
-        it('used checkpointer does not emit duplicate events if checkpointed at the end of block', async () => {
-            const eventsInput: ChaincodeEvent[] = [
-                newChaincodeEvent(10, event1),
-                newChaincodeEvent(10, event2),
-                newChaincodeEvent(20, event3),
-            ];
-            const events = newCloseableAsyncIterable(eventsInput);
-            const checkpointer = Checkpointers.inMemory();
-
-            const checkpointEvents1 = Checkpointers.checkpointChaincodeEvents(events, checkpointer);
-            await checkpointReadEvents(checkpointEvents1, 2);
-
-            const checkpointEvents2 = Checkpointers.checkpointChaincodeEvents(events, checkpointer);
-            const actualEvents = await checkpointReadEvents(checkpointEvents2, 1);
-
-            expect(actualEvents).toEqual(eventsInput.slice(2));
-        });
-
-        it('used checkpointer does not emit duplicate events if checkpointed within subsequent block', async () => {
-            const eventsInput: ChaincodeEvent[] = [
-                newChaincodeEvent(10, event1),
-                newChaincodeEvent(20, event2),
-                newChaincodeEvent(20, event3),
-            ];
-            const events = newCloseableAsyncIterable(eventsInput);
-            const checkpointer = Checkpointers.inMemory();
-
-            const checkpointEvents1 = Checkpointers.checkpointChaincodeEvents(events, checkpointer);
-            await checkpointReadEvents(checkpointEvents1, 2);
-
-            const checkpointEvents2 = Checkpointers.checkpointChaincodeEvents(events, checkpointer);
-            const actualEvents = await checkpointReadEvents(checkpointEvents2, 1);
-
-            expect(actualEvents).toEqual(eventsInput.slice(2));
-        });
-
-        it('closing checkpoint iteratable closes wrapped iteratable', () => {
-            const eventsInput: ChaincodeEvent[] = [
-                newChaincodeEvent(10, event1),
-                newChaincodeEvent(10, event2),
-                newChaincodeEvent(20, event3),
-            ];
-            const events = newCloseableAsyncIterable(eventsInput);
-            const checkpointer = Checkpointers.inMemory();
-            const checkpointEvents = Checkpointers.checkpointChaincodeEvents(events, checkpointer);
-
-            checkpointEvents.close();
-
-            expect(events.close).toBeCalled();
-        });
-    });
 });

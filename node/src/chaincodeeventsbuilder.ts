@@ -45,6 +45,7 @@ export class ChaincodeEventsBuilder {
         result.setChaincodeId(this.#options.chaincodeName);
         result.setIdentity(this.#options.signingIdentity.getCreator());
         result.setStartPosition(this.#eventsBuilder.getStartPosition());
+        result.setTransactionId(this.#options.previousTransactionID)
 
         return result;
     }

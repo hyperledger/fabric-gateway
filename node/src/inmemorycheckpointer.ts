@@ -12,15 +12,15 @@ import { Checkpointer } from './checkpointer';
 
 export class InMemoryCheckPointer implements Checkpointer {
     #blockNumber?: bigint;
-    #transactionIDs: Set<string> = new Set();
+    #transactionID?: string;;
 
     checkpoint(blockNumber: bigint, transactionID?: string): Promise<void> {
         if (blockNumber !== this.#blockNumber) {
             this.#blockNumber = blockNumber;
-            this.#transactionIDs.clear();
+            this.#transactionID = undefined;
         }
         if (transactionID) {
-            this.#transactionIDs.add(transactionID);
+            this.#transactionID = transactionID;
         }
         return Promise.resolve();
     }
@@ -29,7 +29,7 @@ export class InMemoryCheckPointer implements Checkpointer {
         return this.#blockNumber;
     }
 
-    getTransactionIds(): Set<string> {
-        return this.#transactionIDs;
+    getTransactionId(): string | undefined {
+        return this.#transactionID;
     }
 }

@@ -22,9 +22,9 @@ export interface Checkpointer {
     getBlockNumber(): bigint | undefined;
 
     /**
-     * Get the transaction IDs processed within the current block.
+     * Get the last processed transaction Id within the current block.
      */
-    getTransactionIds(): Set<string>;
+    getTransactionId():string | undefined;
 }
 
 /**
