@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.X509Identity;
+import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
@@ -254,12 +255,18 @@ public final class OfflineSignTest {
     }
 
     @Test
+    void chaincode_events_throws_with_no_signer_and_no_explicit_signing() {
+        ChaincodeEventsRequest unsignedRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME").build();
+        assertThatThrownBy(unsignedRequest::getEvents).isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
     void chaincode_events_uses_offline_signature() {
         byte[] expected = "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
 
         ChaincodeEventsRequest unsignedRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME").build();
         ChaincodeEventsRequest signedRequest = gateway.newSignedChaincodeEventsRequest(unsignedRequest.getBytes(), expected);
-        try (CloseableIterator<ChaincodeEvent> iter = signedRequest.getEvents()) {
+        try (CloseableIterator<?> iter = signedRequest.getEvents()) {
             // Need to interact with iterator before asserting to ensure async request has been made
             iter.forEachRemaining(event -> { });
         }
@@ -276,6 +283,109 @@ public final class OfflineSignTest {
         byte[] expected = unsignedRequest.getDigest();
 
         ChaincodeEventsRequest signedRequest = gateway.newSignedChaincodeEventsRequest(unsignedRequest.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        byte[] actual = signedRequest.getDigest();
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void block_events_throws_with_no_signer_and_no_explicit_signing() {
+        BlockEventsRequest unsignedRequest = network.newBlockEventsRequest().build();
+        assertThatThrownBy(unsignedRequest::getEvents).isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void block_events_uses_offline_signature() {
+        byte[] expected = "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
+
+        BlockEventsRequest unsignedRequest = network.newBlockEventsRequest().build();
+        BlockEventsRequest signedRequest = gateway.newSignedBlockEventsRequest(unsignedRequest.getBytes(), expected);
+        try (CloseableIterator<?> iter = signedRequest.getEvents()) {
+            // Need to interact with iterator before asserting to ensure async request has been made
+            iter.forEachRemaining(event -> { });
+        }
+
+        Common.Envelope request = mocker.captureBlockEvents().findFirst().get();
+        byte[] actual = request.getSignature().toByteArray();
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void signed_block_events_keep_same_digest() {
+        BlockEventsRequest unsignedRequest = network.newBlockEventsRequest().build();
+        byte[] expected = unsignedRequest.getDigest();
+
+        BlockEventsRequest signedRequest = gateway.newSignedBlockEventsRequest(unsignedRequest.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        byte[] actual = signedRequest.getDigest();
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void filtered_block_events_throws_with_no_signer_and_no_explicit_signing() {
+        FilteredBlockEventsRequest unsignedRequest = network.newFilteredBlockEventsRequest().build();
+        assertThatThrownBy(unsignedRequest::getEvents).isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void filtered_block_events_uses_offline_signature() {
+        byte[] expected = "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
+
+        FilteredBlockEventsRequest unsignedRequest = network.newFilteredBlockEventsRequest().build();
+        FilteredBlockEventsRequest signedRequest = gateway.newSignedFilteredBlockEventsRequest(unsignedRequest.getBytes(), expected);
+        try (CloseableIterator<?> iter = signedRequest.getEvents()) {
+            // Need to interact with iterator before asserting to ensure async request has been made
+            iter.forEachRemaining(event -> { });
+        }
+
+        Common.Envelope request = mocker.captureFilteredBlockEvents().findFirst().get();
+        byte[] actual = request.getSignature().toByteArray();
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void signed_filtered_block_events_keep_same_digest() {
+        FilteredBlockEventsRequest unsignedRequest = network.newFilteredBlockEventsRequest().build();
+        byte[] expected = unsignedRequest.getDigest();
+
+        FilteredBlockEventsRequest signedRequest = gateway.newSignedFilteredBlockEventsRequest(unsignedRequest.getBytes(),
+                "SIGNATURE".getBytes(StandardCharsets.UTF_8));
+        byte[] actual = signedRequest.getDigest();
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void block_events_with_private_data_throws_with_no_signer_and_no_explicit_signing() {
+        BlockEventsWithPrivateDataRequest unsignedRequest = network.newBlockEventsWithPrivateDataRequest().build();
+        assertThatThrownBy(unsignedRequest::getEvents).isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void block_events_with_private_data_uses_offline_signature() {
+        byte[] expected = "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
+
+        BlockEventsWithPrivateDataRequest unsignedRequest = network.newBlockEventsWithPrivateDataRequest().build();
+        BlockEventsWithPrivateDataRequest signedRequest = gateway.newSignedBlockEventsWithPrivateDataRequest(unsignedRequest.getBytes(), expected);
+        try (CloseableIterator<?> iter = signedRequest.getEvents()) {
+            // Need to interact with iterator before asserting to ensure async request has been made
+            iter.forEachRemaining(event -> { });
+        }
+
+        Common.Envelope request = mocker.captureBlockEventsWithPrivateData().findFirst().get();
+        byte[] actual = request.getSignature().toByteArray();
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void signed_block_events_with_private_data_keep_same_digest() {
+        BlockEventsWithPrivateDataRequest unsignedRequest = network.newBlockEventsWithPrivateDataRequest().build();
+        byte[] expected = unsignedRequest.getDigest();
+
+        BlockEventsWithPrivateDataRequest signedRequest = gateway.newSignedBlockEventsWithPrivateDataRequest(unsignedRequest.getBytes(), "SIGNATURE".getBytes(StandardCharsets.UTF_8));
         byte[] actual = signedRequest.getDigest();
 
         assertThat(actual).isEqualTo(expected);

@@ -104,6 +104,36 @@ public interface Gateway extends AutoCloseable {
     ChaincodeEventsRequest newSignedChaincodeEventsRequest(byte[] bytes, byte[] signature);
 
     /**
+     * Create a block events request with the specified digital signature, which can be used to receive block events.
+     * Supports off-line signing flow.
+     * @param bytes Serialized block events request.
+     * @param signature Digital signature.
+     * @return A signed block events request.
+     * @throws IllegalArgumentException if the supplied request bytes are not valid.
+     */
+    BlockEventsRequest newSignedBlockEventsRequest(byte[] bytes, byte[] signature);
+
+    /**
+     * Create a filtered block events request with the specified digital signature, which can be used to receive
+     * filtered block events.* Supports off-line signing flow.
+     * @param bytes Serialized filtered block events request.
+     * @param signature Digital signature.
+     * @return A signed filtered block events request.
+     * @throws IllegalArgumentException if the supplied request bytes are not valid.
+     */
+    FilteredBlockEventsRequest newSignedFilteredBlockEventsRequest(byte[] bytes, byte[] signature);
+
+    /**
+     * Create a block events with private data request with the specified digital signature, which can be used to
+     * receive block events with private data. Supports off-line signing flow.
+     * @param bytes Serialized block events with private data request.
+     * @param signature Digital signature.
+     * @return A signed block events with private data request.
+     * @throws IllegalArgumentException if the supplied request bytes are not valid.
+     */
+    BlockEventsWithPrivateDataRequest newSignedBlockEventsWithPrivateDataRequest(byte[] bytes, byte[] signature);
+
+    /**
      * Close the gateway connection and all associated resources, including removing listeners attached to networks and
      * contracts created by the gateway.
      */
