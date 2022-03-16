@@ -192,4 +192,43 @@ final class GatewayImpl implements Gateway {
             throw new IllegalArgumentException(e);
         }
     }
+
+    @Override
+    public BlockEventsRequest newSignedBlockEventsRequest(final byte[] bytes, final byte[] signature) {
+        try {
+            Common.Envelope request = Common.Envelope.parseFrom(bytes);
+
+            BlockEventsRequestImpl result = new BlockEventsRequestImpl(client, signingIdentity, request);
+            result.setSignature(signature);
+            return result;
+        } catch (InvalidProtocolBufferException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    @Override
+    public FilteredBlockEventsRequest newSignedFilteredBlockEventsRequest(final byte[] bytes, final byte[] signature) {
+        try {
+            Common.Envelope request = Common.Envelope.parseFrom(bytes);
+
+            FilteredBlockEventsRequestImpl result = new FilteredBlockEventsRequestImpl(client, signingIdentity, request);
+            result.setSignature(signature);
+            return result;
+        } catch (InvalidProtocolBufferException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    @Override
+    public BlockEventsWithPrivateDataRequest newSignedBlockEventsWithPrivateDataRequest(final byte[] bytes, final byte[] signature) {
+        try {
+            Common.Envelope request = Common.Envelope.parseFrom(bytes);
+
+            BlockEventsWithPrivateDataRequestImpl result = new BlockEventsWithPrivateDataRequestImpl(client, signingIdentity, request);
+            result.setSignature(signature);
+            return result;
+        } catch (InvalidProtocolBufferException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
 }
