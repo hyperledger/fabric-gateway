@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/hyperledger/fabric-gateway/pkg/checkpoint"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/orderer"
@@ -169,9 +170,10 @@ func TestChaincodeEvents(t *testing.T) {
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithGatewayClient(mockClient))
 
-		checkpointer := &Checkpointer {
-			StartBlock: func() (uint64, bool) {
-				return uint64(0),false
+		checkpointer := &checkpoint.CheckpointData {
+			StartBlock: &checkpoint.BlockNumber {
+				Value: uint64(0),
+				Exist: false,
 			},
 			AfterTransactionID:"" ,
 		}
@@ -219,11 +221,13 @@ func TestChaincodeEvents(t *testing.T) {
 		defer cancel()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithGatewayClient(mockClient))
-		checkpointer := &Checkpointer {
-			StartBlock: func() (uint64, bool) {
-				return uint64(0),false
+
+		checkpointer := &checkpoint.CheckpointData {
+			StartBlock: &checkpoint.BlockNumber {
+				Value: uint64(0),
+				Exist: false,
 			},
-			AfterTransactionID:"txn1" ,
+			AfterTransactionID: "txn1" ,
 		}
 		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithStartBlock(418), WithCheckpointer(checkpointer))
 		require.NoError(t, err)
@@ -271,10 +275,8 @@ func TestChaincodeEvents(t *testing.T) {
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithGatewayClient(mockClient))
 
-		checkpointer := &Checkpointer {
-		StartBlock: func() (uint64, bool) {
-			return uint64(1) ,true
-		},
+		checkpointer := &checkpoint.CheckpointData {
+		StartBlock: &checkpoint.BlockNumber{Value:uint64(1) ,Exist:true},
 		AfterTransactionID: "txn1",
 		}
 

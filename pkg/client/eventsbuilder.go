@@ -7,8 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"fmt"
 
+	"github.com/hyperledger/fabric-gateway/pkg/checkpoint"
 	"github.com/hyperledger/fabric-protos-go/orderer"
 )
 
@@ -47,28 +47,26 @@ func WithStartBlock(blockNumber uint64) eventOption {
 		return nil
 	}
 }
-type Checkpointer struct {
-	StartBlock func() (uint64, bool)
-	AfterTransactionID string
-}
+
 
 // WithCheckpointer reads events starting at the specified start block and after the transaction ID.
-func WithCheckpointer(checkpointer *Checkpointer) eventOption {
+func WithCheckpointer(checkpointer *checkpoint.CheckpointData) eventOption {
 	return func(builder *eventsBuilder) error {
-	if(checkpointer.StartBlock != nil){
-	if startBlock,ok := checkpointer.StartBlock(); ok {
+	if checkpointer.StartBlock != nil  {
+		if checkpointer.StartBlock.Exist{
 		builder.startPosition = &orderer.SeekPosition{
 			Type: &orderer.SeekPosition_Specified{
 				Specified: &orderer.SeekSpecified{
-					Number: startBlock,
+					Number: checkpointer.StartBlock.Value,
 				},
 			},
 		}
 	}
-		if len(checkpointer.AfterTransactionID) > 0 {
-			builder.afterTransactionID = checkpointer.AfterTransactionID
-		}
 	}
+	if len(checkpointer.AfterTransactionID) > 0 {
+			builder.afterTransactionID = checkpointer.AfterTransactionID
+	}
+
 	return nil
 }
 }
