@@ -18,7 +18,7 @@ export interface EventsOptions {
     /**
      * Tranasction ID of the last processed event .
      */
-     afterTransactionID?: string;
+    afterTransactionID?: string;
 }
 
 export class EventsBuilder {
