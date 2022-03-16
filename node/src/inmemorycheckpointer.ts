@@ -12,7 +12,7 @@ import { Checkpointer } from './checkpointer';
 
 export class InMemoryCheckPointer implements Checkpointer {
     #blockNumber?: bigint;
-    #transactionID?: string;;
+    #transactionID?: string;
 
     checkpoint(blockNumber: bigint, transactionID?: string): Promise<void> {
         if (blockNumber !== this.#blockNumber) {

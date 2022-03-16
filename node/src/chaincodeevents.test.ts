@@ -6,6 +6,7 @@
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
 import { ChaincodeEvent } from './chaincodeevent';
+import { CheckpointerData } from './eventsbuilder';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { GatewayError } from './gatewayerror';
 import { Identity } from './identity/identity';
@@ -130,9 +131,31 @@ describe('Chaincode Events', () => {
             expect(startPosition?.getSpecified()?.getNumber()).toBe(Number(startBlock));
         });
 
-        it('sends valid request with specified start block number and previous processed transaction Id', async () => {
+        it('sends valid request with specified start block number and transction id from the checkpointer', async () => {
             const startBlock = BigInt(418);
-            await network.getChaincodeEvents('CHAINCODE', { startBlock , previousTransactionID: 'txn1' });
+            const checkpointer: CheckpointerData = { startBlock: BigInt(500), afterTransactionID: 'txn1' };
+            await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpointer});
+
+            const signedRequest = client.getChaincodeEventsRequests()[0];
+            expect(signedRequest.getSignature()).toEqual(signature);
+
+            const request = assertDecodeChaincodeEventsRequest(signedRequest);
+
+            expect(request.getChannelId()).toBe(channelName);
+            expect(request.getChaincodeId()).toBe('CHAINCODE');
+
+            const startPosition = request.getStartPosition();
+
+            expect(startPosition).toBeDefined();
+            expect(startPosition?.getTypeCase()).toBe(SeekPosition.TypeCase.SPECIFIED);
+            expect(startPosition?.getSpecified()?.getNumber()).toBe(Number(BigInt(500)));
+            expect(request.getAfterTransactionId()).toEqual('txn1');
+        });
+
+        it('sends valid request with specified start block number and previous processed transaction Id from the checkpointer', async () => {
+            const startBlock = BigInt(418);
+            const checkpointer: CheckpointerData = { afterTransactionID: 'txn1' };
+            await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpointer});
 
             const signedRequest = client.getChaincodeEventsRequests()[0];
             expect(signedRequest.getSignature()).toEqual(signature);
@@ -147,7 +170,7 @@ describe('Chaincode Events', () => {
             expect(startPosition).toBeDefined();
             expect(startPosition?.getTypeCase()).toBe(SeekPosition.TypeCase.SPECIFIED);
             expect(startPosition?.getSpecified()?.getNumber()).toBe(Number(startBlock));
-            expect(request.getTransactionId()).toEqual('txn1');
+            expect(request.getAfterTransactionId()).toEqual('txn1');
         });
 
         it('uses specified call options', async () => {
@@ -239,5 +262,4 @@ describe('Chaincode Events', () => {
             });
         });
     });
-
 });

@@ -73,7 +73,7 @@ export class FileCheckPointer implements Checkpointer {
 
     #setState(state: CheckpointerState): void {
         this.#blockNumber = state.blockNumber ? BigInt(state.blockNumber) : undefined;
-        this.#transactionID = state.transactionID
+        this.#transactionID = state.transactionID;
     }
 
     #getState(): CheckpointerState {

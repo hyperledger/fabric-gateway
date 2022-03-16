@@ -8,7 +8,6 @@ import * as grpc from '@grpc/grpc-js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { CheckpointAsyncIterable } from './checkpointer';
 import { chaincodeEventsMethod, CloseableAsyncIterable, commitStatusMethod, deliverFilteredMethod, deliverMethod, deliverWithPrivateDataMethod, DuplexStreamResponse, endorseMethod, evaluateMethod, GatewayGrpcClient, ServerStreamResponse, submitMethod } from './client';
 import { ChannelHeader, Envelope, Header, Payload } from './protos/common/common_pb';
 import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
@@ -301,10 +300,6 @@ export function newEndorseResponse(options: {
     endorseResponse.setPreparedTransaction(envelope);
 
     return endorseResponse;
-}
-
-export function checkpointReadEvents<T>(iter: CheckpointAsyncIterable<T>, count: number): Promise<T[]> {
-    return readElements(iter, count, () => iter.checkpoint());
 }
 
 export async function readElements<T>(

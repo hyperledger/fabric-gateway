@@ -25,7 +25,7 @@ describe('Checkpointers', () => {
         await fs.rm(tempDir, { recursive: true, force: true });
     });
 
-    function assertState(checkpointer: Checkpointer, blockNumber: bigint | undefined, transactionId?: string ): void {
+    function assertState(checkpointer: Checkpointer, blockNumber: bigint | undefined, transactionId?: string): void {
         expect(checkpointer.getBlockNumber()).toBe(blockNumber);
         expect(checkpointer.getTransactionId()).toEqual(transactionId);
     }

@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CloseableAsyncIterable } from './client';
-
 export interface Checkpointer {
 
     /**
@@ -24,15 +22,5 @@ export interface Checkpointer {
     /**
      * Get the last processed transaction Id within the current block.
      */
-    getTransactionId():string | undefined;
-}
-
-/**
- * An async iterable that can checkpoint events after they are processed.
- */
-export interface CheckpointAsyncIterable<T> extends CloseableAsyncIterable<T> {
-    /**
-     * Checkpoint the last read event. This should be called immediately after the event is successfully processed.
-     */
-    checkpoint(): Promise<void>;
+    getTransactionId(): string | undefined;
 }
