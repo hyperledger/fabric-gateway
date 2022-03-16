@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/hyperledger/fabric-gateway/pkg/checkpoint"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
 	"github.com/hyperledger/fabric-protos-go/gateway"
 	"github.com/hyperledger/fabric-protos-go/orderer"
@@ -98,7 +97,6 @@ func TestChaincodeEvents(t *testing.T) {
 					NextCommit: &orderer.SeekNextCommit{},
 				},
 			},
-			PreviousTransactionId: "",
 		}
 		test.AssertProtoEqual(t, expected, actual)
 	})
@@ -143,12 +141,11 @@ func TestChaincodeEvents(t *testing.T) {
 					},
 				},
 			},
-			PreviousTransactionId: "",
 		}
 		test.AssertProtoEqual(t, expected, actual)
 	})
 
-	t.Run("Sends valid request with specified start block number and transactionID", func(t *testing.T) {
+	t.Run("Sends valid request with specified start block number and fresh checkpointer instance ", func(t *testing.T) {
 		controller := gomock.NewController(t)
 		mockClient := NewMockGatewayClient(controller)
 		mockEvents := NewMockGateway_ChaincodeEventsClient(controller)
@@ -171,7 +168,15 @@ func TestChaincodeEvents(t *testing.T) {
 		defer cancel()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithGatewayClient(mockClient))
-		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithStartBlock(418), WithTransactionID(("txd1")))
+
+		checkpointer := &Checkpointer {
+			StartBlock: func() (uint64, bool) {
+				return uint64(0),false
+			},
+			AfterTransactionID:"" ,
+		}
+
+		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithStartBlock(418), WithCheckpointer(checkpointer))
 		require.NoError(t, err)
 
 		creator, err := network.signingID.Creator()
@@ -188,11 +193,112 @@ func TestChaincodeEvents(t *testing.T) {
 					},
 				},
 			},
-			PreviousTransactionID: "txd1",
+		}
+		test.AssertProtoEqual(t, expected, actual)
+	})
+	t.Run("Sends valid request with specified start block number and checkpointer instance with only transaction id", func(t *testing.T) {
+		controller := gomock.NewController(t)
+		mockClient := NewMockGatewayClient(controller)
+		mockEvents := NewMockGateway_ChaincodeEventsClient(controller)
+
+		var actual *gateway.ChaincodeEventsRequest
+		mockClient.EXPECT().ChaincodeEvents(gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, in *gateway.SignedChaincodeEventsRequest, _ ...grpc.CallOption) {
+				request := &gateway.ChaincodeEventsRequest{}
+				test.AssertUnmarshal(t, in.GetRequest(), request)
+				actual = request
+			}).
+			Return(mockEvents, nil).
+			Times(1)
+
+		mockEvents.EXPECT().Recv().
+			Return(nil, errors.New("fake")).
+			AnyTimes()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		network := AssertNewTestNetwork(t, "NETWORK", WithGatewayClient(mockClient))
+		checkpointer := &Checkpointer {
+			StartBlock: func() (uint64, bool) {
+				return uint64(0),false
+			},
+			AfterTransactionID:"txn1" ,
+		}
+		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithStartBlock(418), WithCheckpointer(checkpointer))
+		require.NoError(t, err)
+
+		creator, err := network.signingID.Creator()
+		require.NoError(t, err)
+
+		expected := &gateway.ChaincodeEventsRequest{
+			ChannelId:   "NETWORK",
+			ChaincodeId: "CHAINCODE",
+			Identity:    creator,
+			StartPosition: &orderer.SeekPosition{
+				Type: &orderer.SeekPosition_Specified{
+					Specified: &orderer.SeekSpecified{
+						Number: 418,
+					},
+				},
+			},
+			AfterTransactionId: "txn1",
 		}
 		test.AssertProtoEqual(t, expected, actual)
 	})
 
+	t.Run("Sends valid request with specified start block and transaction id from checkpointer instance ", func(t *testing.T) {
+		controller := gomock.NewController(t)
+		mockClient := NewMockGatewayClient(controller)
+		mockEvents := NewMockGateway_ChaincodeEventsClient(controller)
+
+		var actual *gateway.ChaincodeEventsRequest
+		mockClient.EXPECT().ChaincodeEvents(gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, in *gateway.SignedChaincodeEventsRequest, _ ...grpc.CallOption) {
+				request := &gateway.ChaincodeEventsRequest{}
+				test.AssertUnmarshal(t, in.GetRequest(), request)
+				actual = request
+			}).
+			Return(mockEvents, nil).
+			Times(1)
+
+		mockEvents.EXPECT().Recv().
+			Return(nil, errors.New("fake")).
+			AnyTimes()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		network := AssertNewTestNetwork(t, "NETWORK", WithGatewayClient(mockClient))
+
+		checkpointer := &Checkpointer {
+		StartBlock: func() (uint64, bool) {
+			return uint64(1) ,true
+		},
+		AfterTransactionID: "txn1",
+		}
+
+		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithStartBlock(500), WithCheckpointer( checkpointer))
+		require.NoError(t, err)
+
+		creator, err := network.signingID.Creator()
+		require.NoError(t, err)
+
+		expected := &gateway.ChaincodeEventsRequest{
+			ChannelId:   "NETWORK",
+			ChaincodeId: "CHAINCODE",
+			Identity:    creator,
+			StartPosition: &orderer.SeekPosition{
+				Type: &orderer.SeekPosition_Specified{
+					Specified: &orderer.SeekSpecified{
+						Number: 1,
+					},
+				},
+			},
+			AfterTransactionId: "txn1",
+		}
+		test.AssertProtoEqual(t, expected, actual)
+	})
 
 	t.Run("Closes event channel on receive error", func(t *testing.T) {
 		controller := gomock.NewController(t)
