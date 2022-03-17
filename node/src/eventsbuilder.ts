@@ -14,11 +14,6 @@ export interface EventsOptions {
      * Block number at which to start reading events.
      */
     startBlock?: bigint;
-
-    /**
-     * Tranasction ID of the last processed event .
-     */
-    afterTransactionID?: string;
 }
 
 export class EventsBuilder {
