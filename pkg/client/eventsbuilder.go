@@ -48,24 +48,27 @@ func WithStartBlock(blockNumber uint64) eventOption {
 	}
 }
 
-// WithCheckpointer reads events starting at the specified start block and after the passed transaction ID .
-func WithCheckpointer(checkpointer *checkpoint.CheckpointData) eventOption {
+// WithCheckpointer reads events starting at the position recorded by the checkpointer.
+func WithCheckpointer(checkpointer checkpoint.Checkpointer) eventOption {
 	return func(builder *eventsBuilder) error {
-	if checkpointer.StartBlock != nil  {
-		if checkpointer.StartBlock.Exist {
-		builder.startPosition = &orderer.SeekPosition{
-			Type: &orderer.SeekPosition_Specified{
-				Specified: &orderer.SeekSpecified{
-					Number: checkpointer.StartBlock.Value,
-				},
-			},
-		}
-	}
-	}
-	if len(checkpointer.AfterTransactionID) > 0 {
-			builder.afterTransactionID = checkpointer.AfterTransactionID
-	}
+	if checkpointer != nil  {
 
+		blockNumber:= checkpointer.BlockNumber()
+		if (blockNumber != uint64(0)){
+			builder.startPosition = &orderer.SeekPosition{
+				Type: &orderer.SeekPosition_Specified{
+					Specified: &orderer.SeekSpecified{
+						Number: blockNumber,
+					},
+				},
+			}
+		}
+
+	transactionID := checkpointer.TransactionID()
+	if len(transactionID) > 0 {
+			builder.afterTransactionID = transactionID
+	}
+	}
 	return nil
 }
 }

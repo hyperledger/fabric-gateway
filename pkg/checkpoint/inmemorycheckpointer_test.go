@@ -15,64 +15,63 @@ import (
 func TestInMemoryCheckpointer(t *testing.T) {
 	t.Run("Initializes default checkpointer state when no checkpointer already exist", func(t *testing.T) {
 
-		checkPointerInstance :=  InMemory()
-		require.EqualValues(t, uint64(0), checkPointerInstance.GetBlockNumber().Value)
-		require.EqualValues(t, false, checkPointerInstance.GetBlockNumber().Exist)
-		require.EqualValues(t, "", checkPointerInstance.GetTransactionID())
+		checkPointerInstance :=  new(InMemoryCheckpointer)
+		blockNumber := checkPointerInstance.BlockNumber()
+		require.EqualValues(t, uint64(0), blockNumber)
+		require.EqualValues(t, "", checkPointerInstance.TransactionID())
 
 	});
 	t.Run("Checkpointing only a block number in a fresh checkpointer gives block number & blank transaction Id", func(t *testing.T) {
 
-		blockNumber := uint64(101)
-		checkPointerInstance :=  InMemory()
-		checkPointerInstance.Checkpoint(func() (uint64, bool) {return blockNumber ,true});
-		require.EqualValues(t, blockNumber, checkPointerInstance.GetBlockNumber().Value)
-		require.EqualValues(t, true, checkPointerInstance.GetBlockNumber().Exist)
-		require.EqualValues(t, "", checkPointerInstance.GetTransactionID())
+		expectedBlockNumber := uint64(101)
+		checkPointerInstance :=  new(InMemoryCheckpointer)
+		checkPointerInstance.CheckpointBlockNumber(expectedBlockNumber)
+		actualblockNumber := checkPointerInstance.BlockNumber()
+		require.EqualValues(t, expectedBlockNumber + 1 , actualblockNumber)
+		require.EqualValues(t, "", checkPointerInstance.TransactionID())
+	});
+	t.Run("Checkpointing only a transaction id in a fresh checkpointer gives valid transaction Id and no blocknumber ", func(t *testing.T) {
+
+
+		checkPointerInstance :=  new(InMemoryCheckpointer)
+		checkPointerInstance.CheckpointTransaction("txn1")
+		blockNumber := checkPointerInstance.BlockNumber()
+		require.EqualValues(t, uint64(0), blockNumber)
+		require.EqualValues(t, "txn1", checkPointerInstance.TransactionID())
 	});
 
-	t.Run("Checkpointing zero block number in a fresh checkpointer gives valid block number zero", func(t *testing.T) {
+	t.Run("Checkpointing zero block number in a fresh checkpointer gives valid block number 1", func(t *testing.T) {
 
-		blockNumber := uint64(0)
-		checkPointerInstance :=  InMemory()
-		checkPointerInstance.Checkpoint(func() (uint64, bool) {return blockNumber ,true});
-		require.EqualValues(t, blockNumber, checkPointerInstance.GetBlockNumber().Value)
-		require.EqualValues(t, true, checkPointerInstance.GetBlockNumber().Exist)
-		require.EqualValues(t, "", checkPointerInstance.GetTransactionID())
+		expectedBlockNumber := uint64(0)
+		checkPointerInstance :=  new(InMemoryCheckpointer)
+		checkPointerInstance.CheckpointBlockNumber(expectedBlockNumber)
+		actualblockNumber := checkPointerInstance.BlockNumber()
+		require.EqualValues(t, expectedBlockNumber + 1 , actualblockNumber)
+		require.EqualValues(t, "", checkPointerInstance.TransactionID())
 	});
 
-	t.Run("Checkpointing same block number and new transaction in used checkpointer gives block number and expected transaction", func(t *testing.T) {
+	t.Run("Checkpointing  block number and new transaction in used checkpointer unsets the  block number and gives expected transaction", func(t *testing.T) {
 
-		blockNumber := uint64(101)
-		setBlockNumber := func() (uint64, bool) {return blockNumber ,true}
-		checkPointerInstance :=  InMemory()
-	    checkPointerInstance.Checkpoint(setBlockNumber);
-		checkPointerInstance.Checkpoint(setBlockNumber, "txn1");
-		require.EqualValues(t, "txn1", checkPointerInstance.GetTransactionID())
-
-	});
-	t.Run("Checkpointing block and transaction in a fresh checkpointer, gives block number and transaction", func(t *testing.T) {
-
-		blockNumber := uint64(101);
-		checkPointerInstance := InMemory()
-		checkPointerInstance.Checkpoint(func() (uint64, bool) {return blockNumber ,true}, "txn1");
-		require.EqualValues(t, blockNumber, checkPointerInstance.GetBlockNumber().Value)
-		require.EqualValues(t, true, checkPointerInstance.GetBlockNumber().Exist)
-		require.EqualValues(t, "txn1", checkPointerInstance.GetTransactionID())
+		expectedBlockNumber := uint64(101)
+		checkPointerInstance :=  new(InMemoryCheckpointer)
+		checkPointerInstance.CheckpointBlockNumber(expectedBlockNumber)
+		checkPointerInstance.CheckpointTransaction("txn1")
+		actualblockNumber := checkPointerInstance.BlockNumber()
+		require.EqualValues(t, uint64(0), actualblockNumber)
+		require.EqualValues(t, "txn1", checkPointerInstance.TransactionID())
 
 	});
+
 	t.Run("Checkpointing only a new block in used checkpointer gives new block number and blank transaction", func(t *testing.T) {
 
-		blockNumber1 := uint64(101);
-		blockNumber2 := uint64(102);
-		setBlockNumber1 := func() (uint64, bool) {return blockNumber1 ,true}
-		setBlockNumber2 := func() (uint64, bool) {return blockNumber2 ,true}
-		checkPointerInstance :=  InMemory();
-		checkPointerInstance.Checkpoint(setBlockNumber1, "txn1");
-		checkPointerInstance.Checkpoint(setBlockNumber2);
-		require.EqualValues(t, blockNumber2, checkPointerInstance.GetBlockNumber().Value)
-		require.EqualValues(t, true, checkPointerInstance.GetBlockNumber().Exist)
-		require.EqualValues(t, "", checkPointerInstance.GetTransactionID())
+		blockNumber1 := uint64(101)
+		blockNumber2 := uint64(102)
 
+		checkPointerInstance :=  new(InMemoryCheckpointer)
+		checkPointerInstance.CheckpointBlockNumber(blockNumber1)
+		checkPointerInstance.CheckpointBlockNumber(blockNumber2)
+		actualblockNumber := checkPointerInstance.BlockNumber()
+		require.EqualValues(t, blockNumber2 + 1, actualblockNumber)
+		require.EqualValues(t, "", checkPointerInstance.TransactionID())
 	});
 }
