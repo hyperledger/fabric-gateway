@@ -1,5 +1,5 @@
 /*
-Copyright 2021 IBM All Rights Reserved.
+Copyright 2022 IBM All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -12,24 +12,25 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
+	"github.com/hyperledger/fabric-protos-go/common"
 )
 
-type ChaincodeEventListener struct {
+type BlockEventListener struct {
 	ctx    context.Context
 	cancel context.CancelFunc
-	events <-chan *client.ChaincodeEvent
+	events <-chan *common.Block
 }
 
-func NewChaincodeEventListener(parentCtx context.Context, network *client.Network, chaincodeName string, options ...client.ChaincodeEventsOption) (*ChaincodeEventListener, error) {
+func NewBlockEventListener(parentCtx context.Context, network *client.Network, options ...client.BlockEventsOption) (*BlockEventListener, error) {
 	ctx, cancel := context.WithCancel(parentCtx)
 
-	events, err := network.ChaincodeEvents(ctx, chaincodeName, options...)
+	events, err := network.BlockEvents(ctx, options...)
 	if err != nil {
 		cancel()
 		return nil, err
 	}
 
-	listener := &ChaincodeEventListener{
+	listener := &BlockEventListener{
 		ctx:    ctx,
 		cancel: cancel,
 		events: events,
@@ -37,7 +38,7 @@ func NewChaincodeEventListener(parentCtx context.Context, network *client.Networ
 	return listener, nil
 }
 
-func (listener *ChaincodeEventListener) Event() (*client.ChaincodeEvent, error) {
+func (listener *BlockEventListener) Event() (*common.Block, error) {
 	select {
 	case event, ok := <-listener.events:
 		if !ok {
@@ -49,6 +50,6 @@ func (listener *ChaincodeEventListener) Event() (*client.ChaincodeEvent, error) 
 	}
 }
 
-func (listener *ChaincodeEventListener) Close() {
+func (listener *BlockEventListener) Close() {
 	listener.cancel()
 }

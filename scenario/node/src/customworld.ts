@@ -6,8 +6,8 @@
 
 import { DataTable, setWorldConstructor } from '@cucumber/cucumber';
 import * as grpc from '@grpc/grpc-js';
-import * as crypto from 'crypto';
 import { ChaincodeEvent, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers } from '@hyperledger/fabric-gateway';
+import * as crypto from 'crypto';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { findSoftHSMPKCS11Lib, fixturesDir, getOrgForMsp } from './fabric';
@@ -205,6 +205,42 @@ export class CustomWorld {
         return await this.getCurrentGateway().nextChaincodeEvent(listenerName);
     }
 
+    async listenForBlockEvents(listenerName: string): Promise<void> {
+        await this.getCurrentGateway().listenForBlockEvents(listenerName);
+    }
+
+    async replayBlockEvents(listenerName: string, startBlock: bigint): Promise<void> {
+        await this.getCurrentGateway().listenForBlockEvents(listenerName, { startBlock });
+    }
+
+    async nextBlockEvent(listenerName: string): Promise<unknown> {
+        return await this.getCurrentGateway().nextBlockEvent(listenerName);
+    }
+
+    async listenForFilteredBlockEvents(listenerName: string): Promise<void> {
+        await this.getCurrentGateway().listenForFilteredBlockEvents(listenerName);
+    }
+
+    async replayFilteredBlockEvents(listenerName: string, startBlock: bigint): Promise<void> {
+        await this.getCurrentGateway().listenForFilteredBlockEvents(listenerName, { startBlock });
+    }
+
+    async nextFilteredBlockEvent(listenerName: string): Promise<unknown> {
+        return await this.getCurrentGateway().nextFilteredBlockEvent(listenerName);
+    }
+
+    async listenForBlockAndPrivateDataEvents(listenerName: string): Promise<void> {
+        await this.getCurrentGateway().listenForBlockAndPrivateDataEvents(listenerName);
+    }
+
+    async replayBlockAndPrivateDataEvents(listenerName: string, startBlock: bigint): Promise<void> {
+        await this.getCurrentGateway().listenForBlockAndPrivateDataEvents(listenerName, { startBlock });
+    }
+
+    async nextBlockAndPrivateDataEvent(listenerName: string): Promise<unknown> {
+        return await this.getCurrentGateway().nextBlockAndPrivateDataEvent(listenerName);
+    }
+
     async setOfflineSigner(user: string, mspId: string): Promise<void> {
         const signer = await newSigner(user, mspId);
         this.getTransaction().setOfflineSigner(signer);
@@ -261,6 +297,17 @@ export class CustomWorld {
         this.getCurrentGateway().closeChaincodeEvents(listenerName);
     }
 
+    closeBlockEvents(listenerName: string): void {
+        this.getCurrentGateway().closeBlockEvents(listenerName);
+    }
+
+    closeFilteredBlockEvents(listenerName: string): void {
+        this.getCurrentGateway().closeFilteredBlockEvents(listenerName);
+    }
+
+    closeBlockAndPrivateDataEvents(listenerName: string): void {
+        this.getCurrentGateway().closeBlockAndPrivateDataEvents(listenerName);
+    }
     private getCurrentGateway(): GatewayContext {
         return assertDefined(this.#currentGateway, 'currentGateway');
     }
