@@ -4,7 +4,7 @@ Copyright 2022 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package checkpoint
+package client
 
 import (
 	"testing"
@@ -41,4 +41,5 @@ func TestInMemoryCheckpointer(t *testing.T) {
 		require.Equal(t, blockNumber, checkpointer.BlockNumber())
 		require.Equal(t, "txn1", checkpointer.TransactionID())
 	});
+
 }

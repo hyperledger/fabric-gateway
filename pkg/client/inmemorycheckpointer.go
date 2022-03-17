@@ -4,7 +4,7 @@ Copyright 2022 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package checkpoint
+package client
 
 type InMemoryCheckpointer struct {
 	blockNumber uint64
@@ -19,6 +19,10 @@ func (c *InMemoryCheckpointer) CheckpointBlock(blockNumber uint64) {
 func (c *InMemoryCheckpointer) CheckpointTransaction(blockNumber uint64 , transactionID string) {
 	c.blockNumber = blockNumber
 	c.transactionID = transactionID
+}
+
+func (c *InMemoryCheckpointer) CheckpointChaincodeEvent(event *ChaincodeEvent) {
+    c.CheckpointTransaction(event.BlockNumber, event.TransactionID)
 }
 
 func (c *InMemoryCheckpointer) BlockNumber() uint64 {
