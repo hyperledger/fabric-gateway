@@ -8,7 +8,6 @@ package client
 
 import (
 
-	"github.com/hyperledger/fabric-gateway/pkg/checkpoint"
 	"github.com/hyperledger/fabric-protos-go/orderer"
 )
 
@@ -34,6 +33,12 @@ func (builder *eventsBuilder) getStartPosition() *orderer.SeekPosition {
 
 type eventOption = func(builder *eventsBuilder) error
 
+// Inferace used while checkpointing events
+type Checkpointer interface {
+	BlockNumber() uint64
+	TransactionID() string
+}
+
 // WithStartBlock reads events starting at the specified block number.
 func WithStartBlock(blockNumber uint64) eventOption {
 	return func(builder *eventsBuilder) error {
@@ -49,26 +54,23 @@ func WithStartBlock(blockNumber uint64) eventOption {
 }
 
 // WithCheckpointer reads events starting at the position recorded by the checkpointer.
-func WithCheckpointer(checkpointer checkpoint.Checkpointer) eventOption {
+func WithCheckpointer(checkpointer Checkpointer) eventOption {
+
 	return func(builder *eventsBuilder) error {
-	if checkpointer != nil  {
+		blockNumber := checkpointer.BlockNumber()
+		transactionID := checkpointer.TransactionID()
 
-		blockNumber:= checkpointer.BlockNumber()
-		if (blockNumber != uint64(0)){
-			builder.startPosition = &orderer.SeekPosition{
-				Type: &orderer.SeekPosition_Specified{
-					Specified: &orderer.SeekSpecified{
-						Number: blockNumber,
-					},
-				},
-			}
+		if (blockNumber == 0 && transactionID == "") {
+			return nil
 		}
-
-	transactionID := checkpointer.TransactionID()
-	if len(transactionID) > 0 {
-			builder.afterTransactionID = transactionID
+		builder.startPosition = &orderer.SeekPosition{
+			Type: &orderer.SeekPosition_Specified{
+				Specified: &orderer.SeekSpecified{
+					Number: blockNumber,
+				},
+			},
+		}
+		builder.afterTransactionID = transactionID
+		return nil
 	}
-	}
-	return nil
-}
 }

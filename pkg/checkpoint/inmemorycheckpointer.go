@@ -6,28 +6,25 @@ SPDX-License-Identifier: Apache-2.0
 
 package checkpoint
 
-	type InMemoryCheckpointer struct {
-        blockNumber uint64
-        transactionID string
-	}
+type InMemoryCheckpointer struct {
+	blockNumber uint64
+	transactionID string
+}
 
-    func (c *InMemoryCheckpointer) CheckpointBlockNumber (blockNumber uint64) {
-            c.blockNumber = blockNumber + 1
-            c.transactionID = ""
-    }
+func (c *InMemoryCheckpointer) CheckpointBlock(blockNumber uint64) {
+	c.blockNumber = blockNumber + 1
+	c.transactionID = ""
+}
 
-    func (c *InMemoryCheckpointer) CheckpointTransaction (transactionID string) {
+func (c *InMemoryCheckpointer) CheckpointTransaction(blockNumber uint64 , transactionID string) {
+	c.blockNumber = blockNumber
+	c.transactionID = transactionID
+}
 
-        c.blockNumber = uint64(0)
-        if len(transactionID) > 0 {
-            c.transactionID = transactionID
-        }
-    }
+func (c *InMemoryCheckpointer) BlockNumber() uint64 {
+	return c.blockNumber
+}
 
-    func (c *InMemoryCheckpointer) BlockNumber() uint64 {
-        return c.blockNumber;
-    }
-
-    func (c *InMemoryCheckpointer) TransactionID() string {
-        return c.transactionID;
-    }
+func (c *InMemoryCheckpointer) TransactionID() string {
+	return c.transactionID
+}
