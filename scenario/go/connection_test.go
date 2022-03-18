@@ -20,6 +20,8 @@ import (
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
+	"github.com/hyperledger/fabric-protos-go/common"
+	"github.com/hyperledger/fabric-protos-go/peer"
 	"google.golang.org/grpc"
 )
 
@@ -56,8 +58,11 @@ func NewGatewayConnection(user string, mspID string, isHSMUser bool) (*GatewayCo
 	}
 
 	connection := &GatewayConnection{
-		id:        id,
-		listeners: make(map[string]*ChaincodeEventListener),
+		id:                                id,
+		chaincodeEventListeners:           make(map[string]*ChaincodeEventListener),
+		blockEventListeners:               make(map[string]*BlockEventListener),
+		filteredBlockEventListeners:       make(map[string]*FilteredBlockEventListener),
+		blockAndPrivateDataEventListeners: make(map[string]*BlockAndPrivateDataEventListener),
 	}
 	connection.ctx, connection.cancel = context.WithCancel(context.Background())
 
@@ -185,15 +190,18 @@ func credentialsDirectory(user string, org string) string {
 }
 
 type GatewayConnection struct {
-	id         identity.Identity
-	options    []client.ConnectOption
-	grpcClient *grpc.ClientConn
-	gateway    *client.Gateway
-	network    *client.Network
-	contract   *client.Contract
-	ctx        context.Context
-	cancel     context.CancelFunc
-	listeners  map[string]*ChaincodeEventListener
+	id                                identity.Identity
+	options                           []client.ConnectOption
+	grpcClient                        *grpc.ClientConn
+	gateway                           *client.Gateway
+	network                           *client.Network
+	contract                          *client.Contract
+	ctx                               context.Context
+	cancel                            context.CancelFunc
+	chaincodeEventListeners           map[string]*ChaincodeEventListener
+	blockEventListeners               map[string]*BlockEventListener
+	filteredBlockEventListeners       map[string]*FilteredBlockEventListener
+	blockAndPrivateDataEventListeners map[string]*BlockAndPrivateDataEventListener
 }
 
 func (connection *GatewayConnection) AddOptions(options ...client.ConnectOption) {
@@ -265,17 +273,113 @@ func (connection *GatewayConnection) receiveChaincodeEvents(listenerName string,
 	}
 
 	connection.CloseChaincodeEvents(listenerName)
-	connection.listeners[listenerName] = listener
+	connection.chaincodeEventListeners[listenerName] = listener
 	return nil
 }
 
 func (connection *GatewayConnection) ChaincodeEvent(listenerName string) (*client.ChaincodeEvent, error) {
-	listener := connection.listeners[listenerName]
+	listener := connection.chaincodeEventListeners[listenerName]
 	if listener == nil {
 		return nil, fmt.Errorf("no chaincode event listener attached")
 	}
 
-	return listener.ChaincodeEvent()
+	return listener.Event()
+}
+
+func (connection *GatewayConnection) ListenForBlockEvents(listenerName string) error {
+	return connection.receiveBlockEvents(listenerName)
+}
+
+func (connection *GatewayConnection) ReplayBlockEvents(listenerName string, startBlock uint64) error {
+	return connection.receiveBlockEvents(listenerName, client.WithStartBlock(startBlock))
+}
+
+func (connection *GatewayConnection) receiveBlockEvents(listenerName string, options ...client.BlockEventsOption) error {
+	if connection.network == nil {
+		return fmt.Errorf("no network selected")
+	}
+
+	listener, err := NewBlockEventListener(connection.ctx, connection.network, options...)
+	if err != nil {
+		return err
+	}
+
+	connection.CloseBlockEvents(listenerName)
+	connection.blockEventListeners[listenerName] = listener
+	return nil
+}
+
+func (connection *GatewayConnection) BlockEvent(listenerName string) (*common.Block, error) {
+	listener := connection.blockEventListeners[listenerName]
+	if listener == nil {
+		return nil, fmt.Errorf("no block event listener attached")
+	}
+
+	return listener.Event()
+}
+
+func (connection *GatewayConnection) ListenForFilteredBlockEvents(listenerName string) error {
+	return connection.receiveFilteredBlockEvents(listenerName)
+}
+
+func (connection *GatewayConnection) ReplayFilteredBlockEvents(listenerName string, startBlock uint64) error {
+	return connection.receiveFilteredBlockEvents(listenerName, client.WithStartBlock(startBlock))
+}
+
+func (connection *GatewayConnection) receiveFilteredBlockEvents(listenerName string, options ...client.BlockEventsOption) error {
+	if connection.network == nil {
+		return fmt.Errorf("no network selected")
+	}
+
+	listener, err := NewFilteredBlockEventListener(connection.ctx, connection.network, options...)
+	if err != nil {
+		return err
+	}
+
+	connection.CloseFilteredBlockEvents(listenerName)
+	connection.filteredBlockEventListeners[listenerName] = listener
+	return nil
+}
+
+func (connection *GatewayConnection) FilteredBlockEvent(listenerName string) (*peer.FilteredBlock, error) {
+	listener := connection.filteredBlockEventListeners[listenerName]
+	if listener == nil {
+		return nil, fmt.Errorf("no filtered block event listener attached")
+	}
+
+	return listener.Event()
+}
+
+func (connection *GatewayConnection) ListenForBlockAndPrivateDataEvents(listenerName string) error {
+	return connection.receiveBlockAndPrivateDataEvents(listenerName)
+}
+
+func (connection *GatewayConnection) ReplayBlockAndPrivateDataEvents(listenerName string, startBlock uint64) error {
+	return connection.receiveBlockAndPrivateDataEvents(listenerName, client.WithStartBlock(startBlock))
+}
+
+func (connection *GatewayConnection) receiveBlockAndPrivateDataEvents(listenerName string, options ...client.BlockEventsOption) error {
+	if connection.network == nil {
+		return fmt.Errorf("no network selected")
+	}
+
+	listener, err := NewBlockAndPrivateDataEventListener(connection.ctx, connection.network, options...)
+	if err != nil {
+		return err
+	}
+
+	connection.CloseBlockAndPrivateDataEvents(listenerName)
+	connection.blockAndPrivateDataEventListeners[listenerName] = listener
+	return nil
+}
+
+func (connection *GatewayConnection) BlockAndPrivateDataEvent(listenerName string) (*peer.BlockAndPrivateData, error) {
+	listener := connection.blockAndPrivateDataEventListeners[listenerName]
+	if listener == nil {
+		return nil, fmt.Errorf("no block with private data event listener attached")
+	}
+
+	return listener.Event()
 }
 
 func (connection *GatewayConnection) Close() {
@@ -290,7 +394,29 @@ func (connection *GatewayConnection) Close() {
 }
 
 func (connection *GatewayConnection) CloseChaincodeEvents(listenerName string) {
-	if listener := connection.listeners[listenerName]; listener != nil {
-		connection.listeners[listenerName].Close()
+	if listener := connection.chaincodeEventListeners[listenerName]; listener != nil {
+		listener.Close()
+		delete(connection.chaincodeEventListeners, listenerName)
+	}
+}
+
+func (connection *GatewayConnection) CloseBlockEvents(listenerName string) {
+	if listener := connection.blockEventListeners[listenerName]; listener != nil {
+		listener.Close()
+		delete(connection.blockEventListeners, listenerName)
+	}
+}
+
+func (connection *GatewayConnection) CloseFilteredBlockEvents(listenerName string) {
+	if listener := connection.filteredBlockEventListeners[listenerName]; listener != nil {
+		listener.Close()
+		delete(connection.filteredBlockEventListeners, listenerName)
+	}
+}
+
+func (connection *GatewayConnection) CloseBlockAndPrivateDataEvents(listenerName string) {
+	if listener := connection.blockAndPrivateDataEventListeners[listenerName]; listener != nil {
+		listener.Close()
+		delete(connection.blockAndPrivateDataEventListeners, listenerName)
 	}
 }

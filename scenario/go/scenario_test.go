@@ -88,6 +88,27 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I stop listening for chaincode events on "([^"]*)"$`, stopChaincodeEventListeningOnListener)
 	s.Step(`^I should receive a chaincode event named "([^"]*)" with payload "([^"]*)"$`, receiveChaincodeEvent)
 	s.Step(`^I should receive a chaincode event named "([^"]*)" with payload "([^"]*)" on "([^"]*)"$`, receiveChaincodeEventOnListener)
+	s.Step(`^I listen for block events$`, listenForBlockEvents)
+	s.Step(`^I listen for block events on a listener named "([^"]*)"$`, listenForBlockEventsOnListener)
+	s.Step(`^I replay block events starting at last committed block$`, replayBlockEventsFromLastBlock)
+	s.Step(`^I stop listening for block events$`, stopBlockEventListening)
+	s.Step(`^I stop listening for block events on "([^"]*)"$`, stopBlockEventListeningOnListener)
+	s.Step(`^I should receive a block event$`, receiveBlockEvent)
+	s.Step(`^I should receive a block event on "([^"]*)"$`, receiveBlockEventOnListener)
+	s.Step(`^I listen for filtered block events$`, listenForFilteredBlockEvents)
+	s.Step(`^I listen for filtered block events on a listener named "([^"]*)"$`, listenForFilteredBlockEventsOnListener)
+	s.Step(`^I replay filtered block events starting at last committed block$`, replayFilteredBlockEventsFromLastBlock)
+	s.Step(`^I stop listening for filtered block events$`, stopFilteredBlockEventListening)
+	s.Step(`^I stop listening for filtered block events on "([^"]*)"$`, stopFilteredBlockEventListeningOnListener)
+	s.Step(`^I should receive a filtered block event$`, receiveFilteredBlockEvent)
+	s.Step(`^I should receive a filtered block event on "([^"]*)"$`, receiveFilteredBlockEventOnListener)
+	s.Step(`^I listen for block and private data events$`, listenForBlockAndPrivateDataEvents)
+	s.Step(`^I listen for block and private data events on a listener named "([^"]*)"$`, listenForBlockAndPrivateDataEventsOnListener)
+	s.Step(`^I replay block and private data events starting at last committed block$`, replayBlockAndPrivateDataEventsFromLastBlock)
+	s.Step(`^I stop listening for block and private data events$`, stopBlockAndPrivateDataEventListening)
+	s.Step(`^I stop listening for block and private data events on "([^"]*)"$`, stopBlockAndPrivateDataEventListeningOnListener)
+	s.Step(`^I should receive a block and private data event$`, receiveBlockAndPrivateDataEvent)
+	s.Step(`^I should receive a block and private data event on "([^"]*)"$`, receiveBlockAndPrivateDataEventOnListener)
 }
 
 func beforeScenario(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
@@ -406,6 +427,105 @@ func receiveChaincodeEventOnListener(name string, payload string, listenerName s
 
 	if event.EventName != name || string(event.Payload) != payload {
 		return fmt.Errorf("expected event named \"%s\" with payload \"%s\", got: %v", name, payload, event)
+	}
+
+	return nil
+}
+
+func listenForBlockEvents() error {
+	return listenForBlockEventsOnListener(defaultListenerName)
+}
+
+func listenForBlockEventsOnListener(name string) error {
+	return currentGateway.ListenForBlockEvents(name)
+}
+
+func replayBlockEventsFromLastBlock() error {
+	return currentGateway.ReplayBlockEvents(defaultListenerName, lastCommittedBlockNumber)
+}
+
+func stopBlockEventListening() {
+	stopBlockEventListeningOnListener(defaultListenerName)
+}
+
+func stopBlockEventListeningOnListener(listenerName string) {
+	currentGateway.CloseBlockEvents(listenerName)
+}
+
+func receiveBlockEvent() error {
+	return receiveBlockEventOnListener(defaultListenerName)
+}
+
+func receiveBlockEventOnListener(listenerName string) error {
+	_, err := currentGateway.BlockEvent(listenerName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func listenForFilteredBlockEvents() error {
+	return listenForFilteredBlockEventsOnListener(defaultListenerName)
+}
+
+func listenForFilteredBlockEventsOnListener(name string) error {
+	return currentGateway.ListenForFilteredBlockEvents(name)
+}
+
+func replayFilteredBlockEventsFromLastBlock() error {
+	return currentGateway.ReplayFilteredBlockEvents(defaultListenerName, lastCommittedBlockNumber)
+}
+
+func stopFilteredBlockEventListening() {
+	stopBlockEventListeningOnListener(defaultListenerName)
+}
+
+func stopFilteredBlockEventListeningOnListener(listenerName string) {
+	currentGateway.CloseFilteredBlockEvents(listenerName)
+}
+
+func receiveFilteredBlockEvent() error {
+	return receiveFilteredBlockEventOnListener(defaultListenerName)
+}
+
+func receiveFilteredBlockEventOnListener(listenerName string) error {
+	_, err := currentGateway.FilteredBlockEvent(listenerName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func listenForBlockAndPrivateDataEvents() error {
+	return listenForBlockAndPrivateDataEventsOnListener(defaultListenerName)
+}
+
+func listenForBlockAndPrivateDataEventsOnListener(name string) error {
+	return currentGateway.ListenForBlockAndPrivateDataEvents(name)
+}
+
+func replayBlockAndPrivateDataEventsFromLastBlock() error {
+	return currentGateway.ReplayBlockAndPrivateDataEvents(defaultListenerName, lastCommittedBlockNumber)
+}
+
+func stopBlockAndPrivateDataEventListening() {
+	stopBlockAndPrivateDataEventListeningOnListener(defaultListenerName)
+}
+
+func stopBlockAndPrivateDataEventListeningOnListener(listenerName string) {
+	currentGateway.CloseBlockAndPrivateDataEvents(listenerName)
+}
+
+func receiveBlockAndPrivateDataEvent() error {
+	return receiveBlockAndPrivateDataEventOnListener(defaultListenerName)
+}
+
+func receiveBlockAndPrivateDataEventOnListener(listenerName string) error {
+	_, err := currentGateway.BlockAndPrivateDataEvent(listenerName)
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -148,6 +148,66 @@ When('I stop listening for chaincode events on {string}', function(this: CustomW
     this.closeChaincodeEvents(listenerName);
 });
 
+When('I listen for block events', async function(this: CustomWorld): Promise<void> {
+    await this.listenForBlockEvents(DEFAULT_LISTENER_NAME);
+});
+
+When('I listen for block events on a listener named {string}', async function(this: CustomWorld, listenerName: string): Promise<void> {
+    await this.listenForBlockEvents(listenerName);
+});
+
+When('I replay block events starting at last committed block', async function(this: CustomWorld): Promise<void> {
+    await this.replayBlockEvents(DEFAULT_LISTENER_NAME, this.getLastCommittedBlockNumber());
+});
+
+When('I stop listening for block events', function(this: CustomWorld): void {
+    this.closeBlockEvents(DEFAULT_LISTENER_NAME);
+});
+
+When('I stop listening for block events on {string}', function(this: CustomWorld, listenerName: string): void {
+    this.closeBlockEvents(listenerName);
+});
+
+When('I listen for filtered block events', async function(this: CustomWorld): Promise<void> {
+    await this.listenForFilteredBlockEvents(DEFAULT_LISTENER_NAME);
+});
+
+When('I listen for filtered block events on a listener named {string}', async function(this: CustomWorld, listenerName: string): Promise<void> {
+    await this.listenForFilteredBlockEvents(listenerName);
+});
+
+When('I replay filtered block events starting at last committed block', async function(this: CustomWorld): Promise<void> {
+    await this.replayFilteredBlockEvents(DEFAULT_LISTENER_NAME, this.getLastCommittedBlockNumber());
+});
+
+When('I stop listening for filtered block events', function(this: CustomWorld): void {
+    this.closeFilteredBlockEvents(DEFAULT_LISTENER_NAME);
+});
+
+When('I stop listening for filtered block events on {string}', function(this: CustomWorld, listenerName: string): void {
+    this.closeFilteredBlockEvents(listenerName);
+});
+
+When('I listen for block and private data events', async function(this: CustomWorld): Promise<void> {
+    await this.listenForBlockAndPrivateDataEvents(DEFAULT_LISTENER_NAME);
+});
+
+When('I listen for block and private data events on a listener named {string}', async function(this: CustomWorld, listenerName: string): Promise<void> {
+    await this.listenForBlockAndPrivateDataEvents(listenerName);
+});
+
+When('I replay block and private data events starting at last committed block', async function(this: CustomWorld): Promise<void> {
+    await this.replayBlockAndPrivateDataEvents(DEFAULT_LISTENER_NAME, this.getLastCommittedBlockNumber());
+});
+
+When('I stop listening for block and private data events', function(this: CustomWorld): void {
+    this.closeBlockAndPrivateDataEvents(DEFAULT_LISTENER_NAME);
+});
+
+When('I stop listening for block and private data events on {string}', function(this: CustomWorld, listenerName: string): void {
+    this.closeBlockAndPrivateDataEvents(listenerName);
+});
+
 Then('the transaction invocation should fail', async function(this: CustomWorld): Promise<void> {
     await this.assertTransactionFails();
 });
@@ -206,4 +266,34 @@ Then('I should receive a chaincode event named {string} with payload {string} on
     const event = await this.nextChaincodeEvent(listenerName);
     const actual = Object.assign({}, event, { payload: bytesAsString(event.payload)});
     expect(actual).toMatchObject({ eventName, payload });
+});
+
+Then('I should receive a block event', async function(this: CustomWorld): Promise<void> {
+    const event = await this.nextBlockEvent(DEFAULT_LISTENER_NAME);
+    expect(event).toBeDefined();
+});
+
+Then('I should receive a block event on {string}', async function(this: CustomWorld, listenerName: string): Promise<void> {
+    const event = await this.nextBlockEvent(listenerName);
+    expect(event).toBeDefined();
+});
+
+Then('I should receive a filtered block event', async function(this: CustomWorld): Promise<void> {
+    const event = await this.nextFilteredBlockEvent(DEFAULT_LISTENER_NAME);
+    expect(event).toBeDefined();
+});
+
+Then('I should receive a filtered block event on {string}', async function(this: CustomWorld, listenerName: string): Promise<void> {
+    const event = await this.nextFilteredBlockEvent(listenerName);
+    expect(event).toBeDefined();
+});
+
+Then('I should receive a block and private data event', async function(this: CustomWorld): Promise<void> {
+    const event = await this.nextBlockAndPrivateDataEvent(DEFAULT_LISTENER_NAME);
+    expect(event).toBeDefined();
+});
+
+Then('I should receive a block and private data event on {string}', async function(this: CustomWorld, listenerName: string): Promise<void> {
+    const event = await this.nextBlockAndPrivateDataEvent(listenerName);
+    expect(event).toBeDefined();
 });

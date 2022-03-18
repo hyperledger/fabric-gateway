@@ -60,7 +60,9 @@ import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Identity;
+import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.gateway.ErrorDetail;
+import org.hyperledger.fabric.protos.peer.EventsPackage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -409,6 +411,81 @@ public class ScenarioSteps {
         currentGateway.closeChaincodeEvents(listenerName);
     }
 
+    @When("I listen for block events")
+    public void listenForBlockEvents() {
+        listenForBlockEventsOnListener(DEFAULT_LISTENER_NAME);
+    }
+
+    @When("I listen for block events on a listener named {string}")
+    public void listenForBlockEventsOnListener(String listenerName) {
+        currentGateway.listenForBlockEvents(listenerName);
+    }
+
+    @When("I replay block events starting at last committed block")
+    public void replayBlockEventsFromLastBlock() {
+        currentGateway.replayBlockEvents(DEFAULT_LISTENER_NAME, lastCommittedBlockNumber);
+    }
+
+    @When("I stop listening for block events")
+    public void stopBlockEventListening() {
+        stopBlockEventListeningOnListener(DEFAULT_LISTENER_NAME);
+    }
+
+    @When("I stop listening for block events on {string}")
+    public void stopBlockEventListeningOnListener(String listenerName) {
+        currentGateway.closeBlockEvents(listenerName);
+    }
+
+    @When("I listen for filtered block events")
+    public void listenForFilteredBlockEvents() {
+        listenForFilteredBlockEventsOnListener(DEFAULT_LISTENER_NAME);
+    }
+
+    @When("I listen for filtered block events on a listener named {string}")
+    public void listenForFilteredBlockEventsOnListener(String listenerName) {
+        currentGateway.listenForFilteredBlockEvents(listenerName);
+    }
+
+    @When("I replay filtered block events starting at last committed block")
+    public void replayFilteredBlockEventsFromLastBlock() {
+        currentGateway.replayFilteredBlockEvents(DEFAULT_LISTENER_NAME, lastCommittedBlockNumber);
+    }
+
+    @When("I stop listening for filtered block events")
+    public void stopFilteredBlockEventListening() {
+        stopBlockEventListeningOnListener(DEFAULT_LISTENER_NAME);
+    }
+
+    @When("I stop listening for filtered block events on {string}")
+    public void stopFilteredBlockEventListeningOnListener(String listenerName) {
+        currentGateway.closeFilteredBlockEvents(listenerName);
+    }
+
+    @When("I listen for block and private data events")
+    public void listenForBlockAndPrivateDataEvents() {
+        listenForBlockAndPrivateDataEventsOnListener(DEFAULT_LISTENER_NAME);
+    }
+
+    @When("I listen for block and private data events on a listener named {string}")
+    public void listenForBlockAndPrivateDataEventsOnListener(String listenerName) {
+        currentGateway.listenForBlockAndPrivateDataEvents(listenerName);
+    }
+
+    @When("I replay block and private data events starting at last committed block")
+    public void replayBlockAndPrivateDataEventsFromLastBlock() {
+        currentGateway.replayBlockAndPrivateDataEvents(DEFAULT_LISTENER_NAME, lastCommittedBlockNumber);
+    }
+
+    @When("I stop listening for block and private data events")
+    public void stopBlockAndPrivateDataEventListening() {
+        stopBlockEventListeningOnListener(DEFAULT_LISTENER_NAME);
+    }
+
+    @When("I stop listening for block and private data events on {string}")
+    public void stopBlockAndPrivateDataEventListeningOnListener(String listenerName) {
+        currentGateway.closeBlockAndPrivateDataEvents(listenerName);
+    }
+
     @Then("the transaction invocation should fail")
     public void assertTransactionFails() {
         invokeTransaction();
@@ -476,6 +553,39 @@ public class ScenarioSteps {
         ChaincodeEvent event = currentGateway.nextChaincodeEvent(listenerName);
         assertThat(event.getEventName()).isEqualTo(eventName);
         assertThat(new String(event.getPayload(), StandardCharsets.UTF_8)).isEqualTo(payload);
+    }
+
+    @Then("I should receive a block event")
+    public void assertReceiveBlockEvent() throws InterruptedException {
+        assertReceiveBlockEventOnListener(DEFAULT_LISTENER_NAME);
+    }
+
+    @Then("I should receive a block event on {string}")
+    public void assertReceiveBlockEventOnListener(String listenerName) throws InterruptedException {
+        Common.Block event = currentGateway.nextBlockEvent(listenerName);
+        assertThat(event).isNotNull();
+    }
+
+    @Then("I should receive a filtered block event")
+    public void assertReceiveFilteredBlockEvent() throws InterruptedException {
+        assertReceiveFilteredBlockEventOnListener(DEFAULT_LISTENER_NAME);
+    }
+
+    @Then("I should receive a filtered block event on {string}")
+    public void assertReceiveFilteredBlockEventOnListener(String listenerName) throws InterruptedException {
+        EventsPackage.FilteredBlock event = currentGateway.nextFilteredBlockEvent(listenerName);
+        assertThat(event).isNotNull();
+    }
+
+    @Then("I should receive a block and private data event")
+    public void assertReceiveBlockAndPrivateDataEvent() throws InterruptedException {
+        assertReceiveBlockAndPrivateDataEventOnListener(DEFAULT_LISTENER_NAME);
+    }
+
+    @Then("I should receive a block and private data event on {string}")
+    public void assertReceiveBlockAndPrivateDataEventOnListener(String listenerName) throws InterruptedException {
+        EventsPackage.BlockAndPrivateData event = currentGateway.nextBlockAndPrivateDataEvent(listenerName);
+        assertThat(event).isNotNull();
     }
 
     private void invokeTransaction() {
