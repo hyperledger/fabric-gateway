@@ -5,31 +5,36 @@
  */
 
 import { Checkpointer } from './checkpointer';
+import { ChaincodeEvent } from './chaincodeevent';
 
 /**
  * In-memory checkpointer class used to persist checkpointer state in memory.
  */
 
 export class InMemoryCheckPointer implements Checkpointer {
-    #blockNumber?: bigint;
-    #transactionID?: string;
 
-    checkpoint(blockNumber: bigint, transactionID?: string): Promise<void> {
-        if (blockNumber !== this.#blockNumber) {
-            this.#blockNumber = blockNumber;
-            this.#transactionID = undefined;
-        }
-        if (transactionID) {
-            this.#transactionID = transactionID;
-        }
-        return Promise.resolve();
-    }
+	#blockNumber?: bigint;
+	#transactionID?: string;
 
-    getBlockNumber(): bigint | undefined {
-        return this.#blockNumber;
-    }
+	checkpointBlock(blockNumber: bigint): void {
+		this.#blockNumber = blockNumber + BigInt(1);
+		this.#transactionID = undefined;
+	}
 
-    getTransactionId(): string | undefined {
-        return this.#transactionID;
-    }
+	checkpointTransaction(blockNumber: bigint, transactionId: string): void {
+		this.#blockNumber = blockNumber;
+		this.#transactionID = transactionId;
+	}
+
+	checkpointChaincodeEvent(event: ChaincodeEvent): void {
+		this.checkpointTransaction(event.blockNumber,event.transactionId);
+	}
+
+	getBlockNumber(): bigint | undefined {
+		return this.#blockNumber;
+	}
+
+	getTransactionId(): string | undefined {
+		return this.#transactionID;
+	}
 }

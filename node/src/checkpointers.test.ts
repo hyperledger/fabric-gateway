@@ -6,8 +6,11 @@
 
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import { ChaincodeEvent } from '.';
 import { Checkpointer } from './checkpointer';
 import * as checkpointers from './checkpointers';
+import { FileCheckPointer } from './filecheckpointer';
+import { InMemoryCheckPointer } from './inmemorycheckpointer';
 import { createTempDir } from './testutils.test';
 
 /* eslint-disable jest/expect-expect */
@@ -45,7 +48,7 @@ describe('Checkpointers', () => {
 
     testCases.forEach(testCase => {
         describe(`${testCase.description} common behaviour`, () => {
-            let checkpointer: Checkpointer;
+            let checkpointer: InMemoryCheckPointer | FileCheckPointer;
 
             beforeEach(async () => {
                 checkpointer = await testCase.newCheckpointer();
@@ -59,39 +62,32 @@ describe('Checkpointers', () => {
                 assertState(checkpointer, undefined);
             });
 
-            it('Checkpoint only block stores block and no transactions', async () => {
-                await checkpointer.checkpoint(1n);
+            it('Checkpointing a block gives next block number & empty transaction Id', async () => {
+                await checkpointer.checkpointBlock(1n);
 
-                assertState(checkpointer, 1n);
+                assertState(checkpointer, 1n + 1n);
             });
 
-            it('Checkpoint block and transaction stores block and transaction', async () => {
-                await checkpointer.checkpoint(1n, 'tx1');
+            it('Checkpointing a transaction gives valid transaction Id and blocknumber', async () => {
+                await checkpointer.checkpointTransaction(1n, 'tx1');
 
                 assertState(checkpointer, 1n, 'tx1');
             });
 
-            it('Checkpoint same block and new transactions stores transactions', async () => {
-                await checkpointer.checkpoint(1n);
-                await checkpointer.checkpoint(1n, 'tx1');
-                await checkpointer.checkpoint(1n, 'tx2');
+            it('Checkpointing a chaincode event gives valid transaction Id and blocknumber', async () => {
+                let event: ChaincodeEvent = {
+                    blockNumber: BigInt(1),
+                    chaincodeName: 'CHAINCODE',
+                    eventName: 'EVENT1',
+                    transactionId: 'TXN1',
+                    payload: new Uint8Array(),
+                };
 
-                assertState(checkpointer, 1n, 'tx2');
+                await checkpointer.checkpointChaincodeEvent(event);
+
+                assertState(checkpointer, event.blockNumber, event.transactionId);
             });
 
-            it('Checkpoint new block clears existing transactions', async () => {
-                await checkpointer.checkpoint(1n, 'tx1');
-                await checkpointer.checkpoint(2n);
-
-                assertState(checkpointer, 2n);
-            });
-
-            it('Checkpoint new block and transaction clears existing transactions', async () => {
-                await checkpointer.checkpoint(1n, 'tx1');
-                await checkpointer.checkpoint(2n, 'tx2');
-
-                assertState(checkpointer, 2n, 'tx2');
-            });
         });
     });
 
@@ -107,7 +103,7 @@ describe('Checkpointers', () => {
 
         it('state is persisted', async () => {
             const expected = await checkpointers.file(checkpointFile);
-            await expected.checkpoint(1n, 'tx1');
+            await expected.checkpointTransaction(1n, 'tx1');
 
             const actual = await checkpointers.file(checkpointFile);
 
@@ -117,11 +113,11 @@ describe('Checkpointers', () => {
 
         it('block number zero is persisted correctly', async () => {
             const expected = await checkpointers.file(checkpointFile);
-            await expected.checkpoint(0n);
+            await expected.checkpointBlock(0n);
 
             const actual = await checkpointers.file(checkpointFile);
 
-            expect(actual.getBlockNumber()).toBe(0n);
+            expect(actual.getBlockNumber()).toBe(0n + 1n);
         });
     });
 });

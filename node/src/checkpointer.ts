@@ -5,17 +5,8 @@
  */
 
 export interface Checkpointer {
-
     /**
-     * Checkpoint the block number and transaction ID of an event. Checkpointing a different block number from the one
-     * currently stored clears all previous transaction IDs.
-     * @param blockNumber - a block number.
-     * @param transactionId - a transaction ID.
-     */
-    checkpoint(blockNumber: bigint, transactionId?: string): Promise<void>;
-
-    /**
-     * Get the current block number, or undefined if there is no previously saved state.
+     * Get the block number for the next event, or undefined if there is no previously saved state.
      */
     getBlockNumber(): bigint | undefined;
 

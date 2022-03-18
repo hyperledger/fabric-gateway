@@ -4,21 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Checkpointer } from '.';
 import { SeekNextCommit, SeekPosition, SeekSpecified } from './protos/orderer/ab_pb';
-
-/**
- * Options used when checkpointng events.
- */
-export interface CheckpointerData {
-    /**
-     * Block number at which to start reading events.
-     */
-    startBlock?: bigint;
-    /**
-    * Tranasction ID of the last processed event .
-    */
-    afterTransactionID?: string;
-}
 
 /**
  * Options used when requesting events.
@@ -29,7 +16,7 @@ export interface EventsOptions {
      */
     startBlock?: bigint;
 
-    checkpointer?: CheckpointerData;
+    checkpointer?: Checkpointer;
 }
 
 export class EventsBuilder {
@@ -44,9 +31,11 @@ export class EventsBuilder {
         const specified = new SeekSpecified();
         const startBlock = this.#options.startBlock;
         const checkPointer = this.#options.checkpointer;
+
         if (checkPointer) {
-            if (checkPointer.startBlock != undefined) {
-                specified.setNumber(Number(checkPointer.startBlock));
+            let blockNumber = checkPointer.getBlockNumber();
+            if (blockNumber != undefined) {
+                specified.setNumber(Number(blockNumber));
                 result.setSpecified(specified);
 
                 return result;
