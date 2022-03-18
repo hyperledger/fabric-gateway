@@ -20,7 +20,6 @@ interface CheckpointerState {
  * Checkpointer class that uses the specified file to store persistent state.
  */
 export class FileCheckPointer implements Checkpointer {
-
     #path: string;
     #blockNumber?: bigint;
     #transactionID?: string;
@@ -35,20 +34,20 @@ export class FileCheckPointer implements Checkpointer {
     }
 
     async checkpointBlock(blockNumber: bigint): Promise<void> {
-		this.#blockNumber = blockNumber + BigInt(1);
-		this.#transactionID = undefined;
+        this.#blockNumber = blockNumber + BigInt(1);
+        this.#transactionID = undefined;
         await this.#saveToFile();
-	}
+    }
 
-	async checkpointTransaction(blockNumber: bigint, transactionId: string) {
-		this.#blockNumber = blockNumber;
-		this.#transactionID = transactionId;
+    async checkpointTransaction(blockNumber: bigint, transactionId: string): Promise<void> {
+        this.#blockNumber = blockNumber;
+        this.#transactionID = transactionId;
         await this.#saveToFile();
-	}
+    }
 
-	async checkpointChaincodeEvent(event :ChaincodeEvent) {
-		await this.checkpointTransaction(event.blockNumber,event.transactionId);
-	}
+    async checkpointChaincodeEvent(event: ChaincodeEvent): Promise<void> {
+        await this.checkpointTransaction(event.blockNumber, event.transactionId);
+    }
 
     getBlockNumber(): bigint | undefined {
         return this.#blockNumber;

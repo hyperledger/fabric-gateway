@@ -75,7 +75,7 @@ describe('Checkpointers', () => {
             });
 
             it('Checkpointing a chaincode event gives valid transaction Id and blocknumber', async () => {
-                let event: ChaincodeEvent = {
+                const event: ChaincodeEvent = {
                     blockNumber: BigInt(1),
                     chaincodeName: 'CHAINCODE',
                     eventName: 'EVENT1',
@@ -87,7 +87,6 @@ describe('Checkpointers', () => {
 
                 assertState(checkpointer, event.blockNumber, event.transactionId);
             });
-
         });
     });
 

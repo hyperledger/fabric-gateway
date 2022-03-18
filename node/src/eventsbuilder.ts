@@ -33,7 +33,7 @@ export class EventsBuilder {
         const checkPointer = this.#options.checkpointer;
 
         if (checkPointer) {
-            let blockNumber = checkPointer.getBlockNumber();
+            const blockNumber = checkPointer.getBlockNumber();
             if (blockNumber != undefined) {
                 specified.setNumber(Number(blockNumber));
                 result.setSpecified(specified);

@@ -134,7 +134,7 @@ describe('Chaincode Events', () => {
 
         it('Sends valid request with specified start block number and fresh checkpointer', async () => {
             const startBlock = BigInt(418);
-            let checkpointer = checkpointers.inMemory()
+            const checkpointer = checkpointers.inMemory();
 
             await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpointer});
 
@@ -156,8 +156,8 @@ describe('Chaincode Events', () => {
 
         it('Sends valid request with specified start block and checkpointed block', async () => {
             const startBlock = BigInt(418);
-            let checkpointer = checkpointers.inMemory()
-            checkpointer.checkpointBlock(1n)
+            const checkpointer = checkpointers.inMemory();
+            checkpointer.checkpointBlock(1n);
 
             await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpointer});
 
@@ -179,8 +179,8 @@ describe('Chaincode Events', () => {
 
         it('Sends valid request with specified start block  and checkpointed  transaction id', async () => {
             const startBlock = BigInt(418);
-            let checkpointer = checkpointers.inMemory()
-            checkpointer.checkpointTransaction(1n,'txn1')
+            const checkpointer = checkpointers.inMemory();
+            checkpointer.checkpointTransaction(1n, 'txn1');
 
             await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpointer});
 
@@ -201,7 +201,7 @@ describe('Chaincode Events', () => {
         });
 
         it('Sends valid request with no start block and fresh checkpointer', async () => {
-            let checkpointer = checkpointers.inMemory()
+            const checkpointer = checkpointers.inMemory();
 
             await network.getChaincodeEvents('CHAINCODE', { checkpointer});
 
@@ -222,8 +222,8 @@ describe('Chaincode Events', () => {
         });
 
         it('Sends valid request with no start block and checkpointer transaction id', async () => {
-            let checkpointer = checkpointers.inMemory();
-            checkpointer.checkpointTransaction(1n,'txn1')
+            const checkpointer = checkpointers.inMemory();
+            checkpointer.checkpointTransaction(1n, 'txn1');
 
             await network.getChaincodeEvents('CHAINCODE', { checkpointer});
 
@@ -244,8 +244,8 @@ describe('Chaincode Events', () => {
         });
 
         it('Sends valid request with with start block and checkpointer chaincode event', async () => {
-            let checkpointer = checkpointers.inMemory();
-            let event:ChaincodeEvent =  {
+            const checkpointer = checkpointers.inMemory();
+            const event: ChaincodeEvent =  {
                 blockNumber: BigInt(1),
                 chaincodeName: 'chaincode',
                 eventName: 'event1',
@@ -253,7 +253,7 @@ describe('Chaincode Events', () => {
                 payload: new Uint8Array(),
             };
 
-            checkpointer.checkpointChaincodeEvent(event)
+            checkpointer.checkpointChaincodeEvent(event);
             await network.getChaincodeEvents('CHAINCODE', { checkpointer });
 
             const signedRequest = client.getChaincodeEventsRequests()[0];
