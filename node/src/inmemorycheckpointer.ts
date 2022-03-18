@@ -13,17 +13,17 @@ import { ChaincodeEvent } from './chaincodeevent';
 
 export class InMemoryCheckPointer implements Checkpointer {
     #blockNumber?: bigint;
-    #transactionID?: string;
+    #transactionId?: string;
 
     checkpointBlock(blockNumber: bigint): Promise<void> {
         this.#blockNumber = blockNumber + BigInt(1);
-        this.#transactionID = undefined;
+        this.#transactionId = undefined;
         return Promise.resolve();
     }
 
     checkpointTransaction(blockNumber: bigint, transactionId: string): Promise<void> {
         this.#blockNumber = blockNumber;
-        this.#transactionID = transactionId;
+        this.#transactionId = transactionId;
         return Promise.resolve();
     }
 
@@ -36,6 +36,6 @@ export class InMemoryCheckPointer implements Checkpointer {
     }
 
     getTransactionId(): string | undefined {
-        return this.#transactionID;
+        return this.#transactionId;
     }
 }

@@ -45,9 +45,9 @@ export class ChaincodeEventsBuilder {
         result.setChaincodeId(this.#options.chaincodeName);
         result.setIdentity(this.#options.signingIdentity.getCreator());
         result.setStartPosition(this.#eventsBuilder.getStartPosition());
-        const transactionID = this.#options.checkpoint?.getTransactionId();
-        if (transactionID) {
-            result.setAfterTransactionId(transactionID);
+        const transactionId = this.#options.checkpoint?.getTransactionId();
+        if (transactionId) {
+            result.setAfterTransactionId(transactionId);
         }
         return result;
     }

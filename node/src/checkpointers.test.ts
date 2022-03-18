@@ -60,19 +60,19 @@ describe('Checkpointers', () => {
                 assertState(checkpointer, undefined);
             });
 
-            it('Checkpointing a block gives next block number & empty transaction Id', async () => {
+            it('Checkpointing a block gives next block number & empty transaction ID', async () => {
                 await checkpointer.checkpointBlock(1n);
 
                 assertState(checkpointer, 1n + 1n);
             });
 
-            it('Checkpointing a transaction gives valid transaction Id and blocknumber', async () => {
+            it('Checkpointing a transaction gives valid transaction ID and blocknumber', async () => {
                 await checkpointer.checkpointTransaction(1n, 'tx1');
 
                 assertState(checkpointer, 1n, 'tx1');
             });
 
-            it('Checkpointing a chaincode event gives valid transaction Id and blocknumber', async () => {
+            it('Checkpointing a chaincode event gives valid transaction ID and blocknumber', async () => {
                 const event: ChaincodeEvent = {
                     blockNumber: BigInt(1),
                     chaincodeName: 'CHAINCODE',

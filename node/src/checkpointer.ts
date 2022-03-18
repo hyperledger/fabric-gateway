@@ -16,7 +16,7 @@ export interface Checkpoint {
     getBlockNumber(): bigint | undefined;
 
     /**
-     * Get the last processed transaction Id within the current block.
+     * Get the last processed transaction ID within the current block.
      */
     getTransactionId(): string | undefined;
 }
