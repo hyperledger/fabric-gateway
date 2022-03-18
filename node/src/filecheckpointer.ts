@@ -16,9 +16,6 @@ interface CheckpointerState {
     transactionId?: string;
 }
 
-/**
- * Checkpointer class that uses the specified file to store persistent state.
- */
 export class FileCheckPointer implements Checkpointer {
     #path: string;
     #blockNumber?: bigint;
