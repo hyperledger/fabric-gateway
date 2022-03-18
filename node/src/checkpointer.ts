@@ -4,9 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export interface Checkpointer {
+import { ChaincodeEvent } from './chaincodeevent';
+
+/**
+ * Used to get the checkpointed state.
+ */
+export interface Checkpoint {
     /**
-     * Get the block number for the next event, or undefined if there is no previously saved state.
+     * Get the checkpointed block number, or undefined if there is no previously saved state.
      */
     getBlockNumber(): bigint | undefined;
 
@@ -14,4 +19,21 @@ export interface Checkpointer {
      * Get the last processed transaction Id within the current block.
      */
     getTransactionId(): string | undefined;
+}
+
+export interface Checkpointer extends Checkpoint {
+    /**
+     * To checkpoint block.
+     */
+    checkpointBlock(blockNumber: bigint): Promise<void>;
+
+    /**
+     *To checkpoint transaction within the current block.
+     */
+    checkpointTransaction(blockNumber: bigint, transactionId: string): Promise<void>;
+
+    /**
+     * To checkpoint chaincode event.
+     */
+    checkpointChaincodeEvent(event: ChaincodeEvent): Promise<void>;
 }

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Checkpointer } from './checkpointer';
+import { Checkpoint } from './checkpointer';
 import { SeekNextCommit, SeekPosition, SeekSpecified } from './protos/orderer/ab_pb';
 
 /**
@@ -15,10 +15,11 @@ export interface EventsOptions {
      * Block number at which to start reading events.
      */
     startBlock?: bigint;
+
     /**
-     * Used to get checkpointer state.
+     * Used to get checkpointed state.
      */
-    checkpointer?: Checkpointer;
+    checkpointer?: Checkpoint;
 }
 
 export class EventsBuilder {

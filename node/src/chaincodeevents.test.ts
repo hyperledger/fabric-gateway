@@ -31,7 +31,7 @@ function newChaincodeEvent(blockNumber: number, event: ChaincodeEventProto): Cha
         payload: event.getPayload_asU8() ?? new Uint8Array(),
     };
 }
-function assertChaincodeEventRequest(request:ChaincodeEventsRequestProto,channelName:string,chaincodeName:string,typeCase: SeekPosition.TypeCase ,blockNumber?:bigint, transactionId?:string) {
+function assertChaincodeEventRequest(request: ChaincodeEventsRequestProto, channelName: string, chaincodeName: string, typeCase: SeekPosition.TypeCase, blockNumber?: bigint, transactionId?: string): void {
     expect(request.getChannelId()).toBe(channelName);
     expect(request.getChaincodeId()).toBe(chaincodeName);
 
@@ -39,10 +39,10 @@ function assertChaincodeEventRequest(request:ChaincodeEventsRequestProto,channel
 
     expect(startPosition).toBeDefined();
     expect(startPosition?.getTypeCase()).toBe(typeCase);
-    if(blockNumber != undefined) {
+    if (blockNumber != undefined) {
         expect(startPosition?.getSpecified()?.getNumber()).toBe(Number(blockNumber));
     }
-    if(transactionId) {
+    if (transactionId) {
         expect(request.getAfterTransactionId()).toEqual(transactionId);
     }
 }
@@ -111,7 +111,7 @@ describe('Chaincode Events', () => {
             expect(signedRequest.getSignature()).toEqual(signature);
 
             const request = assertDecodeChaincodeEventsRequest(signedRequest);
-            assertChaincodeEventRequest(request, channelName, 'CHAINCODE', SeekPosition.TypeCase.NEXT_COMMIT)
+            assertChaincodeEventRequest(request, channelName, 'CHAINCODE', SeekPosition.TypeCase.NEXT_COMMIT);
         });
 
         it('throws with negative specified start block number', async () => {
@@ -149,7 +149,7 @@ describe('Chaincode Events', () => {
         it('Sends valid request with specified start block and checkpointed block', async () => {
             const startBlock = BigInt(418);
             const checkpointer = checkpointers.inMemory();
-            checkpointer.checkpointBlock(1n);
+            await checkpointer.checkpointBlock(1n);
 
             await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpointer});
 
@@ -158,13 +158,12 @@ describe('Chaincode Events', () => {
 
             const request = assertDecodeChaincodeEventsRequest(signedRequest);
             assertChaincodeEventRequest(request, channelName, 'CHAINCODE', SeekPosition.TypeCase.SPECIFIED, 1n+ 1n, '');
-
         });
 
         it('Sends valid request with specified start block and checkpointed transaction id', async () => {
             const startBlock = BigInt(418);
             const checkpointer = checkpointers.inMemory();
-            checkpointer.checkpointTransaction(1n, 'txn1');
+            await checkpointer.checkpointTransaction(1n, 'txn1');
 
             await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpointer});
 
@@ -189,7 +188,7 @@ describe('Chaincode Events', () => {
 
         it('Sends valid request with no start block and checkpointer transaction id', async () => {
             const checkpointer = checkpointers.inMemory();
-            checkpointer.checkpointTransaction(1n, 'txn1');
+            await checkpointer.checkpointTransaction(1n, 'txn1');
 
             await network.getChaincodeEvents('CHAINCODE', { checkpointer});
 
@@ -210,7 +209,7 @@ describe('Chaincode Events', () => {
                 payload: new Uint8Array(),
             };
 
-            checkpointer.checkpointChaincodeEvent(event);
+            await checkpointer.checkpointChaincodeEvent(event);
             await network.getChaincodeEvents('CHAINCODE', { checkpointer });
 
             const signedRequest = client.getChaincodeEventsRequests()[0];

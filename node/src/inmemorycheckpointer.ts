@@ -15,18 +15,20 @@ export class InMemoryCheckPointer implements Checkpointer {
     #blockNumber?: bigint;
     #transactionID?: string;
 
-    checkpointBlock(blockNumber: bigint): void {
+    checkpointBlock(blockNumber: bigint): Promise<void> {
         this.#blockNumber = blockNumber + BigInt(1);
         this.#transactionID = undefined;
+        return Promise.resolve();
     }
 
-    checkpointTransaction(blockNumber: bigint, transactionId: string): void {
+    checkpointTransaction(blockNumber: bigint, transactionId: string): Promise<void> {
         this.#blockNumber = blockNumber;
         this.#transactionID = transactionId;
+        return Promise.resolve();
     }
 
-    checkpointChaincodeEvent(event: ChaincodeEvent): void {
-        this.checkpointTransaction(event.blockNumber, event.transactionId);
+    async checkpointChaincodeEvent(event: ChaincodeEvent): Promise<void> {
+        await this.checkpointTransaction(event.blockNumber, event.transactionId);
     }
 
     getBlockNumber(): bigint | undefined {

@@ -9,8 +9,6 @@ import * as path from 'path';
 import { ChaincodeEvent } from './chaincodeevent';
 import { Checkpointer } from './checkpointer';
 import * as checkpointers from './checkpointers';
-import { FileCheckPointer } from './filecheckpointer';
-import { InMemoryCheckPointer } from './inmemorycheckpointer';
 import { createTempDir } from './testutils.test';
 
 /* eslint-disable jest/expect-expect */
@@ -48,7 +46,7 @@ describe('Checkpointers', () => {
 
     testCases.forEach(testCase => {
         describe(`${testCase.description} common behaviour`, () => {
-            let checkpointer: InMemoryCheckPointer | FileCheckPointer;
+            let checkpointer: Checkpointer;
 
             beforeEach(async () => {
                 checkpointer = await testCase.newCheckpointer();
