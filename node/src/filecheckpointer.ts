@@ -5,6 +5,7 @@
  */
 
 import fs from 'fs';
+import { ChaincodeEvent } from './chaincodeevent';
 import { Checkpointer } from './checkpointer';
 
 /**
@@ -12,16 +13,13 @@ import { Checkpointer } from './checkpointer';
  */
 interface CheckpointerState {
     blockNumber?: string;
-    transactionIDs: string[];
+    transactionId?: string;
 }
 
-/**
- * Checkpointer class that uses the specified file to store persistent state.
- */
 export class FileCheckPointer implements Checkpointer {
     #path: string;
     #blockNumber?: bigint;
-    #transactionIDs: Set<string> = new Set();
+    #transactionId?: string;
 
     constructor(path: string) {
         this.#path = path;
@@ -32,23 +30,28 @@ export class FileCheckPointer implements Checkpointer {
         await this.#saveToFile();
     }
 
-    async checkpoint(blockNumber: bigint, transactionId?: string): Promise<void> {
-        if (blockNumber !== this.#blockNumber) {
-            this.#blockNumber = blockNumber;
-            this.#transactionIDs.clear();
-        }
-        if (transactionId) {
-            this.#transactionIDs.add(transactionId);
-        }
+    async checkpointBlock(blockNumber: bigint): Promise<void> {
+        this.#blockNumber = blockNumber + BigInt(1);
+        this.#transactionId = undefined;
         await this.#saveToFile();
+    }
+
+    async checkpointTransaction(blockNumber: bigint, transactionId: string): Promise<void> {
+        this.#blockNumber = blockNumber;
+        this.#transactionId = transactionId;
+        await this.#saveToFile();
+    }
+
+    async checkpointChaincodeEvent(event: ChaincodeEvent): Promise<void> {
+        await this.checkpointTransaction(event.blockNumber, event.transactionId);
     }
 
     getBlockNumber(): bigint | undefined {
         return this.#blockNumber;
     }
 
-    getTransactionIds(): Set<string> {
-        return this.#transactionIDs;
+    getTransactionId(): string | undefined {
+        return this.#transactionId;
     }
 
     async #loadFromFile(): Promise<void> {
@@ -72,13 +75,14 @@ export class FileCheckPointer implements Checkpointer {
     }
 
     #setState(state: CheckpointerState): void {
-        this.#blockNumber = state.blockNumber ? BigInt(state.blockNumber) : undefined;
-        this.#transactionIDs = new Set(state.transactionIDs);
+        this.#blockNumber = state.blockNumber != undefined ? BigInt(state.blockNumber) : state.blockNumber;
+        this.#transactionId = state.transactionId;
     }
+
     #getState(): CheckpointerState {
         return {
-            blockNumber: (this.#blockNumber !== undefined) ? this.#blockNumber.toString() : undefined,
-            transactionIDs: Array.from(this.#transactionIDs),
+            blockNumber: this.#blockNumber?.toString(),
+            transactionId: this.#transactionId,
         };
     }
 

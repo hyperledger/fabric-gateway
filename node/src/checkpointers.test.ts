@@ -6,6 +6,7 @@
 
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import { ChaincodeEvent } from './chaincodeevent';
 import { Checkpointer } from './checkpointer';
 import * as checkpointers from './checkpointers';
 import { createTempDir } from './testutils.test';
@@ -25,9 +26,9 @@ describe('Checkpointers', () => {
         await fs.rm(tempDir, { recursive: true, force: true });
     });
 
-    function assertState(checkpointer: Checkpointer, blockNumber: bigint | undefined, ...transactionIds: string[]): void {
+    function assertState(checkpointer: Checkpointer, blockNumber: bigint | undefined, transactionId?: string): void {
         expect(checkpointer.getBlockNumber()).toBe(blockNumber);
-        expect(checkpointer.getTransactionIds()).toEqual(new Set(transactionIds));
+        expect(checkpointer.getTransactionId()).toEqual(transactionId);
     }
 
     const testCases = [
@@ -59,38 +60,30 @@ describe('Checkpointers', () => {
                 assertState(checkpointer, undefined);
             });
 
-            it('Checkpoint only block stores block and no transactions', async () => {
-                await checkpointer.checkpoint(1n);
+            it('Checkpointing a block gives next block number & empty transaction ID', async () => {
+                await checkpointer.checkpointBlock(1n);
 
-                assertState(checkpointer, 1n);
+                assertState(checkpointer, 1n + 1n);
             });
 
-            it('Checkpoint block and transaction stores block and transaction', async () => {
-                await checkpointer.checkpoint(1n, 'tx1');
+            it('Checkpointing a transaction gives valid transaction ID and blocknumber', async () => {
+                await checkpointer.checkpointTransaction(1n, 'tx1');
 
                 assertState(checkpointer, 1n, 'tx1');
             });
 
-            it('Checkpoint same block and new transactions stores transactions', async () => {
-                await checkpointer.checkpoint(1n);
-                await checkpointer.checkpoint(1n, 'tx1');
-                await checkpointer.checkpoint(1n, 'tx2');
+            it('Checkpointing a chaincode event gives valid transaction ID and blocknumber', async () => {
+                const event: ChaincodeEvent = {
+                    blockNumber: BigInt(1),
+                    chaincodeName: 'CHAINCODE',
+                    eventName: 'EVENT1',
+                    transactionId: 'TXN1',
+                    payload: new Uint8Array(),
+                };
 
-                assertState(checkpointer, 1n, 'tx1', 'tx2');
-            });
+                await checkpointer.checkpointChaincodeEvent(event);
 
-            it('Checkpoint new block clears existing transactions', async () => {
-                await checkpointer.checkpoint(1n, 'tx1');
-                await checkpointer.checkpoint(2n);
-
-                assertState(checkpointer, 2n);
-            });
-
-            it('Checkpoint new block and transaction clears existing transactions', async () => {
-                await checkpointer.checkpoint(1n, 'tx1');
-                await checkpointer.checkpoint(2n, 'tx2');
-
-                assertState(checkpointer, 2n, 'tx2');
+                assertState(checkpointer, event.blockNumber, event.transactionId);
             });
         });
     });
@@ -107,21 +100,21 @@ describe('Checkpointers', () => {
 
         it('state is persisted', async () => {
             const expected = await checkpointers.file(checkpointFile);
-            await expected.checkpoint(1n, 'tx1');
+            await expected.checkpointTransaction(1n, 'tx1');
 
             const actual = await checkpointers.file(checkpointFile);
 
             expect(actual.getBlockNumber()).toBe(expected.getBlockNumber());
-            expect(actual.getTransactionIds()).toEqual(expected.getTransactionIds());
+            expect(actual.getTransactionId()).toEqual(expected.getTransactionId());
         });
 
         it('block number zero is persisted correctly', async () => {
             const expected = await checkpointers.file(checkpointFile);
-            await expected.checkpoint(0n);
+            await expected.checkpointBlock(0n);
 
             const actual = await checkpointers.file(checkpointFile);
 
-            expect(actual.getBlockNumber()).toBe(0n);
+            expect(actual.getBlockNumber()).toBe(0n + 1n);
         });
     });
 });

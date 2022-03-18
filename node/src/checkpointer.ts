@@ -4,35 +4,36 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CloseableAsyncIterable } from './client';
+import { ChaincodeEvent } from './chaincodeevent';
 
-export interface Checkpointer {
-
+/**
+ * Used to get the checkpointed state.
+ */
+export interface Checkpoint {
     /**
-     * Checkpoint the block number and transaction ID of an event. Checkpointing a different block number from the one
-     * currently stored clears all previous transaction IDs.
-     * @param blockNumber - a block number.
-     * @param transactionId - a transaction ID.
-     */
-    checkpoint(blockNumber: bigint, transactionId?: string): Promise<void>;
-
-    /**
-     * Get the current block number, or undefined if there is no previously saved state.
+     * Get the checkpointed block number, or undefined if there is no previously saved state.
      */
     getBlockNumber(): bigint | undefined;
 
     /**
-     * Get the transaction IDs processed within the current block.
+     * Get the last processed transaction ID within the current block.
      */
-    getTransactionIds(): Set<string>;
+    getTransactionId(): string | undefined;
 }
 
-/**
- * An async iterable that can checkpoint events after they are processed.
- */
-export interface CheckpointAsyncIterable<T> extends CloseableAsyncIterable<T> {
+export interface Checkpointer extends Checkpoint {
     /**
-     * Checkpoint the last read event. This should be called immediately after the event is successfully processed.
+     * To checkpoint block.
      */
-    checkpoint(): Promise<void>;
+    checkpointBlock(blockNumber: bigint): Promise<void>;
+
+    /**
+     *To checkpoint transaction within the current block.
+     */
+    checkpointTransaction(blockNumber: bigint, transactionId: string): Promise<void>;
+
+    /**
+     * To checkpoint chaincode event.
+     */
+    checkpointChaincodeEvent(event: ChaincodeEvent): Promise<void>;
 }
