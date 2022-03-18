@@ -6,7 +6,7 @@
 
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { ChaincodeEvent } from '.';
+import { ChaincodeEvent } from './chaincodeevent';
 import { Checkpointer } from './checkpointer';
 import * as checkpointers from './checkpointers';
 import { FileCheckPointer } from './filecheckpointer';

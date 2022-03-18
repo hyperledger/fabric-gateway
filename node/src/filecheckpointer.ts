@@ -13,7 +13,7 @@ import { Checkpointer } from './checkpointer';
  */
 interface CheckpointerState {
     blockNumber?: string;
-    transactionID?: string;
+    transactionId?: string;
 }
 
 /**
@@ -78,14 +78,14 @@ export class FileCheckPointer implements Checkpointer {
     }
 
     #setState(state: CheckpointerState): void {
-        this.#blockNumber = state.blockNumber ? BigInt(state.blockNumber) : undefined;
-        this.#transactionID = state.transactionID;
+        this.#blockNumber = state.blockNumber != undefined ? BigInt(state.blockNumber) : state.blockNumber;
+        this.#transactionID = state.transactionId;
     }
 
     #getState(): CheckpointerState {
         return {
-            blockNumber: (this.#blockNumber !== undefined) ? this.#blockNumber.toString() : undefined,
-            transactionID: this.#transactionID,
+            blockNumber: this.#blockNumber?.toString(),
+            transactionId: this.#transactionID,
         };
     }
 
