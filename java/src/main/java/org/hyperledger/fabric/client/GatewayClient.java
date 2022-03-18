@@ -114,8 +114,8 @@ final class GatewayClient {
         return invokeDuplexStreamingCall(stub::deliverFiltered, request);
     }
 
-    public CloseableIterator<EventsPackage.DeliverResponse> blockEventsWithPrivateData(final Common.Envelope request, final CallOption... options) {
-        DeliverGrpc.DeliverStub stub = applyOptions(deliverAsyncStub, defaultOptions.getBlockEventsWithPrivateData(options));
+    public CloseableIterator<EventsPackage.DeliverResponse> blockAndPrivateDataEvents(final Common.Envelope request, final CallOption... options) {
+        DeliverGrpc.DeliverStub stub = applyOptions(deliverAsyncStub, defaultOptions.getBlockAndPrivateDataEvents(options));
         return invokeDuplexStreamingCall(stub::deliverWithPrivateData, request);
     }
 

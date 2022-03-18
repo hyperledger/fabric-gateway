@@ -120,7 +120,7 @@ func (client *gatewayClient) FilteredBlockEvents(ctx context.Context, in *common
 	return deliverClient, nil
 }
 
-func (client *gatewayClient) BlockEventsWithPrivateData(ctx context.Context, in *common.Envelope, opts ...grpc.CallOption) (peer.Deliver_DeliverWithPrivateDataClient, error) {
+func (client *gatewayClient) BlockAndPrivateEventsData(ctx context.Context, in *common.Envelope, opts ...grpc.CallOption) (peer.Deliver_DeliverWithPrivateDataClient, error) {
 	deliverClient, err := client.grpcDeliverClient.DeliverWithPrivateData(ctx, opts...)
 	if err != nil {
 		return nil, err

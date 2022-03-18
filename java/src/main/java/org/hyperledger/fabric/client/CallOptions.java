@@ -19,7 +19,7 @@ final class CallOptions {
     private final List<CallOption> chaincodeEvents;
     private final List<CallOption> blockEvents;
     private final List<CallOption> filteredBlockEvents;
-    private final List<CallOption> blockEventsWithPrivateData;
+    private final List<CallOption> blockAndPrivateDataEvents;
 
     private CallOptions(final Builder builder) {
         this.evaluate = Collections.unmodifiableList(new ArrayList<>(builder.evaluate));
@@ -29,7 +29,7 @@ final class CallOptions {
         this.chaincodeEvents = Collections.unmodifiableList(new ArrayList<>(builder.chaincodeEvents));
         this.blockEvents = Collections.unmodifiableList(new ArrayList<>(builder.blockEvents));
         this.filteredBlockEvents = Collections.unmodifiableList(new ArrayList<>(builder.filteredBlockEvents));
-        this.blockEventsWithPrivateData = Collections.unmodifiableList(new ArrayList<>(builder.blockEventsWithPrivateData));
+        this.blockAndPrivateDataEvents = Collections.unmodifiableList(new ArrayList<>(builder.blockAndPrivateDataEvents));
     }
 
     public static Builder newBuiler() {
@@ -70,8 +70,8 @@ final class CallOptions {
         return append(filteredBlockEvents, additional);
     }
 
-    public List<CallOption> getBlockEventsWithPrivateData(final CallOption... additional) {
-        return append(blockEventsWithPrivateData, additional);
+    public List<CallOption> getBlockAndPrivateDataEvents(final CallOption... additional) {
+        return append(blockAndPrivateDataEvents, additional);
     }
 
     public static final class Builder {
@@ -82,7 +82,7 @@ final class CallOptions {
         private List<CallOption> chaincodeEvents = Collections.emptyList();
         private List<CallOption> blockEvents = Collections.emptyList();
         private List<CallOption> filteredBlockEvents = Collections.emptyList();
-        private List<CallOption> blockEventsWithPrivateData = Collections.emptyList();
+        private List<CallOption> blockAndPrivateDataEvents = Collections.emptyList();
 
         private Builder() {
             // Nothing to do
@@ -130,9 +130,9 @@ final class CallOptions {
             return this;
         }
 
-        public Builder blockEventsWithPrivateData(final List<CallOption> options) {
-            Objects.requireNonNull(options, "blockEventsWithPrivateData");
-            blockEventsWithPrivateData = options;
+        public Builder blockAndPrivateDataEvents(final List<CallOption> options) {
+            Objects.requireNonNull(options, "blockAndPrivateDataEvents");
+            blockAndPrivateDataEvents = options;
             return this;
         }
 

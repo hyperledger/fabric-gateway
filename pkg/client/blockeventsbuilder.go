@@ -133,17 +133,17 @@ func (builder *blockEventsBuilder) build() (*BlockEventsRequest, error) {
 	return result, nil
 }
 
-type blockEventsWithPrivateDataBuilder struct {
+type blockAndPrivateDataEventsBuilder struct {
 	baseBlockEventsBuilder
 }
 
-func (builder *blockEventsWithPrivateDataBuilder) build() (*BlockEventsWithPrivateDataRequest, error) {
+func (builder *blockAndPrivateDataEventsBuilder) build() (*BlockAndPrivateDataEventsRequest, error) {
 	payload, err := builder.payloadBytes()
 	if err != nil {
 		return nil, err
 	}
 
-	result := &BlockEventsWithPrivateDataRequest{
+	result := &BlockAndPrivateDataEventsRequest{
 		baseBlockEventsRequest{
 			client:    builder.client,
 			signingID: builder.signingID,

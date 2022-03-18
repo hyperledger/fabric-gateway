@@ -124,14 +124,14 @@ public interface Gateway extends AutoCloseable {
     FilteredBlockEventsRequest newSignedFilteredBlockEventsRequest(byte[] bytes, byte[] signature);
 
     /**
-     * Create a block events with private data request with the specified digital signature, which can be used to
-     * receive block events with private data. Supports off-line signing flow.
-     * @param bytes Serialized block events with private data request.
+     * Create a block and private data events request with the specified digital signature, which can be used to
+     * receive block and private data events. Supports off-line signing flow.
+     * @param bytes Serialized block and private data events request.
      * @param signature Digital signature.
-     * @return A signed block events with private data request.
+     * @return A signed block and private data events request.
      * @throws IllegalArgumentException if the supplied request bytes are not valid.
      */
-    BlockEventsWithPrivateDataRequest newSignedBlockEventsWithPrivateDataRequest(byte[] bytes, byte[] signature);
+    BlockAndPrivateDataEventsRequest newSignedBlockAndPrivateDataEventsRequest(byte[] bytes, byte[] signature);
 
     /**
      * Close the gateway connection and all associated resources, including removing listeners attached to networks and
@@ -226,11 +226,11 @@ public interface Gateway extends AutoCloseable {
         Builder filteredBlockEventsOptions(CallOption... options);
 
         /**
-         * Specify the default call options for block events with private data.
+         * Specify the default call options for block and private data events.
          * @param options Call options.
          * @return The builder instance, allowing multiple configuration options to be chained.
          */
-        Builder blockEventsWithPrivateDataOptions(CallOption... options);
+        Builder blockAndPrivateDataEventsOptions(CallOption... options);
 
         /**
          * Connects to the gateway using the specified options.

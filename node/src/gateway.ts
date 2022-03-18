@@ -6,7 +6,7 @@
 
 import { CallOptions, Client } from '@grpc/grpc-js';
 import { ChaincodeEventsRequest, Commit, Proposal, Transaction } from '.';
-import { BlockEventsRequest, BlockEventsRequestImpl, BlockEventsWithPrivateDataRequest, BlockEventsWithPrivateDataRequestImpl, FilteredBlockEventsRequest, FilteredBlockEventsRequestImpl } from './blockeventsrequest';
+import { BlockEventsRequest, BlockEventsRequestImpl, BlockAndPrivateDataEventsRequest, BlockAndPrivateDataEventsRequestImpl, FilteredBlockEventsRequest, FilteredBlockEventsRequestImpl } from './blockeventsrequest';
 import { ChaincodeEventsRequestImpl } from './chaincodeeventsrequest';
 import { GatewayClient, GatewayGrpcClient, newGatewayClient } from './client';
 import { CommitImpl } from './commit';
@@ -102,9 +102,9 @@ export interface ConnectOptions {
     filteredBlockEventsOptions?: () => CallOptions;
 
     /**
-     * Supplier of default call options for block events with private data.
+     * Supplier of default call options for block and private data events.
      */
-    blockEventsWithPrivateDataOptions?: () => CallOptions;
+    blockAndPrivateDataEventsOptions?: () => CallOptions;
 }
 
 /**
@@ -200,13 +200,13 @@ export interface Gateway {
     newSignedFilteredBlockEventsRequest(bytes: Uint8Array, signature: Uint8Array): FilteredBlockEventsRequest;
 
     /**
-     * Create a block events with private data request with the specified digital signature. Supports off-line signing
+     * Create a block and private data events request with the specified digital signature. Supports off-line signing
      * flow.
-     * @param bytes - Serialized block events with private data request.
+     * @param bytes - Serialized block and private data events request.
      * @param signature - Digital signature.
-     * @returns A signed filtered block events with private data request.
+     * @returns A signed block and private data events request.
      */
-    newSignedBlockEventsWithPrivateDataRequest(bytes: Uint8Array, signature: Uint8Array): BlockEventsWithPrivateDataRequest;
+    newSignedBlockAndPrivateDataEventsRequest(bytes: Uint8Array, signature: Uint8Array): BlockAndPrivateDataEventsRequest;
 
     /**
      * Close the gateway when it is no longer required. This releases all resources associated with networks and
@@ -321,10 +321,10 @@ class GatewayImpl {
         return result;
     }
 
-    newSignedBlockEventsWithPrivateDataRequest(bytes: Uint8Array, signature: Uint8Array): BlockEventsWithPrivateDataRequest {
+    newSignedBlockAndPrivateDataEventsRequest(bytes: Uint8Array, signature: Uint8Array): BlockAndPrivateDataEventsRequest {
         const request = Envelope.deserializeBinary(bytes);
 
-        const result = new BlockEventsWithPrivateDataRequestImpl({
+        const result = new BlockAndPrivateDataEventsRequestImpl({
             client: this.#client,
             signingIdentity: this.#signingIdentity,
             request,

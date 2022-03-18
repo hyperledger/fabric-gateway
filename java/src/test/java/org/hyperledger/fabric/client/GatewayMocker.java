@@ -134,8 +134,8 @@ public final class GatewayMocker implements AutoCloseable {
         return deliverFilteredRequestCaptor.getValue();
     }
 
-    public Stream<Common.Envelope> captureBlockEventsWithPrivateData() {
-        Mockito.verify(deliverSpy).blockEventsWithPrivateData(deliverWithPrivateDataRequestCaptor.capture());
+    public Stream<Common.Envelope> captureBlockAndPrivateDataEvents() {
+        Mockito.verify(deliverSpy).blockAndPrivateDataEvents(deliverWithPrivateDataRequestCaptor.capture());
         return deliverWithPrivateDataRequestCaptor.getValue();
     }
 

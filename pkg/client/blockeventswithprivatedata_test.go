@@ -22,7 +22,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func TestBlockEventsWithPrivateData(t *testing.T) {
+func TestBlockAndPrivateDataEvents(t *testing.T) {
 	t.Run("Returns connect error", func(t *testing.T) {
 		expected := NewStatusError(t, codes.Aborted, "BLOCK_EVENTS_ERROR")
 		mockClient := NewMockDeliverClient(gomock.NewController(t))
@@ -33,7 +33,7 @@ func TestBlockEventsWithPrivateData(t *testing.T) {
 		defer cancel()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
-		_, err := network.BlockEventsWithPrivateData(ctx)
+		_, err := network.BlockAndPrivateDataEvents(ctx)
 
 		require.Equal(t, status.Code(expected), status.Code(err), "status code")
 		require.Errorf(t, err, expected.Error(), "error message")
@@ -62,7 +62,7 @@ func TestBlockEventsWithPrivateData(t *testing.T) {
 		defer cancel()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
-		_, err := network.BlockEventsWithPrivateData(ctx)
+		_, err := network.BlockAndPrivateDataEvents(ctx)
 		require.NoError(t, err)
 
 		AssertValidBlockEventRequestHeader(t, payload, network.Name())
@@ -104,7 +104,7 @@ func TestBlockEventsWithPrivateData(t *testing.T) {
 		defer cancel()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
-		_, err := network.BlockEventsWithPrivateData(ctx, WithStartBlock(418))
+		_, err := network.BlockAndPrivateDataEvents(ctx, WithStartBlock(418))
 		require.NoError(t, err)
 
 		AssertValidBlockEventRequestHeader(t, payload, network.Name())
@@ -142,7 +142,7 @@ func TestBlockEventsWithPrivateData(t *testing.T) {
 		defer cancel()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
-		receive, err := network.BlockEventsWithPrivateData(ctx, WithStartBlock(418))
+		receive, err := network.BlockAndPrivateDataEvents(ctx, WithStartBlock(418))
 		require.NoError(t, err)
 
 		actual, ok := <-receive
@@ -219,7 +219,7 @@ func TestBlockEventsWithPrivateData(t *testing.T) {
 		defer cancel()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
-		receive, err := network.BlockEventsWithPrivateData(ctx)
+		receive, err := network.BlockAndPrivateDataEvents(ctx)
 		require.NoError(t, err)
 
 		for _, event := range blocksAndPrivateData {
@@ -290,7 +290,7 @@ func TestBlockEventsWithPrivateData(t *testing.T) {
 		defer cancel()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
-		receive, err := network.BlockEventsWithPrivateData(ctx)
+		receive, err := network.BlockAndPrivateDataEvents(ctx)
 		require.NoError(t, err)
 
 		expected := []*peer.BlockAndPrivateData{

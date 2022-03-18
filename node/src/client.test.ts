@@ -92,10 +92,10 @@ describe('client', () => {
             expect(t).toThrow(GatewayError);
         });
 
-        it('block events with private data', () => {
-            grpcClient.mockBlockEventsWithPrivateDataError(grpcError);
+        it('block and private data events', () => {
+            grpcClient.mockBlockAndPrivateDataEventsError(grpcError);
 
-            const t: () => void = () => gatewayClient.blockEventsWithPrivateData(new Envelope());
+            const t: () => void = () => gatewayClient.blockAndPrivateDataEvents(new Envelope());
 
             expect(t).toThrow(grpcError.message);
             expect(t).toThrow(GatewayError);

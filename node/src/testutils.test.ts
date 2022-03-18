@@ -15,6 +15,7 @@ import { DeliverResponse } from './protos/peer/events_pb';
 import { ChaincodeAction } from './protos/peer/proposal_pb';
 import { ProposalResponsePayload, Response } from './protos/peer/proposal_response_pb';
 import { ChaincodeActionPayload, ChaincodeEndorsedAction, Transaction, TransactionAction } from './protos/peer/transaction_pb';
+
 /* eslint-disable jest/no-export */
 
 it('Test utilities', () => { // eslint-disable-line jest/expect-expect
@@ -74,7 +75,7 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
     constructor() {
         // Default empty responses
         this.mockBlockEventsResponse(emptyDuplexStreamResponse);
-        this.mockBlockEventsWithPrivateDataResponse(emptyDuplexStreamResponse);
+        this.mockBlockAndPrivateDataEventsResponse(emptyDuplexStreamResponse);
         this.mockChaincodeEventsResponse(emptyServerStreamResponse);
         this.mockCommitStatusResponse(new CommitStatusResponse());
         this.mockEndorseResponse(new EndorseResponse());
@@ -149,7 +150,7 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
         return this.#deliverMock.mock.calls.map(call => call[0]);
     }
 
-    getBlockEventsWithPrivateDataOptions(): grpc.CallOptions[] {
+    getBlockAndPrivateDataEventsOptions(): grpc.CallOptions[] {
         return this.#deliverWithPrivateDataMock.mock.calls.map(call => call[0]);
     }
 
@@ -239,11 +240,11 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
         });
     }
 
-    mockBlockEventsWithPrivateDataResponse(stream: DuplexStreamResponse<Envelope, DeliverResponse>): void {
+    mockBlockAndPrivateDataEventsResponse(stream: DuplexStreamResponse<Envelope, DeliverResponse>): void {
         this.#deliverWithPrivateDataMock.mockReturnValue(stream);
     }
 
-    mockBlockEventsWithPrivateDataError(err: grpc.ServiceError): void {
+    mockBlockAndPrivateDataEventsError(err: grpc.ServiceError): void {
         this.#deliverWithPrivateDataMock.mockImplementation(() => {
             throw err;
         });

@@ -11,10 +11,10 @@ import java.util.NoSuchElementException;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.peer.EventsPackage;
 
-final class BlockEventsWithPrivateDataRequestImpl extends SignableBlockEventsRequest implements BlockEventsWithPrivateDataRequest {
+final class BlockAndPrivateDataEventsRequestImpl extends SignableBlockEventsRequest implements BlockAndPrivateDataEventsRequest {
     private final GatewayClient client;
 
-    BlockEventsWithPrivateDataRequestImpl(final GatewayClient client, final SigningIdentity signingIdentity, final Common.Envelope request) {
+    BlockAndPrivateDataEventsRequestImpl(final GatewayClient client, final SigningIdentity signingIdentity, final Common.Envelope request) {
         super(signingIdentity, request);
         this.client = client;
     }
@@ -22,7 +22,7 @@ final class BlockEventsWithPrivateDataRequestImpl extends SignableBlockEventsReq
     @Override
     public CloseableIterator<EventsPackage.BlockAndPrivateData> getEvents(final CallOption... options) {
         Common.Envelope request = getSignedRequest();
-        CloseableIterator<EventsPackage.DeliverResponse> responseIter = client.blockEventsWithPrivateData(request, options);
+        CloseableIterator<EventsPackage.DeliverResponse> responseIter = client.blockAndPrivateDataEvents(request, options);
 
         return new MappingCloseableIterator<>(responseIter, response -> {
             EventsPackage.DeliverResponse.TypeCase responseType = response.getTypeCase();

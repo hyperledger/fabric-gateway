@@ -258,8 +258,8 @@ func TestOfflineSign(t *testing.T) {
 		}
 	}
 
-	var newSignableFromBlockEventsWithPrivateDataRequest func(t *testing.T, gateway *Gateway, request *BlockEventsWithPrivateDataRequest) *Signable
-	newSignableFromBlockEventsWithPrivateDataRequest = func(t *testing.T, gateway *Gateway, request *BlockEventsWithPrivateDataRequest) *Signable {
+	var newSignableFromBlockAndPrivateDataEventsRequest func(t *testing.T, gateway *Gateway, request *BlockAndPrivateDataEventsRequest) *Signable
+	newSignableFromBlockAndPrivateDataEventsRequest = func(t *testing.T, gateway *Gateway, request *BlockAndPrivateDataEventsRequest) *Signable {
 		return &Signable{
 			Invocations: []Invocation{
 				{
@@ -277,10 +277,10 @@ func TestOfflineSign(t *testing.T) {
 				bytes, err := request.Bytes()
 				require.NoError(t, err, "Bytes")
 
-				result, err := gateway.NewSignedBlockEventsWithPrivateDataRequest(bytes, signature)
+				result, err := gateway.NewSignedBlockAndPrivateDataEventsRequest(bytes, signature)
 				require.NoError(t, err, "NewSignedBlockEventsRequest")
 
-				return newSignableFromBlockEventsWithPrivateDataRequest(t, gateway, result)
+				return newSignableFromBlockAndPrivateDataEventsRequest(t, gateway, result)
 			},
 			State: struct {
 				Digest []byte
@@ -470,7 +470,7 @@ func TestOfflineSign(t *testing.T) {
 			},
 		},
 		{
-			Description: "Block events with private data",
+			Description: "Block and private data events",
 			Create: func(t *testing.T) *Signable {
 				controller := gomock.NewController(t)
 				mockClient := NewMockDeliverClient(controller)
@@ -483,10 +483,10 @@ func TestOfflineSign(t *testing.T) {
 				gateway := newGatewayWithNoSign(t, WithGatewayClient(NewMockGatewayClient(controller)), WithDeliverClient(mockClient))
 				network := gateway.GetNetwork("NETWORK")
 
-				request, err := network.NewBlockEventsWithPrivateDataRequest()
+				request, err := network.NewBlockAndPrivateDataEventsRequest()
 				require.NoError(t, err)
 
-				return newSignableFromBlockEventsWithPrivateDataRequest(t, gateway, request)
+				return newSignableFromBlockAndPrivateDataEventsRequest(t, gateway, request)
 			},
 		},
 	}

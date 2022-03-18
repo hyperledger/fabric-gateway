@@ -36,6 +36,6 @@ public final class MockDeliverService extends DeliverGrpc.DeliverImplBase {
 
     @Override
     public StreamObserver<Common.Envelope> deliverWithPrivateData(final StreamObserver<EventsPackage.DeliverResponse> responseObserver) {
-        return testUtils.invokeStubDuplexCall(stub::blockEventsWithPrivateData, (ServerCallStreamObserver<EventsPackage.DeliverResponse>) responseObserver, 1);
+        return testUtils.invokeStubDuplexCall(stub::blockAndPrivateDataEvents, (ServerCallStreamObserver<EventsPackage.DeliverResponse>) responseObserver, 1);
     }
 }

@@ -7,7 +7,7 @@
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
 import { CloseableAsyncIterable } from '.';
 import { BlockEventsOptions } from './blockeventsbuilder';
-import { BlockEventsRequest, BlockEventsWithPrivateDataRequest, FilteredBlockEventsRequest } from './blockeventsrequest';
+import { BlockEventsRequest, BlockAndPrivateDataEventsRequest, FilteredBlockEventsRequest } from './blockeventsrequest';
 import { assertDefined, Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { GatewayError } from './gatewayerror';
 import { Identity } from './identity/identity';
@@ -60,7 +60,7 @@ describe('Block Events', () => {
             client,
             blockEventsOptions: defaultOptions,
             filteredBlockEventsOptions: defaultOptions,
-            blockEventsWithPrivateDataOptions: defaultOptions,
+            blockAndPrivateDataEventsOptions: defaultOptions,
         };
         gateway = internalConnect(options);
         network = gateway.getNetwork(channelName);
@@ -86,7 +86,7 @@ describe('Block Events', () => {
         mockResponse(stream: DuplexStreamResponseStub<Envelope, DeliverResponse>): void;
         mockError(err: ServiceError): void;
         getEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<unknown>>;
-        newEventsRequest(options?: BlockEventsOptions): BlockEventsRequest | FilteredBlockEventsRequest | BlockEventsWithPrivateDataRequest;
+        newEventsRequest(options?: BlockEventsOptions): BlockEventsRequest | FilteredBlockEventsRequest | BlockAndPrivateDataEventsRequest;
         getCallOptions(): CallOptions[];
         newBlockResponse(blockNumber: number): DeliverResponse;
         getBlockFromResponse(response: DeliverResponse): Block | FilteredBlock | BlockAndPrivateData | undefined;
@@ -157,21 +157,21 @@ describe('Block Events', () => {
             },
         },
         {
-            description: 'Blocks with private data',
+            description: 'Blocks and private data',
             mockResponse(stream) {
-                client.mockBlockEventsWithPrivateDataResponse(stream);
+                client.mockBlockAndPrivateDataEventsResponse(stream);
             },
             mockError(err) {
-                client.mockBlockEventsWithPrivateDataError(err);
+                client.mockBlockAndPrivateDataEventsError(err);
             },
             getEvents(options?) {
-                return network.getBlockEventsWithPrivateData(options);
+                return network.getBlockAndPrivateDataEvents(options);
             },
             newEventsRequest(options?) {
-                return network.newBlockEventsWithPrivateDataRequest(options);
+                return network.newBlockAndPrivateDataEventsRequest(options);
             },
             getCallOptions() {
-                return client.getBlockEventsWithPrivateDataOptions();
+                return client.getBlockAndPrivateDataEventsOptions();
             },
             newBlockResponse(blockNumber) {
                 const header = new BlockHeader();

@@ -129,21 +129,21 @@ public interface Network {
     FilteredBlockEventsRequest.Builder newFilteredBlockEventsRequest();
 
     /**
-     * Get block events with private data. The Java gRPC implementation may not begin reading events until the first
+     * Get block and private data events. The Java gRPC implementation may not begin reading events until the first
      * use of the* returned iterator.
      * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC
      * connection error occurs.</p>
      * @param options Call options.
      * @return Ordered sequence of events.
-     * @see #newBlockEventsWithPrivateDataRequest()
+     * @see #newBlockAndPrivateDataEventsRequest()
      */
-    CloseableIterator<EventsPackage.BlockAndPrivateData> getBlockEventsWithPrivateData(CallOption... options);
+    CloseableIterator<EventsPackage.BlockAndPrivateData> getBlockAndPrivateDataEvents(CallOption... options);
 
     /**
-     * Build a request to receive block events with private data. This can be used to specify a specific ledger start
+     * Build a request to receive block and private data events. This can be used to specify a specific ledger start
      * position. Supports offline signing flow.
-     * @return A block events with private data request builder.
+     * @return A block and private data events request builder.
      * @throws NullPointerException if the chaincode name is null.
      */
-    BlockEventsWithPrivateDataRequest.Builder newBlockEventsWithPrivateDataRequest();
+    BlockAndPrivateDataEventsRequest.Builder newBlockAndPrivateDataEventsRequest();
 }

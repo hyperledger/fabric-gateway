@@ -5,7 +5,7 @@
  */
 
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
-import { BlockEventsRequest, BlockEventsRequestImpl, BlockEventsWithPrivateDataRequest, BlockEventsWithPrivateDataRequestImpl, FilteredBlockEventsRequest, FilteredBlockEventsRequestImpl } from './blockeventsrequest';
+import { BlockEventsRequest, BlockEventsRequestImpl, BlockAndPrivateDataEventsRequest, BlockAndPrivateDataEventsRequestImpl, FilteredBlockEventsRequest, FilteredBlockEventsRequestImpl } from './blockeventsrequest';
 import { GatewayClient } from './client';
 import { EventsBuilder, EventsOptions } from './eventsbuilder';
 import { ChannelHeader, Envelope, Header, HeaderType, Payload, SignatureHeader } from './protos/common/common_pb';
@@ -71,7 +71,7 @@ export class FilteredBlockEventsBuilder {
     }
 }
 
-export class BlockEventsWithPrivateDataBuilder {
+export class BlockAndPrivateDataEventsBuilder {
     readonly #options: Readonly<BlockEventsBuilderOptions>;
     readonly #envelopeBuilder: BlockEventsEnvelopeBuilder;
 
@@ -80,9 +80,9 @@ export class BlockEventsWithPrivateDataBuilder {
         this.#envelopeBuilder = new BlockEventsEnvelopeBuilder(options);
     }
 
-    build(): BlockEventsWithPrivateDataRequest {
+    build(): BlockAndPrivateDataEventsRequest {
         const request = this.#envelopeBuilder.build();
-        return new BlockEventsWithPrivateDataRequestImpl({
+        return new BlockAndPrivateDataEventsRequestImpl({
             client: this.#options.client,
             request,
             signingIdentity: this.#options.signingIdentity,

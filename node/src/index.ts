@@ -5,7 +5,7 @@
  */
 
 export { BlockEventsOptions } from './blockeventsbuilder';
-export { BlockEventsRequest, BlockEventsWithPrivateDataRequest, FilteredBlockEventsRequest } from './blockeventsrequest';
+export { BlockEventsRequest, BlockAndPrivateDataEventsRequest, FilteredBlockEventsRequest } from './blockeventsrequest';
 export { ChaincodeEvent } from './chaincodeevent';
 export { ChaincodeEventsOptions } from './chaincodeeventsbuilder';
 export { Checkpoint, Checkpointer } from './checkpointer';
