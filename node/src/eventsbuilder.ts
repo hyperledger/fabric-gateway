@@ -19,7 +19,7 @@ export interface EventsOptions {
     /**
      * Used to get checkpointed state.
      */
-    checkpointer?: Checkpoint;
+    checkpoint?: Checkpoint;
 }
 
 export class EventsBuilder {
@@ -31,7 +31,7 @@ export class EventsBuilder {
 
     getStartPosition(): SeekPosition {
         const result = new SeekPosition();
-        const startBlock = this.#options.checkpointer?.getBlockNumber() ?? this.#options.startBlock;
+        const startBlock = this.#options.checkpoint?.getBlockNumber() ?? this.#options.startBlock;
 
         if (startBlock != undefined) {
             const specified = new SeekSpecified();

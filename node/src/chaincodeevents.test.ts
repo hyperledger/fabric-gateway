@@ -137,7 +137,7 @@ describe('Chaincode Events', () => {
             const startBlock = BigInt(418);
             const checkpointer = checkpointers.inMemory();
 
-            await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpointer});
+            await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpoint: checkpointer});
 
             const signedRequest = client.getChaincodeEventsRequests()[0];
             expect(signedRequest.getSignature()).toEqual(signature);
@@ -151,7 +151,7 @@ describe('Chaincode Events', () => {
             const checkpointer = checkpointers.inMemory();
             await checkpointer.checkpointBlock(1n);
 
-            await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpointer});
+            await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpoint: checkpointer});
 
             const signedRequest = client.getChaincodeEventsRequests()[0];
             expect(signedRequest.getSignature()).toEqual(signature);
@@ -165,7 +165,7 @@ describe('Chaincode Events', () => {
             const checkpointer = checkpointers.inMemory();
             await checkpointer.checkpointTransaction(1n, 'txn1');
 
-            await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpointer});
+            await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpoint: checkpointer});
 
             const signedRequest = client.getChaincodeEventsRequests()[0];
             expect(signedRequest.getSignature()).toEqual(signature);
@@ -177,7 +177,7 @@ describe('Chaincode Events', () => {
         it('Sends valid request with no start block and fresh checkpointer', async () => {
             const checkpointer = checkpointers.inMemory();
 
-            await network.getChaincodeEvents('CHAINCODE', { checkpointer});
+            await network.getChaincodeEvents('CHAINCODE', { checkpoint: checkpointer});
 
             const signedRequest = client.getChaincodeEventsRequests()[0];
             expect(signedRequest.getSignature()).toEqual(signature);
@@ -190,7 +190,7 @@ describe('Chaincode Events', () => {
             const checkpointer = checkpointers.inMemory();
             await checkpointer.checkpointTransaction(1n, 'txn1');
 
-            await network.getChaincodeEvents('CHAINCODE', { checkpointer});
+            await network.getChaincodeEvents('CHAINCODE', { checkpoint: checkpointer});
 
             const signedRequest = client.getChaincodeEventsRequests()[0];
             expect(signedRequest.getSignature()).toEqual(signature);
@@ -210,7 +210,7 @@ describe('Chaincode Events', () => {
             };
 
             await checkpointer.checkpointChaincodeEvent(event);
-            await network.getChaincodeEvents('CHAINCODE', { checkpointer });
+            await network.getChaincodeEvents('CHAINCODE', { checkpoint: checkpointer });
 
             const signedRequest = client.getChaincodeEventsRequests()[0];
             expect(signedRequest.getSignature()).toEqual(signature);
