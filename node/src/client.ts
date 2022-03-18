@@ -32,7 +32,7 @@ export interface GatewayClient {
     chaincodeEvents(request: SignedChaincodeEventsRequest, options?: CallOptions): CloseableAsyncIterable<ChaincodeEventsResponse>;
     blockEvents(request: Envelope, options?: CallOptions): CloseableAsyncIterable<DeliverResponse>;
     filteredBlockEvents(request: Envelope, options?: CallOptions): CloseableAsyncIterable<DeliverResponse>;
-    blockEventsWithPrivateData(request: Envelope, options?: CallOptions): CloseableAsyncIterable<DeliverResponse>;
+    blockAndPrivateDataEvents(request: Envelope, options?: CallOptions): CloseableAsyncIterable<DeliverResponse>;
 }
 
 /**
@@ -69,7 +69,7 @@ export interface GatewayGrpcClient {
     makeBidiStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, options: CallOptions): DuplexStreamResponse<RequestType, ResponseType>;
 }
 
-type DefaultCallOptions = Pick<ConnectOptions, 'commitStatusOptions' | 'endorseOptions' | 'evaluateOptions' | 'submitOptions' | 'chaincodeEventsOptions' | 'blockEventsOptions' | 'filteredBlockEventsOptions' | 'blockEventsWithPrivateDataOptions'>;
+type DefaultCallOptions = Pick<ConnectOptions, 'commitStatusOptions' | 'endorseOptions' | 'evaluateOptions' | 'submitOptions' | 'chaincodeEventsOptions' | 'blockEventsOptions' | 'filteredBlockEventsOptions' | 'blockAndPrivateDataEventsOptions'>;
 
 class GatewayClientImpl implements GatewayClient {
     readonly #client: GatewayGrpcClient;
@@ -183,12 +183,12 @@ class GatewayClientImpl implements GatewayClient {
         );
     }
 
-    blockEventsWithPrivateData(request: Envelope, options?: CallOptions): CloseableAsyncIterable<DeliverResponse> {
+    blockAndPrivateDataEvents(request: Envelope, options?: CallOptions): CloseableAsyncIterable<DeliverResponse> {
         return this.#makeBidiStreamRequest(
             deliverWithPrivateDataMethod,
             deserializeDeliverResponse,
             request,
-            buildOptions(this.#defaultOptions.blockEventsWithPrivateDataOptions, options),
+            buildOptions(this.#defaultOptions.blockAndPrivateDataEventsOptions, options),
         );
     }
 

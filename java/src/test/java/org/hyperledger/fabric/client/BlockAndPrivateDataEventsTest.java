@@ -16,10 +16,10 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
-public final class BlockEventsWithPrivateDataTest extends CommonBlockEventsTest<EventsPackage.BlockAndPrivateData> {
+public final class BlockAndPrivateDataEventsTest extends CommonBlockEventsTest<EventsPackage.BlockAndPrivateData> {
     @Override
     protected void setEventsOptions(final Gateway.Builder builder, final CallOption... options) {
-        builder.blockEventsWithPrivateDataOptions(options);
+        builder.blockAndPrivateDataEventsOptions(options);
     }
 
     @Override
@@ -36,27 +36,27 @@ public final class BlockEventsWithPrivateDataTest extends CommonBlockEventsTest<
 
     @Override
     protected void stubDoThrow(final Throwable... t) {
-        doThrow(t).when(stub).blockEventsWithPrivateData(any());
+        doThrow(t).when(stub).blockAndPrivateDataEvents(any());
     }
 
     @Override
     protected CloseableIterator<EventsPackage.BlockAndPrivateData> getEvents(final CallOption... options) {
-        return network.getBlockEventsWithPrivateData(options);
+        return network.getBlockAndPrivateDataEvents(options);
     }
 
     @Override
     protected Stream<Common.Envelope> captureEvents() {
-        return mocker.captureBlockEventsWithPrivateData();
+        return mocker.captureBlockAndPrivateDataEvents();
     }
 
     @Override
     protected EventsBuilder<EventsPackage.BlockAndPrivateData> newEventsRequest() {
-        return network.newBlockEventsWithPrivateDataRequest();
+        return network.newBlockAndPrivateDataEventsRequest();
     }
 
     @Override
     protected void stubDoReturn(final Stream<EventsPackage.DeliverResponse> responses) {
-        doReturn(responses).when(stub).blockEventsWithPrivateData(any());
+        doReturn(responses).when(stub).blockAndPrivateDataEvents(any());
     }
 
     @Override

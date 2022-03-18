@@ -105,8 +105,8 @@ final class GatewayImpl implements Gateway {
         }
 
         @Override
-        public Gateway.Builder blockEventsWithPrivateDataOptions(final CallOption... options) {
-            optionsBuilder.blockEventsWithPrivateData(Arrays.asList(options));
+        public Gateway.Builder blockAndPrivateDataEventsOptions(final CallOption... options) {
+            optionsBuilder.blockAndPrivateDataEvents(Arrays.asList(options));
             return this;
         }
 
@@ -220,11 +220,11 @@ final class GatewayImpl implements Gateway {
     }
 
     @Override
-    public BlockEventsWithPrivateDataRequest newSignedBlockEventsWithPrivateDataRequest(final byte[] bytes, final byte[] signature) {
+    public BlockAndPrivateDataEventsRequest newSignedBlockAndPrivateDataEventsRequest(final byte[] bytes, final byte[] signature) {
         try {
             Common.Envelope request = Common.Envelope.parseFrom(bytes);
 
-            BlockEventsWithPrivateDataRequestImpl result = new BlockEventsWithPrivateDataRequestImpl(client, signingIdentity, request);
+            BlockAndPrivateDataEventsRequestImpl result = new BlockAndPrivateDataEventsRequestImpl(client, signingIdentity, request);
             result.setSignature(signature);
             return result;
         } catch (InvalidProtocolBufferException e) {

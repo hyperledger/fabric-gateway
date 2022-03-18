@@ -65,25 +65,25 @@ export interface FilteredBlockEventsRequest extends Signable {
 }
 
 /**
- * Delivers block events with private data.
+ * Delivers block and private data events.
  */
-export interface BlockEventsWithPrivateDataRequest extends Signable {
+export interface BlockAndPrivateDataEventsRequest extends Signable {
     /**
-     * Get block events with private data.
+     * Get block and private data events.
      * @param options - gRPC call
-     * @returns Blocks with private data protocol buffer messages. The iterator should be closed after use to complete
+     * @returns Block and private data protocol buffer messages. The iterator should be closed after use to complete
      * the eventing session.
      * @throws {@link GatewayError}
      * Thrown by the iterator if the gRPC service invocation fails.
      * @example
      * ```
-     * const blocks = await request.getEvents();
+     * const events = await network.getBlockAndPrivateEventsData();
      * try {
-     *     for async (const block of blocks) {
-     *         // Process block
+     *     for async (const event of events) {
+     *         // Process block and private data event
      *     }
      * } finally {
-     *     blocks.close();
+     *     events.close();
      * }
      * ```
      */
@@ -176,7 +176,7 @@ export class FilteredBlockEventsRequestImpl extends SignableBlockEventsRequest i
     }
 }
 
-export class BlockEventsWithPrivateDataRequestImpl extends SignableBlockEventsRequest implements BlockEventsWithPrivateDataRequest {
+export class BlockAndPrivateDataEventsRequestImpl extends SignableBlockEventsRequest implements BlockAndPrivateDataEventsRequest {
     readonly #client: GatewayClient;
 
     constructor(options: Readonly<BlockEventsRequestOptions>) {
@@ -186,7 +186,7 @@ export class BlockEventsWithPrivateDataRequestImpl extends SignableBlockEventsRe
 
     async getEvents(options?: Readonly<CallOptions>): Promise<CloseableAsyncIterable<BlockAndPrivateData>> {
         const signedRequest = await this.getSignedRequest();
-        const responses = this.#client.blockEventsWithPrivateData(signedRequest, options);
+        const responses = this.#client.blockAndPrivateDataEvents(signedRequest, options);
         return {
             [Symbol.asyncIterator]: () => mapAsyncIterator(
                 responses[Symbol.asyncIterator](),

@@ -23,7 +23,7 @@ public class DeliverServiceStub {
         return Stream.empty();
     }
 
-    public Stream<EventsPackage.DeliverResponse> blockEventsWithPrivateData(final Stream<Common.Envelope> requests) {
+    public Stream<EventsPackage.DeliverResponse> blockAndPrivateDataEvents(final Stream<Common.Envelope> requests) {
         return Stream.empty();
     }
 }

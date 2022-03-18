@@ -70,12 +70,12 @@ final class NetworkImpl implements Network {
     }
 
     @Override
-    public CloseableIterator<EventsPackage.BlockAndPrivateData> getBlockEventsWithPrivateData(final CallOption... options) {
-        return newBlockEventsWithPrivateDataRequest().build().getEvents(options);
+    public CloseableIterator<EventsPackage.BlockAndPrivateData> getBlockAndPrivateDataEvents(final CallOption... options) {
+        return newBlockAndPrivateDataEventsRequest().build().getEvents(options);
     }
 
     @Override
-    public BlockEventsWithPrivateDataRequest.Builder newBlockEventsWithPrivateDataRequest() {
-        return new BlockEventsWithPrivateDataBuilder(client, signingIdentity, channelName);
+    public BlockAndPrivateDataEventsRequest.Builder newBlockAndPrivateDataEventsRequest() {
+        return new BlockAndPrivateDataEventsBuilder(client, signingIdentity, channelName);
     }
 }

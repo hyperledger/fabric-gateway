@@ -376,7 +376,7 @@ func (connection *GatewayConnection) receiveBlockAndPrivateDataEvents(listenerNa
 func (connection *GatewayConnection) BlockAndPrivateDataEvent(listenerName string) (*peer.BlockAndPrivateData, error) {
 	listener := connection.blockAndPrivateDataEventListeners[listenerName]
 	if listener == nil {
-		return nil, fmt.Errorf("no block with private data event listener attached")
+		return nil, fmt.Errorf("no block and private data event listener attached")
 	}
 
 	return listener.Event()

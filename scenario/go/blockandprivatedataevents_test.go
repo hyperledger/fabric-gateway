@@ -24,7 +24,7 @@ type BlockAndPrivateDataEventListener struct {
 func NewBlockAndPrivateDataEventListener(parentCtx context.Context, network *client.Network, options ...client.BlockEventsOption) (*BlockAndPrivateDataEventListener, error) {
 	ctx, cancel := context.WithCancel(parentCtx)
 
-	events, err := network.BlockEventsWithPrivateData(ctx, options...)
+	events, err := network.BlockAndPrivateDataEvents(ctx, options...)
 	if err != nil {
 		cancel()
 		return nil, err

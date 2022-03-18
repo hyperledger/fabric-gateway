@@ -290,14 +290,14 @@ func (gw *Gateway) NewSignedFilteredBlockEventsRequest(bytes []byte, signature [
 	return result, nil
 }
 
-// NewSignedBlockEventsWithPrivateDataRequest creates a signed request to read block events with private data.
-func (gw *Gateway) NewSignedBlockEventsWithPrivateDataRequest(bytes []byte, signature []byte) (*BlockEventsWithPrivateDataRequest, error) {
+// NewSignedBlockAndPrivateDataEventsRequest creates a signed request to read block and private data events.
+func (gw *Gateway) NewSignedBlockAndPrivateDataEventsRequest(bytes []byte, signature []byte) (*BlockAndPrivateDataEventsRequest, error) {
 	request := &common.Envelope{}
 	if err := util.Unmarshal(bytes, request); err != nil {
 		return nil, fmt.Errorf("failed to deserialize block events request envelope: %w", err)
 	}
 
-	result := &BlockEventsWithPrivateDataRequest{
+	result := &BlockAndPrivateDataEventsRequest{
 		baseBlockEventsRequest{
 			client:    gw.client,
 			signingID: gw.signingID,

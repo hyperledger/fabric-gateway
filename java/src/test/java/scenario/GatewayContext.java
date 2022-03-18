@@ -128,11 +128,11 @@ public class GatewayContext {
     }
 
     public void listenForBlockAndPrivateDataEvents(String listenerName) {
-        receiveBlockAndPrivateDataEvents(listenerName, network.getBlockEventsWithPrivateData());
+        receiveBlockAndPrivateDataEvents(listenerName, network.getBlockAndPrivateDataEvents());
     }
 
     public void replayBlockAndPrivateDataEvents(String listenerName, long startBlock) {
-        CloseableIterator<EventsPackage.BlockAndPrivateData> iter = network.newBlockEventsWithPrivateDataRequest()
+        CloseableIterator<EventsPackage.BlockAndPrivateData> iter = network.newBlockAndPrivateDataEventsRequest()
                 .startBlock(startBlock)
                 .build()
                 .getEvents();

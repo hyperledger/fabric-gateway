@@ -87,7 +87,7 @@ export class GatewayContext {
 
     async listenForBlockAndPrivateDataEvents(listenerName: string, options?: BlockEventsOptions): Promise<void> {
         this.closeBlockEvents(listenerName);
-        const events = await this.getNetwork().getBlockEventsWithPrivateData(options);
+        const events = await this.getNetwork().getBlockAndPrivateDataEvents(options);
         const listener = new EventListener(events);
         this.#blockAndPrivateDataEventListeners.set(listenerName, listener);
     }

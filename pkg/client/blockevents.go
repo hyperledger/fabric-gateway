@@ -128,18 +128,18 @@ func (events *BlockEventsRequest) Events(ctx context.Context) (<-chan *common.Bl
 	return results, nil
 }
 
-// BlockEventsWithPrivateDataRequest delivers block events.
-type BlockEventsWithPrivateDataRequest struct {
+// BlockAndPrivateDataEventsRequest delivers block and private data events.
+type BlockAndPrivateDataEventsRequest struct {
 	baseBlockEventsRequest
 }
 
-// Events returns a channel from which block events with private data can be read.
-func (events *BlockEventsWithPrivateDataRequest) Events(ctx context.Context) (<-chan *peer.BlockAndPrivateData, error) {
+// Events returns a channel from which block and private data events can be read.
+func (events *BlockAndPrivateDataEventsRequest) Events(ctx context.Context) (<-chan *peer.BlockAndPrivateData, error) {
 	if err := events.sign(); err != nil {
 		return nil, err
 	}
 
-	eventsClient, err := events.client.BlockEventsWithPrivateData(ctx, events.request)
+	eventsClient, err := events.client.BlockAndPrivateEventsData(ctx, events.request)
 	if err != nil {
 		return nil, err
 	}

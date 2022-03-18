@@ -243,9 +243,9 @@ describe('Offline sign', () => {
         });
     });
 
-    describe('block events with private data', () => {
+    describe('block and private data events', () => {
         it('throws with no signer and no explicit signing', async () => {
-            const unsignedRequest = network.newBlockEventsWithPrivateDataRequest();
+            const unsignedRequest = network.newBlockAndPrivateDataEventsRequest();
 
             await expect(unsignedRequest.getEvents()).rejects.toThrow(undefinedSignerMessage);
         });
@@ -253,10 +253,10 @@ describe('Offline sign', () => {
         it('uses offline signature', async () => {
             const expected = Buffer.from('MY_SIGNATURE');
             const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([]);
-            client.mockBlockEventsWithPrivateDataResponse(stream);
+            client.mockBlockAndPrivateDataEventsResponse(stream);
 
-            const unsignedRequest = network.newBlockEventsWithPrivateDataRequest();
-            const signedRequest = gateway.newSignedBlockEventsWithPrivateDataRequest(unsignedRequest.getBytes(), expected);
+            const unsignedRequest = network.newBlockAndPrivateDataEventsRequest();
+            const signedRequest = gateway.newSignedBlockAndPrivateDataEventsRequest(unsignedRequest.getBytes(), expected);
             await signedRequest.getEvents();
 
             expect(stream.write.mock.calls.length).toBe(1);
@@ -369,11 +369,11 @@ describe('Offline sign', () => {
             expect(actual).toEqual(expected);
         });
 
-        it('block events with private data request keeps same digest', () => {
-            const unsignedRequest = network.newBlockEventsWithPrivateDataRequest();
+        it('block and private data events request keeps same digest', () => {
+            const unsignedRequest = network.newBlockAndPrivateDataEventsRequest();
             const expected = unsignedRequest.getDigest();
 
-            const signedRequest = gateway.newSignedBlockEventsWithPrivateDataRequest(unsignedRequest.getBytes(), expected);
+            const signedRequest = gateway.newSignedBlockAndPrivateDataEventsRequest(unsignedRequest.getBytes(), expected);
             const actual = signedRequest.getDigest();
 
             expect(actual).toEqual(expected);

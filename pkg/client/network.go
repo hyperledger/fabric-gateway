@@ -143,9 +143,9 @@ func (network *Network) NewFilteredBlockEventsRequest(options ...BlockEventsOpti
 	return builder.build()
 }
 
-// FilteredBlockEvents returns a channel from which filtered block events can be read.
-func (network *Network) BlockEventsWithPrivateData(ctx context.Context, options ...BlockEventsOption) (<-chan *peer.BlockAndPrivateData, error) {
-	events, err := network.NewBlockEventsWithPrivateDataRequest(options...)
+// BlockAndPrivateDataEvents returns a channel from which block and private data events can be read.
+func (network *Network) BlockAndPrivateDataEvents(ctx context.Context, options ...BlockEventsOption) (<-chan *peer.BlockAndPrivateData, error) {
+	events, err := network.NewBlockAndPrivateDataEventsRequest(options...)
 	if err != nil {
 		return nil, err
 	}
@@ -153,9 +153,9 @@ func (network *Network) BlockEventsWithPrivateData(ctx context.Context, options 
 	return events.Events(ctx)
 }
 
-// NewBlockEventsWithPrivateDataRequest creates a request to read filtered block events. Supports off-line signing flow.
-func (network *Network) NewBlockEventsWithPrivateDataRequest(options ...BlockEventsOption) (*BlockEventsWithPrivateDataRequest, error) {
-	builder := &blockEventsWithPrivateDataBuilder{
+// NewBlockAndPrivateDataEventsRequest creates a request to read block and private data events. Supports off-line signing flow.
+func (network *Network) NewBlockAndPrivateDataEventsRequest(options ...BlockEventsOption) (*BlockAndPrivateDataEventsRequest, error) {
+	builder := &blockAndPrivateDataEventsBuilder{
 		baseBlockEventsBuilder{
 			eventsBuilder{
 				signingID:   network.signingID,
