@@ -60,6 +60,7 @@ func (builder *chaincodeEventsBuilder) newChaincodeEventsRequestProto() (*gatewa
 		Identity:      creator,
 		ChaincodeId:   builder.chaincodeName,
 		StartPosition: builder.getStartPosition(),
+		AfterTransactionId: builder.afterTransactionID,
 	}
 	return request, nil
 }

@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
+
 	"github.com/hyperledger/fabric-protos-go/orderer"
 )
 
@@ -15,6 +16,7 @@ type eventsBuilder struct {
 	signingID     *signingIdentity
 	channelName   string
 	startPosition *orderer.SeekPosition
+	afterTransactionID string
 }
 
 func (builder *eventsBuilder) getStartPosition() *orderer.SeekPosition {
@@ -31,6 +33,12 @@ func (builder *eventsBuilder) getStartPosition() *orderer.SeekPosition {
 
 type eventOption = func(builder *eventsBuilder) error
 
+// Inferace used while checkpointing events
+type Checkpointer interface {
+	BlockNumber() uint64
+	TransactionID() string
+}
+
 // WithStartBlock reads events starting at the specified block number.
 func WithStartBlock(blockNumber uint64) eventOption {
 	return func(builder *eventsBuilder) error {
@@ -41,6 +49,28 @@ func WithStartBlock(blockNumber uint64) eventOption {
 				},
 			},
 		}
+		return nil
+	}
+}
+
+// WithCheckpointer reads events starting at the position recorded by the checkpointer.
+func WithCheckpointer(checkpointer Checkpointer) eventOption {
+
+	return func(builder *eventsBuilder) error {
+		blockNumber := checkpointer.BlockNumber()
+		transactionID := checkpointer.TransactionID()
+
+		if (blockNumber == 0 && transactionID == "") {
+			return nil
+		}
+		builder.startPosition = &orderer.SeekPosition{
+			Type: &orderer.SeekPosition_Specified{
+				Specified: &orderer.SeekSpecified{
+					Number: blockNumber,
+				},
+			},
+		}
+		builder.afterTransactionID = transactionID
 		return nil
 	}
 }
