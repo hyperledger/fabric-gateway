@@ -5,10 +5,9 @@
  */
 
 import { CallOptions } from '@grpc/grpc-js';
+import { common, peer } from '@hyperledger/fabric-protos';
 import { CloseableAsyncIterable, GatewayClient } from './client';
 import { assertDefined } from './gateway';
-import { Block, Envelope } from './protos/common/common_pb';
-import { BlockAndPrivateData, DeliverResponse, FilteredBlock } from './protos/peer/events_pb';
 import { Signable } from './signable';
 import { SigningIdentity } from './signingidentity';
 
@@ -35,7 +34,7 @@ export interface BlockEventsRequest extends Signable {
      * }
      * ```
      */
-    getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<Block>>;
+    getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<common.Block>>;
 }
 
 /**
@@ -61,7 +60,7 @@ export interface FilteredBlockEventsRequest extends Signable {
      * }
      * ```
      */
-    getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<FilteredBlock>>;
+    getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<peer.FilteredBlock>>;
 }
 
 /**
@@ -87,20 +86,20 @@ export interface BlockAndPrivateDataEventsRequest extends Signable {
      * }
      * ```
      */
-    getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<BlockAndPrivateData>>;
+    getEvents(options?: CallOptions): Promise<CloseableAsyncIterable<peer.BlockAndPrivateData>>;
 }
 
 export interface BlockEventsRequestOptions {
     client: GatewayClient;
     signingIdentity: SigningIdentity;
-    request: Envelope;
+    request: common.Envelope;
 }
 
 type SignableBlockEventsRequestOptions = Pick<BlockEventsRequestOptions, 'request' | 'signingIdentity'>;
 
 class SignableBlockEventsRequest implements Signable {
     readonly #signingIdentity: SigningIdentity;
-    readonly #request: Envelope;
+    readonly #request: common.Envelope;
 
     constructor(options: Readonly<SignableBlockEventsRequestOptions>) {
         this.#signingIdentity = options.signingIdentity;
@@ -119,7 +118,7 @@ class SignableBlockEventsRequest implements Signable {
         this.#request.setSignature(signature);
     }
 
-    protected async getSignedRequest(): Promise<Envelope> {
+    protected async getSignedRequest(): Promise<common.Envelope> {
         if (!this.#isSigned()) {
             const signature = await this.#signingIdentity.sign(this.getDigest());
             this.setSignature(signature);
@@ -142,7 +141,7 @@ export class BlockEventsRequestImpl extends SignableBlockEventsRequest implement
         this.#client = options.client;
     }
 
-    async getEvents(options?: Readonly<CallOptions>): Promise<CloseableAsyncIterable<Block>> {
+    async getEvents(options?: Readonly<CallOptions>): Promise<CloseableAsyncIterable<common.Block>> {
         const signedRequest = await this.getSignedRequest();
         const responses = this.#client.blockEvents(signedRequest, options);
         return {
@@ -163,7 +162,7 @@ export class FilteredBlockEventsRequestImpl extends SignableBlockEventsRequest i
         this.#client = options.client;
     }
 
-    async getEvents(options?: Readonly<CallOptions>): Promise<CloseableAsyncIterable<FilteredBlock>> {
+    async getEvents(options?: Readonly<CallOptions>): Promise<CloseableAsyncIterable<peer.FilteredBlock>> {
         const signedRequest = await this.getSignedRequest();
         const responses = this.#client.filteredBlockEvents(signedRequest, options);
         return {
@@ -184,7 +183,7 @@ export class BlockAndPrivateDataEventsRequestImpl extends SignableBlockEventsReq
         this.#client = options.client;
     }
 
-    async getEvents(options?: Readonly<CallOptions>): Promise<CloseableAsyncIterable<BlockAndPrivateData>> {
+    async getEvents(options?: Readonly<CallOptions>): Promise<CloseableAsyncIterable<peer.BlockAndPrivateData>> {
         const signedRequest = await this.getSignedRequest();
         const responses = this.#client.blockAndPrivateDataEvents(signedRequest, options);
         return {
@@ -209,8 +208,8 @@ function mapAsyncIterator<T, R>(iterator: AsyncIterator<T>, map: (element: T) =>
     };
 }
 
-function getBlock<T>(response: DeliverResponse, getter: () => T | null | undefined): T {
-    if (response.getTypeCase() === DeliverResponse.TypeCase.STATUS) {
+function getBlock<T>(response: peer.DeliverResponse, getter: () => T | null | undefined): T {
+    if (response.getTypeCase() === peer.DeliverResponse.TypeCase.STATUS) {
         throw new Error(`Unexpected status response: ${response.getStatus()}`);
     }
     const block = getter();

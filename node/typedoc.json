@@ -3,11 +3,6 @@
     "entryPoints": [
         "src/index.ts"
     ],
-    "intentionallyNotExported": [
-        "Block",
-        "BlockAndPrivateData",
-        "FilteredBlock"
-    ],
     "out": "apidocs",
     "treatWarningsAsErrors": true
 }

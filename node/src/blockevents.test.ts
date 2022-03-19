@@ -5,18 +5,14 @@
  */
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
+import { common, ledger, msp, orderer, peer } from '@hyperledger/fabric-protos';
 import { CloseableAsyncIterable } from '.';
 import { BlockEventsOptions } from './blockeventsbuilder';
-import { BlockEventsRequest, BlockAndPrivateDataEventsRequest, FilteredBlockEventsRequest } from './blockeventsrequest';
+import { BlockAndPrivateDataEventsRequest, BlockEventsRequest, FilteredBlockEventsRequest } from './blockeventsrequest';
 import { assertDefined, Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { GatewayError } from './gatewayerror';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { Block, BlockHeader, ChannelHeader, Envelope, Payload, SignatureHeader, Status } from './protos/common/common_pb';
-import { TxPvtReadWriteSet } from './protos/ledger/rwset/rwset_pb';
-import { SerializedIdentity } from './protos/msp/identities_pb';
-import { SeekInfo, SeekPosition } from './protos/orderer/ab_pb';
-import { BlockAndPrivateData, DeliverResponse, FilteredBlock } from './protos/peer/events_pb';
 import { DuplexStreamResponseStub, MockGatewayGrpcClient, newDuplexStreamResponse, readElements } from './testutils.test';
 
 describe('Block Events', () => {
@@ -66,11 +62,11 @@ describe('Block Events', () => {
         network = gateway.getNetwork(channelName);
     });
 
-    function assertValidBlockEventsRequestHeader(payload: Payload): void {
+    function assertValidBlockEventsRequestHeader(payload: common.Payload): void {
         const header = assertDefined(payload.getHeader(), 'header');
-        const channelHeader = ChannelHeader.deserializeBinary(header.getChannelHeader_asU8());
-        const signatureHeader = SignatureHeader.deserializeBinary(header.getSignatureHeader_asU8());
-        const creator = SerializedIdentity.deserializeBinary(signatureHeader.getCreator_asU8());
+        const channelHeader = common.ChannelHeader.deserializeBinary(header.getChannelHeader_asU8());
+        const signatureHeader = common.SignatureHeader.deserializeBinary(header.getSignatureHeader_asU8());
+        const creator = msp.SerializedIdentity.deserializeBinary(signatureHeader.getCreator_asU8());
 
         const actualCreator: Identity = {
             credentials: creator.getIdBytes_asU8(),
@@ -83,13 +79,13 @@ describe('Block Events', () => {
 
     interface TestCase {
         description: string;
-        mockResponse(stream: DuplexStreamResponseStub<Envelope, DeliverResponse>): void;
+        mockResponse(stream: DuplexStreamResponseStub<common.Envelope, peer.DeliverResponse>): void;
         mockError(err: ServiceError): void;
         getEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<unknown>>;
         newEventsRequest(options?: BlockEventsOptions): BlockEventsRequest | FilteredBlockEventsRequest | BlockAndPrivateDataEventsRequest;
         getCallOptions(): CallOptions[];
-        newBlockResponse(blockNumber: number): DeliverResponse;
-        getBlockFromResponse(response: DeliverResponse): Block | FilteredBlock | BlockAndPrivateData | undefined;
+        newBlockResponse(blockNumber: number): peer.DeliverResponse;
+        getBlockFromResponse(response: peer.DeliverResponse): common.Block | peer.FilteredBlock | peer.BlockAndPrivateData | undefined;
     }
 
     const testCases: TestCase[] = [
@@ -111,13 +107,13 @@ describe('Block Events', () => {
                 return client.getBlockEventsOptions();
             },
             newBlockResponse(blockNumber) {
-                const header = new BlockHeader();
+                const header = new common.BlockHeader();
                 header.setNumber(blockNumber);
 
-                const block = new Block();
+                const block = new common.Block();
                 block.setHeader(header);
 
-                const response = new DeliverResponse();
+                const response = new peer.DeliverResponse();
                 response.setBlock(block);
 
                 return response;
@@ -144,10 +140,10 @@ describe('Block Events', () => {
                 return client.getFilteredBlockEventsOptions();
             },
             newBlockResponse(blockNumber) {
-                const block = new FilteredBlock();
+                const block = new peer.FilteredBlock();
                 block.setNumber(blockNumber);
 
-                const response = new DeliverResponse();
+                const response = new peer.DeliverResponse();
                 response.setFilteredBlock(block);
 
                 return response;
@@ -174,18 +170,18 @@ describe('Block Events', () => {
                 return client.getBlockAndPrivateDataEventsOptions();
             },
             newBlockResponse(blockNumber) {
-                const header = new BlockHeader();
+                const header = new common.BlockHeader();
                 header.setNumber(blockNumber);
 
-                const block = new Block();
+                const block = new common.Block();
                 block.setHeader(header);
 
-                const blockAndPrivateData = new BlockAndPrivateData();
+                const blockAndPrivateData = new peer.BlockAndPrivateData();
                 blockAndPrivateData.setBlock(block);
                 const privateData = blockAndPrivateData.getPrivateDataMapMap();
-                privateData.set(0, new TxPvtReadWriteSet());
+                privateData.set(0, new ledger.rwset.TxPvtReadWriteSet());
 
-                const response = new DeliverResponse();
+                const response = new peer.DeliverResponse();
                 response.setBlockAndPrivateData(blockAndPrivateData);
 
                 return response;
@@ -197,7 +193,7 @@ describe('Block Events', () => {
     ];
     testCases.forEach(testCase => describe(`${testCase.description}`, () => {
         it('sends valid request with default start position', async () => {
-            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([]);
+            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
             testCase.mockResponse(stream);
 
             await testCase.getEvents();
@@ -205,17 +201,17 @@ describe('Block Events', () => {
             expect(stream.write.mock.calls.length).toBe(1);
             const request = stream.write.mock.calls[0][0];
 
-            const payload = Payload.deserializeBinary(request.getPayload_asU8());
+            const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
             assertValidBlockEventsRequestHeader(payload);
 
-            const seekInfo = SeekInfo.deserializeBinary(payload.getData_asU8());
+            const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
             const start = seekInfo.getStart();
             expect(start).toBeDefined();
-            expect(start?.getTypeCase()).toBe(SeekPosition.TypeCase.NEXT_COMMIT);
+            expect(start?.getTypeCase()).toBe(orderer.SeekPosition.TypeCase.NEXT_COMMIT);
             expect(start?.getNextCommit()).toBeDefined();
             const stop = seekInfo.getStop();
             expect(stop).toBeDefined();
-            expect(stop?.getTypeCase()).toBe(SeekPosition.TypeCase.SPECIFIED);
+            expect(stop?.getTypeCase()).toBe(orderer.SeekPosition.TypeCase.SPECIFIED);
             expect(stop?.getSpecified()).toBeDefined();
             expect(stop?.getSpecified()?.getNumber()).toBe(Number.MAX_SAFE_INTEGER);
         });
@@ -229,7 +225,7 @@ describe('Block Events', () => {
 
         it('sends valid request with specified start block number', async () => {
             const startBlock = BigInt(418);
-            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([]);
+            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
             testCase.mockResponse(stream);
 
             await testCase.getEvents({ startBlock });
@@ -237,17 +233,17 @@ describe('Block Events', () => {
             expect(stream.write.mock.calls.length).toBe(1);
             const request = stream.write.mock.calls[0][0];
 
-            const payload = Payload.deserializeBinary(request.getPayload_asU8());
+            const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
             assertValidBlockEventsRequestHeader(payload);
 
-            const seekInfo = SeekInfo.deserializeBinary(payload.getData_asU8());
+            const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
             const start = seekInfo.getStart();
             expect(start).toBeDefined();
-            expect(start?.getTypeCase()).toBe(SeekPosition.TypeCase.SPECIFIED);
+            expect(start?.getTypeCase()).toBe(orderer.SeekPosition.TypeCase.SPECIFIED);
             expect(start?.getSpecified()?.getNumber()).toBe(Number(startBlock));
             const stop = seekInfo.getStop();
             expect(stop).toBeDefined();
-            expect(stop?.getTypeCase()).toBe(SeekPosition.TypeCase.SPECIFIED);
+            expect(stop?.getTypeCase()).toBe(orderer.SeekPosition.TypeCase.SPECIFIED);
             expect(stop?.getSpecified()).toBeDefined();
             expect(stop?.getSpecified()?.getNumber()).toBe(Number.MAX_SAFE_INTEGER);
         });
@@ -293,7 +289,7 @@ describe('Block Events', () => {
         });
 
         it('throws GatewayError on receive ServiceError', async () => {
-            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([serviceError]);
+            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([serviceError]);
             testCase.mockResponse(stream);
 
             const events = await testCase.getEvents();
@@ -308,20 +304,20 @@ describe('Block Events', () => {
         });
 
         it('throws on receive of status message', async () => {
-            const response = new DeliverResponse();
-            response.setStatus(Status.SERVICE_UNAVAILABLE);
-            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([response]);
+            const response = new peer.DeliverResponse();
+            response.setStatus(common.Status.SERVICE_UNAVAILABLE);
+            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([response]);
             testCase.mockResponse(stream);
 
             const events = await testCase.getEvents();
             const t = readElements(events, 1);
 
-            await expect(t).rejects.toThrow(String(Status.SERVICE_UNAVAILABLE));
+            await expect(t).rejects.toThrow(String(common.Status.SERVICE_UNAVAILABLE));
         });
 
         it('throws on receive of unexpected message type', async () => {
-            const response = new DeliverResponse();
-            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([response]);
+            const response = new peer.DeliverResponse();
+            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([response]);
             testCase.mockResponse(stream);
 
             const events = await testCase.getEvents();
@@ -332,7 +328,7 @@ describe('Block Events', () => {
 
         it('receives events', async () => {
             const responses = [testCase.newBlockResponse(1), testCase.newBlockResponse(2)];
-            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>(responses);
+            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>(responses);
             testCase.mockResponse(stream);
 
             const events = await testCase.getEvents();
@@ -345,7 +341,7 @@ describe('Block Events', () => {
 
         it('closing iterator cancels gRPC stream', async () => {
             const responses = [testCase.newBlockResponse(1), testCase.newBlockResponse(2)];
-            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>(responses);
+            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>(responses);
             testCase.mockResponse(stream);
 
             const events = await testCase.getEvents();

@@ -4,19 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { common, orderer } from '@hyperledger/fabric-protos';
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
-import { BlockEventsRequest, BlockEventsRequestImpl, BlockAndPrivateDataEventsRequest, BlockAndPrivateDataEventsRequestImpl, FilteredBlockEventsRequest, FilteredBlockEventsRequestImpl } from './blockeventsrequest';
+import { BlockAndPrivateDataEventsRequest, BlockAndPrivateDataEventsRequestImpl, BlockEventsRequest, BlockEventsRequestImpl, FilteredBlockEventsRequest, FilteredBlockEventsRequestImpl } from './blockeventsrequest';
 import { GatewayClient } from './client';
 import { EventsBuilder, EventsOptions } from './eventsbuilder';
-import { ChannelHeader, Envelope, Header, HeaderType, Payload, SignatureHeader } from './protos/common/common_pb';
-import { SeekInfo, SeekPosition, SeekSpecified } from './protos/orderer/ab_pb';
 import { SigningIdentity } from './signingidentity';
 
-function seekLargestBlockNumber(): SeekPosition {
-    const largestBlockNumber = new SeekSpecified();
+function seekLargestBlockNumber(): orderer.SeekPosition {
+    const largestBlockNumber = new orderer.SeekSpecified();
     largestBlockNumber.setNumber(Number.MAX_SAFE_INTEGER);
 
-    const result = new SeekPosition();
+    const result = new orderer.SeekPosition();
     result.setSpecified(largestBlockNumber);
 
     return result;
@@ -101,43 +100,43 @@ class BlockEventsEnvelopeBuilder {
         this.#eventsBuilder = new EventsBuilder(options);
     }
 
-    build(): Envelope {
-        const result = new Envelope();
+    build(): common.Envelope {
+        const result = new common.Envelope();
         result.setPayload(this.#newPayload().serializeBinary());
         return result;
     }
 
-    #newPayload(): Payload {
-        const result = new Payload();
+    #newPayload(): common.Payload {
+        const result = new common.Payload();
         result.setHeader(this.#newHeader());
         result.setData(this.#newSeekInfo().serializeBinary());
         return result;
     }
 
-    #newHeader(): Header {
-        const result = new Header();
+    #newHeader(): common.Header {
+        const result = new common.Header();
         result.setChannelHeader(this.#newChannelHeader().serializeBinary());
         result.setSignatureHeader(this.#newSignatureHeader().serializeBinary());
         return result;
     }
 
-    #newChannelHeader(): ChannelHeader {
-        const result = new ChannelHeader();
+    #newChannelHeader(): common.ChannelHeader {
+        const result = new common.ChannelHeader();
         result.setChannelId(this.#options.channelName);
         result.setEpoch(0);
         result.setTimestamp(Timestamp.fromDate(new Date()));
-        result.setType(HeaderType.DELIVER_SEEK_INFO);
+        result.setType(common.HeaderType.DELIVER_SEEK_INFO);
         return result;
     }
 
-    #newSignatureHeader(): SignatureHeader {
-        const result = new SignatureHeader();
+    #newSignatureHeader(): common.SignatureHeader {
+        const result = new common.SignatureHeader();
         result.setCreator(this.#options.signingIdentity.getCreator());
         return result;
     }
 
-    #newSeekInfo(): SeekInfo {
-        const result = new SeekInfo();
+    #newSeekInfo(): orderer.SeekInfo {
+        const result = new orderer.SeekInfo();
         result.setStart(this.#eventsBuilder.getStartPosition());
         result.setStop(seekLargestBlockNumber());
         return result;

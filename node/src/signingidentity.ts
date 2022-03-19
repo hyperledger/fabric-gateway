@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { msp } from '@hyperledger/fabric-protos';
 import { ConnectOptions } from './gateway';
 import { Hash } from './hash/hash';
 import { sha256 } from './hash/hashes';
 import { Identity } from './identity/identity';
 import { Signer } from './identity/signer';
-import { SerializedIdentity } from './protos/msp/identities_pb';
 
 export const undefinedSignerMessage = 'No signing implementation';
 
@@ -31,7 +31,7 @@ export class SigningIdentity {
             credentials: Uint8Array.from(options.identity.credentials)
         };
 
-        const serializedIdentity = new SerializedIdentity();
+        const serializedIdentity = new msp.SerializedIdentity();
         serializedIdentity.setMspid(options.identity.mspId);
         serializedIdentity.setIdBytes(options.identity.credentials);
         this.#creator = serializedIdentity.serializeBinary();

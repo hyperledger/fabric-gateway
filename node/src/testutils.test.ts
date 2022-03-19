@@ -5,16 +5,11 @@
  */
 
 import * as grpc from '@grpc/grpc-js';
+import { common, gateway, peer } from '@hyperledger/fabric-protos';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { chaincodeEventsMethod, CloseableAsyncIterable, commitStatusMethod, deliverFilteredMethod, deliverMethod, deliverWithPrivateDataMethod, DuplexStreamResponse, endorseMethod, evaluateMethod, GatewayGrpcClient, ServerStreamResponse, submitMethod } from './client';
-import { ChannelHeader, Envelope, Header, Payload } from './protos/common/common_pb';
-import { ChaincodeEventsResponse, CommitStatusResponse, EndorseRequest, EndorseResponse, EvaluateRequest, EvaluateResponse, SignedChaincodeEventsRequest, SignedCommitStatusRequest, SubmitRequest, SubmitResponse } from './protos/gateway/gateway_pb';
-import { DeliverResponse } from './protos/peer/events_pb';
-import { ChaincodeAction } from './protos/peer/proposal_pb';
-import { ProposalResponsePayload, Response } from './protos/peer/proposal_response_pb';
-import { ChaincodeActionPayload, ChaincodeEndorsedAction, Transaction, TransactionAction } from './protos/peer/transaction_pb';
 
 /* eslint-disable jest/no-export */
 
@@ -48,14 +43,14 @@ const emptyServerStreamResponse = {
 };
 
 export class MockGatewayGrpcClient implements GatewayGrpcClient {
-    readonly #chaincodeEventsMock = jest.fn() as MockServerStreamRequest<SignedChaincodeEventsRequest, ChaincodeEventsResponse>;
-    readonly #commitStatusMock = jest.fn() as MockUnaryRequest<SignedCommitStatusRequest, CommitStatusResponse>;
-    readonly #deliverMock = jest.fn() as MockDuplexStreamRequest<Envelope, DeliverResponse>;
-    readonly #deliverFilteredMock = jest.fn() as MockDuplexStreamRequest<Envelope, DeliverResponse>;
-    readonly #deliverWithPrivateDataMock = jest.fn() as MockDuplexStreamRequest<Envelope, DeliverResponse>;
-    readonly #endorseMock = jest.fn() as MockUnaryRequest<EndorseRequest, EndorseResponse>;
-    readonly #evaluateMock = jest.fn() as MockUnaryRequest<EvaluateRequest, EvaluateResponse>;
-    readonly #submitMock = jest.fn() as MockUnaryRequest<SubmitRequest, SubmitResponse>;
+    readonly #chaincodeEventsMock = jest.fn() as MockServerStreamRequest<gateway.SignedChaincodeEventsRequest, gateway.ChaincodeEventsResponse>;
+    readonly #commitStatusMock = jest.fn() as MockUnaryRequest<gateway.SignedCommitStatusRequest, gateway.CommitStatusResponse>;
+    readonly #deliverMock = jest.fn() as MockDuplexStreamRequest<common.Envelope, peer.DeliverResponse>;
+    readonly #deliverFilteredMock = jest.fn() as MockDuplexStreamRequest<common.Envelope, peer.DeliverResponse>;
+    readonly #deliverWithPrivateDataMock = jest.fn() as MockDuplexStreamRequest<common.Envelope, peer.DeliverResponse>;
+    readonly #endorseMock = jest.fn() as MockUnaryRequest<gateway.EndorseRequest, gateway.EndorseResponse>;
+    readonly #evaluateMock = jest.fn() as MockUnaryRequest<gateway.EvaluateRequest, gateway.EvaluateResponse>;
+    readonly #submitMock = jest.fn() as MockUnaryRequest<gateway.SubmitRequest, gateway.SubmitResponse>;
 
     #unaryMocks: Record<string, MockUnaryRequest<any, any>> = { // eslint-disable-line @typescript-eslint/no-explicit-any
         [commitStatusMethod]: this.#commitStatusMock,
@@ -77,11 +72,11 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
         this.mockBlockEventsResponse(emptyDuplexStreamResponse);
         this.mockBlockAndPrivateDataEventsResponse(emptyDuplexStreamResponse);
         this.mockChaincodeEventsResponse(emptyServerStreamResponse);
-        this.mockCommitStatusResponse(new CommitStatusResponse());
-        this.mockEndorseResponse(new EndorseResponse());
-        this.mockEvaluateResponse(new EvaluateResponse());
+        this.mockCommitStatusResponse(new gateway.CommitStatusResponse());
+        this.mockEndorseResponse(new gateway.EndorseResponse());
+        this.mockEvaluateResponse(new gateway.EvaluateResponse());
         this.mockFilteredBlockEventsResponse(emptyDuplexStreamResponse);
-        this.mockSubmitResponse(new SubmitResponse());
+        this.mockSubmitResponse(new gateway.SubmitResponse());
     }
 
     makeUnaryRequest<RequestType, ResponseType>(
@@ -126,23 +121,23 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
         return mock(options); // eslint-disable-line @typescript-eslint/no-unsafe-return
     }
 
-    getChaincodeEventsRequests(): SignedChaincodeEventsRequest[] {
+    getChaincodeEventsRequests(): gateway.SignedChaincodeEventsRequest[] {
         return this.#chaincodeEventsMock.mock.calls.map(call => call[0]);
     }
 
-    getCommitStatusRequests(): SignedCommitStatusRequest[] {
+    getCommitStatusRequests(): gateway.SignedCommitStatusRequest[] {
         return this.#commitStatusMock.mock.calls.map(call => call[0]);
     }
 
-    getEndorseRequests(): EndorseRequest[] {
+    getEndorseRequests(): gateway.EndorseRequest[] {
         return this.#endorseMock.mock.calls.map(call => call[0]);
     }
 
-    getEvaluateRequests(): EvaluateRequest[] {
+    getEvaluateRequests(): gateway.EvaluateRequest[] {
         return this.#evaluateMock.mock.calls.map(call => call[0]);
     }
 
-    getSubmitRequests(): SubmitRequest[] {
+    getSubmitRequests(): gateway.SubmitRequest[] {
         return this.#submitMock.mock.calls.map(call => call[0]);
     }
 
@@ -178,7 +173,7 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
         return this.#submitMock.mock.calls.map(call => call[1]);
     }
 
-    mockCommitStatusResponse(response: CommitStatusResponse): void {
+    mockCommitStatusResponse(response: gateway.CommitStatusResponse): void {
         this.#commitStatusMock.mockImplementation(fakeUnaryCall(undefined, response));
     }
 
@@ -186,7 +181,7 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
         this.#commitStatusMock.mockImplementation(fakeUnaryCall(err, undefined));
     }
 
-    mockEndorseResponse(response: EndorseResponse): void {
+    mockEndorseResponse(response: gateway.EndorseResponse): void {
         this.#endorseMock.mockImplementation(fakeUnaryCall(undefined, response));
     }
 
@@ -194,7 +189,7 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
         this.#endorseMock.mockImplementation(fakeUnaryCall(err, undefined));
     }
 
-    mockEvaluateResponse(response: EvaluateResponse): void {
+    mockEvaluateResponse(response: gateway.EvaluateResponse): void {
         this.#evaluateMock.mockImplementation(fakeUnaryCall(undefined, response));
     }
 
@@ -202,7 +197,7 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
         this.#evaluateMock.mockImplementation(fakeUnaryCall(err, undefined));
     }
 
-    mockSubmitResponse(response: SubmitResponse): void {
+    mockSubmitResponse(response: gateway.SubmitResponse): void {
         this.#submitMock.mockImplementation(fakeUnaryCall(undefined, response));
     }
 
@@ -210,7 +205,7 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
         this.#submitMock.mockImplementation(fakeUnaryCall(err, undefined));
     }
 
-    mockChaincodeEventsResponse(stream: ServerStreamResponse<ChaincodeEventsResponse>): void {
+    mockChaincodeEventsResponse(stream: ServerStreamResponse<gateway.ChaincodeEventsResponse>): void {
         this.#chaincodeEventsMock.mockReturnValue(stream);
     }
 
@@ -220,7 +215,7 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
         });
     }
 
-    mockBlockEventsResponse(stream: DuplexStreamResponse<Envelope, DeliverResponse>): void {
+    mockBlockEventsResponse(stream: DuplexStreamResponse<common.Envelope, peer.DeliverResponse>): void {
         this.#deliverMock.mockReturnValue(stream);
     }
 
@@ -230,7 +225,7 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
         });
     }
 
-    mockFilteredBlockEventsResponse(stream: DuplexStreamResponse<Envelope, DeliverResponse>): void {
+    mockFilteredBlockEventsResponse(stream: DuplexStreamResponse<common.Envelope, peer.DeliverResponse>): void {
         this.#deliverFilteredMock.mockReturnValue(stream);
     }
 
@@ -240,7 +235,7 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
         });
     }
 
-    mockBlockAndPrivateDataEventsResponse(stream: DuplexStreamResponse<Envelope, DeliverResponse>): void {
+    mockBlockAndPrivateDataEventsResponse(stream: DuplexStreamResponse<common.Envelope, peer.DeliverResponse>): void {
         this.#deliverWithPrivateDataMock.mockReturnValue(stream);
     }
 
@@ -261,43 +256,43 @@ function fakeUnaryCall<ResponseType>(err: grpc.ServiceError | undefined, respons
 export function newEndorseResponse(options: {
     result: Uint8Array;
     channelName?: string;
-}): EndorseResponse {
-    const chaincodeResponse = new Response();
+}): gateway.EndorseResponse {
+    const chaincodeResponse = new peer.Response();
     chaincodeResponse.setPayload(options.result);
 
-    const chaincodeAction = new ChaincodeAction();
+    const chaincodeAction = new peer.ChaincodeAction();
     chaincodeAction.setResponse(chaincodeResponse);
 
-    const responsePayload = new ProposalResponsePayload();
+    const responsePayload = new peer.ProposalResponsePayload();
     responsePayload.setExtension$(chaincodeAction.serializeBinary());
 
-    const endorsedAction = new ChaincodeEndorsedAction();
+    const endorsedAction = new peer.ChaincodeEndorsedAction();
     endorsedAction.setProposalResponsePayload(responsePayload.serializeBinary());
 
-    const actionPayload = new ChaincodeActionPayload();
+    const actionPayload = new peer.ChaincodeActionPayload();
     actionPayload.setAction(endorsedAction);
 
-    const transactionAction = new TransactionAction();
+    const transactionAction = new peer.TransactionAction();
     transactionAction.setPayload(actionPayload.serializeBinary());
 
-    const transaction = new Transaction();
+    const transaction = new peer.Transaction();
     transaction.setActionsList([transactionAction]);
 
-    const payload = new Payload();
+    const payload = new common.Payload();
     payload.setData(transaction.serializeBinary());
 
-    const channelHeader = new ChannelHeader();
+    const channelHeader = new common.ChannelHeader();
     channelHeader.setChannelId(options.channelName ?? 'network');
 
-    const header = new Header();
+    const header = new common.Header();
     header.setChannelHeader(channelHeader.serializeBinary());
 
     payload.setHeader(header);
 
-    const envelope = new Envelope();
+    const envelope = new common.Envelope();
     envelope.setPayload(payload.serializeBinary());
 
-    const endorseResponse = new EndorseResponse();
+    const endorseResponse = new gateway.EndorseResponse();
     endorseResponse.setPreparedTransaction(envelope);
 
     return endorseResponse;

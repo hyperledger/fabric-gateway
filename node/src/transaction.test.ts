@@ -5,14 +5,13 @@
  */
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
+import { gateway as gatewayproto, peer } from '@hyperledger/fabric-protos';
 import { CommitError } from './commiterror';
 import { CommitStatusError } from './commitstatuserror';
 import { Contract } from './contract';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { CommitStatusResponse } from './protos/gateway/gateway_pb';
-import { TxValidationCode } from './protos/peer/transaction_pb';
 import { SubmitError } from './submiterror';
 import { MockGatewayGrpcClient, newEndorseResponse } from './testutils.test';
 
@@ -52,8 +51,8 @@ describe('Transaction', () => {
         });
         client.mockEndorseResponse(endorseResponse);
 
-        const commitResult = new CommitStatusResponse();
-        commitResult.setResult(TxValidationCode.VALID);
+        const commitResult = new gatewayproto.CommitStatusResponse();
+        commitResult.setResult(peer.TxValidationCode.VALID);
         client.mockCommitStatusResponse(commitResult);
 
         identity = {
@@ -114,8 +113,8 @@ describe('Transaction', () => {
     });
 
     it('throws CommitError on commit failure', async () => {
-        const commitResult = new CommitStatusResponse();
-        commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
+        const commitResult = new gatewayproto.CommitStatusResponse();
+        commitResult.setResult(peer.TxValidationCode.MVCC_READ_CONFLICT);
         client.mockCommitStatusResponse(commitResult);
 
         const t = contract.submitTransaction('TRANSACTION_NAME');
@@ -182,19 +181,19 @@ describe('Transaction', () => {
     });
 
     it('commit returns transaction validation code', async () => {
-        const commitResult = new CommitStatusResponse();
-        commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
+        const commitResult = new gatewayproto.CommitStatusResponse();
+        commitResult.setResult(peer.TxValidationCode.MVCC_READ_CONFLICT);
         client.mockCommitStatusResponse(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
         const status = await commit.getStatus();
 
-        expect(status.code).toBe(TxValidationCode.MVCC_READ_CONFLICT);
+        expect(status.code).toBe(peer.TxValidationCode.MVCC_READ_CONFLICT);
     });
 
     it('commit returns successful for successful transaction', async () => {
-        const commitResult = new CommitStatusResponse();
-        commitResult.setResult(TxValidationCode.VALID);
+        const commitResult = new gatewayproto.CommitStatusResponse();
+        commitResult.setResult(peer.TxValidationCode.VALID);
         client.mockCommitStatusResponse(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
@@ -204,8 +203,8 @@ describe('Transaction', () => {
     });
 
     it('commit returns unsuccessful for failed transaction', async () => {
-        const commitResult = new CommitStatusResponse();
-        commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
+        const commitResult = new gatewayproto.CommitStatusResponse();
+        commitResult.setResult(peer.TxValidationCode.MVCC_READ_CONFLICT);
         client.mockCommitStatusResponse(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');
@@ -215,8 +214,8 @@ describe('Transaction', () => {
     });
 
     it('commit returns block number', async () => {
-        const commitResult = new CommitStatusResponse();
-        commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
+        const commitResult = new gatewayproto.CommitStatusResponse();
+        commitResult.setResult(peer.TxValidationCode.MVCC_READ_CONFLICT);
         commitResult.setBlockNumber(101);
         client.mockCommitStatusResponse(commitResult);
 
@@ -227,8 +226,8 @@ describe('Transaction', () => {
     });
 
     it('commit returns zero for missing block number', async () => {
-        const commitResult = new CommitStatusResponse();
-        commitResult.setResult(TxValidationCode.MVCC_READ_CONFLICT);
+        const commitResult = new gatewayproto.CommitStatusResponse();
+        commitResult.setResult(peer.TxValidationCode.MVCC_READ_CONFLICT);
         client.mockCommitStatusResponse(commitResult);
 
         const commit = await contract.submitAsync('TRANSACTION_NAME');

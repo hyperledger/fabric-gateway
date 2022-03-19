@@ -4,9 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { gateway, peer } from '@hyperledger/fabric-protos';
 import { CloseableAsyncIterable } from './client';
-import { ChaincodeEventsResponse } from './protos/gateway/gateway_pb';
-import { ChaincodeEvent as ChaincodeEventProto } from './protos/peer/chaincode_event_pb';
 
 /**
  * Chaincode event emitted by a transaction function.
@@ -38,7 +37,7 @@ export interface ChaincodeEvent {
     payload: Uint8Array;
 }
 
-export function newChaincodeEvents(responses: CloseableAsyncIterable<ChaincodeEventsResponse>): CloseableAsyncIterable<ChaincodeEvent> {
+export function newChaincodeEvents(responses: CloseableAsyncIterable<gateway.ChaincodeEventsResponse>): CloseableAsyncIterable<ChaincodeEvent> {
     return {
         async* [Symbol.asyncIterator]() { // eslint-disable-line @typescript-eslint/require-await
             for await (const response of responses) {
@@ -55,7 +54,7 @@ export function newChaincodeEvents(responses: CloseableAsyncIterable<ChaincodeEv
     };
 }
 
-function newChaincodeEvent(blockNumber: bigint, event: ChaincodeEventProto): ChaincodeEvent {
+function newChaincodeEvent(blockNumber: bigint, event: peer.ChaincodeEvent): ChaincodeEvent {
     return {
         blockNumber,
         chaincodeName: event.getChaincodeId() ?? '',

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { orderer } from '@hyperledger/fabric-protos';
 import { Checkpoint } from './checkpointer';
-import { SeekNextCommit, SeekPosition, SeekSpecified } from './protos/orderer/ab_pb';
 
 /**
  * Options used when requesting events.
@@ -29,12 +29,12 @@ export class EventsBuilder {
         this.#options = options;
     }
 
-    getStartPosition(): SeekPosition {
-        const result = new SeekPosition();
+    getStartPosition(): orderer.SeekPosition {
+        const result = new orderer.SeekPosition();
         const startBlock = this.#options.checkpoint?.getBlockNumber() ?? this.#options.startBlock;
 
         if (startBlock != undefined) {
-            const specified = new SeekSpecified();
+            const specified = new orderer.SeekSpecified();
 
             specified.setNumber(Number(startBlock));
             result.setSpecified(specified);
@@ -42,7 +42,7 @@ export class EventsBuilder {
             return result;
         }
 
-        result.setNextCommit(new SeekNextCommit());
+        result.setNextCommit(new orderer.SeekNextCommit());
         return result;
     }
 }

@@ -5,24 +5,22 @@
  */
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
+import { gateway as gatewayproto, orderer, peer } from '@hyperledger/fabric-protos';
 import { ChaincodeEvent } from './chaincodeevent';
+import * as checkpointers from './checkpointers';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { GatewayError } from './gatewayerror';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, ChaincodeEventsResponse, SignedChaincodeEventsRequest } from './protos/gateway/gateway_pb';
-import { SeekPosition } from './protos/orderer/ab_pb';
-import { ChaincodeEvent as ChaincodeEventProto } from './protos/peer/chaincode_event_pb';
 import { MockGatewayGrpcClient, newServerStreamResponse, readElements } from './testutils.test';
-import * as checkpointers from './checkpointers';
 
-function assertDecodeChaincodeEventsRequest(signedRequest: SignedChaincodeEventsRequest): ChaincodeEventsRequestProto {
+function assertDecodeChaincodeEventsRequest(signedRequest: gatewayproto.SignedChaincodeEventsRequest): gatewayproto.ChaincodeEventsRequest {
     const requestBytes = signedRequest.getRequest_asU8();
     expect(requestBytes).toBeDefined();
-    return ChaincodeEventsRequestProto.deserializeBinary(requestBytes);
+    return gatewayproto.ChaincodeEventsRequest.deserializeBinary(requestBytes);
 }
 
-function newChaincodeEvent(blockNumber: number, event: ChaincodeEventProto): ChaincodeEvent {
+function newChaincodeEvent(blockNumber: number, event: peer.ChaincodeEvent): ChaincodeEvent {
     return {
         blockNumber: BigInt(blockNumber),
         chaincodeName: event.getChaincodeId() ?? '',
@@ -35,12 +33,12 @@ function newChaincodeEvent(blockNumber: number, event: ChaincodeEventProto): Cha
 interface ExpectedRequest{
     channelName: string;
     chaincodeName: string;
-    typeCase: SeekPosition.TypeCase;
+    typeCase: orderer.SeekPosition.TypeCase;
     blockNumber?: bigint;
     transactionId?: string;
 }
 
-function assertChaincodeEventRequest(actual: ChaincodeEventsRequestProto, expectedRequest: ExpectedRequest): void {
+function assertChaincodeEventRequest(actual: gatewayproto.ChaincodeEventsRequest, expectedRequest: ExpectedRequest): void {
     expect(actual.getChannelId()).toBe(expectedRequest.channelName);
     expect(actual.getChaincodeId()).toBe(expectedRequest.chaincodeName);
 
@@ -71,19 +69,19 @@ describe('Chaincode Events', () => {
     let gateway: Gateway;
     let network: Network;
 
-    const event1 = new ChaincodeEventProto();
+    const event1 = new peer.ChaincodeEvent();
     event1.setChaincodeId('CHAINCODE');
     event1.setTxId('tx1');
     event1.setEventName('event1'),
     event1.setPayload(Buffer.from('payload1'));
 
-    const event2 = new ChaincodeEventProto();
+    const event2 = new peer.ChaincodeEvent();
     event2.setChaincodeId('CHAINCODE');
     event2.setTxId('tx2');
     event2.setEventName('event2'),
     event2.setPayload(Buffer.from('payload2'));
 
-    const event3 = new ChaincodeEventProto();
+    const event3 = new peer.ChaincodeEvent();
     event3.setChaincodeId('CHAINCODE');
     event3.setTxId('tx3');
     event3.setEventName('event3'),
@@ -122,7 +120,7 @@ describe('Chaincode Events', () => {
             const expected: ExpectedRequest = {
                 channelName: channelName,
                 chaincodeName: 'CHAINCODE',
-                typeCase: SeekPosition.TypeCase.NEXT_COMMIT
+                typeCase: orderer.SeekPosition.TypeCase.NEXT_COMMIT
             };
 
             const request = assertDecodeChaincodeEventsRequest(signedRequest);
@@ -147,7 +145,7 @@ describe('Chaincode Events', () => {
             const expected: ExpectedRequest = {
                 channelName: channelName,
                 chaincodeName: 'CHAINCODE',
-                typeCase: SeekPosition.TypeCase.SPECIFIED,
+                typeCase: orderer.SeekPosition.TypeCase.SPECIFIED,
                 blockNumber: startBlock
             };
 
@@ -167,7 +165,7 @@ describe('Chaincode Events', () => {
             const expected: ExpectedRequest = {
                 channelName: channelName,
                 chaincodeName: 'CHAINCODE',
-                typeCase: SeekPosition.TypeCase.SPECIFIED,
+                typeCase: orderer.SeekPosition.TypeCase.SPECIFIED,
                 blockNumber: startBlock,
                 transactionId: ''
             };
@@ -188,7 +186,7 @@ describe('Chaincode Events', () => {
             const expected: ExpectedRequest = {
                 channelName: channelName,
                 chaincodeName: 'CHAINCODE',
-                typeCase: SeekPosition.TypeCase.SPECIFIED,
+                typeCase: orderer.SeekPosition.TypeCase.SPECIFIED,
                 blockNumber: 1n+ 1n,
                 transactionId: ''
             };
@@ -209,7 +207,7 @@ describe('Chaincode Events', () => {
             const expected: ExpectedRequest = {
                 channelName: channelName,
                 chaincodeName: 'CHAINCODE',
-                typeCase: SeekPosition.TypeCase.SPECIFIED,
+                typeCase: orderer.SeekPosition.TypeCase.SPECIFIED,
                 blockNumber: 1n,
                 transactionId: 'txn1'
             };
@@ -228,7 +226,7 @@ describe('Chaincode Events', () => {
             const expected: ExpectedRequest = {
                 channelName: channelName,
                 chaincodeName: 'CHAINCODE',
-                typeCase: SeekPosition.TypeCase.NEXT_COMMIT,
+                typeCase: orderer.SeekPosition.TypeCase.NEXT_COMMIT,
             };
 
             const request = assertDecodeChaincodeEventsRequest(signedRequest);
@@ -247,7 +245,7 @@ describe('Chaincode Events', () => {
             const expected: ExpectedRequest = {
                 channelName: channelName,
                 chaincodeName: 'CHAINCODE',
-                typeCase: SeekPosition.TypeCase.SPECIFIED,
+                typeCase: orderer.SeekPosition.TypeCase.SPECIFIED,
                 blockNumber: 1n,
                 transactionId: 'txn1'
             };
@@ -275,7 +273,7 @@ describe('Chaincode Events', () => {
             const expected: ExpectedRequest = {
                 channelName: channelName,
                 chaincodeName: 'CHAINCODE',
-                typeCase: SeekPosition.TypeCase.SPECIFIED,
+                typeCase: orderer.SeekPosition.TypeCase.SPECIFIED,
                 blockNumber: 1n,
                 transactionId: 'txn1'
             };
@@ -326,11 +324,11 @@ describe('Chaincode Events', () => {
     });
 
     describe('event delivery', () => {
-        const response1 = new ChaincodeEventsResponse();
+        const response1 = new gatewayproto.ChaincodeEventsResponse();
         response1.setBlockNumber(1);
         response1.setEventsList([ event1, event2 ]);
 
-        const response2 = new ChaincodeEventsResponse();
+        const response2 = new gatewayproto.ChaincodeEventsResponse();
         response2.setBlockNumber(2);
         response2.setEventsList([ event3 ]);
 
@@ -360,7 +358,7 @@ describe('Chaincode Events', () => {
         });
 
         it('throws GatewayError on call ServiceError', async () => {
-            client.mockChaincodeEventsResponse(newServerStreamResponse<ChaincodeEventsResponse>([ serviceError ]));
+            client.mockChaincodeEventsResponse(newServerStreamResponse<gatewayproto.ChaincodeEventsResponse>([ serviceError ]));
 
             const events = await network.getChaincodeEvents('CHAINCODE');
             const t = readElements(events, 1);

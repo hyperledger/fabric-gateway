@@ -16,6 +16,5 @@
         "src/"
     ],
     "exclude": [
-        "src/protos/"
     ]
 }

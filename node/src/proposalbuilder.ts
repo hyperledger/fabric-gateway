@@ -4,13 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { common, gateway, peer } from '@hyperledger/fabric-protos';
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
 import { GatewayClient } from './client';
 import { Proposal, ProposalImpl } from './proposal';
-import { ChannelHeader, Header, HeaderType } from './protos/common/common_pb';
-import { ProposedTransaction } from './protos/gateway/gateway_pb';
-import { ChaincodeID, ChaincodeInput, ChaincodeInvocationSpec, ChaincodeSpec } from './protos/peer/chaincode_pb';
-import { ChaincodeHeaderExtension, ChaincodeProposalPayload, Proposal as ProposalProto, SignedProposal } from './protos/peer/proposal_pb';
 import { SigningIdentity } from './signingidentity';
 import { TransactionContext } from './transactioncontext';
 
@@ -62,8 +59,8 @@ export class ProposalBuilder {
         });
     }
 
-    #newProposedTransaction(): ProposedTransaction {
-        const result = new ProposedTransaction();
+    #newProposedTransaction(): gateway.ProposedTransaction {
+        const result = new gateway.ProposedTransaction();
         result.setProposal(this.#newSignedProposal());
         result.setTransactionId(this.#transactionContext.getTransactionId());
         if (this.#options.endorsingOrganizations) {
@@ -72,29 +69,29 @@ export class ProposalBuilder {
         return result;
     }
 
-    #newSignedProposal(): SignedProposal {
-        const result = new SignedProposal();
+    #newSignedProposal(): peer.SignedProposal {
+        const result = new peer.SignedProposal();
         result.setProposalBytes(this.#newProposal().serializeBinary());
         return result;
     }
 
-    #newProposal(): ProposalProto {
-        const result = new ProposalProto();
+    #newProposal(): peer.Proposal {
+        const result = new peer.Proposal();
         result.setHeader(this.#newHeader().serializeBinary());
         result.setPayload(this.#newChaincodeProposalPayload().serializeBinary());
         return result;
     }
 
-    #newHeader(): Header {
-        const result = new Header();
+    #newHeader(): common.Header {
+        const result = new common.Header();
         result.setChannelHeader(this.#newChannelHeader().serializeBinary());
         result.setSignatureHeader(this.#transactionContext.getSignatureHeader().serializeBinary());
         return result;
     }
 
-    #newChannelHeader(): ChannelHeader {
-        const result = new ChannelHeader();
-        result.setType(HeaderType.ENDORSER_TRANSACTION);
+    #newChannelHeader(): common.ChannelHeader {
+        const result = new common.ChannelHeader();
+        result.setType(common.HeaderType.ENDORSER_TRANSACTION);
         result.setTxId(this.#transactionContext.getTransactionId());
         result.setTimestamp(Timestamp.fromDate(new Date()));
         result.setChannelId(this.#options.channelName);
@@ -103,20 +100,20 @@ export class ProposalBuilder {
         return result;
     }
 
-    #newChaincodeHeaderExtension(): ChaincodeHeaderExtension {
-        const result = new ChaincodeHeaderExtension();
+    #newChaincodeHeaderExtension(): peer.ChaincodeHeaderExtension {
+        const result = new peer.ChaincodeHeaderExtension();
         result.setChaincodeId(this.#newChaincodeID());
         return result;
     }
 
-    #newChaincodeID(): ChaincodeID {
-        const result = new ChaincodeID();
+    #newChaincodeID(): peer.ChaincodeID {
+        const result = new peer.ChaincodeID();
         result.setName(this.#options.chaincodeName);
         return result;
     }
 
-    #newChaincodeProposalPayload(): ChaincodeProposalPayload {
-        const result = new ChaincodeProposalPayload();
+    #newChaincodeProposalPayload(): peer.ChaincodeProposalPayload {
+        const result = new peer.ChaincodeProposalPayload();
         result.setInput(this.#newChaincodeInvocationSpec().serializeBinary());
         const transientMap = result.getTransientmapMap();
         for (const [key, value] of Object.entries(this.#getTransientData())) {
@@ -125,22 +122,22 @@ export class ProposalBuilder {
         return result;
     }
 
-    #newChaincodeInvocationSpec(): ChaincodeInvocationSpec {
-        const result = new ChaincodeInvocationSpec();
+    #newChaincodeInvocationSpec(): peer.ChaincodeInvocationSpec {
+        const result = new peer.ChaincodeInvocationSpec();
         result.setChaincodeSpec(this.#newChaincodeSpec());
         return result;
     }
 
-    #newChaincodeSpec(): ChaincodeSpec {
-        const result = new ChaincodeSpec();
-        result.setType(ChaincodeSpec.Type.NODE);
+    #newChaincodeSpec(): peer.ChaincodeSpec {
+        const result = new peer.ChaincodeSpec();
+        result.setType(peer.ChaincodeSpec.Type.NODE);
         result.setChaincodeId(this.#newChaincodeID());
         result.setInput(this.#newChaincodeInput());
         return result;
     }
 
-    #newChaincodeInput(): ChaincodeInput {
-        const result = new ChaincodeInput();
+    #newChaincodeInput(): peer.ChaincodeInput {
+        const result = new peer.ChaincodeInput();
         result.setArgsList(this.#getArgsAsBytes());
         return result;
     }

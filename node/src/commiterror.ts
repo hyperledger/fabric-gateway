@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TxValidationCodeMap } from './protos/peer/transaction_pb';
+import { peer } from '@hyperledger/fabric-protos';
 import { Status, StatusNames } from './status';
 
 /**
@@ -14,7 +14,7 @@ export class CommitError extends Error {
     /**
      * Transaction validation status code. The value corresponds to one of the values enumerated by {@link StatusCode}.
      */
-    code: TxValidationCodeMap[keyof TxValidationCodeMap];
+    code: peer.TxValidationCodeMap[keyof peer.TxValidationCodeMap];
 
     /**
      * The ID of the transaction.

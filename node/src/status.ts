@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TxValidationCode, TxValidationCodeMap } from './protos/peer/transaction_pb';
+import { peer } from '@hyperledger/fabric-protos';
 
 /**
  * Enumeration of transaction status codes.
  */
-export const StatusCode = Object.freeze(TxValidationCode) as { [P in keyof typeof TxValidationCode]: typeof TxValidationCode[P] };
+export const StatusCode = Object.freeze(peer.TxValidationCode) as { [P in keyof typeof peer.TxValidationCode]: typeof peer.TxValidationCode[P] };
 
 export const StatusNames = Object.freeze(
     Object.fromEntries(
@@ -31,7 +31,7 @@ export interface Status {
     /**
      * Transaction validation status code. The value corresponds to one of the values enumerated by {@link StatusCode}.
      */
-    code: TxValidationCodeMap[keyof TxValidationCodeMap];
+    code: peer.TxValidationCodeMap[keyof peer.TxValidationCodeMap];
 
     /**
      * `true` if the transaction committed successfully; otherwise `false`.
@@ -42,5 +42,4 @@ export interface Status {
      * The ID of the transaction.
      */
     transactionId: string;
-
 }

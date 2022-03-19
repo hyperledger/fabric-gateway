@@ -5,40 +5,34 @@
  */
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
+import { common, gateway as gatewayproto, msp, peer } from '@hyperledger/fabric-protos';
 import { Contract } from './contract';
 import { EndorseError } from './endorseerror';
 import { Gateway, internalConnect } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { ChannelHeader, Header, SignatureHeader } from './protos/common/common_pb';
-import { CommitStatusResponse, EndorseRequest, EvaluateRequest, EvaluateResponse } from './protos/gateway/gateway_pb';
-import { SerializedIdentity } from './protos/msp/identities_pb';
-import { ChaincodeInvocationSpec, ChaincodeSpec } from './protos/peer/chaincode_pb';
-import { ChaincodeProposalPayload, Proposal as ProposalProto } from './protos/peer/proposal_pb';
-import { Response } from './protos/peer/proposal_response_pb';
-import { TxValidationCode } from './protos/peer/transaction_pb';
 import { MockGatewayGrpcClient, newEndorseResponse } from './testutils.test';
 
-function assertDecodeEvaluateRequest(request: EvaluateRequest): ProposalProto {
+function assertDecodeEvaluateRequest(request: gatewayproto.EvaluateRequest): peer.Proposal {
     const proposalBytes = request.getProposedTransaction()?.getProposalBytes_asU8();
     expect(proposalBytes).toBeDefined(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
-    return ProposalProto.deserializeBinary(proposalBytes!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+    return peer.Proposal.deserializeBinary(proposalBytes!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
 }
 
-function assertDecodeEndorseRequest(request: EndorseRequest): ProposalProto {
+function assertDecodeEndorseRequest(request: gatewayproto.EndorseRequest): peer.Proposal {
     const proposalBytes = request.getProposedTransaction()?.getProposalBytes_asU8();
     expect(proposalBytes).toBeDefined(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
-    return ProposalProto.deserializeBinary(proposalBytes!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+    return peer.Proposal.deserializeBinary(proposalBytes!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
 }
 
-function assertDecodeChaincodeSpec(proposal: ProposalProto): ChaincodeSpec {
-    const payload = ChaincodeProposalPayload.deserializeBinary(proposal.getPayload_asU8());
-    const invocationSpec = ChaincodeInvocationSpec.deserializeBinary(payload.getInput_asU8());
+function assertDecodeChaincodeSpec(proposal: peer.Proposal): peer.ChaincodeSpec {
+    const payload = peer.ChaincodeProposalPayload.deserializeBinary(proposal.getPayload_asU8());
+    const invocationSpec = peer.ChaincodeInvocationSpec.deserializeBinary(payload.getInput_asU8());
     expect(invocationSpec.getChaincodeSpec()).toBeDefined();
     return invocationSpec.getChaincodeSpec()!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
 }
 
-function assertDecodeArgsAsStrings(proposal: ProposalProto): string[] {
+function assertDecodeArgsAsStrings(proposal: peer.Proposal): string[] {
     const chaincodeSpec = assertDecodeChaincodeSpec(proposal);
     expect(chaincodeSpec.getInput()).toBeDefined();
 
@@ -48,18 +42,18 @@ function assertDecodeArgsAsStrings(proposal: ProposalProto): string[] {
     return args.map(arg => Buffer.from(arg).toString());
 }
 
-function assertDecodeHeader(proposal: ProposalProto): Header {
-    return Header.deserializeBinary(proposal.getHeader_asU8());
+function assertDecodeHeader(proposal: peer.Proposal): common.Header {
+    return common.Header.deserializeBinary(proposal.getHeader_asU8());
 }
 
-function assertDecodeSignatureHeader(proposal: ProposalProto): SignatureHeader {
+function assertDecodeSignatureHeader(proposal: peer.Proposal): common.SignatureHeader {
     const header = assertDecodeHeader(proposal);
-    return SignatureHeader.deserializeBinary(header.getSignatureHeader_asU8());
+    return common.SignatureHeader.deserializeBinary(header.getSignatureHeader_asU8());
 }
 
-function assertDecodeChannelHeader(proposal: ProposalProto): ChannelHeader {
+function assertDecodeChannelHeader(proposal: peer.Proposal): common.ChannelHeader {
     const header = assertDecodeHeader(proposal);
-    return ChannelHeader.deserializeBinary(header.getChannelHeader_asU8());
+    return common.ChannelHeader.deserializeBinary(header.getChannelHeader_asU8());
 }
 
 describe('Proposal', () => {
@@ -116,10 +110,10 @@ describe('Proposal', () => {
         const expectedResult = 'TX_RESULT';
 
         beforeEach(() => {
-            const txResult = new Response();
+            const txResult = new peer.Response();
             txResult.setPayload(Buffer.from(expectedResult));
 
-            const evaluateResult = new EvaluateResponse();
+            const evaluateResult = new gatewayproto.EvaluateResponse();
             evaluateResult.setResult(txResult);
 
             client.mockEvaluateResponse(evaluateResult);
@@ -211,8 +205,8 @@ describe('Proposal', () => {
 
             const evaluateRequest = client.getEvaluateRequests()[0];
             const proposal_bytes = evaluateRequest.getProposedTransaction()?.getProposalBytes_asU8() ?? Buffer.from('');
-            const proposal = ProposalProto.deserializeBinary(proposal_bytes);
-            const payload = ChaincodeProposalPayload.deserializeBinary(proposal.getPayload_asU8());
+            const proposal = peer.Proposal.deserializeBinary(proposal_bytes);
+            const payload = peer.ChaincodeProposalPayload.deserializeBinary(proposal.getPayload_asU8());
 
             const actual = Object.fromEntries(payload.getTransientmapMap().getEntryList());
 
@@ -228,8 +222,8 @@ describe('Proposal', () => {
 
             const evaluateRequest = client.getEvaluateRequests()[0];
             const proposal_bytes = evaluateRequest.getProposedTransaction()?.getProposalBytes_asU8() ?? Buffer.from('');
-            const proposal = ProposalProto.deserializeBinary(proposal_bytes);
-            const payload = ChaincodeProposalPayload.deserializeBinary(proposal.getPayload_asU8());
+            const proposal = peer.Proposal.deserializeBinary(proposal_bytes);
+            const payload = peer.ChaincodeProposalPayload.deserializeBinary(proposal.getPayload_asU8());
 
             const actual = Object.fromEntries(payload.getTransientmapMap().getEntryList());
             const expected: Record<string, Uint8Array> = {};
@@ -275,7 +269,7 @@ describe('Proposal', () => {
             const proposal = assertDecodeEvaluateRequest(evaluateRequest);
             const signatureHeader = assertDecodeSignatureHeader(proposal);
 
-            const expected = new SerializedIdentity();
+            const expected = new msp.SerializedIdentity();
             expected.setMspid(identity.mspId);
             expected.setIdBytes(identity.credentials);
 
@@ -346,8 +340,8 @@ describe('Proposal', () => {
             });
             client.mockEndorseResponse(endorseResult);
 
-            const commitResult = new CommitStatusResponse();
-            commitResult.setResult(TxValidationCode.VALID);
+            const commitResult = new gatewayproto.CommitStatusResponse();
+            commitResult.setResult(peer.TxValidationCode.VALID);
             client.mockCommitStatusResponse(commitResult);
         });
 
@@ -461,7 +455,7 @@ describe('Proposal', () => {
             const proposal = assertDecodeEndorseRequest(endorseRequest);
             const signatureHeader = assertDecodeSignatureHeader(proposal);
 
-            const expected = new SerializedIdentity();
+            const expected = new msp.SerializedIdentity();
             expected.setMspid(identity.mspId);
             expected.setIdBytes(identity.credentials);
 

@@ -5,11 +5,9 @@
  */
 
 import { CallOptions } from '@grpc/grpc-js';
+import { common, gateway, peer } from '@hyperledger/fabric-protos';
 import { GatewayClient } from './client';
 import { assertDefined } from './gateway';
-import { Envelope } from './protos/common/common_pb';
-import { EndorseRequest, EvaluateRequest, PreparedTransaction, ProposedTransaction } from './protos/gateway/gateway_pb';
-import { SignedProposal } from './protos/peer/proposal_pb';
 import { Signable } from './signable';
 import { SigningIdentity } from './signingidentity';
 import { Transaction, TransactionImpl } from './transaction';
@@ -48,15 +46,15 @@ export interface ProposalImplOptions {
     client: GatewayClient;
     signingIdentity: SigningIdentity;
     channelName: string;
-    proposedTransaction: ProposedTransaction;
+    proposedTransaction: gateway.ProposedTransaction;
 }
 
 export class ProposalImpl implements Proposal {
     readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
     readonly #channelName: string;
-    readonly #proposedTransaction: ProposedTransaction;
-    readonly #proposal: SignedProposal;
+    readonly #proposedTransaction: gateway.ProposedTransaction;
+    readonly #proposal: peer.SignedProposal;
 
     constructor(options: Readonly<ProposalImplOptions>) {
         this.#client = options.client;
@@ -118,8 +116,8 @@ export class ProposalImpl implements Proposal {
         return signatureLength > 0;
     }
 
-    #newEvaluateRequest(): EvaluateRequest {
-        const result = new EvaluateRequest();
+    #newEvaluateRequest(): gateway.EvaluateRequest {
+        const result = new gateway.EvaluateRequest();
         result.setTransactionId(this.#proposedTransaction.getTransactionId());
         result.setChannelId(this.#channelName);
         result.setProposedTransaction(this.#proposal);
@@ -127,8 +125,8 @@ export class ProposalImpl implements Proposal {
         return result;
     }
 
-    #newEndorseRequest(): EndorseRequest {
-        const result = new EndorseRequest();
+    #newEndorseRequest(): gateway.EndorseRequest {
+        const result = new gateway.EndorseRequest();
         result.setTransactionId(this.#proposedTransaction.getTransactionId());
         result.setChannelId(this.#channelName);
         result.setProposedTransaction(this.#proposal);
@@ -136,8 +134,8 @@ export class ProposalImpl implements Proposal {
         return result;
     }
 
-    #newPreparedTransaction(envelope: Envelope): PreparedTransaction {
-        const result = new PreparedTransaction();
+    #newPreparedTransaction(envelope: common.Envelope): gateway.PreparedTransaction {
+        const result = new gateway.PreparedTransaction();
         result.setEnvelope(envelope);
         result.setTransactionId(this.#proposedTransaction.getTransactionId());
         return result;

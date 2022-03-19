@@ -5,8 +5,9 @@
  */
 
 import { CallOptions, Client } from '@grpc/grpc-js';
+import { common, gateway, peer } from '@hyperledger/fabric-protos';
 import { ChaincodeEventsRequest, Commit, Proposal, Transaction } from '.';
-import { BlockEventsRequest, BlockEventsRequestImpl, BlockAndPrivateDataEventsRequest, BlockAndPrivateDataEventsRequestImpl, FilteredBlockEventsRequest, FilteredBlockEventsRequestImpl } from './blockeventsrequest';
+import { BlockAndPrivateDataEventsRequest, BlockAndPrivateDataEventsRequestImpl, BlockEventsRequest, BlockEventsRequestImpl, FilteredBlockEventsRequest, FilteredBlockEventsRequestImpl } from './blockeventsrequest';
 import { ChaincodeEventsRequestImpl } from './chaincodeeventsrequest';
 import { GatewayClient, GatewayGrpcClient, newGatewayClient } from './client';
 import { CommitImpl } from './commit';
@@ -15,9 +16,6 @@ import { Identity } from './identity/identity';
 import { Signer } from './identity/signer';
 import { Network, NetworkImpl } from './network';
 import { ProposalImpl } from './proposal';
-import { ChannelHeader, Envelope, Header } from './protos/common/common_pb';
-import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, CommitStatusRequest, PreparedTransaction, ProposedTransaction, SignedCommitStatusRequest } from './protos/gateway/gateway_pb';
-import { Proposal as ProposalProto } from './protos/peer/proposal_pb';
 import { SigningIdentity } from './signingidentity';
 import { TransactionImpl } from './transaction';
 
@@ -237,11 +235,11 @@ class GatewayImpl {
     }
 
     newSignedProposal(bytes: Uint8Array, signature: Uint8Array): Proposal {
-        const proposedTransaction = ProposedTransaction.deserializeBinary(bytes);
+        const proposedTransaction = gateway.ProposedTransaction.deserializeBinary(bytes);
         const signedProposal = assertDefined(proposedTransaction.getProposal(), 'Missing signed proposal');
-        const proposal = ProposalProto.deserializeBinary(signedProposal.getProposalBytes_asU8());
-        const header = Header.deserializeBinary(proposal.getHeader_asU8());
-        const channelHeader = ChannelHeader.deserializeBinary(header.getChannelHeader_asU8());
+        const proposal = peer.Proposal.deserializeBinary(signedProposal.getProposalBytes_asU8());
+        const header = common.Header.deserializeBinary(proposal.getHeader_asU8());
+        const channelHeader = common.ChannelHeader.deserializeBinary(header.getChannelHeader_asU8());
 
         const result = new ProposalImpl({
             client: this.#client,
@@ -255,7 +253,7 @@ class GatewayImpl {
     }
 
     newSignedTransaction(bytes: Uint8Array, signature: Uint8Array): Transaction {
-        const preparedTransaction = PreparedTransaction.deserializeBinary(bytes);
+        const preparedTransaction = gateway.PreparedTransaction.deserializeBinary(bytes);
 
         const result = new TransactionImpl({
             client: this.#client,
@@ -268,8 +266,8 @@ class GatewayImpl {
     }
 
     newSignedCommit(bytes: Uint8Array, signature: Uint8Array): Commit {
-        const signedRequest = SignedCommitStatusRequest.deserializeBinary(bytes);
-        const request = CommitStatusRequest.deserializeBinary(signedRequest.getRequest_asU8());
+        const signedRequest = gateway.SignedCommitStatusRequest.deserializeBinary(bytes);
+        const request = gateway.CommitStatusRequest.deserializeBinary(signedRequest.getRequest_asU8());
 
         const result = new CommitImpl({
             client: this.#client,
@@ -283,7 +281,7 @@ class GatewayImpl {
     }
 
     newSignedChaincodeEventsRequest(bytes: Uint8Array, signature: Uint8Array): ChaincodeEventsRequest {
-        const request = ChaincodeEventsRequestProto.deserializeBinary(bytes);
+        const request = gateway.ChaincodeEventsRequest.deserializeBinary(bytes);
 
         const result = new ChaincodeEventsRequestImpl({
             client: this.#client,
@@ -296,7 +294,7 @@ class GatewayImpl {
     }
 
     newSignedBlockEventsRequest(bytes: Uint8Array, signature: Uint8Array): BlockEventsRequest {
-        const request = Envelope.deserializeBinary(bytes);
+        const request = common.Envelope.deserializeBinary(bytes);
 
         const result = new BlockEventsRequestImpl({
             client: this.#client,
@@ -309,7 +307,7 @@ class GatewayImpl {
     }
 
     newSignedFilteredBlockEventsRequest(bytes: Uint8Array, signature: Uint8Array): FilteredBlockEventsRequest {
-        const request = Envelope.deserializeBinary(bytes);
+        const request = common.Envelope.deserializeBinary(bytes);
 
         const result = new FilteredBlockEventsRequestImpl({
             client: this.#client,
@@ -322,7 +320,7 @@ class GatewayImpl {
     }
 
     newSignedBlockAndPrivateDataEventsRequest(bytes: Uint8Array, signature: Uint8Array): BlockAndPrivateDataEventsRequest {
-        const request = Envelope.deserializeBinary(bytes);
+        const request = common.Envelope.deserializeBinary(bytes);
 
         const result = new BlockAndPrivateDataEventsRequestImpl({
             client: this.#client,
