@@ -11,18 +11,21 @@ type InMemoryCheckpointer struct {
 	transactionID string
 }
 
-func (c *InMemoryCheckpointer) CheckpointBlock(blockNumber uint64) {
+func (c *InMemoryCheckpointer) CheckpointBlock(blockNumber uint64) error {
 	c.blockNumber = blockNumber + 1
 	c.transactionID = ""
+	return nil
 }
 
-func (c *InMemoryCheckpointer) CheckpointTransaction(blockNumber uint64, transactionID string) {
+func (c *InMemoryCheckpointer) CheckpointTransaction(blockNumber uint64 , transactionID string) error {
 	c.blockNumber = blockNumber
 	c.transactionID = transactionID
+	return nil
 }
 
-func (c *InMemoryCheckpointer) CheckpointChaincodeEvent(event *ChaincodeEvent) {
-	c.CheckpointTransaction(event.BlockNumber, event.TransactionID)
+func (c *InMemoryCheckpointer) CheckpointChaincodeEvent(event *ChaincodeEvent) error {
+    c.CheckpointTransaction(event.BlockNumber, event.TransactionID)
+	return nil
 }
 
 func (c *InMemoryCheckpointer) BlockNumber() uint64 {
