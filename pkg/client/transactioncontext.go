@@ -30,8 +30,8 @@ func newTransactionContext(signingIdentity *signingIdentity) (*transactionContex
 	}
 
 	saltedCreator := append(nonce, creator...)
-	rawTransactionId := signingIdentity.hash(saltedCreator)
-	transactionId := hex.EncodeToString(rawTransactionId)
+	rawTransactionID := signingIdentity.hash(saltedCreator)
+	transactionID := hex.EncodeToString(rawTransactionID)
 
 	signatureHeader := &common.SignatureHeader{
 		Creator: creator,
@@ -39,7 +39,7 @@ func newTransactionContext(signingIdentity *signingIdentity) (*transactionContex
 	}
 
 	transactionCtx := &transactionContext{
-		TransactionID:   transactionId,
+		TransactionID:   transactionID,
 		SignatureHeader: signatureHeader,
 	}
 	return transactionCtx, nil

@@ -353,7 +353,7 @@ func TestChaincodeEvents(t *testing.T) {
 		network := AssertNewTestNetwork(t, "NETWORK", WithGatewayClient(mockClient))
 
 		checkpointer := new(InMemoryCheckpointer)
-		checkpointer.CheckpointTransaction(uint64(500),"txn1")
+		checkpointer.CheckpointTransaction(uint64(500), "txn1")
 
 		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithCheckpointer(checkpointer))
 		require.NoError(t, err)
@@ -399,13 +399,13 @@ func TestChaincodeEvents(t *testing.T) {
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithGatewayClient(mockClient))
 
-		checkpointer :=  new(InMemoryCheckpointer)
+		checkpointer := new(InMemoryCheckpointer)
 		event := &ChaincodeEvent{
-				BlockNumber:   1,
-				ChaincodeName: "CHAINCODE",
-				EventName:     "EVENT_1",
-				Payload:       []byte("PAYLOAD_1"),
-				TransactionID: "TRANSACTION_1",
+			BlockNumber:   1,
+			ChaincodeName: "CHAINCODE",
+			EventName:     "EVENT_1",
+			Payload:       []byte("PAYLOAD_1"),
+			TransactionID: "TRANSACTION_1",
 		}
 
 		checkpointer.CheckpointChaincodeEvent(event)

@@ -4,6 +4,10 @@ Copyright 2020 IBM All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+// Package identity defines a client identity and signing implementation used to interact with a Fabric network.
+//
+// This package provides utilities to aid creation of client identities and accompanying signing implementations from
+// various types of credentials.
 package identity
 
 import (
