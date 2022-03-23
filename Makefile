@@ -81,7 +81,7 @@ scan-node:
 	cd $(node_dir); npm install --package-lock-only; npm audit --production
 
 scan-java: build-protos
-	cd $(java_dir); mvn verify -DskipTests -P owasp
+	cd $(java_dir); mvn dependency-check:check -P owasp
 
 sample-network: pull-latest-peer vendor-chaincode
 	cd $(scenario_dir)/go; GATEWAY_NO_SHUTDOWN=TRUE go test -tags pkcs11 -v -args $(scenario_dir)/features/transactions.feature $(scenario_dir)/features/privatedata.feature
