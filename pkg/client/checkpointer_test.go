@@ -27,9 +27,9 @@ type Checkpoint interface {
 }
 
 type testCase struct {
-	description string
-	after func ()
-	newCheckpointer func () Checkpoint
+	description     string
+	after           func()
+	newCheckpointer func() Checkpoint
 }
 
 func CheckFileExist(path string) bool {
@@ -43,15 +43,15 @@ func setupSuite(t *testing.T) func(t *testing.T) {
 		if isError(err) {
 			panic(err)
 		}
-	defer file.Close()
+		defer file.Close()
 	}
 	return func(t *testing.T) {
-		if CheckFileExist(path){
-		err := os.Remove(path)
-		if isError(err) {
-			panic(err)
+		if CheckFileExist(path) {
+			err := os.Remove(path)
+			if isError(err) {
+				panic(err)
+			}
 		}
-	}
 	}
 }
 
@@ -65,17 +65,17 @@ func TestCheckpointer(t *testing.T) {
 	teardownSuite := setupSuite(t)
 	defer teardownSuite(t)
 
-	testCases := []testCase {
+	testCases := []testCase{
 		{
 			description: "In-memory",
-			after: func () {} ,
+			after:       func() {},
 			newCheckpointer: func() Checkpoint {
-					return new(InMemoryCheckpointer)
+				return new(InMemoryCheckpointer)
 			},
 		},
 		{
 			description: "File",
-			after: func () {
+			after: func() {
 				var err = os.Remove(path)
 				if isError(err) {
 					return
@@ -86,57 +86,57 @@ func TestCheckpointer(t *testing.T) {
 				return fileCheckpointer
 			},
 		},
-	};
+	}
 
 	for _, tc := range testCases {
 
-	t.Run(tc.description + " :Initializes default checkpointer state when no checkpointer already exist", func(t *testing.T) {
-		checkpointer := tc.newCheckpointer()
+		t.Run(tc.description+" :Initializes default checkpointer state when no checkpointer already exist", func(t *testing.T) {
+			checkpointer := tc.newCheckpointer()
 
-		assertState(t, checkpointer, uint64(0), "")
+			assertState(t, checkpointer, uint64(0), "")
 
-		tc.after()
-	});
+			tc.after()
+		})
 
-	t.Run(tc.description + " :Checkpointing a block gives next block number & empty transaction Id", func(t *testing.T) {
+		t.Run(tc.description+" :Checkpointing a block gives next block number & empty transaction Id", func(t *testing.T) {
 
-		blockNumber := uint64(101)
-		checkpointer := tc.newCheckpointer()
+			blockNumber := uint64(101)
+			checkpointer := tc.newCheckpointer()
 
-		checkpointer.CheckpointBlock(blockNumber)
+			checkpointer.CheckpointBlock(blockNumber)
 
-		assertState(t,checkpointer, blockNumber + 1 , "")
+			assertState(t, checkpointer, blockNumber+1, "")
 
-		tc.after()
-	});
+			tc.after()
+		})
 
-	t.Run(tc.description + " :Checkpointing a transaction gives valid transaction Id and blocknumber ", func(t *testing.T) {
+		t.Run(tc.description+" :Checkpointing a transaction gives valid transaction Id and blocknumber ", func(t *testing.T) {
 
-		blockNumber := uint64(101)
-		checkpointer :=  tc.newCheckpointer()
+			blockNumber := uint64(101)
+			checkpointer := tc.newCheckpointer()
 
-		checkpointer.CheckpointTransaction(blockNumber,"txn1")
+			checkpointer.CheckpointTransaction(blockNumber, "txn1")
 
-		assertState(t,checkpointer, blockNumber, "txn1")
+			assertState(t, checkpointer, blockNumber, "txn1")
 
-		tc.after()
-	});
+			tc.after()
+		})
 
-	t.Run(tc.description + " :Checkpointing an event gives valid transaction Id and blocknumber ", func(t *testing.T) {
+		t.Run(tc.description+" :Checkpointing an event gives valid transaction Id and blocknumber ", func(t *testing.T) {
 
-		checkpointer :=  tc.newCheckpointer()
-		event := &ChaincodeEvent{
-			BlockNumber: uint64(101),
-			TransactionID: "txn1",
-			ChaincodeName: "Chaincode",
-			EventName: "event1",
-			Payload: []byte("payload"),
-		}
+			checkpointer := tc.newCheckpointer()
+			event := &ChaincodeEvent{
+				BlockNumber:   uint64(101),
+				TransactionID: "txn1",
+				ChaincodeName: "Chaincode",
+				EventName:     "event1",
+				Payload:       []byte("payload"),
+			}
 
-		checkpointer.CheckpointChaincodeEvent(event)
-		assertState(t,checkpointer, event.BlockNumber, event.TransactionID)
+			checkpointer.CheckpointChaincodeEvent(event)
+			assertState(t, checkpointer, event.BlockNumber, event.TransactionID)
 
-		tc.after()
-	});
+			tc.after()
+		})
 	}
 }

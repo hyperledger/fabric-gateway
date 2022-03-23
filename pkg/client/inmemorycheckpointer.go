@@ -17,14 +17,14 @@ func (c *InMemoryCheckpointer) CheckpointBlock(blockNumber uint64) error {
 	return nil
 }
 
-func (c *InMemoryCheckpointer) CheckpointTransaction(blockNumber uint64 , transactionID string) error {
+func (c *InMemoryCheckpointer) CheckpointTransaction(blockNumber uint64, transactionID string) error {
 	c.blockNumber = blockNumber
 	c.transactionID = transactionID
 	return nil
 }
 
 func (c *InMemoryCheckpointer) CheckpointChaincodeEvent(event *ChaincodeEvent) error {
-    c.CheckpointTransaction(event.BlockNumber, event.TransactionID)
+	c.CheckpointTransaction(event.BlockNumber, event.TransactionID)
 	return nil
 }
 

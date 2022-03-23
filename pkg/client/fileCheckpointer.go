@@ -1,4 +1,3 @@
-
 /*
 Copyright 2022 IBM All Rights Reserved.
 
@@ -15,8 +14,8 @@ import (
 )
 
 type FileCheckpointer struct {
-	path string
-	blockNumber uint64
+	path          string
+	blockNumber   uint64
 	transactionID string
 }
 
@@ -33,13 +32,13 @@ func NewFileCheckpointer(path string) (*FileCheckpointer, error) {
 	return fileCheckpointer, err
 }
 
-func (c *FileCheckpointer) CheckpointBlock(blockNumber uint64) error{
+func (c *FileCheckpointer) CheckpointBlock(blockNumber uint64) error {
 	c.blockNumber = blockNumber + 1
 	c.transactionID = ""
 	return c.saveToFile()
 }
 
-func (c *FileCheckpointer) CheckpointTransaction(blockNumber uint64, transactionID string) error{
+func (c *FileCheckpointer) CheckpointTransaction(blockNumber uint64, transactionID string) error {
 	c.blockNumber = blockNumber
 	c.transactionID = transactionID
 	return c.saveToFile()
@@ -59,15 +58,15 @@ func (c *FileCheckpointer) TransactionID() string {
 }
 
 func (c *FileCheckpointer) getState() *FileCheckpointer {
-	return  &FileCheckpointer {
-		blockNumber: c.blockNumber,
+	return &FileCheckpointer{
+		blockNumber:   c.blockNumber,
 		transactionID: c.transactionID,
 	}
 }
 
 func (c *FileCheckpointer) loadFromFile() error {
-	fileCheckpointer :=  struct{
-		BlockNumber uint64
+	fileCheckpointer := struct {
+		BlockNumber   uint64
 		TransactionID string
 	}{}
 
@@ -76,13 +75,13 @@ func (c *FileCheckpointer) loadFromFile() error {
 		return err
 	}
 	if len(data) != 0 {
-		 err := json.Unmarshal(data, &fileCheckpointer);
-			if isError(err){
+		err := json.Unmarshal(data, &fileCheckpointer)
+		if isError(err) {
 			return err
-		 }
+		}
 	}
 
-	c.setState(&FileCheckpointer{blockNumber: fileCheckpointer.BlockNumber,transactionID:fileCheckpointer.TransactionID})
+	c.setState(&FileCheckpointer{blockNumber: fileCheckpointer.BlockNumber, transactionID: fileCheckpointer.TransactionID})
 
 	return nil
 }
@@ -96,13 +95,13 @@ func (c *FileCheckpointer) readFile() ([]byte, error) {
 	exist := c.checkFileExist()
 	if !exist {
 		err := c.createFile()
-		if isError(err){
+		if isError(err) {
 			return []byte{}, err
 		}
 	}
-	data , err := ioutil.ReadFile(c.path)
+	data, err := ioutil.ReadFile(c.path)
 
-	return data ,err
+	return data, err
 }
 
 func (c *FileCheckpointer) checkFileExist() bool {
@@ -123,13 +122,14 @@ func (c *FileCheckpointer) createFile() error {
 func (c *FileCheckpointer) saveToFile() error {
 	fileCheckpointer := c.getState()
 	data, err := json.Marshal(struct {
-		BlockNumber uint64
-		TransactionID string}{
-			BlockNumber:fileCheckpointer.blockNumber,
-			TransactionID:fileCheckpointer.transactionID,
+		BlockNumber   uint64
+		TransactionID string
+	}{
+		BlockNumber:   fileCheckpointer.blockNumber,
+		TransactionID: fileCheckpointer.transactionID,
 	})
 
-	if isError(err){
+	if isError(err) {
 		return err
 	}
 	err = os.WriteFile(c.path, data, 0600)
@@ -140,7 +140,7 @@ func (c *FileCheckpointer) saveToFile() error {
 	return nil
 }
 
-func isError(err error ) bool {
+func isError(err error) bool {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
