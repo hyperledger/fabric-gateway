@@ -46,7 +46,8 @@ func (c *FileCheckpointer) CheckpointTransaction(blockNumber uint64, transaction
 }
 
 func (c *FileCheckpointer) CheckpointChaincodeEvent(event *ChaincodeEvent) error {
-	return c.CheckpointTransaction(event.BlockNumber, event.TransactionID)
+	err := c.CheckpointTransaction(event.BlockNumber, event.TransactionID)
+	return err
 }
 
 func (c *FileCheckpointer) BlockNumber() uint64 {
@@ -112,9 +113,9 @@ func (c *FileCheckpointer) checkFileExist() bool {
 func (c *FileCheckpointer) createFile() error {
 	file, err := os.Create(c.path)
 	if isError(err) {
+		file.Close()
 		return err
 	}
-	defer file.Close()
 
 	return nil
 }
@@ -131,7 +132,7 @@ func (c *FileCheckpointer) saveToFile() error {
 	if isError(err){
 		return err
 	}
-	err = os.WriteFile(c.path, data, 0755)
+	err = os.WriteFile(c.path, data, 0600)
 	if isError(err) {
 		return err
 	}
