@@ -24,8 +24,8 @@ func (c *InMemoryCheckpointer) CheckpointTransaction(blockNumber uint64, transac
 }
 
 func (c *InMemoryCheckpointer) CheckpointChaincodeEvent(event *ChaincodeEvent) error {
-	c.CheckpointTransaction(event.BlockNumber, event.TransactionID)
-	return nil
+	err := c.CheckpointTransaction(event.BlockNumber, event.TransactionID)
+	return err
 }
 
 func (c *InMemoryCheckpointer) BlockNumber() uint64 {

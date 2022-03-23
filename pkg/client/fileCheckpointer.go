@@ -112,7 +112,7 @@ func (c *FileCheckpointer) checkFileExist() bool {
 func (c *FileCheckpointer) createFile() error {
 	file, err := os.Create(c.path)
 	if isError(err) {
-		file.Close()
+		_ = file.Close()
 		return err
 	}
 
