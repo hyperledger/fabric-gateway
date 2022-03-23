@@ -33,14 +33,12 @@ func NewFileCheckpointer(path string) (*FileCheckpointer, error) {
 }
 
 func (c *FileCheckpointer) CheckpointBlock(blockNumber uint64) error {
-	c.blockNumber = blockNumber + 1
-	c.transactionID = ""
+	c.updateState(blockNumber+1, "")
 	return c.saveToFile()
 }
 
 func (c *FileCheckpointer) CheckpointTransaction(blockNumber uint64, transactionID string) error {
-	c.blockNumber = blockNumber
-	c.transactionID = transactionID
+	c.updateState(blockNumber, transactionID)
 	return c.saveToFile()
 }
 
@@ -57,7 +55,7 @@ func (c *FileCheckpointer) TransactionID() string {
 	return c.transactionID
 }
 
-func (c *FileCheckpointer) getState() *FileCheckpointer {
+func (c *FileCheckpointer) State() *FileCheckpointer {
 	return &FileCheckpointer{
 		blockNumber:   c.blockNumber,
 		transactionID: c.transactionID,
@@ -81,14 +79,14 @@ func (c *FileCheckpointer) loadFromFile() error {
 		}
 	}
 
-	c.setState(&FileCheckpointer{blockNumber: fileCheckpointer.BlockNumber, transactionID: fileCheckpointer.TransactionID})
+	c.updateState(fileCheckpointer.BlockNumber, fileCheckpointer.TransactionID)
 
 	return nil
 }
 
-func (c *FileCheckpointer) setState(fileCheckpointer *FileCheckpointer) {
-	c.blockNumber = fileCheckpointer.blockNumber
-	c.transactionID = fileCheckpointer.transactionID
+func (c *FileCheckpointer) updateState(blockNumber uint64, transactionID string) {
+	c.blockNumber = blockNumber
+	c.transactionID = transactionID
 }
 
 func (c *FileCheckpointer) readFile() ([]byte, error) {
@@ -120,7 +118,7 @@ func (c *FileCheckpointer) createFile() error {
 }
 
 func (c *FileCheckpointer) saveToFile() error {
-	fileCheckpointer := c.getState()
+	fileCheckpointer := c.State()
 	data, err := json.Marshal(struct {
 		BlockNumber   uint64
 		TransactionID string
