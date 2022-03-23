@@ -56,10 +56,10 @@ func (builder *chaincodeEventsBuilder) newChaincodeEventsRequestProto() (*gatewa
 	}
 
 	request := &gateway.ChaincodeEventsRequest{
-		ChannelId:     builder.channelName,
-		Identity:      creator,
-		ChaincodeId:   builder.chaincodeName,
-		StartPosition: builder.getStartPosition(),
+		ChannelId:          builder.channelName,
+		Identity:           creator,
+		ChaincodeId:        builder.chaincodeName,
+		StartPosition:      builder.getStartPosition(),
 		AfterTransactionId: builder.afterTransactionID,
 	}
 	return request, nil

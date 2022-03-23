@@ -63,15 +63,15 @@ func (client *gatewayClient) CommitStatus(in *gateway.SignedCommitStatusRequest,
 func (client *gatewayClient) CommitStatusWithContext(ctx context.Context, in *gateway.SignedCommitStatusRequest, opts ...grpc.CallOption) (*gateway.CommitStatusResponse, error) {
 	response, err := client.grpcGatewayClient.CommitStatus(ctx, in, opts...)
 	if err != nil {
-		transactionId := getTransactionIdFromSignedCommitStatusRequest(in)
-		txErr := newTransactionError(err, transactionId)
+		transactionID := getTransactionIDFromSignedCommitStatusRequest(in)
+		txErr := newTransactionError(err, transactionID)
 		return nil, &CommitStatusError{txErr}
 	}
 
 	return response, nil
 }
 
-func getTransactionIdFromSignedCommitStatusRequest(in *gateway.SignedCommitStatusRequest) string {
+func getTransactionIDFromSignedCommitStatusRequest(in *gateway.SignedCommitStatusRequest) string {
 	request := &gateway.CommitStatusRequest{}
 	err := util.Unmarshal(in.GetRequest(), request)
 	if err != nil {
