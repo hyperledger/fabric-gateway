@@ -8,7 +8,6 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 )
@@ -17,6 +16,11 @@ type FileCheckpointer struct {
 	path          string
 	blockNumber   uint64
 	transactionID string
+}
+
+type checkpointState struct {
+	BlockNumber   uint64 `json:"blockNumber"`
+	TransactionID string `json:"transactionId"`
 }
 
 func NewFileCheckpointer(path string) (*FileCheckpointer, error) {
@@ -63,23 +67,17 @@ func (c *FileCheckpointer) State() *FileCheckpointer {
 }
 
 func (c *FileCheckpointer) loadFromFile() error {
-	fileCheckpointer := struct {
-		BlockNumber   uint64
-		TransactionID string
-	}{}
-
 	data, err := c.readFile()
-	if isError(err) {
+	if err != nil {
 		return err
 	}
+	state := &checkpointState{}
 	if len(data) != 0 {
-		err := json.Unmarshal(data, &fileCheckpointer)
-		if isError(err) {
+		if err := json.Unmarshal(data, state); err != nil {
 			return err
 		}
 	}
-
-	c.updateState(fileCheckpointer.BlockNumber, fileCheckpointer.TransactionID)
+	c.updateState(state.BlockNumber, state.TransactionID)
 
 	return nil
 }
@@ -92,13 +90,10 @@ func (c *FileCheckpointer) updateState(blockNumber uint64, transactionID string)
 func (c *FileCheckpointer) readFile() ([]byte, error) {
 	exist := c.checkFileExist()
 	if !exist {
-		err := c.createFile()
-		if isError(err) {
-			return []byte{}, err
-		}
+		return nil, nil
 	}
-	data, err := ioutil.ReadFile(c.path)
 
+	data, err := ioutil.ReadFile(c.path)
 	return data, err
 }
 
@@ -107,41 +102,17 @@ func (c *FileCheckpointer) checkFileExist() bool {
 	return !os.IsNotExist(err)
 }
 
-func (c *FileCheckpointer) createFile() error {
-	file, err := os.Create(c.path)
-	if isError(err) {
-		_ = file.Close()
-		return err
-	}
-
-	return nil
-}
-
 func (c *FileCheckpointer) saveToFile() error {
 	fileCheckpointer := c.State()
-	data, err := json.Marshal(struct {
-		BlockNumber   uint64
-		TransactionID string
-	}{
+	data, err := json.Marshal(checkpointState{
 		BlockNumber:   fileCheckpointer.blockNumber,
 		TransactionID: fileCheckpointer.transactionID,
 	})
-
-	if isError(err) {
-		return err
-	}
-	err = os.WriteFile(c.path, data, 0600)
-	if isError(err) {
-		return err
-	}
-
-	return nil
-}
-
-func isError(err error) bool {
 	if err != nil {
-		fmt.Println(err.Error())
+		return err
 	}
-
-	return (err != nil)
+	if err = os.WriteFile(c.path, data, 0600); err != nil {
+		return err
+	}
+	return nil
 }
