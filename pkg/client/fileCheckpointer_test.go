@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -17,20 +16,24 @@ import (
 const checkpointerFilePath = "file_checkpointer_test_file.json"
 
 func after(t *testing.T) {
-	fmt.Println("CheckFileExist", CheckFileExist(checkpointerFilePath))
 	if CheckFileExist(checkpointerFilePath) {
-		_ = os.Remove(checkpointerFilePath)
+		err := os.Remove(checkpointerFilePath)
+		require.NoError(t, err)
 	}
 
 }
 
 func TestFileCheckpointer(t *testing.T) {
+	defer after(t)
+
 	t.Run("state is persisted", func(t *testing.T) {
-		actualFileCheckpointer, _ := NewFileCheckpointer(checkpointerFilePath)
+		actualFileCheckpointer, err1 := NewFileCheckpointer(checkpointerFilePath)
 		actualFileCheckpointer.CheckpointTransaction(uint64(1), "txn")
 
-		expectedFileCheckpointer, _ := NewFileCheckpointer(checkpointerFilePath)
+		expectedFileCheckpointer, err2 := NewFileCheckpointer(checkpointerFilePath)
 
+		require.NoError(t, err1)
+		require.NoError(t, err2)
 		require.Equal(t, actualFileCheckpointer.BlockNumber(), expectedFileCheckpointer.BlockNumber())
 		require.Equal(t, actualFileCheckpointer.TransactionID(), expectedFileCheckpointer.TransactionID())
 
@@ -39,12 +42,25 @@ func TestFileCheckpointer(t *testing.T) {
 
 	t.Run("block number zero is persisted correctly", func(t *testing.T) {
 		blockNumber := uint64(0)
-		fileCheckpointer, _ := NewFileCheckpointer(checkpointerFilePath)
+		fileCheckpointer, err := NewFileCheckpointer(checkpointerFilePath)
 
 		fileCheckpointer.CheckpointBlock(uint64(0))
 
+		require.NoError(t, err)
 		require.Equal(t, blockNumber+uint64(1), fileCheckpointer.BlockNumber())
 		require.Equal(t, "", fileCheckpointer.TransactionID())
+
+		after(t)
+	})
+
+	t.Run("throws on reading invalid blockNumber type from the file", func(t *testing.T) {
+
+		err := os.WriteFile(checkpointerFilePath, []byte(`{"blockNumber":false}`), 0600)
+
+		_, err1 := NewFileCheckpointer(checkpointerFilePath)
+
+		require.NoError(t, err)
+		require.Containsf(t, err1.Error(), "cannot unmarshal", "Received unexpected error message")
 
 		after(t)
 	})
@@ -55,8 +71,6 @@ func TestFileCheckpointer(t *testing.T) {
 
 		_, err := NewFileCheckpointer(badPath)
 
-		require.EqualErrorf(t, err, "open MISSING_DIRECTORY/test_file.json: no such file or directory", "Error should be: %v, got: %v", "open MISSINGDIRECTORY/checkpointer.go: no such file or directory", err)
-
+		require.EqualErrorf(t, err, "open MISSING_DIRECTORY/test_file.json: no such file or directory", "Error should be: %v, got: %v", "open MISSING_DIRECTORY/checkpointer.go: no such file or directory", err)
 	})
-
 }

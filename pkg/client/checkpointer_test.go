@@ -15,21 +15,10 @@ import (
 
 var path = "checkpointer_test_file.json"
 
-type checkpoint interface {
-	CheckpointBlock(uint64) error
-	CheckpointTransaction(uint64, string) error
-	CheckpointChaincodeEvent(*ChaincodeEvent) error
-}
-
-type Checkpoint interface {
-	checkpoint
-	Checkpointer
-}
-
 type testCase struct {
 	description     string
-	after           func()
-	newCheckpointer func() Checkpoint
+	after           func(t *testing.T)
+	newCheckpointer func(t *testing.T) (Checkpointer, error)
 }
 
 func CheckFileExist(path string) bool {
@@ -40,17 +29,13 @@ func CheckFileExist(path string) bool {
 func setupSuite(t *testing.T) func(t *testing.T) {
 	if !CheckFileExist(path) {
 		file, err := os.Create(path)
-		if isError(err) {
-			panic(err)
-		}
+		require.NoError(t, err)
 		defer file.Close()
 	}
 	return func(t *testing.T) {
 		if CheckFileExist(path) {
 			err := os.Remove(path)
-			if isError(err) {
-				panic(err)
-			}
+			require.NoError(t, err)
 		}
 	}
 }
@@ -68,22 +53,22 @@ func TestCheckpointer(t *testing.T) {
 	testCases := []testCase{
 		{
 			description: "In-memory",
-			after:       func() {},
-			newCheckpointer: func() Checkpoint {
-				return new(InMemoryCheckpointer)
+			after:       func(t *testing.T) {},
+			newCheckpointer: func(t *testing.T) (Checkpointer, error) {
+				inmemorCheckpointer := new(InMemoryCheckpointer)
+				return inmemorCheckpointer, nil
 			},
 		},
 		{
 			description: "File",
-			after: func() {
-				var err = os.Remove(path)
-				if isError(err) {
-					return
-				}
+			after: func(t *testing.T) {
+				err := os.Remove(path)
+				require.NoError(t, err)
 			},
-			newCheckpointer: func() Checkpoint {
-				fileCheckpointer, _ := NewFileCheckpointer(path)
-				return fileCheckpointer
+			newCheckpointer: func(*testing.T) (Checkpointer, error) {
+				fileCheckpointer, err := NewFileCheckpointer(path)
+				require.NoError(t, err)
+				return fileCheckpointer, err
 			},
 		},
 	}
@@ -91,40 +76,40 @@ func TestCheckpointer(t *testing.T) {
 	for _, tc := range testCases {
 
 		t.Run(tc.description+" :Initializes default checkpointer state when no checkpointer already exist", func(t *testing.T) {
-			checkpointer := tc.newCheckpointer()
+			checkpointer, _ := tc.newCheckpointer(t)
 
 			assertState(t, checkpointer, uint64(0), "")
 
-			tc.after()
+			tc.after(t)
 		})
 
 		t.Run(tc.description+" :Checkpointing a block gives next block number & empty transaction Id", func(t *testing.T) {
 
 			blockNumber := uint64(101)
-			checkpointer := tc.newCheckpointer()
+			checkpointer, _ := tc.newCheckpointer(t)
 
 			checkpointer.CheckpointBlock(blockNumber)
 
 			assertState(t, checkpointer, blockNumber+1, "")
 
-			tc.after()
+			tc.after(t)
 		})
 
 		t.Run(tc.description+" :Checkpointing a transaction gives valid transaction Id and blocknumber ", func(t *testing.T) {
 
 			blockNumber := uint64(101)
-			checkpointer := tc.newCheckpointer()
+			checkpointer, _ := tc.newCheckpointer(t)
 
 			checkpointer.CheckpointTransaction(blockNumber, "txn1")
 
 			assertState(t, checkpointer, blockNumber, "txn1")
 
-			tc.after()
+			tc.after(t)
 		})
 
 		t.Run(tc.description+" :Checkpointing an event gives valid transaction Id and blocknumber ", func(t *testing.T) {
 
-			checkpointer := tc.newCheckpointer()
+			checkpointer, _ := tc.newCheckpointer(t)
 			event := &ChaincodeEvent{
 				BlockNumber:   uint64(101),
 				TransactionID: "txn1",
@@ -136,7 +121,7 @@ func TestCheckpointer(t *testing.T) {
 			checkpointer.CheckpointChaincodeEvent(event)
 			assertState(t, checkpointer, event.BlockNumber, event.TransactionID)
 
-			tc.after()
+			tc.after(t)
 		})
 	}
 }
