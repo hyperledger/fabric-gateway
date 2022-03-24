@@ -328,7 +328,9 @@ stages:
         jdkSourceOption: 'PreInstalled'
     - script: make scan-java
       displayName: 'Run Java security vulnerability scan'
-      
+    - publish: $(System.DefaultWorkingDirectory)/java/target/dependency-check-report.html
+      artifact: DependencyCheck
+      displayName: 'Upload dependency-check report'
 # Only publish on scheduled builds and tagged releases
 - stage: Publish
   dependsOn: [Test, Docs]
