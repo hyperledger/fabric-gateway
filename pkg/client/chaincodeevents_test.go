@@ -171,7 +171,7 @@ func TestChaincodeEvents(t *testing.T) {
 
 		checkpointer := new(InMemoryCheckpointer)
 
-		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithStartBlock(418), WithCheckpointer(checkpointer))
+		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithStartBlock(418), WithCheckpoint(checkpointer))
 		require.NoError(t, err)
 
 		creator, err := network.signingID.Creator()
@@ -217,7 +217,7 @@ func TestChaincodeEvents(t *testing.T) {
 
 		checkpointer := new(InMemoryCheckpointer)
 		checkpointer.CheckpointBlock(uint64(500))
-		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithStartBlock(418), WithCheckpointer(checkpointer))
+		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithStartBlock(418), WithCheckpoint(checkpointer))
 		require.NoError(t, err)
 
 		creator, err := network.signingID.Creator()
@@ -264,7 +264,7 @@ func TestChaincodeEvents(t *testing.T) {
 
 		checkpointer := new(InMemoryCheckpointer)
 		checkpointer.CheckpointTransaction(uint64(500), "txn1")
-		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithStartBlock(418), WithCheckpointer(checkpointer))
+		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithStartBlock(418), WithCheckpoint(checkpointer))
 		require.NoError(t, err)
 
 		creator, err := network.signingID.Creator()
@@ -311,7 +311,7 @@ func TestChaincodeEvents(t *testing.T) {
 		network := AssertNewTestNetwork(t, "NETWORK", WithGatewayClient(mockClient))
 
 		checkpointer := new(InMemoryCheckpointer)
-		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithCheckpointer(checkpointer))
+		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithCheckpoint(checkpointer))
 		require.NoError(t, err)
 
 		creator, err := network.signingID.Creator()
@@ -355,7 +355,7 @@ func TestChaincodeEvents(t *testing.T) {
 		checkpointer := new(InMemoryCheckpointer)
 		checkpointer.CheckpointTransaction(uint64(500), "txn1")
 
-		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithCheckpointer(checkpointer))
+		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithCheckpoint(checkpointer))
 		require.NoError(t, err)
 
 		creator, err := network.signingID.Creator()
@@ -410,7 +410,7 @@ func TestChaincodeEvents(t *testing.T) {
 
 		checkpointer.CheckpointChaincodeEvent(event)
 
-		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithStartBlock(418), WithCheckpointer(checkpointer))
+		_, err := network.ChaincodeEvents(ctx, "CHAINCODE", WithStartBlock(418), WithCheckpoint(checkpointer))
 		require.NoError(t, err)
 
 		creator, err := network.signingID.Creator()
