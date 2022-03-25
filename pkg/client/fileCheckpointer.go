@@ -24,15 +24,20 @@ type checkpointState struct {
 }
 
 func NewFileCheckpointer(path string) (*FileCheckpointer, error) {
-	fileCheckpointer := new(FileCheckpointer)
-	fileCheckpointer.path = path
+	fileCheckpointer := &FileCheckpointer{
+		path: path,
+	}
 
 	err := fileCheckpointer.loadFromFile()
 	if err != nil {
-		return fileCheckpointer, err
+		return nil, err
 	}
 
 	err = fileCheckpointer.saveToFile()
+	if err != nil {
+		return nil, err
+	}
+
 	return fileCheckpointer, err
 }
 
@@ -57,13 +62,6 @@ func (c *FileCheckpointer) BlockNumber() uint64 {
 
 func (c *FileCheckpointer) TransactionID() string {
 	return c.transactionID
-}
-
-func (c *FileCheckpointer) State() *FileCheckpointer {
-	return &FileCheckpointer{
-		blockNumber:   c.blockNumber,
-		transactionID: c.transactionID,
-	}
 }
 
 func (c *FileCheckpointer) loadFromFile() error {
@@ -103,16 +101,12 @@ func (c *FileCheckpointer) checkFileExist() bool {
 }
 
 func (c *FileCheckpointer) saveToFile() error {
-	fileCheckpointer := c.State()
 	data, err := json.Marshal(checkpointState{
-		BlockNumber:   fileCheckpointer.blockNumber,
-		TransactionID: fileCheckpointer.transactionID,
+		BlockNumber:   c.blockNumber,
+		TransactionID: c.transactionID,
 	})
 	if err != nil {
 		return err
 	}
-	if err = os.WriteFile(c.path, data, 0600); err != nil {
-		return err
-	}
-	return nil
+	return os.WriteFile(c.path, data, 0600)
 }
