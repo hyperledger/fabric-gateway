@@ -40,13 +40,13 @@ type Checkpoint interface {
 	TransactionID() string
 }
 
-// Checkpointer provides the current position for event processing.
+// Checkpointer allows update of a checkpoint position after events are successfully processed.
 type Checkpointer interface {
 	// CheckpointBlock checkpoints the block number.
 	CheckpointBlock(uint64) error
 	// CheckpointTransaction checkpoints the transaction within a block.
 	CheckpointTransaction(uint64, string) error
-	// CheckpointChaincodeEvent checkpoints the event
+	// CheckpointChaincodeEvent checkpoints the chaincode event.
 	CheckpointChaincodeEvent(*ChaincodeEvent) error
 
 	Checkpoint
@@ -66,7 +66,7 @@ func WithStartBlock(blockNumber uint64) eventOption {
 	}
 }
 
-// WithCheckpointer reads events starting at the position recorded by the checkpointer.
+// WithCheckpointer reads events starting at the checkpoint position.
 func WithCheckpointer(checkpoint Checkpoint) eventOption {
 
 	return func(builder *eventsBuilder) error {
