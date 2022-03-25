@@ -17,6 +17,7 @@ final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
     private final String channelName;
     private final String chaincodeName;
     private final StartPositionBuilder startPositionBuilder = new StartPositionBuilder();
+    private String afterTransactionId;
 
     ChaincodeEventsBuilder(final GatewayClient client, final SigningIdentity signingIdentity, final String channelName,
                            final String chaincodeName) {
@@ -32,6 +33,14 @@ final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
     @Override
     public ChaincodeEventsRequest.Builder startBlock(final long blockNumber) {
         startPositionBuilder.startBlock(blockNumber);
+        return this;
+    }
+
+    @Override
+    public ChaincodeEventsRequest.Builder checkpoint(final Checkpoint checkpoint) {
+        startPositionBuilder.startBlock(checkpoint.getBlockNumber());
+        this.afterTransactionId = checkpoint.getTransactionId();
+
         return this;
     }
 
@@ -55,6 +64,7 @@ final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
                 .setChaincodeId(chaincodeName)
                 .setIdentity(creator)
                 .setStartPosition(startPositionBuilder.build())
+                .setAfterTransactionId(afterTransactionId)
                 .build();
     }
 }
