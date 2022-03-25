@@ -8,36 +8,27 @@ package client
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-var path = "checkpointer_test_file.json"
-
 type testCase struct {
 	description     string
-	after           func(t *testing.T)
-	newCheckpointer func(t *testing.T) (Checkpointer, error)
+	before          func(t *testing.T, fileName string) string
+	newCheckpointer func(t *testing.T, filePath string) Checkpointer
 }
 
-func CheckFileExist(path string) bool {
-	_, err := os.Stat(path)
-	return !os.IsNotExist(err)
+func setupSuite(t *testing.T) string {
+	dname, err := os.MkdirTemp("", "sample")
+	require.NoError(t, err)
+	return dname
 }
 
-func setupSuite(t *testing.T) func(t *testing.T) {
-	if !CheckFileExist(path) {
-		file, err := os.Create(path)
-		require.NoError(t, err)
-		defer file.Close()
-	}
-	return func(t *testing.T) {
-		if CheckFileExist(path) {
-			err := os.Remove(path)
-			require.NoError(t, err)
-		}
-	}
+func teardownSuite(t *testing.T, dirName string) {
+	err := os.RemoveAll(dirName)
+	require.NoError(t, err)
 }
 
 func assertState(t *testing.T, checkpointer Checkpoint, blocknumber uint64, transactionID string) {
@@ -47,81 +38,84 @@ func assertState(t *testing.T, checkpointer Checkpoint, blocknumber uint64, tran
 
 func TestCheckpointer(t *testing.T) {
 
-	teardownSuite := setupSuite(t)
-	defer teardownSuite(t)
+	dirName := setupSuite(t)
+	defer teardownSuite(t, dirName)
 
 	testCases := []testCase{
 		{
 			description: "In-memory",
-			after:       func(t *testing.T) {},
-			newCheckpointer: func(t *testing.T) (Checkpointer, error) {
+			before: func(t *testing.T, fileName string) string {
+				return ""
+			},
+			newCheckpointer: func(t *testing.T, filePath string) Checkpointer {
 				inmemorCheckpointer := new(InMemoryCheckpointer)
-				return inmemorCheckpointer, nil
+				return inmemorCheckpointer
 			},
 		},
 		{
 			description: "File",
-			after: func(t *testing.T) {
-				err := os.Remove(path)
+			before: func(t *testing.T, fileName string) string {
+				filePath := filepath.Join(dirName, fileName)
+				err := os.WriteFile(filePath, nil, 0666)
 				require.NoError(t, err)
+				return filePath
 			},
-			newCheckpointer: func(*testing.T) (Checkpointer, error) {
-				fileCheckpointer, err := NewFileCheckpointer(path)
+			newCheckpointer: func(t *testing.T, filePath string) Checkpointer {
+				fileCheckpointer, err := NewFileCheckpointer(filePath)
 				require.NoError(t, err)
-				return fileCheckpointer, err
+				return fileCheckpointer
 			},
 		},
 	}
 
 	for _, tc := range testCases {
 
-		t.Run(tc.description+" :Initializes default checkpointer state when no checkpointer already exist", func(t *testing.T) {
-			checkpointer, _ := tc.newCheckpointer(t)
+		t.Run(tc.description, func(t *testing.T) {
 
-			assertState(t, checkpointer, uint64(0), "")
+			t.Run("Initializes default checkpointer state when no checkpointer already exist", func(t *testing.T) {
+				filePath := tc.before(t, "file1.json")
 
-			tc.after(t)
-		})
+				checkpointer := tc.newCheckpointer(t, filePath)
 
-		t.Run(tc.description+" :Checkpointing a block gives next block number & empty transaction Id", func(t *testing.T) {
+				assertState(t, checkpointer, uint64(0), "")
+			})
 
-			blockNumber := uint64(101)
-			checkpointer, _ := tc.newCheckpointer(t)
+			t.Run("Checkpointing a block gives next block number & empty transaction Id", func(t *testing.T) {
+				blockNumber := uint64(101)
+				filePath := tc.before(t, "file2.json")
 
-			checkpointer.CheckpointBlock(blockNumber)
+				checkpointer := tc.newCheckpointer(t, filePath)
+				checkpointer.CheckpointBlock(blockNumber)
 
-			assertState(t, checkpointer, blockNumber+1, "")
+				assertState(t, checkpointer, blockNumber+1, "")
+			})
 
-			tc.after(t)
-		})
+			t.Run("Checkpointing a transaction gives valid transaction Id and blocknumber ", func(t *testing.T) {
+				blockNumber := uint64(101)
+				filePath := tc.before(t, "file3.json")
 
-		t.Run(tc.description+" :Checkpointing a transaction gives valid transaction Id and blocknumber ", func(t *testing.T) {
+				checkpointer := tc.newCheckpointer(t, filePath)
+				checkpointer.CheckpointTransaction(blockNumber, "txn1")
 
-			blockNumber := uint64(101)
-			checkpointer, _ := tc.newCheckpointer(t)
+				assertState(t, checkpointer, blockNumber, "txn1")
+			})
 
-			checkpointer.CheckpointTransaction(blockNumber, "txn1")
+			t.Run("Checkpointing an event gives valid transaction Id and blocknumber ", func(t *testing.T) {
+				filePath := tc.before(t, "file4.json")
+				event := &ChaincodeEvent{
+					BlockNumber:   uint64(101),
+					TransactionID: "txn1",
+					ChaincodeName: "Chaincode",
+					EventName:     "event1",
+					Payload:       []byte("payload"),
+				}
 
-			assertState(t, checkpointer, blockNumber, "txn1")
+				checkpointer := tc.newCheckpointer(t, filePath)
+				checkpointer.CheckpointChaincodeEvent(event)
 
-			tc.after(t)
-		})
+				assertState(t, checkpointer, event.BlockNumber, event.TransactionID)
 
-		t.Run(tc.description+" :Checkpointing an event gives valid transaction Id and blocknumber ", func(t *testing.T) {
-
-			checkpointer, _ := tc.newCheckpointer(t)
-			event := &ChaincodeEvent{
-				BlockNumber:   uint64(101),
-				TransactionID: "txn1",
-				ChaincodeName: "Chaincode",
-				EventName:     "event1",
-				Payload:       []byte("payload"),
-			}
-
-			checkpointer.CheckpointChaincodeEvent(event)
-			assertState(t, checkpointer, event.BlockNumber, event.TransactionID)
-
-			tc.after(t)
+			})
 		})
 	}
 }

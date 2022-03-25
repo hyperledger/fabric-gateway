@@ -8,25 +8,37 @@ package client
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-const checkpointerFilePath = "file_checkpointer_test_file.json"
+func beforeAll(t *testing.T) string {
+	dname, err := os.MkdirTemp("", "temp")
+	require.NoError(t, err)
+	return dname
+}
 
-func after(t *testing.T) {
-	if CheckFileExist(checkpointerFilePath) {
-		err := os.Remove(checkpointerFilePath)
-		require.NoError(t, err)
-	}
+func afterAll(t *testing.T, dirName string) {
+	err := os.RemoveAll(dirName)
+	require.NoError(t, err)
+}
 
+func beforeEach(t *testing.T, dirName string, fileName string) string {
+	filePath := filepath.Join(dirName, fileName)
+	err := os.WriteFile(filePath, nil, 0666)
+	require.NoError(t, err)
+	return filePath
 }
 
 func TestFileCheckpointer(t *testing.T) {
-	defer after(t)
+	dirName := beforeAll(t)
+	defer afterAll(t, dirName)
 
 	t.Run("state is persisted", func(t *testing.T) {
+		checkpointerFilePath := beforeEach(t, dirName, "file1.json")
+
 		actualFileCheckpointer, err1 := NewFileCheckpointer(checkpointerFilePath)
 		actualFileCheckpointer.CheckpointTransaction(uint64(1), "txn")
 
@@ -36,11 +48,10 @@ func TestFileCheckpointer(t *testing.T) {
 		require.NoError(t, err2)
 		require.Equal(t, actualFileCheckpointer.BlockNumber(), expectedFileCheckpointer.BlockNumber())
 		require.Equal(t, actualFileCheckpointer.TransactionID(), expectedFileCheckpointer.TransactionID())
-
-		after(t)
 	})
 
 	t.Run("block number zero is persisted correctly", func(t *testing.T) {
+		checkpointerFilePath := beforeEach(t, dirName, "file2.json")
 		blockNumber := uint64(0)
 		fileCheckpointer, err := NewFileCheckpointer(checkpointerFilePath)
 
@@ -49,12 +60,10 @@ func TestFileCheckpointer(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, blockNumber+uint64(1), fileCheckpointer.BlockNumber())
 		require.Equal(t, "", fileCheckpointer.TransactionID())
-
-		after(t)
 	})
 
 	t.Run("throws on reading invalid blockNumber type from the file", func(t *testing.T) {
-
+		checkpointerFilePath := beforeEach(t, dirName, "file3.json")
 		err := os.WriteFile(checkpointerFilePath, []byte(`{"blockNumber":false}`), 0600)
 
 		_, err1 := NewFileCheckpointer(checkpointerFilePath)
@@ -62,7 +71,6 @@ func TestFileCheckpointer(t *testing.T) {
 		require.NoError(t, err)
 		require.Containsf(t, err1.Error(), "cannot unmarshal", "Received unexpected error message")
 
-		after(t)
 	})
 
 	t.Run("throws on unwritable file location", func(t *testing.T) {
@@ -71,6 +79,6 @@ func TestFileCheckpointer(t *testing.T) {
 
 		_, err := NewFileCheckpointer(badPath)
 
-		require.EqualErrorf(t, err, "open MISSING_DIRECTORY/test_file.json: no such file or directory", "Error should be: %v, got: %v", "open MISSING_DIRECTORY/checkpointer.go: no such file or directory", err)
+		require.Errorf(t, err, "Error not received")
 	})
 }
