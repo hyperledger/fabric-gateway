@@ -1,9 +1,9 @@
 {
+    "cleanOutputDir": true,
     "entryPoints": [
         "src/index.ts"
     ],
     "intentionallyNotExported": [
-        "TxValidationCodeMap",
         "Block",
         "BlockAndPrivateData",
         "FilteredBlock"

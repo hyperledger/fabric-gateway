@@ -9,7 +9,7 @@ import { TxValidationCode, TxValidationCodeMap } from './protos/peer/transaction
 /**
  * Enumeration of transaction status codes.
  */
-export const StatusCode = Object.freeze(TxValidationCode);
+export const StatusCode = Object.freeze(TxValidationCode) as { [P in keyof typeof TxValidationCode]: typeof TxValidationCode[P] };
 
 export const StatusNames = Object.freeze(
     Object.fromEntries(
