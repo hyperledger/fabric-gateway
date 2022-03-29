@@ -40,18 +40,6 @@ type Checkpoint interface {
 	TransactionID() string
 }
 
-// Checkpointer allows update of a checkpoint position after events are successfully processed.
-type Checkpointer interface {
-	// CheckpointBlock checkpoints the block number.
-	CheckpointBlock(uint64) error
-	// CheckpointTransaction checkpoints the transaction within a block.
-	CheckpointTransaction(uint64, string) error
-	// CheckpointChaincodeEvent checkpoints the chaincode event.
-	CheckpointChaincodeEvent(*ChaincodeEvent) error
-
-	Checkpoint
-}
-
 // WithStartBlock reads events starting at the specified block number.
 func WithStartBlock(blockNumber uint64) eventOption {
 	return func(builder *eventsBuilder) error {
@@ -66,9 +54,9 @@ func WithStartBlock(blockNumber uint64) eventOption {
 	}
 }
 
-// WithCheckpointer reads events starting at the checkpoint position.
-func WithCheckpointer(checkpoint Checkpoint) eventOption {
-
+// WithCheckpoint reads events starting at the checkpoint position. This can be used to resume a previous eventing
+// session. The zero value is ignored and a start position specified by other options or the default position is used.
+func WithCheckpoint(checkpoint Checkpoint) eventOption {
 	return func(builder *eventsBuilder) error {
 		blockNumber := checkpoint.BlockNumber()
 		transactionID := checkpoint.TransactionID()
@@ -76,6 +64,7 @@ func WithCheckpointer(checkpoint Checkpoint) eventOption {
 		if blockNumber == 0 && transactionID == "" {
 			return nil
 		}
+
 		builder.startPosition = &orderer.SeekPosition{
 			Type: &orderer.SeekPosition_Specified{
 				Specified: &orderer.SeekSpecified{
@@ -84,6 +73,7 @@ func WithCheckpointer(checkpoint Checkpoint) eventOption {
 			},
 		}
 		builder.afterTransactionID = transactionID
+
 		return nil
 	}
 }
