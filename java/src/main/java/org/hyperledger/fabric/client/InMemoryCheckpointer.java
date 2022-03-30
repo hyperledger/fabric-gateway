@@ -14,43 +14,29 @@ public final class InMemoryCheckpointer implements Checkpointer {
     private long blockNumber;
     private String transactionId = "";
 
-    /**
-     * CheckpointBlock checkpoints the block.
-     * @param blockNumber
-     */
+    @Override
     public void checkpointBlock(final long blockNumber) {
         this.blockNumber = blockNumber + 1;
         this.transactionId = "";
     }
 
-    /**
-     * CheckpointTransaction checkpoints the transaction within a block.
-     * @param blockNumber
-     * @param transactionID
-     */
+    @Override
     public void checkpointTransaction(final long blockNumber, final String transactionID) {
         this.blockNumber = blockNumber;
         this.transactionId = transactionID;
     }
 
-    /**
-     * CheckpointChaincodeEvent checkpoints the chaincode event.
-     * @param event
-     */
+    @Override
     public void  checkpointChaincodeEvent(final ChaincodeEvent event) {
         checkpointTransaction(event.getBlockNumber(), event.getTransactionId());
     }
 
-    /**
-     * @return BlockNumber in which the next event is expected.
-     */
+    @Override
     public long getBlockNumber() {
         return this.blockNumber;
     }
 
-    /**
-     * @return Transaction ID of the last successfully processed event within the current block.
-     */
+    @Override
     public String getTransactionId() {
         return this.transactionId;
     }

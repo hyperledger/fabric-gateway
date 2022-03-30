@@ -11,14 +11,14 @@ package org.hyperledger.fabric.client;
  */
 public interface Checkpoint {
     /**
-     *
-     * @return  BlockNumber in which the next event is expected.
+     * The block number in which the next event is expected.
+     * @return  A ledger block number.
      */
     long getBlockNumber();
 
     /**
-     *
-     * @return Transaction ID of the last successfully processed event within the current block.
+     * Transaction Id of the last successfully processed event within the current block.
+     * @return A transaction Id.
      */
     String getTransactionId();
 }
