@@ -7,7 +7,7 @@ Gateway in Fabric.
 
 Install the following pre-reqs to run the sample client applications:
 
-- Go v1.16 (required for sample Fabric network and Go sample)
+- Go v1.17 (required for sample Fabric network and Go sample)
 - Node 14.x or 16.x (required for Node sample)
 - Java 11 (required for Java sample)
 - Docker (required for sample Fabric network)
@@ -20,7 +20,7 @@ go install github.com/cucumber/godog/cmd/godog@v0.12.1
 ```
 
 Make sure you can run `godog --version` after installing. If the command is not found, add the Go bin directory to your
-path using: 
+path using:
 
 ```sh
 export PATH="${PATH}:$(go env GOPATH)/bin"
