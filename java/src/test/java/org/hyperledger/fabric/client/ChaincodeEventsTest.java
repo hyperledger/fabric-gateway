@@ -8,10 +8,12 @@ package org.hyperledger.fabric.client;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Option;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
 import io.grpc.Status;
@@ -31,7 +33,22 @@ import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+class ExpectedRequest {
+    String channelName;
+    String chaincodeName;
+    Ab.SeekPosition.TypeCase typeCase;
+    Optional<Long> blockNumber;
+    Optional<String> transactionId;
 
+    public ExpectedRequest(String channelName, String chaincodeName, Ab.SeekPosition.TypeCase typeCase, Optional<Long> blockNumber, Optional<String> transactionId){
+    this.channelName = channelName;
+    this.chaincodeName = chaincodeName;
+    this.typeCase = typeCase;
+    this.blockNumber = blockNumber;
+    this.transactionId = transactionId;
+    }
+
+}
 public final class ChaincodeEventsTest {
     private static final Deadline defaultDeadline = Deadline.after(1, TimeUnit.DAYS);
 
@@ -55,6 +72,18 @@ public final class ChaincodeEventsTest {
     void afterEach() {
         gateway.close();
         mocker.close();
+    }
+
+    void assertChaincodeRequest(org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest actual, ExpectedRequest expectedRequest){
+        assertThat(actual.getChannelId()).isEqualTo(expectedRequest.channelName);
+        assertThat(actual.getChaincodeId()).isEqualTo(expectedRequest.chaincodeName);
+        assertThat(actual.getStartPosition().getTypeCase()).isEqualTo(expectedRequest.typeCase);
+        if(expectedRequest.blockNumber.isPresent()) {
+            assertThat(actual.getStartPosition().getSpecified().getNumber()).isEqualTo(expectedRequest.blockNumber.get());
+        }
+        if(expectedRequest.transactionId.isPresent()) {
+            assertThat(actual.getAfterTransactionId()).isEqualTo(expectedRequest.transactionId.get());
+        }
     }
 
     @Test
@@ -90,10 +119,8 @@ public final class ChaincodeEventsTest {
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
-        assertThat(request.getChannelId()).isEqualTo("NETWORK");
-        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_NAME");
+        assertChaincodeRequest(request, new ExpectedRequest("NETWORK","CHAINCODE_NAME",Ab.SeekPosition.TypeCase.NEXT_COMMIT,Optional.empty(),Optional.empty()));
 
-        assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.NEXT_COMMIT);
     }
 
     @Test
@@ -110,11 +137,8 @@ public final class ChaincodeEventsTest {
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
-        assertThat(request.getChannelId()).isEqualTo("NETWORK");
-        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_NAME");
+        assertChaincodeRequest(request, new ExpectedRequest("NETWORK","CHAINCODE_NAME",Ab.SeekPosition.TypeCase.SPECIFIED, Optional.ofNullable(startBlock),Optional.empty()));
 
-        assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
-        assertThat(request.getStartPosition().getSpecified().getNumber()).isEqualTo(startBlock);
     }
 
     @Test
@@ -131,15 +155,11 @@ public final class ChaincodeEventsTest {
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
-        assertThat(request.getChannelId()).isEqualTo("NETWORK");
-        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_NAME");
-
-        assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
-        assertThat(request.getStartPosition().getSpecified().getNumber()).isEqualTo(startBlock);
+        assertChaincodeRequest(request, new ExpectedRequest("NETWORK","CHAINCODE_NAME",Ab.SeekPosition.TypeCase.SPECIFIED, Optional.ofNullable(startBlock),Optional.empty()));
     }
 
     @Test
-    void sends_valid_request_with_specified_start_block_number_and_fresh_checkpointer() throws Exception {
+    void uses_specified_start_block_instead_of_unset_checkpoint() throws Exception {
         long startBlock = -1;
         Checkpointer checkpointer = new InMemoryCheckpointer();
         EventsRequest<ChaincodeEvent> eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
@@ -154,15 +174,11 @@ public final class ChaincodeEventsTest {
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
-        assertThat(request.getChannelId()).isEqualTo("NETWORK");
-        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_NAME");
-
-        assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
-        assertThat(request.getStartPosition().getSpecified().getNumber()).isEqualTo(startBlock);
+        assertChaincodeRequest(request, new ExpectedRequest("NETWORK","CHAINCODE_NAME",Ab.SeekPosition.TypeCase.SPECIFIED, Optional.ofNullable(startBlock),Optional.empty()));
     }
 
     @Test
-    void sends_valid_request_with_specified_start_block_and_checkpointed_block() throws Exception {
+    void uses_checkpoint_block_instead_of_specified_start_block() throws Exception {
         long startBlock = -1;
         long blockNumber = 101;
         Checkpointer checkpointer = new InMemoryCheckpointer();
@@ -179,20 +195,16 @@ public final class ChaincodeEventsTest {
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
-        assertThat(request.getChannelId()).isEqualTo("NETWORK");
-        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_NAME");
-
-        assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
-        assertThat(request.getStartPosition().getSpecified().getNumber()).isEqualTo(blockNumber + 1);
+        assertChaincodeRequest(request, new ExpectedRequest("NETWORK","CHAINCODE_NAME",Ab.SeekPosition.TypeCase.SPECIFIED, Optional.ofNullable(checkpointer.getBlockNumber()),Optional.empty()));
     }
 
     @Test
-    void sends_valid_request_with_specified_start_block_and_checkpointed_transaction_id() throws Exception {
+    void uses_checkpoint_block_and_transaction_instead_of_specified_start_block() throws Exception {
         long startBlock = -1;
         long blockNumber = 101;
         String transactionId = "TRANSACTION_ID";
         Checkpointer checkpointer = new InMemoryCheckpointer();
-        checkpointer.checkpointTransaction(blockNumber,transactionId);
+        checkpointer.checkpointTransaction(blockNumber, Optional.ofNullable(transactionId));
         EventsRequest<ChaincodeEvent> eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
                 .startBlock(startBlock)
                 .checkpoint(checkpointer)
@@ -205,19 +217,12 @@ public final class ChaincodeEventsTest {
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
-        assertThat(request.getChannelId()).isEqualTo("NETWORK");
-        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_NAME");
-
-        assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
-        assertThat(request.getStartPosition().getSpecified().getNumber()).isEqualTo(blockNumber);
-        assertThat(request.getAfterTransactionId()).isEqualTo(transactionId);
+        assertChaincodeRequest(request, new ExpectedRequest("NETWORK","CHAINCODE_NAME",Ab.SeekPosition.TypeCase.SPECIFIED, Optional.ofNullable(checkpointer.getBlockNumber()),(checkpointer.getTransactionId())));
     }
 
     @Test
-    void sends_valid_request_with_no_start_block_and_fresh_checkpointer() throws Exception {
+    void start_at_next_commit_with_unset_checkpoint_and_no_start_block() throws Exception {
         Checkpointer checkpointer = new InMemoryCheckpointer();
-        System.out.println( "null???????????");
-        System.out.println( checkpointer);
         EventsRequest<ChaincodeEvent> eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
                 .checkpoint(checkpointer)
                 .build();
@@ -229,18 +234,15 @@ public final class ChaincodeEventsTest {
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
-        assertThat(request.getChannelId()).isEqualTo("NETWORK");
-        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_NAME");
-
-        assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.NEXT_COMMIT);
+        assertChaincodeRequest(request, new ExpectedRequest("NETWORK", "CHAINCODE_NAME", Ab.SeekPosition.TypeCase.NEXT_COMMIT, Optional.empty(),Optional.empty()));
     }
 
     @Test
-    void sends_valid_request_with_no_start_block_and_checkpointer_transaction_id() throws Exception {
+    void uses_checkpoint_block_and_transaction_with_unset_start_block() throws Exception {
         long blockNumber = 1;
         String transactionId = "TRANSACTION_ID";
         Checkpointer checkpointer = new InMemoryCheckpointer();
-        checkpointer.checkpointTransaction(blockNumber,transactionId);
+        checkpointer.checkpointTransaction(blockNumber, Optional.ofNullable(transactionId));
         EventsRequest<ChaincodeEvent> eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
                 .checkpoint(checkpointer)
                 .build();
@@ -252,13 +254,7 @@ public final class ChaincodeEventsTest {
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
-        assertThat(request.getChannelId()).isEqualTo("NETWORK");
-        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_NAME");
-
-        assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
-        assertThat(request.getStartPosition().getSpecified().getNumber()).isEqualTo(blockNumber);
-        assertThat(request.getAfterTransactionId()).isEqualTo(transactionId);
-
+        assertChaincodeRequest(request, new ExpectedRequest("NETWORK", "CHAINCODE_NAME", Ab.SeekPosition.TypeCase.SPECIFIED, Optional.ofNullable(checkpointer.getBlockNumber()),checkpointer.getTransactionId()));
     }
 
     @Test
@@ -291,6 +287,8 @@ public final class ChaincodeEventsTest {
         assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
         assertThat(request.getStartPosition().getSpecified().getNumber()).isEqualTo(blockNumber);
         assertThat(request.getAfterTransactionId()).isEqualTo(event.getTxId());
+        assertChaincodeRequest(request, new ExpectedRequest("NETWORK", "CHAINCODE_NAME", Ab.SeekPosition.TypeCase.SPECIFIED, Optional.ofNullable(blockNumber), Optional.of(event.getTxId())));
+
     }
 
     @Test

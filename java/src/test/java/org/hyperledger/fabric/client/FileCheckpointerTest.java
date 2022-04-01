@@ -5,7 +5,9 @@ package org.hyperledger.fabric.client;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -15,7 +17,7 @@ public class FileCheckpointerTest extends CommonCheckpointerTest {
 
     @Override
     protected FileCheckpointer getCheckpointerInstance() throws IOException {
-        String file = testUtils.createTempFile(".json").toString();
+        Path file = testUtils.createTempFile(".json");
         this.fileCheckpointer = new FileCheckpointer(file);
         return fileCheckpointer;
     }
@@ -27,24 +29,24 @@ public class FileCheckpointerTest extends CommonCheckpointerTest {
 
     @Test
     void state_is_persisted() throws IOException {
-        String file = testUtils.createTempFile(".json").toString();
+        Path file = testUtils.createTempFile(".json");
         this.fileCheckpointer = new FileCheckpointer(file);
-        this.fileCheckpointer.checkpointTransaction(Long.valueOf(1),"TRANSACTION_ID");
+        this.fileCheckpointer.checkpointTransaction(1, Optional.ofNullable("TRANSACTION_ID"));
         this.fileCheckpointer.close();
         this.fileCheckpointer = new FileCheckpointer(file);
-        this.assertData(fileCheckpointer, Long.valueOf(1),"TRANSACTION_ID");
+        this.assertData(fileCheckpointer, 1, Optional.ofNullable("TRANSACTION_ID"));
     }
 
     @Test
     void block_number_zero_is_persisted_correctly() throws IOException {
          this.getCheckpointerInstance();
-         this.fileCheckpointer.checkpointBlock(Long.valueOf(0));
-         this.assertData(this.fileCheckpointer, Long.valueOf(1),"");
+         this.fileCheckpointer.checkpointBlock(0);
+         this.assertData(this.fileCheckpointer, 1, Optional.empty());
     }
 
     @Test
     void throws_on_unwritable_file_location() {
-        String badPath = Paths.get("").resolve("/missing_directory/checkpoint.json").toString();
+        Path badPath = Paths.get("").resolve("/missing_directory/checkpoint.json");
         assertThrows(IOException.class, () -> {
              new FileCheckpointer(badPath);
         });
