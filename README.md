@@ -18,7 +18,7 @@ See the [gateway.proto file](https://github.com/hyperledger/fabric-protos/blob/m
 
 This repository comprises three functionally equivalent client APIs, written in Go, Typescript, and Java. In order to
 build these components, the following needs to be installed and available in the PATH:
-- Go 1.16
+- Go 1.17
 - Node 14
 - Java 8
 - Docker

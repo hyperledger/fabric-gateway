@@ -29,7 +29,7 @@ PKGNAME = github.com/hyperledger/fabric-gateway
 ARCH=$(shell go env GOARCH)
 MARCH=$(shell go env GOOS)-$(shell go env GOARCH)
 
-GO_VER = 1.16.7
+GO_VER = 1.17.8
 GO_TAGS ?=
 
 build: build-node build-java
