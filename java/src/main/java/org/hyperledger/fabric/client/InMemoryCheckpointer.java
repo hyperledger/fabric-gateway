@@ -15,22 +15,22 @@ import java.util.Optional;
 public final class InMemoryCheckpointer implements Checkpointer {
 
     private long blockNumber;
-    private Optional<String> transactionId = Optional.empty();
+    private String transactionId;
 
     @Override
     public void checkpointBlock(final long blockNumber) {
-        checkpointTransaction(blockNumber + 1, Optional.empty());
+        checkpointTransaction(blockNumber + 1, null);
     }
 
     @Override
-    public void checkpointTransaction(final long blockNumber, final Optional<String> transactionId) {
+    public void checkpointTransaction(final long blockNumber, final String transactionId) {
         this.blockNumber = blockNumber;
         this.transactionId = transactionId;
     }
 
     @Override
     public void  checkpointChaincodeEvent(final ChaincodeEvent event) {
-        checkpointTransaction(event.getBlockNumber(), Optional.ofNullable(event.getTransactionId()));
+        checkpointTransaction(event.getBlockNumber(), event.getTransactionId());
     }
 
     @Override
@@ -40,6 +40,6 @@ public final class InMemoryCheckpointer implements Checkpointer {
 
     @Override
     public Optional<String> getTransactionId() {
-        return transactionId;
+        return Optional.ofNullable(transactionId);
     }
 }

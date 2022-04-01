@@ -12,36 +12,36 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class FileCheckpointerTest extends CommonCheckpointerTest {
-    FileCheckpointer fileCheckpointer;
+    private FileCheckpointer checkpointer;
     private static final TestUtils testUtils = TestUtils.getInstance();
 
     @Override
     protected FileCheckpointer getCheckpointerInstance() throws IOException {
         Path file = testUtils.createTempFile(".json");
-        this.fileCheckpointer = new FileCheckpointer(file);
-        return fileCheckpointer;
+        checkpointer = new FileCheckpointer(file);
+        return checkpointer;
     }
 
     @Override
     protected void tearDown() throws IOException {
-        this.fileCheckpointer.close();
+        checkpointer.close();
     }
 
     @Test
     void state_is_persisted() throws IOException {
         Path file = testUtils.createTempFile(".json");
-        this.fileCheckpointer = new FileCheckpointer(file);
-        this.fileCheckpointer.checkpointTransaction(1, Optional.ofNullable("TRANSACTION_ID"));
-        this.fileCheckpointer.close();
-        this.fileCheckpointer = new FileCheckpointer(file);
-        this.assertData(fileCheckpointer, 1, Optional.ofNullable("TRANSACTION_ID"));
+        try ( FileCheckpointer checkpointer = new FileCheckpointer(file);) {
+            checkpointer.checkpointTransaction(1, "TRANSACTION_ID");
+        }
+        checkpointer = new FileCheckpointer(file);
+        assertCheckpoint(checkpointer, 1, "TRANSACTION_ID");
     }
 
     @Test
     void block_number_zero_is_persisted_correctly() throws IOException {
-         this.getCheckpointerInstance();
-         this.fileCheckpointer.checkpointBlock(0);
-         this.assertData(this.fileCheckpointer, 1, Optional.empty());
+         getCheckpointerInstance();
+         checkpointer.checkpointBlock(0);
+         assertCheckpoint(this.checkpointer, 1);
     }
 
     @Test

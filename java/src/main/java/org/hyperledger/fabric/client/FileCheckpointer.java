@@ -6,7 +6,6 @@
 
 package org.hyperledger.fabric.client;
 
-
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonReader;
@@ -29,19 +28,13 @@ import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 
-
-//class State {
-//   long blockNumber;
-//   String  transactionId;
-//}
 /**
  * Checkpointer implementation backed by persistent file storage.
  * It can be used to checkpoint progress after successfully processing events, allowing eventing to be resumed from this point.
  */
 public final class FileCheckpointer implements Checkpointer, AutoCloseable {
-
     private long blockNumber;
-    private Optional<String> transactionId = Optional.empty();
+    private String transactionId;
     private final Path path;
     private final Reader fileReader;
     private final Writer fileWriter;
@@ -57,7 +50,7 @@ public final class FileCheckpointer implements Checkpointer, AutoCloseable {
     /**
      * To create a checkpointer instance backed by persistent file storage.
      * @param path Path of the file which has to store the checkpointer state.
-     * @throws IOException
+     * @throws IOException if the file cannot be opened, is unwritable, or contains invalid checkpointer state data.
      */
     public FileCheckpointer(final Path path) throws IOException {
         this.path = path;
@@ -90,11 +83,11 @@ public final class FileCheckpointer implements Checkpointer, AutoCloseable {
 
     @Override
     public void checkpointBlock(final long blockNumber) throws IOException {
-        checkpointTransaction(blockNumber + 1, Optional.empty());
+        checkpointTransaction(blockNumber + 1, null);
     }
 
     @Override
-    public void checkpointTransaction(final long blockNumber, final Optional<String> transactionID) throws IOException {
+    public void checkpointTransaction(final long blockNumber, final String transactionID) throws IOException {
         this.blockNumber = blockNumber;
         this.transactionId = transactionID;
         save();
@@ -102,7 +95,7 @@ public final class FileCheckpointer implements Checkpointer, AutoCloseable {
 
     @Override
     public void checkpointChaincodeEvent(final ChaincodeEvent event) throws IOException {
-        checkpointTransaction(event.getBlockNumber(), Optional.ofNullable(event.getTransactionId()));
+        checkpointTransaction(event.getBlockNumber(), event.getTransactionId());
     }
 
     @Override
@@ -112,7 +105,7 @@ public final class FileCheckpointer implements Checkpointer, AutoCloseable {
 
     @Override
     public Optional<String> getTransactionId() {
-        return transactionId;
+        return Optional.ofNullable(transactionId);
     }
 
     private void load() throws IOException {
@@ -135,7 +128,7 @@ public final class FileCheckpointer implements Checkpointer, AutoCloseable {
     private void parseJson(final JsonObject json) throws IOException {
         try {
             blockNumber = json.get(CONFIG_KEY_BLOCK).getAsLong();
-            transactionId = Optional.ofNullable(json.get(CONFIG_KEY_TRANSACTIONID).getAsString());
+            transactionId = json.get(CONFIG_KEY_TRANSACTIONID).getAsString();
         } catch (RuntimeException e) {
             throw new IOException("Bad format of checkpoint data from file: " + path, e);
         }
@@ -161,24 +154,23 @@ public final class FileCheckpointer implements Checkpointer, AutoCloseable {
     private JsonObject buildJson() {
         JsonObject object = new JsonObject();
         object.addProperty(CONFIG_KEY_BLOCK, blockNumber);
-        if (transactionId.isPresent()) {
-            object.addProperty(CONFIG_KEY_TRANSACTIONID, transactionId.get());
+        if (transactionId != null) {
+            object.addProperty(CONFIG_KEY_TRANSACTIONID, transactionId);
         }
         return object;
     }
 
     /**
      * Releases the resources and closes the file channel.
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
-
     public void close() throws IOException {
         fileChannel.close(); // Also releases lock
     }
 
     /**
-     * Confirms the changes made to the file have been written to the storage device.
-     * @throws IOException
+     * Commits file changes to the storage device.
+     * @throws IOException if an I/O error occurs.
      */
     public void sync() throws IOException {
         fileChannel.force(false);

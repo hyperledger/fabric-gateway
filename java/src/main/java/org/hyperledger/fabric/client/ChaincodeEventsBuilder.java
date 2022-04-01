@@ -7,6 +7,8 @@
 package org.hyperledger.fabric.client;
 
 import java.util.Objects;
+import java.util.Optional;
+
 import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 
@@ -38,14 +40,12 @@ final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
     @Override
     public ChaincodeEventsRequest.Builder checkpoint(final Checkpoint checkpoint) {
         long blockNumber = checkpoint.getBlockNumber();
-        Boolean transactionStatus = checkpoint.getTransactionId().isPresent();
-        if (blockNumber == 0 && !transactionStatus) {
+        Optional<String> transactionId = checkpoint.getTransactionId();
+        if (blockNumber == 0 && !transactionId.isPresent()) {
             return this;
         }
         startPositionBuilder.startBlock(blockNumber);
-        if (transactionStatus) {
-            this.afterTransactionId = checkpoint.getTransactionId().get();
-        }
+        this.afterTransactionId = transactionId.orElse(null);
         return this;
     }
 

@@ -7,24 +7,23 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 public abstract  class CommonCheckpointerTest {
 
-    Checkpointer checkpointerInstance;
+    private Checkpointer checkpointerInstance;
 
-    void assertData(Checkpointer checkpointer, long blockNumber, Optional<String> transactionId) {
-        assertThat(checkpointer.getBlockNumber()).isEqualTo(blockNumber);
-        if (transactionId.isPresent()) {
-            assertTrue(checkpointer.getTransactionId().isPresent());
-            assertThat(checkpointer.getTransactionId().get()).isEqualTo(transactionId.get());
-        } else {
-            assertFalse(checkpointer.getTransactionId().isPresent());
-        }
+    protected void assertCheckpoint(final Checkpoint checkpoint, final long blockNumber) {
+        assertThat(checkpoint.getBlockNumber()).isEqualTo(blockNumber);
+        assertThat(checkpoint.getTransactionId()).isNotPresent();
+    }
+    protected void assertCheckpoint(final Checkpoint checkpoint, final long blockNumber, final String transactionId) {
+        assertThat(checkpoint.getBlockNumber()).isEqualTo(blockNumber);
+        assertTrue(checkpoint.getTransactionId().isPresent());
+        assertThat(checkpoint.getTransactionId().get()).isEqualTo(transactionId);
     }
 
     @BeforeEach
@@ -42,23 +41,19 @@ public abstract  class CommonCheckpointerTest {
 
     @Test
     void initial_checkpointer_state() throws IOException {
-        assertData(checkpointerInstance , 0, Optional.empty());
+        assertCheckpoint(checkpointerInstance , 0);
     }
 
     @Test
     void CheckpointBlock_sets_next_block_number_and_empty_transaction_id() throws IOException {
-        long blockNumber = 101;
-
-        checkpointerInstance.checkpointBlock(blockNumber);
-        assertData(checkpointerInstance ,blockNumber +1,Optional.empty());
+        checkpointerInstance.checkpointBlock(101);
+        assertCheckpoint(checkpointerInstance , 102);
     }
 
     @Test
     void checkpointTransaction_sets_block_number_and_transaction_id() throws Exception {
-        long blockNumber = 101;
-
-        checkpointerInstance.checkpointTransaction(blockNumber,Optional.ofNullable("txn1"));
-        assertData(checkpointerInstance , blockNumber , Optional.ofNullable("txn1"));
+        checkpointerInstance.checkpointTransaction(101, "txn1");
+        assertCheckpoint(checkpointerInstance , 101 , "txn1");
     }
 
     @Test
@@ -72,7 +67,7 @@ public abstract  class CommonCheckpointerTest {
                 .build();
         ChaincodeEvent eventImp = new ChaincodeEventImpl(blockNumber,event);
         checkpointerInstance.checkpointChaincodeEvent(eventImp);
-        assertData(checkpointerInstance ,blockNumber, Optional.ofNullable(eventImp.getTransactionId()));
+        assertCheckpoint(checkpointerInstance ,blockNumber, eventImp.getTransactionId());
     }
 
 }

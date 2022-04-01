@@ -6,12 +6,11 @@ import java.io.IOException;
 public class InMemoryCheckpointerTest extends CommonCheckpointerTest {
 
     @Override
-    protected InMemoryCheckpointer getCheckpointerInstance() throws IOException {
+    protected InMemoryCheckpointer getCheckpointerInstance() {
         return new InMemoryCheckpointer();
     }
 
     @Override
-    protected void tearDown() throws IOException {
+    protected void tearDown() {
     }
-
 }
