@@ -6,38 +6,40 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.Optional;
+
 /**
- * InMemoryCheckpointer class used to persist checkpointer state in memory.
+ * A non-persistent Checkpointer implementation.
+ * It can be used to checkpoint progress after successfully processing events, allowing eventing to be resumed from this point.
  */
 public final class InMemoryCheckpointer implements Checkpointer {
 
     private long blockNumber;
-    private String transactionId = "";
+    private Optional<String> transactionId = Optional.empty();
 
     @Override
     public void checkpointBlock(final long blockNumber) {
-        this.blockNumber = blockNumber + 1;
-        this.transactionId = "";
+        checkpointTransaction(blockNumber + 1, Optional.empty());
     }
 
     @Override
-    public void checkpointTransaction(final long blockNumber, final String transactionID) {
+    public void checkpointTransaction(final long blockNumber, final Optional<String> transactionId) {
         this.blockNumber = blockNumber;
-        this.transactionId = transactionID;
+        this.transactionId = transactionId;
     }
 
     @Override
     public void  checkpointChaincodeEvent(final ChaincodeEvent event) {
-        checkpointTransaction(event.getBlockNumber(), event.getTransactionId());
+        checkpointTransaction(event.getBlockNumber(), Optional.ofNullable(event.getTransactionId()));
     }
 
     @Override
     public long getBlockNumber() {
-        return this.blockNumber;
+        return blockNumber;
     }
 
     @Override
-    public String getTransactionId() {
-        return this.transactionId;
+    public Optional<String> getTransactionId() {
+        return transactionId;
     }
 }

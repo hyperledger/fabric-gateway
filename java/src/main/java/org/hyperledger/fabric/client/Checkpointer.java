@@ -7,6 +7,7 @@
 package org.hyperledger.fabric.client;
 
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * Checkpointer allows update of a checkpoint position after events are successfully processed.
@@ -26,13 +27,13 @@ public interface Checkpointer extends Checkpoint {
       * @param blockNumber a ledger block number.
       * @param transactionId transaction id within the block.
       */
-      void checkpointTransaction(long blockNumber, String transactionId) throws Exception;
+      void checkpointTransaction(long blockNumber, Optional<String> transactionId) throws IOException;
 
      /**
       *  CheckpointChaincodeEvent checkpoints the chaincode event.
       * @param event a chaincode event.
       */
-      void checkpointChaincodeEvent(ChaincodeEvent event) throws Exception;
+      void checkpointChaincodeEvent(ChaincodeEvent event) throws IOException;
 
 }
 

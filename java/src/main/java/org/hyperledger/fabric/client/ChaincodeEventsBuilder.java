@@ -7,7 +7,6 @@
 package org.hyperledger.fabric.client;
 
 import java.util.Objects;
-
 import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 
@@ -17,7 +16,7 @@ final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
     private final String channelName;
     private final String chaincodeName;
     private final StartPositionBuilder startPositionBuilder = new StartPositionBuilder();
-    private String afterTransactionId = "";
+    private String afterTransactionId;
 
     ChaincodeEventsBuilder(final GatewayClient client, final SigningIdentity signingIdentity, final String channelName,
                            final String chaincodeName) {
@@ -38,13 +37,15 @@ final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
 
     @Override
     public ChaincodeEventsRequest.Builder checkpoint(final Checkpoint checkpoint) {
-        Long blockNumber = checkpoint.getBlockNumber();
-        String transactionId = checkpoint.getTransactionId();
-        if (blockNumber == 0 && transactionId.length() == 0) {
+        long blockNumber = checkpoint.getBlockNumber();
+        Boolean transactionStatus = checkpoint.getTransactionId().isPresent();
+        if (blockNumber == 0 && !transactionStatus) {
             return this;
         }
         startPositionBuilder.startBlock(blockNumber);
-        this.afterTransactionId = transactionId;
+        if (transactionStatus) {
+            this.afterTransactionId = checkpoint.getTransactionId().get();
+        }
         return this;
     }
 
@@ -63,12 +64,14 @@ final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
 
     private org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest newChaincodeEventsRequestProto() {
         ByteString creator = ByteString.copyFrom(signingIdentity.getCreator());
-        return org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest.newBuilder()
+        org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest.Builder builder = org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest.newBuilder()
                 .setChannelId(channelName)
                 .setChaincodeId(chaincodeName)
                 .setIdentity(creator)
-                .setStartPosition(startPositionBuilder.build())
-                .setAfterTransactionId(afterTransactionId)
-                .build();
+                .setStartPosition(startPositionBuilder.build());
+                if (afterTransactionId != null) {
+                    builder.setAfterTransactionId(afterTransactionId);
+                 }
+        return builder.build();
     }
 }
