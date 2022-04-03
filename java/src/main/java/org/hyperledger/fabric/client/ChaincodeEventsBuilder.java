@@ -7,6 +7,7 @@
 package org.hyperledger.fabric.client;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
@@ -17,6 +18,7 @@ final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
     private final String channelName;
     private final String chaincodeName;
     private final StartPositionBuilder startPositionBuilder = new StartPositionBuilder();
+    private String afterTransactionId;
 
     ChaincodeEventsBuilder(final GatewayClient client, final SigningIdentity signingIdentity, final String channelName,
                            final String chaincodeName) {
@@ -36,6 +38,18 @@ final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
     }
 
     @Override
+    public ChaincodeEventsRequest.Builder checkpoint(final Checkpoint checkpoint) {
+        long blockNumber = checkpoint.getBlockNumber();
+        Optional<String> transactionId = checkpoint.getTransactionId();
+        if (blockNumber == 0 && !transactionId.isPresent()) {
+            return this;
+        }
+        startPositionBuilder.startBlock(blockNumber);
+        this.afterTransactionId = transactionId.orElse(null);
+        return this;
+    }
+
+    @Override
     public ChaincodeEventsRequest build() {
         SignedChaincodeEventsRequest signedRequest = newSignedChaincodeEventsRequestProto();
         return new ChaincodeEventsRequestImpl(client, signingIdentity, signedRequest);
@@ -50,11 +64,14 @@ final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
 
     private org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest newChaincodeEventsRequestProto() {
         ByteString creator = ByteString.copyFrom(signingIdentity.getCreator());
-        return org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest.newBuilder()
+        org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest.Builder builder = org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest.newBuilder()
                 .setChannelId(channelName)
                 .setChaincodeId(chaincodeName)
                 .setIdentity(creator)
-                .setStartPosition(startPositionBuilder.build())
-                .build();
+                .setStartPosition(startPositionBuilder.build());
+                if (afterTransactionId != null) {
+                    builder.setAfterTransactionId(afterTransactionId);
+                 }
+        return builder.build();
     }
 }

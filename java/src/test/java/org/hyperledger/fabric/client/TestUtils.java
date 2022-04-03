@@ -9,6 +9,9 @@ package org.hyperledger.fabric.client;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -45,6 +48,7 @@ import org.hyperledger.fabric.protos.peer.TransactionPackage;
 
 public final class TestUtils {
     private static final TestUtils INSTANCE = new TestUtils();
+    private static final String TEST_FILE_PREFIX = "fg-test-";
 
     private final AtomicLong currentTransactionId = new AtomicLong();
     private final X509Credentials credentials = new X509Credentials();
@@ -289,5 +293,11 @@ public final class TestUtils {
                 onCompleted.run();
             }
         };
+    }
+
+    public Path createTempFile(String sufix, FileAttribute<?>... attributes) throws IOException {
+        Path tempFile = Files.createTempFile(TEST_FILE_PREFIX, sufix, attributes);
+        tempFile.toFile().deleteOnExit();
+        return tempFile;
     }
 }

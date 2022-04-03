@@ -8,10 +8,12 @@ package org.hyperledger.fabric.client;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Option;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
 import io.grpc.Status;
@@ -57,6 +59,22 @@ public final class ChaincodeEventsTest {
         mocker.close();
     }
 
+    void assertStartPosition(final org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest actual, final long blockNumber, final String transactionId) {
+        assertThat(actual.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
+        assertThat(actual.getStartPosition().getSpecified().getNumber()).isEqualTo(blockNumber);
+        assertThat(actual.getAfterTransactionId()).isEqualTo(transactionId);
+    }
+
+    void assertNextCommit(final org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest actual) {
+        assertThat(actual.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.NEXT_COMMIT);
+    }
+
+    void assertRequestInitiated(EventsRequest<ChaincodeEvent> eventsRequest) {
+        try (CloseableIterator<ChaincodeEvent> iter = eventsRequest.getEvents()) {
+            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
+        }
+    }
+
     @Test
     void throws_NullPointerException_on_null_chaincode_name() {
         assertThatThrownBy(() -> network.getChaincodeEvents(null))
@@ -89,11 +107,7 @@ public final class ChaincodeEventsTest {
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
-
-        assertThat(request.getChannelId()).isEqualTo("NETWORK");
-        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_NAME");
-
-        assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.NEXT_COMMIT);
+        assertNextCommit(request);
     }
 
     @Test
@@ -103,18 +117,11 @@ public final class ChaincodeEventsTest {
                 .startBlock(startBlock)
                 .build();
 
-        try (CloseableIterator<ChaincodeEvent> iter = eventsRequest.getEvents()) {
-            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
-        }
+        assertRequestInitiated(eventsRequest);
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
-
-        assertThat(request.getChannelId()).isEqualTo("NETWORK");
-        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_NAME");
-
-        assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
-        assertThat(request.getStartPosition().getSpecified().getNumber()).isEqualTo(startBlock);
+        assertStartPosition(request,startBlock,"");
     }
 
     @Test
@@ -123,19 +130,118 @@ public final class ChaincodeEventsTest {
         EventsRequest<ChaincodeEvent> eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
                 .startBlock(startBlock)
                 .build();
-
-        try (CloseableIterator<ChaincodeEvent> iter = eventsRequest.getEvents()) {
-            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
-        }
+        assertRequestInitiated(eventsRequest);
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
-        assertThat(request.getChannelId()).isEqualTo("NETWORK");
-        assertThat(request.getChaincodeId()).isEqualTo("CHAINCODE_NAME");
+        assertStartPosition(request, startBlock, "");
+    }
 
-        assertThat(request.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
-        assertThat(request.getStartPosition().getSpecified().getNumber()).isEqualTo(startBlock);
+    @Test
+    void uses_specified_start_block_instead_of_unset_checkpoint() throws Exception {
+        long startBlock = -1;
+        Checkpointer checkpointer = new InMemoryCheckpointer();
+        EventsRequest<ChaincodeEvent> eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
+                .startBlock(startBlock)
+                .checkpoint(checkpointer)
+                .build();
+
+        assertRequestInitiated(eventsRequest);
+
+        SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
+        ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
+
+        assertStartPosition(request, startBlock, "");
+    }
+
+    @Test
+    void uses_checkpoint_block_instead_of_specified_start_block() throws Exception {
+        Checkpointer checkpointer = new InMemoryCheckpointer();
+        checkpointer.checkpointBlock(101);
+        EventsRequest<ChaincodeEvent> eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
+                .startBlock(-1)
+                .checkpoint(checkpointer)
+                .build();
+
+        assertRequestInitiated(eventsRequest);
+
+        SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
+        ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
+        assertStartPosition(request, checkpointer.getBlockNumber(), "");
+    }
+
+    @Test
+    void uses_checkpoint_block_and_transaction_instead_of_specified_start_block() throws Exception {
+        Checkpointer checkpointer = new InMemoryCheckpointer();
+        checkpointer.checkpointTransaction(101, "TRANSACTION_ID");
+        EventsRequest<ChaincodeEvent> eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
+                .startBlock(-1)
+                .checkpoint(checkpointer)
+                .build();
+
+        assertRequestInitiated(eventsRequest);
+
+        SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
+        ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
+
+        assertStartPosition(request, checkpointer.getBlockNumber(), checkpointer.getTransactionId().orElse(null));
+    }
+
+    @Test
+    void start_at_next_commit_with_unset_checkpoint_and_no_start_block() throws Exception {
+        Checkpointer checkpointer = new InMemoryCheckpointer();
+        EventsRequest<ChaincodeEvent> eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
+                .checkpoint(checkpointer)
+                .build();
+
+        assertRequestInitiated(eventsRequest);
+
+        SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
+        ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
+
+        assertNextCommit(request);
+    }
+
+    @Test
+    void uses_checkpoint_block_and_transaction_with_unset_start_block() throws Exception {
+        Checkpointer checkpointer = new InMemoryCheckpointer();
+        checkpointer.checkpointTransaction(1, "TRANSACTION_ID");
+        EventsRequest<ChaincodeEvent> eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
+                .checkpoint(checkpointer)
+                .build();
+
+        assertRequestInitiated(eventsRequest);
+
+        SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
+        ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
+
+        assertStartPosition(request, checkpointer.getBlockNumber(), checkpointer.getTransactionId().orElse(null));
+    }
+
+    @Test
+    void uses_checkpointed_chaincode_event_block_and_transaction() throws  Exception {
+        long blockNumber = 1;
+        ChaincodeEventPackage.ChaincodeEvent event = ChaincodeEventPackage.ChaincodeEvent.newBuilder()
+                .setChaincodeId("CHAINCODE_NAME")
+                .setTxId("tx1")
+                .setEventName("event")
+                .setPayload(ByteString.copyFromUtf8("payload1"))
+                .build();
+        ChaincodeEventImpl chaincodeEvent = new ChaincodeEventImpl(blockNumber, event);
+        Checkpointer checkpointer = new InMemoryCheckpointer();
+
+        checkpointer.checkpointChaincodeEvent(chaincodeEvent);
+        EventsRequest<ChaincodeEvent> eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
+                .checkpoint(checkpointer)
+                .build();
+
+        assertRequestInitiated(eventsRequest);
+
+        SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
+        ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
+
+        assertStartPosition(request, chaincodeEvent.getBlockNumber(), chaincodeEvent.getTransactionId());
     }
 
     @Test
