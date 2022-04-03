@@ -6,14 +6,7 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
-
 import com.google.protobuf.ByteString;
-import com.google.protobuf.Option;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
 import io.grpc.Status;
@@ -26,6 +19,13 @@ import org.hyperledger.fabric.protos.peer.ChaincodeEventPackage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -59,6 +59,14 @@ public final class ChaincodeEventsTest {
         mocker.close();
     }
 
+    void assertStartPosition(final org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest actual, final long blockNumber) {
+        assertStartPosition(actual, blockNumber, "");
+    }
+
+    void assertStartPosition(final org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest actual, final long blockNumber, final Optional<String> transactionId) {
+        assertStartPosition(actual, blockNumber, transactionId.orElse(""));
+    }
+
     void assertStartPosition(final org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest actual, final long blockNumber, final String transactionId) {
         assertThat(actual.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
         assertThat(actual.getStartPosition().getSpecified().getNumber()).isEqualTo(blockNumber);
@@ -69,9 +77,9 @@ public final class ChaincodeEventsTest {
         assertThat(actual.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.NEXT_COMMIT);
     }
 
-    void assertRequestInitiated(EventsRequest<ChaincodeEvent> eventsRequest) {
-        try (CloseableIterator<ChaincodeEvent> iter = eventsRequest.getEvents()) {
-            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
+    void assertRequestInitiated(final Supplier<CloseableIterator<?>> supplier) {
+        try (CloseableIterator<?> iter = supplier.get()) {
+            iter.hasNext(); // Interact with iterator to ensure async request has been made
         }
     }
 
@@ -101,9 +109,7 @@ public final class ChaincodeEventsTest {
 
     @Test
     void sends_valid_request_with_default_start_position() throws Exception {
-        try (CloseableIterator<ChaincodeEvent> iter = network.getChaincodeEvents("CHAINCODE_NAME")) {
-            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
-        }
+        assertRequestInitiated(() -> network.getChaincodeEvents("CHAINCODE_NAME"));
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
@@ -117,11 +123,11 @@ public final class ChaincodeEventsTest {
                 .startBlock(startBlock)
                 .build();
 
-        assertRequestInitiated(eventsRequest);
+        assertRequestInitiated(eventsRequest::getEvents);
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
-        assertStartPosition(request,startBlock,"");
+        assertStartPosition(request, startBlock);
     }
 
     @Test
@@ -130,12 +136,12 @@ public final class ChaincodeEventsTest {
         EventsRequest<ChaincodeEvent> eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
                 .startBlock(startBlock)
                 .build();
-        assertRequestInitiated(eventsRequest);
+        assertRequestInitiated(eventsRequest::getEvents);
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
-        assertStartPosition(request, startBlock, "");
+        assertStartPosition(request, startBlock);
     }
 
     @Test
@@ -147,12 +153,12 @@ public final class ChaincodeEventsTest {
                 .checkpoint(checkpointer)
                 .build();
 
-        assertRequestInitiated(eventsRequest);
+        assertRequestInitiated(eventsRequest::getEvents);
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
-        assertStartPosition(request, startBlock, "");
+        assertStartPosition(request, startBlock);
     }
 
     @Test
@@ -164,11 +170,11 @@ public final class ChaincodeEventsTest {
                 .checkpoint(checkpointer)
                 .build();
 
-        assertRequestInitiated(eventsRequest);
+        assertRequestInitiated(eventsRequest::getEvents);
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
-        assertStartPosition(request, checkpointer.getBlockNumber(), "");
+        assertStartPosition(request, checkpointer.getBlockNumber());
     }
 
     @Test
@@ -180,12 +186,12 @@ public final class ChaincodeEventsTest {
                 .checkpoint(checkpointer)
                 .build();
 
-        assertRequestInitiated(eventsRequest);
+        assertRequestInitiated(eventsRequest::getEvents);
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
-        assertStartPosition(request, checkpointer.getBlockNumber(), checkpointer.getTransactionId().orElse(null));
+        assertStartPosition(request, checkpointer.getBlockNumber(), checkpointer.getTransactionId());
     }
 
     @Test
@@ -195,7 +201,7 @@ public final class ChaincodeEventsTest {
                 .checkpoint(checkpointer)
                 .build();
 
-        assertRequestInitiated(eventsRequest);
+        assertRequestInitiated(eventsRequest::getEvents);
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
@@ -211,12 +217,12 @@ public final class ChaincodeEventsTest {
                 .checkpoint(checkpointer)
                 .build();
 
-        assertRequestInitiated(eventsRequest);
+        assertRequestInitiated(eventsRequest::getEvents);
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
-        assertStartPosition(request, checkpointer.getBlockNumber(), checkpointer.getTransactionId().orElse(null));
+        assertStartPosition(request, checkpointer.getBlockNumber(), checkpointer.getTransactionId());
     }
 
     @Test
@@ -236,7 +242,7 @@ public final class ChaincodeEventsTest {
                 .checkpoint(checkpointer)
                 .build();
 
-        assertRequestInitiated(eventsRequest);
+        assertRequestInitiated(eventsRequest::getEvents);
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
@@ -325,9 +331,7 @@ public final class ChaincodeEventsTest {
     void uses_specified_call_options() {
         Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
         CallOption option = CallOption.deadline(expected);
-        try (CloseableIterator<ChaincodeEvent> iter = network.getChaincodeEvents("CHAINCODE_NAME", option)) {
-            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
-        }
+        assertRequestInitiated(() -> network.getChaincodeEvents("CHAINCODE_NAME", option));
 
         List<CallOptions> actual = mocker.captureCallOptions();
         assertThat(actual).first()
@@ -337,9 +341,7 @@ public final class ChaincodeEventsTest {
 
     @Test
     void uses_default_call_options() {
-        try (CloseableIterator<ChaincodeEvent> iter = network.getChaincodeEvents("CHAINCODE_NAME")) {
-            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
-        }
+        assertRequestInitiated(() -> network.getChaincodeEvents("CHAINCODE_NAME"));
 
         List<CallOptions> actual = mocker.captureCallOptions();
         assertThat(actual).first()

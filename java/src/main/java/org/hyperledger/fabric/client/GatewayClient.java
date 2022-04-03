@@ -137,7 +137,7 @@ final class GatewayClient {
             final Supplier<Iterator<Response>> call
     ) {
         try {
-            Iterator<Response> iterator =  context.wrap(call::get).call();
+            Iterator<Response> iterator = context.wrap(call::get).call();
             return new ResponseIterator<>(context, iterator);
         } catch (StatusRuntimeException e) {
             context.cancel(e);

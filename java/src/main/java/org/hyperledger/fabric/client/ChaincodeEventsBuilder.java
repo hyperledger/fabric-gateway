@@ -6,11 +6,11 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.Objects;
-import java.util.Optional;
-
 import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
+
+import java.util.Objects;
+import java.util.Optional;
 
 final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
     private final GatewayClient client;
@@ -69,9 +69,9 @@ final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
                 .setChaincodeId(chaincodeName)
                 .setIdentity(creator)
                 .setStartPosition(startPositionBuilder.build());
-                if (afterTransactionId != null) {
-                    builder.setAfterTransactionId(afterTransactionId);
-                 }
+        if (afterTransactionId != null) {
+            builder.setAfterTransactionId(afterTransactionId);
+        }
         return builder.build();
     }
 }
