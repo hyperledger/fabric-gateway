@@ -21,8 +21,8 @@ public interface ChaincodeEventsRequest extends EventsRequest<ChaincodeEvent> {
 
         /**
          * Reads events starting at the checkpoint position.
-         * @param checkpoint
-         * @return Builder
+         * @param checkpoint a checkpoint position.
+         * @return This builder.
          */
         Builder checkpoint(Checkpoint checkpoint);
 

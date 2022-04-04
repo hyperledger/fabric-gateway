@@ -45,7 +45,7 @@ public abstract  class CommonCheckpointerTest {
     }
 
     @Test
-    void CheckpointBlock_sets_next_block_number_and_empty_transaction_id() throws IOException {
+    void checkpointBlock_sets_next_block_number_and_empty_transaction_id() throws IOException {
         checkpointerInstance.checkpointBlock(101);
         assertCheckpoint(checkpointerInstance , 102);
     }

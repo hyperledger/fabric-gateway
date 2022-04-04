@@ -29,7 +29,7 @@ public final class InMemoryCheckpointer implements Checkpointer {
     }
 
     @Override
-    public void  checkpointChaincodeEvent(final ChaincodeEvent event) {
+    public void checkpointChaincodeEvent(final ChaincodeEvent event) {
         checkpointTransaction(event.getBlockNumber(), event.getTransactionId());
     }
 

@@ -20,22 +20,22 @@ public interface Checkpointer extends Checkpoint {
       * @param blockNumber a ledger block number.
       * @throws IOException if an I/O error occurs.
       */
-      void  checkpointBlock(long blockNumber) throws IOException;
+    void checkpointBlock(long blockNumber) throws IOException;
 
      /**
-      * CheckpointTransaction checkpoints the transaction within a block.
+      * Checkpoint a transaction within a block.
       * @param blockNumber a ledger block number.
       * @param transactionId transaction id within the block.
       * @throws IOException if an I/O error occurs.
       */
-      void checkpointTransaction(long blockNumber, String transactionId) throws IOException;
+    void checkpointTransaction(long blockNumber, String transactionId) throws IOException;
 
      /**
-      *  CheckpointChaincodeEvent checkpoints the chaincode event.
+      * Checkpoint a chaincode event.
       * @param event a chaincode event.
       * @throws IOException if an I/O error occurs.
       */
-      void checkpointChaincodeEvent(ChaincodeEvent event) throws IOException;
+    void checkpointChaincodeEvent(ChaincodeEvent event) throws IOException;
 
 }
 

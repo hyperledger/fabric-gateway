@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -109,10 +110,10 @@ public final class FileCheckpointer implements Checkpointer, AutoCloseable {
     }
 
     private void load() throws IOException {
-            JsonObject data = readFile();
-            if (data != null) {
-                parseJson(data);
-            }
+        JsonObject data = readFile();
+        if (data != null) {
+            parseJson(data);
+        }
     }
 
     private JsonObject readFile() throws IOException {
