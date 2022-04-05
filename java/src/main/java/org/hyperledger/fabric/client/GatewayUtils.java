@@ -9,8 +9,9 @@ package org.hyperledger.fabric.client;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
 import org.hyperledger.fabric.client.identity.Identity;
-import org.hyperledger.fabric.protos.msp.Identities;
-import org.hyperledger.fabric.protos.orderer.Ab;
+import org.hyperledger.fabric.protos.msp.SerializedIdentity;
+import org.hyperledger.fabric.protos.orderer.SeekPosition;
+import org.hyperledger.fabric.protos.orderer.SeekSpecified;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -48,7 +49,7 @@ final class GatewayUtils {
     }
 
     public static byte[] serializeIdentity(final Identity identity) {
-        return Identities.SerializedIdentity.newBuilder()
+        return SerializedIdentity.newBuilder()
                 .setMspid(identity.getMspId())
                 .setIdBytes(ByteString.copyFrom(identity.getCredentials()))
                 .build()
@@ -69,12 +70,12 @@ final class GatewayUtils {
                 .build();
     }
 
-    public static Ab.SeekPosition seekLargestBlockNumber() {
-        Ab.SeekSpecified largestBlockNumber = Ab.SeekSpecified.newBuilder()
+    public static SeekPosition seekLargestBlockNumber() {
+        SeekSpecified largestBlockNumber = SeekSpecified.newBuilder()
                 .setNumber(Long.MAX_VALUE)
                 .build();
 
-        return Ab.SeekPosition.newBuilder()
+        return SeekPosition.newBuilder()
                 .setSpecified(largestBlockNumber)
                 .build();
     }

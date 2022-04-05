@@ -60,9 +60,10 @@ import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Identity;
-import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.common.Block;
 import org.hyperledger.fabric.protos.gateway.ErrorDetail;
-import org.hyperledger.fabric.protos.peer.EventsPackage;
+import org.hyperledger.fabric.protos.peer.BlockAndPrivateData;
+import org.hyperledger.fabric.protos.peer.FilteredBlock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -562,7 +563,7 @@ public class ScenarioSteps {
 
     @Then("I should receive a block event on {string}")
     public void assertReceiveBlockEventOnListener(String listenerName) throws InterruptedException {
-        Common.Block event = currentGateway.nextBlockEvent(listenerName);
+        Block event = currentGateway.nextBlockEvent(listenerName);
         assertThat(event).isNotNull();
     }
 
@@ -573,7 +574,7 @@ public class ScenarioSteps {
 
     @Then("I should receive a filtered block event on {string}")
     public void assertReceiveFilteredBlockEventOnListener(String listenerName) throws InterruptedException {
-        EventsPackage.FilteredBlock event = currentGateway.nextFilteredBlockEvent(listenerName);
+        FilteredBlock event = currentGateway.nextFilteredBlockEvent(listenerName);
         assertThat(event).isNotNull();
     }
 
@@ -584,7 +585,7 @@ public class ScenarioSteps {
 
     @Then("I should receive a block and private data event on {string}")
     public void assertReceiveBlockAndPrivateDataEventOnListener(String listenerName) throws InterruptedException {
-        EventsPackage.BlockAndPrivateData event = currentGateway.nextBlockAndPrivateDataEvent(listenerName);
+        BlockAndPrivateData event = currentGateway.nextBlockAndPrivateDataEvent(listenerName);
         assertThat(event).isNotNull();
     }
 

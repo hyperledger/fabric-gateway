@@ -14,13 +14,14 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.Channel;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
-import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.common.ChannelHeader;
+import org.hyperledger.fabric.protos.common.Envelope;
+import org.hyperledger.fabric.protos.common.Header;
 import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
 import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
-import org.hyperledger.fabric.protos.peer.ProposalPackage;
 
 final class GatewayImpl implements Gateway {
     public static final class Builder implements Gateway.Builder {
@@ -142,11 +143,13 @@ final class GatewayImpl implements Gateway {
     public Proposal newSignedProposal(final byte[] bytes, final byte[] signature) {
         try {
             ProposedTransaction proposedTransaction = ProposedTransaction.parseFrom(bytes);
-            ProposalPackage.Proposal proposal = ProposalPackage.Proposal.parseFrom(proposedTransaction.getProposal().getProposalBytes());
-            Common.Header header = Common.Header.parseFrom(proposal.getHeader());
-            Common.ChannelHeader channelHeader = Common.ChannelHeader.parseFrom(header.getChannelHeader());
+            org.hyperledger.fabric.protos.peer.Proposal proposal = org.hyperledger.fabric.protos.peer.Proposal
+                    .parseFrom(proposedTransaction.getProposal().getProposalBytes());
+            Header header = Header.parseFrom(proposal.getHeader());
+            ChannelHeader channelHeader = ChannelHeader.parseFrom(header.getChannelHeader());
 
-            ProposalImpl result = new ProposalImpl(client, signingIdentity, channelHeader.getChannelId(), proposedTransaction);
+            ProposalImpl result = new ProposalImpl(client, signingIdentity, channelHeader.getChannelId(),
+                    proposedTransaction);
             result.setSignature(signature);
             return result;
         } catch (InvalidProtocolBufferException e) {
@@ -196,7 +199,7 @@ final class GatewayImpl implements Gateway {
     @Override
     public BlockEventsRequest newSignedBlockEventsRequest(final byte[] bytes, final byte[] signature) {
         try {
-            Common.Envelope request = Common.Envelope.parseFrom(bytes);
+            Envelope request = Envelope.parseFrom(bytes);
 
             BlockEventsRequestImpl result = new BlockEventsRequestImpl(client, signingIdentity, request);
             result.setSignature(signature);
@@ -209,9 +212,10 @@ final class GatewayImpl implements Gateway {
     @Override
     public FilteredBlockEventsRequest newSignedFilteredBlockEventsRequest(final byte[] bytes, final byte[] signature) {
         try {
-            Common.Envelope request = Common.Envelope.parseFrom(bytes);
+            Envelope request = Envelope.parseFrom(bytes);
 
-            FilteredBlockEventsRequestImpl result = new FilteredBlockEventsRequestImpl(client, signingIdentity, request);
+            FilteredBlockEventsRequestImpl result = new FilteredBlockEventsRequestImpl(client, signingIdentity,
+                    request);
             result.setSignature(signature);
             return result;
         } catch (InvalidProtocolBufferException e) {
@@ -220,11 +224,13 @@ final class GatewayImpl implements Gateway {
     }
 
     @Override
-    public BlockAndPrivateDataEventsRequest newSignedBlockAndPrivateDataEventsRequest(final byte[] bytes, final byte[] signature) {
+    public BlockAndPrivateDataEventsRequest newSignedBlockAndPrivateDataEventsRequest(final byte[] bytes,
+            final byte[] signature) {
         try {
-            Common.Envelope request = Common.Envelope.parseFrom(bytes);
+            Envelope request = Envelope.parseFrom(bytes);
 
-            BlockAndPrivateDataEventsRequestImpl result = new BlockAndPrivateDataEventsRequestImpl(client, signingIdentity, request);
+            BlockAndPrivateDataEventsRequestImpl result = new BlockAndPrivateDataEventsRequestImpl(client,
+                    signingIdentity, request);
             result.setSignature(signature);
             return result;
         } catch (InvalidProtocolBufferException e) {

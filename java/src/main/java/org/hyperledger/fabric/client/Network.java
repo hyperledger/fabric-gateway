@@ -6,8 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
-import org.hyperledger.fabric.protos.common.Common;
-import org.hyperledger.fabric.protos.peer.EventsPackage;
+import org.hyperledger.fabric.protos.common.Block;
+import org.hyperledger.fabric.protos.peer.BlockAndPrivateData;
+import org.hyperledger.fabric.protos.peer.FilteredBlock;
 
 /**
  * Network represents a network of nodes that are members of a specific Fabric channel. Network instances are obtained
@@ -99,7 +100,7 @@ public interface Network {
      * @return Ordered sequence of events.
      * @see #newBlockEventsRequest()
      */
-    CloseableIterator<Common.Block> getBlockEvents(CallOption... options);
+    CloseableIterator<Block> getBlockEvents(CallOption... options);
 
     /**
      * Build a request to receive block events. This can be used to specify a specific ledger start position. Supports
@@ -118,7 +119,7 @@ public interface Network {
      * @return Ordered sequence of events.
      * @see #newFilteredBlockEventsRequest()
      */
-    CloseableIterator<EventsPackage.FilteredBlock> getFilteredBlockEvents(CallOption... options);
+    CloseableIterator<FilteredBlock> getFilteredBlockEvents(CallOption... options);
 
     /**
      * Build a request to receive filtered block events. This can be used to specify a specific ledger start position.
@@ -137,7 +138,7 @@ public interface Network {
      * @return Ordered sequence of events.
      * @see #newBlockAndPrivateDataEventsRequest()
      */
-    CloseableIterator<EventsPackage.BlockAndPrivateData> getBlockAndPrivateDataEvents(CallOption... options);
+    CloseableIterator<BlockAndPrivateData> getBlockAndPrivateDataEvents(CallOption... options);
 
     /**
      * Build a request to receive block and private data events. This can be used to specify a specific ledger start

@@ -8,28 +8,31 @@ package org.hyperledger.fabric.client;
 
 import java.util.stream.Stream;
 
-import org.hyperledger.fabric.protos.common.Common;
-import org.hyperledger.fabric.protos.ledger.rwset.Rwset;
-import org.hyperledger.fabric.protos.peer.EventsPackage;
+import org.hyperledger.fabric.protos.common.Block;
+import org.hyperledger.fabric.protos.common.BlockHeader;
+import org.hyperledger.fabric.protos.common.Envelope;
+import org.hyperledger.fabric.protos.ledger.rwset.TxPvtReadWriteSet;
+import org.hyperledger.fabric.protos.peer.BlockAndPrivateData;
+import org.hyperledger.fabric.protos.peer.DeliverResponse;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
-public final class BlockAndPrivateDataEventsTest extends CommonBlockEventsTest<EventsPackage.BlockAndPrivateData> {
+public final class BlockAndPrivateDataEventsTest extends CommonBlockEventsTest<BlockAndPrivateData> {
     @Override
     protected void setEventsOptions(final Gateway.Builder builder, final CallOption... options) {
         builder.blockAndPrivateDataEventsOptions(options);
     }
 
     @Override
-    protected EventsPackage.DeliverResponse newDeliverResponse(final long blockNumber) {
-        return EventsPackage.DeliverResponse.newBuilder()
-                .setBlockAndPrivateData(EventsPackage.BlockAndPrivateData.newBuilder()
-                        .setBlock(Common.Block.newBuilder()
-                                .setHeader(Common.BlockHeader.newBuilder().setNumber(blockNumber))
+    protected DeliverResponse newDeliverResponse(final long blockNumber) {
+        return DeliverResponse.newBuilder()
+                .setBlockAndPrivateData(BlockAndPrivateData.newBuilder()
+                        .setBlock(Block.newBuilder()
+                                .setHeader(BlockHeader.newBuilder().setNumber(blockNumber))
                         )
-                        .putPrivateDataMap(0, Rwset.TxPvtReadWriteSet.newBuilder().build())
+                        .putPrivateDataMap(0, TxPvtReadWriteSet.newBuilder().build())
                 )
                 .build();
     }
@@ -40,27 +43,27 @@ public final class BlockAndPrivateDataEventsTest extends CommonBlockEventsTest<E
     }
 
     @Override
-    protected CloseableIterator<EventsPackage.BlockAndPrivateData> getEvents(final CallOption... options) {
+    protected CloseableIterator<BlockAndPrivateData> getEvents(final CallOption... options) {
         return network.getBlockAndPrivateDataEvents(options);
     }
 
     @Override
-    protected Stream<Common.Envelope> captureEvents() {
+    protected Stream<Envelope> captureEvents() {
         return mocker.captureBlockAndPrivateDataEvents();
     }
 
     @Override
-    protected EventsBuilder<EventsPackage.BlockAndPrivateData> newEventsRequest() {
+    protected EventsBuilder<BlockAndPrivateData> newEventsRequest() {
         return network.newBlockAndPrivateDataEventsRequest();
     }
 
     @Override
-    protected void stubDoReturn(final Stream<EventsPackage.DeliverResponse> responses) {
+    protected void stubDoReturn(final Stream<DeliverResponse> responses) {
         doReturn(responses).when(stub).blockAndPrivateDataEvents(any());
     }
 
     @Override
-    protected EventsPackage.BlockAndPrivateData extractEvent(final EventsPackage.DeliverResponse response) {
+    protected BlockAndPrivateData extractEvent(final DeliverResponse response) {
         return response.getBlockAndPrivateData();
     }
 }

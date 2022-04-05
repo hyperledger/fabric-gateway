@@ -7,18 +7,18 @@
 package org.hyperledger.fabric.client;
 
 import com.google.protobuf.ByteString;
-import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.common.Envelope;
 
 class SignableBlockEventsRequest implements Signable {
     private final SigningIdentity signingIdentity;
-    private Common.Envelope request;
+    private Envelope request;
 
-    SignableBlockEventsRequest(final SigningIdentity signingIdentity, final Common.Envelope request) {
+    SignableBlockEventsRequest(final SigningIdentity signingIdentity, final Envelope request) {
         this.signingIdentity = signingIdentity;
         this.request = request;
     }
 
-    protected Common.Envelope getSignedRequest() {
+    protected Envelope getSignedRequest() {
         if (!isSigned()) {
             byte[] digest = getDigest();
             byte[] signature = signingIdentity.sign(digest);

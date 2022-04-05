@@ -35,16 +35,23 @@ import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Credentials;
 import org.hyperledger.fabric.client.identity.X509Identity;
-import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.common.ChannelHeader;
+import org.hyperledger.fabric.protos.common.Envelope;
+import org.hyperledger.fabric.protos.common.Header;
+import org.hyperledger.fabric.protos.common.Payload;
 import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
 import org.hyperledger.fabric.protos.gateway.EndorseResponse;
 import org.hyperledger.fabric.protos.gateway.EvaluateResponse;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
 import org.hyperledger.fabric.protos.gateway.SubmitResponse;
-import org.hyperledger.fabric.protos.peer.ProposalPackage;
-import org.hyperledger.fabric.protos.peer.ProposalResponsePackage;
-import org.hyperledger.fabric.protos.peer.ProposalResponsePackage.Response;
-import org.hyperledger.fabric.protos.peer.TransactionPackage;
+import org.hyperledger.fabric.protos.peer.ChaincodeAction;
+import org.hyperledger.fabric.protos.peer.ProposalResponsePayload;
+import org.hyperledger.fabric.protos.peer.Response;
+import org.hyperledger.fabric.protos.peer.ChaincodeActionPayload;
+import org.hyperledger.fabric.protos.peer.ChaincodeEndorsedAction;
+import org.hyperledger.fabric.protos.peer.Transaction;
+import org.hyperledger.fabric.protos.peer.TransactionAction;
+import org.hyperledger.fabric.protos.peer.TxValidationCode;
 
 public final class TestUtils {
     private static final TestUtils INSTANCE = new TestUtils();
@@ -117,38 +124,38 @@ public final class TestUtils {
     }
 
     public PreparedTransaction newPreparedTransaction(String result, String channelName) {
-        Common.ChannelHeader channelHeader = Common.ChannelHeader.newBuilder()
+        ChannelHeader channelHeader = ChannelHeader.newBuilder()
                 .setChannelId(channelName)
                 .build();
-        Common.Header header = Common.Header.newBuilder()
+        Header header = Header.newBuilder()
                 .setChannelHeader(channelHeader.toByteString())
                 .build();
 
-        ProposalPackage.ChaincodeAction chaincodeAction = ProposalPackage.ChaincodeAction.newBuilder()
+        ChaincodeAction chaincodeAction = ChaincodeAction.newBuilder()
                 .setResponse(newResponse(result))
                 .build();
-        ProposalResponsePackage.ProposalResponsePayload responsePayload = ProposalResponsePackage.ProposalResponsePayload.newBuilder()
+        ProposalResponsePayload responsePayload = ProposalResponsePayload.newBuilder()
                 .setExtension(chaincodeAction.toByteString())
                 .build();
-        TransactionPackage.ChaincodeEndorsedAction endorsedAction = TransactionPackage.ChaincodeEndorsedAction.newBuilder()
+        ChaincodeEndorsedAction endorsedAction = ChaincodeEndorsedAction.newBuilder()
                 .setProposalResponsePayload(responsePayload.toByteString())
                 .build();
-        TransactionPackage.ChaincodeActionPayload actionPayload = TransactionPackage.ChaincodeActionPayload.newBuilder()
+        ChaincodeActionPayload actionPayload = ChaincodeActionPayload.newBuilder()
                 .setAction(endorsedAction)
                 .build();
-        TransactionPackage.TransactionAction transactionAction = TransactionPackage.TransactionAction.newBuilder()
+        TransactionAction transactionAction = TransactionAction.newBuilder()
                 .setPayload(actionPayload.toByteString())
                 .build();
-        TransactionPackage.Transaction transaction = TransactionPackage.Transaction.newBuilder()
+        Transaction transaction = Transaction.newBuilder()
                 .addActions(transactionAction)
                 .build();
 
-        Common.Payload payload = Common.Payload.newBuilder()
+        Payload payload = Payload.newBuilder()
                 .setHeader(header)
                 .setData(transaction.toByteString())
                 .build();
 
-        Common.Envelope envelope = Common.Envelope.newBuilder()
+        Envelope envelope = Envelope.newBuilder()
                 .setPayload(payload.toByteString())
                 .build();
 
@@ -158,13 +165,13 @@ public final class TestUtils {
                 .build();
     }
 
-    public CommitStatusResponse newCommitStatusResponse(TransactionPackage.TxValidationCode status) {
+    public CommitStatusResponse newCommitStatusResponse(TxValidationCode status) {
         return CommitStatusResponse.newBuilder()
                 .setResult(status)
                 .build();
     }
 
-    public CommitStatusResponse newCommitStatusResponse(TransactionPackage.TxValidationCode status, long blockNumber) {
+    public CommitStatusResponse newCommitStatusResponse(TxValidationCode status, long blockNumber) {
         return CommitStatusResponse.newBuilder()
                 .setResult(status)
                 .setBlockNumber(blockNumber)

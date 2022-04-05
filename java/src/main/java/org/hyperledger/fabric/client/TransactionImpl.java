@@ -7,7 +7,7 @@
 package org.hyperledger.fabric.client;
 
 import com.google.protobuf.ByteString;
-import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.common.Envelope;
 import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
@@ -75,7 +75,7 @@ final class TransactionImpl implements Transaction {
     }
 
     void setSignature(final byte[] signature) {
-        Common.Envelope envelope = preparedTransaction.getEnvelope().toBuilder()
+        Envelope envelope = preparedTransaction.getEnvelope().toBuilder()
                 .setSignature(ByteString.copyFrom(signature))
                 .build();
 

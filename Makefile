@@ -49,7 +49,18 @@ $(pb_files): fabric-protos
 build-node: build-protos
 	cd $(node_dir); npm install; npm run build; rm -f fabric-gateway-dev.tgz; mv $$(npm pack) fabric-gateway-dev.tgz
 
-build-java: build-protos
+# Just a temporary hack until the library is published!
+.PHONEY: install-java-protos
+install-java-protos:
+	mvn install:install-file \
+		-Dfile=fabric-protos-0.1.0-SNAPSHOT.jar \
+		-DgroupId=org.hyperledger.fabric \
+		-DartifactId=fabric-protos \
+		-Dversion=0.1.0-SNAPSHOT \
+		-Dpackaging=jar \
+		-DgeneratePom=true
+
+build-java: build-protos install-java-protos
 	cd $(java_dir); mvn install -DskipTests
 
 unit-test: generate unit-test-go unit-test-node unit-test-java
@@ -63,7 +74,7 @@ unit-test-go-pkcs11: lint
 unit-test-node: build-node
 	cd $(node_dir); npm test
 
-unit-test-java: build-protos
+unit-test-java: build-protos install-java-protos
 	cd $(java_dir); mvn test
 
 lint:
@@ -132,7 +143,7 @@ generate-docs-node: build-node
 	cd $(node_dir); npm run generate-apidoc
 
 .PHONEY: generate-docs-java
-generate-docs-java: build-protos
+generate-docs-java: build-protos install-java-protos
 	cd $(java_dir); mvn javadoc:javadoc
 
 test: unit-test scenario-test

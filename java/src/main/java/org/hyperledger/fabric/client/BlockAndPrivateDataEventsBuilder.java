@@ -8,7 +8,7 @@ package org.hyperledger.fabric.client;
 
 import java.util.Objects;
 
-import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.common.Envelope;
 
 final class BlockAndPrivateDataEventsBuilder implements BlockAndPrivateDataEventsRequest.Builder {
     private final GatewayClient client;
@@ -31,7 +31,7 @@ final class BlockAndPrivateDataEventsBuilder implements BlockAndPrivateDataEvent
 
     @Override
     public BlockAndPrivateDataEventsRequest build() {
-        Common.Envelope request = envelopeBuilder.build();
+        Envelope request = envelopeBuilder.build();
         return new BlockAndPrivateDataEventsRequestImpl(client, signingIdentity, request);
     }
 }

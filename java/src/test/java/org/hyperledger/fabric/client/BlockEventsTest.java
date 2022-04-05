@@ -8,24 +8,26 @@ package org.hyperledger.fabric.client;
 
 import java.util.stream.Stream;
 
-import org.hyperledger.fabric.protos.common.Common;
-import org.hyperledger.fabric.protos.peer.EventsPackage;
+import org.hyperledger.fabric.protos.common.Block;
+import org.hyperledger.fabric.protos.common.BlockHeader;
+import org.hyperledger.fabric.protos.common.Envelope;
+import org.hyperledger.fabric.protos.peer.DeliverResponse;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
-public final class BlockEventsTest extends CommonBlockEventsTest<Common.Block> {
+public final class BlockEventsTest extends CommonBlockEventsTest<Block> {
     @Override
     protected void setEventsOptions(final Gateway.Builder builder, final CallOption... options) {
         builder.blockEventsOptions(options);
     }
 
     @Override
-    protected EventsPackage.DeliverResponse newDeliverResponse(final long blockNumber) {
-        return EventsPackage.DeliverResponse.newBuilder()
-                .setBlock(Common.Block.newBuilder()
-                        .setHeader(Common.BlockHeader.newBuilder().setNumber(blockNumber))
+    protected DeliverResponse newDeliverResponse(final long blockNumber) {
+        return DeliverResponse.newBuilder()
+                .setBlock(Block.newBuilder()
+                        .setHeader(BlockHeader.newBuilder().setNumber(blockNumber))
                 )
                 .build();
     }
@@ -36,27 +38,27 @@ public final class BlockEventsTest extends CommonBlockEventsTest<Common.Block> {
     }
 
     @Override
-    protected CloseableIterator<Common.Block> getEvents(final CallOption... options) {
+    protected CloseableIterator<Block> getEvents(final CallOption... options) {
         return network.getBlockEvents(options);
     }
 
     @Override
-    protected Stream<Common.Envelope> captureEvents() {
+    protected Stream<Envelope> captureEvents() {
         return mocker.captureBlockEvents();
     }
 
     @Override
-    protected EventsBuilder<Common.Block> newEventsRequest() {
+    protected EventsBuilder<Block> newEventsRequest() {
         return network.newBlockEventsRequest();
     }
 
     @Override
-    protected void stubDoReturn(final Stream<EventsPackage.DeliverResponse> responses) {
+    protected void stubDoReturn(final Stream<DeliverResponse> responses) {
         doReturn(responses).when(stub).blockEvents(any());
     }
 
     @Override
-    protected Common.Block extractEvent(final EventsPackage.DeliverResponse response) {
+    protected Block extractEvent(final DeliverResponse response) {
         return response.getBlock();
     }
 }

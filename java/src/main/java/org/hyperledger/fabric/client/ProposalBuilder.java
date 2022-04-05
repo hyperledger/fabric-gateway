@@ -14,18 +14,25 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.protobuf.ByteString;
-import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.common.ChannelHeader;
+import org.hyperledger.fabric.protos.common.Header;
+import org.hyperledger.fabric.protos.common.HeaderType;
 import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
-import org.hyperledger.fabric.protos.peer.Chaincode;
-import org.hyperledger.fabric.protos.peer.ProposalPackage;
+import org.hyperledger.fabric.protos.peer.ChaincodeID;
+import org.hyperledger.fabric.protos.peer.ChaincodeInput;
+import org.hyperledger.fabric.protos.peer.ChaincodeInvocationSpec;
+import org.hyperledger.fabric.protos.peer.ChaincodeSpec;
+import org.hyperledger.fabric.protos.peer.ChaincodeProposalPayload;
+import org.hyperledger.fabric.protos.peer.ChaincodeHeaderExtension;
+import org.hyperledger.fabric.protos.peer.SignedProposal;
 
 final class ProposalBuilder implements Proposal.Builder {
     private final GatewayClient client;
     private final SigningIdentity signingIdentity;
     private final String channelName;
-    private final Chaincode.ChaincodeID chaincodeId;
-    private final Chaincode.ChaincodeInput.Builder inputBuilder = Chaincode.ChaincodeInput.newBuilder();
-    private final ProposalPackage.ChaincodeProposalPayload.Builder payloadBuilder = ProposalPackage.ChaincodeProposalPayload.newBuilder();
+    private final ChaincodeID chaincodeId;
+    private final ChaincodeInput.Builder inputBuilder = ChaincodeInput.newBuilder();
+    private final ChaincodeProposalPayload.Builder payloadBuilder = ChaincodeProposalPayload.newBuilder();
     private Set<String> endorsingOrgs = Collections.emptySet();
 
     ProposalBuilder(final GatewayClient client, final SigningIdentity signingIdentity,
@@ -33,7 +40,7 @@ final class ProposalBuilder implements Proposal.Builder {
         this.client = client;
         this.signingIdentity = signingIdentity;
         this.channelName = channelName;
-        this.chaincodeId = Chaincode.ChaincodeID.newBuilder()
+        this.chaincodeId = ChaincodeID.newBuilder()
                 .setName(chaincodeName)
                 .build();
 
@@ -95,29 +102,29 @@ final class ProposalBuilder implements Proposal.Builder {
                 .build();
     }
 
-    private ProposalPackage.SignedProposal newSignedProposal(final TransactionContext context) {
-        return ProposalPackage.SignedProposal.newBuilder()
+    private SignedProposal newSignedProposal(final TransactionContext context) {
+        return SignedProposal.newBuilder()
                 .setProposalBytes(newProposal(context).toByteString())
                 .build();
     }
 
-    private ProposalPackage.Proposal newProposal(final TransactionContext context) {
-        return ProposalPackage.Proposal.newBuilder()
+    private org.hyperledger.fabric.protos.peer.Proposal newProposal(final TransactionContext context) {
+        return org.hyperledger.fabric.protos.peer.Proposal.newBuilder()
                 .setHeader(newHeader(context).toByteString())
                 .setPayload(newChaincodeProposalPayload().toByteString())
                 .build();
     }
 
-    private Common.Header newHeader(final TransactionContext context) {
-        return Common.Header.newBuilder()
+    private Header newHeader(final TransactionContext context) {
+        return Header.newBuilder()
                 .setChannelHeader(newChannelHeader(context).toByteString())
                 .setSignatureHeader(context.getSignatureHeader().toByteString())
                 .build();
     }
 
-    private Common.ChannelHeader newChannelHeader(final TransactionContext context) {
-        return Common.ChannelHeader.newBuilder()
-                .setType(Common.HeaderType.ENDORSER_TRANSACTION.getNumber())
+    private ChannelHeader newChannelHeader(final TransactionContext context) {
+        return ChannelHeader.newBuilder()
+                .setType(HeaderType.ENDORSER_TRANSACTION.getNumber())
                 .setTxId(context.getTransactionId())
                 .setTimestamp(GatewayUtils.getCurrentTimestamp())
                 .setChannelId(channelName)
@@ -126,26 +133,26 @@ final class ProposalBuilder implements Proposal.Builder {
                 .build();
     }
 
-    private ProposalPackage.ChaincodeHeaderExtension newChaincodeHeaderExtension() {
-        return ProposalPackage.ChaincodeHeaderExtension.newBuilder()
+    private ChaincodeHeaderExtension newChaincodeHeaderExtension() {
+        return ChaincodeHeaderExtension.newBuilder()
                 .setChaincodeId(chaincodeId)
                 .build();
     }
 
-    private ProposalPackage.ChaincodeProposalPayload newChaincodeProposalPayload() {
+    private ChaincodeProposalPayload newChaincodeProposalPayload() {
         return payloadBuilder
                 .setInput(newChaincodeInvocationSpec().toByteString())
                 .build();
     }
 
-    private Chaincode.ChaincodeInvocationSpec newChaincodeInvocationSpec() {
-        return Chaincode.ChaincodeInvocationSpec.newBuilder()
+    private ChaincodeInvocationSpec newChaincodeInvocationSpec() {
+        return ChaincodeInvocationSpec.newBuilder()
                 .setChaincodeSpec(newChaincodeSpec())
                 .build();
     }
 
-    private Chaincode.ChaincodeSpec newChaincodeSpec() {
-        return Chaincode.ChaincodeSpec.newBuilder()
+    private ChaincodeSpec newChaincodeSpec() {
+        return ChaincodeSpec.newBuilder()
                 .setChaincodeId(chaincodeId)
                 .setInput(inputBuilder.build())
                 .build();

@@ -14,8 +14,7 @@ import io.grpc.StatusRuntimeException;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
-import org.hyperledger.fabric.protos.orderer.Ab;
-import org.hyperledger.fabric.protos.peer.ChaincodeEventPackage;
+import org.hyperledger.fabric.protos.orderer.SeekPosition;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,13 +67,13 @@ public final class ChaincodeEventsTest {
     }
 
     void assertStartPosition(final org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest actual, final long blockNumber, final String transactionId) {
-        assertThat(actual.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
+        assertThat(actual.getStartPosition().getTypeCase()).isEqualTo(SeekPosition.TypeCase.SPECIFIED);
         assertThat(actual.getStartPosition().getSpecified().getNumber()).isEqualTo(blockNumber);
         assertThat(actual.getAfterTransactionId()).isEqualTo(transactionId);
     }
 
     void assertNextCommit(final org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest actual) {
-        assertThat(actual.getStartPosition().getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.NEXT_COMMIT);
+        assertThat(actual.getStartPosition().getTypeCase()).isEqualTo(SeekPosition.TypeCase.NEXT_COMMIT);
     }
 
     void assertRequestInitiated(final Supplier<CloseableIterator<?>> supplier) {
@@ -228,7 +227,7 @@ public final class ChaincodeEventsTest {
     @Test
     void uses_checkpointed_chaincode_event_block_and_transaction() throws  Exception {
         long blockNumber = 1;
-        ChaincodeEventPackage.ChaincodeEvent event = ChaincodeEventPackage.ChaincodeEvent.newBuilder()
+        org.hyperledger.fabric.protos.peer.ChaincodeEvent event = org.hyperledger.fabric.protos.peer.ChaincodeEvent.newBuilder()
                 .setChaincodeId("CHAINCODE_NAME")
                 .setTxId("tx1")
                 .setEventName("event")
@@ -252,19 +251,19 @@ public final class ChaincodeEventsTest {
 
     @Test
     void returns_events() {
-        ChaincodeEventPackage.ChaincodeEvent event1 = ChaincodeEventPackage.ChaincodeEvent.newBuilder()
+        org.hyperledger.fabric.protos.peer.ChaincodeEvent event1 = org.hyperledger.fabric.protos.peer.ChaincodeEvent.newBuilder()
                 .setChaincodeId("CHAINCODE_NAME")
                 .setTxId("tx1")
                 .setEventName("event1")
                 .setPayload(ByteString.copyFromUtf8("payload1"))
                 .build();
-        ChaincodeEventPackage.ChaincodeEvent event2 = ChaincodeEventPackage.ChaincodeEvent.newBuilder()
+        org.hyperledger.fabric.protos.peer.ChaincodeEvent event2 = org.hyperledger.fabric.protos.peer.ChaincodeEvent.newBuilder()
                 .setChaincodeId("CHAINCODE_NAME")
                 .setTxId("tx2")
                 .setEventName("event2")
                 .setPayload(ByteString.copyFromUtf8("payload2"))
                 .build();
-        ChaincodeEventPackage.ChaincodeEvent event3 = ChaincodeEventPackage.ChaincodeEvent.newBuilder()
+        org.hyperledger.fabric.protos.peer.ChaincodeEvent event3 = org.hyperledger.fabric.protos.peer.ChaincodeEvent.newBuilder()
                 .setChaincodeId("CHAINCODE_NAME")
                 .setTxId("tx3")
                 .setEventName("event3")
@@ -298,7 +297,7 @@ public final class ChaincodeEventsTest {
 
     @Test
     void close_stops_receiving_events() {
-        ChaincodeEventPackage.ChaincodeEvent event1 = ChaincodeEventPackage.ChaincodeEvent.newBuilder()
+        org.hyperledger.fabric.protos.peer.ChaincodeEvent event1 = org.hyperledger.fabric.protos.peer.ChaincodeEvent.newBuilder()
                 .setChaincodeId("CHAINCODE_NAME")
                 .setTxId("tx1")
                 .setEventName("event1")

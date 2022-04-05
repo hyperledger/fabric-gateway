@@ -10,11 +10,10 @@ import java.util.Collections;
 import java.util.Iterator;
 
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
-import org.hyperledger.fabric.protos.peer.ChaincodeEventPackage;
 
 final class ChaincodeEventIterator implements CloseableIterator<ChaincodeEvent> {
     private final CloseableIterator<ChaincodeEventsResponse> responseIter;
-    private Iterator<ChaincodeEventPackage.ChaincodeEvent> eventIter = Collections.emptyIterator();
+    private Iterator<org.hyperledger.fabric.protos.peer.ChaincodeEvent> eventIter = Collections.emptyIterator();
     private long blockNumber;
 
     ChaincodeEventIterator(final CloseableIterator<ChaincodeEventsResponse> responseIter) {
