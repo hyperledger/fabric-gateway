@@ -56,12 +56,13 @@ Feature: Chaincode event listening
 
     Scenario: Checkpoint of chaincode events
         Given I create a checkpointer
-        And I use my checkpointer to listen for chaincode events from basic on a listener named "listener1"
+        Given I listen for chaincode events from basic
+        And I use my checkpointer to listen for chaincode events from basic
         And I prepare to submit an event transaction
         And I set the transaction arguments to ["checkpoint", "one"]
         And I invoke the transaction
         Then I should receive a chaincode event named "checkpoint" with payload "one"
-        Then I should checkpoint the chaincode event on a listener named "listener1"
+        Then I should checkpoint the chaincode event
         When I stop listening for chaincode events
         And I prepare to submit an event transaction
         And I set the transaction arguments to ["checkpoint", "two"]

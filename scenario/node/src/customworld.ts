@@ -6,7 +6,7 @@
 
 import { DataTable, setWorldConstructor } from '@cucumber/cucumber';
 import * as grpc from '@grpc/grpc-js';
-import { ChaincodeEvent, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers, checkpointers, Checkpointer, ChaincodeEventsOptions } from '@hyperledger/fabric-gateway';
+import { ChaincodeEvent, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers, checkpointers, Checkpointer } from '@hyperledger/fabric-gateway';
 import * as crypto from 'crypto';
 import { promises as fs } from 'fs';
 import * as path from 'path';
@@ -125,7 +125,6 @@ export class CustomWorld {
     #transaction?: TransactionInvocation;
     #lastCommittedBlockNumber = BigInt(0);
     #checkpointer?: Checkpointer;
-    #lastEventReceived?: ChaincodeEvent;
 
     async createGateway(name: string, user: string, mspId: string): Promise<void> {
         const identity = await newIdentity(user, mspId);
@@ -205,10 +204,9 @@ export class CustomWorld {
     }
 
     async listenAndCheckpointChaincodeEvents(listenerName: string, chaincodeName: string): Promise<void> {
-        const options: ChaincodeEventsOptions = {
+        await this.getCurrentGateway().listenForChaincodeEvents(listenerName, chaincodeName, {
             checkpoint: this.#checkpointer
-        };
-        await this.getCurrentGateway().listenForChaincodeEvents(listenerName, chaincodeName, options);
+        });
     }
 
     async replayChaincodeEvents(listenerName: string, chaincodeName: string, startBlock: bigint): Promise<void> {
@@ -220,7 +218,7 @@ export class CustomWorld {
     }
 
     async checkpointBlock(listenerName: string): Promise<void> {
-        await this.getCurrentGateway().checkPointBlock(listenerName, this.getCheckpointer(), this.getLastEventReceived().blockNumber);
+        await this.getCurrentGateway().checkPointBlock(listenerName, this.getCheckpointer());
     }
 
     async listenForBlockEvents(listenerName: string): Promise<void> {
@@ -336,10 +334,6 @@ export class CustomWorld {
 
     private getCheckpointer(): Checkpointer {
         return assertDefined(this.#checkpointer, 'checkPointer');
-    }
-
-    private getLastEventReceived(): ChaincodeEvent {
-        return assertDefined(this.#lastEventReceived, 'lastEventReceived');
     }
 }
 
