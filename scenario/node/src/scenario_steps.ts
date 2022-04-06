@@ -305,3 +305,7 @@ Then('I should receive a block and private data event on {string}', async functi
     const event = await this.nextBlockAndPrivateDataEvent(listenerName);
     expect(event).toBeDefined();
 });
+
+Then('I should checkpoint the chaincode event on a listener named {string}', async function(this: CustomWorld, listenerName: string): Promise<void> {
+    await this.checkpointBlock(listenerName);
+});

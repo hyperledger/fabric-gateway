@@ -125,6 +125,7 @@ export class CustomWorld {
     #transaction?: TransactionInvocation;
     #lastCommittedBlockNumber = BigInt(0);
     #checkpointer?: Checkpointer;
+    #lastEventReceived?: ChaincodeEvent;
 
     async createGateway(name: string, user: string, mspId: string): Promise<void> {
         const identity = await newIdentity(user, mspId);
@@ -216,6 +217,10 @@ export class CustomWorld {
 
     async nextChaincodeEvent(listenerName: string): Promise<ChaincodeEvent> {
         return await this.getCurrentGateway().nextChaincodeEvent(listenerName);
+    }
+
+    async checkpointBlock(listenerName: string): Promise<void> {
+        await this.getCurrentGateway().checkPointBlock(listenerName, this.getCheckpointer(), this.getLastEventReceived().blockNumber);
     }
 
     async listenForBlockEvents(listenerName: string): Promise<void> {
@@ -327,6 +332,14 @@ export class CustomWorld {
 
     private getTransaction(): TransactionInvocation {
         return assertDefined(this.#transaction, 'transaction');
+    }
+
+    private getCheckpointer(): Checkpointer {
+        return assertDefined(this.#checkpointer, 'checkPointer');
+    }
+
+    private getLastEventReceived(): ChaincodeEvent {
+        return assertDefined(this.#lastEventReceived, 'lastEventReceived');
     }
 }
 

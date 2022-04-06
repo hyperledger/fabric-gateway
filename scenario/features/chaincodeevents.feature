@@ -61,6 +61,7 @@ Feature: Chaincode event listening
         And I set the transaction arguments to ["checkpoint", "one"]
         And I invoke the transaction
         Then I should receive a chaincode event named "checkpoint" with payload "one"
+        Then I should checkpoint the chaincode event on a listener named "listener1"
         When I stop listening for chaincode events
         And I prepare to submit an event transaction
         And I set the transaction arguments to ["checkpoint", "two"]

@@ -5,7 +5,7 @@
  */
 
 import * as grpc from '@grpc/grpc-js';
-import { BlockEventsOptions, ChaincodeEvent, ChaincodeEventsOptions, connect, ConnectOptions, Contract, Gateway, Identity, Network, Signer } from '@hyperledger/fabric-gateway';
+import { BlockEventsOptions, ChaincodeEvent, ChaincodeEventsOptions, Checkpointer, connect, ConnectOptions, Contract, Gateway, Identity, Network, Signer } from '@hyperledger/fabric-gateway';
 import { EventListener } from './eventlistener';
 import { TransactionInvocation } from './transactioninvocation';
 import { assertDefined } from './utils';
@@ -61,6 +61,10 @@ export class GatewayContext {
 
     async nextChaincodeEvent(listenerName: string): Promise<ChaincodeEvent> {
         return await this.getChaincodeEventListener(listenerName).next();
+    }
+
+    async checkPointBlock(listenerName: string, checkpointer: Checkpointer, blockNumber: bigint): Promise<void> {
+        await this.getChaincodeEventListener(listenerName).checkpointBlock(checkpointer, blockNumber);
     }
 
     async listenForBlockEvents(listenerName: string, options?: BlockEventsOptions): Promise<void> {
