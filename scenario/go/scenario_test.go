@@ -417,7 +417,7 @@ func listenForChaincodeEventsOnListener(chaincodeName string, listenerName strin
 }
 
 func listenAndCheckpointChaincodeEventsOnListener(chaincodeName string) error {
-	return currentGateway.ListenAndCheckpointChaincodeEvents(chaincodeName, defaultListenerName)
+	return currentGateway.ListenAndCheckpointChaincodeEvents(defaultListenerName, chaincodeName)
 }
 
 func checkpointChaincodeEvent() {
