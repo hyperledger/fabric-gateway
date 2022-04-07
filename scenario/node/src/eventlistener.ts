@@ -20,7 +20,7 @@ export class EventListener<T> {
         return result.value as T;
     }
 
-    async checkpointChaincodeEvent(checkpointer: Checkpointer, event:ChaincodeEvent): Promise<void> {
+    async checkpointChaincodeEvent(checkpointer: Checkpointer, event: ChaincodeEvent): Promise<void> {
         await checkpointer.checkpointChaincodeEvent(event);
     }
 
