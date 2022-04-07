@@ -205,7 +205,7 @@ export class CustomWorld {
 
     async listenAndCheckpointChaincodeEvents(listenerName: string, chaincodeName: string): Promise<void> {
         await this.getCurrentGateway().listenForChaincodeEvents(listenerName, chaincodeName, {
-            checkpoint: this.#checkpointer
+            checkpoint: this.getCheckpointer()
         });
     }
 
