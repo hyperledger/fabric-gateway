@@ -56,7 +56,6 @@ Feature: Chaincode event listening
 
     Scenario: Checkpoint of chaincode events
         Given I create a checkpointer
-        Given I listen for chaincode events from basic
         And I use my checkpointer to listen for chaincode events from basic
         And I prepare to submit an event transaction
         And I set the transaction arguments to ["checkpoint", "one"]

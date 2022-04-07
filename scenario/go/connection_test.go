@@ -258,6 +258,10 @@ func (connection *GatewayConnection) ListenForChaincodeEvents(listenerName strin
 	return connection.receiveChaincodeEvents(listenerName, chaincodeName)
 }
 
+func (connection *GatewayConnection) ListenAndCheckpointChaincodeEvents(listenerName string, chaincodeName string) error {
+	return connection.receiveChaincodeEvents(listenerName, chaincodeName, client.WithCheckpoint(checkpointer))
+}
+
 func (connection *GatewayConnection) ReplayChaincodeEvents(listenerName string, chaincodeName string, startBlock uint64) error {
 	return connection.receiveChaincodeEvents(listenerName, chaincodeName, client.WithStartBlock(startBlock))
 }

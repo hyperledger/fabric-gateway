@@ -38,10 +38,12 @@ const (
 const defaultListenerName = ""
 
 var (
-	gateways                 map[string]*GatewayConnection
-	currentGateway           *GatewayConnection
-	transaction              *Transaction
-	lastCommittedBlockNumber uint64
+	gateways                   map[string]*GatewayConnection
+	currentGateway             *GatewayConnection
+	transaction                *Transaction
+	lastCommittedBlockNumber   uint64
+	checkpointer               *client.InMemoryCheckpointer
+	lastChaincodeEventReceived *client.ChaincodeEvent
 )
 
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
@@ -60,6 +62,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I create a gateway named (\S+) for user (\S+) in MSP (\S+)$`, createGateway)
 	s.Step(`^I create a gateway named (\S+) for HSM user (\S+) in MSP (\S+)`, createGatewayWithHSMSigner)
 	s.Step(`^I create a gateway named (\S+) without signer for user (\S+) in MSP (\S+)$`, createGatewayWithoutSigner)
+	s.Step(`^I create a checkpointer`, createCheckpointer)
 	s.Step(`^I connect the gateway to (\S+)$`, connectGateway)
 	s.Step(`^I use the gateway named (\S+)$`, useGateway)
 	s.Step(`^I deploy (\S+) chaincode named (\S+) at version (\S+) for all organizations on channel (\S+) with endorsement policy (.+)$`, deployChaincode)
@@ -73,6 +76,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I invoke the transaction$`, invokeSuccessfulTransaction)
 	s.Step(`^I use the (\S+) contract$`, useContract)
 	s.Step(`^I use the (\S+) network$`, useNetwork)
+	s.Step(`^I use my checkpointer to listen for chaincode events from (\S+)$`, listenAndCheckpointChaincodeEvents)
 	s.Step(`^the response should be JSON matching$`, theResponseShouldBeJSONMatching)
 	s.Step(`^I stop the peer named (\S+)$`, stopPeer)
 	s.Step(`^I start the peer named (\S+)$`, startPeer)
@@ -84,6 +88,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I listen for chaincode events from (\S+)$`, listenForChaincodeEvents)
 	s.Step(`^I listen for chaincode events from (\S+) on a listener named "([^"]*)"$`, listenForChaincodeEventsOnListener)
 	s.Step(`^I replay chaincode events from (\S+) starting at last committed block$`, replayChaincodeEventsFromLastBlock)
+	s.Step(`^I should checkpoint the chaincode event`, checkpointChaincodeEvent)
 	s.Step(`^I stop listening for chaincode events$`, stopChaincodeEventListening)
 	s.Step(`^I stop listening for chaincode events on "([^"]*)"$`, stopChaincodeEventListeningOnListener)
 	s.Step(`^I should receive a chaincode event named "([^"]*)" with payload "([^"]*)"$`, receiveChaincodeEvent)
@@ -156,6 +161,10 @@ func createGatewayWithoutSigner(name string, user string, mspID string) error {
 	currentGateway = connection
 	gateways[name] = connection
 	return nil
+}
+
+func createCheckpointer() {
+	checkpointer = new(client.InMemoryCheckpointer)
 }
 
 func connectGateway(peer string) error {
@@ -399,8 +408,20 @@ func listenForChaincodeEvents(chaincodeName string) error {
 	return listenForChaincodeEventsOnListener(chaincodeName, defaultListenerName)
 }
 
+func listenAndCheckpointChaincodeEvents(chaincodeName string) error {
+	return listenAndCheckpointChaincodeEventsOnListener(chaincodeName)
+}
+
 func listenForChaincodeEventsOnListener(chaincodeName string, listenerName string) error {
 	return currentGateway.ListenForChaincodeEvents(listenerName, chaincodeName)
+}
+
+func listenAndCheckpointChaincodeEventsOnListener(chaincodeName string) error {
+	return currentGateway.ListenAndCheckpointChaincodeEvents(chaincodeName, defaultListenerName)
+}
+
+func checkpointChaincodeEvent() {
+	checkpointer.CheckpointChaincodeEvent(lastChaincodeEventReceived)
 }
 
 func replayChaincodeEventsFromLastBlock(chaincodeName string) error {
@@ -428,6 +449,7 @@ func receiveChaincodeEventOnListener(name string, payload string, listenerName s
 	if event.EventName != name || string(event.Payload) != payload {
 		return fmt.Errorf("expected event named \"%s\" with payload \"%s\", got: %v", name, payload, event)
 	}
+	lastChaincodeEventReceived = event
 
 	return nil
 }
