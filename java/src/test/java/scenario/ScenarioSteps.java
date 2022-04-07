@@ -54,7 +54,9 @@ import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import org.hyperledger.fabric.client.ChaincodeEvent;
+import org.hyperledger.fabric.client.Checkpointer;
 import org.hyperledger.fabric.client.GatewayException;
+import org.hyperledger.fabric.client.InMemoryCheckpointer;
 import org.hyperledger.fabric.client.identity.Identities;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
@@ -74,6 +76,8 @@ public class ScenarioSteps {
     private static final Path DOCKER_COMPOSE_DIR = Paths.get(FIXTURES_DIR.toString(), "docker-compose")
             .toAbsolutePath();
     private static final String DEFAULT_LISTENER_NAME = "";
+    private static Checkpointer checkpointer;
+    private static ChaincodeEvent lastChaincodeEventReceived;
 
     private static final Map<String, String> MSP_ID_TO_ORG_MAP;
     static {
@@ -339,6 +343,11 @@ public class ScenarioSteps {
         currentGateway.useContract(contractName);
     }
 
+    @Given("I create a checkpointer")
+    public void createCheckpointer() {
+        checkpointer = new InMemoryCheckpointer();
+    }
+
     @When("^I prepare to (evaluate|submit) an? ([^ ]+) transaction$")
     public void prepareTransaction(String action, String transactionName) {
         transactionInvocation = currentGateway.newTransaction(action, transactionName);
@@ -389,6 +398,12 @@ public class ScenarioSteps {
     @When("I listen for chaincode events from {word}")
     public void listenForChaincodeEvents(String chaincodeName) {
         listenForChaincodeEventsOnListener(chaincodeName, DEFAULT_LISTENER_NAME);
+    }
+
+    @When("I use my checkpointer to listen for chaincode events from {word}")
+    public void listenForChaincodeEventsUsingCheckpointer(String chaincodeName){
+        assertCheckpointerExist();
+        currentGateway.listenAndCheckpointChaincodeEvents(DEFAULT_LISTENER_NAME, chaincodeName, checkpointer);
     }
 
     @When("I listen for chaincode events from {word} on a listener named {string}")
@@ -551,8 +566,14 @@ public class ScenarioSteps {
     @Then("I should receive a chaincode event named {string} with payload {string} on {string}")
     public void assertReceiveChaincodeEventOnListener(String eventName, String payload, String listenerName) throws InterruptedException {
         ChaincodeEvent event = currentGateway.nextChaincodeEvent(listenerName);
+        lastChaincodeEventReceived = event;
         assertThat(event.getEventName()).isEqualTo(eventName);
         assertThat(new String(event.getPayload(), StandardCharsets.UTF_8)).isEqualTo(payload);
+    }
+
+    @Then("I should checkpoint the chaincode event")
+    public void checkpointchaincodeEvent() throws IOException {
+        checkpointer.checkpointChaincodeEvent(lastChaincodeEventReceived);
     }
 
     @Then("I should receive a block event")
@@ -732,4 +753,11 @@ public class ScenarioSteps {
             return Identities.readPrivateKey(privateKeyReader);
         }
     }
+
+    private void assertCheckpointerExist() {
+      if (checkpointer == null){
+          throw new NullPointerException("checkpointer does not exist");
+      }
+    }
+
 }
