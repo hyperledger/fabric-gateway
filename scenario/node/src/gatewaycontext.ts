@@ -22,7 +22,7 @@ export class GatewayContext {
     #blockEventListeners: Map<string, EventListener<unknown>> = new Map();
     #filteredBlockEventListeners: Map<string, EventListener<unknown>> = new Map();
     #blockAndPrivateDataEventListeners: Map<string, EventListener<unknown>> = new Map();
-    #lastEventReceived?: ChaincodeEvent;
+    #lastChaincodeEventReceived?: ChaincodeEvent;
 
     constructor(identity: Identity, signer?: Signer, signerClose?: () => void) {
         this.#identity = identity;
@@ -62,12 +62,12 @@ export class GatewayContext {
 
     async nextChaincodeEvent(listenerName: string): Promise<ChaincodeEvent> {
         const event: ChaincodeEvent = await this.getChaincodeEventListener(listenerName).next();
-        this.#lastEventReceived = event;
+        this.#lastChaincodeEventReceived = event;
         return event;
     }
 
-    async checkPointBlock(listenerName: string, checkpointer: Checkpointer,): Promise<void> {
-        await this.getChaincodeEventListener(listenerName).checkpointBlock(checkpointer, this.getLastEventReceived().blockNumber);
+    async checkPointChaincodeEvent(listenerName: string, checkpointer: Checkpointer,): Promise<void> {
+        await this.getChaincodeEventListener(listenerName).checkpointChaincodeEvent(checkpointer, this.getLastEventReceived());
     }
 
     async listenForBlockEvents(listenerName: string, options?: BlockEventsOptions): Promise<void> {
@@ -163,6 +163,6 @@ export class GatewayContext {
     }
 
     private getLastEventReceived(): ChaincodeEvent {
-        return assertDefined(this.#lastEventReceived, 'event');
+        return assertDefined(this.#lastChaincodeEventReceived, 'event');
     }
 }

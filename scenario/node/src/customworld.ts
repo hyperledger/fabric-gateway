@@ -218,7 +218,7 @@ export class CustomWorld {
     }
 
     async checkpointBlock(listenerName: string): Promise<void> {
-        await this.getCurrentGateway().checkPointBlock(listenerName, this.getCheckpointer());
+        await this.getCurrentGateway().checkPointChaincodeEvent(listenerName, this.getCheckpointer());
     }
 
     async listenForBlockEvents(listenerName: string): Promise<void> {
