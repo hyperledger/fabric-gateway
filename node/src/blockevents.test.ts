@@ -14,6 +14,31 @@ import { GatewayError } from './gatewayerror';
 import { Identity } from './identity/identity';
 import { Network } from './network';
 import { DuplexStreamResponseStub, MockGatewayGrpcClient, newDuplexStreamResponse, readElements } from './testutils.test';
+import * as checkpointers from './checkpointers';
+import { ChaincodeEvent } from './chaincodeevent';
+
+function assertStartPositionToBeSpecified(seekInfo: orderer.SeekInfo, blockNumber:number): void {
+    const start = seekInfo.getStart();
+    expect(start).toBeDefined();
+    expect(start?.getTypeCase()).toBe(orderer.SeekPosition.TypeCase.SPECIFIED);
+    expect(start?.getSpecified()).toBeDefined();
+    expect(start?.getSpecified()?.getNumber()).toBe(blockNumber);
+}
+
+function assertStartPositionToBeNextCommit(seekInfo: orderer.SeekInfo ): void {
+    const start = seekInfo.getStart();
+    expect(start).toBeDefined();
+    expect(start?.getTypeCase()).toBe(orderer.SeekPosition.TypeCase.NEXT_COMMIT);
+    expect(start?.getNextCommit()).toBeDefined();
+}
+
+function assertStopPosition(seekInfo: orderer.SeekInfo){
+    const stop = seekInfo.getStop();
+    expect(stop).toBeDefined();
+    expect(stop?.getTypeCase()).toBe(orderer.SeekPosition.TypeCase.SPECIFIED);
+    expect(stop?.getSpecified()).toBeDefined();
+    expect(stop?.getSpecified()?.getNumber()).toBe(Number.MAX_SAFE_INTEGER);
+}
 
 describe('Block Events', () => {
     const channelName = 'CHANNEL_NAME';
@@ -205,15 +230,9 @@ describe('Block Events', () => {
             assertValidBlockEventsRequestHeader(payload);
 
             const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
-            const start = seekInfo.getStart();
-            expect(start).toBeDefined();
-            expect(start?.getTypeCase()).toBe(orderer.SeekPosition.TypeCase.NEXT_COMMIT);
-            expect(start?.getNextCommit()).toBeDefined();
-            const stop = seekInfo.getStop();
-            expect(stop).toBeDefined();
-            expect(stop?.getTypeCase()).toBe(orderer.SeekPosition.TypeCase.SPECIFIED);
-            expect(stop?.getSpecified()).toBeDefined();
-            expect(stop?.getSpecified()?.getNumber()).toBe(Number.MAX_SAFE_INTEGER);
+
+            assertStartPositionToBeNextCommit(seekInfo);
+            assertStopPosition(seekInfo)
         });
 
         it('throws with negative specified start block number', async () => {
@@ -237,16 +256,94 @@ describe('Block Events', () => {
             assertValidBlockEventsRequestHeader(payload);
 
             const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
-            const start = seekInfo.getStart();
-            expect(start).toBeDefined();
-            expect(start?.getTypeCase()).toBe(orderer.SeekPosition.TypeCase.SPECIFIED);
-            expect(start?.getSpecified()?.getNumber()).toBe(Number(startBlock));
-            const stop = seekInfo.getStop();
-            expect(stop).toBeDefined();
-            expect(stop?.getTypeCase()).toBe(orderer.SeekPosition.TypeCase.SPECIFIED);
-            expect(stop?.getSpecified()).toBeDefined();
-            expect(stop?.getSpecified()?.getNumber()).toBe(Number.MAX_SAFE_INTEGER);
+
+            assertStartPositionToBeSpecified(seekInfo, Number(startBlock));
+            assertStopPosition(seekInfo)
         });
+
+        it('Sends valid request with specified start block number and fresh checkpointer', async () => {
+            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([]);
+            testCase.mockResponse(stream);
+            const startBlock = BigInt(418);
+            await testCase.getEvents({startBlock:startBlock, checkpoint: checkpointers.inMemory()});
+
+            expect(stream.write.mock.calls.length).toBe(1);
+            const request = stream.write.mock.calls[0][0];
+
+            const payload = Payload.deserializeBinary(request.getPayload_asU8());
+            assertValidBlockEventsRequestHeader(payload);
+
+            const seekInfo = SeekInfo.deserializeBinary(payload.getData_asU8());
+
+            assertStartPositionToBeSpecified(seekInfo, Number(startBlock));
+            assertStopPosition(seekInfo)
+        });
+
+        it('Sends valid request with specified start block and checkpointed block', async () => {
+            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([]);
+            testCase.mockResponse(stream);
+
+            const startBlock = BigInt(418);
+            const checkpointer = checkpointers.inMemory();
+            await checkpointer.checkpointBlock(1n);
+            await testCase.getEvents({startBlock:startBlock, checkpoint: checkpointer});
+
+            expect(stream.write.mock.calls.length).toBe(1);
+            const request = stream.write.mock.calls[0][0];
+
+            const payload = Payload.deserializeBinary(request.getPayload_asU8());
+            assertValidBlockEventsRequestHeader(payload);
+
+            const seekInfo = SeekInfo.deserializeBinary(payload.getData_asU8());
+
+            assertStartPositionToBeSpecified(seekInfo, 2)
+            assertStopPosition(seekInfo)
+        })
+
+        it('Sends valid request with no start block and fresh checkpointer', async () => {
+            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([]);
+            testCase.mockResponse(stream);
+            const checkpointer = checkpointers.inMemory();
+            await testCase.getEvents({checkpoint: checkpointer});
+
+            expect(stream.write.mock.calls.length).toBe(1);
+            const request = stream.write.mock.calls[0][0];
+
+            const payload = Payload.deserializeBinary(request.getPayload_asU8());
+            assertValidBlockEventsRequestHeader(payload);
+
+            const seekInfo = SeekInfo.deserializeBinary(payload.getData_asU8());
+
+            assertStartPositionToBeNextCommit(seekInfo);
+            assertStopPosition(seekInfo);
+        })
+
+        it('Sends valid request with with start block and checkpointer chaincode event', async () => {
+            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([]);
+            testCase.mockResponse(stream);
+            const startBlock = BigInt(418);
+            const checkpointer = checkpointers.inMemory();
+            const event: ChaincodeEvent =  {
+                blockNumber: BigInt(1),
+                chaincodeName: 'chaincode',
+                eventName: 'event1',
+                transactionId: 'txn1',
+                payload: new Uint8Array(),
+            };
+
+            checkpointer.checkpointChaincodeEvent(event);
+            await testCase.getEvents({startBlock: startBlock, checkpoint: checkpointer});
+
+            expect(stream.write.mock.calls.length).toBe(1);
+            const request = stream.write.mock.calls[0][0];
+
+            const payload = Payload.deserializeBinary(request.getPayload_asU8());
+            assertValidBlockEventsRequestHeader(payload);
+
+            const seekInfo = SeekInfo.deserializeBinary(payload.getData_asU8());
+            assertStartPositionToBeSpecified(seekInfo, Number(event.blockNumber));
+            assertStopPosition(seekInfo)
+        })
 
         it('uses specified call options', async () => {
             const deadline = Date.now() + 1000;
