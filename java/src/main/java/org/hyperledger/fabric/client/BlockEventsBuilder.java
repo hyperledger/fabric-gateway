@@ -30,6 +30,16 @@ final class BlockEventsBuilder implements BlockEventsRequest.Builder {
     }
 
     @Override
+    public BlockEventsBuilder checkpoint(final Checkpoint checkpoint) {
+        long blockNumber = checkpoint.getBlockNumber();
+        if (blockNumber == 0) {
+            return this;
+        }
+        envelopeBuilder.startBlock(blockNumber);
+        return this;
+    }
+
+    @Override
     public BlockEventsRequest build() {
         Common.Envelope request = envelopeBuilder.build();
         return new BlockEventsRequestImpl(client, signingIdentity, request);

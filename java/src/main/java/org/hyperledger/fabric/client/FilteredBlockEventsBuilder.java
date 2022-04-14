@@ -30,6 +30,16 @@ final class FilteredBlockEventsBuilder implements FilteredBlockEventsRequest.Bui
     }
 
     @Override
+    public FilteredBlockEventsBuilder checkpoint(final Checkpoint checkpoint) {
+        long blockNumber = checkpoint.getBlockNumber();
+        if (blockNumber == 0) {
+            return this;
+        }
+        envelopeBuilder.startBlock(blockNumber);
+        return this;
+    }
+
+    @Override
     public FilteredBlockEventsRequest build() {
         Common.Envelope request = envelopeBuilder.build();
         return new FilteredBlockEventsRequestImpl(client, signingIdentity, request);

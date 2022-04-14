@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
@@ -23,6 +24,7 @@ import org.hyperledger.fabric.client.identity.X509Identity;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.msp.Identities;
 import org.hyperledger.fabric.protos.orderer.Ab;
+import org.hyperledger.fabric.protos.peer.ChaincodeEventPackage;
 import org.hyperledger.fabric.protos.peer.EventsPackage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,6 +83,22 @@ public abstract class CommonBlockEventsTest<E> {
         assertThat(actualIdentity).isEqualTo(gateway.getIdentity());
     }
 
+    private void assertStartPositionTobeSpecified (final Ab.SeekInfo seekInfo, final long startBlock) {
+        Ab.SeekPosition start = seekInfo.getStart();
+        assertThat(start.getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
+        assertThat(start.getSpecified().getNumber()).isEqualTo(startBlock);
+ }
+    private void assertStartPositionTobeNextCommit (final Ab.SeekInfo seekInfo) {
+        Ab.SeekPosition start = seekInfo.getStart();
+        assertThat(start.getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.NEXT_COMMIT);
+    }
+
+    private void assertStopPosition (final Ab.SeekInfo seekInfo) {
+        Ab.SeekPosition stop = seekInfo.getStop();
+        assertThat(stop.getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
+        assertThat(stop.getSpecified().getNumber()).isEqualTo(Long.MAX_VALUE);
+    }
+
     @Test
     void throws_on_connection_error() {
         StatusRuntimeException expected = new StatusRuntimeException(Status.UNAVAILABLE);
@@ -130,12 +148,8 @@ public abstract class CommonBlockEventsTest<E> {
         assertValidBlockEventsRequestHeader(payload);
 
         Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
-        Ab.SeekPosition start = seekInfo.getStart();
-        assertThat(start.getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
-        assertThat(start.getSpecified().getNumber()).isEqualTo(startBlock);
-        Ab.SeekPosition stop = seekInfo.getStop();
-        assertThat(stop.getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
-        assertThat(stop.getSpecified().getNumber()).isEqualTo(Long.MAX_VALUE);
+        assertStartPositionTobeSpecified(seekInfo, startBlock);
+        assertStopPosition(seekInfo);
     }
 
     @Test
@@ -154,9 +168,73 @@ public abstract class CommonBlockEventsTest<E> {
         assertValidBlockEventsRequestHeader(payload);
 
         Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
-        Ab.SeekPosition start = seekInfo.getStart();
-        assertThat(start.getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
-        assertThat(start.getSpecified().getNumber()).isEqualTo(startBlock);
+        assertStartPositionTobeSpecified(seekInfo, startBlock);
+        assertStopPosition(seekInfo);
+    }
+
+    @Test
+    void uses_specified_start_block_instead_of_unset_checkpoint() throws Exception {
+        long startBlock = -1;
+        Checkpointer checkpointer = new InMemoryCheckpointer();
+        EventsRequest<?> eventsRequest = newEventsRequest()
+                .startBlock(startBlock)
+                .checkpoint(checkpointer)
+                .build();
+
+        try (CloseableIterator<?> iter = eventsRequest.getEvents()) {
+            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
+        }
+
+        Common.Envelope request = captureEvents().findFirst().get();
+        Common.Payload payload = Common.Payload.parseFrom(request.getPayload());
+        assertValidBlockEventsRequestHeader(payload);
+
+        Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
+        assertStartPositionTobeSpecified(seekInfo, startBlock);
+        assertStopPosition(seekInfo);
+    }
+
+    @Test
+    void uses_checkpoint_block_instead_of_specified_start_block() throws Exception {
+        long blockNumber = 111;
+        Checkpointer checkpointer = new InMemoryCheckpointer();
+        checkpointer.checkpointBlock(blockNumber);
+        EventsRequest<?> eventsRequest = newEventsRequest()
+                .startBlock(-1)
+                .checkpoint(checkpointer)
+                .build();
+
+        try (CloseableIterator<?> iter = eventsRequest.getEvents()) {
+            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
+        }
+
+        Common.Envelope request = captureEvents().findFirst().get();
+        Common.Payload payload = Common.Payload.parseFrom(request.getPayload());
+        assertValidBlockEventsRequestHeader(payload);
+
+        Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
+        assertStartPositionTobeSpecified(seekInfo, blockNumber+1);
+        assertStopPosition(seekInfo);
+    }
+
+    @Test
+    void start_at_next_commit_with_unset_checkpoint_and_no_start_block() throws Exception {
+        Checkpointer checkpointer = new InMemoryCheckpointer();
+        EventsRequest<?> eventsRequest = newEventsRequest()
+                .checkpoint(checkpointer)
+                .build();
+
+        try (CloseableIterator<?> iter = eventsRequest.getEvents()) {
+            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
+        }
+
+        Common.Envelope request = captureEvents().findFirst().get();
+        Common.Payload payload = Common.Payload.parseFrom(request.getPayload());
+        assertValidBlockEventsRequestHeader(payload);
+
+        Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
+        assertStartPositionTobeNextCommit(seekInfo);
+        assertStopPosition(seekInfo);
     }
 
     @Test()

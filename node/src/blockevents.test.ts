@@ -15,7 +15,6 @@ import { Identity } from './identity/identity';
 import { Network } from './network';
 import { DuplexStreamResponseStub, MockGatewayGrpcClient, newDuplexStreamResponse, readElements } from './testutils.test';
 import * as checkpointers from './checkpointers';
-import { ChaincodeEvent } from './chaincodeevent';
 
 function assertStartPositionToBeSpecified(seekInfo: orderer.SeekInfo, blockNumber:number): void {
     const start = seekInfo.getStart();
@@ -316,33 +315,6 @@ describe('Block Events', () => {
 
             assertStartPositionToBeNextCommit(seekInfo);
             assertStopPosition(seekInfo);
-        })
-
-        it('Sends valid request with with start block and checkpointer chaincode event', async () => {
-            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([]);
-            testCase.mockResponse(stream);
-            const startBlock = BigInt(418);
-            const checkpointer = checkpointers.inMemory();
-            const event: ChaincodeEvent =  {
-                blockNumber: BigInt(1),
-                chaincodeName: 'chaincode',
-                eventName: 'event1',
-                transactionId: 'txn1',
-                payload: new Uint8Array(),
-            };
-
-            checkpointer.checkpointChaincodeEvent(event);
-            await testCase.getEvents({startBlock: startBlock, checkpoint: checkpointer});
-
-            expect(stream.write.mock.calls.length).toBe(1);
-            const request = stream.write.mock.calls[0][0];
-
-            const payload = Payload.deserializeBinary(request.getPayload_asU8());
-            assertValidBlockEventsRequestHeader(payload);
-
-            const seekInfo = SeekInfo.deserializeBinary(payload.getData_asU8());
-            assertStartPositionToBeSpecified(seekInfo, Number(event.blockNumber));
-            assertStopPosition(seekInfo)
         })
 
         it('uses specified call options', async () => {
