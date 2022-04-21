@@ -156,6 +156,18 @@ When('I listen for block events', async function(this: CustomWorld): Promise<voi
     await this.listenForBlockEvents(DEFAULT_LISTENER_NAME);
 });
 
+When('I use my checkpointer to listen for block events', async function(this: CustomWorld): Promise<void> {
+    await this.listenForBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
+});
+
+When('I use my checkpointer to listen for filtered block events', async function(this: CustomWorld): Promise<void> {
+    await this.listenForFilteredBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
+});
+
+When('I use my checkpointer to listen for block and private data events', async function(this: CustomWorld): Promise<void> {
+    await this.listenForBlockAndPrivateDataEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
+});
+
 When('I listen for block events on a listener named {string}', async function(this: CustomWorld, listenerName: string): Promise<void> {
     await this.listenForBlockEvents(listenerName);
 });
@@ -279,6 +291,18 @@ Then('I should receive a chaincode event named {string} with payload {string} on
 Then('I should receive a block event', async function(this: CustomWorld): Promise<void> {
     const event = await this.nextBlockEvent(DEFAULT_LISTENER_NAME);
     expect(event).toBeDefined();
+});
+
+Then('I should checkpoint the block event', async function(this: CustomWorld): Promise<void> {
+    await this.checkpointBlockEvent(DEFAULT_LISTENER_NAME);
+});
+
+Then('I should checkpoint the filtered block event', async function(this: CustomWorld): Promise<void> {
+    await this.checkpointFilteredBlockEvent(DEFAULT_LISTENER_NAME);
+});
+
+Then('I should checkpoint the block and private data event', async function(this: CustomWorld): Promise<void> {
+    await this.checkpointBlockAndPrivateDataEvent(DEFAULT_LISTENER_NAME);
 });
 
 Then('I should receive a block event on {string}', async function(this: CustomWorld, listenerName: string): Promise<void> {

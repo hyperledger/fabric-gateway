@@ -93,7 +93,9 @@ export class GatewayContext {
     }
 
     async nextBlockEvent(listenerName: string): Promise<unknown> {
-        return await this.getBlockEventListener(listenerName).next();
+        const event  = await this.getBlockEventListener(listenerName).next() as Block;
+        this.#lastBlockEventReceived = event;
+        return event;
     }
 
     async listenForFilteredBlockEvents(listenerName: string, options?: BlockEventsOptions): Promise<void> {
@@ -104,7 +106,21 @@ export class GatewayContext {
     }
 
     async nextFilteredBlockEvent(listenerName: string): Promise<unknown> {
-        return await this.getFilteredBlockEventListener(listenerName).next();
+        const event = await this.getFilteredBlockEventListener(listenerName).next();
+        this.#lastFilteredBlockEventReceived = event;
+        return event;
+    }
+
+    async checkPointBlockEvent(listenerName: string, checkpointer: Checkpointer): Promise<void> {
+        await this.getBlockEventListener(listenerName).checkpointBlockEvent(checkpointer, this.getLastBlockEventReceived() as Block);
+    }
+
+    async checkpointFilteredBlockEvent(listenerName: string, checkpointer: Checkpointer): Promise<void> {
+        await this.getFilteredBlockEventListener(listenerName).checkpointFilteredBlockEvent(checkpointer, this.getLastFilteredBlockEventReceived() as FilteredBlock);
+    }
+
+    async checkpointBlockAndPrivateDataEvent(listenerName: string, checkpointer: Checkpointer): Promise<void> {
+        await this.getBlockAndPrivateDataEventListener(listenerName).checkpointBlockAndPrivateDataEvent(checkpointer, this.getLastBlockAndPrivateDataReceived() as BlockAndPrivateData);
     }
 
     async listenForBlockAndPrivateDataEvents(listenerName: string, options?: BlockEventsOptions): Promise<void> {
@@ -115,7 +131,9 @@ export class GatewayContext {
     }
 
     async nextBlockAndPrivateDataEvent(listenerName: string): Promise<unknown> {
-        return await this.getBlockAndPrivateDataEventListener(listenerName).next();
+        const event = await this.getBlockAndPrivateDataEventListener(listenerName).next();
+        this.#lastBlockAndPrivateDataReceived = event;
+        return event;
     }
 
     close(): void {
@@ -175,5 +193,17 @@ export class GatewayContext {
 
     private getBlockAndPrivateDataEventListener(listenerName: string): EventListener<unknown> {
         return assertDefined(this.#blockAndPrivateDataEventListeners.get(listenerName), `blockAndPrivateDataEventListener: ${listenerName}`);
+    }
+
+    private getLastBlockEventReceived(): unknown {
+        return assertDefined(this.#lastBlockEventReceived, 'event');
+    }
+
+    private getLastFilteredBlockEventReceived(): unknown {
+        return assertDefined(this.#lastFilteredBlockEventReceived, 'filtered block event');
+    }
+
+    private getLastBlockAndPrivateDataReceived(): unknown {
+        return assertDefined(this.#lastBlockAndPrivateDataReceived, 'block and private data');
     }
 }

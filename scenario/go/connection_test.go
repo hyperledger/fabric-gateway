@@ -326,6 +326,16 @@ func (connection *GatewayConnection) ListenForBlockEvents(listenerName string) e
 	return connection.receiveBlockEvents(listenerName)
 }
 
+func (connection *GatewayConnection) ListenForBlockEventsUsingCheckpointer(listenerName string, checkpointer client.Checkpoint) error {
+	return connection.receiveBlockEvents(listenerName, client.WithCheckpoint(checkpointer))
+}
+func (connection *GatewayConnection) ListenForFilteredBlockEventsUsingCheckpointer(listenerName string, checkpointer client.Checkpoint) error {
+	return connection.receiveFilteredBlockEvents(listenerName, client.WithCheckpoint(checkpointer))
+}
+func (connection *GatewayConnection) ListenForBlockAndPrivateDataEventsUsingCheckpointer(listenerName string, checkpointer client.Checkpoint) error {
+	return connection.receiveBlockAndPrivateDataEvents(listenerName, client.WithCheckpoint(checkpointer))
+}
+
 func (connection *GatewayConnection) ReplayBlockEvents(listenerName string, startBlock uint64) error {
 	return connection.receiveBlockEvents(listenerName, client.WithStartBlock(startBlock))
 }
