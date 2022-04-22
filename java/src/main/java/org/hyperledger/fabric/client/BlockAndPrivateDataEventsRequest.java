@@ -22,6 +22,9 @@ public interface BlockAndPrivateDataEventsRequest extends EventsRequest<EventsPa
         Builder startBlock(long blockNumber);
 
         @Override
+        Builder checkpoint(Checkpoint checkpoint);
+
+        @Override
         BlockAndPrivateDataEventsRequest build();
     }
 }

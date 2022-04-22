@@ -111,6 +111,30 @@ public class GatewayContext {
         receiveBlockEvents(listenerName, network.getBlockEvents());
     }
 
+    public void listenForBlockEventsUsingCheckpointer(String listenerName, Checkpointer checkpointer) {
+            CloseableIterator<Common.Block> iter = network.newBlockEventsRequest()
+                    .checkpoint(checkpointer)
+                    .build()
+                    .getEvents();
+            receiveBlockEvents(listenerName, iter);
+    }
+
+    public void listenForFilteredBlockEventsUsingCheckpointer(String listenerName, Checkpointer checkpointer) {
+        CloseableIterator<EventsPackage.FilteredBlock> iter = network.newFilteredBlockEventsRequest()
+                .checkpoint(checkpointer)
+                .build()
+                .getEvents();
+        receiveFilteredBlockEvents(listenerName, iter);
+    }
+
+    public void  listenForBlockAndPrivateDataUsingCheckpointer(String listenerName, Checkpointer checkpointer) {
+        CloseableIterator<EventsPackage.BlockAndPrivateData> iter = network.newBlockAndPrivateDataEventsRequest()
+                .checkpoint(checkpointer)
+                .build()
+                .getEvents();
+        receiveBlockAndPrivateDataEvents(listenerName, iter);
+    }
+
     public void replayBlockEvents(String listenerName, long startBlock) {
         CloseableIterator<Common.Block> iter = network.newBlockEventsRequest()
                 .startBlock(startBlock)
