@@ -450,7 +450,7 @@ public class ScenarioSteps<lastBlockEventReceived> {
     }
 
     @When("I use my checkpointer to listen for block and private data events")
-    public void listenForBlockAndPrivateDataUsingCheckpointer(String chaincodeName){
+    public void listenForBlockAndPrivateDataUsingCheckpointer(){
         assertCheckpointerExist();
         currentGateway.listenForBlockAndPrivateDataUsingCheckpointer(DEFAULT_LISTENER_NAME, checkpointer);
     }
