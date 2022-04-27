@@ -42,15 +42,21 @@ build-protos: $(pb_files)
 
 fabric-protos:
 	git clone https://github.com/hyperledger/fabric-protos.git
-	cd fabric-protos && git checkout "$(fabric_protos_commit)"
+	cd fabric-protos && \
+		git checkout "$(fabric_protos_commit)"
 
 $(pb_files): fabric-protos
 
 build-node: build-protos
-	cd $(node_dir); npm install; npm run build; rm -f fabric-gateway-dev.tgz; mv $$(npm pack) fabric-gateway-dev.tgz
+	cd $(node_dir) && \
+		npm install && \
+		npm run build && \
+		rm -f fabric-gateway-dev.tgz && \
+		mv $$(npm pack) fabric-gateway-dev.tgz
 
 build-java: build-protos
-	cd $(java_dir); mvn install -DskipTests
+	cd $(java_dir) && \
+		mvn install -DskipTests
 
 unit-test: generate unit-test-go unit-test-node unit-test-java
 
@@ -61,10 +67,12 @@ unit-test-go-pkcs11: lint
 	SOFTHSM2_CONF=${HOME}/softhsm2.conf go test -tags pkcs11 -timeout 10s -coverprofile=$(base_dir)/cover.out $(base_dir)/pkg/...
 
 unit-test-node: build-node
-	cd $(node_dir); npm test
+	cd $(node_dir) && \
+		npm test
 
 unit-test-java: build-protos
-	cd $(java_dir); mvn test
+	cd $(java_dir) && \
+		mvn test
 
 lint:
 	$(base_dir)/ci/check_gofmt.sh $(base_dir)/pkg $(scenario_dir)/go $(samples_dir)/go $(hsm_samples_dir)/go
@@ -78,62 +86,89 @@ scan-go:
 	go list -json -deps ./pkg/... | docker run --rm --interactive sonatypecommunity/nancy:latest sleuth
 
 scan-node:
-	cd $(node_dir); npm install --package-lock-only; npm audit --production
+	cd $(node_dir) && \
+		npm install --package-lock-only && \
+		npm audit --production
 
 scan-java: build-protos
-	cd $(java_dir); mvn dependency-check:check -P owasp
+	cd $(java_dir) && \
+		mvn dependency-check:check -P owasp
 
 sample-network: pull-latest-peer vendor-chaincode
-	cd $(scenario_dir)/go; GATEWAY_NO_SHUTDOWN=TRUE go test -tags pkcs11 -v -args $(scenario_dir)/features/transactions.feature $(scenario_dir)/features/privatedata.feature
+	cd $(scenario_dir)/go && \
+		GATEWAY_NO_SHUTDOWN=TRUE go test -tags pkcs11 -v -args $(scenario_dir)/features/transactions.feature $(scenario_dir)/features/privatedata.feature
 
 enroll-hsm-user:
-	cd ${scenario_dir}/fixtures; ./generate-hsm-user.sh HSMUser
+	cd ${scenario_dir}/fixtures && \
+		./generate-hsm-user.sh HSMUser
 
 sample-network-clean:
-	docker ps -aq | xargs docker rm -f; docker images -q 'dev-*' | xargs docker rmi -f; docker network prune --force
+	docker ps -aq | xargs docker rm -f
+	docker images -q 'dev-*' | xargs docker rmi -f
+	docker network prune --force
 
 run-samples: | sample-network run-samples-go run-samples-node run-samples-java sample-network-clean
 
 run-samples-go:
-	cd $(samples_dir)/go; go run sample.go
+	cd $(samples_dir)/go && \
+		go run sample.go
 
 run-hsm-samples-go: enroll-hsm-user
-	cd $(hsm_samples_dir)/go; SOFTHSM2_CONF=${HOME}/softhsm2.conf go run -tags pkcs11 hsm-sample.go
+	cd $(hsm_samples_dir)/go && \
+		SOFTHSM2_CONF=${HOME}/softhsm2.conf go run -tags pkcs11 hsm-sample.go
 
 run-hsm-samples-node: build-node enroll-hsm-user
-	cd $(hsm_samples_dir)/node; rm -rf package-lock.json node_modules; npm install; npm run build; npm start
+	cd $(hsm_samples_dir)/node && \
+		rm -rf package-lock.json node_modules && \
+		npm install && \
+		npm run build && \
+		npm start
 
 run-samples-node: build-node
-	cd $(samples_dir)/node; rm -rf package-lock.json node_modules; npm install; npm run build; npm start
+	cd $(samples_dir)/node && \
+		rm -rf package-lock.json node_modules && \
+		npm install && \
+		npm run build && \
+		npm start
 
 run-samples-java: build-java
-	cd $(samples_dir)/java; mvn clean compile exec:java -Dexec.mainClass='com.example.Sample'
+	cd $(samples_dir)/java && \
+		mvn clean compile exec:java -Dexec.mainClass='com.example.Sample'
 
 generate:
 	go generate ./pkg/...
 
 vendor-chaincode:
-	cd $(scenario_dir)/fixtures/chaincode/golang/basic; GO111MODULE=on go mod vendor
-	cd $(scenario_dir)/fixtures/chaincode/golang/private; GO111MODULE=on go mod vendor
+	cd $(scenario_dir)/fixtures/chaincode/golang/basic && \
+		GO111MODULE=on go mod vendor
+	cd $(scenario_dir)/fixtures/chaincode/golang/private && \
+		GO111MODULE=on go mod vendor
 
 scenario-test-go: vendor-chaincode
-	cd $(scenario_dir)/go; SOFTHSM2_CONF=${HOME}/softhsm2.conf go test -tags pkcs11 -v -args $(scenario_dir)/features/
+	cd $(scenario_dir)/go && \
+		SOFTHSM2_CONF=${HOME}/softhsm2.conf go test -tags pkcs11 -v -args $(scenario_dir)/features/
 
 scenario-test-node: vendor-chaincode build-node
-	cd $(scenario_dir)/node; rm -rf package-lock.json node_modules; npm install; SOFTHSM2_CONF=${HOME}/softhsm2.conf npm test
+	cd $(scenario_dir)/node && \
+		rm -rf package-lock.json node_modules && \
+		npm install && \
+		SOFTHSM2_CONF=${HOME}/softhsm2.conf npm test
 
 scenario-test-java: vendor-chaincode build-java
-	cd $(java_dir); mvn verify
+	cd $(java_dir) && \
+		mvn verify
 
 scenario-test: scenario-test-go scenario-test-node scenario-test-java
 
 .PHONEY: generate-docs-node
 generate-docs-node: build-node
-	cd $(node_dir); npm run generate-apidoc
+	cd $(node_dir) && \
+		npm run generate-apidoc
 
 .PHONEY: generate-docs-java
 generate-docs-java: build-protos
-	cd $(java_dir); mvn javadoc:javadoc
+	cd $(java_dir) && \
+		mvn javadoc:javadoc
 
 test: unit-test scenario-test
 
