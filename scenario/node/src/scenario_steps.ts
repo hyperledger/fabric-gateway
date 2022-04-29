@@ -89,7 +89,7 @@ Given('I connect the gateway to {word}', async function(this: CustomWorld, addre
 });
 
 Given('I create a checkpointer', function(this: CustomWorld): void {
-    this.createCheckpointer(DEFAULT_LISTENER_NAME);
+    this.createCheckpointer();
 });
 
 When('I use the {word} network', function(this: CustomWorld, channelName: string): void {

@@ -5,7 +5,7 @@
  */
 
 import * as grpc from '@grpc/grpc-js';
-import { BlockEventsOptions, ChaincodeEvent, ChaincodeEventsOptions, checkpointers, connect, ConnectOptions, Contract, Gateway, Identity, Network, Signer } from '@hyperledger/fabric-gateway';
+import { BlockEventsOptions, ChaincodeEvent, ChaincodeEventsOptions, Checkpointer, connect, ConnectOptions, Contract, Gateway, Identity, Network, Signer } from '@hyperledger/fabric-gateway';
 import { CheckpointEventListener } from './checkpointeventlistener';
 import { EventListener } from './eventlistener';
 import { TransactionInvocation } from './transactioninvocation';
@@ -19,7 +19,7 @@ export class GatewayContext {
     #gateway?: Gateway;
     #network?: Network;
     #contract?: Contract;
-    #chaincodeEventListeners: Map<string, EventListener<ChaincodeEvent> | CheckpointEventListener<ChaincodeEvent>> = new Map();
+    #chaincodeEventListeners: Map<string, EventListener<ChaincodeEvent>> = new Map();
     #blockEventListeners: Map<string, EventListener<unknown>> = new Map();
     #filteredBlockEventListeners: Map<string, EventListener<unknown>> = new Map();
     #blockAndPrivateDataEventListeners: Map<string, EventListener<unknown>> = new Map();
@@ -60,21 +60,16 @@ export class GatewayContext {
         this.#chaincodeEventListeners.set(listenerName, listener);
     }
 
-    async listenForChaincodeEventsUsingCheckpointer(listenerName: string, chaincodeName: string, options?: ChaincodeEventsOptions): Promise<void> {
+    async listenForChaincodeEventsUsingCheckpointer(listenerName: string, chaincodeName: string, checkpointer: Checkpointer, options?: ChaincodeEventsOptions): Promise<void> {
+        this.closeChaincodeEvents(listenerName);
         const events = await this.getNetwork().getChaincodeEvents(chaincodeName, options);
-        (this.#chaincodeEventListeners.get(listenerName) as CheckpointEventListener<ChaincodeEvent>).setEvents(events);
+        const listener = new CheckpointEventListener(events, (event: ChaincodeEvent) => checkpointer.checkpointChaincodeEvent(event));
+        this.#chaincodeEventListeners.set(listenerName, listener);
     }
 
     async nextChaincodeEvent(listenerName: string): Promise<ChaincodeEvent> {
         const event: ChaincodeEvent = await this.getChaincodeEventListener(listenerName).next();
         return event;
-    }
-
-    createCheckpointer(listenerName: string): void {
-        const checkpointer = checkpointers.inMemory();
-        this.closeChaincodeEvents(listenerName);
-        const listener = new CheckpointEventListener<ChaincodeEvent>(checkpointer);
-        this.#chaincodeEventListeners.set(listenerName, listener);
     }
 
     async listenForBlockEvents(listenerName: string, options?: BlockEventsOptions): Promise<void> {

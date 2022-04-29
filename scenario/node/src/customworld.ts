@@ -6,7 +6,7 @@
 
 import { DataTable, setWorldConstructor } from '@cucumber/cucumber';
 import * as grpc from '@grpc/grpc-js';
-import { ChaincodeEvent, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers } from '@hyperledger/fabric-gateway';
+import { ChaincodeEvent, Checkpointer, checkpointers, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers } from '@hyperledger/fabric-gateway';
 import * as crypto from 'crypto';
 import { promises as fs } from 'fs';
 import * as path from 'path';
@@ -124,6 +124,7 @@ export class CustomWorld {
     #currentGateway?: GatewayContext;
     #transaction?: TransactionInvocation;
     #lastCommittedBlockNumber = BigInt(0);
+    #checkpointer?: Checkpointer;
 
     async createGateway(name: string, user: string, mspId: string): Promise<void> {
         const identity = await newIdentity(user, mspId);
@@ -148,8 +149,8 @@ export class CustomWorld {
         this.#currentGateway = gateway;
     }
 
-    createCheckpointer(listener: string): void {
-        this.getCurrentGateway().createCheckpointer(listener);
+    createCheckpointer(): void {
+        this.#checkpointer = checkpointers.inMemory();
     }
 
     useGateway(name: string): void {
@@ -202,7 +203,7 @@ export class CustomWorld {
     }
 
     async listenAndCheckpointChaincodeEvents(listenerName: string, chaincodeName: string): Promise<void> {
-        await this.getCurrentGateway().listenForChaincodeEventsUsingCheckpointer(listenerName, chaincodeName);
+        await this.getCurrentGateway().listenForChaincodeEventsUsingCheckpointer(listenerName, chaincodeName, this.#checkpointer, { checkpoint: this.#checkpointer });
     }
 
     async replayChaincodeEvents(listenerName: string, chaincodeName: string, startBlock: bigint): Promise<void> {

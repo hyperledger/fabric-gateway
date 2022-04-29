@@ -4,36 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ChaincodeEvent, Checkpointer, CloseableAsyncIterable } from '@hyperledger/fabric-gateway';
+import { CloseableAsyncIterable } from '@hyperledger/fabric-gateway';
+import { EventListener } from './eventlistener';
 
-export class CheckpointEventListener<T> {
-    #iterator?: AsyncIterator<T>;
-    #close?: () => void;
-    #checkpointer: Checkpointer;
+export class CheckpointEventListener<T> extends EventListener<T> {
+    readonly #checkpoint: (event: T) => Promise<void>;
 
-    constructor(checkpointer: Checkpointer) {
-        this.#checkpointer = checkpointer;
-    }
-
-    setEvents(events: CloseableAsyncIterable<T>): void {
-        this.#iterator = events[Symbol.asyncIterator]();
-        this.#close = () => events.close();
-    }
-
-    getCheckpointer(): Checkpointer {
-        return this.#checkpointer;
+    constructor(events: CloseableAsyncIterable<T>, checkpoint: (event: T) => Promise<void>) {
+        super(events);
+        this.#checkpoint = checkpoint;
     }
 
     async next(): Promise<T> {
-        const result = await this.#iterator?.next();
-        const event = result?.value as T;
-        if (event) {
-            await this.#checkpointer.checkpointChaincodeEvent(event as unknown as ChaincodeEvent);
-        }
+        const event = await super.next();
+        await this.#checkpoint(event);
         return event;
-    }
-
-    close(): void {
-        this.#close? this.#close() : null;
     }
 }
