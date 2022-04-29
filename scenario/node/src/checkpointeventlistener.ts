@@ -6,7 +6,6 @@
 
 import { ChaincodeEvent, Checkpointer, CloseableAsyncIterable } from '@hyperledger/fabric-gateway';
 
-
 export class CheckpointEventListener<T> {
     #iterator?: AsyncIterator<T>;
     #close?: () => void;

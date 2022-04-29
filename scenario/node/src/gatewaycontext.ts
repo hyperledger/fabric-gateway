@@ -61,20 +61,19 @@ export class GatewayContext {
     }
 
     async listenForChaincodeEventsUsingCheckpointer(listenerName: string, chaincodeName: string, options?: ChaincodeEventsOptions): Promise<void> {
-        this.closeChaincodeEvents(listenerName);
         const events = await this.getNetwork().getChaincodeEvents(chaincodeName, options);
         const listener  = this.#chaincodeEventListeners.get(listenerName) as CheckpointEventListener<ChaincodeEvent>;
         listener.setEvents(events);
     }
-
 
     async nextChaincodeEvent(listenerName: string): Promise<ChaincodeEvent> {
         const event: ChaincodeEvent = await this.getChaincodeEventListener(listenerName).next();
         return event;
     }
 
-    createCheckpointer(listenerName: string,): void {
+    createCheckpointer(listenerName: string): void {
         const checkpointer = checkpointers.inMemory();
+        this.closeChaincodeEvents(listenerName);
         const listener = new CheckpointEventListener<ChaincodeEvent>(checkpointer);
         this.#chaincodeEventListeners.set(listenerName, listener);
     }
