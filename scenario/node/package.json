@@ -3,7 +3,7 @@
     "version": "0.0.1",
     "description": "Scenario test for Fabric Gateway",
     "engines": {
-        "node": "^14.15.0 || ^16.13.0"
+        "node": ">=14.15.0"
     },
     "scripts": {
         "build": "npm-run-all clean compile lint",
