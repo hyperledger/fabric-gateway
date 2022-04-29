@@ -65,5 +65,5 @@ Feature: Chaincode event listening
         And I prepare to submit an event transaction
         And I set the transaction arguments to ["checkpoint", "two"]
         And I invoke the transaction
-        And I use my checkpointer to listen for chaincode events from basic
+        And I use the checkpointer to listen for chaincode events from basic
         Then I should receive a chaincode event named "checkpoint" with payload "two"
