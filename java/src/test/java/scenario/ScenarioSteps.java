@@ -400,7 +400,7 @@ public class ScenarioSteps {
         listenForChaincodeEventsOnListener(chaincodeName, DEFAULT_LISTENER_NAME);
     }
 
-    @When("I use my checkpointer to listen for chaincode events from {word}")
+    @When("I use the checkpointer to listen for chaincode events from {word}")
     public void listenForChaincodeEventsUsingCheckpointer(String chaincodeName){
         assertCheckpointerExist();
         currentGateway.listenAndCheckpointChaincodeEvents(DEFAULT_LISTENER_NAME, chaincodeName, checkpointer);

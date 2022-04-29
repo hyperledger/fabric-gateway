@@ -6,7 +6,7 @@
 
 import { DataTable, setWorldConstructor } from '@cucumber/cucumber';
 import * as grpc from '@grpc/grpc-js';
-import { ChaincodeEvent, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers, checkpointers, Checkpointer } from '@hyperledger/fabric-gateway';
+import { ChaincodeEvent, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers } from '@hyperledger/fabric-gateway';
 import * as crypto from 'crypto';
 import { promises as fs } from 'fs';
 import * as path from 'path';
@@ -124,7 +124,6 @@ export class CustomWorld {
     #currentGateway?: GatewayContext;
     #transaction?: TransactionInvocation;
     #lastCommittedBlockNumber = BigInt(0);
-    #checkpointer?: Checkpointer;
 
     async createGateway(name: string, user: string, mspId: string): Promise<void> {
         const identity = await newIdentity(user, mspId);
@@ -149,9 +148,8 @@ export class CustomWorld {
         this.#currentGateway = gateway;
     }
 
-    createCheckpointer(): Checkpointer {
-        this.#checkpointer = checkpointers.inMemory();
-        return this.#checkpointer;
+    createCheckpointer(listener: string): void {
+        this.getCurrentGateway().createCheckpointer(listener);
     }
 
     useGateway(name: string): void {
@@ -204,9 +202,7 @@ export class CustomWorld {
     }
 
     async listenAndCheckpointChaincodeEvents(listenerName: string, chaincodeName: string): Promise<void> {
-        await this.getCurrentGateway().listenForChaincodeEvents(listenerName, chaincodeName, {
-            checkpoint: this.getCheckpointer()
-        });
+        await this.getCurrentGateway().listenForChaincodeEventsUsingCheckpointer(listenerName, chaincodeName);
     }
 
     async replayChaincodeEvents(listenerName: string, chaincodeName: string, startBlock: bigint): Promise<void> {
@@ -217,9 +213,6 @@ export class CustomWorld {
         return await this.getCurrentGateway().nextChaincodeEvent(listenerName);
     }
 
-    async checkpointBlock(listenerName: string): Promise<void> {
-        await this.getCurrentGateway().checkPointChaincodeEvent(listenerName, this.getCheckpointer());
-    }
 
     async listenForBlockEvents(listenerName: string): Promise<void> {
         await this.getCurrentGateway().listenForBlockEvents(listenerName);
@@ -330,10 +323,6 @@ export class CustomWorld {
 
     private getTransaction(): TransactionInvocation {
         return assertDefined(this.#transaction, 'transaction');
-    }
-
-    private getCheckpointer(): Checkpointer {
-        return assertDefined(this.#checkpointer, 'checkPointer');
     }
 }
 

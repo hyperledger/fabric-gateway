@@ -76,7 +76,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I invoke the transaction$`, invokeSuccessfulTransaction)
 	s.Step(`^I use the (\S+) contract$`, useContract)
 	s.Step(`^I use the (\S+) network$`, useNetwork)
-	s.Step(`^I use my checkpointer to listen for chaincode events from (\S+)$`, listenAndCheckpointChaincodeEvents)
+	s.Step(`^I use the checkpointer to listen for chaincode events from (\S+)$`, listenAndCheckpointChaincodeEvents)
 	s.Step(`^the response should be JSON matching$`, theResponseShouldBeJSONMatching)
 	s.Step(`^I stop the peer named (\S+)$`, stopPeer)
 	s.Step(`^I start the peer named (\S+)$`, startPeer)

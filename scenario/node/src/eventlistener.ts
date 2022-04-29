@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ChaincodeEvent, Checkpointer, CloseableAsyncIterable } from '@hyperledger/fabric-gateway';
+import { CloseableAsyncIterable } from '@hyperledger/fabric-gateway';
 
 export class EventListener<T> {
     #iterator: AsyncIterator<T>;
@@ -18,10 +18,6 @@ export class EventListener<T> {
     async next(): Promise<T> {
         const result = await this.#iterator.next();
         return result.value as T;
-    }
-
-    async checkpointChaincodeEvent(checkpointer: Checkpointer, event: ChaincodeEvent): Promise<void> {
-        await checkpointer.checkpointChaincodeEvent(event);
     }
 
     close(): void {
