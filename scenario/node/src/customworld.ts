@@ -203,7 +203,7 @@ export class CustomWorld {
     }
 
     async listenAndCheckpointChaincodeEvents(listenerName: string, chaincodeName: string): Promise<void> {
-        await this.getCurrentGateway().listenForChaincodeEventsUsingCheckpointer(listenerName, chaincodeName, this.#checkpointer, { checkpoint: this.#checkpointer });
+        await this.getCurrentGateway().listenForChaincodeEventsUsingCheckpointer(listenerName, chaincodeName, this.getCheckpointer(), { checkpoint: this.#checkpointer });
     }
 
     async replayChaincodeEvents(listenerName: string, chaincodeName: string, startBlock: bigint): Promise<void> {
@@ -324,6 +324,9 @@ export class CustomWorld {
 
     private getTransaction(): TransactionInvocation {
         return assertDefined(this.#transaction, 'transaction');
+    }
+    private getCheckpointer(): Checkpointer {
+        return assertDefined(this.#checkpointer, 'checkpointer');
     }
 }
 
