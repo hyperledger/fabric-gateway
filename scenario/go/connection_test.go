@@ -198,6 +198,7 @@ type GatewayConnection struct {
 	contract                          *client.Contract
 	ctx                               context.Context
 	cancel                            context.CancelFunc
+	checkpointer                      *client.InMemoryCheckpointer
 	chaincodeEventListeners           map[string]*ChaincodeEventListener
 	blockEventListeners               map[string]*BlockEventListener
 	filteredBlockEventListeners       map[string]*FilteredBlockEventListener
@@ -257,9 +258,13 @@ func (connection *GatewayConnection) PrepareTransaction(txnType TransactionType,
 func (connection *GatewayConnection) ListenForChaincodeEvents(listenerName string, chaincodeName string) error {
 	return connection.receiveChaincodeEvents(listenerName, chaincodeName)
 }
+func (connection *GatewayConnection) createCheckpointer() {
+	connection.checkpointer = new(client.InMemoryCheckpointer)
+}
 
-func (connection *GatewayConnection) ListenAndCheckpointChaincodeEvents(listenerName string, chaincodeName string) error {
-	return connection.receiveChaincodeEvents(listenerName, chaincodeName, client.WithCheckpoint(checkpointer))
+func (connection *GatewayConnection) ListenForChaincodeEventsUsingCheckpointer(listenerName string, chaincodeName string) error {
+	connection.receiveChaincodeEvents(listenerName, chaincodeName, client.WithCheckpoint(connection.checkpointer))
+	return connection.receiveChaincodeEventsUsingCheckpointer(listenerName)
 }
 
 func (connection *GatewayConnection) ReplayChaincodeEvents(listenerName string, chaincodeName string, startBlock uint64) error {
@@ -278,6 +283,17 @@ func (connection *GatewayConnection) receiveChaincodeEvents(listenerName string,
 
 	connection.CloseChaincodeEvents(listenerName)
 	connection.chaincodeEventListeners[listenerName] = listener
+	return nil
+}
+
+func (connection *GatewayConnection) receiveChaincodeEventsUsingCheckpointer(listenerName string) error {
+	listener := connection.chaincodeEventListeners[listenerName]
+	if listener == nil {
+		return fmt.Errorf("no chaincode event listener attached")
+	}
+	listener.checkpoint = func(event *client.ChaincodeEvent) {
+		connection.checkpointer.CheckpointChaincodeEvent(event)
+	}
 	return nil
 }
 

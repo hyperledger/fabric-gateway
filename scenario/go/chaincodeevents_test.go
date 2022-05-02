@@ -15,9 +15,10 @@ import (
 )
 
 type ChaincodeEventListener struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	events <-chan *client.ChaincodeEvent
+	ctx        context.Context
+	cancel     context.CancelFunc
+	events     <-chan *client.ChaincodeEvent
+	checkpoint func(*client.ChaincodeEvent)
 }
 
 func NewChaincodeEventListener(parentCtx context.Context, network *client.Network, chaincodeName string, options ...client.ChaincodeEventsOption) (*ChaincodeEventListener, error) {
@@ -42,6 +43,9 @@ func (listener *ChaincodeEventListener) Event() (*client.ChaincodeEvent, error) 
 	case event, ok := <-listener.events:
 		if !ok {
 			return nil, fmt.Errorf("event channel closed")
+		}
+		if listener.checkpoint != nil {
+			listener.checkpoint(event)
 		}
 		return event, nil
 	case <-time.After(30 * time.Second):

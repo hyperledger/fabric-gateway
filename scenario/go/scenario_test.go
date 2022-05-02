@@ -38,12 +38,10 @@ const (
 const defaultListenerName = ""
 
 var (
-	gateways                   map[string]*GatewayConnection
-	currentGateway             *GatewayConnection
-	transaction                *Transaction
-	lastCommittedBlockNumber   uint64
-	checkpointer               *client.InMemoryCheckpointer
-	lastChaincodeEventReceived *client.ChaincodeEvent
+	gateways                 map[string]*GatewayConnection
+	currentGateway           *GatewayConnection
+	transaction              *Transaction
+	lastCommittedBlockNumber uint64
 )
 
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
@@ -76,7 +74,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I invoke the transaction$`, invokeSuccessfulTransaction)
 	s.Step(`^I use the (\S+) contract$`, useContract)
 	s.Step(`^I use the (\S+) network$`, useNetwork)
-	s.Step(`^I use the checkpointer to listen for chaincode events from (\S+)$`, listenAndCheckpointChaincodeEvents)
+	s.Step(`^I use the checkpointer to listen for chaincode events from (\S+)$`, listenForChaincodeEventsUsingCheckpointer)
 	s.Step(`^the response should be JSON matching$`, theResponseShouldBeJSONMatching)
 	s.Step(`^I stop the peer named (\S+)$`, stopPeer)
 	s.Step(`^I start the peer named (\S+)$`, startPeer)
@@ -88,7 +86,6 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I listen for chaincode events from (\S+)$`, listenForChaincodeEvents)
 	s.Step(`^I listen for chaincode events from (\S+) on a listener named "([^"]*)"$`, listenForChaincodeEventsOnListener)
 	s.Step(`^I replay chaincode events from (\S+) starting at last committed block$`, replayChaincodeEventsFromLastBlock)
-	s.Step(`^I should checkpoint the chaincode event`, checkpointChaincodeEvent)
 	s.Step(`^I stop listening for chaincode events$`, stopChaincodeEventListening)
 	s.Step(`^I stop listening for chaincode events on "([^"]*)"$`, stopChaincodeEventListeningOnListener)
 	s.Step(`^I should receive a chaincode event named "([^"]*)" with payload "([^"]*)"$`, receiveChaincodeEvent)
@@ -164,7 +161,7 @@ func createGatewayWithoutSigner(name string, user string, mspID string) error {
 }
 
 func createCheckpointer() {
-	checkpointer = new(client.InMemoryCheckpointer)
+	currentGateway.createCheckpointer()
 }
 
 func connectGateway(peer string) error {
@@ -408,20 +405,12 @@ func listenForChaincodeEvents(chaincodeName string) error {
 	return listenForChaincodeEventsOnListener(chaincodeName, defaultListenerName)
 }
 
-func listenAndCheckpointChaincodeEvents(chaincodeName string) error {
-	return listenAndCheckpointChaincodeEventsOnListener(chaincodeName)
+func listenForChaincodeEventsUsingCheckpointer(chaincodeName string) error {
+	return currentGateway.ListenForChaincodeEventsUsingCheckpointer(defaultListenerName, chaincodeName)
 }
 
 func listenForChaincodeEventsOnListener(chaincodeName string, listenerName string) error {
 	return currentGateway.ListenForChaincodeEvents(listenerName, chaincodeName)
-}
-
-func listenAndCheckpointChaincodeEventsOnListener(chaincodeName string) error {
-	return currentGateway.ListenAndCheckpointChaincodeEvents(defaultListenerName, chaincodeName)
-}
-
-func checkpointChaincodeEvent() {
-	checkpointer.CheckpointChaincodeEvent(lastChaincodeEventReceived)
 }
 
 func replayChaincodeEventsFromLastBlock(chaincodeName string) error {
@@ -449,8 +438,6 @@ func receiveChaincodeEventOnListener(name string, payload string, listenerName s
 	if event.EventName != name || string(event.Payload) != payload {
 		return fmt.Errorf("expected event named \"%s\" with payload \"%s\", got: %v", name, payload, event)
 	}
-	lastChaincodeEventReceived = event
-
 	return nil
 }
 
