@@ -76,8 +76,7 @@ public class ScenarioSteps {
     private static final Path DOCKER_COMPOSE_DIR = Paths.get(FIXTURES_DIR.toString(), "docker-compose")
             .toAbsolutePath();
     private static final String DEFAULT_LISTENER_NAME = "";
-    private static Checkpointer checkpointer;
-    private static ChaincodeEvent lastChaincodeEventReceived;
+    private Checkpointer checkpointer;
 
     private static final Map<String, String> MSP_ID_TO_ORG_MAP;
     static {
@@ -402,8 +401,7 @@ public class ScenarioSteps {
 
     @When("I use the checkpointer to listen for chaincode events from {word}")
     public void listenForChaincodeEventsUsingCheckpointer(String chaincodeName){
-        assertCheckpointerExist();
-        currentGateway.listenAndCheckpointChaincodeEvents(DEFAULT_LISTENER_NAME, chaincodeName, checkpointer);
+        currentGateway.listenForChaincodeEventsUsingCheckpointer(DEFAULT_LISTENER_NAME, chaincodeName, checkpointer);
     }
 
     @When("I listen for chaincode events from {word} on a listener named {string}")
@@ -559,21 +557,18 @@ public class ScenarioSteps {
     }
 
     @Then("I should receive a chaincode event named {string} with payload {string}")
-    public void assertReceiveChaincodeEvent(String eventName, String payload) throws InterruptedException {
+    public void assertReceiveChaincodeEvent(String eventName, String payload) throws InterruptedException, IOException {
         assertReceiveChaincodeEventOnListener(eventName, payload, DEFAULT_LISTENER_NAME);
     }
 
     @Then("I should receive a chaincode event named {string} with payload {string} on {string}")
-    public void assertReceiveChaincodeEventOnListener(String eventName, String payload, String listenerName) throws InterruptedException {
+    public void assertReceiveChaincodeEventOnListener(String eventName, String payload, String listenerName) throws InterruptedException, IOException {
         ChaincodeEvent event = currentGateway.nextChaincodeEvent(listenerName);
-        lastChaincodeEventReceived = event;
+        if (checkpointer != null) {
+            checkpointer.checkpointChaincodeEvent(event);
+        }
         assertThat(event.getEventName()).isEqualTo(eventName);
         assertThat(new String(event.getPayload(), StandardCharsets.UTF_8)).isEqualTo(payload);
-    }
-
-    @Then("I should checkpoint the chaincode event")
-    public void checkpointchaincodeEvent() throws IOException {
-        checkpointer.checkpointChaincodeEvent(lastChaincodeEventReceived);
     }
 
     @Then("I should receive a block event")
@@ -752,12 +747,6 @@ public class ScenarioSteps {
         try (Reader privateKeyReader = Files.newBufferedReader(privateKeyPath, StandardCharsets.UTF_8)) {
             return Identities.readPrivateKey(privateKeyReader);
         }
-    }
-
-    private void assertCheckpointerExist() {
-      if (checkpointer == null){
-          throw new NullPointerException("checkpointer does not exist");
-      }
     }
 
 }

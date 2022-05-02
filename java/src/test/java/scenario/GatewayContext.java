@@ -11,7 +11,12 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import io.grpc.ManagedChannel;
-import org.hyperledger.fabric.client.*;
+import org.hyperledger.fabric.client.ChaincodeEvent;
+import org.hyperledger.fabric.client.Checkpointer;
+import org.hyperledger.fabric.client.CloseableIterator;
+import org.hyperledger.fabric.client.Gateway;
+import org.hyperledger.fabric.client.Contract;
+import org.hyperledger.fabric.client.Network;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.protos.common.Common;
@@ -64,7 +69,7 @@ public class GatewayContext {
         receiveChaincodeEvents(listenerName, network.getChaincodeEvents(chaincodeName));
     }
 
-    public void listenAndCheckpointChaincodeEvents(String listenerName, String chaincodeName, Checkpointer checkpointer) {
+    public void listenForChaincodeEventsUsingCheckpointer(String listenerName, String chaincodeName, Checkpointer checkpointer) {
         CloseableIterator<ChaincodeEvent> iter = network.newChaincodeEventsRequest(chaincodeName)
                 .checkpoint(checkpointer)
                 .build()
