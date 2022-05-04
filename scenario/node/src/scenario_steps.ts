@@ -293,18 +293,6 @@ Then('I should receive a block event', async function(this: CustomWorld): Promis
     expect(event).toBeDefined();
 });
 
-Then('I should checkpoint the block event', async function(this: CustomWorld): Promise<void> {
-    await this.checkpointBlockEvent(DEFAULT_LISTENER_NAME);
-});
-
-Then('I should checkpoint the filtered block event', async function(this: CustomWorld): Promise<void> {
-    await this.checkpointFilteredBlockEvent(DEFAULT_LISTENER_NAME);
-});
-
-Then('I should checkpoint the block and private data event', async function(this: CustomWorld): Promise<void> {
-    await this.checkpointBlockAndPrivateDataEvent(DEFAULT_LISTENER_NAME);
-});
-
 Then('I should receive a block event on {string}', async function(this: CustomWorld, listenerName: string): Promise<void> {
     const event = await this.nextBlockEvent(listenerName);
     expect(event).toBeDefined();

@@ -6,7 +6,7 @@
 
 import { DataTable, setWorldConstructor } from '@cucumber/cucumber';
 import * as grpc from '@grpc/grpc-js';
-import { ChaincodeEvent, Checkpointer, checkpointers, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers } from '@hyperledger/fabric-gateway';
+import { ChaincodeEvent, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers } from '@hyperledger/fabric-gateway';
 import * as crypto from 'crypto';
 import { promises as fs } from 'fs';
 import * as path from 'path';
@@ -124,7 +124,6 @@ export class CustomWorld {
     #currentGateway?: GatewayContext;
     #transaction?: TransactionInvocation;
     #lastCommittedBlockNumber = BigInt(0);
-    #checkpointer?: Checkpointer;
 
     async createGateway(name: string, user: string, mspId: string): Promise<void> {
         const identity = await newIdentity(user, mspId);
@@ -134,9 +133,8 @@ export class CustomWorld {
         this.#currentGateway = gateway;
     }
 
-    createCheckpointer(): Checkpointer {
-        this.#checkpointer = checkpointers.inMemory();
-        return this.#checkpointer;
+    createCheckpointer(): void {
+        this.getCurrentGateway().createCheckpointer();
     }
 
     async createGatewayWithoutSigner(name: string, user: string, mspId: string): Promise<void> {
@@ -225,32 +223,21 @@ export class CustomWorld {
     }
 
     async listenForBlockEventsUsingCheckpointer(listenerName: string): Promise<void> {
-        await this.getCurrentGateway().listenForBlockEvents(listenerName, { checkpoint: this.getCheckpointer() });
+        await this.getCurrentGateway().listenForBlockEventsUsingCheckpointer(listenerName,  { checkpoint: this.getCurrentGateway().getcheckpointer() });
     }
 
     async listenForFilteredBlockEventsUsingCheckpointer(listenerName: string): Promise<void> {
-        await this.getCurrentGateway().listenForFilteredBlockEvents(listenerName, { checkpoint: this.getCheckpointer() });
+        await this.getCurrentGateway().listenForFilteredBlockEventsUsingCheckpointer(listenerName,  { checkpoint: this.getCurrentGateway().getcheckpointer() });
     }
 
     async listenForBlockAndPrivateDataEventsUsingCheckpointer(listenerName: string): Promise<void> {
-        await this.getCurrentGateway().listenForBlockAndPrivateDataEvents(listenerName, { checkpoint: this.getCheckpointer() });
+        await this.getCurrentGateway().listenForBlockAndPrivateDataEventsUsingCheckpointer(listenerName, { checkpoint: this.getCurrentGateway().getcheckpointer() });
     }
 
     async replayBlockEvents(listenerName: string, startBlock: bigint): Promise<void> {
         await this.getCurrentGateway().listenForBlockEvents(listenerName, { startBlock });
     }
 
-    async checkpointBlockEvent(listenerName: string): Promise<void> {
-        await this.getCurrentGateway().checkPointBlockEvent(listenerName, this.getCheckpointer());
-    }
-
-    async checkpointFilteredBlockEvent(listenerName: string): Promise<void> {
-        await this.getCurrentGateway().checkpointFilteredBlockEvent(listenerName, this.getCheckpointer());
-    }
-
-    async checkpointBlockAndPrivateDataEvent(listenerName: string): Promise<void> {
-        await this.getCurrentGateway().checkpointBlockAndPrivateDataEvent(listenerName, this.getCheckpointer());
-    }
 
     async nextBlockEvent(listenerName: string): Promise<unknown> {
         return await this.getCurrentGateway().nextBlockEvent(listenerName);
@@ -355,9 +342,6 @@ export class CustomWorld {
         return assertDefined(this.#transaction, 'transaction');
     }
 
-    private getCheckpointer(): Checkpointer {
-        return assertDefined(this.#checkpointer, 'checkPointer');
-    }
 }
 
 setWorldConstructor(CustomWorld);
