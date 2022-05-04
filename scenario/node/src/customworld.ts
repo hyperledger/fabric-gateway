@@ -6,7 +6,7 @@
 
 import { DataTable, setWorldConstructor } from '@cucumber/cucumber';
 import * as grpc from '@grpc/grpc-js';
-import { ChaincodeEvent, Checkpointer, checkpointers, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers } from '@hyperledger/fabric-gateway';
+import { ChaincodeEvent, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers } from '@hyperledger/fabric-gateway';
 import * as crypto from 'crypto';
 import { promises as fs } from 'fs';
 import * as path from 'path';
@@ -124,7 +124,6 @@ export class CustomWorld {
     #currentGateway?: GatewayContext;
     #transaction?: TransactionInvocation;
     #lastCommittedBlockNumber = BigInt(0);
-    #checkpointer?: Checkpointer;
 
     async createGateway(name: string, user: string, mspId: string): Promise<void> {
         const identity = await newIdentity(user, mspId);
@@ -150,7 +149,7 @@ export class CustomWorld {
     }
 
     createCheckpointer(): void {
-        this.#checkpointer = checkpointers.inMemory();
+        this.getCurrentGateway().createCheckpointer();
     }
 
     useGateway(name: string): void {
@@ -202,8 +201,8 @@ export class CustomWorld {
         await this.getCurrentGateway().listenForChaincodeEvents(listenerName, chaincodeName);
     }
 
-    async listenAndCheckpointChaincodeEvents(listenerName: string, chaincodeName: string): Promise<void> {
-        await this.getCurrentGateway().listenForChaincodeEventsUsingCheckpointer(listenerName, chaincodeName, this.getCheckpointer(), { checkpoint: this.#checkpointer });
+    async listenForChaincodeEventsUsingCheckpointer(listenerName: string, chaincodeName: string): Promise<void> {
+        await this.getCurrentGateway().listenForChaincodeEventsUsingCheckpointer(listenerName, chaincodeName, { checkpoint: this.getCurrentGateway().getCheckpointer() });
     }
 
     async replayChaincodeEvents(listenerName: string, chaincodeName: string, startBlock: bigint): Promise<void> {
@@ -324,9 +323,6 @@ export class CustomWorld {
 
     private getTransaction(): TransactionInvocation {
         return assertDefined(this.#transaction, 'transaction');
-    }
-    private getCheckpointer(): Checkpointer {
-        return assertDefined(this.#checkpointer, 'checkpointer');
     }
 }
 

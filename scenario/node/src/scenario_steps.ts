@@ -213,7 +213,7 @@ When('I stop listening for block and private data events on {string}', function(
 });
 
 When('I use the checkpointer to listen for chaincode events from {word}', async function(this: CustomWorld, chaincodeName: string) {
-    await this.listenAndCheckpointChaincodeEvents(DEFAULT_LISTENER_NAME, chaincodeName);
+    await this.listenForChaincodeEventsUsingCheckpointer(DEFAULT_LISTENER_NAME, chaincodeName);
 });
 
 Then('the transaction invocation should fail', async function(this: CustomWorld): Promise<void> {
