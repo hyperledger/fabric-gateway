@@ -173,7 +173,7 @@ public class GatewayContext {
     }
 
     public void close() {
-        chaincodeEventListeners.values().forEach(EventListener::close);
+        chaincodeEventListeners.values().forEach(Events::close);
         blockEventListeners.values().forEach(EventListener::close);
         filteredBlockEventListeners.values().forEach(EventListener::close);
         blockAndPrivateDataEventListeners.values().forEach(EventListener::close);
