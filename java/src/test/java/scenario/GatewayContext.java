@@ -15,6 +15,7 @@ import org.hyperledger.fabric.client.ChaincodeEvent;
 import org.hyperledger.fabric.client.Checkpointer;
 import org.hyperledger.fabric.client.CloseableIterator;
 import org.hyperledger.fabric.client.Gateway;
+import org.hyperledger.fabric.client.InMemoryCheckpointer;
 import org.hyperledger.fabric.client.Contract;
 import org.hyperledger.fabric.client.Network;
 import org.hyperledger.fabric.client.identity.Identity;
@@ -22,12 +23,16 @@ import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.peer.EventsPackage;
 
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 public class GatewayContext {
     private final Gateway.Builder gatewayBuilder;
-    private final Map<String, EventListener<ChaincodeEvent>> chaincodeEventListeners = new HashMap<>();
+    private final Map<String, Events<ChaincodeEvent>> chaincodeEventListeners = new HashMap<>();
     private final Map<String, EventListener<Common.Block>> blockEventListeners = new HashMap<>();
     private final Map<String, EventListener<EventsPackage.FilteredBlock>> filteredBlockEventListeners = new HashMap<>();
     private final Map<String, EventListener<EventsPackage.BlockAndPrivateData>> blockAndPrivateDataEventListeners = new HashMap<>();
+    private Checkpointer checkpointer;
     private ManagedChannel channel;
     private Gateway gateway;
     private Network network;
@@ -57,6 +62,10 @@ public class GatewayContext {
         contract = network.getContract(contractName);
     }
 
+    public void createCheckpointer() {
+        checkpointer = new InMemoryCheckpointer();
+    }
+
     public TransactionInvocation newTransaction(String action, String transactionName) {
         if (action.equals("submit")) {
             return TransactionInvocation.prepareToSubmit(gateway, contract, transactionName);
@@ -69,12 +78,12 @@ public class GatewayContext {
         receiveChaincodeEvents(listenerName, network.getChaincodeEvents(chaincodeName));
     }
 
-    public void listenForChaincodeEventsUsingCheckpointer(String listenerName, String chaincodeName, Checkpointer checkpointer) {
+    public void listenForChaincodeEventsUsingCheckpointer(String listenerName, String chaincodeName) {
         CloseableIterator<ChaincodeEvent> iter = network.newChaincodeEventsRequest(chaincodeName)
                 .checkpoint(checkpointer)
                 .build()
                 .getEvents();
-        receiveChaincodeEvents(listenerName, iter);
+        receiveChaincodeEventsUsingCheckpointer(listenerName, iter);
     }
 
     public void replayChaincodeEvents(String listenerName, String chaincodeName, long startBlock) {
@@ -83,6 +92,12 @@ public class GatewayContext {
                 .build()
                 .getEvents();
         receiveChaincodeEvents(listenerName, iter);
+    }
+
+    private void receiveChaincodeEventsUsingCheckpointer(final String listenerName, final CloseableIterator<ChaincodeEvent> iter) {
+        closeChaincodeEvents(listenerName);
+        Events<ChaincodeEvent> e = new CheckpointEventListener<ChaincodeEvent>(iter, event -> checkpointer.checkpointChaincodeEvent(event));
+        chaincodeEventListeners.put(listenerName, e);
     }
 
     private void receiveChaincodeEvents(final String listenerName, final CloseableIterator<ChaincodeEvent> iter) {

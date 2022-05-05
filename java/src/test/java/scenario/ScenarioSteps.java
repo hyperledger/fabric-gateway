@@ -76,7 +76,6 @@ public class ScenarioSteps {
     private static final Path DOCKER_COMPOSE_DIR = Paths.get(FIXTURES_DIR.toString(), "docker-compose")
             .toAbsolutePath();
     private static final String DEFAULT_LISTENER_NAME = "";
-    private Checkpointer checkpointer;
 
     private static final Map<String, String> MSP_ID_TO_ORG_MAP;
     static {
@@ -344,7 +343,7 @@ public class ScenarioSteps {
 
     @Given("I create a checkpointer")
     public void createCheckpointer() {
-        checkpointer = new InMemoryCheckpointer();
+        currentGateway.createCheckpointer();
     }
 
     @When("^I prepare to (evaluate|submit) an? ([^ ]+) transaction$")
@@ -401,7 +400,7 @@ public class ScenarioSteps {
 
     @When("I use the checkpointer to listen for chaincode events from {word}")
     public void listenForChaincodeEventsUsingCheckpointer(String chaincodeName){
-        currentGateway.listenForChaincodeEventsUsingCheckpointer(DEFAULT_LISTENER_NAME, chaincodeName, checkpointer);
+        currentGateway.listenForChaincodeEventsUsingCheckpointer(DEFAULT_LISTENER_NAME, chaincodeName);
     }
 
     @When("I listen for chaincode events from {word} on a listener named {string}")
@@ -564,9 +563,6 @@ public class ScenarioSteps {
     @Then("I should receive a chaincode event named {string} with payload {string} on {string}")
     public void assertReceiveChaincodeEventOnListener(String eventName, String payload, String listenerName) throws InterruptedException, IOException {
         ChaincodeEvent event = currentGateway.nextChaincodeEvent(listenerName);
-        if (checkpointer != null) {
-            checkpointer.checkpointChaincodeEvent(event);
-        }
         assertThat(event.getEventName()).isEqualTo(eventName);
         assertThat(new String(event.getPayload(), StandardCharsets.UTF_8)).isEqualTo(payload);
     }
