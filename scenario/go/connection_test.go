@@ -59,7 +59,7 @@ func NewGatewayConnection(user string, mspID string, isHSMUser bool) (*GatewayCo
 
 	connection := &GatewayConnection{
 		id:                                id,
-		chaincodeEventListeners:           make(map[string]*ChaincodeEventListener),
+		chaincodeEventListeners:           make(map[string]ChaincodeEvents),
 		blockEventListeners:               make(map[string]*BlockEventListener),
 		filteredBlockEventListeners:       make(map[string]*FilteredBlockEventListener),
 		blockAndPrivateDataEventListeners: make(map[string]*BlockAndPrivateDataEventListener),
@@ -199,7 +199,7 @@ type GatewayConnection struct {
 	ctx                               context.Context
 	cancel                            context.CancelFunc
 	checkpointer                      *client.InMemoryCheckpointer
-	chaincodeEventListeners           map[string]*ChaincodeEventListener
+	chaincodeEventListeners           map[string]ChaincodeEvents
 	blockEventListeners               map[string]*BlockEventListener
 	filteredBlockEventListeners       map[string]*FilteredBlockEventListener
 	blockAndPrivateDataEventListeners map[string]*BlockAndPrivateDataEventListener
@@ -263,8 +263,7 @@ func (connection *GatewayConnection) createCheckpointer() {
 }
 
 func (connection *GatewayConnection) ListenForChaincodeEventsUsingCheckpointer(listenerName string, chaincodeName string) error {
-	connection.receiveChaincodeEvents(listenerName, chaincodeName, client.WithCheckpoint(connection.checkpointer))
-	return connection.receiveChaincodeEventsUsingCheckpointer(listenerName)
+	return connection.receiveChaincodeEventsUsingCheckpointer(listenerName, chaincodeName)
 }
 
 func (connection *GatewayConnection) ReplayChaincodeEvents(listenerName string, chaincodeName string, startBlock uint64) error {
@@ -286,15 +285,22 @@ func (connection *GatewayConnection) receiveChaincodeEvents(listenerName string,
 	return nil
 }
 
-func (connection *GatewayConnection) receiveChaincodeEventsUsingCheckpointer(listenerName string) error {
-	listener := connection.chaincodeEventListeners[listenerName]
-	if listener == nil {
-		return fmt.Errorf("no chaincode event listener attached")
+func (connection *GatewayConnection) receiveChaincodeEventsUsingCheckpointer(listenerName string, chaincodeName string, options ...client.ChaincodeEventsOption) error {
+	if connection.network == nil {
+		return fmt.Errorf("no network selected")
 	}
-	listener.checkpoint = func(event *client.ChaincodeEvent) {
-		connection.checkpointer.CheckpointChaincodeEvent(event)
+	checkpoint := func(event *client.ChaincodeEvent) {
+		currentGateway.checkpointer.CheckpointChaincodeEvent(event)
 	}
+	listener, err := NewCheckpointEventListener(connection.ctx, connection.network, chaincodeName, checkpoint, options...)
+	if err != nil {
+		return err
+	}
+
+	connection.CloseChaincodeEvents(listenerName)
+	connection.chaincodeEventListeners[listenerName] = listener
 	return nil
+
 }
 
 func (connection *GatewayConnection) ChaincodeEvent(listenerName string) (*client.ChaincodeEvent, error) {
