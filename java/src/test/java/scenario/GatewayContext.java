@@ -29,7 +29,7 @@ import java.util.function.Function;
 public class GatewayContext {
     private final Gateway.Builder gatewayBuilder;
     private final Map<String, Events<ChaincodeEvent>> chaincodeEventListeners = new HashMap<>();
-    private final Map<String, EventListener<Common.Block>> blockEventListeners = new HashMap<>();
+    private final Map<String, EventtListener<Common.Block>> blockEventListeners = new HashMap<>();
     private final Map<String, EventListener<EventsPackage.FilteredBlock>> filteredBlockEventListeners = new HashMap<>();
     private final Map<String, EventListener<EventsPackage.BlockAndPrivateData>> blockAndPrivateDataEventListeners = new HashMap<>();
     private Checkpointer checkpointer;
@@ -201,7 +201,7 @@ public class GatewayContext {
         closeEventListener(blockAndPrivateDataEventListeners, listenerName);
     }
 
-    private <T> void closeEventListener(final Map<String, EventListener<T>> listeners, final String listenerName) {
+    private <T> void closeEventListener(final Map<String, Events<T>> listeners, final String listenerName) {
         listeners.computeIfPresent(listenerName, (name, listener) -> {
             listener.close();
             return null;
