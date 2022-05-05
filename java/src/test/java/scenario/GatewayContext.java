@@ -29,7 +29,7 @@ import java.util.function.Function;
 public class GatewayContext {
     private final Gateway.Builder gatewayBuilder;
     private final Map<String, Events<ChaincodeEvent>> chaincodeEventListeners = new HashMap<>();
-    private final Map<String, EventtListener<Common.Block>> blockEventListeners = new HashMap<>();
+    private final Map<String, EventListener<Common.Block>> blockEventListeners = new HashMap<>();
     private final Map<String, EventListener<EventsPackage.FilteredBlock>> filteredBlockEventListeners = new HashMap<>();
     private final Map<String, EventListener<EventsPackage.BlockAndPrivateData>> blockAndPrivateDataEventListeners = new HashMap<>();
     private Checkpointer checkpointer;
@@ -123,7 +123,7 @@ public class GatewayContext {
 
     private void receiveBlockEvents(final String listenerName, final CloseableIterator<Common.Block> iter) {
         closeBlockEvents(listenerName);
-        blockEventListeners.put(listenerName, new EventListener<>(iter));
+        blockEventListeners.put(listenerName, new EventListener<Common.Block>(iter));
     }
 
     public Common.Block nextBlockEvent(String listenerName) throws InterruptedException {
@@ -143,8 +143,8 @@ public class GatewayContext {
     }
 
     private void receiveFilteredBlockEvents(final String listenerName, final CloseableIterator<EventsPackage.FilteredBlock> iter) {
-        closeBlockEvents(listenerName);
-        filteredBlockEventListeners.put(listenerName, new EventListener<>(iter));
+        closeFilteredBlockEvents(listenerName);
+        filteredBlockEventListeners.put(listenerName, new EventListener<EventsPackage.FilteredBlock>(iter));
     }
 
     public EventsPackage.FilteredBlock nextFilteredBlockEvent(String listenerName) throws InterruptedException {
@@ -164,8 +164,8 @@ public class GatewayContext {
     }
 
     private void receiveBlockAndPrivateDataEvents(final String listenerName, final CloseableIterator<EventsPackage.BlockAndPrivateData> iter) {
-        closeBlockEvents(listenerName);
-        blockAndPrivateDataEventListeners.put(listenerName, new EventListener<>(iter));
+        closeFilteredBlockEvents(listenerName);
+        blockAndPrivateDataEventListeners.put(listenerName, new EventListener<EventsPackage.BlockAndPrivateData>(iter));
     }
 
     public EventsPackage.BlockAndPrivateData nextBlockAndPrivateDataEvent(String listenerName) throws InterruptedException {
@@ -174,9 +174,9 @@ public class GatewayContext {
 
     public void close() {
         chaincodeEventListeners.values().forEach(Events::close);
-        blockEventListeners.values().forEach(EventListener::close);
-        filteredBlockEventListeners.values().forEach(EventListener::close);
-        blockAndPrivateDataEventListeners.values().forEach(EventListener::close);
+        blockEventListeners.values().forEach(Events::close);
+        filteredBlockEventListeners.values().forEach(Events::close);
+        blockAndPrivateDataEventListeners.values().forEach(Events::close);
 
         if (gateway != null) {
             gateway.close();
