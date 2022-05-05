@@ -102,7 +102,7 @@ public class GatewayContext {
 
     private void receiveChaincodeEvents(final String listenerName, final CloseableIterator<ChaincodeEvent> iter) {
         closeChaincodeEvents(listenerName);
-        chaincodeEventListeners.put(listenerName, new EventListener<>(iter));
+        chaincodeEventListeners.put(listenerName, new EventListener<ChaincodeEvent>(iter));
     }
 
     public ChaincodeEvent nextChaincodeEvent(String listenerName) throws InterruptedException {
@@ -123,7 +123,7 @@ public class GatewayContext {
 
     private void receiveBlockEvents(final String listenerName, final CloseableIterator<Common.Block> iter) {
         closeBlockEvents(listenerName);
-        blockEventListeners.put(listenerName, new EventListener<Common.Block>(iter));
+        blockEventListeners.put(listenerName, new Events<Common.Block>(iter));
     }
 
     public Common.Block nextBlockEvent(String listenerName) throws InterruptedException {
@@ -144,7 +144,7 @@ public class GatewayContext {
 
     private void receiveFilteredBlockEvents(final String listenerName, final CloseableIterator<EventsPackage.FilteredBlock> iter) {
         closeFilteredBlockEvents(listenerName);
-        filteredBlockEventListeners.put(listenerName, new EventListener<EventsPackage.FilteredBlock>(iter));
+        filteredBlockEventListeners.put(listenerName, new Events<EventsPackage.FilteredBlock>(iter));
     }
 
     public EventsPackage.FilteredBlock nextFilteredBlockEvent(String listenerName) throws InterruptedException {
@@ -164,8 +164,8 @@ public class GatewayContext {
     }
 
     private void receiveBlockAndPrivateDataEvents(final String listenerName, final CloseableIterator<EventsPackage.BlockAndPrivateData> iter) {
-        closeFilteredBlockEvents(listenerName);
-        blockAndPrivateDataEventListeners.put(listenerName, new EventListener<EventsPackage.BlockAndPrivateData>(iter));
+        closeBlockAndPrivateDataEvents(listenerName);
+        blockAndPrivateDataEventListeners.put(listenerName, new Events<EventsPackage.BlockAndPrivateData>(iter));
     }
 
     public EventsPackage.BlockAndPrivateData nextBlockAndPrivateDataEvent(String listenerName) throws InterruptedException {
@@ -173,10 +173,10 @@ public class GatewayContext {
     }
 
     public void close() {
-        chaincodeEventListeners.values().forEach(Events::close);
-        blockEventListeners.values().forEach(Events::close);
-        filteredBlockEventListeners.values().forEach(Events::close);
-        blockAndPrivateDataEventListeners.values().forEach(Events::close);
+        chaincodeEventListeners.values().forEach(Events<ChaincodeEvent>::close);
+        blockEventListeners.values().forEach(Events<Common.Block>::close);
+        filteredBlockEventListeners.values().forEach(Events<EventsPackage.FilteredBlock>::close);
+        blockAndPrivateDataEventListeners.values().forEach(Events<EventsPackage.BlockAndPrivateData>::close);
 
         if (gateway != null) {
             gateway.close();

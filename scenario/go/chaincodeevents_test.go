@@ -20,7 +20,7 @@ type ChaincodeEventListener struct {
 	events <-chan *client.ChaincodeEvent
 }
 
-type CheckpointEventListener struct {
+type CheckpointChaincodeEventListener struct {
 	listener   *ChaincodeEventListener
 	checkpoint func(*client.ChaincodeEvent)
 }
@@ -47,19 +47,18 @@ func NewChaincodeEventListener(parentCtx context.Context, network *client.Networ
 	return listener, nil
 }
 
-func NewCheckpointEventListener(parentCtx context.Context, network *client.Network, chaincodeName string, checkpoint func(*client.ChaincodeEvent), options ...client.ChaincodeEventsOption) (*CheckpointEventListener, error) {
+func NewCheckpointChaincodeEventListener(parentCtx context.Context, network *client.Network, chaincodeName string, checkpoint func(*client.ChaincodeEvent), options ...client.ChaincodeEventsOption) (*CheckpointChaincodeEventListener, error) {
 
 	listener, err := NewChaincodeEventListener(parentCtx, network, chaincodeName, options...)
 	if err != nil {
 		return nil, err
 	}
 
-	checkpointListener := &CheckpointEventListener{
+	checkpointListener := &CheckpointChaincodeEventListener{
 		listener:   listener,
 		checkpoint: checkpoint,
 	}
 	return checkpointListener, nil
-
 }
 
 func (listener *ChaincodeEventListener) Event() (*client.ChaincodeEvent, error) {
@@ -74,7 +73,7 @@ func (listener *ChaincodeEventListener) Event() (*client.ChaincodeEvent, error) 
 	}
 }
 
-func (listener *CheckpointEventListener) Event() (*client.ChaincodeEvent, error) {
+func (listener *CheckpointChaincodeEventListener) Event() (*client.ChaincodeEvent, error) {
 	select {
 	case event, ok := <-listener.listener.events:
 		if !ok {
@@ -83,6 +82,7 @@ func (listener *CheckpointEventListener) Event() (*client.ChaincodeEvent, error)
 		listener.checkpoint(event)
 		return event, nil
 	case <-time.After(30 * time.Second):
+		fmt.Println("**************right event called")
 		return nil, fmt.Errorf("timeout waiting for event")
 	}
 }
@@ -91,6 +91,6 @@ func (listener *ChaincodeEventListener) Close() {
 	listener.cancel()
 }
 
-func (listener *CheckpointEventListener) Close() {
-	listener.cancel()
+func (listener *CheckpointChaincodeEventListener) Close() {
+	listener.listener.cancel()
 }

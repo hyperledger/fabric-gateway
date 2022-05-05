@@ -292,7 +292,7 @@ func (connection *GatewayConnection) receiveChaincodeEventsUsingCheckpointer(lis
 	checkpoint := func(event *client.ChaincodeEvent) {
 		currentGateway.checkpointer.CheckpointChaincodeEvent(event)
 	}
-	listener, err := NewCheckpointEventListener(connection.ctx, connection.network, chaincodeName, checkpoint, options...)
+	listener, err := NewCheckpointChaincodeEventListener(connection.ctx, connection.network, chaincodeName, checkpoint, options...)
 	if err != nil {
 		return err
 	}
