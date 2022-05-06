@@ -36,7 +36,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <grpcVersion>1.45.0</grpcVersion>
+        <grpcVersion>1.46.0</grpcVersion>
         <protobufVersion>3.19.2</protobufVersion> <!-- keep in step with the version used by io.grpc:grpc-protobuf -->
         <enforceJavaVersion>1.8</enforceJavaVersion> <!-- this is overridden in the release profile -->
     </properties>
@@ -59,7 +59,7 @@
             <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-bom</artifactId>
-                <version>7.2.3</version>
+                <version>7.3.4</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -117,7 +117,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>4.4.0</version>
+            <version>4.5.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -401,7 +401,7 @@
                             <dependency>
                                 <groupId>com.puppycrawl.tools</groupId>
                                 <artifactId>checkstyle</artifactId>
-                                <version>10.1</version>
+                                <version>10.2</version>
                             </dependency>
                         </dependencies>
                     </plugin>
@@ -416,7 +416,7 @@
                     <plugin>
                         <groupId>org.owasp</groupId>
                         <artifactId>dependency-check-maven</artifactId>
-                        <version>7.0.1</version>
+                        <version>7.1.0</version>
                         <configuration>
                             <skipProvidedScope>true</skipProvidedScope>
                             <skipTestScope>true</skipTestScope>
