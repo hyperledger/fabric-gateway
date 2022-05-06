@@ -8,13 +8,9 @@ package org.hyperledger.fabric.client;
 
 import org.hyperledger.fabric.protos.peer.EventsPackage;
 
-///**
-// * A Fabric Gateway call to obtain filtered block events. Supports off-line signing flow using
-// * {@link Gateway#newSignedFilteredBlockEventsRequest(byte[], byte[])}.
-// */
-
 /**
- * A Fabric Gateway call to obtain filtered block events.
+ * A Fabric Gateway call to obtain filtered block events. Supports off-line signing flow using
+ * {@link Gateway#newSignedFilteredBlockEventsRequest(byte[], byte[])}.
  */
 public interface FilteredBlockEventsRequest extends EventsRequest<EventsPackage.FilteredBlock> {
     /**

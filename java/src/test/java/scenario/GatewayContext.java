@@ -6,6 +6,7 @@
 
 package scenario;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -14,21 +15,18 @@ import io.grpc.ManagedChannel;
 import org.hyperledger.fabric.client.ChaincodeEvent;
 import org.hyperledger.fabric.client.Checkpointer;
 import org.hyperledger.fabric.client.CloseableIterator;
+import org.hyperledger.fabric.client.Contract;
 import org.hyperledger.fabric.client.Gateway;
 import org.hyperledger.fabric.client.InMemoryCheckpointer;
-import org.hyperledger.fabric.client.Contract;
 import org.hyperledger.fabric.client.Network;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.peer.EventsPackage;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
-
 public class GatewayContext {
     private final Gateway.Builder gatewayBuilder;
-    private final Map<String, Events<ChaincodeEvent>> chaincodeEventListeners = new HashMap<>();
+    private final Map<String, EventListener<ChaincodeEvent>> chaincodeEventListeners = new HashMap<>();
     private final Map<String, EventListener<Common.Block>> blockEventListeners = new HashMap<>();
     private final Map<String, EventListener<EventsPackage.FilteredBlock>> filteredBlockEventListeners = new HashMap<>();
     private final Map<String, EventListener<EventsPackage.BlockAndPrivateData>> blockAndPrivateDataEventListeners = new HashMap<>();
@@ -96,16 +94,16 @@ public class GatewayContext {
 
     private void receiveChaincodeEventsUsingCheckpointer(final String listenerName, final CloseableIterator<ChaincodeEvent> iter) {
         closeChaincodeEvents(listenerName);
-        Events<ChaincodeEvent> e = new CheckpointEventListener<ChaincodeEvent>(iter, event -> checkpointer.checkpointChaincodeEvent(event));
+        EventListener<ChaincodeEvent> e = new CheckpointEventListener<>(iter, checkpointer::checkpointChaincodeEvent);
         chaincodeEventListeners.put(listenerName, e);
     }
 
     private void receiveChaincodeEvents(final String listenerName, final CloseableIterator<ChaincodeEvent> iter) {
         closeChaincodeEvents(listenerName);
-        chaincodeEventListeners.put(listenerName, new EventListener<ChaincodeEvent>(iter));
+        chaincodeEventListeners.put(listenerName, new BasicEventListener<>(iter));
     }
 
-    public ChaincodeEvent nextChaincodeEvent(String listenerName) throws InterruptedException {
+    public ChaincodeEvent nextChaincodeEvent(String listenerName) throws InterruptedException, IOException {
         return chaincodeEventListeners.get(listenerName).next();
     }
 
@@ -123,10 +121,10 @@ public class GatewayContext {
 
     private void receiveBlockEvents(final String listenerName, final CloseableIterator<Common.Block> iter) {
         closeBlockEvents(listenerName);
-        blockEventListeners.put(listenerName, new Events<Common.Block>(iter));
+        blockEventListeners.put(listenerName, new BasicEventListener<>(iter));
     }
 
-    public Common.Block nextBlockEvent(String listenerName) throws InterruptedException {
+    public Common.Block nextBlockEvent(String listenerName) throws InterruptedException, IOException {
         return blockEventListeners.get(listenerName).next();
     }
 
@@ -144,10 +142,10 @@ public class GatewayContext {
 
     private void receiveFilteredBlockEvents(final String listenerName, final CloseableIterator<EventsPackage.FilteredBlock> iter) {
         closeFilteredBlockEvents(listenerName);
-        filteredBlockEventListeners.put(listenerName, new Events<EventsPackage.FilteredBlock>(iter));
+        filteredBlockEventListeners.put(listenerName, new BasicEventListener<>(iter));
     }
 
-    public EventsPackage.FilteredBlock nextFilteredBlockEvent(String listenerName) throws InterruptedException {
+    public EventsPackage.FilteredBlock nextFilteredBlockEvent(String listenerName) throws InterruptedException, IOException {
         return filteredBlockEventListeners.get(listenerName).next();
     }
 
@@ -165,18 +163,18 @@ public class GatewayContext {
 
     private void receiveBlockAndPrivateDataEvents(final String listenerName, final CloseableIterator<EventsPackage.BlockAndPrivateData> iter) {
         closeBlockAndPrivateDataEvents(listenerName);
-        blockAndPrivateDataEventListeners.put(listenerName, new Events<EventsPackage.BlockAndPrivateData>(iter));
+        blockAndPrivateDataEventListeners.put(listenerName, new BasicEventListener<>(iter));
     }
 
-    public EventsPackage.BlockAndPrivateData nextBlockAndPrivateDataEvent(String listenerName) throws InterruptedException {
+    public EventsPackage.BlockAndPrivateData nextBlockAndPrivateDataEvent(String listenerName) throws InterruptedException, IOException {
         return blockAndPrivateDataEventListeners.get(listenerName).next();
     }
 
     public void close() {
-        chaincodeEventListeners.values().forEach(Events<ChaincodeEvent>::close);
-        blockEventListeners.values().forEach(Events<Common.Block>::close);
-        filteredBlockEventListeners.values().forEach(Events<EventsPackage.FilteredBlock>::close);
-        blockAndPrivateDataEventListeners.values().forEach(Events<EventsPackage.BlockAndPrivateData>::close);
+        chaincodeEventListeners.values().forEach(EventListener::close);
+        blockEventListeners.values().forEach(EventListener::close);
+        filteredBlockEventListeners.values().forEach(EventListener::close);
+        blockAndPrivateDataEventListeners.values().forEach(EventListener::close);
 
         if (gateway != null) {
             gateway.close();
@@ -201,7 +199,7 @@ public class GatewayContext {
         closeEventListener(blockAndPrivateDataEventListeners, listenerName);
     }
 
-    private <T> void closeEventListener(final Map<String, Events<T>> listeners, final String listenerName) {
+    private <T> void closeEventListener(final Map<String, EventListener<T>> listeners, final String listenerName) {
         listeners.computeIfPresent(listenerName, (name, listener) -> {
             listener.close();
             return null;

@@ -6,6 +6,12 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
@@ -19,13 +25,6 @@ import org.hyperledger.fabric.protos.peer.ChaincodeEventPackage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -63,8 +62,8 @@ public final class ChaincodeEventsTest {
         assertStartPosition(actual, blockNumber, "");
     }
 
-    void assertStartPosition(final org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest actual, final long blockNumber, final Optional<String> transactionId) {
-        assertStartPosition(actual, blockNumber, transactionId.orElse(""));
+    void assertStartPosition(final org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest actual, final Checkpoint checkpoint) {
+        assertStartPosition(actual, checkpoint.getBlockNumber(), checkpoint.getTransactionId().orElse(""));
     }
 
     void assertStartPosition(final org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest actual, final long blockNumber, final String transactionId) {
@@ -174,7 +173,7 @@ public final class ChaincodeEventsTest {
 
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
-        assertStartPosition(request, checkpointer.getBlockNumber());
+        assertStartPosition(request, checkpointer);
     }
 
     @Test
@@ -191,7 +190,7 @@ public final class ChaincodeEventsTest {
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
-        assertStartPosition(request, checkpointer.getBlockNumber(), checkpointer.getTransactionId());
+        assertStartPosition(request, checkpointer);
     }
 
     @Test
@@ -222,7 +221,7 @@ public final class ChaincodeEventsTest {
         SignedChaincodeEventsRequest signedRequest = mocker.captureChaincodeEvents();
         ChaincodeEventsRequest request = ChaincodeEventsRequest.parseFrom(signedRequest.getRequest());
 
-        assertStartPosition(request, checkpointer.getBlockNumber(), checkpointer.getTransactionId());
+        assertStartPosition(request, checkpointer);
     }
 
     @Test

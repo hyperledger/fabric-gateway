@@ -8,12 +8,9 @@ package org.hyperledger.fabric.client;
 
 import org.hyperledger.fabric.protos.common.Common;
 
-///**
-// * A Fabric Gateway call to obtain block events. Supports off-line signing flow using
-// * {@link Gateway#newSignedBlockEventsRequest(byte[], byte[])}.
-// */
 /**
- * A Fabric Gateway call to obtain block events.
+ * A Fabric Gateway call to obtain block events. Supports off-line signing flow using
+ * {@link Gateway#newSignedBlockEventsRequest(byte[], byte[])}.
  */
 public interface BlockEventsRequest extends EventsRequest<Common.Block> {
     /**

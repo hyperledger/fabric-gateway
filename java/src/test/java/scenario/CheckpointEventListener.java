@@ -1,25 +1,32 @@
 package scenario;
 
+import java.io.IOException;
+
 import org.hyperledger.fabric.client.CloseableIterator;
 
-import java.util.function.Consumer;
+public final class CheckpointEventListener<T> implements EventListener<T> {
+    private final EventListener<T> eventListener;
+    private final CheckpointCall<T> checkpoint;
 
-public final class CheckpointEventListener<T> implements Events<T> {
-  private final EventListener<T> eventListener;
-  private final Consumer<T> checkpoint;
+    @FunctionalInterface
+    public interface CheckpointCall<T> {
+        void accept(T event) throws IOException;
+    }
 
-  CheckpointEventListener(CloseableIterator<T> iterator, Consumer<T> checkpoint) {
-    eventListener = new EventListener<T>(iterator);
-    this.checkpoint = checkpoint;
-  }
-  @Override
-  public T next() {
-    T event = eventListener.next();
-    checkpoint.accept(event);
-    return event;
-  }
-  @Override
-  public void close() {
-    eventListener.close();
-  }
+    CheckpointEventListener(final CloseableIterator<T> iterator, final CheckpointCall<T> checkpoint) {
+        eventListener = new BasicEventListener<>(iterator);
+        this.checkpoint = checkpoint;
+    }
+
+    @Override
+    public T next() throws InterruptedException, IOException {
+        T event = eventListener.next();
+        checkpoint.accept(event);
+        return event;
+    }
+
+    @Override
+    public void close() {
+        eventListener.close();
+    }
 }
