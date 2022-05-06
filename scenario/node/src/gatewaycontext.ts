@@ -7,9 +7,12 @@
 import * as grpc from '@grpc/grpc-js';
 import { BlockEventsOptions, ChaincodeEvent, ChaincodeEventsOptions, Checkpointer, checkpointers, connect, ConnectOptions, Contract, Gateway, Identity, Network, Signer } from '@hyperledger/fabric-gateway';
 import { CheckpointEventListener } from './checkpointeventlistener';
-import { EventListener } from './eventlistener';
+import { BaseEventListener } from './baseeventlistener';
 import { TransactionInvocation } from './transactioninvocation';
 import { assertDefined } from './utils';
+import { BlockAndPrivateData, FilteredBlock } from '@hyperledger/fabric-gateway/dist/protos/peer/events_pb';
+import { Block } from '@hyperledger/fabric-gateway/dist/protos/common/common_pb';
+import { EventListener } from './eventlistener';
 
 export class GatewayContext {
     readonly #identity: Identity;
@@ -20,10 +23,10 @@ export class GatewayContext {
     #network?: Network;
     #contract?: Contract;
     #checkpointer?: Checkpointer;
-    #chaincodeEventListeners: Map<string, EventListener<ChaincodeEvent>> = new Map();
-    #blockEventListeners: Map<string, EventListener<unknown>> = new Map();
-    #filteredBlockEventListeners: Map<string, EventListener<unknown>> = new Map();
-    #blockAndPrivateDataEventListeners: Map<string, EventListener<unknown>> = new Map();
+    readonly #chaincodeEventListeners: Map<string, EventListener<ChaincodeEvent>> = new Map();
+    readonly #blockEventListeners: Map<string, EventListener<Block>> = new Map();
+    readonly #filteredBlockEventListeners: Map<string, EventListener<FilteredBlock>> = new Map();
+    readonly #blockAndPrivateDataEventListeners: Map<string, EventListener<BlockAndPrivateData>> = new Map();
 
     constructor(identity: Identity, signer?: Signer, signerClose?: () => void) {
         this.#identity = identity;
@@ -66,7 +69,7 @@ export class GatewayContext {
     async listenForChaincodeEvents(listenerName: string, chaincodeName: string, options?: ChaincodeEventsOptions): Promise<void> {
         this.closeChaincodeEvents(listenerName);
         const events = await this.getNetwork().getChaincodeEvents(chaincodeName, options);
-        const listener = new EventListener(events);
+        const listener = new BaseEventListener(events);
         this.#chaincodeEventListeners.set(listenerName, listener);
     }
 
@@ -74,7 +77,7 @@ export class GatewayContext {
         this.closeChaincodeEvents(listenerName);
         const events = await this.getNetwork().getChaincodeEvents(chaincodeName, options);
         const listener = new CheckpointEventListener<ChaincodeEvent>(events, async (event: ChaincodeEvent): Promise <void> => {
-            await this.#checkpointer!.checkpointChaincodeEvent(event);});
+            await this.getCheckpointer()?.checkpointChaincodeEvent(event);});
         this.#chaincodeEventListeners.set(listenerName, listener);
     }
 
@@ -86,7 +89,7 @@ export class GatewayContext {
     async listenForBlockEvents(listenerName: string, options?: BlockEventsOptions): Promise<void> {
         this.closeBlockEvents(listenerName);
         const events = await this.getNetwork().getBlockEvents(options);
-        const listener = new EventListener(events);
+        const listener = new BaseEventListener<Block>(events);
         this.#blockEventListeners.set(listenerName, listener);
     }
 
@@ -97,7 +100,7 @@ export class GatewayContext {
     async listenForFilteredBlockEvents(listenerName: string, options?: BlockEventsOptions): Promise<void> {
         this.closeFilteredBlockEvents(listenerName);
         const events = await this.getNetwork().getFilteredBlockEvents(options);
-        const listener = new EventListener(events);
+        const listener = new BaseEventListener<FilteredBlock>(events);
         this.#filteredBlockEventListeners.set(listenerName, listener);
     }
 
@@ -108,7 +111,7 @@ export class GatewayContext {
     async listenForBlockAndPrivateDataEvents(listenerName: string, options?: BlockEventsOptions): Promise<void> {
         this.closeBlockEvents(listenerName);
         const events = await this.getNetwork().getBlockAndPrivateDataEvents(options);
-        const listener = new EventListener(events);
+        const listener = new BaseEventListener<BlockAndPrivateData>(events);
         this.#blockAndPrivateDataEventListeners.set(listenerName, listener);
     }
 
@@ -159,7 +162,7 @@ export class GatewayContext {
         return assertDefined(this.#contract, 'contract');
     }
 
-    private getChaincodeEventListener(listenerName: string): EventListener<ChaincodeEvent> | CheckpointEventListener<ChaincodeEvent> {
+    private getChaincodeEventListener(listenerName: string): EventListener<ChaincodeEvent> {
         return assertDefined(this.#chaincodeEventListeners.get(listenerName), `chaincodeEventListener: ${listenerName}`);
     }
 
