@@ -7,6 +7,7 @@
 package org.hyperledger.fabric.client;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 /**
  * A non-persistent Checkpointer implementation.
@@ -14,7 +15,7 @@ import java.util.Optional;
  */
 public final class InMemoryCheckpointer implements Checkpointer {
 
-    private long blockNumber;
+    private OptionalLong blockNumber = OptionalLong.empty();
     private String transactionId;
 
     @Override
@@ -24,7 +25,7 @@ public final class InMemoryCheckpointer implements Checkpointer {
 
     @Override
     public void checkpointTransaction(final long blockNumber, final String transactionId) {
-        this.blockNumber = blockNumber;
+        this.blockNumber = OptionalLong.of(blockNumber);
         this.transactionId = transactionId;
     }
 
@@ -34,7 +35,7 @@ public final class InMemoryCheckpointer implements Checkpointer {
     }
 
     @Override
-    public long getBlockNumber() {
+    public OptionalLong getBlockNumber() {
         return blockNumber;
     }
 

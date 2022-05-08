@@ -1,11 +1,11 @@
 package org.hyperledger.fabric.client;
 
 
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -33,6 +33,16 @@ public class FileCheckpointerTest extends CommonCheckpointerTest {
         }
         checkpointer = new FileCheckpointer(file);
         assertCheckpoint(checkpointer, 1, "TRANSACTION_ID");
+    }
+
+    @Test
+    void partial_state_is_persisted() throws IOException {
+        Path file = testUtils.createTempFile(".json");
+        try (FileCheckpointer checkpointer = new FileCheckpointer(file)) {
+            checkpointer.checkpointBlock(1);
+        }
+        checkpointer = new FileCheckpointer(file);
+        assertCheckpoint(checkpointer, 2);
     }
 
     @Test

@@ -10,7 +10,6 @@ import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 
 import java.util.Objects;
-import java.util.Optional;
 
 final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
     private final GatewayClient client;
@@ -39,13 +38,8 @@ final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
 
     @Override
     public ChaincodeEventsRequest.Builder checkpoint(final Checkpoint checkpoint) {
-        long blockNumber = checkpoint.getBlockNumber();
-        Optional<String> transactionId = checkpoint.getTransactionId();
-        if (blockNumber == 0 && !transactionId.isPresent()) {
-            return this;
-        }
-        startPositionBuilder.startBlock(blockNumber);
-        this.afterTransactionId = transactionId.orElse(null);
+        checkpoint.getBlockNumber().ifPresent(startPositionBuilder::startBlock);
+        this.afterTransactionId = checkpoint.getTransactionId().orElse(null);
         return this;
     }
 
