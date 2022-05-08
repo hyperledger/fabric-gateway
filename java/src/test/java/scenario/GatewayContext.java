@@ -6,15 +6,18 @@
 
 package scenario;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import io.grpc.ManagedChannel;
 import org.hyperledger.fabric.client.ChaincodeEvent;
+import org.hyperledger.fabric.client.Checkpointer;
 import org.hyperledger.fabric.client.CloseableIterator;
 import org.hyperledger.fabric.client.Contract;
 import org.hyperledger.fabric.client.Gateway;
+import org.hyperledger.fabric.client.InMemoryCheckpointer;
 import org.hyperledger.fabric.client.Network;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
@@ -27,6 +30,7 @@ public class GatewayContext {
     private final Map<String, EventListener<Common.Block>> blockEventListeners = new HashMap<>();
     private final Map<String, EventListener<EventsPackage.FilteredBlock>> filteredBlockEventListeners = new HashMap<>();
     private final Map<String, EventListener<EventsPackage.BlockAndPrivateData>> blockAndPrivateDataEventListeners = new HashMap<>();
+    private Checkpointer checkpointer;
     private ManagedChannel channel;
     private Gateway gateway;
     private Network network;
@@ -56,6 +60,10 @@ public class GatewayContext {
         contract = network.getContract(contractName);
     }
 
+    public void createCheckpointer() {
+        checkpointer = new InMemoryCheckpointer();
+    }
+
     public TransactionInvocation newTransaction(String action, String transactionName) {
         if (action.equals("submit")) {
             return TransactionInvocation.prepareToSubmit(gateway, contract, transactionName);
@@ -68,6 +76,14 @@ public class GatewayContext {
         receiveChaincodeEvents(listenerName, network.getChaincodeEvents(chaincodeName));
     }
 
+    public void listenForChaincodeEventsUsingCheckpointer(String listenerName, String chaincodeName) {
+        CloseableIterator<ChaincodeEvent> iter = network.newChaincodeEventsRequest(chaincodeName)
+                .checkpoint(checkpointer)
+                .build()
+                .getEvents();
+        receiveChaincodeEventsUsingCheckpointer(listenerName, iter);
+    }
+
     public void replayChaincodeEvents(String listenerName, String chaincodeName, long startBlock) {
         CloseableIterator<ChaincodeEvent> iter = network.newChaincodeEventsRequest(chaincodeName)
                 .startBlock(startBlock)
@@ -76,12 +92,18 @@ public class GatewayContext {
         receiveChaincodeEvents(listenerName, iter);
     }
 
-    private void receiveChaincodeEvents(final String listenerName, final CloseableIterator<ChaincodeEvent> iter) {
+    private void receiveChaincodeEventsUsingCheckpointer(final String listenerName, final CloseableIterator<ChaincodeEvent> iter) {
         closeChaincodeEvents(listenerName);
-        chaincodeEventListeners.put(listenerName, new EventListener<>(iter));
+        EventListener<ChaincodeEvent> e = new CheckpointEventListener<>(iter, checkpointer::checkpointChaincodeEvent);
+        chaincodeEventListeners.put(listenerName, e);
     }
 
-    public ChaincodeEvent nextChaincodeEvent(String listenerName) throws InterruptedException {
+    private void receiveChaincodeEvents(final String listenerName, final CloseableIterator<ChaincodeEvent> iter) {
+        closeChaincodeEvents(listenerName);
+        chaincodeEventListeners.put(listenerName, new BasicEventListener<>(iter));
+    }
+
+    public ChaincodeEvent nextChaincodeEvent(String listenerName) throws InterruptedException, IOException {
         return chaincodeEventListeners.get(listenerName).next();
     }
 
@@ -99,10 +121,10 @@ public class GatewayContext {
 
     private void receiveBlockEvents(final String listenerName, final CloseableIterator<Common.Block> iter) {
         closeBlockEvents(listenerName);
-        blockEventListeners.put(listenerName, new EventListener<>(iter));
+        blockEventListeners.put(listenerName, new BasicEventListener<>(iter));
     }
 
-    public Common.Block nextBlockEvent(String listenerName) throws InterruptedException {
+    public Common.Block nextBlockEvent(String listenerName) throws InterruptedException, IOException {
         return blockEventListeners.get(listenerName).next();
     }
 
@@ -119,11 +141,11 @@ public class GatewayContext {
     }
 
     private void receiveFilteredBlockEvents(final String listenerName, final CloseableIterator<EventsPackage.FilteredBlock> iter) {
-        closeBlockEvents(listenerName);
-        filteredBlockEventListeners.put(listenerName, new EventListener<>(iter));
+        closeFilteredBlockEvents(listenerName);
+        filteredBlockEventListeners.put(listenerName, new BasicEventListener<>(iter));
     }
 
-    public EventsPackage.FilteredBlock nextFilteredBlockEvent(String listenerName) throws InterruptedException {
+    public EventsPackage.FilteredBlock nextFilteredBlockEvent(String listenerName) throws InterruptedException, IOException {
         return filteredBlockEventListeners.get(listenerName).next();
     }
 
@@ -140,11 +162,11 @@ public class GatewayContext {
     }
 
     private void receiveBlockAndPrivateDataEvents(final String listenerName, final CloseableIterator<EventsPackage.BlockAndPrivateData> iter) {
-        closeBlockEvents(listenerName);
-        blockAndPrivateDataEventListeners.put(listenerName, new EventListener<>(iter));
+        closeBlockAndPrivateDataEvents(listenerName);
+        blockAndPrivateDataEventListeners.put(listenerName, new BasicEventListener<>(iter));
     }
 
-    public EventsPackage.BlockAndPrivateData nextBlockAndPrivateDataEvent(String listenerName) throws InterruptedException {
+    public EventsPackage.BlockAndPrivateData nextBlockAndPrivateDataEvent(String listenerName) throws InterruptedException, IOException {
         return blockAndPrivateDataEventListeners.get(listenerName).next();
     }
 

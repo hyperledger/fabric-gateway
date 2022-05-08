@@ -1,13 +1,11 @@
 package org.hyperledger.fabric.client;
 
 
-
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -30,7 +28,7 @@ public class FileCheckpointerTest extends CommonCheckpointerTest {
     @Test
     void state_is_persisted() throws IOException {
         Path file = testUtils.createTempFile(".json");
-        try ( FileCheckpointer checkpointer = new FileCheckpointer(file);) {
+        try (FileCheckpointer checkpointer = new FileCheckpointer(file)) {
             checkpointer.checkpointTransaction(1, "TRANSACTION_ID");
         }
         checkpointer = new FileCheckpointer(file);
@@ -47,9 +45,6 @@ public class FileCheckpointerTest extends CommonCheckpointerTest {
     @Test
     void throws_on_unwritable_file_location() {
         Path badPath = Paths.get("").resolve("/missing_directory/checkpoint.json");
-        assertThrows(IOException.class, () -> {
-             new FileCheckpointer(badPath);
-        });
+        assertThrows(IOException.class, () -> new FileCheckpointer(badPath));
     }
-
 }

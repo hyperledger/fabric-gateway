@@ -60,6 +60,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I create a gateway named (\S+) for user (\S+) in MSP (\S+)$`, createGateway)
 	s.Step(`^I create a gateway named (\S+) for HSM user (\S+) in MSP (\S+)`, createGatewayWithHSMSigner)
 	s.Step(`^I create a gateway named (\S+) without signer for user (\S+) in MSP (\S+)$`, createGatewayWithoutSigner)
+	s.Step(`^I create a checkpointer`, createCheckpointer)
 	s.Step(`^I connect the gateway to (\S+)$`, connectGateway)
 	s.Step(`^I use the gateway named (\S+)$`, useGateway)
 	s.Step(`^I deploy (\S+) chaincode named (\S+) at version (\S+) for all organizations on channel (\S+) with endorsement policy (.+)$`, deployChaincode)
@@ -73,6 +74,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I invoke the transaction$`, invokeSuccessfulTransaction)
 	s.Step(`^I use the (\S+) contract$`, useContract)
 	s.Step(`^I use the (\S+) network$`, useNetwork)
+	s.Step(`^I use the checkpointer to listen for chaincode events from (\S+)$`, listenForChaincodeEventsUsingCheckpointer)
 	s.Step(`^the response should be JSON matching$`, theResponseShouldBeJSONMatching)
 	s.Step(`^I stop the peer named (\S+)$`, stopPeer)
 	s.Step(`^I start the peer named (\S+)$`, startPeer)
@@ -156,6 +158,10 @@ func createGatewayWithoutSigner(name string, user string, mspID string) error {
 	currentGateway = connection
 	gateways[name] = connection
 	return nil
+}
+
+func createCheckpointer() {
+	currentGateway.createCheckpointer()
 }
 
 func connectGateway(peer string) error {
@@ -399,6 +405,10 @@ func listenForChaincodeEvents(chaincodeName string) error {
 	return listenForChaincodeEventsOnListener(chaincodeName, defaultListenerName)
 }
 
+func listenForChaincodeEventsUsingCheckpointer(chaincodeName string) error {
+	return currentGateway.ListenForChaincodeEventsUsingCheckpointer(defaultListenerName, chaincodeName)
+}
+
 func listenForChaincodeEventsOnListener(chaincodeName string, listenerName string) error {
 	return currentGateway.ListenForChaincodeEvents(listenerName, chaincodeName)
 }
@@ -428,7 +438,6 @@ func receiveChaincodeEventOnListener(name string, payload string, listenerName s
 	if event.EventName != name || string(event.Payload) != payload {
 		return fmt.Errorf("expected event named \"%s\" with payload \"%s\", got: %v", name, payload, event)
 	}
-
 	return nil
 }
 

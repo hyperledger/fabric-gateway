@@ -52,3 +52,31 @@ func (listener *ChaincodeEventListener) Event() (*client.ChaincodeEvent, error) 
 func (listener *ChaincodeEventListener) Close() {
 	listener.cancel()
 }
+
+type CheckpointChaincodeEventListener struct {
+	listener   ChaincodeEvents
+	checkpoint func(*client.ChaincodeEvent)
+}
+
+func NewCheckpointChaincodeEventListener(listener ChaincodeEvents, checkpoint func(*client.ChaincodeEvent)) *CheckpointChaincodeEventListener {
+	checkpointListener := &CheckpointChaincodeEventListener{
+		listener:   listener,
+		checkpoint: checkpoint,
+	}
+	return checkpointListener
+}
+
+func (listener *CheckpointChaincodeEventListener) Event() (*client.ChaincodeEvent, error) {
+	event, err := listener.listener.Event()
+	if err != nil {
+		return nil, err
+	}
+
+	listener.checkpoint(event)
+
+	return event, nil
+}
+
+func (listener *CheckpointChaincodeEventListener) Close() {
+	listener.listener.Close()
+}

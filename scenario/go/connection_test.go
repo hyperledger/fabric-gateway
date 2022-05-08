@@ -46,6 +46,11 @@ func findSoftHSMLibrary() (string, error) {
 	return "", fmt.Errorf("no SoftHSM Library found")
 }
 
+type ChaincodeEvents interface {
+	Event() (*client.ChaincodeEvent, error)
+	Close()
+}
+
 func NewGatewayConnection(user string, mspID string, isHSMUser bool) (*GatewayConnection, error) {
 	certificatePathImpl := certificatePath
 	if isHSMUser {
@@ -59,7 +64,7 @@ func NewGatewayConnection(user string, mspID string, isHSMUser bool) (*GatewayCo
 
 	connection := &GatewayConnection{
 		id:                                id,
-		chaincodeEventListeners:           make(map[string]*ChaincodeEventListener),
+		chaincodeEventListeners:           make(map[string]ChaincodeEvents),
 		blockEventListeners:               make(map[string]*BlockEventListener),
 		filteredBlockEventListeners:       make(map[string]*FilteredBlockEventListener),
 		blockAndPrivateDataEventListeners: make(map[string]*BlockAndPrivateDataEventListener),
@@ -198,7 +203,8 @@ type GatewayConnection struct {
 	contract                          *client.Contract
 	ctx                               context.Context
 	cancel                            context.CancelFunc
-	chaincodeEventListeners           map[string]*ChaincodeEventListener
+	checkpointer                      *client.InMemoryCheckpointer
+	chaincodeEventListeners           map[string]ChaincodeEvents
 	blockEventListeners               map[string]*BlockEventListener
 	filteredBlockEventListeners       map[string]*FilteredBlockEventListener
 	blockAndPrivateDataEventListeners map[string]*BlockAndPrivateDataEventListener
@@ -255,26 +261,56 @@ func (connection *GatewayConnection) PrepareTransaction(txnType TransactionType,
 }
 
 func (connection *GatewayConnection) ListenForChaincodeEvents(listenerName string, chaincodeName string) error {
-	return connection.receiveChaincodeEvents(listenerName, chaincodeName)
-}
-
-func (connection *GatewayConnection) ReplayChaincodeEvents(listenerName string, chaincodeName string, startBlock uint64) error {
-	return connection.receiveChaincodeEvents(listenerName, chaincodeName, client.WithStartBlock(startBlock))
-}
-
-func (connection *GatewayConnection) receiveChaincodeEvents(listenerName string, chaincodeName string, options ...client.ChaincodeEventsOption) error {
-	if connection.network == nil {
-		return fmt.Errorf("no network selected")
-	}
-
-	listener, err := NewChaincodeEventListener(connection.ctx, connection.network, chaincodeName, options...)
+	listener, err := connection.newChaincodeEventListener(chaincodeName)
 	if err != nil {
 		return err
 	}
 
+	connection.setChaincodeEventListener(listenerName, listener)
+	return nil
+}
+func (connection *GatewayConnection) createCheckpointer() {
+	connection.checkpointer = new(client.InMemoryCheckpointer)
+}
+
+func (connection *GatewayConnection) ListenForChaincodeEventsUsingCheckpointer(listenerName string, chaincodeName string) error {
+	if connection.checkpointer == nil {
+		return fmt.Errorf("no checkpointer")
+	}
+
+	listener, err := connection.newChaincodeEventListener(chaincodeName, client.WithCheckpoint(connection.checkpointer))
+	if err != nil {
+		return err
+	}
+
+	checkpointListener := NewCheckpointChaincodeEventListener(listener, func(event *client.ChaincodeEvent) {
+		connection.checkpointer.CheckpointChaincodeEvent(event)
+	})
+	connection.setChaincodeEventListener(listenerName, checkpointListener)
+	return nil
+}
+
+func (connection *GatewayConnection) ReplayChaincodeEvents(listenerName string, chaincodeName string, startBlock uint64) error {
+	listener, err := connection.newChaincodeEventListener(chaincodeName, client.WithStartBlock(startBlock))
+	if err != nil {
+		return err
+	}
+
+	connection.setChaincodeEventListener(listenerName, listener)
+	return nil
+}
+
+func (connection *GatewayConnection) setChaincodeEventListener(listenerName string, listener ChaincodeEvents) {
 	connection.CloseChaincodeEvents(listenerName)
 	connection.chaincodeEventListeners[listenerName] = listener
-	return nil
+}
+
+func (connection *GatewayConnection) newChaincodeEventListener(chaincodeName string, options ...client.ChaincodeEventsOption) (*ChaincodeEventListener, error) {
+	if connection.network == nil {
+		return nil, fmt.Errorf("no network selected")
+	}
+
+	return NewChaincodeEventListener(connection.ctx, connection.network, chaincodeName, options...)
 }
 
 func (connection *GatewayConnection) ChaincodeEvent(listenerName string) (*client.ChaincodeEvent, error) {

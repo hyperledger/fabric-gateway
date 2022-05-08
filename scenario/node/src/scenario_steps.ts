@@ -88,6 +88,10 @@ Given('I connect the gateway to {word}', async function(this: CustomWorld, addre
     await this.connect(address);
 });
 
+Given('I create a checkpointer', function(this: CustomWorld): void {
+    this.createCheckpointer();
+});
+
 When('I use the {word} network', function(this: CustomWorld, channelName: string): void {
     this.useNetwork(channelName);
 });
@@ -208,6 +212,10 @@ When('I stop listening for block and private data events on {string}', function(
     this.closeBlockAndPrivateDataEvents(listenerName);
 });
 
+When('I use the checkpointer to listen for chaincode events from {word}', async function(this: CustomWorld, chaincodeName: string) {
+    await this.listenForChaincodeEventsUsingCheckpointer(DEFAULT_LISTENER_NAME, chaincodeName);
+});
+
 Then('the transaction invocation should fail', async function(this: CustomWorld): Promise<void> {
     await this.assertTransactionFails();
 });
@@ -297,3 +305,4 @@ Then('I should receive a block and private data event on {string}', async functi
     const event = await this.nextBlockAndPrivateDataEvent(listenerName);
     expect(event).toBeDefined();
 });
+

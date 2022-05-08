@@ -1,12 +1,12 @@
 package org.hyperledger.fabric.client;
 
+import java.io.IOException;
+
 import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.peer.ChaincodeEventPackage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -40,7 +40,7 @@ public abstract  class CommonCheckpointerTest {
     protected abstract void tearDown() throws IOException;
 
     @Test
-    void initial_checkpointer_state() throws IOException {
+    void initial_checkpointer_state() {
         assertCheckpoint(checkpointerInstance , 0);
     }
 

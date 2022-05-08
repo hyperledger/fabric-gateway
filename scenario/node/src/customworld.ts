@@ -148,6 +148,10 @@ export class CustomWorld {
         this.#currentGateway = gateway;
     }
 
+    createCheckpointer(): void {
+        this.getCurrentGateway().createCheckpointer();
+    }
+
     useGateway(name: string): void {
         this.#currentGateway = this.#gateways[name];
     }
@@ -197,6 +201,10 @@ export class CustomWorld {
         await this.getCurrentGateway().listenForChaincodeEvents(listenerName, chaincodeName);
     }
 
+    async listenForChaincodeEventsUsingCheckpointer(listenerName: string, chaincodeName: string): Promise<void> {
+        await this.getCurrentGateway().listenForChaincodeEventsUsingCheckpointer(listenerName, chaincodeName, { checkpoint: this.getCurrentGateway().getCheckpointer() });
+    }
+
     async replayChaincodeEvents(listenerName: string, chaincodeName: string, startBlock: bigint): Promise<void> {
         await this.getCurrentGateway().listenForChaincodeEvents(listenerName, chaincodeName, { startBlock });
     }
@@ -204,6 +212,7 @@ export class CustomWorld {
     async nextChaincodeEvent(listenerName: string): Promise<ChaincodeEvent> {
         return await this.getCurrentGateway().nextChaincodeEvent(listenerName);
     }
+
 
     async listenForBlockEvents(listenerName: string): Promise<void> {
         await this.getCurrentGateway().listenForBlockEvents(listenerName);

@@ -8,7 +8,6 @@ package scenario;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -216,7 +215,7 @@ public class ScenarioSteps {
                     "-o", "orderer.example.com:7050", "--channelID", channelName, "--name", ccName);
             queryCommand.addAll(tlsOptions);
             String out = exec(queryCommand);
-            Pattern regex = Pattern.compile(".*Sequence: ([0-9]+),.*");
+            Pattern regex = Pattern.compile(".*Sequence: (\\d+),.*");
             Matcher matcher = regex.matcher(out);
             if (!matcher.matches()) {
                 System.out.println(out);
@@ -315,7 +314,7 @@ public class ScenarioSteps {
     public void connectGateway(String name) throws Exception {
         ConnectionInfo info = peerConnectionInfo.get(name);
         SslContext sslContext = GrpcSslContexts.forClient()
-                .trustManager(new FileInputStream(info.tlsRootCertPath))
+                .trustManager(Files.newInputStream(Paths.get(info.tlsRootCertPath)))
                 .build();
         ManagedChannel channel = NettyChannelBuilder.forTarget(info.url)
                 .sslContext(sslContext)
@@ -337,6 +336,11 @@ public class ScenarioSteps {
     @Given("I use the {word} contract")
     public void useContract(String contractName) {
         currentGateway.useContract(contractName);
+    }
+
+    @Given("I create a checkpointer")
+    public void createCheckpointer() {
+        currentGateway.createCheckpointer();
     }
 
     @When("^I prepare to (evaluate|submit) an? ([^ ]+) transaction$")
@@ -389,6 +393,11 @@ public class ScenarioSteps {
     @When("I listen for chaincode events from {word}")
     public void listenForChaincodeEvents(String chaincodeName) {
         listenForChaincodeEventsOnListener(chaincodeName, DEFAULT_LISTENER_NAME);
+    }
+
+    @When("I use the checkpointer to listen for chaincode events from {word}")
+    public void listenForChaincodeEventsUsingCheckpointer(String chaincodeName){
+        currentGateway.listenForChaincodeEventsUsingCheckpointer(DEFAULT_LISTENER_NAME, chaincodeName);
     }
 
     @When("I listen for chaincode events from {word} on a listener named {string}")
@@ -544,46 +553,46 @@ public class ScenarioSteps {
     }
 
     @Then("I should receive a chaincode event named {string} with payload {string}")
-    public void assertReceiveChaincodeEvent(String eventName, String payload) throws InterruptedException {
+    public void assertReceiveChaincodeEvent(String eventName, String payload) throws InterruptedException, IOException {
         assertReceiveChaincodeEventOnListener(eventName, payload, DEFAULT_LISTENER_NAME);
     }
 
     @Then("I should receive a chaincode event named {string} with payload {string} on {string}")
-    public void assertReceiveChaincodeEventOnListener(String eventName, String payload, String listenerName) throws InterruptedException {
+    public void assertReceiveChaincodeEventOnListener(String eventName, String payload, String listenerName) throws InterruptedException, IOException {
         ChaincodeEvent event = currentGateway.nextChaincodeEvent(listenerName);
         assertThat(event.getEventName()).isEqualTo(eventName);
         assertThat(new String(event.getPayload(), StandardCharsets.UTF_8)).isEqualTo(payload);
     }
 
     @Then("I should receive a block event")
-    public void assertReceiveBlockEvent() throws InterruptedException {
+    public void assertReceiveBlockEvent() throws InterruptedException, IOException {
         assertReceiveBlockEventOnListener(DEFAULT_LISTENER_NAME);
     }
 
     @Then("I should receive a block event on {string}")
-    public void assertReceiveBlockEventOnListener(String listenerName) throws InterruptedException {
+    public void assertReceiveBlockEventOnListener(String listenerName) throws InterruptedException, IOException {
         Common.Block event = currentGateway.nextBlockEvent(listenerName);
         assertThat(event).isNotNull();
     }
 
     @Then("I should receive a filtered block event")
-    public void assertReceiveFilteredBlockEvent() throws InterruptedException {
+    public void assertReceiveFilteredBlockEvent() throws InterruptedException, IOException {
         assertReceiveFilteredBlockEventOnListener(DEFAULT_LISTENER_NAME);
     }
 
     @Then("I should receive a filtered block event on {string}")
-    public void assertReceiveFilteredBlockEventOnListener(String listenerName) throws InterruptedException {
+    public void assertReceiveFilteredBlockEventOnListener(String listenerName) throws InterruptedException, IOException {
         EventsPackage.FilteredBlock event = currentGateway.nextFilteredBlockEvent(listenerName);
         assertThat(event).isNotNull();
     }
 
     @Then("I should receive a block and private data event")
-    public void assertReceiveBlockAndPrivateDataEvent() throws InterruptedException {
+    public void assertReceiveBlockAndPrivateDataEvent() throws InterruptedException, IOException {
         assertReceiveBlockAndPrivateDataEventOnListener(DEFAULT_LISTENER_NAME);
     }
 
     @Then("I should receive a block and private data event on {string}")
-    public void assertReceiveBlockAndPrivateDataEventOnListener(String listenerName) throws InterruptedException {
+    public void assertReceiveBlockAndPrivateDataEventOnListener(String listenerName) throws InterruptedException, IOException {
         EventsPackage.BlockAndPrivateData event = currentGateway.nextBlockAndPrivateDataEvent(listenerName);
         assertThat(event).isNotNull();
     }
@@ -732,4 +741,5 @@ public class ScenarioSteps {
             return Identities.readPrivateKey(privateKeyReader);
         }
     }
+
 }

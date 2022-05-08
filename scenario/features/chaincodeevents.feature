@@ -19,7 +19,7 @@ Feature: Chaincode event listening
         And I set the transaction arguments to ["foo", "bar"]
         And I invoke the transaction
         Then I should receive a chaincode event named "foo" with payload "bar"
-    
+
     Scenario: Replay chaincode event
         When I prepare to submit an event transaction
         And I set the transaction arguments to ["event", "replay"]
@@ -53,3 +53,17 @@ Feature: Chaincode event listening
         And I set the transaction arguments to ["close", "after"]
         And I invoke the transaction
         Then I should receive a chaincode event named "close" with payload "after" on "listener2"
+
+    Scenario: Checkpoint of chaincode events
+        Given I create a checkpointer
+        And I use the checkpointer to listen for chaincode events from basic
+        And I prepare to submit an event transaction
+        And I set the transaction arguments to ["checkpoint", "one"]
+        And I invoke the transaction
+        Then I should receive a chaincode event named "checkpoint" with payload "one"
+        When I stop listening for chaincode events
+        And I prepare to submit an event transaction
+        And I set the transaction arguments to ["checkpoint", "two"]
+        And I invoke the transaction
+        And I use the checkpointer to listen for chaincode events from basic
+        Then I should receive a chaincode event named "checkpoint" with payload "two"
