@@ -85,7 +85,6 @@ Feature: Block event listening
         And I set the transaction arguments to ["checkpoint"]
         And I invoke the transaction
         Then I should receive a <type> event
-        Then I should checkpoint the <type> event
         When I stop listening for <type> events
         And I prepare to submit an echo transaction
         And I set the transaction arguments to ["echo"]
