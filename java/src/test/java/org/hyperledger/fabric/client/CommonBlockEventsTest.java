@@ -237,6 +237,29 @@ public abstract class CommonBlockEventsTest<E> {
         assertStopPosition(seekInfo);
     }
 
+    @Test
+    void uses_checkpoint_block_zero_with_set_transaction_id_instead_of_specified_start_block() throws Exception {
+        long blockNumber = 0;
+        Checkpointer checkpointer = new InMemoryCheckpointer();
+        checkpointer.checkpointTransaction(blockNumber, "transactionId");
+        EventsRequest<?> eventsRequest = newEventsRequest()
+                .startBlock(-1)
+                .checkpoint(checkpointer)
+                .build();
+
+        try (CloseableIterator<?> iter = eventsRequest.getEvents()) {
+            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
+        }
+
+        Common.Envelope request = captureEvents().findFirst().get();
+        Common.Payload payload = Common.Payload.parseFrom(request.getPayload());
+        assertValidBlockEventsRequestHeader(payload);
+
+        Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
+        assertStartPositionSpecified(seekInfo, blockNumber);
+        assertStopPosition(seekInfo);
+    }
+
     @Test()
     void throws_on_receive_of_status_message() {
         EventsPackage.DeliverResponse response = EventsPackage.DeliverResponse.newBuilder()

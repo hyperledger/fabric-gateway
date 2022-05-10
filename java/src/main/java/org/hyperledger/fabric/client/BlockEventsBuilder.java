@@ -7,7 +7,6 @@
 package org.hyperledger.fabric.client;
 
 import java.util.Objects;
-import java.util.OptionalLong;
 
 import org.hyperledger.fabric.protos.common.Common;
 
@@ -32,8 +31,7 @@ final class BlockEventsBuilder implements BlockEventsRequest.Builder {
 
     @Override
     public BlockEventsBuilder checkpoint(final Checkpoint checkpoint) {
-        OptionalLong blockNumber = envelopeBuilder.checkpoint(checkpoint);
-        blockNumber.ifPresent(envelopeBuilder::startBlock);
+        checkpoint.getBlockNumber().ifPresent(envelopeBuilder::startBlock);
         return this;
     }
 
