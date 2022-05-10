@@ -94,7 +94,7 @@ export class GatewayContext {
     async listenForBlockEventsUsingCheckpointer(listenerName: string, options?: BlockEventsOptions): Promise<void> {
         this.closeBlockEvents(listenerName);
         const events = await this.getNetwork().getBlockEvents(options);
-        const listener = new CheckpointEventListener<Block>(events, async (event: Block): Promise<void> => {
+        const listener = new CheckpointEventListener<common.Block>(events, async (event: common.Block): Promise<void> => {
             const blockNumber = event.getHeader()?.getNumber();
             await this.#checkpointer?.checkpointBlock(BigInt(blockNumber!));
         });
@@ -115,7 +115,7 @@ export class GatewayContext {
     async listenForFilteredBlockEventsUsingCheckpointer(listenerName: string, options?: BlockEventsOptions): Promise<void> {
         this.closeFilteredBlockEvents(listenerName);
         const events = await this.getNetwork().getFilteredBlockEvents(options);
-        const listener = new CheckpointEventListener<FilteredBlock>(events, async (event: FilteredBlock): Promise<void> => {
+        const listener = new CheckpointEventListener<peer.FilteredBlock>(events, async (event: peer.FilteredBlock): Promise<void> => {
             const blockNumber = event.getNumber();
             await this.#checkpointer?.checkpointBlock(BigInt(blockNumber));
         });
@@ -136,7 +136,7 @@ export class GatewayContext {
     async listenForBlockAndPrivateDataEventsUsingCheckpointer(listenerName: string, options?: BlockEventsOptions): Promise<void> {
         this.closeBlockAndPrivateDataEvents(listenerName);
         const events = await this.getNetwork().getBlockAndPrivateDataEvents(options);
-        const listener = new CheckpointEventListener<BlockAndPrivateData>(events, async (event: BlockAndPrivateData): Promise<void>  => {
+        const listener = new CheckpointEventListener<peer.BlockAndPrivateData>(events, async (event: peer.BlockAndPrivateData): Promise<void>  => {
             const blockNumber = event.getBlock()?.getHeader()?.getNumber();
             await this.#checkpointer?.checkpointBlock(BigInt(blockNumber!));
         });
