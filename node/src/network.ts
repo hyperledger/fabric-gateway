@@ -4,15 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BlockEventsBuilder, BlockEventsOptions, BlockAndPrivateDataEventsBuilder, FilteredBlockEventsBuilder } from './blockeventsbuilder';
-import { BlockEventsRequest, BlockAndPrivateDataEventsRequest, FilteredBlockEventsRequest } from './blockeventsrequest';
+import { common, peer } from '@hyperledger/fabric-protos';
+import { BlockAndPrivateDataEventsBuilder, BlockEventsBuilder, BlockEventsOptions, FilteredBlockEventsBuilder } from './blockeventsbuilder';
+import { BlockAndPrivateDataEventsRequest, BlockEventsRequest, FilteredBlockEventsRequest } from './blockeventsrequest';
 import { ChaincodeEvent } from './chaincodeevent';
 import { ChaincodeEventsBuilder, ChaincodeEventsOptions } from './chaincodeeventsbuilder';
 import { ChaincodeEventsRequest } from './chaincodeeventsrequest';
 import { CloseableAsyncIterable, GatewayClient } from './client';
 import { Contract, ContractImpl } from './contract';
-import { Block } from './protos/common/common_pb';
-import { BlockAndPrivateData, FilteredBlock } from './protos/peer/events_pb';
 import { SigningIdentity } from './signingidentity';
 
 /**
@@ -81,7 +80,7 @@ export interface Network {
      * }
      * ```
      */
-    getBlockEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<Block>>;
+    getBlockEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<common.Block>>;
 
     /**
       * Create a request to receive block events. Supports off-line signing flow.
@@ -108,7 +107,7 @@ export interface Network {
      * }
      * ```
      */
-    getFilteredBlockEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<FilteredBlock>>;
+    getFilteredBlockEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<peer.FilteredBlock>>;
 
     /**
       * Create a request to receive filtered block events. Supports off-line signing flow.
@@ -135,7 +134,7 @@ export interface Network {
      * }
      * ```
      */
-    getBlockAndPrivateDataEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<BlockAndPrivateData>>;
+    getBlockAndPrivateDataEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<peer.BlockAndPrivateData>>;
 
     /**
       * Create a request to receive block and private data events. Supports off-line signing flow.
@@ -192,7 +191,7 @@ export class NetworkImpl implements Network {
         )).build();
     }
 
-    async getBlockEvents(options?: Readonly<BlockEventsOptions>): Promise<CloseableAsyncIterable<Block>> {
+    async getBlockEvents(options?: Readonly<BlockEventsOptions>): Promise<CloseableAsyncIterable<common.Block>> {
         return this.newBlockEventsRequest(options).getEvents();
     }
 
@@ -208,7 +207,7 @@ export class NetworkImpl implements Network {
         )).build();
     }
 
-    async getFilteredBlockEvents(options?: Readonly<BlockEventsOptions>): Promise<CloseableAsyncIterable<FilteredBlock>> {
+    async getFilteredBlockEvents(options?: Readonly<BlockEventsOptions>): Promise<CloseableAsyncIterable<peer.FilteredBlock>> {
         return this.newFilteredBlockEventsRequest(options).getEvents();
     }
 
@@ -224,7 +223,7 @@ export class NetworkImpl implements Network {
         )).build();
     }
 
-    async getBlockAndPrivateDataEvents(options?: Readonly<BlockEventsOptions>): Promise<CloseableAsyncIterable<BlockAndPrivateData>> {
+    async getBlockAndPrivateDataEvents(options?: Readonly<BlockEventsOptions>): Promise<CloseableAsyncIterable<peer.BlockAndPrivateData>> {
         return this.newBlockAndPrivateDataEventsRequest(options).getEvents();
     }
 

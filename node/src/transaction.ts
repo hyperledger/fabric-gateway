@@ -5,10 +5,9 @@
  */
 
 import { CallOptions } from '@grpc/grpc-js';
+import { common, gateway } from '@hyperledger/fabric-protos';
 import { GatewayClient } from './client';
 import { assertDefined } from './gateway';
-import { Envelope } from './protos/common/common_pb';
-import { CommitStatusRequest, PreparedTransaction, SignedCommitStatusRequest, SubmitRequest } from './protos/gateway/gateway_pb';
 import { Signable } from './signable';
 import { SigningIdentity } from './signingidentity';
 import { SubmittedTransaction, SubmittedTransactionImpl } from './submittedtransaction';
@@ -41,15 +40,15 @@ export interface Transaction extends Signable {
 export interface TransactionImplOptions {
     client: GatewayClient;
     signingIdentity: SigningIdentity;
-    preparedTransaction: PreparedTransaction;
+    preparedTransaction: gateway.PreparedTransaction;
 }
 
 export class TransactionImpl implements Transaction {
     readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
     readonly #channelName: string;
-    readonly #preparedTransaction: PreparedTransaction;
-    readonly #envelope: Envelope;
+    readonly #preparedTransaction: gateway.PreparedTransaction;
+    readonly #envelope: common.Envelope;
     readonly #result: Uint8Array;
 
     constructor(options: Readonly<TransactionImplOptions>) {
@@ -113,22 +112,22 @@ export class TransactionImpl implements Transaction {
         return signatureLength > 0;
     }
 
-    #newSubmitRequest(): SubmitRequest {
-        const result = new SubmitRequest();
+    #newSubmitRequest(): gateway.SubmitRequest {
+        const result = new gateway.SubmitRequest();
         result.setTransactionId(this.getTransactionId());
         result.setChannelId(this.#channelName);
         result.setPreparedTransaction(this.#envelope);
         return result;
     }
 
-    #newSignedCommitStatusRequest(): SignedCommitStatusRequest {
-        const result = new SignedCommitStatusRequest();
+    #newSignedCommitStatusRequest(): gateway.SignedCommitStatusRequest {
+        const result = new gateway.SignedCommitStatusRequest();
         result.setRequest(this.#newCommitStatusRequest().serializeBinary());
         return result;
     }
 
-    #newCommitStatusRequest(): CommitStatusRequest {
-        const result = new CommitStatusRequest();
+    #newCommitStatusRequest(): gateway.CommitStatusRequest {
+        const result = new gateway.CommitStatusRequest();
         result.setChannelId(this.#channelName);
         result.setTransactionId(this.getTransactionId());
         result.setIdentity(this.#signingIdentity.getCreator());

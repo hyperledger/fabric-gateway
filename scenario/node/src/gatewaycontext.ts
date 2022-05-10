@@ -10,8 +10,7 @@ import { CheckpointEventListener } from './checkpointeventlistener';
 import { BaseEventListener } from './baseeventlistener';
 import { TransactionInvocation } from './transactioninvocation';
 import { assertDefined } from './utils';
-import { BlockAndPrivateData, FilteredBlock } from '@hyperledger/fabric-gateway/dist/protos/peer/events_pb';
-import { Block } from '@hyperledger/fabric-gateway/dist/protos/common/common_pb';
+import { common, peer } from '@hyperledger/fabric-protos';
 import { EventListener } from './eventlistener';
 
 export class GatewayContext {
@@ -24,9 +23,9 @@ export class GatewayContext {
     #contract?: Contract;
     #checkpointer?: Checkpointer;
     readonly #chaincodeEventListeners: Map<string, EventListener<ChaincodeEvent>> = new Map();
-    readonly #blockEventListeners: Map<string, EventListener<Block>> = new Map();
-    readonly #filteredBlockEventListeners: Map<string, EventListener<FilteredBlock>> = new Map();
-    readonly #blockAndPrivateDataEventListeners: Map<string, EventListener<BlockAndPrivateData>> = new Map();
+    readonly #blockEventListeners: Map<string, EventListener<common.Block>> = new Map();
+    readonly #filteredBlockEventListeners: Map<string, EventListener<peer.FilteredBlock>> = new Map();
+    readonly #blockAndPrivateDataEventListeners: Map<string, EventListener<peer.BlockAndPrivateData>> = new Map();
 
     constructor(identity: Identity, signer?: Signer, signerClose?: () => void) {
         this.#identity = identity;
@@ -89,7 +88,7 @@ export class GatewayContext {
     async listenForBlockEvents(listenerName: string, options?: BlockEventsOptions): Promise<void> {
         this.closeBlockEvents(listenerName);
         const events = await this.getNetwork().getBlockEvents(options);
-        const listener = new BaseEventListener<Block>(events);
+        const listener = new BaseEventListener<common.Block>(events);
         this.#blockEventListeners.set(listenerName, listener);
     }
 
@@ -100,7 +99,7 @@ export class GatewayContext {
     async listenForFilteredBlockEvents(listenerName: string, options?: BlockEventsOptions): Promise<void> {
         this.closeFilteredBlockEvents(listenerName);
         const events = await this.getNetwork().getFilteredBlockEvents(options);
-        const listener = new BaseEventListener<FilteredBlock>(events);
+        const listener = new BaseEventListener<peer.FilteredBlock>(events);
         this.#filteredBlockEventListeners.set(listenerName, listener);
     }
 
@@ -111,7 +110,7 @@ export class GatewayContext {
     async listenForBlockAndPrivateDataEvents(listenerName: string, options?: BlockEventsOptions): Promise<void> {
         this.closeBlockEvents(listenerName);
         const events = await this.getNetwork().getBlockAndPrivateDataEvents(options);
-        const listener = new BaseEventListener<BlockAndPrivateData>(events);
+        const listener = new BaseEventListener<peer.BlockAndPrivateData>(events);
         this.#blockAndPrivateDataEventListeners.set(listenerName, listener);
     }
 

@@ -4,15 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { common, gateway as gatewayproto, peer } from '@hyperledger/fabric-protos';
 import { Contract } from './contract';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { Envelope } from './protos/common/common_pb';
-import { CommitStatusResponse, EvaluateResponse } from './protos/gateway/gateway_pb';
-import { DeliverResponse } from './protos/peer/events_pb';
-import { Response } from './protos/peer/proposal_response_pb';
-import { TxValidationCode } from './protos/peer/transaction_pb';
 import { undefinedSignerMessage } from './signingidentity';
 import { MockGatewayGrpcClient, newDuplexStreamResponse, newEndorseResponse } from './testutils.test';
 
@@ -28,10 +24,10 @@ describe('Offline sign', () => {
     beforeEach(() => {
         client = new MockGatewayGrpcClient();
 
-        const txResult = new Response();
+        const txResult = new peer.Response();
         txResult.setPayload(Buffer.from(expectedResult));
 
-        const evaluateResult = new EvaluateResponse();
+        const evaluateResult = new gatewayproto.EvaluateResponse();
         evaluateResult.setResult(txResult);
 
         client.mockEvaluateResponse(evaluateResult);
@@ -42,8 +38,8 @@ describe('Offline sign', () => {
         });
         client.mockEndorseResponse(endorseResponse);
 
-        const commitResult = new CommitStatusResponse();
-        commitResult.setResult(TxValidationCode.VALID);
+        const commitResult = new gatewayproto.CommitStatusResponse();
+        commitResult.setResult(peer.TxValidationCode.VALID);
 
         client.mockCommitStatusResponse(commitResult);
 
@@ -206,7 +202,7 @@ describe('Offline sign', () => {
 
         it('uses offline signature', async () => {
             const expected = Buffer.from('MY_SIGNATURE');
-            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([]);
+            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
             client.mockBlockEventsResponse(stream);
 
             const unsignedRequest = network.newBlockEventsRequest();
@@ -229,7 +225,7 @@ describe('Offline sign', () => {
 
         it('uses offline signature', async () => {
             const expected = Buffer.from('MY_SIGNATURE');
-            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([]);
+            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
             client.mockFilteredBlockEventsResponse(stream);
 
             const unsignedRequest = network.newFilteredBlockEventsRequest();
@@ -252,7 +248,7 @@ describe('Offline sign', () => {
 
         it('uses offline signature', async () => {
             const expected = Buffer.from('MY_SIGNATURE');
-            const stream = newDuplexStreamResponse<Envelope, DeliverResponse>([]);
+            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
             client.mockBlockAndPrivateDataEventsResponse(stream);
 
             const unsignedRequest = network.newBlockAndPrivateDataEventsRequest();

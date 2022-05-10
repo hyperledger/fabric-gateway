@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { common } from '@hyperledger/fabric-protos';
 import { randomBytes } from 'crypto';
-import { SignatureHeader } from './protos/common/common_pb';
 import { SigningIdentity } from './signingidentity';
 
 export class TransactionContext {
     readonly #transactionId: string;
-    readonly #signatureHeader: SignatureHeader;
+    readonly #signatureHeader: common.SignatureHeader;
 
     constructor(signingIdentity: SigningIdentity) {
         const nonce = randomBytes(24);
@@ -20,7 +20,7 @@ export class TransactionContext {
         const rawTransactionId = signingIdentity.hash(saltedCreator);
         this.#transactionId = Buffer.from(rawTransactionId).toString('hex');
 
-        this.#signatureHeader = new SignatureHeader();
+        this.#signatureHeader = new common.SignatureHeader();
         this.#signatureHeader.setCreator(creator);
         this.#signatureHeader.setNonce(nonce);
     }
@@ -29,7 +29,7 @@ export class TransactionContext {
         return this.#transactionId;
     }
 
-    getSignatureHeader(): SignatureHeader {
+    getSignatureHeader(): common.SignatureHeader {
         return this.#signatureHeader;
     }
 }

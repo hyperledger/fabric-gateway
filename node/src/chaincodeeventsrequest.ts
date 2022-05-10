@@ -5,9 +5,9 @@
  */
 
 import { CallOptions } from '@grpc/grpc-js';
+import { gateway } from '@hyperledger/fabric-protos';
 import { ChaincodeEvent, newChaincodeEvents } from './chaincodeevent';
 import { CloseableAsyncIterable, GatewayClient } from './client';
-import { ChaincodeEventsRequest as ChaincodeEventsRequestProto, SignedChaincodeEventsRequest as SignedChaincodeEventsRequestProto } from './protos/gateway/gateway_pb';
 import { Signable } from './signable';
 import { SigningIdentity } from './signingidentity';
 
@@ -39,18 +39,18 @@ export interface ChaincodeEventsRequest extends Signable {
 export interface ChaincodeEventsRequestOptions {
     client: GatewayClient;
     signingIdentity: SigningIdentity;
-    request: ChaincodeEventsRequestProto;
+    request: gateway.ChaincodeEventsRequest;
 }
 
 export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
     readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
-    readonly #signedRequest: SignedChaincodeEventsRequestProto;
+    readonly #signedRequest: gateway.SignedChaincodeEventsRequest;
 
     constructor(options: Readonly<ChaincodeEventsRequestOptions>) {
         this.#client = options.client;
         this.#signingIdentity = options.signingIdentity;
-        this.#signedRequest = new SignedChaincodeEventsRequestProto();
+        this.#signedRequest = new gateway.SignedChaincodeEventsRequest();
         this.#signedRequest.setRequest(options.request.serializeBinary());
     }
 

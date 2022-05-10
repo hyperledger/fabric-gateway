@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { gateway } from '@hyperledger/fabric-protos';
 import { ChaincodeEventsRequest, ChaincodeEventsRequestImpl } from './chaincodeeventsrequest';
 import { GatewayClient } from './client';
 import { EventsBuilder, EventsOptions } from './eventsbuilder';
-import { ChaincodeEventsRequest as ChaincodeEventsRequestProto } from './protos/gateway/gateway_pb';
 import { SigningIdentity } from './signingidentity';
 
 /**
@@ -39,8 +39,8 @@ export class ChaincodeEventsBuilder {
         });
     }
 
-    #newChaincodeEventsRequestProto(): ChaincodeEventsRequestProto {
-        const result = new ChaincodeEventsRequestProto();
+    #newChaincodeEventsRequestProto(): gateway.ChaincodeEventsRequest {
+        const result = new gateway.ChaincodeEventsRequest();
         result.setChannelId(this.#options.channelName);
         result.setChaincodeId(this.#options.chaincodeName);
         result.setIdentity(this.#options.signingIdentity.getCreator());

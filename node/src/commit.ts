@@ -5,8 +5,8 @@
  */
 
 import { CallOptions } from '@grpc/grpc-js';
+import { gateway } from '@hyperledger/fabric-protos';
 import { GatewayClient } from './client';
-import { CommitStatusResponse, SignedCommitStatusRequest } from './protos/gateway/gateway_pb';
 import { Signable } from './signable';
 import { SigningIdentity } from './signingidentity';
 import { Status, StatusCode } from './status';
@@ -34,14 +34,14 @@ export interface CommitImplOptions {
     client: GatewayClient;
     signingIdentity: SigningIdentity;
     transactionId: string;
-    signedRequest: SignedCommitStatusRequest;
+    signedRequest: gateway.SignedCommitStatusRequest;
 }
 
 export class CommitImpl implements Commit {
     readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
     readonly #transactionId: string;
-    readonly #signedRequest: SignedCommitStatusRequest;
+    readonly #signedRequest: gateway.SignedCommitStatusRequest;
 
     constructor(options: Readonly<CommitImplOptions>) {
         this.#client = options.client;
@@ -88,7 +88,7 @@ export class CommitImpl implements Commit {
     }
 
 
-    #newStatus(response: CommitStatusResponse): Status {
+    #newStatus(response: gateway.CommitStatusResponse): Status {
         const code = response.getResult() ?? StatusCode.INVALID_OTHER_REASON;
         return {
             blockNumber: BigInt(response.getBlockNumber()),

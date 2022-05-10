@@ -8,7 +8,6 @@ module.exports = {
     "collectCoverageFrom": [
         "**/*.[jt]s?(x)",
         "!**/*.d.ts",
-        "!src/protos/**",
     ],
     "coverageProvider": "v8",
     "testMatch": [

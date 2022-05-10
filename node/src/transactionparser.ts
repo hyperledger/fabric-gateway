@@ -4,18 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { common, peer } from '@hyperledger/fabric-protos';
 import { inspect } from 'util';
 import { assertDefined } from './gateway';
-import { ChannelHeader, Envelope, Header, Payload } from './protos/common/common_pb';
-import { ChaincodeAction } from './protos/peer/proposal_pb';
-import { ProposalResponsePayload } from './protos/peer/proposal_response_pb';
-import { ChaincodeActionPayload, Transaction, TransactionAction } from './protos/peer/transaction_pb';
 
-export function parseTransactionEnvelope(envelope: Envelope): {
+export function parseTransactionEnvelope(envelope: common.Envelope): {
     channelName: string;
     result: Uint8Array;
 } {
-    const payload = Payload.deserializeBinary(envelope.getPayload_asU8());
+    const payload = common.Payload.deserializeBinary(envelope.getPayload_asU8());
     const header = assertDefined(payload.getHeader(), 'Missing header');
 
     return {
@@ -24,13 +21,13 @@ export function parseTransactionEnvelope(envelope: Envelope): {
     };
 }
 
-function parseChannelNameFromHeader(header: Header): string {
-    const channelHeader = ChannelHeader.deserializeBinary(header.getChannelHeader_asU8());
+function parseChannelNameFromHeader(header: common.Header): string {
+    const channelHeader = common.ChannelHeader.deserializeBinary(header.getChannelHeader_asU8());
     return channelHeader.getChannelId();
 }
 
-function parseResultFromPayload(payload: Payload): Uint8Array {
-    const transaction = Transaction.deserializeBinary(payload.getData_asU8());
+function parseResultFromPayload(payload: common.Payload): Uint8Array {
+    const transaction = peer.Transaction.deserializeBinary(payload.getData_asU8());
 
     const errors: unknown[] = [];
 
@@ -47,11 +44,11 @@ function parseResultFromPayload(payload: Payload): Uint8Array {
     });
 }
 
-function parseResultFromTransactionAction(transactionAction: TransactionAction): Uint8Array {
-    const actionPayload = ChaincodeActionPayload.deserializeBinary(transactionAction.getPayload_asU8());
+function parseResultFromTransactionAction(transactionAction: peer.TransactionAction): Uint8Array {
+    const actionPayload = peer.ChaincodeActionPayload.deserializeBinary(transactionAction.getPayload_asU8());
     const endorsedAction = assertDefined(actionPayload.getAction(), 'Missing endorsed action');
-    const responsePayload = ProposalResponsePayload.deserializeBinary(endorsedAction.getProposalResponsePayload_asU8());
-    const chaincodeAction = ChaincodeAction.deserializeBinary(responsePayload.getExtension_asU8());
+    const responsePayload = peer.ProposalResponsePayload.deserializeBinary(endorsedAction.getProposalResponsePayload_asU8());
+    const chaincodeAction = peer.ChaincodeAction.deserializeBinary(responsePayload.getExtension_asU8());
     const chaincodeResponse = assertDefined(chaincodeAction.getResponse(), 'Missing chaincode response');
     return chaincodeResponse.getPayload_asU8();
 }
