@@ -14,7 +14,7 @@ public final class CheckpointEventListener<T> implements EventListener<T> {
     }
 
     CheckpointEventListener(final CloseableIterator<T> iterator, final CheckpointCall<T> checkpoint) {
-        eventListener = new BasicEventListener<>(iterator);
+        eventListener = new BasicEventListener<T>(iterator);
         this.checkpoint = checkpoint;
     }
 

@@ -261,7 +261,7 @@ describe('Block Events', () => {
         });
 
         it('Sends valid request with specified start block number and fresh checkpointer', async () => {
-            const stream = newDuplexStreamResponse<common.Envelope, common.DeliverResponse>([]);
+            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
             testCase.mockResponse(stream);
             const startBlock = BigInt(418);
             await testCase.getEvents({startBlock: startBlock, checkpoint: checkpointers.inMemory()});
@@ -272,14 +272,14 @@ describe('Block Events', () => {
             const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
             assertValidBlockEventsRequestHeader(payload);
 
-            const seekInfo = common.SeekInfo.deserializeBinary(payload.getData_asU8());
+            const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
 
             assertStartPositionToBeSpecified(seekInfo, Number(startBlock));
             assertStopPosition(seekInfo);
         });
 
         it('Sends valid request with specified start block and checkpointed block', async () => {
-            const stream = newDuplexStreamResponse<common.Envelope, common.DeliverResponse>([]);
+            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
             testCase.mockResponse(stream);
 
             const startBlock = BigInt(418);
@@ -293,14 +293,14 @@ describe('Block Events', () => {
             const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
             assertValidBlockEventsRequestHeader(payload);
 
-            const seekInfo = common.SeekInfo.deserializeBinary(payload.getData_asU8());
+            const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
 
             assertStartPositionToBeSpecified(seekInfo, 2);
             assertStopPosition(seekInfo);
         });
 
         it('Sends valid request with no start block and fresh checkpointer', async () => {
-            const stream = newDuplexStreamResponse<common.Envelope, common.DeliverResponse>([]);
+            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
             testCase.mockResponse(stream);
             const checkpointer = checkpointers.inMemory();
             await testCase.getEvents({checkpoint: checkpointer});
@@ -311,7 +311,7 @@ describe('Block Events', () => {
             const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
             assertValidBlockEventsRequestHeader(payload);
 
-            const seekInfo = common.SeekInfo.deserializeBinary(payload.getData_asU8());
+            const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
 
             assertStartPositionToBeNextCommit(seekInfo);
             assertStopPosition(seekInfo);
