@@ -94,7 +94,7 @@ public class GatewayContext {
 
     private void receiveChaincodeEventsUsingCheckpointer(final String listenerName, final CloseableIterator<ChaincodeEvent> iter) {
         closeChaincodeEvents(listenerName);
-        EventListener<ChaincodeEvent> e = new CheckpointEventListener<ChaincodeEvent>(iter, checkpointer::checkpointChaincodeEvent);
+        EventListener<ChaincodeEvent> e = new CheckpointEventListener<>(iter, checkpointer::checkpointChaincodeEvent);
         chaincodeEventListeners.put(listenerName, e);
     }
 
@@ -111,7 +111,7 @@ public class GatewayContext {
         receiveBlockEvents(listenerName, network.getBlockEvents());
     }
 
-    public void listenForBlockEventsUsingCheckpointer(String listenerName, Checkpointer checkpointer) {
+    public void listenForBlockEventsUsingCheckpointer(String listenerName) {
         CloseableIterator<Common.Block> iter = network.newBlockEventsRequest()
                 .checkpoint(checkpointer)
                 .build()
@@ -121,11 +121,11 @@ public class GatewayContext {
 
     private void receiveBlockEventsUsingCheckpointer(final String listenerName, final CloseableIterator<Common.Block> iter) {
         closeBlockEvents(listenerName);
-        EventListener<Common.Block> e = new CheckpointEventListener<Common.Block>(iter, event-> checkpointer.checkpointBlock(event.getHeader().getNumber()));
+        EventListener<Common.Block> e = new CheckpointEventListener<>(iter, event-> checkpointer.checkpointBlock(event.getHeader().getNumber()));
         blockEventListeners.put(listenerName, e);
     }
 
-    public void listenForFilteredBlockEventsUsingCheckpointer(String listenerName, Checkpointer checkpointer) {
+    public void listenForFilteredBlockEventsUsingCheckpointer(String listenerName) {
         CloseableIterator<EventsPackage.FilteredBlock> iter = network.newFilteredBlockEventsRequest()
                 .checkpoint(checkpointer)
                 .build()
@@ -135,11 +135,11 @@ public class GatewayContext {
 
     private void receiveFilteredBlockEventsUsingCheckpointer(final String listenerName, final CloseableIterator<EventsPackage.FilteredBlock> iter) {
         closeFilteredBlockEvents(listenerName);
-        EventListener<EventsPackage.FilteredBlock> e = new CheckpointEventListener<EventsPackage.FilteredBlock>(iter, event-> checkpointer.checkpointBlock(event.getNumber()));
+        EventListener<EventsPackage.FilteredBlock> e = new CheckpointEventListener<>(iter, event-> checkpointer.checkpointBlock(event.getNumber()));
         filteredBlockEventListeners.put(listenerName, e);
     }
 
-    public void  listenForBlockAndPrivateDataUsingCheckpointer(String listenerName, Checkpointer checkpointer) {
+    public void  listenForBlockAndPrivateDataUsingCheckpointer(String listenerName) {
         CloseableIterator<EventsPackage.BlockAndPrivateData> iter = network.newBlockAndPrivateDataEventsRequest()
                 .checkpoint(checkpointer)
                 .build()
@@ -149,7 +149,7 @@ public class GatewayContext {
 
     private void receiveBlockAndPrivateDataEventsUsingCheckpointer(final String listenerName, final CloseableIterator<EventsPackage.BlockAndPrivateData> iter) {
         closeBlockAndPrivateDataEvents(listenerName);
-        EventListener<EventsPackage.BlockAndPrivateData> e = new CheckpointEventListener<EventsPackage.BlockAndPrivateData>(iter, event-> checkpointer.checkpointBlock(event.getBlock().getHeader().getNumber()));
+        EventListener<EventsPackage.BlockAndPrivateData> e = new CheckpointEventListener<>(iter, event-> checkpointer.checkpointBlock(event.getBlock().getHeader().getNumber()));
         blockAndPrivateDataEventListeners.put(listenerName, e);
     }
 

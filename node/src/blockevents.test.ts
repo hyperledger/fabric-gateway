@@ -16,7 +16,7 @@ import { Network } from './network';
 import { DuplexStreamResponseStub, MockGatewayGrpcClient, newDuplexStreamResponse, readElements } from './testutils.test';
 import * as checkpointers from './checkpointers';
 
-function assertStartPositionToBeSpecified(seekInfo: orderer.SeekInfo, blockNumber:number): void {
+function assertStartPositionToBeSpecified(seekInfo: orderer.SeekInfo, blockNumber: number): void {
     const start = seekInfo.getStart();
     expect(start).toBeDefined();
     expect(start?.getTypeCase()).toBe(orderer.SeekPosition.TypeCase.SPECIFIED);
@@ -24,14 +24,14 @@ function assertStartPositionToBeSpecified(seekInfo: orderer.SeekInfo, blockNumbe
     expect(start?.getSpecified()?.getNumber()).toBe(blockNumber);
 }
 
-function assertStartPositionToBeNextCommit(seekInfo: orderer.SeekInfo ): void {
+function assertStartPositionToBeNextCommit(seekInfo: orderer.SeekInfo): void {
     const start = seekInfo.getStart();
     expect(start).toBeDefined();
     expect(start?.getTypeCase()).toBe(orderer.SeekPosition.TypeCase.NEXT_COMMIT);
     expect(start?.getNextCommit()).toBeDefined();
 }
 
-function assertStopPosition(seekInfo: orderer.SeekInfo){
+function assertStopPosition(seekInfo: orderer.SeekInfo): void {
     const stop = seekInfo.getStop();
     expect(stop).toBeDefined();
     expect(stop?.getTypeCase()).toBe(orderer.SeekPosition.TypeCase.SPECIFIED);

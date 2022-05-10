@@ -75,7 +75,6 @@ public class ScenarioSteps {
     private static final Path DOCKER_COMPOSE_DIR = Paths.get(FIXTURES_DIR.toString(), "docker-compose")
             .toAbsolutePath();
     private static final String DEFAULT_LISTENER_NAME = "";
-    private static Checkpointer checkpointer;
 
     private static final Map<String, String> MSP_ID_TO_ORG_MAP;
     static {
@@ -435,17 +434,17 @@ public class ScenarioSteps {
 
     @When("I use my checkpointer to listen for block events")
     public void listenForBlockEventsUsingCheckpointer() {
-        currentGateway.listenForBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME, checkpointer);
+        currentGateway.listenForBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
     }
 
     @When("I use my checkpointer to listen for filtered block events")
     public void listenForFilteredBlockEventsUsingCheckpointer() {
-        currentGateway.listenForFilteredBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME, checkpointer);
+        currentGateway.listenForFilteredBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
     }
 
     @When("I use my checkpointer to listen for block and private data events")
     public void listenForBlockAndPrivateDataUsingCheckpointer(){
-        currentGateway.listenForBlockAndPrivateDataUsingCheckpointer(DEFAULT_LISTENER_NAME, checkpointer);
+        currentGateway.listenForBlockAndPrivateDataUsingCheckpointer(DEFAULT_LISTENER_NAME);
     }
 
     @When("I replay block events starting at last committed block")
