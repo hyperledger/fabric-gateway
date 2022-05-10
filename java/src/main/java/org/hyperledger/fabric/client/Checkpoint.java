@@ -7,6 +7,7 @@
 package org.hyperledger.fabric.client;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 /**
  * Checkpoint provides the current position for event processing.
@@ -16,7 +17,7 @@ public interface Checkpoint {
      * The block number in which the next event is expected.
      * @return  A ledger block number.
      */
-    long getBlockNumber();
+    OptionalLong getBlockNumber();
 
     /**
      * Transaction Id of the last successfully processed event within the current block.

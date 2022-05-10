@@ -27,6 +27,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 
 /**
@@ -34,7 +35,7 @@ import java.util.Set;
  * It can be used to checkpoint progress after successfully processing events, allowing eventing to be resumed from this point.
  */
 public final class FileCheckpointer implements Checkpointer, AutoCloseable {
-    private long blockNumber;
+    private OptionalLong blockNumber = OptionalLong.empty();
     private String transactionId;
     private final Path path;
     private final Reader fileReader;
@@ -89,7 +90,7 @@ public final class FileCheckpointer implements Checkpointer, AutoCloseable {
 
     @Override
     public void checkpointTransaction(final long blockNumber, final String transactionID) throws IOException {
-        this.blockNumber = blockNumber;
+        this.blockNumber = OptionalLong.of(blockNumber);
         this.transactionId = transactionID;
         save();
     }
@@ -100,7 +101,7 @@ public final class FileCheckpointer implements Checkpointer, AutoCloseable {
     }
 
     @Override
-    public long getBlockNumber() {
+    public OptionalLong getBlockNumber() {
         return blockNumber;
     }
 
@@ -128,8 +129,8 @@ public final class FileCheckpointer implements Checkpointer, AutoCloseable {
 
     private void parseJson(final JsonObject json) throws IOException {
         try {
-            blockNumber = json.get(CONFIG_KEY_BLOCK).getAsLong();
-            transactionId = json.get(CONFIG_KEY_TRANSACTIONID).getAsString();
+            blockNumber = json.has(CONFIG_KEY_BLOCK) ? OptionalLong.of(json.get(CONFIG_KEY_BLOCK).getAsLong()) : OptionalLong.empty();
+            transactionId = json.has(CONFIG_KEY_TRANSACTIONID) ? json.get(CONFIG_KEY_TRANSACTIONID).getAsString() : null;
         } catch (RuntimeException e) {
             throw new IOException("Bad format of checkpoint data from file: " + path, e);
         }
@@ -154,7 +155,7 @@ public final class FileCheckpointer implements Checkpointer, AutoCloseable {
 
     private JsonObject buildJson() {
         JsonObject object = new JsonObject();
-        object.addProperty(CONFIG_KEY_BLOCK, blockNumber);
+        blockNumber.ifPresent(block -> object.addProperty(CONFIG_KEY_BLOCK, block));
         if (transactionId != null) {
             object.addProperty(CONFIG_KEY_TRANSACTIONID, transactionId);
         }

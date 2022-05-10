@@ -6,12 +6,6 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
-
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
@@ -25,6 +19,12 @@ import org.hyperledger.fabric.protos.peer.ChaincodeEventPackage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -63,7 +63,9 @@ public final class ChaincodeEventsTest {
     }
 
     void assertStartPosition(final org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest actual, final Checkpoint checkpoint) {
-        assertStartPosition(actual, checkpoint.getBlockNumber(), checkpoint.getTransactionId().orElse(""));
+        long blockNumber = checkpoint.getBlockNumber().orElseThrow(() -> new IllegalArgumentException("No checkoint block number set"));
+        String transactionId = checkpoint.getTransactionId().orElse("");
+        assertStartPosition(actual, blockNumber, transactionId);
     }
 
     void assertStartPosition(final org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest actual, final long blockNumber, final String transactionId) {

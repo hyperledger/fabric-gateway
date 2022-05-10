@@ -1,29 +1,32 @@
 package org.hyperledger.fabric.client;
 
-import java.io.IOException;
-
 import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.peer.ChaincodeEventPackage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 public abstract  class CommonCheckpointerTest {
 
     private Checkpointer checkpointerInstance;
 
+    protected void assertCheckpoint(final Checkpoint checkpoint) {
+        assertThat(checkpoint.getBlockNumber()).isNotPresent();
+        assertThat(checkpoint.getTransactionId()).isNotPresent();
+    }
+
     protected void assertCheckpoint(final Checkpoint checkpoint, final long blockNumber) {
-        assertThat(checkpoint.getBlockNumber()).isEqualTo(blockNumber);
+        assertThat(checkpoint.getBlockNumber()).hasValue(blockNumber);
         assertThat(checkpoint.getTransactionId()).isNotPresent();
     }
     protected void assertCheckpoint(final Checkpoint checkpoint, final long blockNumber, final String transactionId) {
-        assertThat(checkpoint.getBlockNumber()).isEqualTo(blockNumber);
-        assertTrue(checkpoint.getTransactionId().isPresent());
-        assertThat(checkpoint.getTransactionId().get()).isEqualTo(transactionId);
+        assertThat(checkpoint.getBlockNumber()).hasValue(blockNumber);
+        assertThat(checkpoint.getTransactionId()).hasValue(transactionId);
     }
 
     @BeforeEach
@@ -41,7 +44,7 @@ public abstract  class CommonCheckpointerTest {
 
     @Test
     void initial_checkpointer_state() {
-        assertCheckpoint(checkpointerInstance , 0);
+        assertCheckpoint(checkpointerInstance);
     }
 
     @Test
@@ -69,5 +72,4 @@ public abstract  class CommonCheckpointerTest {
         checkpointerInstance.checkpointChaincodeEvent(eventImp);
         assertCheckpoint(checkpointerInstance ,blockNumber, eventImp.getTransactionId());
     }
-
 }
