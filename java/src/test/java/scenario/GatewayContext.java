@@ -112,11 +112,17 @@ public class GatewayContext {
     }
 
     public void listenForBlockEventsUsingCheckpointer(String listenerName, Checkpointer checkpointer) {
-            CloseableIterator<Common.Block> iter = network.newBlockEventsRequest()
-                    .checkpoint(checkpointer)
-                    .build()
-                    .getEvents();
-            receiveBlockEvents(listenerName, iter);
+        CloseableIterator<Common.Block> iter = network.newBlockEventsRequest()
+                .checkpoint(checkpointer)
+                .build()
+                .getEvents();
+        receiveBlockEventsUsingCheckpointer(listenerName, iter);
+    }
+
+    private void receiveBlockEventsUsingCheckpointer(final String listenerName, final CloseableIterator<Common.Block> iter) {
+        closeChaincodeEvents(listenerName);
+        EventListener<Common.Block> e = new CheckpointEventListener<>(iter, checkpointer::checkpointBlock);
+        blockEventListeners.put(listenerName, e);
     }
 
     public void listenForFilteredBlockEventsUsingCheckpointer(String listenerName, Checkpointer checkpointer) {
@@ -124,7 +130,13 @@ public class GatewayContext {
                 .checkpoint(checkpointer)
                 .build()
                 .getEvents();
-        receiveFilteredBlockEvents(listenerName, iter);
+        receiveFilteredBlockEventsUsingCheckpointer(listenerName, iter);
+    }
+
+    private void receiveFilteredBlockEventsUsingCheckpointer(final String listenerName, final CloseableIterator<EventsPackage.FilteredBlock> iter) {
+        closeFilteredBlockEvents(listenerName);
+        EventListener<EventsPackage.FilteredBlock> e = new CheckpointEventListener<>(iter, checkpointer::checkpointBlock);
+        filteredBlockEventListeners.put(listenerName, e);
     }
 
     public void  listenForBlockAndPrivateDataUsingCheckpointer(String listenerName, Checkpointer checkpointer) {
@@ -132,7 +144,13 @@ public class GatewayContext {
                 .checkpoint(checkpointer)
                 .build()
                 .getEvents();
-        receiveBlockAndPrivateDataEvents(listenerName, iter);
+        receiveBlockAndPrivateDataEventsUsingCheckpointer(listenerName, iter);
+    }
+
+    private void receiveBlockAndPrivateDataEventsUsingCheckpointer(final String listenerName, final CloseableIterator<EventsPackage.BlockAndPrivateData> iter) {
+        closeBlockAndPrivateDataEvents(listenerName);
+        EventListener<EventsPackage.BlockAndPrivateData> e = new CheckpointEventListener<>(iter, checkpointer::checkpointBlock);
+        blockAndPrivateDataEventListeners.put(listenerName, e);
     }
 
     public void replayBlockEvents(String listenerName, long startBlock) {

@@ -6,6 +6,8 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.OptionalLong;
+
 import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.orderer.Ab;
@@ -23,6 +25,10 @@ final class BlockEventsEnvelopeBuilder {
     public BlockEventsEnvelopeBuilder startBlock(final long blockNumber) {
         startPositionBuilder.startBlock(blockNumber);
         return this;
+    }
+
+    public OptionalLong checkpoint(final Checkpoint checkpoint) {
+        return startPositionBuilder.checkpoint(checkpoint);
     }
 
     public Common.Envelope build() {

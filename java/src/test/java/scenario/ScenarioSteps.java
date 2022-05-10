@@ -67,7 +67,7 @@ import org.hyperledger.fabric.client.InMemoryCheckpointer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ScenarioSteps<lastBlockEventReceived> {
+public class ScenarioSteps {
     private static final Map<String, String> runningChaincodes = new HashMap<>();
     private static boolean channelsJoined = false;
     private static final String DOCKER_COMPOSE_TLS_FILE = "docker-compose-tls.yaml";
@@ -76,10 +76,6 @@ public class ScenarioSteps<lastBlockEventReceived> {
             .toAbsolutePath();
     private static final String DEFAULT_LISTENER_NAME = "";
     private static Checkpointer checkpointer;
-    private Common.Block lastBlockEventReceived;
-    private EventsPackage.FilteredBlock lastFilteredBlockEventReceived;
-    private EventsPackage.BlockAndPrivateData lastBlockAndPrivateDataReceived;
-
 
     private static final Map<String, String> MSP_ID_TO_ORG_MAP;
     static {
@@ -439,19 +435,16 @@ public class ScenarioSteps<lastBlockEventReceived> {
 
     @When("I use my checkpointer to listen for block events")
     public void listenForBlockEventsUsingCheckpointer() {
-        assertCheckpointerExist();
         currentGateway.listenForBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME, checkpointer);
     }
 
     @When("I use my checkpointer to listen for filtered block events")
     public void listenForFilteredBlockEventsUsingCheckpointer() {
-        assertCheckpointerExist();
         currentGateway.listenForFilteredBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME, checkpointer);
     }
 
     @When("I use my checkpointer to listen for block and private data events")
     public void listenForBlockAndPrivateDataUsingCheckpointer(){
-        assertCheckpointerExist();
         currentGateway.listenForBlockAndPrivateDataUsingCheckpointer(DEFAULT_LISTENER_NAME, checkpointer);
     }
 
@@ -597,7 +590,6 @@ public class ScenarioSteps<lastBlockEventReceived> {
     @Then("I should receive a block event on {string}")
     public void assertReceiveBlockEventOnListener(String listenerName) throws InterruptedException, IOException {
         Common.Block event = currentGateway.nextBlockEvent(listenerName);
-        lastBlockEventReceived = event;
         assertThat(event).isNotNull();
     }
 
@@ -609,7 +601,6 @@ public class ScenarioSteps<lastBlockEventReceived> {
     @Then("I should receive a filtered block event on {string}")
     public void assertReceiveFilteredBlockEventOnListener(String listenerName) throws InterruptedException, IOException {
         EventsPackage.FilteredBlock event = currentGateway.nextFilteredBlockEvent(listenerName);
-        lastFilteredBlockEventReceived = event;
         assertThat(event).isNotNull();
     }
 
@@ -621,23 +612,7 @@ public class ScenarioSteps<lastBlockEventReceived> {
     @Then("I should receive a block and private data event on {string}")
     public void assertReceiveBlockAndPrivateDataEventOnListener(String listenerName) throws InterruptedException, IOException {
         EventsPackage.BlockAndPrivateData event = currentGateway.nextBlockAndPrivateDataEvent(listenerName);
-        lastBlockAndPrivateDataReceived = event;
         assertThat(event).isNotNull();
-    }
-
-    @Then("I should checkpoint the block event")
-    public void checkpointBlockEvent() throws IOException {
-        checkpointer.checkpointBlock(lastBlockEventReceived.getHeader().getNumber());
-    }
-
-    @Then("I should checkpoint the filtered block event")
-    public void checkpointFilteredBlockEvent() throws IOException {
-        checkpointer.checkpointBlock(lastFilteredBlockEventReceived.getNumber());
-    }
-
-    @Then("I should checkpoint the block and private data event")
-    public void checkpointBlockAndPrivateDataEvent() throws IOException {
-        checkpointer.checkpointBlock(lastBlockAndPrivateDataReceived.getBlock().getHeader().getNumber());
     }
 
     private void invokeTransaction() {

@@ -7,6 +7,7 @@
 package org.hyperledger.fabric.client;
 
 import java.util.Objects;
+import java.util.OptionalLong;
 
 import org.hyperledger.fabric.protos.common.Common;
 
@@ -31,11 +32,8 @@ final class FilteredBlockEventsBuilder implements FilteredBlockEventsRequest.Bui
 
     @Override
     public FilteredBlockEventsBuilder checkpoint(final Checkpoint checkpoint) {
-        long blockNumber = checkpoint.getBlockNumber();
-        if (blockNumber == 0) {
-            return this;
-        }
-        envelopeBuilder.startBlock(blockNumber);
+        OptionalLong blockNumber = envelopeBuilder.checkpoint(checkpoint);
+        blockNumber.ifPresent(envelopeBuilder::startBlock);
         return this;
     }
 

@@ -83,17 +83,17 @@ public abstract class CommonBlockEventsTest<E> {
         assertThat(actualIdentity).isEqualTo(gateway.getIdentity());
     }
 
-    private void assertStartPositionTobeSpecified (final Ab.SeekInfo seekInfo, final long startBlock) {
+    private void assertStartPositionSpecified (final Ab.SeekInfo seekInfo, final long startBlock) {
         Ab.SeekPosition start = seekInfo.getStart();
         assertThat(start.getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
         assertThat(start.getSpecified().getNumber()).isEqualTo(startBlock);
  }
-    private void assertStartPositionTobeNextCommit (final Ab.SeekInfo seekInfo) {
+    private void assertStartPositionNextCommit (final Ab.SeekInfo seekInfo) {
         Ab.SeekPosition start = seekInfo.getStart();
         assertThat(start.getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.NEXT_COMMIT);
     }
 
-    private void assertStopPosition (final Ab.SeekInfo seekInfo) {
+    private void assertStopPosition(final Ab.SeekInfo seekInfo) {
         Ab.SeekPosition stop = seekInfo.getStop();
         assertThat(stop.getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
         assertThat(stop.getSpecified().getNumber()).isEqualTo(Long.MAX_VALUE);
@@ -148,7 +148,7 @@ public abstract class CommonBlockEventsTest<E> {
         assertValidBlockEventsRequestHeader(payload);
 
         Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
-        assertStartPositionTobeSpecified(seekInfo, startBlock);
+        assertStartPositionSpecified(seekInfo, startBlock);
         assertStopPosition(seekInfo);
     }
 
@@ -168,7 +168,7 @@ public abstract class CommonBlockEventsTest<E> {
         assertValidBlockEventsRequestHeader(payload);
 
         Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
-        assertStartPositionTobeSpecified(seekInfo, startBlock);
+        assertStartPositionSpecified(seekInfo, startBlock);
         assertStopPosition(seekInfo);
     }
 
@@ -190,7 +190,7 @@ public abstract class CommonBlockEventsTest<E> {
         assertValidBlockEventsRequestHeader(payload);
 
         Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
-        assertStartPositionTobeSpecified(seekInfo, startBlock);
+        assertStartPositionSpecified(seekInfo, startBlock);
         assertStopPosition(seekInfo);
     }
 
@@ -213,7 +213,7 @@ public abstract class CommonBlockEventsTest<E> {
         assertValidBlockEventsRequestHeader(payload);
 
         Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
-        assertStartPositionTobeSpecified(seekInfo, blockNumber+1);
+        assertStartPositionSpecified(seekInfo, blockNumber+1);
         assertStopPosition(seekInfo);
     }
 
@@ -233,7 +233,7 @@ public abstract class CommonBlockEventsTest<E> {
         assertValidBlockEventsRequestHeader(payload);
 
         Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
-        assertStartPositionTobeNextCommit(seekInfo);
+        assertStartPositionNextCommit(seekInfo);
         assertStopPosition(seekInfo);
     }
 
