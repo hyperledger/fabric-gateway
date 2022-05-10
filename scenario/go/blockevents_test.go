@@ -53,3 +53,31 @@ func (listener *BlockEventListener) Event() (*common.Block, error) {
 func (listener *BlockEventListener) Close() {
 	listener.cancel()
 }
+
+type CheckpointBlockEventListener struct {
+	listener   BlockEvents
+	checkpoint func(*common.Block)
+}
+
+func NewCheckpointBlockEventListener(listener BlockEvents, checkpoint func(*common.Block)) *CheckpointBlockEventListener {
+	checkpointListener := &CheckpointBlockEventListener{
+		listener:   listener,
+		checkpoint: checkpoint,
+	}
+	return checkpointListener
+}
+
+func (listener *CheckpointBlockEventListener) Event() (*common.Block, error) {
+	event, err := listener.listener.Event()
+	if err != nil {
+		return nil, err
+	}
+
+	listener.checkpoint(event)
+
+	return event, nil
+}
+
+func (listener *CheckpointBlockEventListener) Close() {
+	listener.listener.Close()
+}
