@@ -152,10 +152,6 @@ export class CustomWorld {
         this.#currentGateway = gateway;
     }
 
-    createCheckpointer(): void {
-        this.getCurrentGateway().createCheckpointer();
-    }
-
     useGateway(name: string): void {
         this.#currentGateway = this.#gateways[name];
     }
@@ -223,15 +219,15 @@ export class CustomWorld {
     }
 
     async listenForBlockEventsUsingCheckpointer(listenerName: string): Promise<void> {
-        await this.getCurrentGateway().listenForBlockEventsUsingCheckpointer(listenerName,  { checkpoint: this.getCurrentGateway().getcheckpointer() });
+        await this.getCurrentGateway().listenForBlockEventsUsingCheckpointer(listenerName,  { checkpoint: this.getCurrentGateway().getCheckpointer() });
     }
 
     async listenForFilteredBlockEventsUsingCheckpointer(listenerName: string): Promise<void> {
-        await this.getCurrentGateway().listenForFilteredBlockEventsUsingCheckpointer(listenerName,  { checkpoint: this.getCurrentGateway().getcheckpointer() });
+        await this.getCurrentGateway().listenForFilteredBlockEventsUsingCheckpointer(listenerName,  { checkpoint: this.getCurrentGateway().getCheckpointer() });
     }
 
     async listenForBlockAndPrivateDataEventsUsingCheckpointer(listenerName: string): Promise<void> {
-        await this.getCurrentGateway().listenForBlockAndPrivateDataEventsUsingCheckpointer(listenerName, { checkpoint: this.getCurrentGateway().getcheckpointer() });
+        await this.getCurrentGateway().listenForBlockAndPrivateDataEventsUsingCheckpointer(listenerName, { checkpoint: this.getCurrentGateway().getCheckpointer() });
     }
 
     async replayBlockEvents(listenerName: string, startBlock: bigint): Promise<void> {
@@ -341,7 +337,6 @@ export class CustomWorld {
     private getTransaction(): TransactionInvocation {
         return assertDefined(this.#transaction, 'transaction');
     }
-
 }
 
 setWorldConstructor(CustomWorld);
