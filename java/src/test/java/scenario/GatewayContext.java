@@ -94,7 +94,7 @@ public class GatewayContext {
 
     private void receiveChaincodeEventsUsingCheckpointer(final String listenerName, final CloseableIterator<ChaincodeEvent> iter) {
         closeChaincodeEvents(listenerName);
-        EventListener<ChaincodeEvent> e = new CheckpointEventListener<>(iter, checkpointer::checkpointChaincodeEvent);
+        EventListener<ChaincodeEvent> e = new CheckpointEventListener<ChaincodeEvent>(iter, checkpointer::checkpointChaincodeEvent);
         chaincodeEventListeners.put(listenerName, e);
     }
 
@@ -121,7 +121,7 @@ public class GatewayContext {
 
     private void receiveBlockEventsUsingCheckpointer(final String listenerName, final CloseableIterator<Common.Block> iter) {
         closeChaincodeEvents(listenerName);
-        EventListener<Common.Block> e = new CheckpointEventListener<>(iter, checkpointer::checkpointBlock);
+        EventListener<Common.Block> e = new CheckpointEventListener<Common.Block>(iter, checkpointer::checkpointBlock);
         blockEventListeners.put(listenerName, e);
     }
 
@@ -135,7 +135,7 @@ public class GatewayContext {
 
     private void receiveFilteredBlockEventsUsingCheckpointer(final String listenerName, final CloseableIterator<EventsPackage.FilteredBlock> iter) {
         closeFilteredBlockEvents(listenerName);
-        EventListener<EventsPackage.FilteredBlock> e = new CheckpointEventListener<>(iter, checkpointer::checkpointBlock);
+        EventListener<EventsPackage.FilteredBlock> e = new CheckpointEventListener<EventsPackage.FilteredBlock>(iter, checkpointer::checkpointBlock);
         filteredBlockEventListeners.put(listenerName, e);
     }
 
@@ -149,7 +149,7 @@ public class GatewayContext {
 
     private void receiveBlockAndPrivateDataEventsUsingCheckpointer(final String listenerName, final CloseableIterator<EventsPackage.BlockAndPrivateData> iter) {
         closeBlockAndPrivateDataEvents(listenerName);
-        EventListener<EventsPackage.BlockAndPrivateData> e = new CheckpointEventListener<>(iter, checkpointer::checkpointBlock);
+        EventListener<EventsPackage.BlockAndPrivateData> e = new CheckpointEventListener<EventsPackage.BlockAndPrivateData>(iter, checkpointer::checkpointBlock);
         blockAndPrivateDataEventListeners.put(listenerName, e);
     }
 
