@@ -47,7 +47,6 @@ var (
 	checkpointer                    *client.InMemoryCheckpointer
 	lastBlockEventReceived          *common.Block
 	lastFilteredBlockEventReceived  *peer.FilteredBlock
-	lastBlockAndPrivateDataReceived *peer.BlockAndPrivateData
 )
 
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
@@ -95,9 +94,9 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I replay chaincode events from (\S+) starting at last committed block$`, replayChaincodeEventsFromLastBlock)
 	s.Step(`^I stop listening for chaincode events$`, stopChaincodeEventListening)
 	s.Step(`^I stop listening for chaincode events on "([^"]*)"$`, stopChaincodeEventListeningOnListener)
-	s.Step(`^And I use my checkpointer to listen for block events`, listenForBlockEventsUsingCheckpointer)
-	s.Step(`^And I use my checkpointer to listen for filtered block events`, listenForFilteredBlockEventsUsingCheckpointer)
-	s.Step(`^And I use my checkpointer to listen for block and private data events`, listenForBlockAndPrivateDataUsingCheckpointer)
+	s.Step(`^And I use the checkpointer to listen for block events`, listenForBlockEventsUsingCheckpointer)
+	s.Step(`^And I use the checkpointer to listen for filtered block events`, listenForFilteredBlockEventsUsingCheckpointer)
+	s.Step(`^And I use the checkpointer to listen for block and private data events`, listenForBlockAndPrivateDataUsingCheckpointer)
 	s.Step(`^I should receive a chaincode event named "([^"]*)" with payload "([^"]*)"$`, receiveChaincodeEvent)
 	s.Step(`^I should receive a chaincode event named "([^"]*)" with payload "([^"]*)" on "([^"]*)"$`, receiveChaincodeEventOnListener)
 	s.Step(`^I listen for block events$`, listenForBlockEvents)
@@ -556,10 +555,9 @@ func receiveBlockAndPrivateDataEvent() error {
 }
 
 func receiveBlockAndPrivateDataEventOnListener(listenerName string) error {
-	event, err := currentGateway.BlockAndPrivateDataEvent(listenerName)
+	_, err := currentGateway.BlockAndPrivateDataEvent(listenerName)
 	if err != nil {
 		return err
 	}
-	lastBlockAndPrivateDataReceived = event
 	return nil
 }
