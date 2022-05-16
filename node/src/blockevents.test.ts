@@ -299,14 +299,14 @@ describe('Block Events', () => {
             assertStopPosition(seekInfo);
         });
 
-        it('Uses checkpoint block zero with set transaction ID instead of specified start block ', async () => {
+        it('Uses checkpoint block zero with set transaction ID instead of specified start block', async () => {
             const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
             testCase.mockResponse(stream);
 
             const startBlock = BigInt(418);
             const blockNumber = 0n;
             const checkpointer = checkpointers.inMemory();
-            await checkpointer.checkpointTransaction(blockNumber, "transactionID");
+            await checkpointer.checkpointTransaction(blockNumber, 'transactionID');
             await testCase.getEvents({startBlock: startBlock, checkpoint: checkpointer});
 
             expect(stream.write.mock.calls.length).toBe(1);
@@ -321,7 +321,7 @@ describe('Block Events', () => {
             assertStopPosition(seekInfo);
         });
 
-        it('Uses default start block instead of unset checkpoint and no start block ', async () => {
+        it('Uses default start block instead of unset checkpoint and no start block', async () => {
             const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
             testCase.mockResponse(stream);
             const checkpointer = checkpointers.inMemory();
