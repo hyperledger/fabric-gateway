@@ -89,7 +89,7 @@ Feature: Block event listening
         And I prepare to submit an echo transaction
         And I set the transaction arguments to ["echo"]
         And I invoke the transaction
-        And I use my checkpointer to listen for <type> events
+        And I use the checkpointer to listen for <type> events
         Then I should receive a <type> event
 
         Scenarios:
