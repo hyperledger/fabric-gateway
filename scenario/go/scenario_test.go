@@ -40,13 +40,13 @@ const (
 const defaultListenerName = ""
 
 var (
-	gateways                        map[string]*GatewayConnection
-	currentGateway                  *GatewayConnection
-	transaction                     *Transaction
-	lastCommittedBlockNumber        uint64
-	checkpointer                    *client.InMemoryCheckpointer
-	lastBlockEventReceived          *common.Block
-	lastFilteredBlockEventReceived  *peer.FilteredBlock
+	gateways                       map[string]*GatewayConnection
+	currentGateway                 *GatewayConnection
+	transaction                    *Transaction
+	lastCommittedBlockNumber       uint64
+	checkpointer                   *client.InMemoryCheckpointer
+	lastBlockEventReceived         *common.Block
+	lastFilteredBlockEventReceived *peer.FilteredBlock
 )
 
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {

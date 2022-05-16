@@ -263,7 +263,7 @@ func TestBlockEvents(t *testing.T) {
 		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
 
 		checkpointer := new(InMemoryCheckpointer)
-		blockNumber := uint64(0);
+		blockNumber := uint64(0)
 		checkpointer.CheckpointTransaction(blockNumber, "transctionId")
 
 		_, err := network.BlockEvents(ctx, WithStartBlock(418), WithCheckpoint(checkpointer))
