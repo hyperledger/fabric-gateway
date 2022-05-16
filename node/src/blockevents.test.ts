@@ -260,7 +260,7 @@ describe('Block Events', () => {
             assertStopPosition(seekInfo);
         });
 
-        it('Sends valid request with specified start block number and fresh checkpointer', async () => {
+        it('Uses specified start block instead of unset checkpoint', async () => {
             const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
             testCase.mockResponse(stream);
             const startBlock = BigInt(418);
@@ -278,7 +278,7 @@ describe('Block Events', () => {
             assertStopPosition(seekInfo);
         });
 
-        it('Sends valid request with specified start block and checkpointed block', async () => {
+        it('Uses checkpoint block instead of specified start block', async () => {
             const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
             testCase.mockResponse(stream);
 
@@ -299,7 +299,29 @@ describe('Block Events', () => {
             assertStopPosition(seekInfo);
         });
 
-        it('Sends valid request with no start block and fresh checkpointer', async () => {
+        it('Uses checkpoint block zero with set transaction ID instead of specified start block ', async () => {
+            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
+            testCase.mockResponse(stream);
+
+            const startBlock = BigInt(418);
+            const blockNumber = 0n;
+            const checkpointer = checkpointers.inMemory();
+            await checkpointer.checkpointTransaction(blockNumber, "transactionID");
+            await testCase.getEvents({startBlock: startBlock, checkpoint: checkpointer});
+
+            expect(stream.write.mock.calls.length).toBe(1);
+            const request = stream.write.mock.calls[0][0];
+
+            const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
+            assertValidBlockEventsRequestHeader(payload);
+
+            const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
+
+            assertStartPositionToBeSpecified(seekInfo, Number(blockNumber));
+            assertStopPosition(seekInfo);
+        });
+
+        it('Uses default start block instead of unset checkpoint and no start block ', async () => {
             const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
             testCase.mockResponse(stream);
             const checkpointer = checkpointers.inMemory();

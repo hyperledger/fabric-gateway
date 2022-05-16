@@ -156,15 +156,15 @@ When('I listen for block events', async function(this: CustomWorld): Promise<voi
     await this.listenForBlockEvents(DEFAULT_LISTENER_NAME);
 });
 
-When('I use my checkpointer to listen for block events', async function(this: CustomWorld): Promise<void> {
+When('I use the checkpointer to listen for block events', async function(this: CustomWorld): Promise<void> {
     await this.listenForBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
 });
 
-When('I use my checkpointer to listen for filtered block events', async function(this: CustomWorld): Promise<void> {
+When('I use the checkpointer to listen for filtered block events', async function(this: CustomWorld): Promise<void> {
     await this.listenForFilteredBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
 });
 
-When('I use my checkpointer to listen for block and private data events', async function(this: CustomWorld): Promise<void> {
+When('I use the checkpointer to listen for block and private data events', async function(this: CustomWorld): Promise<void> {
     await this.listenForBlockAndPrivateDataEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
 });
 

@@ -234,7 +234,6 @@ export class CustomWorld {
         await this.getCurrentGateway().listenForBlockEvents(listenerName, { startBlock });
     }
 
-
     async nextBlockEvent(listenerName: string): Promise<unknown> {
         return await this.getCurrentGateway().nextBlockEvent(listenerName);
     }
