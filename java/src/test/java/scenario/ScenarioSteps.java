@@ -62,8 +62,6 @@ import org.hyperledger.fabric.client.identity.X509Identity;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.gateway.ErrorDetail;
 import org.hyperledger.fabric.protos.peer.EventsPackage;
-import org.hyperledger.fabric.client.Checkpointer;
-import org.hyperledger.fabric.client.InMemoryCheckpointer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -432,17 +430,17 @@ public class ScenarioSteps {
         currentGateway.listenForBlockEvents(listenerName);
     }
 
-    @When("I use my checkpointer to listen for block events")
+    @When("I use the checkpointer to listen for block events")
     public void listenForBlockEventsUsingCheckpointer() {
         currentGateway.listenForBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
     }
 
-    @When("I use my checkpointer to listen for filtered block events")
+    @When("I use the checkpointer to listen for filtered block events")
     public void listenForFilteredBlockEventsUsingCheckpointer() {
         currentGateway.listenForFilteredBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
     }
 
-    @When("I use my checkpointer to listen for block and private data events")
+    @When("I use the checkpointer to listen for block and private data events")
     public void listenForBlockAndPrivateDataUsingCheckpointer(){
         currentGateway.listenForBlockAndPrivateDataUsingCheckpointer(DEFAULT_LISTENER_NAME);
     }

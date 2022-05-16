@@ -80,7 +80,7 @@ Feature: Block event listening
 
     Scenario Outline: Checkpoint of block events
         Given I create a checkpointer
-        And I use my checkpointer to listen for <type> events
+        And I use the checkpointer to listen for <type> events
         And I prepare to submit an echo transaction
         And I set the transaction arguments to ["checkpoint"]
         And I invoke the transaction

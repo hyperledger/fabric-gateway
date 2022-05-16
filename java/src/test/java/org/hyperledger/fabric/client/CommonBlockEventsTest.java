@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
@@ -24,7 +23,6 @@ import org.hyperledger.fabric.client.identity.X509Identity;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.msp.Identities;
 import org.hyperledger.fabric.protos.orderer.Ab;
-import org.hyperledger.fabric.protos.peer.ChaincodeEventPackage;
 import org.hyperledger.fabric.protos.peer.EventsPackage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
