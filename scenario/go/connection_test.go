@@ -356,7 +356,7 @@ func (connection *GatewayConnection) ListenForBlockEvents(listenerName string) e
 	return connection.receiveBlockEvents(listenerName)
 }
 
-func (connection *GatewayConnection) ListenForBlockEventsUsingCheckpointer(listenerName string, checkpointer client.Checkpoint) error {
+func (connection *GatewayConnection) ListenForBlockEventsUsingCheckpointer(listenerName string) error {
 	if connection.checkpointer == nil {
 		return fmt.Errorf("no checkpointer")
 	}
@@ -373,7 +373,7 @@ func (connection *GatewayConnection) ListenForBlockEventsUsingCheckpointer(liste
 	return nil
 }
 
-func (connection *GatewayConnection) ListenForFilteredBlockEventsUsingCheckpointer(listenerName string, checkpointer client.Checkpoint) error {
+func (connection *GatewayConnection) ListenForFilteredBlockEventsUsingCheckpointer(listenerName string) error {
 	if connection.checkpointer == nil {
 		return fmt.Errorf("no checkpointer")
 	}
@@ -390,7 +390,7 @@ func (connection *GatewayConnection) ListenForFilteredBlockEventsUsingCheckpoint
 	return nil
 }
 
-func (connection *GatewayConnection) ListenForBlockAndPrivateDataEventsUsingCheckpointer(listenerName string, checkpointer client.Checkpoint) error {
+func (connection *GatewayConnection) ListenForBlockAndPrivateDataEventsUsingCheckpointer(listenerName string) error {
 	if connection.checkpointer == nil {
 		return fmt.Errorf("no checkpointer")
 	}

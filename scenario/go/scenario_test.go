@@ -21,9 +21,7 @@ import (
 	"github.com/cucumber/godog"
 	messages "github.com/cucumber/messages-go/v16"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
-	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/gateway"
-	"github.com/hyperledger/fabric-protos-go/peer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -40,13 +38,10 @@ const (
 const defaultListenerName = ""
 
 var (
-	gateways                       map[string]*GatewayConnection
-	currentGateway                 *GatewayConnection
-	transaction                    *Transaction
-	lastCommittedBlockNumber       uint64
-	checkpointer                   *client.InMemoryCheckpointer
-	lastBlockEventReceived         *common.Block
-	lastFilteredBlockEventReceived *peer.FilteredBlock
+	gateways                 map[string]*GatewayConnection
+	currentGateway           *GatewayConnection
+	transaction              *Transaction
+	lastCommittedBlockNumber uint64
 )
 
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
@@ -459,15 +454,15 @@ func listenForBlockEventsOnListener(name string) error {
 }
 
 func listenForBlockEventsUsingCheckpointer() error {
-	return currentGateway.ListenForBlockEventsUsingCheckpointer(defaultListenerName, checkpointer)
+	return currentGateway.ListenForBlockEventsUsingCheckpointer(defaultListenerName)
 }
 
 func listenForFilteredBlockEventsUsingCheckpointer() error {
-	return currentGateway.ListenForFilteredBlockEventsUsingCheckpointer(defaultListenerName, checkpointer)
+	return currentGateway.ListenForFilteredBlockEventsUsingCheckpointer(defaultListenerName)
 }
 
 func listenForBlockAndPrivateDataUsingCheckpointer() error {
-	return currentGateway.ListenForBlockAndPrivateDataEventsUsingCheckpointer(defaultListenerName, checkpointer)
+	return currentGateway.ListenForBlockAndPrivateDataEventsUsingCheckpointer(defaultListenerName)
 }
 
 func replayBlockEventsFromLastBlock() error {
@@ -487,12 +482,12 @@ func receiveBlockEvent() error {
 }
 
 func receiveBlockEventOnListener(listenerName string) error {
-	event, err := currentGateway.BlockEvent(listenerName)
+	_, err := currentGateway.BlockEvent(listenerName)
 
 	if err != nil {
 		return err
 	}
-	lastBlockEventReceived = event
+
 	return nil
 }
 
@@ -521,11 +516,10 @@ func receiveFilteredBlockEvent() error {
 }
 
 func receiveFilteredBlockEventOnListener(listenerName string) error {
-	event, err := currentGateway.FilteredBlockEvent(listenerName)
+	_, err := currentGateway.FilteredBlockEvent(listenerName)
 	if err != nil {
 		return err
 	}
-	lastFilteredBlockEventReceived = event
 
 	return nil
 }
