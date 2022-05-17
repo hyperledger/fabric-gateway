@@ -143,6 +143,194 @@ func TestBlockEvents(t *testing.T) {
 		test.AssertProtoEqual(t, expected, actual)
 	})
 
+	t.Run("Uses specified start block instead of unset checkpoint", func(t *testing.T) {
+		controller := gomock.NewController(t)
+		mockClient := NewMockDeliverClient(controller)
+		mockEvents := NewMockDeliver_DeliverClient(controller)
+
+		mockClient.EXPECT().Deliver(gomock.Any(), gomock.Any()).
+			Return(mockEvents, nil)
+
+		payload := &common.Payload{}
+		mockEvents.EXPECT().Send(gomock.Any()).
+			Do(func(in *common.Envelope) {
+				test.AssertUnmarshal(t, in.GetPayload(), payload)
+			}).
+			Return(nil).
+			Times(1)
+		mockEvents.EXPECT().Recv().
+			Return(nil, errors.New("fake")).
+			AnyTimes()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
+
+		checkpointer := new(InMemoryCheckpointer)
+
+		_, err := network.BlockEvents(ctx, WithStartBlock(418), WithCheckpoint(checkpointer))
+		require.NoError(t, err)
+
+		AssertValidBlockEventRequestHeader(t, payload, network.Name())
+		actual := &orderer.SeekInfo{}
+		test.AssertUnmarshal(t, payload.GetData(), actual)
+
+		expected := &orderer.SeekInfo{
+			Start: &orderer.SeekPosition{
+				Type: &orderer.SeekPosition_Specified{
+					Specified: &orderer.SeekSpecified{
+						Number: 418,
+					},
+				},
+			},
+			Stop: seekLargestBlockNumber(),
+		}
+
+		test.AssertProtoEqual(t, expected, actual)
+	})
+
+	t.Run("Uses checkpoint block instead of specified start block", func(t *testing.T) {
+		controller := gomock.NewController(t)
+		mockClient := NewMockDeliverClient(controller)
+		mockEvents := NewMockDeliver_DeliverClient(controller)
+
+		mockClient.EXPECT().Deliver(gomock.Any(), gomock.Any()).
+			Return(mockEvents, nil)
+
+		payload := &common.Payload{}
+		mockEvents.EXPECT().Send(gomock.Any()).
+			Do(func(in *common.Envelope) {
+				test.AssertUnmarshal(t, in.GetPayload(), payload)
+			}).
+			Return(nil).
+			Times(1)
+		mockEvents.EXPECT().Recv().
+			Return(nil, errors.New("fake")).
+			AnyTimes()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
+
+		checkpointer := new(InMemoryCheckpointer)
+		checkpointer.CheckpointBlock(uint64(500))
+
+		_, err := network.BlockEvents(ctx, WithStartBlock(418), WithCheckpoint(checkpointer))
+		require.NoError(t, err)
+
+		AssertValidBlockEventRequestHeader(t, payload, network.Name())
+		actual := &orderer.SeekInfo{}
+		test.AssertUnmarshal(t, payload.GetData(), actual)
+
+		expected := &orderer.SeekInfo{
+			Start: &orderer.SeekPosition{
+				Type: &orderer.SeekPosition_Specified{
+					Specified: &orderer.SeekSpecified{
+						Number: 501,
+					},
+				},
+			},
+			Stop: seekLargestBlockNumber(),
+		}
+
+		test.AssertProtoEqual(t, expected, actual)
+	})
+
+	t.Run("Uses checkpoint block zero with set transaction ID instead of specified start block", func(t *testing.T) {
+		controller := gomock.NewController(t)
+		mockClient := NewMockDeliverClient(controller)
+		mockEvents := NewMockDeliver_DeliverClient(controller)
+
+		mockClient.EXPECT().Deliver(gomock.Any(), gomock.Any()).
+			Return(mockEvents, nil)
+
+		payload := &common.Payload{}
+		mockEvents.EXPECT().Send(gomock.Any()).
+			Do(func(in *common.Envelope) {
+				test.AssertUnmarshal(t, in.GetPayload(), payload)
+			}).
+			Return(nil).
+			Times(1)
+		mockEvents.EXPECT().Recv().
+			Return(nil, errors.New("fake")).
+			AnyTimes()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
+
+		checkpointer := new(InMemoryCheckpointer)
+		blockNumber := uint64(0)
+		checkpointer.CheckpointTransaction(blockNumber, "transctionId")
+
+		_, err := network.BlockEvents(ctx, WithStartBlock(418), WithCheckpoint(checkpointer))
+		require.NoError(t, err)
+
+		AssertValidBlockEventRequestHeader(t, payload, network.Name())
+		actual := &orderer.SeekInfo{}
+		test.AssertUnmarshal(t, payload.GetData(), actual)
+
+		expected := &orderer.SeekInfo{
+			Start: &orderer.SeekPosition{
+				Type: &orderer.SeekPosition_Specified{
+					Specified: &orderer.SeekSpecified{
+						Number: blockNumber,
+					},
+				},
+			},
+			Stop: seekLargestBlockNumber(),
+		}
+
+		test.AssertProtoEqual(t, expected, actual)
+	})
+	t.Run("Uses default start position with unset checkpoint and no start block", func(t *testing.T) {
+		controller := gomock.NewController(t)
+		mockClient := NewMockDeliverClient(controller)
+		mockEvents := NewMockDeliver_DeliverClient(controller)
+
+		mockClient.EXPECT().Deliver(gomock.Any(), gomock.Any()).
+			Return(mockEvents, nil)
+
+		payload := &common.Payload{}
+		mockEvents.EXPECT().Send(gomock.Any()).
+			Do(func(in *common.Envelope) {
+				test.AssertUnmarshal(t, in.GetPayload(), payload)
+			}).
+			Return(nil).
+			Times(1)
+		mockEvents.EXPECT().Recv().
+			Return(nil, errors.New("fake")).
+			AnyTimes()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
+
+		checkpointer := new(InMemoryCheckpointer)
+
+		_, err := network.BlockEvents(ctx, WithCheckpoint(checkpointer))
+		require.NoError(t, err)
+
+		AssertValidBlockEventRequestHeader(t, payload, network.Name())
+		actual := &orderer.SeekInfo{}
+		test.AssertUnmarshal(t, payload.GetData(), actual)
+
+		expected := &orderer.SeekInfo{
+			Start: &orderer.SeekPosition{
+				Type: &orderer.SeekPosition_NextCommit{
+					NextCommit: &orderer.SeekNextCommit{},
+				},
+			},
+			Stop: seekLargestBlockNumber(),
+		}
+
+		test.AssertProtoEqual(t, expected, actual)
+	})
+
 	t.Run("Closes event channel on receive error", func(t *testing.T) {
 		controller := gomock.NewController(t)
 		mockClient := NewMockDeliverClient(controller)

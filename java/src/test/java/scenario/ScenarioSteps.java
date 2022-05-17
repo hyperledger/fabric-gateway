@@ -430,6 +430,21 @@ public class ScenarioSteps {
         currentGateway.listenForBlockEvents(listenerName);
     }
 
+    @When("I use the checkpointer to listen for block events")
+    public void listenForBlockEventsUsingCheckpointer() {
+        currentGateway.listenForBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
+    }
+
+    @When("I use the checkpointer to listen for filtered block events")
+    public void listenForFilteredBlockEventsUsingCheckpointer() {
+        currentGateway.listenForFilteredBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
+    }
+
+    @When("I use the checkpointer to listen for block and private data events")
+    public void listenForBlockAndPrivateDataUsingCheckpointer(){
+        currentGateway.listenForBlockAndPrivateDataUsingCheckpointer(DEFAULT_LISTENER_NAME);
+    }
+
     @When("I replay block events starting at last committed block")
     public void replayBlockEventsFromLastBlock() {
         currentGateway.replayBlockEvents(DEFAULT_LISTENER_NAME, lastCommittedBlockNumber);
@@ -741,5 +756,4 @@ public class ScenarioSteps {
             return Identities.readPrivateKey(privateKeyReader);
         }
     }
-
 }

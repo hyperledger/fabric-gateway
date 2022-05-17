@@ -53,3 +53,31 @@ func (listener *BlockAndPrivateDataEventListener) Event() (*peer.BlockAndPrivate
 func (listener *BlockAndPrivateDataEventListener) Close() {
 	listener.cancel()
 }
+
+type CheckpointBlockAndPrivateDataEventListener struct {
+	listener   BlockAndPrivateDataEvents
+	checkpoint func(*peer.BlockAndPrivateData)
+}
+
+func NewCheckpointBlockAndPrivateDataEventListener(listener BlockAndPrivateDataEvents, checkpoint func(*peer.BlockAndPrivateData)) *CheckpointBlockAndPrivateDataEventListener {
+	checkpointListener := &CheckpointBlockAndPrivateDataEventListener{
+		listener:   listener,
+		checkpoint: checkpoint,
+	}
+	return checkpointListener
+}
+
+func (listener *CheckpointBlockAndPrivateDataEventListener) Event() (*peer.BlockAndPrivateData, error) {
+	event, err := listener.listener.Event()
+	if err != nil {
+		return nil, err
+	}
+
+	listener.checkpoint(event)
+
+	return event, nil
+}
+
+func (listener *CheckpointBlockAndPrivateDataEventListener) Close() {
+	listener.listener.Close()
+}

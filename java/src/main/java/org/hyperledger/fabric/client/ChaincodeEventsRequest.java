@@ -19,11 +19,7 @@ public interface ChaincodeEventsRequest extends EventsRequest<ChaincodeEvent> {
         @Override
         Builder startBlock(long blockNumber);
 
-        /**
-         * Reads events starting at the checkpoint position.
-         * @param checkpoint a checkpoint position.
-         * @return This builder.
-         */
+        @Override
         Builder checkpoint(Checkpoint checkpoint);
 
         @Override

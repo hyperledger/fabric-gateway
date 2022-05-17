@@ -63,6 +63,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I create a checkpointer`, createCheckpointer)
 	s.Step(`^I connect the gateway to (\S+)$`, connectGateway)
 	s.Step(`^I use the gateway named (\S+)$`, useGateway)
+	s.Step(`^I create a checkpointer`, createCheckpointer)
 	s.Step(`^I deploy (\S+) chaincode named (\S+) at version (\S+) for all organizations on channel (\S+) with endorsement policy (.+)$`, deployChaincode)
 	s.Step(`^I have created and joined all channels$`, createAndJoinChannels)
 	s.Step(`^I have deployed a Fabric network$`, haveFabricNetwork)
@@ -88,6 +89,9 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I replay chaincode events from (\S+) starting at last committed block$`, replayChaincodeEventsFromLastBlock)
 	s.Step(`^I stop listening for chaincode events$`, stopChaincodeEventListening)
 	s.Step(`^I stop listening for chaincode events on "([^"]*)"$`, stopChaincodeEventListeningOnListener)
+	s.Step(`^And I use the checkpointer to listen for block events`, listenForBlockEventsUsingCheckpointer)
+	s.Step(`^And I use the checkpointer to listen for filtered block events`, listenForFilteredBlockEventsUsingCheckpointer)
+	s.Step(`^And I use the checkpointer to listen for block and private data events`, listenForBlockAndPrivateDataUsingCheckpointer)
 	s.Step(`^I should receive a chaincode event named "([^"]*)" with payload "([^"]*)"$`, receiveChaincodeEvent)
 	s.Step(`^I should receive a chaincode event named "([^"]*)" with payload "([^"]*)" on "([^"]*)"$`, receiveChaincodeEventOnListener)
 	s.Step(`^I listen for block events$`, listenForBlockEvents)
@@ -449,6 +453,18 @@ func listenForBlockEventsOnListener(name string) error {
 	return currentGateway.ListenForBlockEvents(name)
 }
 
+func listenForBlockEventsUsingCheckpointer() error {
+	return currentGateway.ListenForBlockEventsUsingCheckpointer(defaultListenerName)
+}
+
+func listenForFilteredBlockEventsUsingCheckpointer() error {
+	return currentGateway.ListenForFilteredBlockEventsUsingCheckpointer(defaultListenerName)
+}
+
+func listenForBlockAndPrivateDataUsingCheckpointer() error {
+	return currentGateway.ListenForBlockAndPrivateDataEventsUsingCheckpointer(defaultListenerName)
+}
+
 func replayBlockEventsFromLastBlock() error {
 	return currentGateway.ReplayBlockEvents(defaultListenerName, lastCommittedBlockNumber)
 }
@@ -467,6 +483,7 @@ func receiveBlockEvent() error {
 
 func receiveBlockEventOnListener(listenerName string) error {
 	_, err := currentGateway.BlockEvent(listenerName)
+
 	if err != nil {
 		return err
 	}
@@ -536,6 +553,5 @@ func receiveBlockAndPrivateDataEventOnListener(listenerName string) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }

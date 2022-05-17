@@ -8,7 +8,6 @@ package org.hyperledger.fabric.client;
 
 import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
-
 import java.util.Objects;
 
 final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {

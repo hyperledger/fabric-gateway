@@ -30,6 +30,12 @@ final class BlockAndPrivateDataEventsBuilder implements BlockAndPrivateDataEvent
     }
 
     @Override
+    public BlockAndPrivateDataEventsBuilder checkpoint(final Checkpoint checkpoint) {
+        checkpoint.getBlockNumber().ifPresent(envelopeBuilder::startBlock);
+        return this;
+    }
+
+    @Override
     public BlockAndPrivateDataEventsRequest build() {
         Common.Envelope request = envelopeBuilder.build();
         return new BlockAndPrivateDataEventsRequestImpl(client, signingIdentity, request);

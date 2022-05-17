@@ -77,3 +77,23 @@ Feature: Block event listening
             | block                  |
             | filtered block         |
             | block and private data |
+
+    Scenario Outline: Checkpoint of block events
+        Given I create a checkpointer
+        And I use the checkpointer to listen for <type> events
+        And I prepare to submit an echo transaction
+        And I set the transaction arguments to ["checkpoint"]
+        And I invoke the transaction
+        Then I should receive a <type> event
+        When I stop listening for <type> events
+        And I prepare to submit an echo transaction
+        And I set the transaction arguments to ["echo"]
+        And I invoke the transaction
+        And I use the checkpointer to listen for <type> events
+        Then I should receive a <type> event
+
+        Scenarios:
+            | type                   |
+            | block                  |
+            | filtered block         |
+            | block and private data |

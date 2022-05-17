@@ -53,3 +53,31 @@ func (listener *FilteredBlockEventListener) Event() (*peer.FilteredBlock, error)
 func (listener *FilteredBlockEventListener) Close() {
 	listener.cancel()
 }
+
+type CheckpointFilteredBlockEventListener struct {
+	listener   FilteredBlockEvents
+	checkpoint func(*peer.FilteredBlock)
+}
+
+func NewCheckpointFilteredBlockEventListener(listener FilteredBlockEvents, checkpoint func(*peer.FilteredBlock)) *CheckpointFilteredBlockEventListener {
+	checkpointListener := &CheckpointFilteredBlockEventListener{
+		listener:   listener,
+		checkpoint: checkpoint,
+	}
+	return checkpointListener
+}
+
+func (listener *CheckpointFilteredBlockEventListener) Event() (*peer.FilteredBlock, error) {
+	event, err := listener.listener.Event()
+	if err != nil {
+		return nil, err
+	}
+
+	listener.checkpoint(event)
+
+	return event, nil
+}
+
+func (listener *CheckpointFilteredBlockEventListener) Close() {
+	listener.listener.Close()
+}

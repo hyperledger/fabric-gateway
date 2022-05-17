@@ -22,6 +22,9 @@ public interface FilteredBlockEventsRequest extends EventsRequest<EventsPackage.
         Builder startBlock(long blockNumber);
 
         @Override
+        Builder checkpoint(Checkpoint checkpoint);
+
+        @Override
         FilteredBlockEventsRequest build();
     }
 }

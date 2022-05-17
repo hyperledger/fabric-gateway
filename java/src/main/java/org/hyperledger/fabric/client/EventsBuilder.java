@@ -19,4 +19,11 @@ public interface EventsBuilder<T> extends Builder<EventsRequest<T>> {
      * @return This builder.
      */
     EventsBuilder<T> startBlock(long blockNumber);
+
+    /**
+     * Reads events starting at the checkpoint position.
+     * @param checkpoint a checkpoint position.
+     * @return This builder.
+     */
+    EventsBuilder<T> checkpoint(Checkpoint checkpoint);
 }

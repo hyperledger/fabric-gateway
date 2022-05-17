@@ -22,6 +22,9 @@ public interface BlockEventsRequest extends EventsRequest<Common.Block> {
         Builder startBlock(long blockNumber);
 
         @Override
+        Builder checkpoint(Checkpoint checkpoint);
+
+        @Override
         BlockEventsRequest build();
     }
 }
