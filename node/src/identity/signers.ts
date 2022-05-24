@@ -42,7 +42,7 @@ function newECPrivateKeySigner(key: KeyObject): Signer {
     const curve = getCurve(curveObjectId);
     const keyPair = curve.keyFromPrivate(rawKey, 'hex');
 
-    return async (digest) => {
+    return (digest) => {
         const signature = curve.sign(digest, keyPair, { canonical: true });
         const signatureBytes = new Uint8Array(signature.toDER());
         return Promise.resolve(signatureBytes);
