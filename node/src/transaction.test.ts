@@ -158,10 +158,41 @@ describe('Transaction', () => {
         expect(signature).toBe('MY_SIGNATURE');
     });
 
+    it('uses signer with newTransaction', async () => {
+        signer.mockResolvedValue(Buffer.from('MY_SIGNATURE'));
+        const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
+        const signedProposal = gateway.newProposal(unsignedProposal.getBytes());
+        const unsignedTransaction = await signedProposal.endorse();
+
+        const signedTransaction = gateway.newTransaction(unsignedTransaction.getBytes());
+        await signedTransaction.submit();
+
+        const submitRequest = client.getSubmitRequests()[0];
+        const signature = Buffer.from(submitRequest.getPreparedTransaction()?.getSignature_asU8() ?? '').toString();
+        expect(signature).toBe('MY_SIGNATURE');
+    });
+
     it('uses signer for commit', async () => {
         signer.mockResolvedValue(Buffer.from('MY_SIGNATURE'));
 
         await contract.submitTransaction('TRANSACTION_NAME');
+
+        const statusRequest = client.getCommitStatusRequests()[0];
+        const signature = Buffer.from(statusRequest.getSignature() ?? '').toString();
+        expect(signature).toBe('MY_SIGNATURE');
+    });
+
+    it('uses signer for newCommit', async () => {
+        signer.mockResolvedValue(Buffer.from('MY_SIGNATURE'));
+
+        const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
+        const signedProposal = gateway.newProposal(unsignedProposal.getBytes());
+        const unsignedTransaction = await signedProposal.endorse();
+
+        const signedTransaction = gateway.newTransaction(unsignedTransaction.getBytes());
+        const unsignedCommit = await signedTransaction.submit();
+        const deserializedSignedCommit = gateway.newCommit(unsignedCommit.getBytes());
+        await deserializedSignedCommit.getStatus();
 
         const statusRequest = client.getCommitStatusRequests()[0];
         const signature = Buffer.from(statusRequest.getSignature() ?? '').toString();

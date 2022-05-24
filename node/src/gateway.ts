@@ -157,12 +157,26 @@ export interface Gateway {
     newSignedProposal(bytes: Uint8Array, signature: Uint8Array): Proposal;
 
     /**
+     * Recreate a proposal from serialized data.
+     * @param bytes - Serialized proposal.
+     * @returns A proposal.
+     */
+    newProposal(bytes: Uint8Array): Proposal;
+
+    /**
       * Create a transaction with the specified digital signature. Supports off-line signing flow.
       * @param bytes - Serialized proposal.
       * @param signature - Digital signature.
       * @returns A signed transaction.
       */
     newSignedTransaction(bytes: Uint8Array, signature: Uint8Array): Transaction;
+
+    /**
+      * Recreate a transaction from serialized data.
+      * @param bytes - Serialized proposal.
+      * @returns A transaction.
+      */
+    newTransaction(bytes: Uint8Array): Transaction;
 
     /**
      * Create a commit with the specified digital signature, which can be used to access information about a
@@ -174,12 +188,26 @@ export interface Gateway {
     newSignedCommit(bytes: Uint8Array, signature: Uint8Array): Commit;
 
     /**
+     * Recreate a commit status request from serialized data.
+     * @param bytes - Serialized commit status request.
+     * @returns A commit status request.
+     */
+    newCommit(bytes: Uint8Array): Commit;
+
+    /**
      * Create a chaincode events request with the specified digital signature. Supports off-line signing flow.
      * @param bytes - Serialized chaincode events request.
      * @param signature - Digital signature.
      * @returns A signed chaincode events request.
      */
     newSignedChaincodeEventsRequest(bytes: Uint8Array, signature: Uint8Array): ChaincodeEventsRequest;
+
+    /**
+     * Recreate a chaincode events request from serialized data.
+     * @param bytes - Serialized chaincode events request.
+     * @returns A chaincode events request.
+     */
+    newChaincodeEventsRequest(bytes: Uint8Array): ChaincodeEventsRequest;
 
     /**
      * Create a block events request with the specified digital signature. Supports off-line signing flow.
@@ -190,12 +218,26 @@ export interface Gateway {
     newSignedBlockEventsRequest(bytes: Uint8Array, signature: Uint8Array): BlockEventsRequest;
 
     /**
+     * Recreate a block events request from serialized data.
+     * @param bytes - Serialized block events request.
+     * @returns A block events request.
+     */
+    newBlockEventsRequest(bytes: Uint8Array): BlockEventsRequest;
+
+    /**
      * Create a filtered block events request with the specified digital signature. Supports off-line signing flow.
      * @param bytes - Serialized filtered block events request.
      * @param signature - Digital signature.
      * @returns A signed filtered block events request.
      */
     newSignedFilteredBlockEventsRequest(bytes: Uint8Array, signature: Uint8Array): FilteredBlockEventsRequest;
+
+    /**
+     * Recreate a filtered block events request from serialized data.
+     * @param bytes - Serialized filtered block events request.
+     * @returns A filtered block events request.
+     */
+    newFilteredBlockEventsRequest(bytes: Uint8Array): FilteredBlockEventsRequest;
 
     /**
      * Create a block and private data events request with the specified digital signature. Supports off-line signing
@@ -207,13 +249,20 @@ export interface Gateway {
     newSignedBlockAndPrivateDataEventsRequest(bytes: Uint8Array, signature: Uint8Array): BlockAndPrivateDataEventsRequest;
 
     /**
+     * Recreate a block and private data events request from serialized data.
+     * @param bytes - Serialized block and private data events request.
+     * @returns A block and private data events request.
+     */
+    newBlockAndPrivateDataEventsRequest(bytes: Uint8Array): BlockAndPrivateDataEventsRequest;
+
+    /**
      * Close the gateway when it is no longer required. This releases all resources associated with networks and
      * contracts obtained using the Gateway, including removing event listeners.
      */
     close(): void;
 }
 
-class GatewayImpl {
+class GatewayImpl implements Gateway {
     readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
 
@@ -234,7 +283,7 @@ class GatewayImpl {
         });
     }
 
-    newSignedProposal(bytes: Uint8Array, signature: Uint8Array): Proposal {
+    newProposal(bytes: Uint8Array): ProposalImpl {
         const proposedTransaction = gateway.ProposedTransaction.deserializeBinary(bytes);
         const signedProposal = assertDefined(proposedTransaction.getProposal(), 'Missing signed proposal');
         const proposal = peer.Proposal.deserializeBinary(signedProposal.getProposalBytes_asU8());
@@ -247,12 +296,18 @@ class GatewayImpl {
             channelName: channelHeader.getChannelId(),
             proposedTransaction,
         });
+
+        return result;
+    }
+
+    newSignedProposal(bytes: Uint8Array, signature: Uint8Array): Proposal {
+        const result = this.newProposal(bytes);
         result.setSignature(signature);
 
         return result;
     }
 
-    newSignedTransaction(bytes: Uint8Array, signature: Uint8Array): Transaction {
+    newTransaction(bytes: Uint8Array): TransactionImpl {
         const preparedTransaction = gateway.PreparedTransaction.deserializeBinary(bytes);
 
         const result = new TransactionImpl({
@@ -260,12 +315,18 @@ class GatewayImpl {
             signingIdentity: this.#signingIdentity,
             preparedTransaction,
         });
+
+        return result;
+    }
+
+    newSignedTransaction(bytes: Uint8Array, signature: Uint8Array): Transaction {
+        const result = this.newTransaction(bytes);
         result.setSignature(signature);
 
         return result;
     }
 
-    newSignedCommit(bytes: Uint8Array, signature: Uint8Array): Commit {
+    newCommit(bytes: Uint8Array): CommitImpl {
         const signedRequest = gateway.SignedCommitStatusRequest.deserializeBinary(bytes);
         const request = gateway.CommitStatusRequest.deserializeBinary(signedRequest.getRequest_asU8());
 
@@ -275,25 +336,44 @@ class GatewayImpl {
             transactionId: request.getTransactionId(),
             signedRequest: signedRequest,
         });
+
+        return result;
+    }
+
+    newSignedCommit(bytes: Uint8Array, signature: Uint8Array): Commit {
+        const result = this.newCommit(bytes);
         result.setSignature(signature);
 
         return result;
     }
 
     newSignedChaincodeEventsRequest(bytes: Uint8Array, signature: Uint8Array): ChaincodeEventsRequest {
-        const request = gateway.ChaincodeEventsRequest.deserializeBinary(bytes);
-
-        const result = new ChaincodeEventsRequestImpl({
-            client: this.#client,
-            signingIdentity: this.#signingIdentity,
-            request,
-        });
+        const result = this.newChaincodeEventsRequest(bytes);
         result.setSignature(signature);
 
         return result;
     }
 
+    newChaincodeEventsRequest(bytes: Uint8Array): ChaincodeEventsRequestImpl {
+        const signedRequest = gateway.SignedChaincodeEventsRequest.deserializeBinary(bytes);
+
+        const result = new ChaincodeEventsRequestImpl({
+            client: this.#client,
+            signingIdentity: this.#signingIdentity,
+            signedRequest,
+        });
+
+        return result;
+    }
+
     newSignedBlockEventsRequest(bytes: Uint8Array, signature: Uint8Array): BlockEventsRequest {
+        const result = this.newBlockEventsRequest(bytes);
+        result.setSignature(signature);
+
+        return result;
+    }
+
+    newBlockEventsRequest(bytes: Uint8Array): BlockEventsRequestImpl {
         const request = common.Envelope.deserializeBinary(bytes);
 
         const result = new BlockEventsRequestImpl({
@@ -301,12 +381,18 @@ class GatewayImpl {
             signingIdentity: this.#signingIdentity,
             request,
         });
-        result.setSignature(signature);
 
         return result;
     }
 
     newSignedFilteredBlockEventsRequest(bytes: Uint8Array, signature: Uint8Array): FilteredBlockEventsRequest {
+        const result = this.newFilteredBlockEventsRequest(bytes);
+        result.setSignature(signature);
+
+        return result;
+    }
+
+    newFilteredBlockEventsRequest(bytes: Uint8Array): FilteredBlockEventsRequestImpl {
         const request = common.Envelope.deserializeBinary(bytes);
 
         const result = new FilteredBlockEventsRequestImpl({
@@ -314,12 +400,18 @@ class GatewayImpl {
             signingIdentity: this.#signingIdentity,
             request,
         });
-        result.setSignature(signature);
 
         return result;
     }
 
     newSignedBlockAndPrivateDataEventsRequest(bytes: Uint8Array, signature: Uint8Array): BlockAndPrivateDataEventsRequest {
+        const result = this.newBlockAndPrivateDataEventsRequest(bytes);
+        result.setSignature(signature);
+
+        return result;
+    }
+
+    newBlockAndPrivateDataEventsRequest(bytes: Uint8Array): BlockAndPrivateDataEventsRequestImpl {
         const request = common.Envelope.deserializeBinary(bytes);
 
         const result = new BlockAndPrivateDataEventsRequestImpl({
@@ -327,7 +419,6 @@ class GatewayImpl {
             signingIdentity: this.#signingIdentity,
             request,
         });
-        result.setSignature(signature);
 
         return result;
     }
