@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -52,7 +52,7 @@ public final class EvaluateTransactionTest {
         stub = mocker.getGatewayServiceStubSpy();
 
         gateway = mocker.getGatewayBuilder()
-                .evaluateOptions(CallOption.deadline(defaultDeadline))
+                .evaluateOptions(options -> options.withDeadline(defaultDeadline))
                 .connect();
         network = gateway.getNetwork("NETWORK");
         contract = network.getContract("CHAINCODE_NAME");
@@ -164,7 +164,7 @@ public final class EvaluateTransactionTest {
     @Test
     void uses_hash() throws GatewayException {
         AtomicReference<String> actual = new AtomicReference<>();
-        Function<byte[], byte[]> hash = (message) -> "MY_DIGEST".getBytes(StandardCharsets.UTF_8);
+        UnaryOperator<byte[]> hash = (message) -> "MY_DIGEST".getBytes(StandardCharsets.UTF_8);
         Signer signer = (digest) -> {
             actual.set(new String(digest, StandardCharsets.UTF_8));
             return "SIGNATURE".getBytes(StandardCharsets.UTF_8);
@@ -306,13 +306,48 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void uses_specified_call_options() throws GatewayException {
+    @SuppressWarnings("deprecation")
+    void uses_legacy_specified_call_options() throws GatewayException {
         Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
-        CallOption option = CallOption.deadline(expected);
 
         contract.newProposal("TRANSACTION_NAME")
                 .build()
-                .evaluate(option);
+                .evaluate(CallOption.deadline(expected));
+
+        List<CallOptions> actual = mocker.captureCallOptions();
+        assertThat(actual).first()
+                .extracting(CallOptions::getDeadline)
+                .isEqualTo(expected);
+    }
+
+    @Test
+    void uses_specified_call_options() throws GatewayException {
+        Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
+
+        contract.newProposal("TRANSACTION_NAME")
+                .build()
+                .evaluate(callOptions -> callOptions.withDeadline(expected));
+
+        List<CallOptions> actual = mocker.captureCallOptions();
+        assertThat(actual).first()
+                .extracting(CallOptions::getDeadline)
+                .isEqualTo(expected);
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void uses_legacy_default_call_options() throws GatewayException {
+        Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
+
+        try (Gateway gateway = mocker.getGatewayBuilder()
+                .evaluateOptions(CallOption.deadline(expected))
+                .connect()) {
+            gateway.getNetwork("NETWORK")
+                    .getContract("CHAINCODE_NAME")
+                    .newProposal("TRANSACTION_NAME")
+                    .build()
+                    .evaluate();
+        }
 
         List<CallOptions> actual = mocker.captureCallOptions();
         assertThat(actual).first()

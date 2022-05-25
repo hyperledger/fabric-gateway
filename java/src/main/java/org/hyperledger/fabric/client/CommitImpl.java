@@ -6,7 +6,10 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.function.UnaryOperator;
+
 import com.google.protobuf.ByteString;
+import io.grpc.CallOptions;
 import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 
@@ -41,7 +44,7 @@ class CommitImpl implements Commit {
     }
 
     @Override
-    public Status getStatus(final CallOption... options) throws CommitStatusException {
+    public Status getStatus(final UnaryOperator<CallOptions> options) throws CommitStatusException {
         sign();
         CommitStatusResponse response = client.commitStatus(signedRequest, options);
         return new StatusImpl(transactionId, response);

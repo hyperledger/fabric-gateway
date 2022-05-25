@@ -6,6 +6,12 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
@@ -19,12 +25,6 @@ import org.hyperledger.fabric.protos.peer.ChaincodeEventPackage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,7 +47,7 @@ public final class ChaincodeEventsTest {
         stub = mocker.getGatewayServiceStubSpy();
 
         gateway = mocker.getGatewayBuilder()
-                .chaincodeEventsOptions(CallOption.deadline(defaultDeadline))
+                .chaincodeEventsOptions(callOptions -> callOptions.withDeadline(defaultDeadline))
                 .connect();
         network = gateway.getNetwork("NETWORK");
     }
@@ -329,10 +329,40 @@ public final class ChaincodeEventsTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
+    void uses_legacy_specified_call_options() {
+        Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
+        assertRequestInitiated(() -> network.getChaincodeEvents("CHAINCODE_NAME", CallOption.deadline(expected)));
+
+        List<CallOptions> actual = mocker.captureCallOptions();
+        assertThat(actual).first()
+                .extracting(CallOptions::getDeadline)
+                .isEqualTo(expected);
+    }
+
+    @Test
     void uses_specified_call_options() {
         Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
-        CallOption option = CallOption.deadline(expected);
-        assertRequestInitiated(() -> network.getChaincodeEvents("CHAINCODE_NAME", option));
+
+        assertRequestInitiated(() -> network.getChaincodeEvents("CHAINCODE_NAME", options -> options.withDeadline(expected)));
+
+        List<CallOptions> actual = mocker.captureCallOptions();
+        assertThat(actual).first()
+                .extracting(CallOptions::getDeadline)
+                .isEqualTo(expected);
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void uses_legacy_default_call_options() {
+        Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
+
+        try (Gateway gateway = mocker.getGatewayBuilder()
+                .chaincodeEventsOptions(CallOption.deadline(expected))
+                .connect()) {
+            Network network = gateway.getNetwork("NETWORK");
+            assertRequestInitiated(() -> network.getChaincodeEvents("CHAINCODE_NAME"));
+        }
 
         List<CallOptions> actual = mocker.captureCallOptions();
         assertThat(actual).first()

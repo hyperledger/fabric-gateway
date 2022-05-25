@@ -6,6 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.function.UnaryOperator;
+
+import io.grpc.CallOptions;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.peer.EventsPackage;
 
@@ -74,12 +77,42 @@ public interface Network {
      * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC connection error
      * occurs.</p>
      * @param chaincodeName A chaincode name.
-     * @param options Call options.
      * @return Ordered sequence of events.
      * @throws NullPointerException if the chaincode name is null.
      * @see #newChaincodeEventsRequest(String)
      */
-    CloseableIterator<ChaincodeEvent> getChaincodeEvents(String chaincodeName, CallOption... options);
+    default CloseableIterator<ChaincodeEvent> getChaincodeEvents(String chaincodeName) {
+        return getChaincodeEvents(chaincodeName, GatewayUtils.asCallOptions());
+    }
+
+    /**
+     * Get events emitted by transaction functions of a specific chaincode from the next committed block. The Java gRPC
+     * implementation may not begin reading events until the first use of the returned iterator.
+     * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC connection error
+     * occurs.</p>
+     * @param chaincodeName A chaincode name.
+     * @param options Function that transforms call options.
+     * @return Ordered sequence of events.
+     * @throws NullPointerException if the chaincode name is null.
+     * @see #newChaincodeEventsRequest(String)
+     */
+    CloseableIterator<ChaincodeEvent> getChaincodeEvents(String chaincodeName, UnaryOperator<CallOptions> options);
+
+    /**
+     * Get events emitted by transaction functions of a specific chaincode from the next committed block. The Java gRPC
+     * implementation may not begin reading events until the first use of the returned iterator.
+     * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC connection error
+     * occurs.</p>
+     * @param chaincodeName A chaincode name.
+     * @param options Call options.
+     * @return Ordered sequence of events.
+     * @throws NullPointerException if the chaincode name is null.
+     * @deprecated Replaced by {@link #getChaincodeEvents(String, UnaryOperator)}.
+     */
+    @Deprecated
+    default CloseableIterator<ChaincodeEvent> getChaincodeEvents(String chaincodeName, CallOption... options) {
+        return getChaincodeEvents(chaincodeName, GatewayUtils.asCallOptions(options));
+    }
 
     /**
      * Build a new chaincode events request, which can be used to obtain events emitted by transaction functions of a
@@ -95,11 +128,23 @@ public interface Network {
      * iterator.
      * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC
      * connection error occurs.</p>
-     * @param options Call options.
      * @return Ordered sequence of events.
      * @see #newBlockEventsRequest()
      */
-    CloseableIterator<Common.Block> getBlockEvents(CallOption... options);
+    default CloseableIterator<Common.Block> getBlockEvents() {
+        return getBlockEvents(GatewayUtils.asCallOptions());
+    }
+
+    /**
+     * Get block events. The Java gRPC implementation may not begin reading events until the first use of the returned
+     * iterator.
+     * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC
+     * connection error occurs.</p>
+     * @param options Function that transforms call options.
+     * @return Ordered sequence of events.
+     * @see #newBlockEventsRequest()
+     */
+    CloseableIterator<Common.Block> getBlockEvents(UnaryOperator<CallOptions> options);
 
     /**
      * Build a request to receive block events. This can be used to specify a specific ledger start position. Supports
@@ -114,11 +159,23 @@ public interface Network {
      * returned iterator.
      * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC
      * connection error occurs.</p>
-     * @param options Call options.
      * @return Ordered sequence of events.
      * @see #newFilteredBlockEventsRequest()
      */
-    CloseableIterator<EventsPackage.FilteredBlock> getFilteredBlockEvents(CallOption... options);
+    default CloseableIterator<EventsPackage.FilteredBlock> getFilteredBlockEvents() {
+        return getFilteredBlockEvents(GatewayUtils.asCallOptions());
+    }
+
+    /**
+     * Get filtered block events. The Java gRPC implementation may not begin reading events until the first use of the
+     * returned iterator.
+     * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC
+     * connection error occurs.</p>
+     * @param options Function that transforms call options.
+     * @return Ordered sequence of events.
+     * @see #newFilteredBlockEventsRequest()
+     */
+    CloseableIterator<EventsPackage.FilteredBlock> getFilteredBlockEvents(UnaryOperator<CallOptions> options);
 
     /**
      * Build a request to receive filtered block events. This can be used to specify a specific ledger start position.
@@ -133,11 +190,23 @@ public interface Network {
      * use of the* returned iterator.
      * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC
      * connection error occurs.</p>
-     * @param options Call options.
      * @return Ordered sequence of events.
      * @see #newBlockAndPrivateDataEventsRequest()
      */
-    CloseableIterator<EventsPackage.BlockAndPrivateData> getBlockAndPrivateDataEvents(CallOption... options);
+    default CloseableIterator<EventsPackage.BlockAndPrivateData> getBlockAndPrivateDataEvents() {
+        return getBlockAndPrivateDataEvents(GatewayUtils.asCallOptions());
+    }
+
+    /**
+     * Get block and private data events. The Java gRPC implementation may not begin reading events until the first
+     * use of the* returned iterator.
+     * <p>Note that the returned iterator may throw {@link io.grpc.StatusRuntimeException} during iteration if a gRPC
+     * connection error occurs.</p>
+     * @param options Function that transforms call options.
+     * @return Ordered sequence of events.
+     * @see #newBlockAndPrivateDataEventsRequest()
+     */
+    CloseableIterator<EventsPackage.BlockAndPrivateData> getBlockAndPrivateDataEvents(UnaryOperator<CallOptions> options);
 
     /**
      * Build a request to receive block and private data events. This can be used to specify a specific ledger start

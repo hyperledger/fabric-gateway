@@ -7,6 +7,9 @@
 package org.hyperledger.fabric.client;
 
 import java.util.Map;
+import java.util.function.UnaryOperator;
+
+import io.grpc.CallOptions;
 
 /**
  * A Fabric Gateway transaction proposal, which can be used to evaluate a transaction to query ledger state, or obtain
@@ -23,11 +26,53 @@ public interface Proposal extends Signable {
     /**
      * Evaluate the proposal and return the transaction result. The transaction is not submitted to the orderer and is
      * not committed to the ledger.
-     * @param options Call options.
      * @return Transaction result.
      * @throws GatewayException if the gRPC service invocation fails.
      */
-    byte[] evaluate(CallOption... options) throws GatewayException;
+    default byte[] evaluate() throws GatewayException {
+        return evaluate(GatewayUtils.asCallOptions());
+    }
+
+    /**
+     * Evaluate the proposal and return the transaction result. The transaction is not submitted to the orderer and is
+     * not committed to the ledger.
+     * @param options Function that transforms call options.
+     * @return Transaction result.
+     * @throws GatewayException if the gRPC service invocation fails.
+     */
+    byte[] evaluate(UnaryOperator<CallOptions> options) throws GatewayException;
+
+    /**
+     * Evaluate the proposal and return the transaction result. The transaction is not submitted to the orderer and is
+     * not committed to the ledger.
+     * @param options Call options.
+     * @return Transaction result.
+     * @throws GatewayException if the gRPC service invocation fails.
+     * @deprecated Replaced by {@link #evaluate(UnaryOperator)}.
+     */
+    @Deprecated
+    default byte[] evaluate(CallOption... options) throws GatewayException {
+        return evaluate(GatewayUtils.asCallOptions(options));
+    }
+
+    /**
+     * Send the proposal to peers to obtain endorsements. Successful endorsement results in a transaction that can be
+     * submitted to the orderer to be committer to the ledger.
+     * @return An endorsed transaction.
+     * @throws EndorseException if the gRPC service invocation fails.
+     */
+    default Transaction endorse() throws EndorseException {
+        return endorse(GatewayUtils.asCallOptions());
+    }
+
+    /**
+     * Send the proposal to peers to obtain endorsements. Successful endorsement results in a transaction that can be
+     * submitted to the orderer to be committer to the ledger.
+     * @param options Function that transforms call options.
+     * @return An endorsed transaction.
+     * @throws EndorseException if the gRPC service invocation fails.
+     */
+    Transaction endorse(UnaryOperator<CallOptions> options) throws EndorseException;
 
     /**
      * Send the proposal to peers to obtain endorsements. Successful endorsement results in a transaction that can be
@@ -35,8 +80,12 @@ public interface Proposal extends Signable {
      * @param options Call options.
      * @return An endorsed transaction.
      * @throws EndorseException if the gRPC service invocation fails.
+     * @deprecated Replaced by {@link #endorse(UnaryOperator)}.
      */
-    Transaction endorse(CallOption... options) throws EndorseException;
+    @Deprecated
+    default Transaction endorse(CallOption... options) throws EndorseException {
+        return endorse(GatewayUtils.asCallOptions(options));
+    }
 
     /**
      * Builder used to create a new transaction proposal.

@@ -6,7 +6,10 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.function.UnaryOperator;
+
 import com.google.protobuf.ByteString;
+import io.grpc.CallOptions;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
@@ -52,7 +55,17 @@ final class TransactionImpl implements Transaction {
     }
 
     @Override
-    public SubmittedTransaction submitAsync(final CallOption... options) throws SubmitException {
+    public byte[] submit(final UnaryOperator<CallOptions> options) throws SubmitException, CommitStatusException, CommitException {
+        Status status = submitAsync(options).getStatus(options);
+        if (!status.isSuccessful()) {
+            throw new CommitException(status);
+        }
+
+        return getResult();
+    }
+
+    @Override
+    public SubmittedTransaction submitAsync(final UnaryOperator<CallOptions> options) throws SubmitException {
         sign();
         SubmitRequest submitRequest = SubmitRequest.newBuilder()
                 .setTransactionId(preparedTransaction.getTransactionId())
@@ -62,16 +75,6 @@ final class TransactionImpl implements Transaction {
         client.submit(submitRequest, options);
 
         return new SubmittedTransactionImpl(client, signingIdentity, getTransactionId(), newSignedCommitStatusRequest(), getResult());
-    }
-
-    @Override
-    public byte[] submit(final CallOption... options) throws CommitException, SubmitException, CommitStatusException {
-        Status status = submitAsync(options).getStatus(options);
-        if (!status.isSuccessful()) {
-            throw new CommitException(status);
-        }
-
-        return getResult();
     }
 
     void setSignature(final byte[] signature) {
