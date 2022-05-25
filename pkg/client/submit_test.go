@@ -799,4 +799,181 @@ func TestSubmitTransaction(t *testing.T) {
 
 		require.ErrorIs(t, err, context.DeadlineExceeded)
 	})
+
+	t.Run("Endorse uses specified gRPC call options", func(t *testing.T) {
+		var actual []grpc.CallOption
+		expected := grpc.WaitForReady(true)
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, _ *gateway.EndorseRequest, opts ...grpc.CallOption) {
+				actual = opts
+			}).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
+			Times(1)
+
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
+
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+
+		_, err = proposal.Endorse(expected)
+		require.NoError(t, err, "Endorse")
+
+		require.Contains(t, actual, expected, "CallOptions")
+	})
+
+	t.Run("Endorse uses specified gRPC call options with specified context", func(t *testing.T) {
+		var actual []grpc.CallOption
+		expected := grpc.WaitForReady(true)
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, _ *gateway.EndorseRequest, opts ...grpc.CallOption) {
+				actual = opts
+			}).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
+			Times(1)
+
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
+
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		_, err = proposal.EndorseWithContext(ctx, expected)
+		require.NoError(t, err, "Endorse")
+
+		require.Contains(t, actual, expected, "CallOptions")
+	})
+
+	t.Run("Submit uses specified gRPC call options", func(t *testing.T) {
+		var actual []grpc.CallOption
+		expected := grpc.WaitForReady(true)
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
+		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, _ *gateway.SubmitRequest, opts ...grpc.CallOption) {
+				actual = opts
+			}).
+			Return(nil, nil).
+			Times(1)
+
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
+
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+
+		transaction, err := proposal.Endorse()
+		require.NoError(t, err, "Endorse")
+
+		_, err = transaction.Submit(expected)
+		require.NoError(t, err, "Submit")
+
+		require.Contains(t, actual, expected, "CallOptions")
+	})
+
+	t.Run("Submit uses specified gRPC call options with specified context", func(t *testing.T) {
+		var actual []grpc.CallOption
+		expected := grpc.WaitForReady(true)
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
+		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, _ *gateway.SubmitRequest, opts ...grpc.CallOption) {
+				actual = opts
+			}).
+			Return(nil, nil).
+			Times(1)
+
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
+
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+
+		transaction, err := proposal.Endorse()
+		require.NoError(t, err, "Endorse")
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		_, err = transaction.SubmitWithContext(ctx, expected)
+		require.NoError(t, err, "Submit")
+
+		require.Contains(t, actual, expected, "CallOptions")
+	})
+
+	t.Run("CommisStatus uses specified gRPC call options", func(t *testing.T) {
+		var actual []grpc.CallOption
+		expected := grpc.WaitForReady(true)
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
+		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(nil, nil)
+		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil).
+			Do(func(ctx context.Context, _ *gateway.SignedCommitStatusRequest, opts ...grpc.CallOption) {
+				actual = opts
+			}).
+			Times(1)
+
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
+
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+
+		transaction, err := proposal.Endorse()
+		require.NoError(t, err, "Endorse")
+
+		commit, err := transaction.Submit(expected)
+		require.NoError(t, err, "Submit")
+
+		_, err = commit.Status(expected)
+		require.NoError(t, err, "Status")
+
+		require.Contains(t, actual, expected, "CallOptions")
+	})
+
+	t.Run("CommisStatus uses specified gRPC call options with specified context", func(t *testing.T) {
+		var actual []grpc.CallOption
+		expected := grpc.WaitForReady(true)
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
+		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(nil, nil)
+		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil).
+			Do(func(ctx context.Context, _ *gateway.SignedCommitStatusRequest, opts ...grpc.CallOption) {
+				actual = opts
+			}).
+			Times(1)
+
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
+
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+
+		transaction, err := proposal.Endorse()
+		require.NoError(t, err, "Endorse")
+
+		commit, err := transaction.Submit(expected)
+		require.NoError(t, err, "Submit")
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		_, err = commit.StatusWithContext(ctx, expected)
+		require.NoError(t, err, "Status")
+
+		require.Contains(t, actual, expected, "CallOptions")
+	})
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go/orderer"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -274,5 +275,40 @@ func TestFilteredBlockEvents(t *testing.T) {
 			actual := <-receive
 			test.AssertProtoEqual(t, event, actual)
 		}
+	})
+
+	t.Run("Uses specified gRPC call options", func(t *testing.T) {
+		var actual []grpc.CallOption
+		expected := grpc.WaitForReady(true)
+
+		controller := gomock.NewController(t)
+		mockClient := NewMockDeliverClient(controller)
+		mockEvents := NewMockDeliver_DeliverClient(controller)
+
+		mockClient.EXPECT().DeliverFiltered(gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, opts ...grpc.CallOption) {
+				actual = opts
+			}).
+			Return(mockEvents, nil).
+			Times(1)
+
+		mockEvents.EXPECT().Send(gomock.Any()).
+			Return(nil).
+			AnyTimes()
+		mockEvents.EXPECT().Recv().
+			Return(nil, errors.New("fake")).
+			AnyTimes()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
+		request, err := network.NewFilteredBlockEventsRequest()
+		require.NoError(t, err, "NewFilteredBlockEventsRequest")
+
+		_, err = request.Events(ctx, expected)
+		require.NoError(t, err, "Events")
+
+		require.Contains(t, actual, expected, "CallOptions")
 	})
 }

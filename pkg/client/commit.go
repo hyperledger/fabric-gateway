@@ -60,28 +60,30 @@ func (commit *Commit) TransactionID() string {
 
 // Status of the committed transaction. If the transaction has not yet committed, this call blocks until the commit
 // occurs.
-func (commit *Commit) Status() (*Status, error) {
-	return commit.status(commit.client.CommitStatus)
+func (commit *Commit) Status(opts ...grpc.CallOption) (*Status, error) {
+	return commit.status(commit.client.CommitStatus, opts...)
 }
 
 // StatusWithContext uses the supplied context to get the status of the committed transaction. If the transaction has
 // not yet committed, this call blocks until the commit occurs.
-func (commit *Commit) StatusWithContext(ctx context.Context) (*Status, error) {
+func (commit *Commit) StatusWithContext(ctx context.Context, opts ...grpc.CallOption) (*Status, error) {
 	return commit.status(
 		func(in *gateway.SignedCommitStatusRequest, opts ...grpc.CallOption) (*gateway.CommitStatusResponse, error) {
 			return commit.client.CommitStatusWithContext(ctx, in, opts...)
 		},
+		opts...,
 	)
 }
 
 func (commit *Commit) status(
 	call func(in *gateway.SignedCommitStatusRequest, opts ...grpc.CallOption) (*gateway.CommitStatusResponse, error),
+	opts ...grpc.CallOption,
 ) (*Status, error) {
 	if err := commit.sign(); err != nil {
 		return nil, err
 	}
 
-	response, err := call(commit.signedRequest)
+	response, err := call(commit.signedRequest, opts...)
 	if err != nil {
 		return nil, err
 	}

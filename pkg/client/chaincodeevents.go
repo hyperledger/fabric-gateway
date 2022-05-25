@@ -12,6 +12,7 @@ import (
 
 	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
 	"github.com/hyperledger/fabric-protos-go/gateway"
+	"google.golang.org/grpc"
 )
 
 // ChaincodeEventsRequest delivers events emitted by transaction functions in a specific chaincode.
@@ -37,12 +38,12 @@ func (events *ChaincodeEventsRequest) Digest() []byte {
 }
 
 // Events returns a channel from which chaincode events can be read.
-func (events *ChaincodeEventsRequest) Events(ctx context.Context) (<-chan *ChaincodeEvent, error) {
+func (events *ChaincodeEventsRequest) Events(ctx context.Context, opts ...grpc.CallOption) (<-chan *ChaincodeEvent, error) {
 	if err := events.sign(); err != nil {
 		return nil, err
 	}
 
-	eventsClient, err := events.client.ChaincodeEvents(ctx, events.signedRequest)
+	eventsClient, err := events.client.ChaincodeEvents(ctx, events.signedRequest, opts...)
 	if err != nil {
 		return nil, err
 	}

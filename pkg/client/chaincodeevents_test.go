@@ -191,7 +191,7 @@ func TestChaincodeEvents(t *testing.T) {
 		}
 		test.AssertProtoEqual(t, expected, actual)
 	})
-	t.Run("Sends valid request with specified start block  and checkpointed block", func(t *testing.T) {
+	t.Run("Sends valid request with specified start block and checkpoint block", func(t *testing.T) {
 		controller := gomock.NewController(t)
 		mockClient := NewMockGatewayClient(controller)
 		mockEvents := NewMockGateway_ChaincodeEventsClient(controller)
@@ -238,7 +238,7 @@ func TestChaincodeEvents(t *testing.T) {
 		test.AssertProtoEqual(t, expected, actual)
 	})
 
-	t.Run("Sends valid request with specified start block  and checkpointed  transaction id", func(t *testing.T) {
+	t.Run("Sends valid request with specified start block and checkpoint transaction ID", func(t *testing.T) {
 		controller := gomock.NewController(t)
 		mockClient := NewMockGatewayClient(controller)
 		mockEvents := NewMockGateway_ChaincodeEventsClient(controller)
@@ -328,7 +328,7 @@ func TestChaincodeEvents(t *testing.T) {
 		}
 		test.AssertProtoEqual(t, expected, actual)
 	})
-	t.Run("Sends valid request with no start block and checkpointer transaction id", func(t *testing.T) {
+	t.Run("Sends valid request with no start block and checkpoint transaction ID", func(t *testing.T) {
 		controller := gomock.NewController(t)
 		mockClient := NewMockGatewayClient(controller)
 		mockEvents := NewMockGateway_ChaincodeEventsClient(controller)
@@ -375,7 +375,7 @@ func TestChaincodeEvents(t *testing.T) {
 		}
 		test.AssertProtoEqual(t, expected, actual)
 	})
-	t.Run("Sends valid request with with start block and checkpointer chaincode event", func(t *testing.T) {
+	t.Run("Sends valid request with with start block and checkpoint chaincode event", func(t *testing.T) {
 		controller := gomock.NewController(t)
 		mockClient := NewMockGatewayClient(controller)
 		mockEvents := NewMockGateway_ChaincodeEventsClient(controller)
@@ -514,5 +514,37 @@ func TestChaincodeEvents(t *testing.T) {
 			actual := <-receive
 			require.EqualValues(t, event, actual)
 		}
+	})
+
+	t.Run("Uses specified gRPC call options", func(t *testing.T) {
+		var actual []grpc.CallOption
+		expected := grpc.WaitForReady(true)
+
+		controller := gomock.NewController(t)
+		mockClient := NewMockGatewayClient(controller)
+		mockEvents := NewMockGateway_ChaincodeEventsClient(controller)
+
+		mockClient.EXPECT().ChaincodeEvents(gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, _ *gateway.SignedChaincodeEventsRequest, opts ...grpc.CallOption) {
+				actual = opts
+			}).
+			Return(mockEvents, nil).
+			Times(1)
+
+		mockEvents.EXPECT().Recv().
+			Return(nil, errors.New("fake")).
+			AnyTimes()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		network := AssertNewTestNetwork(t, "NETWORK", WithGatewayClient(mockClient))
+		request, err := network.NewChaincodeEventsRequest("CHAINCODE")
+		require.NoError(t, err, "NewChaincodeEventsRequest")
+
+		_, err = request.Events(ctx, expected)
+		require.NoError(t, err, "Events")
+
+		require.Contains(t, actual, expected, "CallOptions")
 	})
 }

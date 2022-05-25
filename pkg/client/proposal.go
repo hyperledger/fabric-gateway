@@ -44,22 +44,24 @@ func (proposal *Proposal) TransactionID() string {
 }
 
 // Endorse the proposal and obtain an endorsed transaction for submission to the orderer.
-func (proposal *Proposal) Endorse() (*Transaction, error) {
-	return proposal.endorse(proposal.client.Endorse)
+func (proposal *Proposal) Endorse(opts ...grpc.CallOption) (*Transaction, error) {
+	return proposal.endorse(proposal.client.Endorse, opts...)
 }
 
 // EndorseWithContext uses ths supplied context to endorse the proposal and obtain an endorsed transaction for
 // submission to the orderer.
-func (proposal *Proposal) EndorseWithContext(ctx context.Context) (*Transaction, error) {
+func (proposal *Proposal) EndorseWithContext(ctx context.Context, opts ...grpc.CallOption) (*Transaction, error) {
 	return proposal.endorse(
 		func(in *gateway.EndorseRequest, opts ...grpc.CallOption) (*gateway.EndorseResponse, error) {
 			return proposal.client.EndorseWithContext(ctx, in, opts...)
 		},
+		opts...,
 	)
 }
 
 func (proposal *Proposal) endorse(
 	call func(in *gateway.EndorseRequest, opts ...grpc.CallOption) (*gateway.EndorseResponse, error),
+	opts ...grpc.CallOption,
 ) (*Transaction, error) {
 	if err := proposal.sign(); err != nil {
 		return nil, err
@@ -71,7 +73,7 @@ func (proposal *Proposal) endorse(
 		ProposedTransaction:    proposal.proposedTransaction.GetProposal(),
 		EndorsingOrganizations: proposal.proposedTransaction.GetEndorsingOrganizations(),
 	}
-	response, err := call(endorseRequest)
+	response, err := call(endorseRequest, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -84,22 +86,24 @@ func (proposal *Proposal) endorse(
 }
 
 // Evaluate the proposal and obtain a transaction result. This is effectively a query.
-func (proposal *Proposal) Evaluate() ([]byte, error) {
-	return proposal.evaluate(proposal.client.Evaluate)
+func (proposal *Proposal) Evaluate(opts ...grpc.CallOption) ([]byte, error) {
+	return proposal.evaluate(proposal.client.Evaluate, opts...)
 }
 
 // EvaluateWithContext uses ths supplied context to evaluate the proposal and obtain a transaction result. This is
 // effectively a query.
-func (proposal *Proposal) EvaluateWithContext(ctx context.Context) ([]byte, error) {
+func (proposal *Proposal) EvaluateWithContext(ctx context.Context, opts ...grpc.CallOption) ([]byte, error) {
 	return proposal.evaluate(
 		func(in *gateway.EvaluateRequest, opts ...grpc.CallOption) (*gateway.EvaluateResponse, error) {
 			return proposal.client.EvaluateWithContext(ctx, in, opts...)
 		},
+		opts...,
 	)
 }
 
 func (proposal *Proposal) evaluate(
 	call func(in *gateway.EvaluateRequest, opts ...grpc.CallOption) (*gateway.EvaluateResponse, error),
+	opts ...grpc.CallOption,
 ) ([]byte, error) {
 	if err := proposal.sign(); err != nil {
 		return nil, err
@@ -111,7 +115,7 @@ func (proposal *Proposal) evaluate(
 		ProposedTransaction: proposal.proposedTransaction.GetProposal(),
 		TargetOrganizations: proposal.proposedTransaction.GetEndorsingOrganizations(),
 	}
-	response, err := call(evaluateRequest)
+	response, err := call(evaluateRequest, opts...)
 	if err != nil {
 		return nil, err
 	}

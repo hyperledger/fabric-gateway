@@ -18,6 +18,7 @@ import (
 	"github.com/hyperledger/fabric-protos-go/orderer"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -286,6 +287,7 @@ func TestBlockEvents(t *testing.T) {
 
 		test.AssertProtoEqual(t, expected, actual)
 	})
+
 	t.Run("Uses default start position with unset checkpoint and no start block", func(t *testing.T) {
 		controller := gomock.NewController(t)
 		mockClient := NewMockDeliverClient(controller)
@@ -484,5 +486,40 @@ func TestBlockEvents(t *testing.T) {
 			actual := <-receive
 			test.AssertProtoEqual(t, event, actual)
 		}
+	})
+
+	t.Run("Uses specified gRPC call options", func(t *testing.T) {
+		var actual []grpc.CallOption
+		expected := grpc.WaitForReady(true)
+
+		controller := gomock.NewController(t)
+		mockClient := NewMockDeliverClient(controller)
+		mockEvents := NewMockDeliver_DeliverClient(controller)
+
+		mockClient.EXPECT().Deliver(gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, opts ...grpc.CallOption) {
+				actual = opts
+			}).
+			Return(mockEvents, nil).
+			Times(1)
+
+		mockEvents.EXPECT().Send(gomock.Any()).
+			Return(nil).
+			AnyTimes()
+		mockEvents.EXPECT().Recv().
+			Return(nil, errors.New("fake")).
+			AnyTimes()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
+		request, err := network.NewBlockEventsRequest()
+		require.NoError(t, err, "NewBlockEventsRequest")
+
+		_, err = request.Events(ctx, expected)
+		require.NoError(t, err, "Events")
+
+		require.Contains(t, actual, expected, "CallOptions")
 	})
 }
