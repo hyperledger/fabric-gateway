@@ -13,6 +13,7 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"google.golang.org/grpc"
 )
 
 type baseBlockEventsRequest struct {
@@ -66,12 +67,12 @@ type FilteredBlockEventsRequest struct {
 }
 
 // Events returns a channel from which filtered block events can be read.
-func (events *FilteredBlockEventsRequest) Events(ctx context.Context) (<-chan *peer.FilteredBlock, error) {
+func (events *FilteredBlockEventsRequest) Events(ctx context.Context, opts ...grpc.CallOption) (<-chan *peer.FilteredBlock, error) {
 	if err := events.sign(); err != nil {
 		return nil, err
 	}
 
-	eventsClient, err := events.client.FilteredBlockEvents(ctx, events.request)
+	eventsClient, err := events.client.FilteredBlockEvents(ctx, events.request, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -100,12 +101,12 @@ type BlockEventsRequest struct {
 }
 
 // Events returns a channel from which block events can be read.
-func (events *BlockEventsRequest) Events(ctx context.Context) (<-chan *common.Block, error) {
+func (events *BlockEventsRequest) Events(ctx context.Context, opts ...grpc.CallOption) (<-chan *common.Block, error) {
 	if err := events.sign(); err != nil {
 		return nil, err
 	}
 
-	eventsClient, err := events.client.BlockEvents(ctx, events.request)
+	eventsClient, err := events.client.BlockEvents(ctx, events.request, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -134,12 +135,12 @@ type BlockAndPrivateDataEventsRequest struct {
 }
 
 // Events returns a channel from which block and private data events can be read.
-func (events *BlockAndPrivateDataEventsRequest) Events(ctx context.Context) (<-chan *peer.BlockAndPrivateData, error) {
+func (events *BlockAndPrivateDataEventsRequest) Events(ctx context.Context, opts ...grpc.CallOption) (<-chan *peer.BlockAndPrivateData, error) {
 	if err := events.sign(); err != nil {
 		return nil, err
 	}
 
-	eventsClient, err := events.client.BlockAndPrivateEventsData(ctx, events.request)
+	eventsClient, err := events.client.BlockAndPrivateDataEvents(ctx, events.request, opts...)
 	if err != nil {
 		return nil, err
 	}

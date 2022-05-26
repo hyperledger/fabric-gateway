@@ -338,4 +338,53 @@ func TestEvaluateTransaction(t *testing.T) {
 
 		require.ErrorIs(t, err, context.DeadlineExceeded)
 	})
+
+	t.Run("Uses specified gRPC call options", func(t *testing.T) {
+		var actual []grpc.CallOption
+		expected := grpc.WaitForReady(true)
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, _ *gateway.EvaluateRequest, opts ...grpc.CallOption) {
+				actual = opts
+			}).
+			Return(newEvaluateResponse(nil), nil).
+			Times(1)
+
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
+
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+
+		_, err = proposal.Evaluate(expected)
+		require.NoError(t, err, "Evaluate")
+
+		require.Contains(t, actual, expected, "CallOptions")
+	})
+
+	t.Run("Uses specified gRPC call options with specified context", func(t *testing.T) {
+		var actual []grpc.CallOption
+		expected := grpc.WaitForReady(true)
+
+		mockClient := NewMockGatewayClient(gomock.NewController(t))
+		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(_ context.Context, _ *gateway.EvaluateRequest, opts ...grpc.CallOption) {
+				actual = opts
+			}).
+			Return(newEvaluateResponse(nil), nil).
+			Times(1)
+
+		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
+
+		proposal, err := contract.NewProposal("transaction")
+		require.NoError(t, err, "NewProposal")
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		_, err = proposal.EvaluateWithContext(ctx, expected)
+		require.NoError(t, err, "Evaluate")
+
+		require.Contains(t, actual, expected, "CallOptions")
+	})
 }

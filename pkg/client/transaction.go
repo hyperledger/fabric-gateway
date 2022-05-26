@@ -66,21 +66,23 @@ func (transaction *Transaction) TransactionID() string {
 }
 
 // Submit the transaction to the orderer for commit to the ledger.
-func (transaction *Transaction) Submit() (*Commit, error) {
-	return transaction.submit(transaction.client.Submit)
+func (transaction *Transaction) Submit(opts ...grpc.CallOption) (*Commit, error) {
+	return transaction.submit(transaction.client.Submit, opts...)
 }
 
 // SubmitWithContext uses the supplied context to submit the transaction to the orderer for commit to the ledger.
-func (transaction *Transaction) SubmitWithContext(ctx context.Context) (*Commit, error) {
+func (transaction *Transaction) SubmitWithContext(ctx context.Context, opts ...grpc.CallOption) (*Commit, error) {
 	return transaction.submit(
 		func(in *gateway.SubmitRequest, opts ...grpc.CallOption) (*gateway.SubmitResponse, error) {
 			return transaction.client.SubmitWithContext(ctx, in, opts...)
 		},
+		opts...,
 	)
 }
 
 func (transaction *Transaction) submit(
 	call func(in *gateway.SubmitRequest, opts ...grpc.CallOption) (*gateway.SubmitResponse, error),
+	opts ...grpc.CallOption,
 ) (*Commit, error) {
 	if err := transaction.sign(); err != nil {
 		return nil, err
@@ -97,7 +99,7 @@ func (transaction *Transaction) submit(
 		ChannelId:           transaction.channelID,
 		PreparedTransaction: transaction.preparedTransaction.GetEnvelope(),
 	}
-	_, err = call(submitRequest)
+	_, err = call(submitRequest, opts...)
 	if err != nil {
 		return nil, err
 	}
