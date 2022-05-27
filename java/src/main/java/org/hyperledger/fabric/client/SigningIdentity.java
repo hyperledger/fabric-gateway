@@ -7,18 +7,18 @@
 package org.hyperledger.fabric.client;
 
 import java.security.GeneralSecurityException;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 
 final class SigningIdentity {
     private final Identity identity;
-    private final Function<byte[], byte[]> hash;
+    private final UnaryOperator<byte[]> hash;
     private final Signer signer;
     private final byte[] creator;
 
-    SigningIdentity(final Identity identity, final Function<byte[], byte[]> hash, final Signer signer) {
+    SigningIdentity(final Identity identity, final UnaryOperator<byte[]> hash, final Signer signer) {
         this.identity = identity;
         this.hash = hash;
         this.signer = signer;

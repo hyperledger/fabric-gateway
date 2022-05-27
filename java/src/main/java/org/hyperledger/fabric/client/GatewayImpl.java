@@ -6,11 +6,11 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.Arrays;
 import java.util.Objects;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import io.grpc.CallOptions;
 import io.grpc.Channel;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
@@ -31,8 +31,8 @@ final class GatewayImpl implements Gateway {
         private Channel grpcChannel;
         private Identity identity;
         private Signer signer = UNDEFINED_SIGNER; // No signer implementation is required if only offline signing is used
-        private Function<byte[], byte[]> hash = Hash::sha256;
-        private final CallOptions.Builder optionsBuilder = CallOptions.newBuiler();
+        private UnaryOperator<byte[]> hash = Hash::sha256;
+        private final DefaultCallOptions.Builder optionsBuilder = DefaultCallOptions.newBuiler();
 
         @Override
         public Builder connection(final Channel grpcChannel) {
@@ -56,57 +56,65 @@ final class GatewayImpl implements Gateway {
         }
 
         @Override
-        public Builder hash(final Function<byte[], byte[]> hash) {
+        public Builder hash(final UnaryOperator<byte[]> hash) {
             Objects.requireNonNull(hash, "hash");
             this.hash = hash;
             return this;
         }
 
         @Override
-        public Builder evaluateOptions(final CallOption... options) {
-            optionsBuilder.evaluate(Arrays.asList(options));
+        public Builder evaluateOptions(final UnaryOperator<CallOptions> options) {
+            Objects.requireNonNull(options, "evaluateOptions");
+            optionsBuilder.evaluate(options);
             return this;
         }
 
         @Override
-        public Builder endorseOptions(final CallOption... options) {
-            optionsBuilder.endorse(Arrays.asList(options));
+        public Builder endorseOptions(final UnaryOperator<CallOptions> options) {
+            Objects.requireNonNull(options, "endorseOptions");
+            optionsBuilder.endorse(options);
             return this;
         }
 
         @Override
-        public Builder submitOptions(final CallOption... options) {
-            optionsBuilder.submit(Arrays.asList(options));
+        public Gateway.Builder submitOptions(final UnaryOperator<CallOptions> options) {
+            Objects.requireNonNull(options, "submitOptions");
+            optionsBuilder.submit(options);
             return this;
         }
 
         @Override
-        public Builder commitStatusOptions(final CallOption... options) {
-            optionsBuilder.commitStatus(Arrays.asList(options));
+        public Gateway.Builder commitStatusOptions(final UnaryOperator<CallOptions> options) {
+            Objects.requireNonNull(options, "commitStatusOptions");
+            optionsBuilder.commitStatus(options);
             return this;
         }
 
         @Override
-        public Builder chaincodeEventsOptions(final CallOption... options) {
-            optionsBuilder.chaincodeEvents(Arrays.asList(options));
+        public Gateway.Builder chaincodeEventsOptions(final UnaryOperator<CallOptions> options) {
+            Objects.requireNonNull(options, "chaincodeEventsOptions");
+            optionsBuilder.chaincodeEvents(options);
             return this;
         }
 
         @Override
-        public Gateway.Builder blockEventsOptions(final CallOption... options) {
-            optionsBuilder.blockEvents(Arrays.asList(options));
+        public Gateway.Builder blockEventsOptions(final UnaryOperator<CallOptions> options) {
+            Objects.requireNonNull(options, "blockEventsOptions");
+            optionsBuilder.blockEvents(options);
             return this;
         }
 
         @Override
-        public Gateway.Builder filteredBlockEventsOptions(final CallOption... options) {
-            optionsBuilder.filteredBlockEvents(Arrays.asList(options));
+        public Gateway.Builder filteredBlockEventsOptions(final UnaryOperator<CallOptions> options) {
+            Objects.requireNonNull(options, "filteredBlockEventsOptions");
+            optionsBuilder.filteredBlockEvents(options);
             return this;
         }
 
         @Override
-        public Gateway.Builder blockAndPrivateDataEventsOptions(final CallOption... options) {
-            optionsBuilder.blockAndPrivateDataEvents(Arrays.asList(options));
+        public Gateway.Builder blockAndPrivateDataEventsOptions(final UnaryOperator<CallOptions> options) {
+            Objects.requireNonNull(options, "blockAndPrivateDataEventsOptions");
+            optionsBuilder.blockAndPrivateDataEvents(options);
             return this;
         }
 

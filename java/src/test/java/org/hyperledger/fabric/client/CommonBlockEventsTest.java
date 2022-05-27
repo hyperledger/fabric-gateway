@@ -10,6 +10,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -47,7 +48,7 @@ public abstract class CommonBlockEventsTest<E> {
         stub = mocker.getDeliverServiceStubSpy();
 
         Gateway.Builder builder = mocker.getGatewayBuilder();
-        setEventsOptions(builder, CallOption.deadline(defaultDeadline));
+        setEventsOptions(builder, options -> options.withDeadline(defaultDeadline));
         gateway = builder.connect();
         network = gateway.getNetwork("NETWORK");
     }
@@ -58,10 +59,11 @@ public abstract class CommonBlockEventsTest<E> {
         mocker.close();
     }
 
-    protected abstract void setEventsOptions(Gateway.Builder builder, CallOption... options);
+    protected abstract void setEventsOptions(Gateway.Builder builder, UnaryOperator<CallOptions> options);
     protected abstract EventsPackage.DeliverResponse newDeliverResponse(long blockNumber);
     protected abstract void stubDoThrow(Throwable... t);
-    protected abstract CloseableIterator<E> getEvents(CallOption... options);
+    protected abstract CloseableIterator<E> getEvents();
+    protected abstract CloseableIterator<E> getEvents(UnaryOperator<CallOptions> options);
     protected abstract Stream<Common.Envelope> captureEvents();
     protected abstract EventsBuilder<E> newEventsRequest();
     protected abstract void stubDoReturn(Stream<EventsPackage.DeliverResponse> responses);
@@ -331,8 +333,7 @@ public abstract class CommonBlockEventsTest<E> {
     @Test
     void uses_specified_call_options() {
         Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
-        CallOption option = CallOption.deadline(expected);
-        try (CloseableIterator<?> iter = getEvents(option)) {
+        try (CloseableIterator<?> iter = getEvents(options -> options.withDeadline(expected))) {
             iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
         }
 

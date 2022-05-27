@@ -6,8 +6,10 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
+import io.grpc.CallOptions;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.peer.EventsPackage;
 
@@ -17,7 +19,7 @@ import static org.mockito.Mockito.doThrow;
 
 public final class FilteredBlockEventsTest extends CommonBlockEventsTest<EventsPackage.FilteredBlock> {
     @Override
-    protected void setEventsOptions(final Gateway.Builder builder, final CallOption... options) {
+    protected void setEventsOptions(final Gateway.Builder builder, final UnaryOperator<CallOptions> options) {
         builder.filteredBlockEventsOptions(options);
     }
 
@@ -36,7 +38,12 @@ public final class FilteredBlockEventsTest extends CommonBlockEventsTest<EventsP
     }
 
     @Override
-    protected CloseableIterator<EventsPackage.FilteredBlock> getEvents(final CallOption... options) {
+    protected CloseableIterator<EventsPackage.FilteredBlock> getEvents() {
+        return network.getFilteredBlockEvents();
+    }
+
+    @Override
+    protected CloseableIterator<EventsPackage.FilteredBlock> getEvents(final UnaryOperator<CallOptions> options) {
         return network.getFilteredBlockEvents(options);
     }
 

@@ -10,16 +10,18 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.UnaryOperator;
 
+import io.grpc.CallOptions;
 import io.grpc.Deadline;
-import io.grpc.stub.AbstractStub;
 
 /**
  * Options defining runtime behavior of a gRPC service invocation.
+ * @deprecated Use {@link io.grpc.CallOptions} instead.
  */
+@Deprecated
 public final class CallOption {
-    private final UnaryOperator<AbstractStub<?>> operator;
+    private final UnaryOperator<CallOptions> operator;
 
-    private CallOption(final UnaryOperator<AbstractStub<?>> operator) {
+    private CallOption(final UnaryOperator<CallOptions> operator) {
         this.operator = operator;
     }
 
@@ -30,7 +32,7 @@ public final class CallOption {
      */
     public static CallOption deadline(final Deadline deadline) {
         Objects.requireNonNull(deadline, "deadline");
-        return new CallOption(stub -> stub.withDeadline(deadline));
+        return new CallOption(options -> options.withDeadline(deadline));
     }
 
     /**
@@ -41,11 +43,10 @@ public final class CallOption {
      */
     public static CallOption deadlineAfter(final long duration, final TimeUnit unit) {
         Objects.requireNonNull(unit, "unit");
-        return new CallOption(stub -> stub.withDeadlineAfter(duration, unit));
+        return new CallOption(options -> options.withDeadlineAfter(duration, unit));
     }
 
-    @SuppressWarnings("unchecked")
-    <T extends AbstractStub<T>> T apply(final T stub) {
-        return (T) operator.apply(stub);
+    CallOptions apply(final CallOptions options) {
+        return operator.apply(options);
     }
 }

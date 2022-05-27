@@ -6,7 +6,10 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.function.UnaryOperator;
+
 import com.google.protobuf.ByteString;
+import io.grpc.CallOptions;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 
@@ -23,7 +26,7 @@ final class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
     }
 
     @Override
-    public CloseableIterator<ChaincodeEvent> getEvents(final CallOption... options) {
+    public CloseableIterator<ChaincodeEvent> getEvents(final UnaryOperator<CallOptions> options) {
         sign();
         CloseableIterator<ChaincodeEventsResponse> responseIter = client.chaincodeEvents(signedRequest, options);
         return new ChaincodeEventIterator(responseIter);

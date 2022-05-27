@@ -7,7 +7,9 @@
 package org.hyperledger.fabric.client;
 
 import java.util.NoSuchElementException;
+import java.util.function.UnaryOperator;
 
+import io.grpc.CallOptions;
 import org.hyperledger.fabric.protos.common.Common;
 import org.hyperledger.fabric.protos.peer.EventsPackage;
 
@@ -20,7 +22,7 @@ final class FilteredBlockEventsRequestImpl extends SignableBlockEventsRequest im
     }
 
     @Override
-    public CloseableIterator<EventsPackage.FilteredBlock> getEvents(final CallOption... options) {
+    public CloseableIterator<EventsPackage.FilteredBlock> getEvents(final UnaryOperator<CallOptions> options) {
         Common.Envelope request = getSignedRequest();
         CloseableIterator<EventsPackage.DeliverResponse> responseIter = client.filteredBlockEvents(request, options);
 

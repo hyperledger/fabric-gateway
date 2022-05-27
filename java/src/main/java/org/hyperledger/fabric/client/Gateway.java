@@ -6,8 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
+import io.grpc.CallOptions;
 import io.grpc.Channel;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
@@ -174,63 +175,158 @@ public interface Gateway extends AutoCloseable {
          * @param hash A hashing function.
          * @return The builder instance, allowing multiple configuration options to be chained.
          */
-        Builder hash(Function<byte[], byte[]> hash);
+        Builder hash(UnaryOperator<byte[]> hash);
 
         /**
          * Specify the default call options for evaluating transactions.
+         * <p>A call of:</p>
+         * <pre>{@code
+         *     evaluateOptions(CallOption.deadlineAfter(5, TimeUnit.SECONDS))
+         * }</pre>
+         * <p>is equivalent to:</p>
+         * <pre>{@code
+         *     evaluateOptions(options -> options.withDeadlineAfter(5, TimeUnit.SECONDS))
+         * }</pre>
          * @param options Call options.
          * @return The builder instance, allowing multiple configuration options to be chained.
+         * @deprecated Replaced by {@link #evaluateOptions(UnaryOperator)}.
          */
-        Builder evaluateOptions(CallOption... options);
+        @Deprecated
+        default Builder evaluateOptions(CallOption... options) {
+            return evaluateOptions(GatewayUtils.asCallOptions(options));
+        }
+
+        /**
+         * Specify the default call options for evaluating transactions.
+         * @param options Function that transforms call options.
+         * @return The builder instance, allowing multiple configuration options to be chained.
+         */
+        Builder evaluateOptions(UnaryOperator<CallOptions> options);
 
         /**
          * Specify the default call options for endorsements.
+         * <p>A call of:</p>
+         * <pre>{@code
+         *     endorseOptions(CallOption.deadlineAfter(5, TimeUnit.SECONDS))
+         * }</pre>
+         * <p>is equivalent to:</p>
+         * <pre>{@code
+         *     endorseOptions(options -> options.withDeadlineAfter(5, TimeUnit.SECONDS))
+         * }</pre>
          * @param options Call options.
          * @return The builder instance, allowing multiple configuration options to be chained.
+         * @deprecated Replaced by {@link #endorseOptions(UnaryOperator)}.
          */
-        Builder endorseOptions(CallOption... options);
+        @Deprecated
+        default Builder endorseOptions(CallOption... options) {
+            return endorseOptions(GatewayUtils.asCallOptions(options));
+        }
+
+        /**
+         * Specify the default call options for endorsements.
+         * @param options Function that transforms call options.
+         * @return The builder instance, allowing multiple configuration options to be chained.
+         */
+        Builder endorseOptions(UnaryOperator<CallOptions> options);
 
         /**
          * Specify the default call options for submit of transactions to the orderer.
+         * <p>A call of:</p>
+         * <pre>{@code
+         *     submitOptions(CallOption.deadlineAfter(5, TimeUnit.SECONDS))
+         * }</pre>
+         * <p>is equivalent to:</p>
+         * <pre>{@code
+         *     submitOptions(options -> options.withDeadlineAfter(5, TimeUnit.SECONDS))
+         * }</pre>
          * @param options Call options.
          * @return The builder instance, allowing multiple configuration options to be chained.
+         * @deprecated Replaced by {@link #submitOptions(UnaryOperator)}.
          */
-        Builder submitOptions(CallOption... options);
+        @Deprecated
+        default Builder submitOptions(CallOption... options) {
+            return submitOptions(GatewayUtils.asCallOptions(options));
+        }
+
+        /**
+         * Specify the default call options for submit of transactions to the orderer.
+         * @param options Function that transforms call options.
+         * @return The builder instance, allowing multiple configuration options to be chained.
+         */
+        Builder submitOptions(UnaryOperator<CallOptions> options);
 
         /**
          * Specify the default call options for retrieving transaction commit status.
+         * <p>A call of:</p>
+         * <pre>{@code
+         *     commitStatusOptions(CallOption.deadlineAfter(5, TimeUnit.SECONDS))
+         * }</pre>
+         * <p>is equivalent to:</p>
+         * <pre>{@code
+         *     commitStatusOptions(options -> options.withDeadlineAfter(5, TimeUnit.SECONDS))
+         * }</pre>
          * @param options Call options.
          * @return The builder instance, allowing multiple configuration options to be chained.
+         * @deprecated Replaced by {@link #commitStatusOptions(UnaryOperator)}.
          */
-        Builder commitStatusOptions(CallOption... options);
+        @Deprecated
+        default Builder commitStatusOptions(CallOption... options) {
+            return commitStatusOptions(GatewayUtils.asCallOptions(options));
+        }
+
+        /**
+         * Specify the default call options for retrieving transaction commit status.
+         * @param options Function that transforms call options.
+         * @return The builder instance, allowing multiple configuration options to be chained.
+         */
+        Builder commitStatusOptions(UnaryOperator<CallOptions> options);
 
         /**
          * Specify the default call options for chaincode events.
+         * <p>A call of:</p>
+         * <pre>{@code
+         *     chaincodeEventsOptions(CallOption.deadlineAfter(5, TimeUnit.SECONDS))
+         * }</pre>
+         * <p>is equivalent to:</p>
+         * <pre>{@code
+         *     chaincodeEventsOptions(options -> options.withDeadlineAfter(5, TimeUnit.SECONDS))
+         * }</pre>
          * @param options Call options.
          * @return The builder instance, allowing multiple configuration options to be chained.
+         * @deprecated Replaced by {@link #chaincodeEventsOptions(UnaryOperator)}.
          */
-        Builder chaincodeEventsOptions(CallOption... options);
+        @Deprecated
+        default Builder chaincodeEventsOptions(CallOption... options) {
+            return chaincodeEventsOptions(GatewayUtils.asCallOptions(options));
+        }
+
+        /**
+         * Specify the default call options for chaincode events.
+         * @param options Function that transforms call options.
+         * @return The builder instance, allowing multiple configuration options to be chained.
+         */
+        Builder chaincodeEventsOptions(UnaryOperator<CallOptions> options);
 
         /**
          * Specify the default call options for block events.
-         * @param options Call options.
+         * @param options Function that transforms call options.
          * @return The builder instance, allowing multiple configuration options to be chained.
          */
-        Builder blockEventsOptions(CallOption... options);
+        Builder blockEventsOptions(UnaryOperator<CallOptions> options);
 
         /**
          * Specify the default call options for filtered block events.
-         * @param options Call options.
+         * @param options Function that transforms call options.
          * @return The builder instance, allowing multiple configuration options to be chained.
          */
-        Builder filteredBlockEventsOptions(CallOption... options);
+        Builder filteredBlockEventsOptions(UnaryOperator<CallOptions> options);
 
         /**
          * Specify the default call options for block and private data events.
-         * @param options Call options.
+         * @param options Function that transforms call options.
          * @return The builder instance, allowing multiple configuration options to be chained.
          */
-        Builder blockAndPrivateDataEventsOptions(CallOption... options);
+        Builder blockAndPrivateDataEventsOptions(UnaryOperator<CallOptions> options);
 
         /**
          * Connects to the gateway using the specified options.

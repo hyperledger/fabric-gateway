@@ -6,18 +6,20 @@
 
 package org.hyperledger.fabric.client;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.Timestamp;
-import org.hyperledger.fabric.client.identity.Identity;
-import org.hyperledger.fabric.protos.msp.Identities;
-import org.hyperledger.fabric.protos.orderer.Ab;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+
+import com.google.protobuf.ByteString;
+import com.google.protobuf.Timestamp;
+import io.grpc.CallOptions;
+import org.hyperledger.fabric.client.identity.Identity;
+import org.hyperledger.fabric.protos.msp.Identities;
+import org.hyperledger.fabric.protos.orderer.Ab;
 
 /**
  * Utility functions.
@@ -77,5 +79,19 @@ final class GatewayUtils {
         return Ab.SeekPosition.newBuilder()
                 .setSpecified(largestBlockNumber)
                 .build();
+    }
+
+    @SuppressWarnings("deprecation")
+    static UnaryOperator<CallOptions> asCallOptions(final CallOption... legacyOptions) {
+        if (legacyOptions.length == 0) {
+            return null;
+        }
+
+        return callOptions -> {
+            for (CallOption operator : legacyOptions) {
+                callOptions = operator.apply(callOptions);
+            }
+            return callOptions;
+        };
     }
 }

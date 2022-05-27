@@ -6,7 +6,10 @@
 
 package org.hyperledger.fabric.client;
 
+import java.util.function.UnaryOperator;
+
 import com.google.protobuf.ByteString;
+import io.grpc.CallOptions;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EndorseResponse;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
@@ -45,7 +48,7 @@ final class ProposalImpl implements Proposal {
     }
 
     @Override
-    public byte[] evaluate(final CallOption... options) throws GatewayException {
+    public byte[] evaluate(final UnaryOperator<CallOptions> options) throws GatewayException {
         sign();
         final EvaluateRequest evaluateRequest = EvaluateRequest.newBuilder()
                 .setTransactionId(proposedTransaction.getTransactionId())
@@ -60,7 +63,7 @@ final class ProposalImpl implements Proposal {
     }
 
     @Override
-    public Transaction endorse(final CallOption... options) throws EndorseException {
+    public Transaction endorse(final UnaryOperator<CallOptions> options) throws EndorseException {
         sign();
         final EndorseRequest endorseRequest = EndorseRequest.newBuilder()
                 .setTransactionId(proposedTransaction.getTransactionId())
