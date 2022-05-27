@@ -39,7 +39,7 @@ export interface ChaincodeEventsRequest extends Signable {
 export interface ChaincodeEventsRequestOptions {
     client: GatewayClient;
     signingIdentity: SigningIdentity;
-    request: gateway.ChaincodeEventsRequest;
+    signedRequest: gateway.SignedChaincodeEventsRequest;
 }
 
 export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
@@ -50,8 +50,7 @@ export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
     constructor(options: Readonly<ChaincodeEventsRequestOptions>) {
         this.#client = options.client;
         this.#signingIdentity = options.signingIdentity;
-        this.#signedRequest = new gateway.SignedChaincodeEventsRequest();
-        this.#signedRequest.setRequest(options.request.serializeBinary());
+        this.#signedRequest = options.signedRequest;
     }
 
     async getEvents(options?: Readonly<CallOptions>): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
@@ -61,7 +60,7 @@ export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
     }
 
     getBytes(): Uint8Array {
-        return this.#signedRequest.getRequest_asU8();
+        return this.#signedRequest.serializeBinary();
     }
 
     getDigest(): Uint8Array {

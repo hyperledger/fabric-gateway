@@ -35,7 +35,7 @@ export class ChaincodeEventsBuilder {
         return new ChaincodeEventsRequestImpl({
             client: this.#options.client,
             signingIdentity: this.#options.signingIdentity,
-            request: this.#newChaincodeEventsRequestProto(),
+            signedRequest: this.#newSignedChaincodeEventsRequestProto(),
         });
     }
 
@@ -49,6 +49,12 @@ export class ChaincodeEventsBuilder {
         if (transactionId) {
             result.setAfterTransactionId(transactionId);
         }
+        return result;
+    }
+
+    #newSignedChaincodeEventsRequestProto(): gateway.SignedChaincodeEventsRequest {
+        const result = new gateway.SignedChaincodeEventsRequest();
+        result.setRequest(this.#newChaincodeEventsRequestProto().serializeBinary());
         return result;
     }
 }

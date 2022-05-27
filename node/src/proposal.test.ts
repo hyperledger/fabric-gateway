@@ -250,6 +250,17 @@ describe('Proposal', () => {
             expect(signature).toBe('MY_SIGNATURE');
         });
 
+        it('uses signer with newProposal', async () => {
+            signer.mockResolvedValue(Buffer.from('MY_SIGNATURE'));
+            const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
+            const newProposal = gateway.newProposal(unsignedProposal.getBytes());
+            await newProposal.evaluate();
+
+            const evaluateRequest = client.getEvaluateRequests()[0];
+            const signature = Buffer.from(evaluateRequest.getProposedTransaction()?.getSignature_asU8() ?? '').toString();
+            expect(signature).toBe('MY_SIGNATURE');
+        });
+
         it('uses hash', async () => {
             hash.mockReturnValue(Buffer.from('MY_DIGEST'));
 
@@ -430,6 +441,17 @@ describe('Proposal', () => {
             signer.mockResolvedValue(Buffer.from('MY_SIGNATURE'));
 
             await contract.submitTransaction('TRANSACTION_NAME');
+
+            const endorseRequest = client.getEndorseRequests()[0];
+            const signature = Buffer.from(endorseRequest.getProposedTransaction()?.getSignature_asU8() ?? '').toString();
+            expect(signature).toBe('MY_SIGNATURE');
+        });
+
+        it('uses signer with newProposal', async () => {
+            signer.mockResolvedValue(Buffer.from('MY_SIGNATURE'));
+            const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
+            const newProposal = gateway.newProposal(unsignedProposal.getBytes());
+            await newProposal.endorse();
 
             const endorseRequest = client.getEndorseRequests()[0];
             const signature = Buffer.from(endorseRequest.getProposedTransaction()?.getSignature_asU8() ?? '').toString();
