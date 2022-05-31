@@ -58,6 +58,7 @@ func TestOfflineSign(t *testing.T) {
 		Invocations []Invocation
 		OfflineSign func([]byte) *Signable
 		State       interface{}
+		Recreate    func() *Signable
 	}
 
 	var newSignableFromProposal func(t *testing.T, gateway *Gateway, proposal *Proposal) *Signable
@@ -97,6 +98,15 @@ func TestOfflineSign(t *testing.T) {
 				TransactionID: proposal.TransactionID(),
 				EndorsingOrgs: proposal.proposedTransaction.GetEndorsingOrganizations(),
 			},
+			Recreate: func() *Signable {
+				signedBytes, err := proposal.Bytes()
+				require.NoError(t, err, "NewSignedProposal")
+
+				newProposal, err := gateway.NewProposal(signedBytes)
+				require.NoError(t, err, "NewProposal")
+
+				return newSignableFromProposal(t, gateway, newProposal)
+			},
 		}
 	}
 
@@ -128,6 +138,15 @@ func TestOfflineSign(t *testing.T) {
 				Digest:        transaction.Digest(),
 				TransactionID: transaction.TransactionID(),
 			},
+			Recreate: func() *Signable {
+				signedBytes, err := transaction.Bytes()
+				require.NoError(t, err, "NewSignedTransactionBytes")
+
+				newTransaction, err := gateway.NewTransaction(signedBytes)
+				require.NoError(t, err, "NewTransaction")
+
+				return newSignableFromTransaction(t, gateway, newTransaction)
+			},
 		}
 	}
 
@@ -158,6 +177,15 @@ func TestOfflineSign(t *testing.T) {
 			}{
 				Digest:        commit.Digest(),
 				TransactionID: commit.TransactionID(),
+			},
+			Recreate: func() *Signable {
+				signedBytes, err := commit.Bytes()
+				require.NoError(t, err, "NewSignedCommitBytes")
+
+				newCommit, err := gateway.NewCommit(signedBytes)
+				require.NoError(t, err, "NewCommit")
+
+				return newSignableFromCommit(t, gateway, newCommit)
 			},
 		}
 	}
@@ -191,6 +219,15 @@ func TestOfflineSign(t *testing.T) {
 			}{
 				Digest: request.Digest(),
 			},
+			Recreate: func() *Signable {
+				signedBytes, err := request.Bytes()
+				require.NoError(t, err, "NewSignedChaincodeEventsRequestBytes")
+
+				newChaincodeRequest, err := gateway.NewChaincodeEventsRequest(signedBytes)
+				require.NoError(t, err, "newChaincodeRequest")
+
+				return newSignableFromChaincodeEventsRequest(t, gateway, newChaincodeRequest)
+			},
 		}
 	}
 
@@ -222,6 +259,15 @@ func TestOfflineSign(t *testing.T) {
 				Digest []byte
 			}{
 				Digest: request.Digest(),
+			},
+			Recreate: func() *Signable {
+				signedBytes, err1 := request.Bytes()
+				require.NoError(t, err1, "NewSignedBlockEventsRequestBytes")
+
+				newBlockRequest, err2 := gateway.NewBlockEventsRequest(signedBytes)
+				require.NoError(t, err2, "newBlockRequest")
+
+				return newSignableFromBlockEventsRequest(t, gateway, newBlockRequest)
 			},
 		}
 	}
@@ -255,6 +301,15 @@ func TestOfflineSign(t *testing.T) {
 			}{
 				Digest: request.Digest(),
 			},
+			Recreate: func() *Signable {
+				signedBytes, err := request.Bytes()
+				require.NoError(t, err, "NewSignedFilteredBlockEventsRequestBytes")
+
+				newFilteredBlockRequest, err := gateway.NewFilteredBlockEventsRequest(signedBytes)
+				require.NoError(t, err, "newRequest")
+
+				return newSignableFromFilteredBlockEventsRequest(t, gateway, newFilteredBlockRequest)
+			},
 		}
 	}
 
@@ -286,6 +341,15 @@ func TestOfflineSign(t *testing.T) {
 				Digest []byte
 			}{
 				Digest: request.Digest(),
+			},
+			Recreate: func() *Signable {
+				signedBytes, err1 := request.Bytes()
+				require.NoError(t, err1, "NewSignedBlockAndPrivateDataEventsRequestBytes")
+
+				newBlockAndPrivateDataRequest, err2 := gateway.NewBlockAndPrivateDataEventsRequest(signedBytes)
+				require.NoError(t, err2, "newBlockAndPrivateDataRequest")
+
+				return newSignableFromBlockAndPrivateDataEventsRequest(t, gateway, newBlockAndPrivateDataRequest)
 			},
 		}
 	}
@@ -511,6 +575,18 @@ func TestOfflineSign(t *testing.T) {
 						require.NoError(t, err)
 
 						require.EqualValues(t, expected, signature)
+					})
+					t.Run("retains signature", func(t *testing.T) {
+						signature = nil
+						expected := []byte("SIGNATURE")
+
+						signed := unsigned.OfflineSign(expected)
+						recreated := signed.Recreate()
+						err := recreated.Invocations[i].Invoke()
+						require.NoError(t, err)
+
+						require.EqualValues(t, expected, signature)
+
 					})
 				})
 			}

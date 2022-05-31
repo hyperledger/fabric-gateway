@@ -168,6 +168,18 @@ func (gw *Gateway) GetNetwork(name string) *Network {
 
 // NewSignedProposal creates a transaction proposal with signature, which can be sent to peers for endorsement.
 func (gw *Gateway) NewSignedProposal(bytes []byte, signature []byte) (*Proposal, error) {
+
+	result, err := gw.NewProposal(bytes)
+	if err != nil {
+		return nil, err
+	}
+	result.setSignature(signature)
+
+	return result, nil
+}
+
+// NewProposal recreates a proposal from serialized data.
+func (gw *Gateway) NewProposal(bytes []byte) (*Proposal, error) {
 	proposedTransaction := &gateway.ProposedTransaction{}
 	if err := util.Unmarshal(bytes, proposedTransaction); err != nil {
 		return nil, fmt.Errorf("failed to deserialize proposed transaction: %w", err)
@@ -194,7 +206,6 @@ func (gw *Gateway) NewSignedProposal(bytes []byte, signature []byte) (*Proposal,
 		channelID:           channelHeader.GetChannelId(),
 		proposedTransaction: proposedTransaction,
 	}
-	result.setSignature(signature)
 
 	return result, nil
 }
@@ -202,6 +213,19 @@ func (gw *Gateway) NewSignedProposal(bytes []byte, signature []byte) (*Proposal,
 // NewSignedTransaction creates an endorsed transaction with signature, which can be submitted to the orderer for commit
 // to the ledger.
 func (gw *Gateway) NewSignedTransaction(bytes []byte, signature []byte) (*Transaction, error) {
+	transaction, err := gw.NewTransaction(bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	transaction.setSignature(signature)
+
+	return transaction, nil
+}
+
+// NewTransaction recreates a transaction from serialized data.
+func (gw *Gateway) NewTransaction(bytes []byte) (*Transaction, error) {
+
 	preparedTransaction := &gateway.PreparedTransaction{}
 	if err := util.Unmarshal(bytes, preparedTransaction); err != nil {
 		return nil, fmt.Errorf("failed to deserialize prepared transaction: %w", err)
@@ -212,13 +236,22 @@ func (gw *Gateway) NewSignedTransaction(bytes []byte, signature []byte) (*Transa
 		return nil, err
 	}
 
-	transaction.setSignature(signature)
-
 	return transaction, nil
 }
 
 // NewSignedCommit creates an commit with signature, which can be used to access a committed transaction.
 func (gw *Gateway) NewSignedCommit(bytes []byte, signature []byte) (*Commit, error) {
+	commit, err := gw.NewCommit(bytes)
+	if err != nil {
+		return nil, err
+	}
+	commit.setSignature(signature)
+
+	return commit, nil
+}
+
+// NewCommit recreates a commit from serialized data.
+func (gw *Gateway) NewCommit(bytes []byte) (*Commit, error) {
 	signedRequest := &gateway.SignedCommitStatusRequest{}
 	if err := util.Unmarshal(bytes, signedRequest); err != nil {
 		return nil, fmt.Errorf("failed to deserialize signed commit status request: %w", err)
@@ -230,13 +263,24 @@ func (gw *Gateway) NewSignedCommit(bytes []byte, signature []byte) (*Commit, err
 	}
 
 	commit := newCommit(gw.client, gw.signingID, request.TransactionId, signedRequest)
-	commit.setSignature(signature)
 
 	return commit, nil
 }
 
 // NewSignedChaincodeEventsRequest creates a signed request to read events emitted by a specific chaincode.
 func (gw *Gateway) NewSignedChaincodeEventsRequest(bytes []byte, signature []byte) (*ChaincodeEventsRequest, error) {
+	result, err := gw.NewChaincodeEventsRequest(bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	result.setSignature(signature)
+
+	return result, nil
+}
+
+// NewChaincodeEventsRequest recreates a request to read chaincode events from serialized data.
+func (gw *Gateway) NewChaincodeEventsRequest(bytes []byte) (*ChaincodeEventsRequest, error) {
 	request := &gateway.SignedChaincodeEventsRequest{}
 	if err := util.Unmarshal(bytes, request); err != nil {
 		return nil, fmt.Errorf("failed to deserialize signed chaincode events request: %w", err)
@@ -247,13 +291,23 @@ func (gw *Gateway) NewSignedChaincodeEventsRequest(bytes []byte, signature []byt
 		signingID:     gw.signingID,
 		signedRequest: request,
 	}
-	result.setSignature(signature)
 
 	return result, nil
 }
 
 // NewSignedBlockEventsRequest creates a signed request to read block events.
 func (gw *Gateway) NewSignedBlockEventsRequest(bytes []byte, signature []byte) (*BlockEventsRequest, error) {
+	result, err := gw.NewBlockEventsRequest(bytes)
+	if err != nil {
+		return nil, err
+	}
+	result.setSignature(signature)
+
+	return result, nil
+}
+
+// NewBlockEventsRequest recreates a request to read block events from serialized data.
+func (gw *Gateway) NewBlockEventsRequest(bytes []byte) (*BlockEventsRequest, error) {
 	request := &common.Envelope{}
 	if err := util.Unmarshal(bytes, request); err != nil {
 		return nil, fmt.Errorf("failed to deserialize block events request envelope: %w", err)
@@ -266,13 +320,23 @@ func (gw *Gateway) NewSignedBlockEventsRequest(bytes []byte, signature []byte) (
 			request:   request,
 		},
 	}
-	result.setSignature(signature)
 
 	return result, nil
 }
 
 // NewSignedFilteredBlockEventsRequest creates a signed request to read filtered block events.
 func (gw *Gateway) NewSignedFilteredBlockEventsRequest(bytes []byte, signature []byte) (*FilteredBlockEventsRequest, error) {
+	result, err := gw.NewFilteredBlockEventsRequest(bytes)
+	if err != nil {
+		return nil, err
+	}
+	result.setSignature(signature)
+
+	return result, nil
+}
+
+// NewFilteredBlockEventsRequest recreates a request to read filtered block events from serialized data.
+func (gw *Gateway) NewFilteredBlockEventsRequest(bytes []byte) (*FilteredBlockEventsRequest, error) {
 	request := &common.Envelope{}
 	if err := util.Unmarshal(bytes, request); err != nil {
 		return nil, fmt.Errorf("failed to deserialize block events request envelope: %w", err)
@@ -285,13 +349,23 @@ func (gw *Gateway) NewSignedFilteredBlockEventsRequest(bytes []byte, signature [
 			request:   request,
 		},
 	}
-	result.setSignature(signature)
 
 	return result, nil
 }
 
 // NewSignedBlockAndPrivateDataEventsRequest creates a signed request to read block and private data events.
 func (gw *Gateway) NewSignedBlockAndPrivateDataEventsRequest(bytes []byte, signature []byte) (*BlockAndPrivateDataEventsRequest, error) {
+	result, err := gw.NewBlockAndPrivateDataEventsRequest(bytes)
+	if err != nil {
+		return nil, err
+	}
+	result.setSignature(signature)
+
+	return result, nil
+}
+
+// NewBlockAndPrivateDataEventsRequest recreates a request to read block and private data events from serialized data.
+func (gw *Gateway) NewBlockAndPrivateDataEventsRequest(bytes []byte) (*BlockAndPrivateDataEventsRequest, error) {
 	request := &common.Envelope{}
 	if err := util.Unmarshal(bytes, request); err != nil {
 		return nil, fmt.Errorf("failed to deserialize block events request envelope: %w", err)
@@ -304,7 +378,6 @@ func (gw *Gateway) NewSignedBlockAndPrivateDataEventsRequest(bytes []byte, signa
 			request:   request,
 		},
 	}
-	result.setSignature(signature)
 
 	return result, nil
 }
