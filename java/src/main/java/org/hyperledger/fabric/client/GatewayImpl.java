@@ -148,15 +148,21 @@ final class GatewayImpl implements Gateway {
 
     @Override
     public Proposal newSignedProposal(final byte[] bytes, final byte[] signature) {
+        ProposalImpl result = newProposal(bytes);
+        result.setSignature(signature);
+        return result;
+    }
+
+    @Override
+    public ProposalImpl newProposal(final byte[] bytes) {
         try {
             ProposedTransaction proposedTransaction = ProposedTransaction.parseFrom(bytes);
             ProposalPackage.Proposal proposal = ProposalPackage.Proposal.parseFrom(proposedTransaction.getProposal().getProposalBytes());
             Common.Header header = Common.Header.parseFrom(proposal.getHeader());
             Common.ChannelHeader channelHeader = Common.ChannelHeader.parseFrom(header.getChannelHeader());
 
-            ProposalImpl result = new ProposalImpl(client, signingIdentity, channelHeader.getChannelId(), proposedTransaction);
-            result.setSignature(signature);
-            return result;
+            return new ProposalImpl(client, signingIdentity, channelHeader.getChannelId(), proposedTransaction);
+
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalArgumentException(e);
         }
@@ -164,11 +170,16 @@ final class GatewayImpl implements Gateway {
 
     @Override
     public Transaction newSignedTransaction(final byte[] bytes, final byte[] signature) {
+        TransactionImpl transaction = newTransaction(bytes);
+        transaction.setSignature(signature);
+        return transaction;
+    }
+
+    @Override
+    public TransactionImpl newTransaction(final byte[] bytes) {
         try {
             PreparedTransaction preparedTransaction = PreparedTransaction.parseFrom(bytes);
-            TransactionImpl transaction = new TransactionImpl(client, signingIdentity, preparedTransaction);
-            transaction.setSignature(signature);
-            return transaction;
+            return new TransactionImpl(client, signingIdentity, preparedTransaction);
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalArgumentException(e);
         }
@@ -176,13 +187,18 @@ final class GatewayImpl implements Gateway {
 
     @Override
     public Commit newSignedCommit(final byte[] bytes, final byte[] signature) {
+        CommitImpl commit = newCommit(bytes);
+        commit.setSignature(signature);
+        return commit;
+    }
+
+    @Override
+    public CommitImpl newCommit(final byte[] bytes) {
         try {
             SignedCommitStatusRequest signedRequest = SignedCommitStatusRequest.parseFrom(bytes);
             CommitStatusRequest request = CommitStatusRequest.parseFrom(signedRequest.getRequest());
 
-            CommitImpl commit = new CommitImpl(client, signingIdentity, request.getTransactionId(), signedRequest);
-            commit.setSignature(signature);
-            return commit;
+            return new CommitImpl(client, signingIdentity, request.getTransactionId(), signedRequest);
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalArgumentException(e);
         }
@@ -190,12 +206,17 @@ final class GatewayImpl implements Gateway {
 
     @Override
     public ChaincodeEventsRequest newSignedChaincodeEventsRequest(final byte[] bytes, final byte[] signature) {
+        ChaincodeEventsRequestImpl result = newChaincodeEventsRequest(bytes);
+        result.setSignature(signature);
+        return result;
+    }
+
+    @Override
+    public ChaincodeEventsRequestImpl newChaincodeEventsRequest(final byte[] bytes) {
         try {
             SignedChaincodeEventsRequest signedRequest = SignedChaincodeEventsRequest.parseFrom(bytes);
 
-            ChaincodeEventsRequestImpl result = new ChaincodeEventsRequestImpl(client, signingIdentity, signedRequest);
-            result.setSignature(signature);
-            return result;
+            return new ChaincodeEventsRequestImpl(client, signingIdentity, signedRequest);
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalArgumentException(e);
         }
@@ -203,12 +224,17 @@ final class GatewayImpl implements Gateway {
 
     @Override
     public BlockEventsRequest newSignedBlockEventsRequest(final byte[] bytes, final byte[] signature) {
+        BlockEventsRequestImpl result = newBlockEventsRequest(bytes);
+        result.setSignature(signature);
+        return result;
+    }
+
+    @Override
+    public BlockEventsRequestImpl newBlockEventsRequest(final byte[] bytes) {
         try {
             Common.Envelope request = Common.Envelope.parseFrom(bytes);
 
-            BlockEventsRequestImpl result = new BlockEventsRequestImpl(client, signingIdentity, request);
-            result.setSignature(signature);
-            return result;
+            return new BlockEventsRequestImpl(client, signingIdentity, request);
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalArgumentException(e);
         }
@@ -216,12 +242,17 @@ final class GatewayImpl implements Gateway {
 
     @Override
     public FilteredBlockEventsRequest newSignedFilteredBlockEventsRequest(final byte[] bytes, final byte[] signature) {
+        FilteredBlockEventsRequestImpl result = newFilteredBlockEventsRequest(bytes);
+        result.setSignature(signature);
+        return result;
+    }
+
+    @Override
+    public FilteredBlockEventsRequestImpl newFilteredBlockEventsRequest(final byte[] bytes) {
         try {
             Common.Envelope request = Common.Envelope.parseFrom(bytes);
 
-            FilteredBlockEventsRequestImpl result = new FilteredBlockEventsRequestImpl(client, signingIdentity, request);
-            result.setSignature(signature);
-            return result;
+            return new FilteredBlockEventsRequestImpl(client, signingIdentity, request);
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalArgumentException(e);
         }
@@ -229,12 +260,17 @@ final class GatewayImpl implements Gateway {
 
     @Override
     public BlockAndPrivateDataEventsRequest newSignedBlockAndPrivateDataEventsRequest(final byte[] bytes, final byte[] signature) {
+        BlockAndPrivateDataEventsRequestImpl result = newBlockAndPrivateDataEventsRequest(bytes);
+        result.setSignature(signature);
+        return result;
+    }
+
+    @Override
+    public BlockAndPrivateDataEventsRequestImpl newBlockAndPrivateDataEventsRequest(final byte[] bytes) {
         try {
             Common.Envelope request = Common.Envelope.parseFrom(bytes);
 
-            BlockAndPrivateDataEventsRequestImpl result = new BlockAndPrivateDataEventsRequestImpl(client, signingIdentity, request);
-            result.setSignature(signature);
-            return result;
+            return new BlockAndPrivateDataEventsRequestImpl(client, signingIdentity, request);
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalArgumentException(e);
         }
