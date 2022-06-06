@@ -58,12 +58,6 @@ The following Makefile targets are available
 - `make scenario-test-java` - run the scenario tests for Java client API
 - `make scenario-test` - run the scenario tests for all client language implementations
 - `make test` - run all unit and scenario tests
-- `make sample-network` - create the sample network used to run samples
-- `make sample-network-clean` - remove the sample network
-- `make run-samples-go` - run the samples for the Go client API
-- `make run-samples-node` - run the samples for the Node client API
-- `make run-samples-java` - run the samples for the Java client API
-- `make run-samples` - create the sample network, run samples for all client language implementations, and remove the sample network
 
 Note that immediately after creating a fresh copy of this repository, auto-generated test mocks will not be preset so
 Go code will show errors. Running the `unit-test` make target will generate the required mock implementations, and they
@@ -76,3 +70,7 @@ of docker containers.  The clients connect to the gateway to submit transactions
 
 The tests are defined as feature files using the Cucumber BDD framework.  The same set of feature files
 is used across all three client language implementations to ensure consistency of behaviour.
+
+### Run Samples
+
+Refer [Fabric-Samples](https://github.com/hyperledger/fabric-samples) for sample applications developed using fabic-gateway.

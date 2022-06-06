@@ -238,50 +238,6 @@ stages:
           # TODO: update this variable name in the Makefile
           JENKINS_URL: true
 
-  - job: SamplesGo
-    pool:
-      vmImage: ubuntu-20.04
-    dependsOn: []
-    timeoutInMinutes: 60
-    steps:
-      - template: install_deps_hsm_ca.yml
-      - checkout: self
-      - script: |
-          make sample-network
-          make run-samples-go
-          make run-hsm-samples-go
-        displayName: Run Go SDK samples
-
-  - job: SamplesNode
-    pool:
-      vmImage: ubuntu-20.04
-    dependsOn: []
-    timeoutInMinutes: 60
-    steps:
-      - template: install_deps_hsm_ca.yml
-      - checkout: self
-      - task: NodeTool@0
-        inputs:
-          versionSpec: $(NODEVER)
-      - script: |
-          make sample-network
-          make run-samples-node
-          make run-hsm-samples-node
-        displayName: Run Node SDK samples
-
-  - job: SamplesJava
-    pool:
-      vmImage: ubuntu-20.04
-    dependsOn: []
-    timeoutInMinutes: 60
-    steps:
-      - template: install_deps.yml
-      - checkout: self
-      - script: |
-          make sample-network
-          make run-samples-java
-        displayName: Run Java SDK samples
-
 # Only run security vulnerability scans on scheduled builds
 - stage: Scan
   dependsOn: VerifyVersions
