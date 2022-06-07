@@ -11,14 +11,15 @@ package org.hyperledger.fabric.client;
  */
 public interface Signable {
     /**
-     * Get the serialized proposal message bytes.
-     * @return A serialized proposal.
+     * Get the serialized message bytes.
+     * Serialized bytes can be used to recreate the object using methods on {@link Gateway}.
+     * @return A serialized signable object.
      */
     byte[] getBytes();
 
     /**
-     * Get the digest of the serialized proposal. This is used to generate a digital signature.
-     * @return A hash of the proposal.
+     * Get the digest of the signable object. This is used to generate a digital signature.
+     * @return A hash of the signable object.
      */
     byte[] getDigest();
 }

@@ -9,12 +9,13 @@
  */
 export interface Signable {
     /**
-     * Get the serialized commit status request message.
+     * Get the serialized bytes of the signable object.
+     * Serialized bytes can be used to recreate the object using methods on {@link Gateway}.
      */
     getBytes(): Uint8Array;
 
     /**
-      * Get the digest of the commit status request. This is used to generate a digital signature.
+      * Get the digest of the signable object. This is used to generate a digital signature.
       */
     getDigest(): Uint8Array;
 }
