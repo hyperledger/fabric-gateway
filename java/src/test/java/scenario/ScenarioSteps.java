@@ -101,9 +101,9 @@ public class ScenarioSteps {
     private static final Collection<OrgConfig> ORG_CONFIGS;
     static {
         List<OrgConfig> orgConfigs = Arrays.asList(
-                new OrgConfig("org1_cli", "/etc/hyperledger/configtx/Org1MSPanchors.tx", "peer0.org1.example.com:7051", "peer1.org1.example.com:9051"),
-                new OrgConfig("org2_cli", "/etc/hyperledger/configtx/Org2MSPanchors.tx", "peer0.org2.example.com:8051", "peer1.org2.example.com:10051"),
-                new OrgConfig("org3_cli", "/etc/hyperledger/configtx/Org3MSPanchors.tx", "peer0.org3.example.com:11051")
+                new OrgConfig("org1_cli", "peer0.org1.example.com:7051", "peer1.org1.example.com:9051"),
+                new OrgConfig("org2_cli", "peer0.org2.example.com:8051", "peer1.org2.example.com:10051"),
+                new OrgConfig("org3_cli", "peer0.org3.example.com:11051")
         );
         ORG_CONFIGS = Collections.unmodifiableCollection(orgConfigs);
     }
@@ -115,12 +115,10 @@ public class ScenarioSteps {
 
     private static final class OrgConfig {
         final String cli;
-        final String anchortx;
         final Set<String> peers;
 
-        OrgConfig(String cli, String anchortx, String... peers) {
+        OrgConfig(String cli, String... peers) {
             this.cli = cli;
-            this.anchortx = anchortx;
             Set<String> peerSet = new HashSet<>(Arrays.asList(peers));
             this.peers = Collections.unmodifiableSet(peerSet);
         }
@@ -167,11 +165,13 @@ public class ScenarioSteps {
                     "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem");
 
             List<String> createChannelCommand = new ArrayList<>();
-            Collections.addAll(createChannelCommand, "docker", "exec", "org1_cli", "peer", "channel", "create",
-                    "-o", "orderer.example.com:7050", "-c", "mychannel", "-f",
-                    "/etc/hyperledger/configtx/channel.tx", "--outputBlock",
-                    "/etc/hyperledger/configtx/mychannel.block");
-            createChannelCommand.addAll(tlsOptions);
+            Collections.addAll(createChannelCommand, "docker", "exec", "org1_cli", "osnadmin", "channel", "join",
+                    "--channelID", "mychannel",
+                    "--config-block", "/etc/hyperledger/configtx/mychannel.block",
+                    "-o", "orderer.example.com:7053",
+                    "--ca-file", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem",
+                    "--client-cert", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt",
+                    "--client-key", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key");
             exec(createChannelCommand);
 
             for (OrgConfig org : ORG_CONFIGS) {
@@ -184,11 +184,6 @@ public class ScenarioSteps {
                     exec(joinChannelCommand);
                 }
 
-                List<String> anchorPeersCommand = new ArrayList<>();
-                Collections.addAll(anchorPeersCommand, "docker", "exec", org.cli, "peer", "channel", "update",
-                        "-o", "orderer.example.com:7050", "-c", "mychannel", "-f", org.anchortx);
-                anchorPeersCommand.addAll(tlsOptions);
-                exec(anchorPeersCommand);
             }
 
             channelsJoined = true;
