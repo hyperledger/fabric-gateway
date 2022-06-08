@@ -48,8 +48,6 @@ services:
     environment:
       - ORDERER_GENERAL_LOGLEVEL=${DOCKER_DEBUG}
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
-      - ORDERER_GENERAL_GENESISMETHOD=file
-      - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/configtx/genesis.block
       - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
       - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/orderer/msp
       - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=node_default
@@ -57,6 +55,7 @@ services:
     command: orderer
     ports:
       - 7050:7050
+      - 7053:7053
     volumes:
         - ../crypto-material/:/etc/hyperledger/configtx
         - ../crypto-material/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/:/etc/hyperledger/orderer

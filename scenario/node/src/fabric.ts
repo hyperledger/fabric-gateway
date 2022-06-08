@@ -21,7 +21,6 @@ const tlsOptions = [
 interface OrgInfo {
     readonly orgName: string;
     readonly cli: string;
-    readonly anchortx: string;
     readonly peers: string[];
 }
 
@@ -29,19 +28,16 @@ const orgs: Record<string, OrgInfo> = {
     Org1MSP: {
         orgName: 'org1.example.com',
         cli: 'org1_cli',
-        anchortx: '/etc/hyperledger/configtx/Org1MSPanchors.tx',
         peers: ['peer0.org1.example.com:7051', 'peer1.org1.example.com:9051'],
     },
     Org2MSP: {
         orgName: 'org2.example.com',
         cli: 'org2_cli',
-        anchortx: '/etc/hyperledger/configtx/Org2MSPanchors.tx',
         peers: ['peer0.org2.example.com:8051', 'peer1.org2.example.com:10051'],
     },
     Org3MSP: {
         orgName: 'org2.example.com',
         cli: 'org3_cli',
-        anchortx: '/etc/hyperledger/configtx/Org3MSPanchors.tx',
         peers: ['peer0.org3.example.com:11051'],
     },
 };
@@ -143,13 +139,14 @@ export class Fabric {
             return;
         }
 
-        dockerCommandWithTLS(
-            'exec', 'org1_cli',
-            'peer', 'channel', 'create',
-            '-o', 'orderer.example.com:7050',
-            '-c', 'mychannel',
-            '-f', '/etc/hyperledger/configtx/channel.tx',
-            '--outputBlock', '/etc/hyperledger/configtx/mychannel.block'
+        dockerCommand(
+            'exec', 'org1_cli', 'osnadmin', 'channel', 'join',
+            '--channelID', 'mychannel',
+            '--config-block', '/etc/hyperledger/configtx/mychannel.block',
+            '-o', 'orderer.example.com:7053',
+            '--ca-file', '/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem',
+            '--client-cert', '/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt',
+            '--client-key', '/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key',
         );
 
         for (const org of Object.values(orgs)) {
@@ -161,13 +158,6 @@ export class Fabric {
                     '-b', '/etc/hyperledger/configtx/mychannel.block'
                 );
             }
-
-            dockerCommandWithTLS(
-                'exec', org.cli, 'peer', 'channel', 'update',
-                '-o', 'orderer.example.com:7050',
-                '-c', 'mychannel',
-                '-f', org.anchortx
-            );
         }
 
         this.channelsJoined = true;

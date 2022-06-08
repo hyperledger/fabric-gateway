@@ -23,26 +23,22 @@ const (
 )
 
 type orgConfig struct {
-	cli      string
-	anchortx string
-	peers    []string
+	cli   string
+	peers []string
 }
 
 var orgs = []orgConfig{
 	{
-		cli:      "org1_cli",
-		anchortx: "/etc/hyperledger/configtx/Org1MSPanchors.tx",
-		peers:    []string{"peer0.org1.example.com:7051", "peer1.org1.example.com:9051"},
+		cli:   "org1_cli",
+		peers: []string{"peer0.org1.example.com:7051", "peer1.org1.example.com:9051"},
 	},
 	{
-		cli:      "org2_cli",
-		anchortx: "/etc/hyperledger/configtx/Org2MSPanchors.tx",
-		peers:    []string{"peer0.org2.example.com:8051", "peer1.org2.example.com:10051"},
+		cli:   "org2_cli",
+		peers: []string{"peer0.org2.example.com:8051", "peer1.org2.example.com:10051"},
 	},
 	{
-		cli:      "org3_cli",
-		anchortx: "/etc/hyperledger/configtx/Org3MSPanchors.tx",
-		peers:    []string{"peer0.org3.example.com:11051"},
+		cli:   "org3_cli",
+		peers: []string{"peer0.org3.example.com:11051"},
 	},
 }
 
@@ -315,12 +311,14 @@ func createAndJoinChannels() error {
 	fmt.Println("createAndJoinChannels")
 	startAllPeers()
 	if !channelsJoined {
-		_, err := dockerCommandWithTLS(
-			"exec", "org1_cli", "peer", "channel", "create",
-			"-o", "orderer.example.com:7050",
-			"-c", "mychannel",
-			"-f", "/etc/hyperledger/configtx/channel.tx",
-			"--outputBlock", "/etc/hyperledger/configtx/mychannel.block",
+		_, err := dockerCommand(
+			"exec", "org1_cli", "osnadmin", "channel", "join",
+			"--channelID", "mychannel",
+			"--config-block", "/etc/hyperledger/configtx/mychannel.block",
+			"-o", "orderer.example.com:7053",
+			"--ca-file", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem",
+			"--client-cert", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt",
+			"--client-key", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key",
 		)
 		if err != nil {
 			return err
@@ -336,15 +334,6 @@ func createAndJoinChannels() error {
 				if err != nil {
 					return err
 				}
-			}
-			_, err = dockerCommandWithTLS(
-				"exec", org.cli, "peer", "channel", "update",
-				"-o", "orderer.example.com:7050",
-				"-c", "mychannel",
-				"-f", org.anchortx,
-			)
-			if err != nil {
-				return err
 			}
 		}
 
