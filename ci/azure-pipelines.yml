@@ -238,55 +238,6 @@ stages:
           # TODO: update this variable name in the Makefile
           JENKINS_URL: true
 
-# Only run security vulnerability scans on scheduled builds
-- stage: Scan
-  dependsOn: VerifyVersions
-  condition: eq(variables['Build.Reason'], 'Schedule')
-  jobs:
-  - job: ScanGo
-    pool:
-      vmImage: ubuntu-20.04
-    dependsOn: []
-    timeoutInMinutes: 60
-    steps:
-    - task: GoTool@0
-      inputs:
-        version: $(GOVER)
-        goPath:  $(GOPATH)
-      displayName: Install Go $(GOVER)
-    - checkout: self
-    - script: make scan-go
-      displayName: 'Run Go security vulnerability scan'
-  - job: ScanNode
-    pool:
-      vmImage: ubuntu-20.04
-    dependsOn: []
-    timeoutInMinutes: 60
-    steps:
-    - checkout: self
-    - task: NodeTool@0
-      inputs:
-        versionSpec: $(NODEVER)
-    - script: make scan-node
-      displayName: 'Run Node security vulnerability scan'
-  - job: ScanJava
-    pool:
-      vmImage: ubuntu-20.04
-    dependsOn: []
-    timeoutInMinutes: 60
-    steps:
-    - template: install_deps.yml
-    - checkout: self
-    - task: JavaToolInstaller@0
-      inputs:
-        versionSpec: $(JAVAVER)
-        jdkArchitectureOption: 'x64'
-        jdkSourceOption: 'PreInstalled'
-    - script: make scan-java
-      displayName: 'Run Java security vulnerability scan'
-    - publish: $(System.DefaultWorkingDirectory)/java/target/dependency-check-report.html
-      artifact: DependencyCheck
-      displayName: 'Upload dependency-check report'
 # Only publish on scheduled builds and tagged releases
 - stage: Publish
   dependsOn: [Test, Docs]
