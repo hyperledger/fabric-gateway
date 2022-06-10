@@ -11,6 +11,7 @@ import (
 
 var opts = godog.Options{
 	Output: colors.Colored(os.Stdout),
+	Strict: true,
 }
 
 func init() {
