@@ -11,7 +11,7 @@ Feature: Specify endorsing organizations using HSM managed identities
         And I deploy golang chaincode named private at version 1.0.0 for all organizations on channel mychannel with endorsement policy OR("Org1MSP.member","Org2MSP.member","Org3MSP.member")
         And I register and enroll an HSM user HSMUser1 in MSP Org1MSP
         And I create a gateway named hsmgateway1 for HSM user HSMUser1 in MSP Org1MSP
-        And I connect the gateway to peer0.org1.example.com
+        And I connect the gateway to org1.example.com
         And I use the mychannel network
         And I use the private contract
 

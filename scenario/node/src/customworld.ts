@@ -10,53 +10,13 @@ import { ChaincodeEvent, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity
 import * as crypto from 'crypto';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { findSoftHSMPKCS11Lib, fixturesDir, getOrgForMsp } from './fabric';
+import { findSoftHSMPKCS11Lib, fixturesDir, getOrgForName, getOrgNameForMsp } from './fabric';
 import { getSKIFromCertificate } from './fabricski';
 import { GatewayContext } from './gatewaycontext';
 import { TransactionInvocation } from './transactioninvocation';
 import { assertDefined, Constructor, isInstanceOf } from './utils';
 
 let hsmSignerFactory: HSMSignerFactory;
-
-interface ConnectionInfo {
-    readonly url: string;
-    readonly serverNameOverride: string;
-    readonly tlsRootCertPath: string;
-    running: boolean;
-}
-
-const peerConnectionInfo: Record<string, ConnectionInfo> = {
-    'peer0.org1.example.com': {
-        url:                'localhost:7051',
-        serverNameOverride: 'peer0.org1.example.com',
-        tlsRootCertPath:    fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt',
-        running:            true,
-    },
-    'peer1.org1.example.com': {
-        url:                'localhost:9051',
-        serverNameOverride: 'peer1.org1.example.com',
-        tlsRootCertPath:    fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt',
-        running:            true,
-    },
-    'peer0.org2.example.com': {
-        url:                'localhost:8051',
-        serverNameOverride: 'peer0.org2.example.com',
-        tlsRootCertPath:    fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt',
-        running:            true,
-    },
-    'peer1.org2.example.com': {
-        url:                'localhost:10051',
-        serverNameOverride: 'peer1.org2.example.com',
-        tlsRootCertPath:    fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls/ca.crt',
-        running:            true,
-    },
-    'peer0.org3.example.com': {
-        url:                'localhost:11051',
-        serverNameOverride: 'peer0.org3.example.com',
-        tlsRootCertPath:    fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt',
-        running:            true,
-    }
-};
 
 async function newIdentity(user: string, mspId: string): Promise<Identity> {
     const certificate = await readCertificate(user, mspId);
@@ -67,7 +27,7 @@ async function newIdentity(user: string, mspId: string): Promise<Identity> {
 }
 
 async function readCertificate(user: string, mspId: string): Promise<Buffer> {
-    const org = getOrgForMsp(mspId);
+    const org = getOrgNameForMsp(mspId);
     const credentialsPath = getCredentialsPath(user, mspId);
     const certPath = path.join(credentialsPath, 'signcerts', `${user}@${org}-cert.pem`);
     return await fs.readFile(certPath);
@@ -86,7 +46,7 @@ async function readPrivateKey(user: string, mspId: string): Promise<crypto.KeyOb
 }
 
 function getCredentialsPath(user: string, mspId: string): string {
-    const org = getOrgForMsp(mspId);
+    const org = getOrgNameForMsp(mspId);
     return path.join(fixturesDir, 'crypto-material', 'crypto-config', 'peerOrganizations', `${org}`,
         'users', `${user}@${org}`, 'msp');
 }
@@ -164,18 +124,21 @@ export class CustomWorld {
         this.getCurrentGateway().useContract(contractName);
     }
 
-    async connect(address: string): Promise<void> {
-        // address is the name of the peer, lookup the connection info
-        const peer = peerConnectionInfo[address];
-        const tlsRootCert = await fs.readFile(peer.tlsRootCertPath);
-        const credentials = grpc.credentials.createSsl(tlsRootCert);
-        let grpcOptions: Record<string, unknown> = {};
-        if (peer.serverNameOverride) {
-            grpcOptions = {
-                'grpc.ssl_target_name_override': peer.serverNameOverride
-            };
+    async connect(org: string): Promise<void> {
+        const tlsRootCerts: Buffer[] = [];
+        const peerAddresses: string[] = [];
+        for (const peer of getOrgForName(org).peers) {
+            const tlsRootCert = await fs.readFile(peer.tlsRootCertPath);
+            tlsRootCerts.push(tlsRootCert);
+            peerAddresses.push(`127.0.0.1:${peer.port}`);
         }
-        const client = new grpc.Client(peer.url, credentials, grpcOptions);
+
+        const address = `ipv4:${peerAddresses.join(',')}`;
+        const credentials = grpc.credentials.createSsl(Buffer.concat(tlsRootCerts));
+        console.log(`gRPC client address: ${address}`);
+        const client = new grpc.Client(address, credentials, {
+            'grpc.ssl_target_name_override': 'localhost',
+        });
         this.getCurrentGateway().connect(client);
     }
 

@@ -18,45 +18,88 @@ const tlsOptions = [
     '--cafile', '/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem',
 ];
 
-interface OrgInfo {
-    readonly orgName: string;
-    readonly cli: string;
-    readonly peers: string[];
-}
-
 interface OrdererInfo {
     readonly address: string;
     readonly port: string;
 }
 
-const orgs: Record<string, OrgInfo> = {
-    Org1MSP: {
-        orgName: 'org1.example.com',
-        cli: 'org1_cli',
-        peers: ['peer0.org1.example.com:7051', 'peer1.org1.example.com:9051'],
-    },
-    Org2MSP: {
-        orgName: 'org2.example.com',
-        cli: 'org2_cli',
-        peers: ['peer0.org2.example.com:8051', 'peer1.org2.example.com:10051'],
-    },
-    Org3MSP: {
-        orgName: 'org2.example.com',
-        cli: 'org3_cli',
-        peers: ['peer0.org3.example.com:11051'],
-    },
-};
-
-const orderers: Array<OrdererInfo> = [
+const orderers: OrdererInfo[] = [
     {address: 'orderer1.example.com', port: '7053'},
     {address: 'orderer2.example.com', port: '8053'},
     {address: 'orderer3.example.com', port: '9053'},
 ];
 
-export function getOrgForMsp(mspId: string): string {
-    const org = orgs[mspId]?.orgName;
-    if (!org) {
+export interface ConnectionInfo {
+    readonly name: string;
+    readonly port: string;
+    readonly tlsRootCertPath: string;
+}
+
+export interface OrgInfo {
+    readonly name: string;
+    readonly cli: string;
+    readonly peers: ConnectionInfo[];
+}
+
+const networkConfig: Record<string, OrgInfo> = {
+    Org1MSP: {
+        name: 'org1.example.com',
+        cli: 'org1_cli',
+        peers: [
+            {
+                name: 'peer0.org1.example.com',
+                port: '7051',
+                tlsRootCertPath: fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt',
+            },
+            {
+                name: 'peer1.org1.example.com',
+                port: '9051',
+                tlsRootCertPath: fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt',
+            },
+        ],
+    },
+    Org2MSP: {
+        name: 'org2.example.com',
+        cli: 'org2_cli',
+        peers: [
+            {
+                name: 'peer0.org2.example.com',
+                port: '8051',
+                tlsRootCertPath: fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt',
+            },
+            {
+                name: 'peer1.org2.example.com',
+                port: '10051',
+                tlsRootCertPath: fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls/ca.crt',
+            },
+        ],
+    },
+    Org3MSP: {
+        name: 'org2.example.com',
+        cli: 'org3_cli',
+        peers: [
+            {
+                name: 'peer0.org3.example.com',
+                port: '11051',
+                tlsRootCertPath: fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt',
+            }
+        ],
+    },
+};
+
+export function getOrgNameForMsp(mspId: string): string {
+    const orgName = networkConfig[mspId]?.name;
+    if (!orgName) {
         throw new Error(`Unknown MSP: ${mspId}`);
+    }
+
+    return orgName;
+}
+
+export function getOrgForName(orgName: string): OrgInfo {
+    const org = Object.values(networkConfig).find(org => org.name === orgName);
+    if (!org) {
+        throw new Error(`Unknown org name: ${orgName}`);
     }
 
     return org;
@@ -111,10 +154,9 @@ export class Fabric {
 
     constructor() {
         this.runningPeers = Object.fromEntries(
-            Object.values(orgs)
+            Object.values(networkConfig)
                 .flatMap(org => org.peers)
-                .map(hostPort => hostPort.split(':')[0])
-                .map(host => [host, true])
+                .map(peer => [peer.name, true])
         );
     }
 
@@ -163,9 +205,9 @@ export class Fabric {
             );
         }
 
-        for (const org of Object.values(orgs)) {
+        for (const org of Object.values(networkConfig)) {
             for (const peer of org.peers) {
-                const env = 'CORE_PEER_ADDRESS=' + peer;
+                const env = `CORE_PEER_ADDRESS=${peer.name}:${peer.port}`;
                 dockerCommandWithTLS(
                     'exec', '-e', env, org.cli,
                     'peer', 'channel', 'join',
@@ -221,7 +263,7 @@ export class Fabric {
             });
         }
 
-        for (const [orgName, orgInfo] of Object.entries(orgs)) {
+        for (const [orgName, orgInfo] of Object.entries(networkConfig)) {
             const out = dockerCommand('exec', orgInfo.cli, 'peer', 'lifecycle', 'chaincode', 'queryinstalled');
 
             const pattern = new RegExp('.*Package ID: (.*), Label: ' + ccLabel + '.*');
@@ -269,7 +311,7 @@ export class Fabric {
     }
 
     private async installChaincode(chaincode: ChaincodeDefinition): Promise<void> {
-        const orgInstalls = Object.values(orgs).map(orgInfo => this.installChaincodeToOrg(chaincode, orgInfo));
+        const orgInstalls = Object.values(networkConfig).map(orgInfo => this.installChaincodeToOrg(chaincode, orgInfo));
         await Promise.all(orgInstalls);
     }
 
@@ -282,7 +324,7 @@ export class Fabric {
         );
 
         const peerInstalls = orgInfo.peers.map(peer => {
-            const env = 'CORE_PEER_ADDRESS=' + peer;
+            const env = `CORE_PEER_ADDRESS=${peer.name}:${peer.port}`;
             dockerCommand('exec', '-e', env, orgInfo.cli, 'peer', 'lifecycle', 'chaincode', 'install', chaincode.package);
         });
 

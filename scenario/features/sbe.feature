@@ -9,7 +9,7 @@ Feature: State-based endorsement
         And I have created and joined all channels
         And I deploy golang chaincode named private at version 1.0.0 for all organizations on channel mychannel with endorsement policy OR("Org1MSP.member","Org2MSP.member","Org3MSP.member")
         And I create a gateway named gateway1 for user User1 in MSP Org1MSP
-        And I connect the gateway to peer0.org1.example.com
+        And I connect the gateway to org1.example.com
         And I use the mychannel network
         And I use the private contract
         And I prepare to submit a SetStateWithEndorser transaction

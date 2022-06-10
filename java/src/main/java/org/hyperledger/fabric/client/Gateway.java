@@ -212,7 +212,7 @@ public interface Gateway extends AutoCloseable {
         Builder connection(Channel grpcChannel);
 
         /**
-         * Specifies the client identity used to connect to the network. All interactions will the Fabric network using
+         * Specifies the client identity used to connect to the network. All interactions with the Fabric network using
          * this Gateway will be performed by this identity.
          * @param identity An identity.
          * @return The builder instance, allowing multiple configuration options to be chained.

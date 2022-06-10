@@ -84,8 +84,8 @@ Given('I use the gateway named {word}', function(this: CustomWorld, name: string
     this.useGateway(name);
 });
 
-Given('I connect the gateway to {word}', async function(this: CustomWorld, address: string): Promise<void> {
-    await this.connect(address);
+Given('I connect the gateway to {word}', async function(this: CustomWorld, org: string): Promise<void> {
+    await this.connect(org);
 });
 
 Given('I create a checkpointer', function(this: CustomWorld): void {
