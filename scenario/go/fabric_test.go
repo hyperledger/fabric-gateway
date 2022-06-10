@@ -27,6 +27,11 @@ type orgConfig struct {
 	peers []string
 }
 
+type ordererConfig struct {
+	address string
+	port    string
+}
+
 var orgs = []orgConfig{
 	{
 		cli:   "org1_cli",
@@ -40,6 +45,12 @@ var orgs = []orgConfig{
 		cli:   "org3_cli",
 		peers: []string{"peer0.org3.example.com:11051"},
 	},
+}
+
+var orderers = []ordererConfig{
+	{address: "orderer1.example.com", port: "7053"},
+	{address: "orderer2.example.com", port: "8053"},
+	{address: "orderer3.example.com", port: "9053"},
 }
 
 type peerConnectionInfo struct {
@@ -191,7 +202,7 @@ func deployChaincode(ccType, ccName, version, channelName, signaturePolicy strin
 		exists = true
 		out, err := dockerCommandWithTLS(
 			"exec", "org1_cli", "peer", "lifecycle", "chaincode", "querycommitted",
-			"-o", "orderer.example.com:7050", "--channelID", channelName, "--name", ccName,
+			"-o", "orderer1.example.com:7050", "--channelID", channelName, "--name", ccName,
 		)
 		if err != nil {
 			return err
@@ -264,7 +275,7 @@ func deployChaincode(ccType, ccName, version, channelName, signaturePolicy strin
 			"exec", org.cli, "peer", "lifecycle", "chaincode", "approveformyorg",
 			"--package-id", packageID,
 			"--channelID", channelName,
-			"--orderer", "orderer.example.com:7050",
+			"--orderer", "orderer1.example.com:7050",
 			"--name", ccName,
 			"--version", version,
 			"--signature-policy", signaturePolicy,
@@ -282,7 +293,7 @@ func deployChaincode(ccType, ccName, version, channelName, signaturePolicy strin
 	commitCommand := []string{
 		"exec", "org1_cli", "peer", "lifecycle", "chaincode", "commit",
 		"--channelID", channelName,
-		"--orderer", "orderer.example.com:7050",
+		"--orderer", "orderer1.example.com:7050",
 		"--name", ccName,
 		"--version", version,
 		"--signature-policy", signaturePolicy,
@@ -311,23 +322,26 @@ func createAndJoinChannels() error {
 	fmt.Println("createAndJoinChannels")
 	startAllPeers()
 	if !channelsJoined {
-		_, err := dockerCommand(
-			"exec", "org1_cli", "osnadmin", "channel", "join",
-			"--channelID", "mychannel",
-			"--config-block", "/etc/hyperledger/configtx/mychannel.block",
-			"-o", "orderer.example.com:7053",
-			"--ca-file", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem",
-			"--client-cert", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt",
-			"--client-key", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key",
-		)
-		if err != nil {
-			return err
+		for _, orderer := range orderers {
+			tlsdir := fmt.Sprintf("/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/%s/tls", orderer.address)
+			_, err := dockerCommand(
+				"exec", "org1_cli", "osnadmin", "channel", "join",
+				"--channelID", "mychannel",
+				"--config-block", "/etc/hyperledger/configtx/mychannel.block",
+				"-o", fmt.Sprintf("%s:%s", orderer.address, orderer.port),
+				"--ca-file", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem",
+				"--client-cert", tlsdir+"/server.crt",
+				"--client-key", tlsdir+"/server.key",
+			)
+			if err != nil {
+				return err
+			}
 		}
 
 		for _, org := range orgs {
 			for _, peer := range org.peers {
 				env := "CORE_PEER_ADDRESS=" + peer
-				_, err = dockerCommandWithTLS(
+				_, err := dockerCommandWithTLS(
 					"exec", "-e", env, org.cli, "peer", "channel", "join",
 					"-b", "/etc/hyperledger/configtx/mychannel.block",
 				)
