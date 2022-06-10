@@ -24,6 +24,11 @@ interface OrgInfo {
     readonly peers: string[];
 }
 
+interface OrdererInfo {
+    readonly address: string;
+    readonly port: string;
+}
+
 const orgs: Record<string, OrgInfo> = {
     Org1MSP: {
         orgName: 'org1.example.com',
@@ -41,6 +46,12 @@ const orgs: Record<string, OrgInfo> = {
         peers: ['peer0.org3.example.com:11051'],
     },
 };
+
+const orderers: Array<OrdererInfo> = [
+    {address: 'orderer1.example.com', port: '7053'},
+    {address: 'orderer2.example.com', port: '8053'},
+    {address: 'orderer3.example.com', port: '9053'},
+];
 
 export function getOrgForMsp(mspId: string): string {
     const org = orgs[mspId]?.orgName;
@@ -139,15 +150,18 @@ export class Fabric {
             return;
         }
 
-        dockerCommand(
-            'exec', 'org1_cli', 'osnadmin', 'channel', 'join',
-            '--channelID', 'mychannel',
-            '--config-block', '/etc/hyperledger/configtx/mychannel.block',
-            '-o', 'orderer.example.com:7053',
-            '--ca-file', '/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem',
-            '--client-cert', '/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt',
-            '--client-key', '/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key',
-        );
+        for (const ord of orderers) {
+            const orddir = '/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/' + ord.address;
+            dockerCommand(
+                'exec', 'org1_cli', 'osnadmin', 'channel', 'join',
+                '--channelID', 'mychannel',
+                '--config-block', '/etc/hyperledger/configtx/mychannel.block',
+                '-o', ord.address + ':' + ord.port,
+                '--ca-file', '/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem',
+                '--client-cert', orddir + '/tls/server.crt',
+                '--client-key', orddir + '/tls/server.key',
+            );
+        }
 
         for (const org of Object.values(orgs)) {
             for (const peer of org.peers) {
@@ -178,7 +192,7 @@ export class Fabric {
             exists = true;
             const out = dockerCommandWithTLS(
                 'exec', 'org1_cli', 'peer', 'lifecycle', 'chaincode', 'querycommitted',
-                '-o', 'orderer.example.com:7050', '--channelID', channelName, '--name', ccName);
+                '-o', 'orderer1.example.com:7050', '--channelID', channelName, '--name', ccName);
             const pattern = new RegExp('.*Sequence: ([0-9]+),.*');
             const match = out.match(pattern);
             if (match === null || match.length < 2) {

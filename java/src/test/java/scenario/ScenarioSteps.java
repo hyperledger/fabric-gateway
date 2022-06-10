@@ -124,6 +124,26 @@ public class ScenarioSteps {
         }
     }
 
+    private static final Collection<OrdererConfig> ORDERER_CONFIGS;
+    static {
+        List<OrdererConfig> ordererConfigs = Arrays.asList(
+                new OrdererConfig("orderer1.example.com", "7053"),
+                new OrdererConfig("orderer2.example.com", "8053"),
+                new OrdererConfig("orderer3.example.com", "9053")
+        );
+        ORDERER_CONFIGS = Collections.unmodifiableCollection(ordererConfigs);
+    }
+
+    private static final class OrdererConfig {
+        final String address;
+        final String port;
+
+        OrdererConfig(String address, String port) {
+            this.address = address;
+            this.port = port;
+        }
+    }
+
     private static final class ConnectionInfo {
         final String url;
         final String serverNameOverride;
@@ -164,15 +184,18 @@ public class ScenarioSteps {
             final List<String> tlsOptions = Arrays.asList("--tls", "true", "--cafile",
                     "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem");
 
-            List<String> createChannelCommand = new ArrayList<>();
-            Collections.addAll(createChannelCommand, "docker", "exec", "org1_cli", "osnadmin", "channel", "join",
-                    "--channelID", "mychannel",
-                    "--config-block", "/etc/hyperledger/configtx/mychannel.block",
-                    "-o", "orderer.example.com:7053",
-                    "--ca-file", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem",
-                    "--client-cert", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt",
-                    "--client-key", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key");
-            exec(createChannelCommand);
+            for (OrdererConfig orderer : ORDERER_CONFIGS) {
+                String ordDir = "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/" + orderer.address;
+                List<String> createChannelCommand = new ArrayList<>();
+                Collections.addAll(createChannelCommand, "docker", "exec", "org1_cli", "osnadmin", "channel", "join",
+                        "--channelID", "mychannel",
+                        "--config-block", "/etc/hyperledger/configtx/mychannel.block",
+                        "-o", orderer.address + ":" + orderer.port,
+                        "--ca-file", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem",
+                        "--client-cert", ordDir + "/tls/server.crt",
+                        "--client-key", ordDir + "/tls/server.key");
+                exec(createChannelCommand);
+            }
 
             for (OrgConfig org : ORG_CONFIGS) {
                 for (String peer : org.peers) {
@@ -207,7 +230,7 @@ public class ScenarioSteps {
             exists = true;
             List<String> queryCommand = new ArrayList<>();
             Collections.addAll(queryCommand,"docker", "exec", "org1_cli", "peer", "lifecycle", "chaincode", "querycommitted",
-                    "-o", "orderer.example.com:7050", "--channelID", channelName, "--name", ccName);
+                    "-o", "orderer1.example.com:7050", "--channelID", channelName, "--name", ccName);
             queryCommand.addAll(tlsOptions);
             String out = exec(queryCommand);
             Pattern regex = Pattern.compile(".*Sequence: (\\d+),.*");
