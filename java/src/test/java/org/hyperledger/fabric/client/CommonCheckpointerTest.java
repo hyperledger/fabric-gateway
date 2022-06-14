@@ -1,12 +1,11 @@
 package org.hyperledger.fabric.client;
 
+import java.io.IOException;
+
 import com.google.protobuf.ByteString;
-import org.hyperledger.fabric.protos.peer.ChaincodeEventPackage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -62,7 +61,7 @@ public abstract  class CommonCheckpointerTest {
     @Test
     void checkpointEvent_sets_block_number_and_transaction_id_from_event() throws Exception {
         long blockNumber = 0;
-        ChaincodeEventPackage.ChaincodeEvent event = ChaincodeEventPackage.ChaincodeEvent.newBuilder()
+        org.hyperledger.fabric.protos.peer.ChaincodeEvent event = org.hyperledger.fabric.protos.peer.ChaincodeEvent.newBuilder()
                 .setChaincodeId("CHAINCODE_NAME")
                 .setTxId("tx1")
                 .setEventName("event1")

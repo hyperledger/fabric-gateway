@@ -21,15 +21,16 @@ import org.hyperledger.fabric.client.InMemoryCheckpointer;
 import org.hyperledger.fabric.client.Network;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
-import org.hyperledger.fabric.protos.common.Common;
-import org.hyperledger.fabric.protos.peer.EventsPackage;
+import org.hyperledger.fabric.protos.common.Block;
+import org.hyperledger.fabric.protos.peer.BlockAndPrivateData;
+import org.hyperledger.fabric.protos.peer.FilteredBlock;
 
 public class GatewayContext {
     private final Gateway.Builder gatewayBuilder;
     private final Map<String, EventListener<ChaincodeEvent>> chaincodeEventListeners = new HashMap<>();
-    private final Map<String, EventListener<Common.Block>> blockEventListeners = new HashMap<>();
-    private final Map<String, EventListener<EventsPackage.FilteredBlock>> filteredBlockEventListeners = new HashMap<>();
-    private final Map<String, EventListener<EventsPackage.BlockAndPrivateData>> blockAndPrivateDataEventListeners = new HashMap<>();
+    private final Map<String, EventListener<Block>> blockEventListeners = new HashMap<>();
+    private final Map<String, EventListener<FilteredBlock>> filteredBlockEventListeners = new HashMap<>();
+    private final Map<String, EventListener<BlockAndPrivateData>> blockAndPrivateDataEventListeners = new HashMap<>();
     private Checkpointer checkpointer;
     private ManagedChannel channel;
     private Gateway gateway;
@@ -112,61 +113,61 @@ public class GatewayContext {
     }
 
     public void listenForBlockEventsUsingCheckpointer(String listenerName) {
-        CloseableIterator<Common.Block> iter = network.newBlockEventsRequest()
+        CloseableIterator<Block> iter = network.newBlockEventsRequest()
                 .checkpoint(checkpointer)
                 .build()
                 .getEvents();
         receiveBlockEventsUsingCheckpointer(listenerName, iter);
     }
 
-    private void receiveBlockEventsUsingCheckpointer(final String listenerName, final CloseableIterator<Common.Block> iter) {
+    private void receiveBlockEventsUsingCheckpointer(final String listenerName, final CloseableIterator<Block> iter) {
         closeBlockEvents(listenerName);
-        EventListener<Common.Block> e = new CheckpointEventListener<>(iter, event-> checkpointer.checkpointBlock(event.getHeader().getNumber()));
+        EventListener<Block> e = new CheckpointEventListener<>(iter, event-> checkpointer.checkpointBlock(event.getHeader().getNumber()));
         blockEventListeners.put(listenerName, e);
     }
 
     public void listenForFilteredBlockEventsUsingCheckpointer(String listenerName) {
-        CloseableIterator<EventsPackage.FilteredBlock> iter = network.newFilteredBlockEventsRequest()
+        CloseableIterator<FilteredBlock> iter = network.newFilteredBlockEventsRequest()
                 .checkpoint(checkpointer)
                 .build()
                 .getEvents();
         receiveFilteredBlockEventsUsingCheckpointer(listenerName, iter);
     }
 
-    private void receiveFilteredBlockEventsUsingCheckpointer(final String listenerName, final CloseableIterator<EventsPackage.FilteredBlock> iter) {
+    private void receiveFilteredBlockEventsUsingCheckpointer(final String listenerName, final CloseableIterator<FilteredBlock> iter) {
         closeFilteredBlockEvents(listenerName);
-        EventListener<EventsPackage.FilteredBlock> e = new CheckpointEventListener<>(iter, event-> checkpointer.checkpointBlock(event.getNumber()));
+        EventListener<FilteredBlock> e = new CheckpointEventListener<>(iter, event-> checkpointer.checkpointBlock(event.getNumber()));
         filteredBlockEventListeners.put(listenerName, e);
     }
 
     public void  listenForBlockAndPrivateDataUsingCheckpointer(String listenerName) {
-        CloseableIterator<EventsPackage.BlockAndPrivateData> iter = network.newBlockAndPrivateDataEventsRequest()
+        CloseableIterator<BlockAndPrivateData> iter = network.newBlockAndPrivateDataEventsRequest()
                 .checkpoint(checkpointer)
                 .build()
                 .getEvents();
         receiveBlockAndPrivateDataEventsUsingCheckpointer(listenerName, iter);
     }
 
-    private void receiveBlockAndPrivateDataEventsUsingCheckpointer(final String listenerName, final CloseableIterator<EventsPackage.BlockAndPrivateData> iter) {
+    private void receiveBlockAndPrivateDataEventsUsingCheckpointer(final String listenerName, final CloseableIterator<BlockAndPrivateData> iter) {
         closeBlockAndPrivateDataEvents(listenerName);
-        EventListener<EventsPackage.BlockAndPrivateData> e = new CheckpointEventListener<>(iter, event-> checkpointer.checkpointBlock(event.getBlock().getHeader().getNumber()));
+        EventListener<BlockAndPrivateData> e = new CheckpointEventListener<>(iter, event-> checkpointer.checkpointBlock(event.getBlock().getHeader().getNumber()));
         blockAndPrivateDataEventListeners.put(listenerName, e);
     }
 
     public void replayBlockEvents(String listenerName, long startBlock) {
-        CloseableIterator<Common.Block> iter = network.newBlockEventsRequest()
+        CloseableIterator<Block> iter = network.newBlockEventsRequest()
                 .startBlock(startBlock)
                 .build()
                 .getEvents();
         receiveBlockEvents(listenerName, iter);
     }
 
-    private void receiveBlockEvents(final String listenerName, final CloseableIterator<Common.Block> iter) {
+    private void receiveBlockEvents(final String listenerName, final CloseableIterator<Block> iter) {
         closeBlockEvents(listenerName);
         blockEventListeners.put(listenerName, new BasicEventListener<>(iter));
     }
 
-    public Common.Block nextBlockEvent(String listenerName) throws InterruptedException, IOException {
+    public Block nextBlockEvent(String listenerName) throws InterruptedException, IOException {
         return blockEventListeners.get(listenerName).next();
     }
 
@@ -175,19 +176,19 @@ public class GatewayContext {
     }
 
     public void replayFilteredBlockEvents(String listenerName, long startBlock) {
-        CloseableIterator<EventsPackage.FilteredBlock> iter = network.newFilteredBlockEventsRequest()
+        CloseableIterator<FilteredBlock> iter = network.newFilteredBlockEventsRequest()
                 .startBlock(startBlock)
                 .build()
                 .getEvents();
         receiveFilteredBlockEvents(listenerName, iter);
     }
 
-    private void receiveFilteredBlockEvents(final String listenerName, final CloseableIterator<EventsPackage.FilteredBlock> iter) {
+    private void receiveFilteredBlockEvents(final String listenerName, final CloseableIterator<FilteredBlock> iter) {
         closeFilteredBlockEvents(listenerName);
         filteredBlockEventListeners.put(listenerName, new BasicEventListener<>(iter));
     }
 
-    public EventsPackage.FilteredBlock nextFilteredBlockEvent(String listenerName) throws InterruptedException, IOException {
+    public FilteredBlock nextFilteredBlockEvent(String listenerName) throws InterruptedException, IOException {
         return filteredBlockEventListeners.get(listenerName).next();
     }
 
@@ -196,19 +197,19 @@ public class GatewayContext {
     }
 
     public void replayBlockAndPrivateDataEvents(String listenerName, long startBlock) {
-        CloseableIterator<EventsPackage.BlockAndPrivateData> iter = network.newBlockAndPrivateDataEventsRequest()
+        CloseableIterator<BlockAndPrivateData> iter = network.newBlockAndPrivateDataEventsRequest()
                 .startBlock(startBlock)
                 .build()
                 .getEvents();
         receiveBlockAndPrivateDataEvents(listenerName, iter);
     }
 
-    private void receiveBlockAndPrivateDataEvents(final String listenerName, final CloseableIterator<EventsPackage.BlockAndPrivateData> iter) {
+    private void receiveBlockAndPrivateDataEvents(final String listenerName, final CloseableIterator<BlockAndPrivateData> iter) {
         closeBlockAndPrivateDataEvents(listenerName);
         blockAndPrivateDataEventListeners.put(listenerName, new BasicEventListener<>(iter));
     }
 
-    public EventsPackage.BlockAndPrivateData nextBlockAndPrivateDataEvent(String listenerName) throws InterruptedException, IOException {
+    public BlockAndPrivateData nextBlockAndPrivateDataEvent(String listenerName) throws InterruptedException, IOException {
         return blockAndPrivateDataEventListeners.get(listenerName).next();
     }
 

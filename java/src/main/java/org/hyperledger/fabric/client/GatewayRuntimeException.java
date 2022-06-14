@@ -19,7 +19,7 @@ import org.hyperledger.fabric.protos.gateway.ErrorDetail;
 public class GatewayRuntimeException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
-    private final GrpcStatus grpcStatus;
+    private final transient GrpcStatus grpcStatus;
 
     /**
      * Constructs a new exception with the specified cause.

@@ -13,15 +13,19 @@ import java.util.stream.Stream;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
-import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.common.ChannelHeader;
+import org.hyperledger.fabric.protos.common.Envelope;
+import org.hyperledger.fabric.protos.common.Header;
+import org.hyperledger.fabric.protos.common.SignatureHeader;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
-import org.hyperledger.fabric.protos.peer.Chaincode;
-import org.hyperledger.fabric.protos.peer.ProposalPackage;
-import org.hyperledger.fabric.protos.peer.ProposalPackage.SignedProposal;
+import org.hyperledger.fabric.protos.peer.ChaincodeInvocationSpec;
+import org.hyperledger.fabric.protos.peer.ChaincodeProposalPayload;
+import org.hyperledger.fabric.protos.peer.ChaincodeSpec;
+import org.hyperledger.fabric.protos.peer.SignedProposal;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mockito;
@@ -50,9 +54,9 @@ public final class GatewayMocker implements AutoCloseable {
     @Captor private ArgumentCaptor<SubmitRequest> submitRequestCaptor;
     @Captor private ArgumentCaptor<SignedCommitStatusRequest> commitStatusRequestCaptor;
     @Captor private ArgumentCaptor<SignedChaincodeEventsRequest> chaincodeEventsRequestCaptor;
-    @Captor private ArgumentCaptor<Stream<Common.Envelope>> deliverRequestCaptor;
-    @Captor private ArgumentCaptor<Stream<Common.Envelope>> deliverFilteredRequestCaptor;
-    @Captor private ArgumentCaptor<Stream<Common.Envelope>> deliverWithPrivateDataRequestCaptor;
+    @Captor private ArgumentCaptor<Stream<Envelope>> deliverRequestCaptor;
+    @Captor private ArgumentCaptor<Stream<Envelope>> deliverFilteredRequestCaptor;
+    @Captor private ArgumentCaptor<Stream<Envelope>> deliverWithPrivateDataRequestCaptor;
     @Captor private ArgumentCaptor<CallOptions> callOptionsCaptor;
 
     public GatewayMocker() {
@@ -124,17 +128,17 @@ public final class GatewayMocker implements AutoCloseable {
         return chaincodeEventsRequestCaptor.getValue();
     }
 
-    public Stream<Common.Envelope> captureBlockEvents() {
+    public Stream<Envelope> captureBlockEvents() {
         Mockito.verify(deliverSpy).blockEvents(deliverRequestCaptor.capture());
         return deliverRequestCaptor.getValue();
     }
 
-    public Stream<Common.Envelope> captureFilteredBlockEvents() {
+    public Stream<Envelope> captureFilteredBlockEvents() {
         Mockito.verify(deliverSpy).filteredBlockEvents(deliverFilteredRequestCaptor.capture());
         return deliverFilteredRequestCaptor.getValue();
     }
 
-    public Stream<Common.Envelope> captureBlockAndPrivateDataEvents() {
+    public Stream<Envelope> captureBlockAndPrivateDataEvents() {
         Mockito.verify(deliverSpy).blockAndPrivateDataEvents(deliverWithPrivateDataRequestCaptor.capture());
         return deliverWithPrivateDataRequestCaptor.getValue();
     }
@@ -144,34 +148,34 @@ public final class GatewayMocker implements AutoCloseable {
         return callOptionsCaptor.getAllValues();
     }
 
-    public Chaincode.ChaincodeSpec getChaincodeSpec(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
-        ProposalPackage.Proposal proposal = getProposal(proposedTransaction);
-        ProposalPackage.ChaincodeProposalPayload chaincodeProposalPayload = ProposalPackage.ChaincodeProposalPayload.parseFrom(proposal.getPayload());
-        Chaincode.ChaincodeInvocationSpec chaincodeInvocationSpec = Chaincode.ChaincodeInvocationSpec.parseFrom(chaincodeProposalPayload.getInput());
+    public ChaincodeSpec getChaincodeSpec(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
+        org.hyperledger.fabric.protos.peer.Proposal proposal = getProposal(proposedTransaction);
+        ChaincodeProposalPayload chaincodeProposalPayload = ChaincodeProposalPayload.parseFrom(proposal.getPayload());
+        ChaincodeInvocationSpec chaincodeInvocationSpec = ChaincodeInvocationSpec.parseFrom(chaincodeProposalPayload.getInput());
         return chaincodeInvocationSpec.getChaincodeSpec();
     }
 
-    public ProposalPackage.ChaincodeProposalPayload getProposalPayload(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
-        ProposalPackage.Proposal proposal = getProposal(proposedTransaction);
-        return ProposalPackage.ChaincodeProposalPayload.parseFrom(proposal.getPayload());
+    public ChaincodeProposalPayload getProposalPayload(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
+        org.hyperledger.fabric.protos.peer.Proposal proposal = getProposal(proposedTransaction);
+        return ChaincodeProposalPayload.parseFrom(proposal.getPayload());
     }
 
-    public ProposalPackage.Proposal getProposal(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
-        return ProposalPackage.Proposal.parseFrom(proposedTransaction.getProposalBytes());
+    public org.hyperledger.fabric.protos.peer.Proposal getProposal(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
+        return org.hyperledger.fabric.protos.peer.Proposal.parseFrom(proposedTransaction.getProposalBytes());
     }
 
-    public Common.SignatureHeader getSignatureHeader(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
-        Common.Header header = getHeader(proposedTransaction);
-        return Common.SignatureHeader.parseFrom(header.getSignatureHeader());
+    public SignatureHeader getSignatureHeader(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
+        Header header = getHeader(proposedTransaction);
+        return SignatureHeader.parseFrom(header.getSignatureHeader());
     }
 
-    public Common.ChannelHeader getChannelHeader(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
-        Common.Header header = getHeader(proposedTransaction);
-        return Common.ChannelHeader.parseFrom(header.getChannelHeader());
+    public ChannelHeader getChannelHeader(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
+        Header header = getHeader(proposedTransaction);
+        return ChannelHeader.parseFrom(header.getChannelHeader());
     }
 
-    public Common.Header getHeader(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
-        ProposalPackage.Proposal proposal = getProposal(proposedTransaction);
-        return Common.Header.parseFrom(proposal.getHeader());
+    public Header getHeader(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
+        org.hyperledger.fabric.protos.peer.Proposal proposal = getProposal(proposedTransaction);
+        return Header.parseFrom(proposal.getHeader());
     }
 }

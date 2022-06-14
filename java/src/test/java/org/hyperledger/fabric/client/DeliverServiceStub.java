@@ -8,22 +8,22 @@ package org.hyperledger.fabric.client;
 
 import java.util.stream.Stream;
 
-import org.hyperledger.fabric.protos.common.Common;
-import org.hyperledger.fabric.protos.peer.EventsPackage;
+import org.hyperledger.fabric.protos.common.Envelope;
+import org.hyperledger.fabric.protos.peer.DeliverResponse;
 
 /**
  * Simplified stub implementation for Deliver gRPC service, to be used as a spy by unit tests.
  */
 public class DeliverServiceStub {
-    public Stream<EventsPackage.DeliverResponse> blockEvents(final Stream<Common.Envelope> requests) {
+    public Stream<DeliverResponse> blockEvents(final Stream<Envelope> requests) {
         return Stream.empty();
     }
 
-    public Stream<EventsPackage.DeliverResponse> filteredBlockEvents(final Stream<Common.Envelope> requests) {
+    public Stream<DeliverResponse> filteredBlockEvents(final Stream<Envelope> requests) {
         return Stream.empty();
     }
 
-    public Stream<EventsPackage.DeliverResponse> blockAndPrivateDataEvents(final Stream<Common.Envelope> requests) {
+    public Stream<DeliverResponse> blockAndPrivateDataEvents(final Stream<Envelope> requests) {
         return Stream.empty();
     }
 }

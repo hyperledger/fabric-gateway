@@ -10,8 +10,9 @@ import java.util.Objects;
 import java.util.function.UnaryOperator;
 
 import io.grpc.CallOptions;
-import org.hyperledger.fabric.protos.common.Common;
-import org.hyperledger.fabric.protos.peer.EventsPackage;
+import org.hyperledger.fabric.protos.common.Block;
+import org.hyperledger.fabric.protos.peer.BlockAndPrivateData;
+import org.hyperledger.fabric.protos.peer.FilteredBlock;
 
 final class NetworkImpl implements Network {
     private final GatewayClient client;
@@ -52,7 +53,7 @@ final class NetworkImpl implements Network {
     }
 
     @Override
-    public CloseableIterator<Common.Block> getBlockEvents(final UnaryOperator<CallOptions> options) {
+    public CloseableIterator<Block> getBlockEvents(final UnaryOperator<CallOptions> options) {
         return newBlockEventsRequest().build().getEvents(options);
     }
 
@@ -62,7 +63,7 @@ final class NetworkImpl implements Network {
     }
 
     @Override
-    public CloseableIterator<EventsPackage.FilteredBlock> getFilteredBlockEvents(final UnaryOperator<CallOptions> options) {
+    public CloseableIterator<FilteredBlock> getFilteredBlockEvents(final UnaryOperator<CallOptions> options) {
         return newFilteredBlockEventsRequest().build().getEvents(options);
     }
 
@@ -72,7 +73,7 @@ final class NetworkImpl implements Network {
     }
 
     @Override
-    public CloseableIterator<EventsPackage.BlockAndPrivateData> getBlockAndPrivateDataEvents(final UnaryOperator<CallOptions> options) {
+    public CloseableIterator<BlockAndPrivateData> getBlockAndPrivateDataEvents(final UnaryOperator<CallOptions> options) {
         return newBlockAndPrivateDataEventsRequest().build().getEvents(options);
     }
 
