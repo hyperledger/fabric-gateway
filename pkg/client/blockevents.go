@@ -10,10 +10,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
-	"github.com/hyperledger/fabric-protos-go/common"
-	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 )
 
 type baseBlockEventsRequest struct {
@@ -24,7 +24,7 @@ type baseBlockEventsRequest struct {
 
 // Bytes of the serialized block events request.
 func (events *baseBlockEventsRequest) Bytes() ([]byte, error) {
-	requestBytes, err := util.Marshal(events.request)
+	requestBytes, err := proto.Marshal(events.request)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshall Envelope protobuf: %w", err)
 	}

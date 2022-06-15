@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"github.com/hyperledger/fabric-protos-go/orderer"
+	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
 )
 
 type eventsBuilder struct {

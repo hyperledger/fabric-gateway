@@ -13,19 +13,19 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
-	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
-	"github.com/hyperledger/fabric-protos-go/common"
-	"github.com/hyperledger/fabric-protos-go/gateway"
-	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/runtime/protoiface"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func AssertMarshal(t *testing.T, message protoiface.MessageV1, msgAndArgs ...interface{}) []byte {
-	bytes, err := util.Marshal(message)
+func AssertMarshal(t *testing.T, message protoreflect.ProtoMessage, msgAndArgs ...interface{}) []byte {
+	bytes, err := proto.Marshal(message)
 	require.NoError(t, err, msgAndArgs...)
 	return bytes
 }
