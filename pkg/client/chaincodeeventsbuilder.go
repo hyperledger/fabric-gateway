@@ -9,8 +9,8 @@ package client
 import (
 	"fmt"
 
-	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
-	"github.com/hyperledger/fabric-protos-go/gateway"
+	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
+	"google.golang.org/protobuf/proto"
 )
 
 type chaincodeEventsBuilder struct {
@@ -38,7 +38,7 @@ func (builder *chaincodeEventsBuilder) newSignedChaincodeEventsRequestProto() (*
 		return nil, err
 	}
 
-	requestBytes, err := util.Marshal(request)
+	requestBytes, err := proto.Marshal(request)
 	if err != nil {
 		return nil, fmt.Errorf("failed to serialize chaincode events request: %w", err)
 	}

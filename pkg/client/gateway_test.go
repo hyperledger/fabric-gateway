@@ -12,14 +12,14 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	"github.com/hyperledger/fabric-protos-go/gateway"
-	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 )
 
-//go:generate mockgen -destination ./gateway_mock_test.go -package ${GOPACKAGE} github.com/hyperledger/fabric-protos-go/gateway GatewayClient,Gateway_ChaincodeEventsClient
-//go:generate mockgen -destination ./deliver_mock_test.go -package ${GOPACKAGE} github.com/hyperledger/fabric-protos-go/peer DeliverClient,Deliver_DeliverClient,Deliver_DeliverFilteredClient,Deliver_DeliverWithPrivateDataClient
+//go:generate mockgen -destination ./gateway_mock_test.go -package ${GOPACKAGE} github.com/hyperledger/fabric-protos-go-apiv2/gateway GatewayClient,Gateway_ChaincodeEventsClient
+//go:generate mockgen -destination ./deliver_mock_test.go -package ${GOPACKAGE} github.com/hyperledger/fabric-protos-go-apiv2/peer DeliverClient,Deliver_DeliverClient,Deliver_DeliverFilteredClient,Deliver_DeliverWithPrivateDataClient
 
 // WithGatewayClient uses the supplied client for the Gateway. Allows a stub implementation to be used for testing.
 func WithGatewayClient(client gateway.GatewayClient) ConnectOption {

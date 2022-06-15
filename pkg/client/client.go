@@ -9,11 +9,11 @@ package client
 import (
 	"context"
 
-	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
-	"github.com/hyperledger/fabric-protos-go/common"
-	"github.com/hyperledger/fabric-protos-go/gateway"
-	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 )
 
 type gatewayClient struct {
@@ -73,7 +73,7 @@ func (client *gatewayClient) CommitStatusWithContext(ctx context.Context, in *ga
 
 func getTransactionIDFromSignedCommitStatusRequest(in *gateway.SignedCommitStatusRequest) string {
 	request := &gateway.CommitStatusRequest{}
-	err := util.Unmarshal(in.GetRequest(), request)
+	err := proto.Unmarshal(in.GetRequest(), request)
 	if err != nil {
 		return "?"
 	}

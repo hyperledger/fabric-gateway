@@ -9,8 +9,8 @@ package client
 import (
 	"context"
 
-	"github.com/hyperledger/fabric-protos-go/common"
-	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 )
 
 // Network represents a network of nodes that are members of a specific Fabric channel. The Network can be used to

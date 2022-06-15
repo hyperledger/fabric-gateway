@@ -9,9 +9,9 @@ package client
 import (
 	"math"
 
-	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
-	"github.com/hyperledger/fabric-protos-go/common"
-	"github.com/hyperledger/fabric-protos-go/orderer"
+	"github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -53,7 +53,7 @@ func (builder *baseBlockEventsBuilder) payloadBytes() ([]byte, error) {
 		Data: data,
 	}
 
-	return util.Marshal(payload)
+	return proto.Marshal(payload)
 }
 
 func (builder *baseBlockEventsBuilder) channelHeaderBytes() ([]byte, error) {
@@ -64,7 +64,7 @@ func (builder *baseBlockEventsBuilder) channelHeaderBytes() ([]byte, error) {
 		Epoch:     0,
 	}
 
-	return util.Marshal(channelHeader)
+	return proto.Marshal(channelHeader)
 }
 
 func (builder *baseBlockEventsBuilder) signatureHeaderBytes() ([]byte, error) {
@@ -77,7 +77,7 @@ func (builder *baseBlockEventsBuilder) signatureHeaderBytes() ([]byte, error) {
 		Creator: creator,
 	}
 
-	return util.Marshal(signatureHeader)
+	return proto.Marshal(signatureHeader)
 }
 
 func (builder *baseBlockEventsBuilder) dataBytes() ([]byte, error) {
@@ -86,7 +86,7 @@ func (builder *baseBlockEventsBuilder) dataBytes() ([]byte, error) {
 		Stop:  seekLargestBlockNumber(),
 	}
 
-	return util.Marshal(data)
+	return proto.Marshal(data)
 }
 
 type filteredBlockEventsBuilder struct {

@@ -10,10 +10,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
-	"github.com/hyperledger/fabric-protos-go/gateway"
-	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 )
 
 // Commit provides access to a committed transaction.
@@ -40,7 +40,7 @@ func newCommit(
 
 // Bytes of the serialized commit.
 func (commit *Commit) Bytes() ([]byte, error) {
-	requestBytes, err := util.Marshal(commit.signedRequest)
+	requestBytes, err := proto.Marshal(commit.signedRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshall SignedCommitStatusRequest protobuf: %w", err)
 	}

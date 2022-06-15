@@ -10,9 +10,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
-	"github.com/hyperledger/fabric-protos-go/gateway"
+	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 )
 
 // ChaincodeEventsRequest delivers events emitted by transaction functions in a specific chaincode.
@@ -24,7 +24,7 @@ type ChaincodeEventsRequest struct {
 
 // Bytes of the serialized chaincode events request.
 func (events *ChaincodeEventsRequest) Bytes() ([]byte, error) {
-	requestBytes, err := util.Marshal(events.signedRequest)
+	requestBytes, err := proto.Marshal(events.signedRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshall SignedChaincodeEventsRequest protobuf: %w", err)
 	}

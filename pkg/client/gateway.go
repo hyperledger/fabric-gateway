@@ -20,11 +20,11 @@ import (
 
 	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
-	"github.com/hyperledger/fabric-protos-go/common"
-	"github.com/hyperledger/fabric-protos-go/gateway"
-	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 )
 
 // Gateway representing the connection of a specific client identity to a Fabric Gateway.
@@ -181,22 +181,22 @@ func (gw *Gateway) NewSignedProposal(bytes []byte, signature []byte) (*Proposal,
 // NewProposal recreates a proposal from serialized data.
 func (gw *Gateway) NewProposal(bytes []byte) (*Proposal, error) {
 	proposedTransaction := &gateway.ProposedTransaction{}
-	if err := util.Unmarshal(bytes, proposedTransaction); err != nil {
+	if err := proto.Unmarshal(bytes, proposedTransaction); err != nil {
 		return nil, fmt.Errorf("failed to deserialize proposed transaction: %w", err)
 	}
 
 	proposal := &peer.Proposal{}
-	if err := util.Unmarshal(proposedTransaction.GetProposal().GetProposalBytes(), proposal); err != nil {
+	if err := proto.Unmarshal(proposedTransaction.GetProposal().GetProposalBytes(), proposal); err != nil {
 		return nil, fmt.Errorf("failed to deserialize proposal: %w", err)
 	}
 
 	header := &common.Header{}
-	if err := util.Unmarshal(proposal.GetHeader(), header); err != nil {
+	if err := proto.Unmarshal(proposal.GetHeader(), header); err != nil {
 		return nil, fmt.Errorf("failed to deserialize header: %w", err)
 	}
 
 	channelHeader := &common.ChannelHeader{}
-	if err := util.Unmarshal(header.GetChannelHeader(), channelHeader); err != nil {
+	if err := proto.Unmarshal(header.GetChannelHeader(), channelHeader); err != nil {
 		return nil, fmt.Errorf("failed to deserialize channel header: %w", err)
 	}
 
@@ -227,7 +227,7 @@ func (gw *Gateway) NewSignedTransaction(bytes []byte, signature []byte) (*Transa
 func (gw *Gateway) NewTransaction(bytes []byte) (*Transaction, error) {
 
 	preparedTransaction := &gateway.PreparedTransaction{}
-	if err := util.Unmarshal(bytes, preparedTransaction); err != nil {
+	if err := proto.Unmarshal(bytes, preparedTransaction); err != nil {
 		return nil, fmt.Errorf("failed to deserialize prepared transaction: %w", err)
 	}
 
@@ -253,12 +253,12 @@ func (gw *Gateway) NewSignedCommit(bytes []byte, signature []byte) (*Commit, err
 // NewCommit recreates a commit from serialized data.
 func (gw *Gateway) NewCommit(bytes []byte) (*Commit, error) {
 	signedRequest := &gateway.SignedCommitStatusRequest{}
-	if err := util.Unmarshal(bytes, signedRequest); err != nil {
+	if err := proto.Unmarshal(bytes, signedRequest); err != nil {
 		return nil, fmt.Errorf("failed to deserialize signed commit status request: %w", err)
 	}
 
 	request := &gateway.CommitStatusRequest{}
-	if err := util.Unmarshal(signedRequest.Request, request); err != nil {
+	if err := proto.Unmarshal(signedRequest.Request, request); err != nil {
 		return nil, fmt.Errorf("failed to deserialize commit status request: %w", err)
 	}
 
@@ -282,7 +282,7 @@ func (gw *Gateway) NewSignedChaincodeEventsRequest(bytes []byte, signature []byt
 // NewChaincodeEventsRequest recreates a request to read chaincode events from serialized data.
 func (gw *Gateway) NewChaincodeEventsRequest(bytes []byte) (*ChaincodeEventsRequest, error) {
 	request := &gateway.SignedChaincodeEventsRequest{}
-	if err := util.Unmarshal(bytes, request); err != nil {
+	if err := proto.Unmarshal(bytes, request); err != nil {
 		return nil, fmt.Errorf("failed to deserialize signed chaincode events request: %w", err)
 	}
 
@@ -309,7 +309,7 @@ func (gw *Gateway) NewSignedBlockEventsRequest(bytes []byte, signature []byte) (
 // NewBlockEventsRequest recreates a request to read block events from serialized data.
 func (gw *Gateway) NewBlockEventsRequest(bytes []byte) (*BlockEventsRequest, error) {
 	request := &common.Envelope{}
-	if err := util.Unmarshal(bytes, request); err != nil {
+	if err := proto.Unmarshal(bytes, request); err != nil {
 		return nil, fmt.Errorf("failed to deserialize block events request envelope: %w", err)
 	}
 
@@ -338,7 +338,7 @@ func (gw *Gateway) NewSignedFilteredBlockEventsRequest(bytes []byte, signature [
 // NewFilteredBlockEventsRequest recreates a request to read filtered block events from serialized data.
 func (gw *Gateway) NewFilteredBlockEventsRequest(bytes []byte) (*FilteredBlockEventsRequest, error) {
 	request := &common.Envelope{}
-	if err := util.Unmarshal(bytes, request); err != nil {
+	if err := proto.Unmarshal(bytes, request); err != nil {
 		return nil, fmt.Errorf("failed to deserialize block events request envelope: %w", err)
 	}
 
@@ -367,7 +367,7 @@ func (gw *Gateway) NewSignedBlockAndPrivateDataEventsRequest(bytes []byte, signa
 // NewBlockAndPrivateDataEventsRequest recreates a request to read block and private data events from serialized data.
 func (gw *Gateway) NewBlockAndPrivateDataEventsRequest(bytes []byte) (*BlockAndPrivateDataEventsRequest, error) {
 	request := &common.Envelope{}
-	if err := util.Unmarshal(bytes, request); err != nil {
+	if err := proto.Unmarshal(bytes, request); err != nil {
 		return nil, fmt.Errorf("failed to deserialize block events request envelope: %w", err)
 	}
 

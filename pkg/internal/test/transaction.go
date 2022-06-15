@@ -9,21 +9,21 @@ package test
 import (
 	"testing"
 
-	"github.com/hyperledger/fabric-gateway/pkg/internal/util"
-	"github.com/hyperledger/fabric-protos-go/common"
-	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/runtime/protoiface"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // AssertProtoEqual ensures an expected protobuf message matches an actual message
-func AssertProtoEqual(t *testing.T, expected protoiface.MessageV1, actual protoiface.MessageV1) {
-	require.True(t, util.ProtoEqual(expected, actual), "Expected %v, got %v", expected, actual)
+func AssertProtoEqual(t *testing.T, expected protoreflect.ProtoMessage, actual protoreflect.ProtoMessage) {
+	require.True(t, proto.Equal(expected, actual), "Expected %v, got %v", expected, actual)
 }
 
 // AssertUnmarshal ensures that a protobuf is umarshaled without error
-func AssertUnmarshal(t *testing.T, b []byte, m protoiface.MessageV1) {
-	err := util.Unmarshal(b, m)
+func AssertUnmarshal(t *testing.T, b []byte, m protoreflect.ProtoMessage) {
+	err := proto.Unmarshal(b, m)
 	require.NoError(t, err)
 }
 
