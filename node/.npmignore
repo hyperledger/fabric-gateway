@@ -1,7 +1,4 @@
 # Exclude everything except specific inclusions below
 **/*
 
-# Include all non-test code in 'dist'
 !dist/**/*
-dist/**/*.test.*
-dist/**/*.spec.*
