@@ -21,7 +21,7 @@
     "scripts": {
         "build": "npm-run-all clean compile lint copy-non-ts-source",
         "clean": "rm -rf apidocs dist src/protos",
-        "compile": "tsc",
+        "compile": "tsc --project tsconfig.build.json",
         "copy-non-ts-source": "rsync -rv --prune-empty-dirs --include='*.d.ts' --exclude='*.ts' src/ dist",
         "generate-apidoc": "typedoc",
         "lint": "eslint . --ext .ts",

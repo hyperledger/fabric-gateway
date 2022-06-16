@@ -6,7 +6,6 @@
         "declarationMap": true,
         "sourceMap": true,
         "outDir": "dist",
-        "rootDir": "src",
         "strict": true,
         "noUnusedLocals": true,
         "noImplicitReturns": true,
@@ -14,7 +13,5 @@
     },
     "include": [
         "src/"
-    ],
-    "exclude": [
     ]
 }
