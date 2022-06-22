@@ -23,11 +23,13 @@ build these components, the following needs to be installed and available in the
 - Java 8
 - Docker
 - Make
-- Go tools:
-  - `go install github.com/cucumber/godog/cmd/godog@v0.12`
-  - `go install honnef.co/go/tools/cmd/staticcheck@latest`
-  - `go install github.com/golang/mock/mockgen@v1.6`
-  - `go install github.com/securego/gosec/v2/cmd/gosec@latest`
+
+Additional required tools are installed using the following Makefile target:
+
+- `make setup`
+
+In order to run any of the Hardware Security Module (HSM) tests, the following must also be installed:
+
 - pkcs11 enabled fabric-ca-client
   - `go get -tags 'pkcs11' github.com/hyperledger/fabric-ca/cmd/fabric-ca-client`
 - SoftHSM, which can either be:
@@ -46,7 +48,9 @@ build these components, the following needs to be installed and available in the
 
 ### Build using make
 
-The following Makefile targets are available
+> **Note:** When the repository is first cloned, some mock implementations used for testing will not be present and the Go code will show compile errors. These will be generated when the `unit-test` target is run, or can be generated explicitly by running `make generate`.
+
+The following Makefile targets are available:
 - `make generate` - generate mock implementations used by unit tests
 - `make unit-test-go` - run unit tests for the Go client API
 - `make unit-test-node` - run unit tests for the Node client API
@@ -59,10 +63,6 @@ The following Makefile targets are available
 - `make scenario-test` - run the scenario tests for all client language implementations
 - `make test` - run all unit and scenario tests
 
-Note that immediately after creating a fresh copy of this repository, auto-generated test mocks will not be preset so
-Go code will show errors. Running the `unit-test` make target will generate the required mock implementations, and they
-can also be generated explicitly by running `make generate`.
-
 ### Scenario tests
 
 The scenario tests create a Fabric network comprising two orgs (one peer in each org) and a single gateway within a set
@@ -73,4 +73,4 @@ is used across all three client language implementations to ensure consistency o
 
 ### Run Samples
 
-Refer [Fabric-Samples](https://github.com/hyperledger/fabric-samples) for sample applications developed using fabic-gateway.
+Refer to [Fabric-Samples](https://github.com/hyperledger/fabric-samples) for sample applications developed using fabic-gateway.

@@ -102,7 +102,6 @@ stages:
     timeoutInMinutes: 60
     steps:
     - template: install_deps.yml
-    - checkout: self
     - script: make generate-docs-node
       displayName: Generate Node docs
     - publish: $(System.DefaultWorkingDirectory)/node/apidocs
@@ -114,7 +113,6 @@ stages:
     timeoutInMinutes: 60
     steps:
     - template: install_deps.yml
-    - checkout: self
     - task: JavaToolInstaller@0
       inputs:
         versionSpec: 17
@@ -134,7 +132,6 @@ stages:
     timeoutInMinutes: 60
     steps:
     - template: install_deps_hsm.yml
-    - checkout: self
     - script: make generate unit-test-go-pkcs11
       displayName: Run Go unit tests with pkcs11
   - job: UnitTestNode
@@ -144,7 +141,6 @@ stages:
     timeoutInMinutes: 60
     steps:
     - template: install_deps.yml
-    - checkout: self
     - task: NodeTool@0
       inputs:
         versionSpec: $(NODEVER)
@@ -159,7 +155,6 @@ stages:
     timeoutInMinutes: 60
     steps:
     - template: install_deps.yml
-    - checkout: self
     - task: JavaToolInstaller@0
       inputs:
         versionSpec: $(JAVAVER)
@@ -179,7 +174,6 @@ stages:
     timeoutInMinutes: 60
     steps:
     - template: install_deps_hsm_ca.yml
-    - checkout: self
     - script: make pull-latest-peer scenario-test-go
       displayName: Run Go SDK scenario tests
       env:
@@ -199,7 +193,6 @@ stages:
           NODEVER: 16.x
     steps:
     - template: install_deps_hsm_ca.yml
-    - checkout: self
     - task: NodeTool@0
       inputs:
         versionSpec: $(NODEVER)
@@ -226,7 +219,6 @@ stages:
           JAVAVER: 17
     steps:
       - template: install_deps.yml
-      - checkout: self
       - task: JavaToolInstaller@0
         inputs:
           versionSpec: $(JAVAVER)

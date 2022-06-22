@@ -8,15 +8,12 @@ steps:
       sudo apt-get update
       echo "vsts  hard  nofile  65535" | sudo tee -a /etc/security/limits.conf
       echo "vsts  soft  nofile  65535" | sudo tee -a /etc/security/limits.conf
-    displayName: Install Dependencies
+    displayName: Configure environment
   - task: GoTool@0
     inputs:
       version: $(GOVER)
       goPath:  $(GOPATH)
     displayName: Install Go $(GOVER)
-  - script: |
-      go install github.com/cucumber/godog/cmd/godog@v0.12
-      go install honnef.co/go/tools/cmd/staticcheck@latest
-      go install github.com/golang/mock/mockgen@v1.6
-      go install github.com/securego/gosec/v2/cmd/gosec@latest
-    displayName: Install Go tools
+  - checkout: self
+  - script: make setup
+    displayName: Install tools

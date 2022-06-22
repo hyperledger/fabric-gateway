@@ -30,6 +30,13 @@ MARCH=$(shell go env GOOS)-$(shell go env GOARCH)
 GO_VER = 1.17.8
 GO_TAGS ?=
 
+.PHONEY: setup
+setup:
+	go install github.com/cucumber/godog/cmd/godog@v0.12
+	go install honnef.co/go/tools/cmd/staticcheck@latest
+	go install github.com/golang/mock/mockgen@v1.6
+	go install github.com/securego/gosec/v2/cmd/gosec@latest
+
 build: build-node build-java
 
 fabric_protos_commit = 9f95521bb870cca7b765217c80aeb600e0bd5abf
