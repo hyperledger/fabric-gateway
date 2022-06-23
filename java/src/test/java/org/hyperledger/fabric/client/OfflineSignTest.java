@@ -11,7 +11,7 @@ import java.util.List;
 
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.X509Identity;
-import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.common.Envelope;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
@@ -440,7 +440,7 @@ public final class OfflineSignTest {
             iter.forEachRemaining(event -> { });
         }
 
-        Common.Envelope request = mocker.captureBlockEvents().findFirst().get();
+        Envelope request = mocker.captureBlockEvents().findFirst().get();
         byte[] actual = request.getSignature().toByteArray();
 
         assertThat(actual).isEqualTo(expected);
@@ -458,7 +458,7 @@ public final class OfflineSignTest {
             iter.forEachRemaining(event -> { });
         }
 
-        Common.Envelope request = mocker.captureBlockEvents().findFirst().get();
+        Envelope request = mocker.captureBlockEvents().findFirst().get();
         byte[] actual = request.getSignature().toByteArray();
 
         assertThat(actual).isEqualTo(expected);
@@ -503,7 +503,7 @@ public final class OfflineSignTest {
             iter.forEachRemaining(event -> { });
         }
 
-        Common.Envelope request = mocker.captureFilteredBlockEvents().findFirst().get();
+        Envelope request = mocker.captureFilteredBlockEvents().findFirst().get();
         byte[] actual = request.getSignature().toByteArray();
 
         assertThat(actual).isEqualTo(expected);
@@ -522,7 +522,7 @@ public final class OfflineSignTest {
             iter.forEachRemaining(event -> { });
         }
 
-        Common.Envelope request = mocker.captureFilteredBlockEvents().findFirst().get();
+        Envelope request = mocker.captureFilteredBlockEvents().findFirst().get();
         byte[] actual = request.getSignature().toByteArray();
 
         assertThat(actual).isEqualTo(expected);
@@ -568,7 +568,7 @@ public final class OfflineSignTest {
             iter.forEachRemaining(event -> { });
         }
 
-        Common.Envelope request = mocker.captureBlockAndPrivateDataEvents().findFirst().get();
+        Envelope request = mocker.captureBlockAndPrivateDataEvents().findFirst().get();
         byte[] actual = request.getSignature().toByteArray();
 
         assertThat(actual).isEqualTo(expected);
@@ -587,7 +587,7 @@ public final class OfflineSignTest {
             iter.forEachRemaining(event -> { });
         }
 
-        Common.Envelope request = mocker.captureBlockAndPrivateDataEvents().findFirst().get();
+        Envelope request = mocker.captureBlockAndPrivateDataEvents().findFirst().get();
         byte[] actual = request.getSignature().toByteArray();
 
         assertThat(actual).isEqualTo(expected);

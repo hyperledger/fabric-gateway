@@ -26,7 +26,7 @@ import io.grpc.Channel;
 import io.grpc.Context;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
-import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.common.Envelope;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
@@ -40,7 +40,7 @@ import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitRequest;
 import org.hyperledger.fabric.protos.gateway.SubmitResponse;
 import org.hyperledger.fabric.protos.peer.DeliverGrpc;
-import org.hyperledger.fabric.protos.peer.EventsPackage;
+import org.hyperledger.fabric.protos.peer.DeliverResponse;
 
 final class GatewayClient {
     private final GatewayGrpc.GatewayBlockingStub gatewayBlockingStub;
@@ -105,17 +105,17 @@ final class GatewayClient {
         return invokeServerStreamingCall(() -> stub.chaincodeEvents(request));
     }
 
-    public CloseableIterator<EventsPackage.DeliverResponse> blockEvents(final Common.Envelope request, final UnaryOperator<CallOptions> options) {
+    public CloseableIterator<DeliverResponse> blockEvents(final Envelope request, final UnaryOperator<CallOptions> options) {
         DeliverGrpc.DeliverStub stub = defaultOptions.applyBlockEvents(deliverAsyncStub, options);
         return invokeDuplexStreamingCall(stub::deliver, request);
     }
 
-    public CloseableIterator<EventsPackage.DeliverResponse> filteredBlockEvents(final Common.Envelope request, final UnaryOperator<CallOptions> options) {
+    public CloseableIterator<DeliverResponse> filteredBlockEvents(final Envelope request, final UnaryOperator<CallOptions> options) {
         DeliverGrpc.DeliverStub stub = defaultOptions.applyFilteredBlockEvents(deliverAsyncStub, options);
         return invokeDuplexStreamingCall(stub::deliverFiltered, request);
     }
 
-    public CloseableIterator<EventsPackage.DeliverResponse> blockAndPrivateDataEvents(final Common.Envelope request, final UnaryOperator<CallOptions> options) {
+    public CloseableIterator<DeliverResponse> blockAndPrivateDataEvents(final Envelope request, final UnaryOperator<CallOptions> options) {
         DeliverGrpc.DeliverStub stub = defaultOptions.applyBlockAndPrivateDataEvents(deliverAsyncStub, options);
         return invokeDuplexStreamingCall(stub::deliverWithPrivateData, request);
     }

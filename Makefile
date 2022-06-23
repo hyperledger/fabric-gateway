@@ -37,123 +37,136 @@ setup:
 	go install github.com/golang/mock/mockgen@v1.6
 	go install github.com/securego/gosec/v2/cmd/gosec@latest
 
+.PHONEY: build
 build: build-node build-java
 
-fabric_protos_commit = 9f95521bb870cca7b765217c80aeb600e0bd5abf
-pb_files = protos/gateway/gateway.pb.go protos/gateway/gateway_grpc.pb.go
-
-.PHONEY: build-protos
-build-protos: $(pb_files)
-
-fabric-protos:
-	git clone https://github.com/hyperledger/fabric-protos.git
-	cd fabric-protos && \
-		git checkout "$(fabric_protos_commit)"
-
-$(pb_files): fabric-protos
-
-build-node: build-protos
-	cd $(node_dir) && \
+.PHONEY: build-node
+build-node:
+	cd "$(node_dir)" && \
 		npm install && \
 		npm run build && \
 		rm -f fabric-gateway-dev.tgz && \
 		mv $$(npm pack) fabric-gateway-dev.tgz
 
-build-java: build-protos
-	cd $(java_dir) && \
+.PHONEY: build-java
+build-java:
+	cd "$(java_dir)" && \
 		mvn install -DskipTests
 
+.PHONEY: unit-test
 unit-test: generate unit-test-go unit-test-node unit-test-java
 
+.PHONEY: unit-test-go
 unit-test-go: lint
-	go test -timeout 10s -coverprofile=$(base_dir)/cover.out $(base_dir)/pkg/...
+	go test -timeout 10s -coverprofile="$(base_dir)/cover.out" "$(go_dir)/..."
 
+.PHONEY: unit-test-go-pkcs11
 unit-test-go-pkcs11: lint
-	SOFTHSM2_CONF=${HOME}/softhsm2.conf go test -tags pkcs11 -timeout 10s -coverprofile=$(base_dir)/cover.out $(base_dir)/pkg/...
+	SOFTHSM2_CONF="$${HOME}/softhsm2.conf" go test -tags pkcs11 -timeout 10s -coverprofile="$(base_dir)/cover.out" "$(go_dir)/..."
 
+.PHONEY: unit-test-node
 unit-test-node: build-node
-	cd $(node_dir) && \
+	cd "$(node_dir)" && \
 		npm test
 
-unit-test-java: build-protos
-	cd $(java_dir) && \
+.PHONEY: unit-test-java
+unit-test-java:
+	cd "$(java_dir)" && \
 		mvn test
 
+.PHONEY: lint
 lint:
-	$(base_dir)/ci/check_gofmt.sh $(base_dir)/pkg $(scenario_dir)/go
-	staticcheck -f stylish -tags="pkcs11" $(base_dir)/pkg/... $(scenario_dir)/go
-	go vet -tags pkcs11 $(base_dir)/pkg/... $(scenario_dir)/go
-	gosec -tags pkcs11 -exclude-generated $(base_dir)/pkg/...
+	"$(base_dir)/ci/check_gofmt.sh" "$(go_dir)" "$(scenario_dir)/go"
+	staticcheck -f stylish -tags="pkcs11" "$(go_dir)/..." "$(scenario_dir)/go"
+	go vet -tags pkcs11 "$(go_dir)/..." "$(scenario_dir)/go"
+	gosec -tags pkcs11 -exclude-generated "$(go_dir)/..."
 
+.PHONEY: scan
 scan: scan-go scan-node scan-java
 
+.PHONEY: scan-go
 scan-go:
-	go list -json -deps ./pkg/... | docker run --rm --interactive sonatypecommunity/nancy:latest sleuth
+	go list -json -deps "$(go_dir)/..." | docker run --rm --interactive sonatypecommunity/nancy:latest sleuth
 
+.PHONEY: scan-node
 scan-node:
-	cd $(node_dir) && \
+	cd "$(node_dir)" && \
 		npm install --package-lock-only && \
 		npm audit --production
 
-scan-java: build-protos
-	cd $(java_dir) && \
+.PHONEY: scan-java
+scan-java:
+	cd "$(java_dir)" && \
 		mvn dependency-check:check -P owasp
 
+.PHONEY: generate
 generate:
-	go generate ./pkg/...
+	go generate "$(go_dir)/..."
 
+.PHONEY: vendor-chaincode
 vendor-chaincode:
-	cd $(scenario_dir)/fixtures/chaincode/golang/basic && \
+	cd "$(scenario_dir)/fixtures/chaincode/golang/basic" && \
 		GO111MODULE=on go mod vendor
-	cd $(scenario_dir)/fixtures/chaincode/golang/private && \
+	cd "$(scenario_dir)/fixtures/chaincode/golang/private" && \
 		GO111MODULE=on go mod vendor
 
+.PHONEY: scenario-test-go
 scenario-test-go: vendor-chaincode
 	cd $(scenario_dir)/go && \
-		SOFTHSM2_CONF=${HOME}/softhsm2.conf go test -tags pkcs11 -v -args $(scenario_dir)/features/
+		SOFTHSM2_CONF="$${HOME}/softhsm2.conf" go test -tags pkcs11 -v -args "$(scenario_dir)/features/"
 
+.PHONEY: scenario-test-node
 scenario-test-node: vendor-chaincode build-node
-	cd $(scenario_dir)/node && \
+	cd "$(scenario_dir)/node" && \
 		rm -rf package-lock.json node_modules && \
 		npm install && \
-		SOFTHSM2_CONF=${HOME}/softhsm2.conf npm test
+		SOFTHSM2_CONF="$${HOME}/softhsm2.conf" npm test
 
+.PHONEY: scenario-test-java
 scenario-test-java: vendor-chaincode build-java
-	cd $(java_dir) && \
+	cd "$(java_dir)" && \
 		mvn verify
 
+.PHONEY: scenario-test
 scenario-test: scenario-test-go scenario-test-node scenario-test-java
 
 .PHONEY: generate-docs-node
 generate-docs-node: build-node
-	cd $(node_dir) && \
+	cd "$(node_dir)" && \
 		npm run generate-apidoc
 
 .PHONEY: generate-docs-java
-generate-docs-java: build-protos
-	cd $(java_dir) && \
+generate-docs-java:
+	cd "$(java_dir)" && \
 		mvn javadoc:javadoc
 
+.PHONEY: test
 test: unit-test scenario-test
 
+.PHONEY: all
 all: test
 
+.PHONEY: pull-latest-peer
 pull-latest-peer:
 	docker pull $(PEER_IMAGE_PULL)
 	docker tag $(PEER_IMAGE_PULL) hyperledger/fabric-peer:$(PEER_IMAGE_TAG)
 	# also need to retag the following images for the chaincode builder
 	for IMAGE in baseos ccenv javaenv nodeenv; do \
-		docker pull hyperledger/fabric-$$IMAGE:$(TWO_DIGIT_VERSION); \
-		docker tag hyperledger/fabric-$$IMAGE:$(TWO_DIGIT_VERSION) hyperledger/fabric-$$IMAGE:$(PEER_IMAGE_TAG); \
+		docker pull hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION); \
+		docker tag hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION) hyperledger/fabric-$$IMAGE:$(PEER_IMAGE_TAG); \
 	done
 
 .PHONEY: clean
-clean: clean-protos clean-generated
+clean: clean-generated clean-node clean-java
 
-.PHONEY: clean-protos
-clean-protos:
-	-rm -rf fabric-protos
-	-rm $(pb_files)
+.PHONEY: clean-node
+clean-node:
+	rm -rf "$(node_dir)/package-lock.json" "$(node_dir)/node_modules"
 
+.PHONEY: clean-java
+clean-java:
+	cd "$(java_dir)" && mvn clean
+
+.PHONEY: clean-generated
 clean-generated:
-	find ./pkg -name '*_mock_test.go' -delete
+	find "$(go_dir)" -name '*_mock_test.go' -delete

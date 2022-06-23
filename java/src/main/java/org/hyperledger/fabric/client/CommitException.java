@@ -6,7 +6,7 @@
 
 package org.hyperledger.fabric.client;
 
-import org.hyperledger.fabric.protos.peer.TransactionPackage;
+import org.hyperledger.fabric.protos.peer.TxValidationCode;
 
 /**
  * Thrown when a transaction fails to commit successfully.
@@ -14,10 +14,10 @@ import org.hyperledger.fabric.protos.peer.TransactionPackage;
 public class CommitException extends Exception {
     private static final long serialVersionUID = 1L;
 
-    private final Status status;
+    private final transient Status status;
 
     private static String message(final Status status) {
-        TransactionPackage.TxValidationCode code = status.getCode();
+        TxValidationCode code = status.getCode();
         return "Commit of transaction " + status.getTransactionId() + " failed with status code " + code.getNumber()
                 + " (" + code.name() + ")";
     }
@@ -43,7 +43,7 @@ public class CommitException extends Exception {
      * Get the transaction status code.
      * @return transaction status code.
      */
-    public TransactionPackage.TxValidationCode getCode() {
+    public TxValidationCode getCode() {
         return status.getCode();
     }
 }

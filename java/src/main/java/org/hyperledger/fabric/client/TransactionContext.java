@@ -11,7 +11,7 @@ import java.security.SecureRandom;
 
 import com.google.protobuf.ByteString;
 import org.bouncycastle.util.encoders.Hex;
-import org.hyperledger.fabric.protos.common.Common;
+import org.hyperledger.fabric.protos.common.SignatureHeader;
 
 final class TransactionContext {
     private static final int NONCE_LENGTH = 24;
@@ -20,7 +20,7 @@ final class TransactionContext {
     private final SigningIdentity signingIdentity;
     private final byte[] nonce;
     private final String transactionId;
-    private final Common.SignatureHeader signatureHeader;
+    private final SignatureHeader signatureHeader;
 
     TransactionContext(final SigningIdentity signingIdentity) {
         this.signingIdentity = signingIdentity;
@@ -43,8 +43,8 @@ final class TransactionContext {
         return new String(hexTransactionId, StandardCharsets.UTF_8);
     }
 
-    private Common.SignatureHeader newSignatureHeader() {
-        return Common.SignatureHeader.newBuilder()
+    private SignatureHeader newSignatureHeader() {
+        return SignatureHeader.newBuilder()
                 .setCreator(ByteString.copyFrom(signingIdentity.getCreator()))
                 .setNonce(ByteString.copyFrom(nonce))
                 .build();
@@ -54,7 +54,7 @@ final class TransactionContext {
         return transactionId;
     }
 
-    public Common.SignatureHeader getSignatureHeader() {
+    public SignatureHeader getSignatureHeader() {
         return signatureHeader;
     }
 }

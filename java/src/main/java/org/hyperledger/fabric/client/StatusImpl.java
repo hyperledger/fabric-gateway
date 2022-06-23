@@ -7,8 +7,7 @@
 package org.hyperledger.fabric.client;
 
 import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
-
-import static org.hyperledger.fabric.protos.peer.TransactionPackage.TxValidationCode;
+import org.hyperledger.fabric.protos.peer.TxValidationCode;
 
 /**
  * Information about a transaction that is committed to the ledger.

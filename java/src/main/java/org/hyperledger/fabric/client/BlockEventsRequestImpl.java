@@ -10,25 +10,26 @@ import java.util.NoSuchElementException;
 import java.util.function.UnaryOperator;
 
 import io.grpc.CallOptions;
-import org.hyperledger.fabric.protos.common.Common;
-import org.hyperledger.fabric.protos.peer.EventsPackage;
+import org.hyperledger.fabric.protos.common.Block;
+import org.hyperledger.fabric.protos.common.Envelope;
+import org.hyperledger.fabric.protos.peer.DeliverResponse;
 
 final class BlockEventsRequestImpl extends SignableBlockEventsRequest implements BlockEventsRequest {
     private final GatewayClient client;
 
-    BlockEventsRequestImpl(final GatewayClient client, final SigningIdentity signingIdentity, final Common.Envelope request) {
+    BlockEventsRequestImpl(final GatewayClient client, final SigningIdentity signingIdentity, final Envelope request) {
         super(signingIdentity, request);
         this.client = client;
     }
 
     @Override
-    public CloseableIterator<Common.Block> getEvents(final UnaryOperator<CallOptions> options) {
-        Common.Envelope request = getSignedRequest();
-        CloseableIterator<EventsPackage.DeliverResponse> responseIter = client.blockEvents(request, options);
+    public CloseableIterator<Block> getEvents(final UnaryOperator<CallOptions> options) {
+        Envelope request = getSignedRequest();
+        CloseableIterator<DeliverResponse> responseIter = client.blockEvents(request, options);
 
         return new MappingCloseableIterator<>(responseIter, response -> {
-            EventsPackage.DeliverResponse.TypeCase responseType = response.getTypeCase();
-            if (responseType == EventsPackage.DeliverResponse.TypeCase.STATUS) {
+            DeliverResponse.TypeCase responseType = response.getTypeCase();
+            if (responseType == DeliverResponse.TypeCase.STATUS) {
                 throw new NoSuchElementException("Unexpected status response: " + response.getStatus());
             }
 

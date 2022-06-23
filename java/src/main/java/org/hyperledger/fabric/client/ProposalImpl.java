@@ -15,7 +15,7 @@ import org.hyperledger.fabric.protos.gateway.EndorseResponse;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
 import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
-import org.hyperledger.fabric.protos.peer.ProposalPackage;
+import org.hyperledger.fabric.protos.peer.SignedProposal;
 
 final class ProposalImpl implements Proposal {
     private final GatewayClient client;
@@ -81,7 +81,7 @@ final class ProposalImpl implements Proposal {
     }
 
     void setSignature(final byte[] signature) {
-        ProposalPackage.SignedProposal signedProposal = proposedTransaction.getProposal().toBuilder()
+        SignedProposal signedProposal = proposedTransaction.getProposal().toBuilder()
                 .setSignature(ByteString.copyFrom(signature))
                 .build();
 

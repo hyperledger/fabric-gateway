@@ -19,12 +19,18 @@ import io.grpc.CallOptions;
 import io.grpc.Deadline;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import org.hyperledger.fabric.client.identity.Identities;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.X509Identity;
-import org.hyperledger.fabric.protos.common.Common;
-import org.hyperledger.fabric.protos.msp.Identities;
-import org.hyperledger.fabric.protos.orderer.Ab;
-import org.hyperledger.fabric.protos.peer.EventsPackage;
+import org.hyperledger.fabric.protos.common.ChannelHeader;
+import org.hyperledger.fabric.protos.common.Envelope;
+import org.hyperledger.fabric.protos.common.Header;
+import org.hyperledger.fabric.protos.common.Payload;
+import org.hyperledger.fabric.protos.common.SignatureHeader;
+import org.hyperledger.fabric.protos.msp.SerializedIdentity;
+import org.hyperledger.fabric.protos.orderer.SeekInfo;
+import org.hyperledger.fabric.protos.orderer.SeekPosition;
+import org.hyperledger.fabric.protos.peer.DeliverResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,42 +66,42 @@ public abstract class CommonBlockEventsTest<E> {
     }
 
     protected abstract void setEventsOptions(Gateway.Builder builder, UnaryOperator<CallOptions> options);
-    protected abstract EventsPackage.DeliverResponse newDeliverResponse(long blockNumber);
+    protected abstract DeliverResponse newDeliverResponse(long blockNumber);
     protected abstract void stubDoThrow(Throwable... t);
     protected abstract CloseableIterator<E> getEvents();
     protected abstract CloseableIterator<E> getEvents(UnaryOperator<CallOptions> options);
-    protected abstract Stream<Common.Envelope> captureEvents();
+    protected abstract Stream<Envelope> captureEvents();
     protected abstract EventsBuilder<E> newEventsRequest();
-    protected abstract void stubDoReturn(Stream<EventsPackage.DeliverResponse> responses);
-    protected abstract E extractEvent(EventsPackage.DeliverResponse response);
+    protected abstract void stubDoReturn(Stream<DeliverResponse> responses);
+    protected abstract E extractEvent(DeliverResponse response);
 
-    private void assertValidBlockEventsRequestHeader(final Common.Payload payload) throws InvalidProtocolBufferException, CertificateException {
-        Common.Header header = payload.getHeader();
-        Common.ChannelHeader channelHeader = Common.ChannelHeader.parseFrom(header.getChannelHeader());
-        Common.SignatureHeader signatureHeader = Common.SignatureHeader.parseFrom(header.getSignatureHeader());
-        Identities.SerializedIdentity creator = Identities.SerializedIdentity.parseFrom(signatureHeader.getCreator());
+    private void assertValidBlockEventsRequestHeader(final Payload payload) throws InvalidProtocolBufferException, CertificateException {
+        Header header = payload.getHeader();
+        ChannelHeader channelHeader = ChannelHeader.parseFrom(header.getChannelHeader());
+        SignatureHeader signatureHeader = SignatureHeader.parseFrom(header.getSignatureHeader());
+        SerializedIdentity creator = SerializedIdentity.parseFrom(signatureHeader.getCreator());
 
         String credentials = creator.getIdBytes().toStringUtf8();
-        X509Certificate certificate = org.hyperledger.fabric.client.identity.Identities.readX509Certificate(credentials);
+        X509Certificate certificate = Identities.readX509Certificate(credentials);
         Identity actualIdentity = new X509Identity(creator.getMspid(), certificate);
 
         assertThat(channelHeader.getChannelId()).isEqualTo(network.getName());
         assertThat(actualIdentity).isEqualTo(gateway.getIdentity());
     }
 
-    private void assertStartPositionSpecified (final Ab.SeekInfo seekInfo, final long startBlock) {
-        Ab.SeekPosition start = seekInfo.getStart();
-        assertThat(start.getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
+    private void assertStartPositionSpecified (final SeekInfo seekInfo, final long startBlock) {
+        SeekPosition start = seekInfo.getStart();
+        assertThat(start.getTypeCase()).isEqualTo(SeekPosition.TypeCase.SPECIFIED);
         assertThat(start.getSpecified().getNumber()).isEqualTo(startBlock);
  }
-    private void assertStartPositionNextCommit (final Ab.SeekInfo seekInfo) {
-        Ab.SeekPosition start = seekInfo.getStart();
-        assertThat(start.getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.NEXT_COMMIT);
+    private void assertStartPositionNextCommit (final SeekInfo seekInfo) {
+        SeekPosition start = seekInfo.getStart();
+        assertThat(start.getTypeCase()).isEqualTo(SeekPosition.TypeCase.NEXT_COMMIT);
     }
 
-    private void assertStopPosition(final Ab.SeekInfo seekInfo) {
-        Ab.SeekPosition stop = seekInfo.getStop();
-        assertThat(stop.getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
+    private void assertStopPosition(final SeekInfo seekInfo) {
+        SeekPosition stop = seekInfo.getStop();
+        assertThat(stop.getTypeCase()).isEqualTo(SeekPosition.TypeCase.SPECIFIED);
         assertThat(stop.getSpecified().getNumber()).isEqualTo(Long.MAX_VALUE);
     }
 
@@ -120,15 +126,15 @@ public abstract class CommonBlockEventsTest<E> {
             iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
         }
 
-        Common.Envelope request = captureEvents().findFirst().get();
-        Common.Payload payload = Common.Payload.parseFrom(request.getPayload());
+        Envelope request = captureEvents().findFirst().get();
+        Payload payload = Payload.parseFrom(request.getPayload());
         assertValidBlockEventsRequestHeader(payload);
 
-        Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
-        Ab.SeekPosition start = seekInfo.getStart();
-        assertThat(start.getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.NEXT_COMMIT);
-        Ab.SeekPosition stop = seekInfo.getStop();
-        assertThat(stop.getTypeCase()).isEqualTo(Ab.SeekPosition.TypeCase.SPECIFIED);
+        SeekInfo seekInfo = SeekInfo.parseFrom(payload.getData());
+        SeekPosition start = seekInfo.getStart();
+        assertThat(start.getTypeCase()).isEqualTo(SeekPosition.TypeCase.NEXT_COMMIT);
+        SeekPosition stop = seekInfo.getStop();
+        assertThat(stop.getTypeCase()).isEqualTo(SeekPosition.TypeCase.SPECIFIED);
         assertThat(stop.getSpecified().getNumber()).isEqualTo(Long.MAX_VALUE);
     }
 
@@ -143,11 +149,11 @@ public abstract class CommonBlockEventsTest<E> {
             iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
         }
 
-        Common.Envelope request = captureEvents().findFirst().get();
-        Common.Payload payload = Common.Payload.parseFrom(request.getPayload());
+        Envelope request = captureEvents().findFirst().get();
+        Payload payload = Payload.parseFrom(request.getPayload());
         assertValidBlockEventsRequestHeader(payload);
 
-        Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
+        SeekInfo seekInfo = SeekInfo.parseFrom(payload.getData());
         assertStartPositionSpecified(seekInfo, startBlock);
         assertStopPosition(seekInfo);
     }
@@ -163,11 +169,11 @@ public abstract class CommonBlockEventsTest<E> {
             iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
         }
 
-        Common.Envelope request = captureEvents().findFirst().get();
-        Common.Payload payload = Common.Payload.parseFrom(request.getPayload());
+        Envelope request = captureEvents().findFirst().get();
+        Payload payload = Payload.parseFrom(request.getPayload());
         assertValidBlockEventsRequestHeader(payload);
 
-        Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
+        SeekInfo seekInfo = SeekInfo.parseFrom(payload.getData());
         assertStartPositionSpecified(seekInfo, startBlock);
         assertStopPosition(seekInfo);
     }
@@ -185,11 +191,11 @@ public abstract class CommonBlockEventsTest<E> {
             iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
         }
 
-        Common.Envelope request = captureEvents().findFirst().get();
-        Common.Payload payload = Common.Payload.parseFrom(request.getPayload());
+        Envelope request = captureEvents().findFirst().get();
+        Payload payload = Payload.parseFrom(request.getPayload());
         assertValidBlockEventsRequestHeader(payload);
 
-        Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
+        SeekInfo seekInfo = SeekInfo.parseFrom(payload.getData());
         assertStartPositionSpecified(seekInfo, startBlock);
         assertStopPosition(seekInfo);
     }
@@ -208,11 +214,11 @@ public abstract class CommonBlockEventsTest<E> {
             iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
         }
 
-        Common.Envelope request = captureEvents().findFirst().get();
-        Common.Payload payload = Common.Payload.parseFrom(request.getPayload());
+        Envelope request = captureEvents().findFirst().get();
+        Payload payload = Payload.parseFrom(request.getPayload());
         assertValidBlockEventsRequestHeader(payload);
 
-        Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
+        SeekInfo seekInfo = SeekInfo.parseFrom(payload.getData());
         assertStartPositionSpecified(seekInfo, blockNumber+1);
         assertStopPosition(seekInfo);
     }
@@ -228,11 +234,11 @@ public abstract class CommonBlockEventsTest<E> {
             iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
         }
 
-        Common.Envelope request = captureEvents().findFirst().get();
-        Common.Payload payload = Common.Payload.parseFrom(request.getPayload());
+        Envelope request = captureEvents().findFirst().get();
+        Payload payload = Payload.parseFrom(request.getPayload());
         assertValidBlockEventsRequestHeader(payload);
 
-        Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
+        SeekInfo seekInfo = SeekInfo.parseFrom(payload.getData());
         assertStartPositionNextCommit(seekInfo);
         assertStopPosition(seekInfo);
     }
@@ -251,19 +257,19 @@ public abstract class CommonBlockEventsTest<E> {
             iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
         }
 
-        Common.Envelope request = captureEvents().findFirst().get();
-        Common.Payload payload = Common.Payload.parseFrom(request.getPayload());
+        Envelope request = captureEvents().findFirst().get();
+        Payload payload = Payload.parseFrom(request.getPayload());
         assertValidBlockEventsRequestHeader(payload);
 
-        Ab.SeekInfo seekInfo = Ab.SeekInfo.parseFrom(payload.getData());
+        SeekInfo seekInfo = SeekInfo.parseFrom(payload.getData());
         assertStartPositionSpecified(seekInfo, blockNumber);
         assertStopPosition(seekInfo);
     }
 
     @Test()
     void throws_on_receive_of_status_message() {
-        EventsPackage.DeliverResponse response = EventsPackage.DeliverResponse.newBuilder()
-                .setStatus(Common.Status.SERVICE_UNAVAILABLE)
+        DeliverResponse response = DeliverResponse.newBuilder()
+                .setStatus(org.hyperledger.fabric.protos.common.Status.SERVICE_UNAVAILABLE)
                 .build();
         stubDoReturn(Stream.of(response));
 
@@ -271,12 +277,12 @@ public abstract class CommonBlockEventsTest<E> {
             try (CloseableIterator<?> iter = getEvents()) {
                 iter.forEachRemaining(event -> { });
             }
-        }).hasMessageContaining(Common.Status.SERVICE_UNAVAILABLE.toString());
+        }).hasMessageContaining(org.hyperledger.fabric.protos.common.Status.SERVICE_UNAVAILABLE.toString());
     }
 
     @Test
     void returns_events() {
-        List<EventsPackage.DeliverResponse> responses = Stream.of(newDeliverResponse(1), newDeliverResponse(2))
+        List<DeliverResponse> responses = Stream.of(newDeliverResponse(1), newDeliverResponse(2))
                 .collect(Collectors.toList());
         List<E> expected = responses.stream()
                 .map(this::extractEvent)
@@ -292,7 +298,7 @@ public abstract class CommonBlockEventsTest<E> {
 
     @Test
     void close_stops_receiving_events() {
-        Stream<EventsPackage.DeliverResponse> responses = Stream.generate(() -> newDeliverResponse(1)).limit(100);
+        Stream<DeliverResponse> responses = Stream.generate(() -> newDeliverResponse(1)).limit(100);
         stubDoReturn(responses);
 
         CloseableIterator<?> eventIter = getEvents();
@@ -310,7 +316,7 @@ public abstract class CommonBlockEventsTest<E> {
 
     @Test
     void eventing_can_be_restarted_after_close() {
-        List<EventsPackage.DeliverResponse> responses = Stream.of(newDeliverResponse(1), newDeliverResponse(2))
+        List<DeliverResponse> responses = Stream.of(newDeliverResponse(1), newDeliverResponse(2))
                 .collect(Collectors.toList());
         List<E> expected = responses.stream()
                 .map(this::extractEvent)

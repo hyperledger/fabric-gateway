@@ -11,16 +11,14 @@ import java.util.List;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-
-import static org.hyperledger.fabric.protos.common.Common.ChannelHeader;
-import static org.hyperledger.fabric.protos.common.Common.Envelope;
-import static org.hyperledger.fabric.protos.common.Common.Header;
-import static org.hyperledger.fabric.protos.common.Common.Payload;
-import static org.hyperledger.fabric.protos.peer.ProposalPackage.ChaincodeAction;
-import static org.hyperledger.fabric.protos.peer.ProposalResponsePackage.ProposalResponsePayload;
-import static org.hyperledger.fabric.protos.peer.TransactionPackage.ChaincodeActionPayload;
-import static org.hyperledger.fabric.protos.peer.TransactionPackage.Transaction;
-import static org.hyperledger.fabric.protos.peer.TransactionPackage.TransactionAction;
+import org.hyperledger.fabric.protos.common.ChannelHeader;
+import org.hyperledger.fabric.protos.common.Envelope;
+import org.hyperledger.fabric.protos.common.Header;
+import org.hyperledger.fabric.protos.common.Payload;
+import org.hyperledger.fabric.protos.peer.ChaincodeAction;
+import org.hyperledger.fabric.protos.peer.ChaincodeActionPayload;
+import org.hyperledger.fabric.protos.peer.ProposalResponsePayload;
+import org.hyperledger.fabric.protos.peer.TransactionAction;
 
 final class TransactionEnvelopeParser {
     private final String channelName;
@@ -50,7 +48,7 @@ final class TransactionEnvelopeParser {
     }
 
     private ByteString parseResult(final Payload payload) throws InvalidProtocolBufferException {
-        Transaction transaction = Transaction.parseFrom(payload.getData());
+        org.hyperledger.fabric.protos.peer.Transaction transaction = org.hyperledger.fabric.protos.peer.Transaction.parseFrom(payload.getData());
 
         List<InvalidProtocolBufferException> parseExceptions = new ArrayList<>();
 

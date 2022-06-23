@@ -9,8 +9,6 @@ package org.hyperledger.fabric.client;
 import java.util.Arrays;
 import java.util.Objects;
 
-import org.hyperledger.fabric.protos.peer.ChaincodeEventPackage;
-
 final class ChaincodeEventImpl implements ChaincodeEvent {
     private final long blockNumber;
     private final String transactionId;
@@ -19,7 +17,7 @@ final class ChaincodeEventImpl implements ChaincodeEvent {
     private final byte[] payload;
     private final int hash;
 
-    ChaincodeEventImpl(final long blockNumber, final ChaincodeEventPackage.ChaincodeEvent event) {
+    ChaincodeEventImpl(final long blockNumber, final org.hyperledger.fabric.protos.peer.ChaincodeEvent event) {
         this.blockNumber = blockNumber;
         this.transactionId = event.getTxId();
         this.chaincodeName = event.getChaincodeId();
