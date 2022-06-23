@@ -6,12 +6,13 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.UnaryOperator;
-
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
+
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * The Gateway provides the connection point for an application to access the Fabric network as a specific user. It is
@@ -231,7 +232,7 @@ public interface Gateway extends AutoCloseable {
          * @param hash A hashing function.
          * @return The builder instance, allowing multiple configuration options to be chained.
          */
-        Builder hash(UnaryOperator<byte[]> hash);
+        Builder hash(Function<byte[], byte[]> hash);
 
         /**
          * Specify the default call options for evaluating transactions.

@@ -39,6 +39,7 @@
         <grpcVersion>1.47.0</grpcVersion>
         <protobufVersion>3.19.2</protobufVersion> <!-- keep in step with the version used by io.grpc:grpc-protobuf -->
         <enforceJavaVersion>1.8</enforceJavaVersion> <!-- this is overridden in the release profile -->
+        <bouncyCastleVersion>1.71</bouncyCastleVersion>
     </properties>
 
     <repositories>
@@ -59,7 +60,7 @@
             <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-bom</artifactId>
-                <version>7.3.4</version>
+                <version>7.4.1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -90,17 +91,13 @@
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
+            <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-params</artifactId>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -131,21 +128,14 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>javax.json</groupId>
-            <artifactId>javax.json-api</artifactId>
-            <version>1.1.4</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>javax.json</artifactId>
-            <version>1.1.4</version>
-            <scope>test</scope>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+            <version>${bouncyCastleVersion}</version>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpkix-jdk15on</artifactId>
-            <version>1.70</version>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>${bouncyCastleVersion}</version>
         </dependency>
         <dependency> <!-- Necessary for Java 9+, according to https://github.com/grpc/grpc-java#readme -->
             <groupId>org.apache.tomcat</groupId>
@@ -321,6 +311,11 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.3.0</version>
             </plugin>
         </plugins>
     </build>

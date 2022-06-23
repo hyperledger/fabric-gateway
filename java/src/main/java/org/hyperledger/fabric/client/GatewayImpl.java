@@ -6,9 +6,6 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.Objects;
-import java.util.function.UnaryOperator;
-
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -23,6 +20,10 @@ import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
+
 final class GatewayImpl implements Gateway {
     public static final class Builder implements Gateway.Builder {
         private static final Signer UNDEFINED_SIGNER = (digest) -> {
@@ -32,7 +33,7 @@ final class GatewayImpl implements Gateway {
         private Channel grpcChannel;
         private Identity identity;
         private Signer signer = UNDEFINED_SIGNER; // No signer implementation is required if only offline signing is used
-        private UnaryOperator<byte[]> hash = Hash::sha256;
+        private Function<byte[], byte[]> hash = Hash::sha256;
         private final DefaultCallOptions.Builder optionsBuilder = DefaultCallOptions.newBuiler();
 
         @Override
@@ -57,7 +58,7 @@ final class GatewayImpl implements Gateway {
         }
 
         @Override
-        public Builder hash(final UnaryOperator<byte[]> hash) {
+        public Builder hash(final Function<byte[], byte[]> hash) {
             Objects.requireNonNull(hash, "hash");
             this.hash = hash;
             return this;

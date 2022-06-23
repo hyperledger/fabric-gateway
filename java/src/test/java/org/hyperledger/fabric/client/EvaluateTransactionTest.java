@@ -6,15 +6,6 @@
 
 package org.hyperledger.fabric.client;
 
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.CallOptions;
@@ -29,12 +20,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.entry;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 public final class EvaluateTransactionTest {
     private static final TestUtils utils = TestUtils.getInstance();
@@ -164,8 +160,8 @@ public final class EvaluateTransactionTest {
     @Test
     void uses_hash() throws GatewayException {
         AtomicReference<String> actual = new AtomicReference<>();
-        UnaryOperator<byte[]> hash = (message) -> "MY_DIGEST".getBytes(StandardCharsets.UTF_8);
-        Signer signer = (digest) -> {
+        Function<byte[], byte[]> hash = message -> "MY_DIGEST".getBytes(StandardCharsets.UTF_8);
+        Signer signer = digest -> {
             actual.set(new String(digest, StandardCharsets.UTF_8));
             return "SIGNATURE".getBytes(StandardCharsets.UTF_8);
         };
