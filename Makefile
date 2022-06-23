@@ -30,13 +30,6 @@ MARCH=$(shell go env GOOS)-$(shell go env GOARCH)
 GO_VER = 1.17.8
 GO_TAGS ?=
 
-.PHONEY: setup
-setup:
-	go install github.com/cucumber/godog/cmd/godog@v0.12
-	go install honnef.co/go/tools/cmd/staticcheck@latest
-	go install github.com/golang/mock/mockgen@v1.6
-	go install github.com/securego/gosec/v2/cmd/gosec@latest
-
 .PHONEY: build
 build: build-node build-java
 
@@ -77,8 +70,10 @@ unit-test-java:
 .PHONEY: lint
 lint:
 	"$(base_dir)/ci/check_gofmt.sh" "$(go_dir)" "$(scenario_dir)/go"
+	go install honnef.co/go/tools/cmd/staticcheck@latest
 	staticcheck -f stylish -tags="pkcs11" "$(go_dir)/..." "$(scenario_dir)/go"
 	go vet -tags pkcs11 "$(go_dir)/..." "$(scenario_dir)/go"
+	go install github.com/securego/gosec/v2/cmd/gosec@latest
 	gosec -tags pkcs11 -exclude-generated "$(go_dir)/..."
 
 .PHONEY: scan
@@ -101,6 +96,7 @@ scan-java:
 
 .PHONEY: generate
 generate:
+	go install github.com/golang/mock/mockgen@v1.6
 	go generate "$(go_dir)/..."
 
 .PHONEY: vendor-chaincode
@@ -112,11 +108,13 @@ vendor-chaincode:
 
 .PHONEY: scenario-test-go
 scenario-test-go: vendor-chaincode
+	go install github.com/cucumber/godog/cmd/godog@v0.12
 	cd $(scenario_dir)/go && \
 		SOFTHSM2_CONF="$${HOME}/softhsm2.conf" go test -tags pkcs11 -v -args "$(scenario_dir)/features/"
 
 .PHONEY: scenario-test-node
 scenario-test-node: vendor-chaincode build-node
+	go install -tags pkcs11 github.com/hyperledger/fabric-ca/cmd/fabric-ca-client@latest
 	cd "$(scenario_dir)/node" && \
 		rm -rf package-lock.json node_modules && \
 		npm install && \
