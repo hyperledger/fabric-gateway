@@ -6,41 +6,9 @@
 
 package scenario;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.InvalidKeyException;
-import java.security.PrivateKey;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.security.interfaces.ECPrivateKey;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonString;
-
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.docstring.DocString;
 import io.cucumber.java.After;
@@ -63,6 +31,35 @@ import org.hyperledger.fabric.protos.common.Block;
 import org.hyperledger.fabric.protos.gateway.ErrorDetail;
 import org.hyperledger.fabric.protos.peer.BlockAndPrivateData;
 import org.hyperledger.fabric.protos.peer.FilteredBlock;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.InvalidKeyException;
+import java.security.PrivateKey;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.ECPrivateKey;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -113,6 +110,7 @@ public class ScenarioSteps {
     private final Map<String, GatewayContext> gateways = new HashMap<>();
     private TransactionInvocation transactionInvocation;
     private long lastCommittedBlockNumber;
+    private final Gson gson = new Gson();
 
     private static final class OrgConfig {
         final String cli;
@@ -369,7 +367,7 @@ public class ScenarioSteps {
 
     @When("^I set the transaction arguments? to (.+)$")
     public void setTransactionArguments(String argsJson) {
-        String[] args = newStringArray(parseJsonArray(argsJson));
+        String[] args = gson.fromJson(argsJson, String[].class);
         transactionInvocation.setArguments(args);
     }
 
@@ -392,7 +390,7 @@ public class ScenarioSteps {
 
     @When("^I set the endorsing organizations? to (.+)$")
     public void setEndorsingOrgs(String orgsJson) {
-        String[] orgs = newStringArray(parseJsonArray(orgsJson));
+        String[] orgs = gson.fromJson(orgsJson, String[].class);
         transactionInvocation.setEndorsingOrgs(orgs);
     }
 
@@ -537,12 +535,9 @@ public class ScenarioSteps {
 
     @Then("the response should be JSON matching")
     public void assertJsonResponse(DocString expected) {
-        try (JsonReader expectedReader = createJsonReader(expected.getContent());
-             JsonReader actualReader = createJsonReader(transactionInvocation.getResponse())) {
-            JsonObject expectedObject = expectedReader.readObject();
-            JsonObject actualObject = actualReader.readObject();
-            assertThat(actualObject).isEqualTo(expectedObject);
-        }
+        JsonElement expectedElement = JsonParser.parseString(expected.getContent());
+        JsonElement actualElement = JsonParser.parseString(transactionInvocation.getResponse());
+        assertThat(actualElement).isEqualTo(expectedElement);
     }
 
     @Then("the response should be {string}")
@@ -651,20 +646,6 @@ public class ScenarioSteps {
             peerConnectionInfo.get(peer).start();
         }
         Thread.sleep(20000);
-    }
-
-    private static JsonArray parseJsonArray(String jsonString) {
-        try (JsonReader reader = createJsonReader(jsonString)) {
-            return reader.readArray();
-        }
-    }
-
-    private static JsonReader createJsonReader(String jsonString) {
-        return Json.createReader(new StringReader(jsonString));
-    }
-
-    private static String[] newStringArray(JsonArray jsonArray) {
-        return jsonArray.getValuesAs(JsonString.class).stream().map(JsonString::getString).toArray(String[]::new);
     }
 
     public static String newString(byte[] bytes) {

@@ -6,16 +6,6 @@
 
 package org.hyperledger.fabric.client;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
@@ -32,10 +22,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
-import static org.assertj.core.api.Assertions.entry;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -300,8 +297,8 @@ public final class SubmitTransactionTest {
     @Test
     void uses_hash() throws Exception {
         List<String> actual = new ArrayList<>();
-        UnaryOperator<byte[]> hash = (message) -> "MY_DIGEST".getBytes(StandardCharsets.UTF_8);
-        Signer signer = (digest) -> {
+        Function<byte[], byte[]> hash = message -> "MY_DIGEST".getBytes(StandardCharsets.UTF_8);
+        Signer signer = digest -> {
             actual.add(new String(digest, StandardCharsets.UTF_8));
             return "SIGNATURE".getBytes(StandardCharsets.UTF_8);
         };

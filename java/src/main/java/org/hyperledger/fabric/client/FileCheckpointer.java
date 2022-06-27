@@ -35,19 +35,21 @@ import java.util.Set;
  * It can be used to checkpoint progress after successfully processing events, allowing eventing to be resumed from this point.
  */
 public final class FileCheckpointer implements Checkpointer, AutoCloseable {
-    private OptionalLong blockNumber = OptionalLong.empty();
-    private String transactionId;
-    private final Path path;
-    private final Reader fileReader;
-    private final Writer fileWriter;
+    private static final String CONFIG_KEY_BLOCK = "blockNumber";
+    private static final String CONFIG_KEY_TRANSACTIONID = "transactionId";
     private static final Set<OpenOption> OPEN_OPTIONS = Collections.unmodifiableSet(EnumSet.of(
             StandardOpenOption.CREATE,
             StandardOpenOption.READ,
             StandardOpenOption.WRITE
     ));
+
+    private OptionalLong blockNumber = OptionalLong.empty();
+    private String transactionId;
+    private final Path path;
+    private final Reader fileReader;
+    private final Writer fileWriter;
     private final FileChannel fileChannel;
-    private static final String CONFIG_KEY_BLOCK = "blockNumber";
-    private static final String CONFIG_KEY_TRANSACTIONID = "transactionId";
+    private final Gson gson = new Gson();
 
     /**
      * To create a checkpointer instance backed by persistent file storage.
@@ -121,7 +123,7 @@ public final class FileCheckpointer implements Checkpointer, AutoCloseable {
         fileChannel.position(0);
         JsonReader jsonReader = new JsonReader(fileReader);
         try {
-            return new Gson().fromJson(jsonReader, JsonObject.class);
+            return gson.fromJson(jsonReader, JsonObject.class);
         } catch (RuntimeException e) {
             throw new IOException("Failed to parse checkpoint data from file: " + path, e);
         }
@@ -146,7 +148,7 @@ public final class FileCheckpointer implements Checkpointer, AutoCloseable {
     private void saveJson(final JsonObject json) throws IOException {
         JsonWriter jsonWriter = new JsonWriter(fileWriter);
         try {
-            new Gson().toJson(json, jsonWriter);
+            gson.toJson(json, jsonWriter);
         } catch (RuntimeException e) {
             throw new IOException("Failed to write checkpoint data to file: " + path, e);
         }
