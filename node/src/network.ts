@@ -18,6 +18,53 @@ import { SigningIdentity } from './signingidentity';
  * Network represents a network of nodes that are members of a specific Fabric channel. The Network can be used to
  * access deployed smart contracts, and to listen for events emitted when blocks are committed to the ledger. Network
  * instances are obtained from a Gateway using the {@link Gateway.getNetwork} method.
+ *
+ * To safely handle connection errors during eventing, it is recommended to use a checkpointer to track eventing
+ * progress. This allows eventing to be resumed with no loss or duplication of events.
+ *
+ * @example Chaincode events
+ * ```typescript
+ * const checkpointer = checkpointers.inMemory();
+ *
+ * while (true) {
+ *     const events = await network.getChaincodeEvents(chaincodeName, {
+ *         checkpoint: checkpointer,
+ *         startBlock: BigInt(101), // Ignored if the checkpointer has checkpoint state
+ *     });
+ *     try {
+ *         for async (const event of events) {
+ *             // Process then checkpoint event
+ *             await checkpointer.checkpointChaincodeEvent(event)
+ *         }
+ *     } catch (err: unknown) {
+ *         // Connection error
+ *     } finally {
+ *         events.close();
+ *     }
+ * }
+ * ```
+ *
+ * @example Block events
+ * ```typescript
+ * const checkpointer = checkpointers.inMemory();
+ *
+ * while (true) {
+ *     const events = await network.getBlockEvents({
+ *         checkpoint: checkpointer,
+ *         startBlock: BigInt(101), // Ignored if the checkpointer has checkpoint state
+ *     });
+ *     try {
+ *         for async (const event of events) {
+ *             // Process then checkpoint block
+ *             await checkpointer.checkpointBlock(event.getHeader().getNumber())
+ *         }
+ *     } catch (err: unknown) {
+ *         // Connection error
+ *     } finally {
+ *         events.close();
+ *     }
+ * }
+ * ```
  */
 export interface Network {
     /**
@@ -41,7 +88,7 @@ export interface Network {
      * @throws {@link GatewayError}
      * Thrown by the iterator if the gRPC service invocation fails.
      * @example
-     * ```
+     * ```typescript
      * const events = await network.getChaincodeEvents(chaincodeName, { startBlock: BigInt(101) });
      * try {
      *     for async (const event of events) {
@@ -69,8 +116,8 @@ export interface Network {
      * @throws {@link GatewayError}
      * Thrown by the iterator if the gRPC service invocation fails.
      * @example
-     * ```
-     * const blocks = await network.getBlockEvents();
+     * ```typescript
+     * const blocks = await network.getBlockEvents({ startBlock: BigInt(101) });
      * try {
      *     for async (const block of blocks) {
      *         // Process block
@@ -96,8 +143,8 @@ export interface Network {
      * @throws {@link GatewayError}
      * Thrown by the iterator if the gRPC service invocation fails.
      * @example
-     * ```
-     * const blocks = await network.getFilteredBlockEvents();
+     * ```typescript
+     * const blocks = await network.getFilteredBlockEvents({ startBlock: BigInt(101) });
      * try {
      *     for async (const block of blocks) {
      *         // Process block
@@ -123,8 +170,8 @@ export interface Network {
      * @throws {@link GatewayError}
      * Thrown by the iterator if the gRPC service invocation fails.
      * @example
-     * ```
-     * const events = await network.getBlockAndPrivateEventsData();
+     * ```typescript
+     * const events = await network.getBlockAndPrivateEventsData({ startBlock: BigInt(101) });
      * try {
      *     for async (const event of events) {
      *         // Process block and private data event

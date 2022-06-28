@@ -12,7 +12,6 @@ import java.io.IOException;
  * Checkpointer allows update of a checkpoint position after events are successfully processed.
  */
 public interface Checkpointer extends Checkpoint {
-
      /**
       * Checkpoint a successfully processed block.
       * <p>Note that the block number is an unsigned 64-bit integer, with the sign bit used to hold the top bit of

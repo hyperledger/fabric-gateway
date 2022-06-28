@@ -33,7 +33,7 @@ import { SubmittedTransaction } from './submittedtransaction';
  * {@link Gateway.newSignedCommit} methods respectively.
  *
  * @example Evaluate transaction
- * ```
+ * ```typescript
  * const result = await contract.evaluate('transactionName', {
  *     arguments: ['one', 'two'],
  *     // Specify additional proposal options here
@@ -41,7 +41,7 @@ import { SubmittedTransaction } from './submittedtransaction';
  * ```
  *
  * @example Submit transaction
- * ```
+ * ```typescript
  * const result = await contract.submit('transactionName', {
  *     arguments: ['one', 'two'],
  *     // Specify additional proposal options here
@@ -49,7 +49,7 @@ import { SubmittedTransaction } from './submittedtransaction';
  * ```
  *
  * @example Async submit
- * ```
+ * ```typescript
  * const commit = await contract.submitAsync('transactionName', {
  *     arguments: ['one', 'two']
  * });
@@ -64,7 +64,7 @@ import { SubmittedTransaction } from './submittedtransaction';
  * ```
  *
  * @example Fine-grained submit transaction
- * ```
+ * ```typescript
  * const proposal = contract.newProposal('transactionName');
  * const transaction = await proposal.endorse();
  * const commit = await transaction.submit();
@@ -74,7 +74,7 @@ import { SubmittedTransaction } from './submittedtransaction';
  * ```
  *
  * @example Off-line signing
- * ```
+ * ```typescript
  * const unsignedProposal = contract.newProposal('transactionName');
  * const proposalBytes = unsignedProposal.getBytes();
  * const proposalDigest = unsignedProposal.getDigest();
@@ -116,7 +116,7 @@ export interface Contract {
      * This can be used for querying the world state.
      *
      * This method is equivalent to:
-     * ```
+     * ```typescript
      * contract.evaluate(name, { arguments: [ arg1, arg2 ] });
      * ```
      * @param name - Name of the transaction to invoke.
@@ -133,7 +133,7 @@ export interface Contract {
      * committed to the ledger.
      *
      * This method is equivalent to:
-     * ```
+     * ```typescript
      * contract.submit(name, { arguments: [ arg1, arg2 ] });
      * ```
      * @param name - Name of the transaction to be invoked.

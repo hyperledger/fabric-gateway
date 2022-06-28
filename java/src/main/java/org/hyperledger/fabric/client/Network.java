@@ -21,28 +21,55 @@ import org.hyperledger.fabric.protos.peer.FilteredBlock;
  * <ul>
  *     <li>Obtain a specific smart contract deployed to the network using {@link #getContract(String)}, in order to
  *     submit and evaluate transactions for that smart contract.</li>
- *     <li>Listen for events emitted when blocks are committed to the ledger using
- *     {@link #getChaincodeEvents(String, CallOption...)} or {@link #newChaincodeEventsRequest(String)}.</li>
+ *     <li>Listen for chaincode events emitted by transactions when they are committed to the ledger using
+ *     {@link #getChaincodeEvents(String)} or {@link #newChaincodeEventsRequest(String)}.</li>
+ *     <li>Listen for block events emitted when blocks are committed to the ledger:
+ *         <ul>
+ *             <li><strong>Blocks</strong> using {@link #getBlockEvents()} or {@link #newBlockEventsRequest()}.</li>
+ *             <li><strong>Filtered blocks</strong> {@link #getFilteredBlockEvents()} or {@link #newFilteredBlockEventsRequest()}.</li>
+ *             <li><strong>Blocks and private data </strong> {@link #getBlockAndPrivateDataEvents()} or {@link #newBlockAndPrivateDataEventsRequest()}.</li>
+ *         </ul>
+ *     </li>
  * </ul>
  *
- * <p>Chaincode events example:</p>
+ * <p>To safely handle connection errors during eventing, it is recommended to use a checkpointer to track eventing
+ * progress. This allows eventing to be resumed with no loss or duplication of events.</p>
+ *
+ * <p>Chaincode events example</p>
  * <pre>{@code
- *     try (CloseableIterator<ChaincodeEvent> events = network.getChaincodeEvents("chaincodeName")) {
- *         events.forEachRemaining(event -> {
- *             // Process event
- *         });
+ *     Checkpointer checkpointer = new InMemoryCheckpointer();
+ *     while (true) {
+ *         ChaincodeEventsRequest request = network.newChaincodeEventsRequest("chaincodeName")
+ *                 .checkpoint(checkpointer)
+ *                 .startBlock(blockNumber) // Ignored if the checkpointer has checkpoint state
+ *                 .build();
+ *         try (CloseableIterator<ChaincodeEvent> events = request.getEvents()) {
+ *             events.forEachRemaining(event -> {
+ *                 // Process then checkpoint event
+ *                 checkpointer.checkpointChaincodeEvent(event);
+ *             });
+ *         } catch (io.grpc.StatusRuntimeException e) {
+ *             // Connection error
+ *         }
  *     }
  * }</pre>
- * *
- * <p>Chaincode event replay example</p>
+ *
+ * <p>Block events example</p>
  * <pre>{@code
- *     ChaincodeEventsRequest request = network.newChaincodeEventsRequest("chaincodeName")
- *             .startBlock(blockNumber)
- *             .build();
- *     try (CloseableIterator<ChaincodeEvent> events = request.getEvents()) {
- *         events.forEachRemaining(event -> {
- *             // Process event
- *         });
+ *     Checkpointer checkpointer = new InMemoryCheckpointer();
+ *     while (true) {
+ *         ChaincodeEventsRequest request = network.newBlockEventsRequest()
+ *                 .checkpoint(checkpointer)
+ *                 .startBlock(blockNumber) // Ignored if the checkpointer has checkpoint state
+ *                 .build();
+ *         try (CloseableIterator<Block> events = request.getEvents()) {
+ *             events.forEachRemaining(event -> {
+ *                 // Process then checkpoint block
+ *                 checkpointer.checkpointBlock(event.getHeader().getNumber());
+ *             });
+ *         } catch (io.grpc.StatusRuntimeException e) {
+ *             // Connection error
+ *         }
  *     }
  * }</pre>
  */
