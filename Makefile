@@ -92,7 +92,7 @@ scan-go:
 scan-node:
 	cd "$(node_dir)" && \
 		npm install --package-lock-only && \
-		npm audit --production
+		npm audit --omit=dev
 
 .PHONEY: scan-java
 scan-java:
