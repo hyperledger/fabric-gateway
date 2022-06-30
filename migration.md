@@ -14,6 +14,8 @@ The Fabric Gateway client API is an evolution of the legacy SDKs and the Fabric 
 - **Submit transaction**: invoke a smart contract transaction function to update ledger state.
 - **Evaluate transaction**: invoke a smart contract transaction function to query ledger state.
 - **Chaincode events**: receive events emitted by committed transactions to trigger business processes.
+- **Block events**: receive blocks committed to the ledger.
+- **Event checkpointing**: persist current event position to support resume of eventing.
 
 The high level API to connect a Gateway instance, and submit or evaluate a transaction remains almost identical.
 
@@ -27,9 +29,7 @@ The key API and behavioral differences that need to be considered when switching
 - **[Connection profiles](#connection-profiles)** are not needed.
 - **[Wallets](#wallets)** are not needed, with the application choosing how to manage credential storage.
 - **[Endorsement requirements](#endorsement-requirements)** generally no longer need to be specified.
-- **[Block event listening](#block-event-listening)** is not available (yet).
 - **[Event reconnect](#event-reconnect)** is controlled by the client application.
-- **[Event checkpointing](#event-checkpointing)** is not available (yet).
 
 More detail and recommendations for each of these items is provided below.
 
@@ -71,29 +71,8 @@ These restrictions are in place to ensure that private data is not distributed t
 
 It is recommended to only specify endorsing organizations in cases where it is specifically required.
 
-### Block event listening
-
-The Fabric Gateway client API does not currently provide block event listening.
-
-A use case where block event listening is used with the legacy SDKs is to perform asynchronous submit of transactions, where the transaction submit returns immediately after successfully submitting to the orderer, allowing the client application to perform operations using the transaction result (such as updating a UI or returning a REST response) before later listening for events to confirm the transaction commit status. The Fabric Gateway client API provides a direct mechanism for asynchronous submit of transactions, making event listening unnecessary. See the API documentation for examples in [Go](https://pkg.go.dev/github.com/hyperledger/fabric-gateway/pkg/client#Contract.SubmitAsync), [Node](https://hyperledger.github.io/fabric-gateway/main/api/node/interfaces/Contract.html), and [Java](https://hyperledger.github.io/fabric-gateway/main/api/java/org/hyperledger/fabric/client/Contract.html).
-
-For specific use cases that do require blocks to be read, such as creating an off-chain data store of ledger data, it is recommended to either:
-
-- Continue to use the legacy SDKs to retrieve blocks.
-- Use [gRPC client APIs](https://grpc.io/) to access the peer [Deliver service](https://github.com/hyperledger/fabric-protos/blob/c6ece3f9b7f977fd83b243af9dc8e5dd7c926f52/peer/events.proto#L65-L81) directly.
-
-Note that the Fabric Gateway client API does provide chaincode event listening. This uses a more efficient mechanism to retrieve chaincode events directly, without the overhead of retrieving full block events, so the Fabric Gateway client API should be preferred for receiving chaincode events.
-
 ### Event reconnect
 
 In the event of a peer or network failure during event listening, the legacy SDKs transparently attempt to reestablish connection and continue delivering events once successful reconnection is achieved. The Fabric Gateway client API surfaces eventing errors to the client application at the point it requests the next event. To reestablish eventing, the application must initiate a new event listening session with an appropriate start position.
 
-The [event checkpointing](#event-checkpointing) section describes how to avoid duplicate event processing.
-
-### Event checkpointing
-
-The checkpointing capability in legacy SDKs allows client applications to easily resume event listening without duplicating or missing events. This behavior can still be achieved using the Fabric Gateway client API but requires more work on the part of the client application. The client application needs to:
-
-1. Store the current block number from which events are being received.
-1. Track the events successfully processed within the current block.
-1. When resuming eventing, replay from the current block and discard any previously processed events.
+Event checkpointing tracks the current event position and can be used to resume eventing at the correct start position on reconnect.
