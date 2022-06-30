@@ -296,6 +296,7 @@
                     <failOnError>true</failOnError>
                     <links>
                         <link>https://docs.oracle.com/javase/8/docs/api/</link>
+                        <link>https://grpc.github.io/grpc-java/javadoc/</link>
                     </links>
                     <source>${javaVersion}</source>
                     <detectJavaApiLink>false</detectJavaApiLink>
