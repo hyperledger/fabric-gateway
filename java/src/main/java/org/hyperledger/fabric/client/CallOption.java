@@ -15,7 +15,7 @@ import io.grpc.Deadline;
 
 /**
  * Options defining runtime behavior of a gRPC service invocation.
- * @deprecated Use {@link io.grpc.CallOptions} instead.
+ * @deprecated Use gRPC {@link io.grpc.CallOptions} instead.
  */
 @Deprecated
 public final class CallOption {
