@@ -22,7 +22,7 @@ import { TransactionImpl } from './transaction';
 /**
  * Options used when connecting to a Fabric Gateway.
  * @example
- * ```
+ * ```typescript
  * function defaultTimeout(): grpc.CallOptions {
  *     return {
  *         deadline: Date.now() + 5000, // 5 second timeout

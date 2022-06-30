@@ -22,7 +22,7 @@ export interface ChaincodeEventsRequest extends Signable {
      * @throws {@link GatewayError}
      * Thrown by the iterator if the gRPC service invocation fails.
      * @example
-     * ```
+     * ```typescript
      * const events = await request.getEvents();
      * try {
      *     for async (const event of events) {

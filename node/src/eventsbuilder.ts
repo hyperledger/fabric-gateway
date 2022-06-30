@@ -9,6 +9,11 @@ import { Checkpoint } from './checkpointer';
 
 /**
  * Options used when requesting events.
+ *
+ * If both a start block and checkpoint are specified, and the checkpoint has a valid position set, the checkpoint
+ * position is used and the specified start block is ignored. If the checkpoint is unset then the start block is used.
+ *
+ * If no start position is specified, eventing begins from the next committed block.
  */
 export interface EventsOptions {
     /**

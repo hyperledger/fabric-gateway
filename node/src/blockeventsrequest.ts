@@ -23,7 +23,7 @@ export interface BlockEventsRequest extends Signable {
      * @throws {@link GatewayError}
      * Thrown by the iterator if the gRPC service invocation fails.
      * @example
-     * ```
+     * ```typescript
      * const blocks = await request.getEvents();
      * try {
      *     for async (const block of blocks) {
@@ -49,7 +49,7 @@ export interface FilteredBlockEventsRequest extends Signable {
      * @throws {@link GatewayError}
      * Thrown by the iterator if the gRPC service invocation fails.
      * @example
-     * ```
+     * ```typescript
      * const blocks = await request.getEvents();
      * try {
      *     for async (const block of blocks) {
@@ -75,7 +75,7 @@ export interface BlockAndPrivateDataEventsRequest extends Signable {
      * @throws {@link GatewayError}
      * Thrown by the iterator if the gRPC service invocation fails.
      * @example
-     * ```
+     * ```typescript
      * const events = await network.getBlockAndPrivateEventsData();
      * try {
      *     for async (const event of events) {

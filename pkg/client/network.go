@@ -16,6 +16,9 @@ import (
 // Network represents a network of nodes that are members of a specific Fabric channel. The Network can be used to
 // access deployed smart contracts, and to listen for events emitted when blocks are committed to the ledger. Network
 // instances are obtained from a Gateway using the Gateway's GetNetwork() method.
+//
+// To safely handle connection errors during eventing, it is recommended to use a checkpointer to track eventing
+// progress. This allows eventing to be resumed with no loss or duplication of events.
 type Network struct {
 	client    *gatewayClient
 	signingID *signingIdentity
@@ -44,6 +47,11 @@ func (network *Network) GetContractWithName(chaincodeName string, contractName s
 }
 
 // ChaincodeEventsOption implements an option for a chaincode events request.
+//
+// If both a start block and checkpoint are specified, and the checkpoint has a valid position set, the checkpoint
+// position is used and the specified start block is ignored. If the checkpoint is unset then the start block is used.
+//
+// If no start position is specified, eventing begins from the next committed block.
 type ChaincodeEventsOption eventOption
 
 // ChaincodeEvents returns a channel from which chaincode events emitted by transaction functions in the specified

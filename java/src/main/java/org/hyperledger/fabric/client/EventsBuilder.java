@@ -8,6 +8,13 @@ package org.hyperledger.fabric.client;
 
 /**
  * Builder used to create a new events request.
+ *
+ * <p>If both a start block and checkpoint are specified, and the checkpoint has a valid position set, the
+ * checkpoint position is used and the specified start block is ignored. If the checkpoint is unset then the start block
+ * is used.</p>
+ *
+ * <p>If no start position is specified, eventing begins from the next committed block.</p>
+ *
  * @param <T> Event type returned by the request.
  */
 public interface EventsBuilder<T> extends Builder<EventsRequest<T>> {
