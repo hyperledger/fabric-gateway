@@ -14,6 +14,3 @@ steps:
       version: $(GOVER)
       goPath:  $(GOPATH)
     displayName: Install Go $(GOVER)
-  - checkout: self
-  - script: make setup
-    displayName: Install tools

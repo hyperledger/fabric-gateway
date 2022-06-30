@@ -24,14 +24,8 @@ build these components, the following needs to be installed and available in the
 - Docker
 - Make
 
-Additional required tools are installed using the following Makefile target:
-
-- `make setup`
-
 In order to run any of the Hardware Security Module (HSM) tests, the following must also be installed:
 
-- pkcs11 enabled fabric-ca-client
-  - `go get -tags 'pkcs11' github.com/hyperledger/fabric-ca/cmd/fabric-ca-client`
 - SoftHSM, which can either be:
   - installed using the package manager for your host system:
     - Ubuntu: `sudo apt install softhsm2`

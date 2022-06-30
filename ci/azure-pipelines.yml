@@ -102,6 +102,7 @@ stages:
     timeoutInMinutes: 60
     steps:
     - template: install_deps.yml
+    - checkout: self
     - script: make generate-docs-node
       displayName: Generate Node docs
     - publish: $(System.DefaultWorkingDirectory)/node/apidocs
@@ -118,6 +119,7 @@ stages:
         versionSpec: 17
         jdkArchitectureOption: 'x64'
         jdkSourceOption: 'PreInstalled'
+    - checkout: self
     - script: make generate-docs-java
       displayName: Generate Java docs
     - publish: $(System.DefaultWorkingDirectory)/java/target/site/apidocs
@@ -132,6 +134,7 @@ stages:
     timeoutInMinutes: 60
     steps:
     - template: install_deps_hsm.yml
+    - checkout: self
     - script: make generate unit-test-go-pkcs11
       displayName: Run Go unit tests with pkcs11
   - job: UnitTestNode
@@ -141,6 +144,7 @@ stages:
     timeoutInMinutes: 60
     steps:
     - template: install_deps.yml
+    - checkout: self
     - task: NodeTool@0
       inputs:
         versionSpec: $(NODEVER)
@@ -160,6 +164,7 @@ stages:
         versionSpec: $(JAVAVER)
         jdkArchitectureOption: 'x64'
         jdkSourceOption: 'PreInstalled'
+    - checkout: self
     - script: make unit-test-java
       displayName: Run Java unit tests
   #   - script: bash <(curl https://codecov.io/bash) -t $CODECOV_UPLOAD_TOKEN
@@ -174,11 +179,9 @@ stages:
     timeoutInMinutes: 60
     steps:
     - template: install_deps_hsm_ca.yml
+    - checkout: self
     - script: make pull-latest-peer scenario-test-go
       displayName: Run Go SDK scenario tests
-      env:
-        # TODO: update this variable name in the Makefile
-        JENKINS_URL: true
 
   - job: ScenarioTestNode
     pool:
@@ -196,13 +199,9 @@ stages:
     - task: NodeTool@0
       inputs:
         versionSpec: $(NODEVER)
-    - script: go install -tags pkcs11 github.com/hyperledger/fabric-ca/cmd/fabric-ca-client@latest
-      displayName: Install Fabric-ca-client with HSM Support
+    - checkout: self
     - script: make pull-latest-peer scenario-test-node
       displayName: Run Node SDK scenario tests
-      env:
-        # TODO: update this variable name in the Makefile
-        JENKINS_URL: true
 
   - job: ScenarioTestJava
     pool:
@@ -224,11 +223,9 @@ stages:
           versionSpec: $(JAVAVER)
           jdkArchitectureOption: 'x64'
           jdkSourceOption: 'PreInstalled'
+      - checkout: self
       - script: make pull-latest-peer scenario-test-java
         displayName: Run Java SDK scenario tests
-        env:
-          # TODO: update this variable name in the Makefile
-          JENKINS_URL: true
 
 # Only publish on scheduled builds and tagged releases
 - stage: Publish
