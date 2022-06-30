@@ -4,16 +4,17 @@ The Fabric Gateway client API allows applications to interact with a Hyperledger
 
 ## How to use
 
-Samples showing how to create a client application that updates and queries the ledger, and listens for events, are available in the [fabric-samples](https://github.com/hyperledger/fabric-samples) repository:
+Samples showing how to create client applications that connect to and interact with a Hyperledger Fabric network, are available in the [fabric-samples](https://github.com/hyperledger/fabric-samples) repository:
 
-* [fabric-samples/asset-transfer-basic](https://github.com/hyperledger/fabric-samples/tree/main/asset-transfer-basic)
-* [fabric-samples/asset-transfer-events](https://github.com/hyperledger/fabric-samples/tree/main/asset-transfer-events)
+- [fabric-samples/asset-transfer-basic](https://github.com/hyperledger/fabric-samples/tree/main/asset-transfer-basic) for examples of transaction submit and evaluate.
+- [fabric-samples/asset-transfer-events](https://github.com/hyperledger/fabric-samples/tree/main/asset-transfer-events) for examples of chaincode eventing.
+- [fabric-samples/off_chain_data](https://github.com/hyperledger/fabric-samples/tree/main/off_chain_data) for examples of block eventing.
 
 ## API documentation
 
 The Gateway client API documentation for Go is available here:
 
-* https://pkg.go.dev/github.com/hyperledger/fabric-gateway/pkg/client
+- https://pkg.go.dev/github.com/hyperledger/fabric-gateway/pkg/client
 
 ## Installation
 
@@ -27,4 +28,4 @@ go get github.com/hyperledger/fabric-gateway
 
 This API requires Fabric 2.4 with a Gateway enabled Peer. Additional compatibility information is available in the documentation:
 
-* https://hyperledger.github.io/fabric-gateway/
+- https://hyperledger.github.io/fabric-gateway/
