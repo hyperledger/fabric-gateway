@@ -35,7 +35,8 @@ export interface ErrorDetail {
 export class GatewayError extends Error {
     /**
      * gRPC status code.
-     * @see {@link https://grpc.github.io/grpc/core/md_doc_statuscodes.html} for descriptions of status codes.
+     * @see [https://grpc.github.io/grpc/core/md_doc_statuscodes.html](https://grpc.github.io/grpc/core/md_doc_statuscodes.html)
+     * for descriptions of status codes.
      */
     code: number;
 

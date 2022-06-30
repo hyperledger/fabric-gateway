@@ -1,6 +1,6 @@
 {
     "name": "@hyperledger/fabric-gateway",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "description": "Hyperledger Fabric Gateway client API for Node",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -50,7 +50,7 @@
         "jest": "^28.1.0",
         "npm-run-all": "^4.1.5",
         "ts-jest": "^28.0.2",
-        "typedoc": "^0.22.11",
+        "typedoc": "^0.23.2",
         "typescript": "~4.7.2"
     }
 }

@@ -14,38 +14,40 @@ gRPC connections to a Fabric Gateway may be shared by all `Gateway` instances in
 
 The following complete example shows how to connect to a Fabric network, submit a transaction and query the ledger state using an instantiated smart contract.
 
-    import * as grpc from '@grpc/grpc-js';
-    import * as crypto from 'crypto';
-    import { connect, Identity, signers } from '@hyperledger/fabric-gateway';
-    import { promises as fs } from 'fs';
-    import { TextDecoder } from 'util';
+```typescript
+import * as grpc from '@grpc/grpc-js';
+import * as crypto from 'crypto';
+import { connect, Identity, signers } from '@hyperledger/fabric-gateway';
+import { promises as fs } from 'fs';
+import { TextDecoder } from 'util';
 
-    const utf8Decoder = new TextDecoder();
+const utf8Decoder = new TextDecoder();
 
-    async function main(): Promise<void> {
-        const credentials = await fs.readFile('path/to/certificate.pem');
-        const identity: Identity = { mspId: 'myorg', credentials };
+async function main(): Promise<void> {
+    const credentials = await fs.readFile('path/to/certificate.pem');
+    const identity: Identity = { mspId: 'myorg', credentials };
 
-        const privateKeyPem = await fs.readFile('path/to/privateKey.pem');
-        const privateKey = crypto.createPrivateKey(privateKeyPem);
-        const signer = signers.newPrivateKeySigner(privateKey);
+    const privateKeyPem = await fs.readFile('path/to/privateKey.pem');
+    const privateKey = crypto.createPrivateKey(privateKeyPem);
+    const signer = signers.newPrivateKeySigner(privateKey);
 
-        const client = new grpc.Client('gateway.example.org:1337', grpc.credentials.createInsecure());
+    const client = new grpc.Client('gateway.example.org:1337', grpc.credentials.createInsecure());
 
-        const gateway = connect({ identity, signer, client });
-        try {
-            const network = gateway.getNetwork('channelName');
-            const contract = network.getContract('chaincodeName');
+    const gateway = connect({ identity, signer, client });
+    try {
+        const network = gateway.getNetwork('channelName');
+        const contract = network.getContract('chaincodeName');
 
-            const putResult = await contract.submitTransaction('put', 'time', new Date().toISOString());
-            console.log('Put result:', utf8Decoder.decode(putResult));
+        const putResult = await contract.submitTransaction('put', 'time', new Date().toISOString());
+        console.log('Put result:', utf8Decoder.decode(putResult));
 
-            const getResult = await contract.evaluateTransaction('get', 'time');
-            console.log('Get result:', utf8Decoder.decode(getResult));
-        } finally {
-            gateway.close();
-            client.close()
-        }
+        const getResult = await contract.evaluateTransaction('get', 'time');
+        console.log('Get result:', utf8Decoder.decode(getResult));
+    } finally {
+        gateway.close();
+        client.close()
     }
+}
 
-    main().catch(console.error);
+main().catch(console.error);
+```
