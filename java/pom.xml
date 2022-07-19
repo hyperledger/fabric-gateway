@@ -398,6 +398,9 @@
                             <skipTestScope>true</skipTestScope>
                             <skipSystemScope>true</skipSystemScope>
                             <failBuildOnCVSS>7</failBuildOnCVSS>
+                            <suppressionFiles>
+                                <suppressionFile>dependency-suppression.xml</suppressionFile>
+                            </suppressionFiles>
                         </configuration>
                         <executions>
                             <execution>
