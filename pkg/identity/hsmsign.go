@@ -173,18 +173,19 @@ func (signer *hsmSigner) Sign(digest []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	r, s := new(big.Int), new(big.Int)
-	sIndex := len(signature) / 2
-	r.SetBytes(signature[0:sIndex])
-	s.SetBytes(signature[sIndex:])
+	r, s := unmarshalConcatSignature(signature)
 
 	// Only Elliptic of 256 byte keys are supported
-	s, err = toLowSByCurve(elliptic.P256(), s)
-	if err != nil {
-		return nil, err
-	}
+	s = canonicalECDSASignatureSValue(s, elliptic.P256().Params().Params().N)
 
-	return marshalECDSASignature(r, s)
+	return asn1ECDSASignature(r, s)
+}
+
+func unmarshalConcatSignature(signature []byte) (r *big.Int, s *big.Int) {
+	sIndex := len(signature) / 2
+	r = new(big.Int).SetBytes(signature[0:sIndex])
+	s = new(big.Int).SetBytes(signature[sIndex:])
+	return
 }
 
 func (signer *hsmSigner) hsmSign(digest []byte) ([]byte, error) {
