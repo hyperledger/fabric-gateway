@@ -15,7 +15,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
@@ -122,7 +121,7 @@ func NewGatewayConnectionWithHSMSigner(user string, mspID string) (*GatewayConne
 }
 
 func newIdentity(mspID string, certPath string) (*identity.X509Identity, error) {
-	certificatePEM, err := ioutil.ReadFile(certPath)
+	certificatePEM, err := os.ReadFile(certPath)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +135,7 @@ func newIdentity(mspID string, certPath string) (*identity.X509Identity, error) 
 }
 
 func NewSign(keyPath string) (identity.Sign, error) {
-	privateKeyPEM, err := ioutil.ReadFile(keyPath)
+	privateKeyPEM, err := os.ReadFile(keyPath)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +161,7 @@ func NewHSMSigner(user string) (identity.Sign, identity.HSMSignClose, error) {
 		}
 	}
 
-	certificatePEM, err := ioutil.ReadFile(hsmCertificatePath(user, ""))
+	certificatePEM, err := os.ReadFile(hsmCertificatePath(user, ""))
 	if err != nil {
 		return nil, nil, err
 	}

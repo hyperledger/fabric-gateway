@@ -8,7 +8,7 @@ package client_test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
@@ -56,7 +56,7 @@ func Example() {
 
 // NewIdentity creates a client identity for this Gateway connection using an X.509 certificate.
 func NewIdentity() *identity.X509Identity {
-	certificatePEM, err := ioutil.ReadFile("certificate.pem")
+	certificatePEM, err := os.ReadFile("certificate.pem")
 	if err != nil {
 		panic(err)
 	}
@@ -76,7 +76,7 @@ func NewIdentity() *identity.X509Identity {
 
 // NewSign creates a function that generates a digital signature from a message digest using a private key.
 func NewSign() identity.Sign {
-	privateKeyPEM, err := ioutil.ReadFile("privateKey.pem")
+	privateKeyPEM, err := os.ReadFile("privateKey.pem")
 	if err != nil {
 		panic(err)
 	}

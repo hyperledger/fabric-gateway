@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"strconv"
@@ -202,7 +201,7 @@ func useGateway(name string) error {
 }
 
 func loadX509Cert(certFile string) (*x509.Certificate, error) {
-	cf, e := ioutil.ReadFile(certFile)
+	cf, e := os.ReadFile(certFile)
 	if e != nil {
 		return nil, e
 	}
