@@ -82,6 +82,8 @@ scan: scan-go scan-node scan-java
 .PHONEY: scan-go
 scan-go:
 	go list -json -deps "$(go_dir)/..." | docker run --rm --interactive sonatypecommunity/nancy:latest sleuth
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+	govulncheck "$(go_dir)/..."
 
 .PHONEY: scan-node
 scan-node:
