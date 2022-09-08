@@ -52,7 +52,7 @@ func (contract *Contract) ContractName() string {
 //
 // This method is equivalent to:
 //
-//     contract.Evaluate(name, WithArguments(args...))
+//	contract.Evaluate(name, WithArguments(args...))
 func (contract *Contract) EvaluateTransaction(name string, args ...string) ([]byte, error) {
 	return contract.Evaluate(name, WithArguments(args...))
 }
@@ -78,7 +78,7 @@ func (contract *Contract) Evaluate(transactionName string, options ...ProposalOp
 //
 // This method is equivalent to:
 //
-//     contract.Submit(name, client.WithArguments(args...))
+//	contract.Submit(name, client.WithArguments(args...))
 func (contract *Contract) SubmitTransaction(name string, args ...string) ([]byte, error) {
 	return contract.Submit(name, WithArguments(args...))
 }
