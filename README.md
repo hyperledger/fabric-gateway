@@ -23,6 +23,7 @@ build these components, the following needs to be installed and available in the
 - Java 8
 - Docker
 - Make
+- Maven
 
 In order to run any of the Hardware Security Module (HSM) tests, the following must also be installed:
 
