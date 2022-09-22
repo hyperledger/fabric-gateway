@@ -2,10 +2,18 @@
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
     <suppress>
         <notes><![CDATA[
-      file name: fabric-protos-*.jar
-      CVE relates to github.com/hyperledger/fabric Go module
-      ]]></notes>
+        file name: fabric-protos-*.jar
+        CVE relates to github.com/hyperledger/fabric Go module
+        ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.hyperledger\.fabric/fabric\-protos@.*$</packageUrl>
         <cve>CVE-2022-31121</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+        file name: fabric-protos-*.jar
+        CVE relates to github.com/hyperledger/fabric Go module
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.hyperledger\.fabric/fabric\-protos@.*$</packageUrl>
+        <cve>CVE-2022-36023</cve>
     </suppress>
 </suppressions>
