@@ -13,11 +13,11 @@ scenario_dir := $(base_dir)/scenario
 
 # PEER_IMAGE_PULL is where to pull peer image from, it can be set by external env variable
 # In fabric-gateway main branch it should reflect the location of the latest fabric main branch image
-PEER_IMAGE_PULL ?= hyperledger-fabric.jfrog.io/fabric-peer:amd64-latest
+PEER_IMAGE_PULL ?= hyperledger-fabric.jfrog.io/fabric-peer:amd64-2.5-stable
 
 # PEER_IMAGE_TAG is what to tag the pulled peer image as, it will also be used in docker-compose to reference the image
 # In fabric-gateway main branch this version tag should correspond to the version in the fabric main branch
-PEER_IMAGE_TAG ?= 3.0
+PEER_IMAGE_TAG ?= 2.5
 
 # TWO_DIGIT_VERSION specifies which chaincode images to pull, they will be tagged to be consistent with PEER_IMAGE_TAG
 # In fabric-gateway main branch it should typically be the latest released chaincode version available in dockerhub.
