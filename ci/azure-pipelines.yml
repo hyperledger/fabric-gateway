@@ -46,7 +46,7 @@ stages:
   jobs:
   - job: VerifyNodeModuleVersion
     pool:
-      vmImage: ubuntu-20.04
+      vmImage: ubuntu-22.04
     dependsOn: []
     steps:
       - checkout: self
@@ -61,7 +61,7 @@ stages:
           GATEWAY_VERSION: $(GATEWAY_VERSION)
   - job: VerifyJavaArtifactVersion
     pool:
-      vmImage: ubuntu-20.04
+      vmImage: ubuntu-22.04
     dependsOn: []
     steps:
       - checkout: self
@@ -77,7 +77,7 @@ stages:
   # The Go module version is the git tag
   - job: VerifyGoModuleVersion
     pool:
-      vmImage: ubuntu-20.04
+      vmImage: ubuntu-22.04
     dependsOn: []
     condition: startsWith(variables['Build.SourceBranch'], 'refs/tags')
     steps:
@@ -97,7 +97,7 @@ stages:
   jobs:
   - job: GenerateNodeDocs
     pool:
-      vmImage: ubuntu-20.04
+      vmImage: ubuntu-22.04
     dependsOn: []
     timeoutInMinutes: 60
     steps:
@@ -109,7 +109,7 @@ stages:
       artifact: NodeDocs
   - job: GenerateJavaDocs
     pool:
-      vmImage: ubuntu-20.04
+      vmImage: ubuntu-22.04
     dependsOn: []
     timeoutInMinutes: 60
     steps:
@@ -129,7 +129,7 @@ stages:
   jobs:
   - job: UnitTestGo
     pool:
-      vmImage: ubuntu-20.04
+      vmImage: ubuntu-22.04
     dependsOn: []
     timeoutInMinutes: 60
     strategy:
@@ -147,7 +147,7 @@ stages:
       displayName: Run Go unit tests with pkcs11
   - job: UnitTestNode
     pool:
-      vmImage: ubuntu-20.04
+      vmImage: ubuntu-22.04
     dependsOn: []
     timeoutInMinutes: 60
     steps:
@@ -162,7 +162,7 @@ stages:
       artifact: NodeBuild
   - job: UnitTestJava
     pool:
-      vmImage: ubuntu-20.04
+      vmImage: ubuntu-22.04
     dependsOn: []
     timeoutInMinutes: 60
     steps:
@@ -182,7 +182,7 @@ stages:
 
   - job: ScenarioTestGo
     pool:
-      vmImage: ubuntu-20.04
+      vmImage: ubuntu-22.04
     dependsOn: []
     timeoutInMinutes: 60
     strategy:
@@ -201,7 +201,7 @@ stages:
 
   - job: ScenarioTestNode
     pool:
-      vmImage: ubuntu-20.04
+      vmImage: ubuntu-22.04
     dependsOn: []
     timeoutInMinutes: 60
     strategy:
@@ -221,7 +221,7 @@ stages:
 
   - job: ScenarioTestJava
     pool:
-      vmImage: ubuntu-20.04
+      vmImage: ubuntu-22.04
     dependsOn: []
     timeoutInMinutes: 60
     strategy:
@@ -250,7 +250,7 @@ stages:
   jobs:
   - job: PublishDocs
     pool:
-      vmImage: ubuntu-20.04
+      vmImage: ubuntu-22.04
     steps:
     - checkout: self
     - script: |
@@ -280,7 +280,7 @@ stages:
       displayName: 'Update gh-pages branch'
   - job: PublishNode
     pool:
-      vmImage: ubuntu-20.04
+      vmImage: ubuntu-22.04
     steps:
       - download: current
         artifact: NodeBuild
@@ -329,7 +329,7 @@ stages:
           BUILD_NUMBER: $(BUILD_NUMBER)
   - job: PublishJava
     pool:
-      vmImage: ubuntu-20.04
+      vmImage: ubuntu-22.04
     steps:
       - task: JavaToolInstaller@0
         inputs:
