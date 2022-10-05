@@ -45,4 +45,4 @@ The following table shows versions of Fabric, programming language runtimes, and
 | **Go** | 1.17, 1.18 | 1.17, 1.18 |
 | **Node** | 14, 16 | 14, 16 |
 | **Java** | 8, 11, 17 | 8, 11, 17 |
-| **Platform** | Ubuntu 20.04 | |
+| **Platform** | Ubuntu 22.04 | |
