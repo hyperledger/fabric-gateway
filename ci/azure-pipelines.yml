@@ -37,7 +37,7 @@ variables:
   - name: GOVER
     value: 1.17
   - name: NODEVER
-    value: 18.x
+    value: 14.x
   - name: JAVAVER
     value: 8
 
