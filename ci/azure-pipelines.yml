@@ -210,6 +210,8 @@ stages:
           NODEVER: 14.x
         Node16:
           NODEVER: 16.x
+        Node18:
+          NODEVER: 18.x
     steps:
     - template: install_deps_hsm_ca.yml
     - task: NodeTool@0
