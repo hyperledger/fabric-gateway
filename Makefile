@@ -23,13 +23,6 @@ PEER_IMAGE_TAG ?= 2.5
 # In fabric-gateway main branch it should typically be the latest released chaincode version available in dockerhub.
 TWO_DIGIT_VERSION ?= 2.4
 
-PKGNAME = github.com/hyperledger/fabric-gateway
-ARCH=$(shell go env GOARCH)
-MARCH=$(shell go env GOOS)-$(shell go env GOARCH)
-
-GO_VER = 1.17.8
-GO_TAGS ?=
-
 .PHONEY: build
 build: build-node build-java
 
@@ -80,10 +73,16 @@ lint:
 scan: scan-go scan-node scan-java
 
 .PHONEY: scan-go
-scan-go:
-	go list -json -deps "$(go_dir)/..." | docker run --rm --interactive sonatypecommunity/nancy:latest sleuth
+scan-go: scan-go-govulncheck scan-go-nancy
+
+.PHONEY: scan-go-govulncheck
+scan-go-govulncheck:
 	go install golang.org/x/vuln/cmd/govulncheck@latest
 	govulncheck "$(go_dir)/..."
+
+.PHONEY: scan-go-nancy
+scan-go-nancy:
+	go list -json -deps "$(go_dir)/..." | docker run --rm --interactive sonatypecommunity/nancy:latest sleuth
 
 .PHONEY: scan-node
 scan-node:
