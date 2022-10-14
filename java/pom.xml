@@ -36,10 +36,10 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <grpcVersion>1.49.1</grpcVersion>
-        <protobufVersion>3.21.1</protobufVersion> <!-- keep in step with the version used by io.grpc:grpc-protobuf -->
+        <grpcVersion>1.50.0</grpcVersion>
+        <protobufVersion>3.21.7</protobufVersion> <!-- keep in step with the version used by io.grpc:grpc-protobuf -->
         <enforceJavaVersion>1.8</enforceJavaVersion> <!-- this is overridden in the release profile -->
-        <bouncyCastleVersion>1.71.1</bouncyCastleVersion>
+        <bouncyCastleVersion>1.72</bouncyCastleVersion>
     </properties>
 
     <repositories>
@@ -60,7 +60,7 @@
             <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-bom</artifactId>
-                <version>7.8.0</version>
+                <version>7.8.1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -377,7 +377,7 @@
                             <dependency>
                                 <groupId>com.puppycrawl.tools</groupId>
                                 <artifactId>checkstyle</artifactId>
-                                <version>10.3.3</version>
+                                <version>10.3.4</version>
                             </dependency>
                         </dependencies>
                     </plugin>
