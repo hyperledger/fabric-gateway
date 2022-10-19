@@ -107,10 +107,10 @@ describe('when creating or disposing of an HSM Signer Factory', () => {
     it('throws if library option is not valid', () => {
         pkcs11Stub.C_Initialize = () => { throw new Error('Some Error'); };
         expect(() => newHSMSignerFactory('somelibrary'))
-            .toThrowError('Some Error');
+            .toThrow('Some Error');
 
         expect(() => newHSMSignerFactory(''))
-            .toThrowError('library must be provided');
+            .toThrow('library must be provided');
     });
 
     it('can be disposed', () => {
@@ -155,44 +155,44 @@ describe('When using an HSM Signer', () => {
         };
 
         expect(() => hsmSignerFactory.newSigner(badHSMOptions))
-            .toThrowError('label property must be provided');
+            .toThrow('label property must be provided');
 
         badHSMOptions.label = 'ForFabric';
         badHSMOptions.pin = '';
         expect(() => hsmSignerFactory.newSigner(badHSMOptions))
-            .toThrowError('pin property must be provided');
+            .toThrow('pin property must be provided');
 
         badHSMOptions.pin = '98765432';
         badHSMOptions.identifier = '';
         expect(() => hsmSignerFactory.newSigner(badHSMOptions))
-            .toThrowError('identifier property must be provided');
+            .toThrow('identifier property must be provided');
 
         const noLabelOptions = {
             pin: '98765432',
             identifier: 'id'
         };
         expect(() => hsmSignerFactory.newSigner(noLabelOptions as HSMSignerOptions))
-            .toThrowError('label property must be provided');
+            .toThrow('label property must be provided');
 
         const noPinOptions = {
             label: 'ForFabric',
             identifier: 'id'
         };
         expect(() => hsmSignerFactory.newSigner(noPinOptions as HSMSignerOptions))
-            .toThrowError('pin property must be provided');
+            .toThrow('pin property must be provided');
 
         const noIdentifierOptions = {
             label: 'ForFabric',
             pin: '98765432'
         };
         expect(() => hsmSignerFactory.newSigner(noIdentifierOptions as HSMSignerOptions))
-            .toThrowError('identifier property must be provided');
+            .toThrow('identifier property must be provided');
     });
 
     it('throws an error if no slots are returned', () => {
         pkcs11Stub.C_GetSlotList = () => [];
         expect(() => hsmSignerFactory.newSigner(hsmOptions))
-            .toThrowError('No pkcs11 slots can be found');
+            .toThrow('No pkcs11 slots can be found');
     });
 
     it('throws an error if label cannot be found and there are slots', () => {
@@ -203,21 +203,21 @@ describe('When using an HSM Signer', () => {
         };
 
         expect(() => hsmSignerFactory.newSigner(badHSMOptions))
-            .toThrowError('label someunknownlabel cannot be found in the pkcs11 slot list');
+            .toThrow('label someunknownlabel cannot be found in the pkcs11 slot list');
     });
 
     it('finds the correct slot when the correct label is available', () => {
         pkcs11Stub.C_OpenSession = jest.fn();
         expect(() => hsmSignerFactory.newSigner(hsmOptions))
             .not.toThrow();
-        expect(pkcs11Stub.C_OpenSession).toBeCalledWith(slot1, CKF_SERIAL_SESSION);
+        expect(pkcs11Stub.C_OpenSession).toHaveBeenCalledWith(slot1, CKF_SERIAL_SESSION);
     });
 
     it('defaults to a CKU_USER if none provided', () => {
         pkcs11Stub.C_Login = jest.fn();
         expect(() => hsmSignerFactory.newSigner(hsmOptions))
             .not.toThrow();
-        expect(pkcs11Stub.C_Login).toBeCalledWith(mockSession, CKU_USER, hsmOptions.pin);
+        expect(pkcs11Stub.C_Login).toHaveBeenCalledWith(mockSession, CKU_USER, hsmOptions.pin);
     });
 
     it('uses usertype if provided', () => {
@@ -231,13 +231,13 @@ describe('When using an HSM Signer', () => {
         pkcs11Stub.C_Login = jest.fn();
         expect(() => hsmSignerFactory.newSigner(hsmOptionsWithUserType))
             .not.toThrow();
-        expect(pkcs11Stub.C_Login).toBeCalledWith(mockSession, hsmOptionsWithUserType.userType, hsmOptions.pin);
+        expect(pkcs11Stub.C_Login).toHaveBeenCalledWith(mockSession, hsmOptionsWithUserType.userType, hsmOptions.pin);
     });
 
     it('throws if pkcs11 open session throws an error', () => {
         pkcs11Stub.C_OpenSession = () => { throw new Error('Some Error'); };
         expect(() => hsmSignerFactory.newSigner(hsmOptions))
-            .toThrowError('Some Error');
+            .toThrow('Some Error');
     });
 
     it('throws if pkcs11 login throws an error', () => {
@@ -245,8 +245,8 @@ describe('When using an HSM Signer', () => {
         pkcs11Stub.C_CloseSession = jest.fn();
         pkcs11Stub.C_GetSlotList = () => [slot1, slot2];
         expect(() => hsmSignerFactory.newSigner(hsmOptions))
-            .toThrowError('Some Error');
-        expect(pkcs11Stub.C_CloseSession).toBeCalledWith(mockSession);
+            .toThrow('Some Error');
+        expect(pkcs11Stub.C_CloseSession).toHaveBeenCalledWith(mockSession);
     });
 
     it('Ignores already logged in errors at login time', () => {
@@ -261,16 +261,16 @@ describe('When using an HSM Signer', () => {
         pkcs11Stub.C_Login = () => { throw alreadyLoggedInError; };
         expect(() => hsmSignerFactory.newSigner(hsmOptions))
             .not.toThrow();
-        expect(pkcs11Stub.C_CloseSession).not.toBeCalled();
+        expect(pkcs11Stub.C_CloseSession).not.toHaveBeenCalled();
     });
 
     it('throws and calls find final if it cannot find the HSM object', () => {
         pkcs11Stub.C_CloseSession = jest.fn();
         pkcs11Stub.C_FindObjects = jest.fn(() => { return []; });
         expect(() => hsmSignerFactory.newSigner(hsmOptions))
-            .toThrowError('Unable to find object in HSM with ID id');
-        expect(pkcs11Stub.C_FindObjectsFinal).toBeCalled();
-        expect(pkcs11Stub.C_CloseSession).toBeCalledWith(mockSession);
+            .toThrow('Unable to find object in HSM with ID id');
+        expect(pkcs11Stub.C_FindObjectsFinal).toHaveBeenCalled();
+        expect(pkcs11Stub.C_CloseSession).toHaveBeenCalledWith(mockSession);
     });
 
     it('finds the HSM object if it exists', () => {
@@ -283,9 +283,9 @@ describe('When using an HSM Signer', () => {
             { type: CKA_KEY_TYPE, value: CKK_EC },
         ];
 
-        expect(pkcs11Stub.C_FindObjectsInit).toBeCalledWith(mockSession, expect.arrayContaining(expectedTemplate));
-        expect(pkcs11Stub.C_FindObjects).toBeCalledWith(mockSession, 1);
-        expect(pkcs11Stub.C_FindObjects).toBeCalledWith(mockSession, 1);
+        expect(pkcs11Stub.C_FindObjectsInit).toHaveBeenCalledWith(mockSession, expect.arrayContaining(expectedTemplate));
+        expect(pkcs11Stub.C_FindObjects).toHaveBeenCalledWith(mockSession, 1);
+        expect(pkcs11Stub.C_FindObjects).toHaveBeenCalledWith(mockSession, 1);
     });
 
     it('signs using the HSM', async () => {
@@ -298,8 +298,8 @@ describe('When using an HSM Signer', () => {
         const signed = await signer(digest);
         expect(signed).toEqual(new Uint8Array(Buffer.from(DERSignature, 'hex')));
 
-        expect(pkcs11Stub.C_SignInit).toBeCalledWith(mockSession, { mechanism: CKM_ECDSA }, mockPrivateKeyHandle);
-        expect(pkcs11Stub.C_Sign).toBeCalledWith(mockSession, digest, expect.anything());
+        expect(pkcs11Stub.C_SignInit).toHaveBeenCalledWith(mockSession, { mechanism: CKM_ECDSA }, mockPrivateKeyHandle);
+        expect(pkcs11Stub.C_Sign).toHaveBeenCalledWith(mockSession, digest, expect.anything());
     });
 
     it('can be closed', () => {

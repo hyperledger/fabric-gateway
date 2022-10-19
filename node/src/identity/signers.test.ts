@@ -11,14 +11,14 @@ describe('signers', () => {
     it('throws for public key', () => {
         const { publicKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
         expect(() => newPrivateKeySigner(publicKey))
-            .toThrowError(publicKey.type);
+            .toThrow(publicKey.type);
     });
 
     it('throws for unsupported private key type', () => {
         const { privateKey } = generateKeyPairSync('dsa', { modulusLength: 2048, divisorLength: 256 });
 
         expect(() => newPrivateKeySigner(privateKey))
-            .toThrowError(privateKey.asymmetricKeyType);
+            .toThrow(privateKey.asymmetricKeyType);
     });
 
     describe('EC', () => {
@@ -49,7 +49,7 @@ describe('signers', () => {
         it('throws for unsupported curve', () => {
             const { privateKey } = generateKeyPairSync('ec', { namedCurve: 'secp256k1' });
             expect(() => newPrivateKeySigner(privateKey))
-                .toThrowError('1.3.132.0.10');
+                .toThrow('1.3.132.0.10');
         });
     });
 });

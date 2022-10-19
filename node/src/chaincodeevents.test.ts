@@ -354,7 +354,7 @@ describe('Chaincode Events', () => {
             const events = await network.getChaincodeEvents('CHAINCODE');
             events.close();
 
-            expect(responseStream.cancel).toBeCalled();
+            expect(responseStream.cancel).toHaveBeenCalled();
         });
 
         it('throws GatewayError on call ServiceError', async () => {
