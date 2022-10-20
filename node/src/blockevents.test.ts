@@ -438,7 +438,7 @@ describe('Block Events', () => {
             const events = await testCase.getEvents();
             events.close();
 
-            expect(stream.cancel).toBeCalled();
+            expect(stream.cancel).toHaveBeenCalled();
         });
     }));
 });
