@@ -25,7 +25,7 @@ variables:
   - group: credentials
   - group: JARSigningPublish
   - name: GATEWAY_VERSION
-    value: 1.1.1
+    value: 1.1.2
   - name: BUILD_DATE
     value: $[format('{0:yyyyMMdd}', pipeline.startTime)]
   - name: BUILD_NUMBER
