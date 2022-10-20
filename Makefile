@@ -82,7 +82,8 @@ scan-go-govulncheck:
 
 .PHONEY: scan-go-nancy
 scan-go-nancy:
-	go list -json -deps "$(go_dir)/..." | docker run --rm --interactive sonatypecommunity/nancy:latest sleuth
+	go install github.com/sonatype-nexus-community/nancy@latest
+	go list -json -deps "$(go_dir)/..." | nancy sleuth
 
 .PHONEY: scan-node
 scan-node:
