@@ -36,7 +36,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <grpcVersion>1.50.0</grpcVersion>
+        <grpcVersion>1.50.1</grpcVersion>
         <protobufVersion>3.21.7</protobufVersion> <!-- keep in step with the version used by io.grpc:grpc-protobuf -->
         <enforceJavaVersion>1.8</enforceJavaVersion> <!-- this is overridden in the release profile -->
         <bouncyCastleVersion>1.72</bouncyCastleVersion>
