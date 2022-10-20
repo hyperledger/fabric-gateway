@@ -97,7 +97,7 @@ func WithHash(hash hash.Hash) ConnectOption {
 // WithClientConnection uses the supplied gRPC client connection to a Fabric Gateway. This should be shared by all
 // Gateway instances connecting to the same Fabric Gateway. The client connection will not be closed when the Gateway
 // is closed.
-func WithClientConnection(clientConnection *grpc.ClientConn) ConnectOption {
+func WithClientConnection(clientConnection grpc.ClientConnInterface) ConnectOption {
 	return func(gw *Gateway) error {
 		gw.client.grpcGatewayClient = gateway.NewGatewayClient(clientConnection)
 		gw.client.grpcDeliverClient = peer.NewDeliverClient(clientConnection)
