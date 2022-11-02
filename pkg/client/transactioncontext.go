@@ -10,6 +10,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 
+	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 )
 
@@ -30,7 +31,7 @@ func newTransactionContext(signingIdentity *signingIdentity) (*transactionContex
 	}
 
 	saltedCreator := append(nonce, creator...)
-	rawTransactionID := signingIdentity.hash(saltedCreator)
+	rawTransactionID := hash.SHA256(saltedCreator)
 	transactionID := hex.EncodeToString(rawTransactionID)
 
 	signatureHeader := &common.SignatureHeader{

@@ -6,6 +6,7 @@
 
 import { common } from '@hyperledger/fabric-protos';
 import { randomBytes } from 'crypto';
+import { sha256 } from './hash/hashes';
 import { SigningIdentity } from './signingidentity';
 
 export class TransactionContext {
@@ -17,7 +18,7 @@ export class TransactionContext {
         const creator = signingIdentity.getCreator();
 
         const saltedCreator = Buffer.concat([nonce, creator]);
-        const rawTransactionId = signingIdentity.hash(saltedCreator);
+        const rawTransactionId = sha256(saltedCreator);
         this.#transactionId = Buffer.from(rawTransactionId).toString('hex');
 
         this.#signatureHeader = new common.SignatureHeader();
