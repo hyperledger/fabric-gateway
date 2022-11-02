@@ -6,12 +6,12 @@
 
 package org.hyperledger.fabric.client;
 
-import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
-
 import com.google.protobuf.ByteString;
 import org.bouncycastle.util.encoders.Hex;
 import org.hyperledger.fabric.protos.common.SignatureHeader;
+
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 
 final class TransactionContext {
     private static final int NONCE_LENGTH = 24;
@@ -38,7 +38,7 @@ final class TransactionContext {
 
     private String newTransactionId() {
         byte[] saltedCreator = GatewayUtils.concat(nonce, signingIdentity.getCreator());
-        byte[] rawTransactionId = signingIdentity.hash(saltedCreator);
+        byte[] rawTransactionId = Hash.sha256(saltedCreator);
         byte[] hexTransactionId = Hex.encode(rawTransactionId);
         return new String(hexTransactionId, StandardCharsets.UTF_8);
     }
