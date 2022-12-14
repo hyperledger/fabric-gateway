@@ -73,7 +73,7 @@ lint:
 scan: scan-go scan-node scan-java
 
 .PHONEY: scan-go
-scan-go: scan-go-govulncheck scan-go-nancy
+scan-go: scan-go-govulncheck scan-go-nancy scan-go-osv-scanner
 
 .PHONEY: scan-go-govulncheck
 scan-go-govulncheck:
@@ -85,16 +85,38 @@ scan-go-nancy:
 	go install github.com/sonatype-nexus-community/nancy@latest
 	go list -json -deps "$(go_dir)/..." | nancy sleuth
 
+.PHONEY: scan-go-osv-scanner
+scan-go-osv-scanner:
+	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
+	osv-scanner go.mod
+
 .PHONEY: scan-node
-scan-node:
+scan-node: scan-node-npm-audit scan-node-osv-scanner
+
+.PHONEY: scan-node-npm-audit
+scan-node-npm-audit:
 	cd "$(node_dir)" && \
 		npm install --package-lock-only && \
 		npm audit --omit=dev
 
+.PHONEY: scan-node-osv-scanner
+scan-node-osv-scanner:
+	cd "$(node_dir)" && npm install --package-lock-only
+	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
+	osv-scanner node/package-lock.json
+
 .PHONEY: scan-java
-scan-java:
+scan-java: scan-java-dependency-check scan-java-osv-scanner
+
+.PHONEY: scan-java-dependency-check
+scan-java-dependency-check:
 	cd "$(java_dir)" && \
 		mvn dependency-check:check -P owasp
+
+.PHONEY: scan-java-osv-scanner
+scan-java-osv-scanner:
+	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
+	osv-scanner java/pom.xml
 
 .PHONEY: generate
 generate:
