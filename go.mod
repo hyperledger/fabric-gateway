@@ -6,9 +6,9 @@ require (
 	github.com/cucumber/godog v0.12.5
 	github.com/cucumber/messages-go/v16 v16.0.1
 	github.com/golang/mock v1.6.0
-	github.com/hyperledger/fabric-protos-go-apiv2 v0.0.0-20220615102044-467be1c7b2e7
+	github.com/hyperledger/fabric-protos-go-apiv2 v0.2.0
 	github.com/miekg/pkcs11 v1.1.1
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.8.1
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 )
