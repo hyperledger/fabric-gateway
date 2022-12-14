@@ -36,7 +36,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <grpcVersion>1.50.1</grpcVersion>
+        <grpcVersion>1.51.1</grpcVersion>
         <protobufVersion>3.21.7</protobufVersion> <!-- keep in step with the version used by io.grpc:grpc-protobuf -->
         <enforceJavaVersion>1.8</enforceJavaVersion> <!-- this is overridden in the release profile -->
         <bouncyCastleVersion>1.72</bouncyCastleVersion>
@@ -60,7 +60,7 @@
             <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-bom</artifactId>
-                <version>7.9.0</version>
+                <version>7.10.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -162,12 +162,12 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.9.1</version>
+            <version>2.10</version>
         </dependency>
         <dependency>
             <groupId>org.hyperledger.fabric</groupId>
             <artifactId>fabric-protos</artifactId>
-            <version>0.1.5</version>
+            <version>0.2.0</version>
         </dependency>
     </dependencies>
 
@@ -377,7 +377,7 @@
                             <dependency>
                                 <groupId>com.puppycrawl.tools</groupId>
                                 <artifactId>checkstyle</artifactId>
-                                <version>10.4</version>
+                                <version>10.5.0</version>
                             </dependency>
                         </dependencies>
                     </plugin>
