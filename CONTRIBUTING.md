@@ -60,18 +60,17 @@ Consider recommendations from these resources:
 
 Scenario tests use [Cucumber](https://cucumber.io/docs/cucumber/) as the testing framework. The same set of test features are run against all language implementations of the API to ensure consistent functionality and behavior.
 
-## Code of Conduct Guidelines <a name="conduct"></a>
+## Code of conduct
 
-See our [Code of Conduct Guidelines](https://github.com/hyperledger/.github/blob/main/CODE_OF_CONDUCT.md).
+Please review the project [code of conduct](CODE_OF_CONDUCT.md) before contributing.
 
-## Maintainers <a name="maintainers"></a>
+## Maintainers
 
-Should you have any questions or concerns, please reach out to one of the project's [Maintainers](../blob/main/MAINTAINERS.md).
+Should you have any questions or concerns, please reach out to one of the project's [maintainers](MAINTAINERS.md).
 
 ## Hyperledger Fabric
 
-See the
-[Hyperledger Fabric contributors guide](http://hyperledger-fabric.readthedocs.io/en/latest/CONTRIBUTING.html) for more details, including other Hyperledger Fabric projects you may wish to contribute to.
+See the [Hyperledger Fabric contributors guide](http://hyperledger-fabric.readthedocs.io/en/latest/CONTRIBUTING.html) for more details, including other Hyperledger Fabric projects you may wish to contribute to.
 
 ---
 
