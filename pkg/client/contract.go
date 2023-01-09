@@ -6,6 +6,10 @@ SPDX-License-Identifier: Apache-2.0
 
 package client
 
+import (
+	"context"
+)
+
 // Contract represents a smart contract, and allows applications to:
 //
 // - Evaluate transactions that query state from the ledger using the EvaluateTransaction() method.
@@ -59,7 +63,7 @@ func (contract *Contract) EvaluateTransaction(name string, args ...string) ([]by
 
 // Evaluate a transaction function and return its result. This method provides greater control over the transaction
 // proposal content and the endorsing peers on which it is evaluated. This allows transaction functions to be evaluated
-// where the proposal must include transient data, or that will access ledger data with key-based endorsement policies.
+// where the proposal must include transient data.
 func (contract *Contract) Evaluate(transactionName string, options ...ProposalOption) ([]byte, error) {
 	proposal, err := contract.NewProposal(transactionName, options...)
 	if err != nil {
@@ -67,6 +71,17 @@ func (contract *Contract) Evaluate(transactionName string, options ...ProposalOp
 	}
 
 	return proposal.Evaluate()
+}
+
+// EvaluateWithContext evaluates a transaction function in the scope of a specific context and return its result. This
+// method provides greater control over the transaction proposal content and the endorsing peers on which it is
+// evaluated. This allows transaction functions to be evaluated where the proposal must include transient data.
+func (contract *Contract) EvaluateWithContext(ctx context.Context, transactionName string, options ...ProposalOption) ([]byte, error) {
+	proposal, err := contract.NewProposal(transactionName, options...)
+	if err != nil {
+		return nil, err
+	}
+	return proposal.EvaluateWithContext(ctx)
 }
 
 // SubmitTransaction will submit a transaction to the ledger and return its result only after it is committed to the
@@ -84,9 +99,8 @@ func (contract *Contract) SubmitTransaction(name string, args ...string) ([]byte
 }
 
 // Submit a transaction to the ledger and return its result only after it has been committed to the ledger. This method
-// provides greater control over the transaction proposal content and the endorsing peers on which it is evaluated. This
-// allows transaction functions to be submitted where the proposal must include transient data, or that will access
-// ledger data with key-based endorsement policies.
+// provides greater control over the transaction proposal content and the endorsing peers on which it is evaluated.
+// This allows transaction functions to be submitted where the proposal must include transient data.
 //
 // This method may return different error types depending on the point in the transaction invocation that a failure
 // occurs. The error can be inspected with errors.Is or errors.As.
@@ -97,6 +111,32 @@ func (contract *Contract) Submit(transactionName string, options ...ProposalOpti
 	}
 
 	status, err := commit.Status()
+	if err != nil {
+		return result, err
+	}
+
+	if !status.Successful {
+		return nil, newCommitError(status.TransactionID, status.Code)
+	}
+
+	return result, nil
+}
+
+// SubmitWithContext submit a transaction to the ledger in the scope of a specific Context and return its result only
+// after it has been committed to the ledger. This method provides greater control over the transaction proposal
+// content and the endorsing peers on which it is evaluated. This allows transaction functions to be submitted where
+// the proposal must include transient data.
+//
+// This method may return different error types depending on the point in the transaction invocation that a failure
+// occurs. The error can be inspected with errors.Is or errors.As.
+func (contract *Contract) SubmitWithContext(ctx context.Context, transactionName string, options ...ProposalOption) ([]byte, error) {
+
+	result, commit, err := contract.SubmitAsyncWithContext(ctx, transactionName, options...)
+	if err != nil {
+		return result, err
+	}
+
+	status, err := commit.StatusWithContext(ctx)
 	if err != nil {
 		return result, err
 	}
@@ -127,6 +167,33 @@ func (contract *Contract) SubmitAsync(transactionName string, options ...Proposa
 	result := transaction.Result()
 
 	commit, err := transaction.Submit()
+	if err != nil {
+		return result, nil, err
+	}
+
+	return result, commit, nil
+}
+
+// SubmitAsyncWithContext submits a transaction to the ledger in the scope of a specific context and returns its result
+// immediately after successfully sending to the orderer, along with a Commit that can be used to wait for it to be
+// committed to the ledger.
+//
+// This method may return different error types depending on the point in the transaction invocation that a failure
+// occurs. The error can be inspected with errors.Is or errors.As.
+func (contract *Contract) SubmitAsyncWithContext(ctx context.Context, transactionName string, options ...ProposalOption) ([]byte, *Commit, error) {
+	proposal, err := contract.NewProposal(transactionName, options...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	transaction, err := proposal.EndorseWithContext(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	result := transaction.Result()
+
+	commit, err := transaction.SubmitWithContext(ctx)
 	if err != nil {
 		return result, nil, err
 	}
