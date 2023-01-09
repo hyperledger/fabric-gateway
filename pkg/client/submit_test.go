@@ -138,44 +138,80 @@ func TestSubmitTransaction(t *testing.T) {
 		require.Equal(t, proposal.TransactionID(), actual.TransactionID, "transaction ID")
 	})
 
-	t.Run("Returns result for committed transaction", func(t *testing.T) {
-		expected := []byte("TRANSACTION_RESULT")
-		mockClient := NewMockGatewayClient(gomock.NewController(t))
-		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
-		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(nil, nil)
-		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
-			Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil)
+	for _, testCase := range []struct {
+		name string
+		run  func(t *testing.T, contract *Contract) ([]byte, error)
+	}{
+		{
+			name: "SubmitTransaction returns result for committed transaction",
+			run: func(t *testing.T, contract *Contract) ([]byte, error) {
+				return contract.SubmitTransaction("transaction")
+			},
+		},
+		{
+			name: "SubmitWithContext returns result for committed transaction",
+			run: func(t *testing.T, contract *Contract) ([]byte, error) {
+				return contract.SubmitWithContext(context.Background(), "transactionName")
+			},
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			expected := []byte("TRANSACTION_RESULT")
+			mockClient := NewMockGatewayClient(gomock.NewController(t))
+			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+				Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
+			mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+				Return(nil, nil)
+			mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
+				Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil)
 
-		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
+			contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
-		actual, err := contract.SubmitTransaction("transaction")
-		require.NoError(t, err)
+			actual, err := testCase.run(t, contract)
+			require.NoError(t, err)
 
-		require.Equal(t, expected, actual)
-	})
+			require.Equal(t, expected, actual)
+		})
+	}
 
-	t.Run("Returns commit error for invalid commit status", func(t *testing.T) {
-		expectedError := peer.TxValidationCode_name[int32(peer.TxValidationCode_MVCC_READ_CONFLICT)]
-		mockClient := NewMockGatewayClient(gomock.NewController(t))
-		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
-		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(nil, nil)
-		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
-			Return(newCommitStatusResponse(peer.TxValidationCode_MVCC_READ_CONFLICT, 1), nil)
+	for _, testCase := range []struct {
+		name string
+		run  func(t *testing.T, contract *Contract) ([]byte, error)
+	}{
+		{
+			name: "SubmitTransaction returns commit error for invalid commit status",
+			run: func(t *testing.T, contract *Contract) ([]byte, error) {
+				return contract.SubmitTransaction("transaction")
+			},
+		},
+		{
+			name: "SubmitWithContext returns commit error for invalid commit status",
+			run: func(t *testing.T, contract *Contract) ([]byte, error) {
+				return contract.SubmitWithContext(context.Background(), "transactionName")
+			},
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			expectedError := peer.TxValidationCode_name[int32(peer.TxValidationCode_MVCC_READ_CONFLICT)]
 
-		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
+			mockClient := NewMockGatewayClient(gomock.NewController(t))
+			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+				Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
+			mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+				Return(nil, nil)
+			mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
+				Return(newCommitStatusResponse(peer.TxValidationCode_MVCC_READ_CONFLICT, 1), nil)
 
-		_, err := contract.SubmitTransaction("transaction")
+			contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
+			_, err := testCase.run(t, contract)
 
-		require.Errorf(t, err, expectedError, "error message")
-		var actual *CommitError
-		require.ErrorAsf(t, err, &actual, "error type: %T", err)
-		require.NotEmpty(t, actual.TransactionID, "transaction ID")
-		require.Equal(t, peer.TxValidationCode_MVCC_READ_CONFLICT, actual.Code, "validation code")
-	})
+			require.Errorf(t, err, expectedError, "error message")
+			var actual *CommitError
+			require.ErrorAsf(t, err, &actual, "error type: %T", err)
+			require.NotEmpty(t, actual.TransactionID, "transaction ID")
+			require.Equal(t, peer.TxValidationCode_MVCC_READ_CONFLICT, actual.Code, "validation code")
+		})
+	}
 
 	t.Run("Includes channel name in proposal", func(t *testing.T) {
 		var actual string
@@ -631,30 +667,6 @@ func TestSubmitTransaction(t *testing.T) {
 		require.Equal(t, expectedBlockNumber, status.BlockNumber)
 	})
 
-	t.Run("Uses specified context for endorse", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
-
-		mockClient := NewMockGatewayClient(gomock.NewController(t))
-		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			DoAndReturn(func(ctx context.Context, _ *gateway.EndorseRequest, _ ...grpc.CallOption) (*gateway.EndorseResponse, error) {
-				ctxErr := ctx.Err()
-				if ctxErr != nil {
-					return nil, ctxErr
-				}
-				return AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil
-			})
-
-		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
-
-		proposal, err := contract.NewProposal("transaction")
-		require.NoError(t, err, "NewProposal")
-
-		_, err = proposal.EndorseWithContext(ctx)
-
-		require.ErrorIs(t, err, context.Canceled, "EndorseWithContext")
-	})
-
 	t.Run("Uses default context for endorse", func(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
@@ -678,31 +690,6 @@ func TestSubmitTransaction(t *testing.T) {
 		_, err := contract.Submit("transaction")
 
 		require.ErrorIs(t, err, context.DeadlineExceeded)
-	})
-
-	t.Run("Uses specified context for submit", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
-
-		mockClient := NewMockGatewayClient(gomock.NewController(t))
-		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
-		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			DoAndReturn(func(ctx context.Context, _ *gateway.SubmitRequest, _ ...grpc.CallOption) (*gateway.SubmitResponse, error) {
-				return nil, ctx.Err()
-			})
-
-		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
-
-		proposal, err := contract.NewProposal("transaction")
-		require.NoError(t, err, "NewProposal")
-
-		transaction, err := proposal.Endorse()
-		require.NoError(t, err, "Endorse")
-
-		_, err = transaction.SubmitWithContext(ctx)
-
-		require.ErrorIs(t, err, context.Canceled, "SubmitWithContext")
 	})
 
 	t.Run("Uses default context for submit", func(t *testing.T) {
@@ -729,39 +716,65 @@ func TestSubmitTransaction(t *testing.T) {
 		require.ErrorIs(t, err, context.DeadlineExceeded)
 	})
 
-	t.Run("Uses specified context for commit status", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
+	for _, testCase := range []struct {
+		name string
+		run  func(*testing.T, context.Context, *Contract)
+	}{
+		{
+			name: "SubmitWithContext uses specified context",
+			run: func(t *testing.T, ctx context.Context, contract *Contract) {
+				_, err := contract.SubmitWithContext(ctx, "transaction")
+				require.NoError(t, err, "SubmitWithContext")
+			},
+		},
+		{
+			name: "SubmitAsyncWithContext uses specified context",
+			run: func(t *testing.T, ctx context.Context, contract *Contract) {
+				_, commit, err := contract.SubmitAsyncWithContext(ctx, "transaction")
+				require.NoError(t, err, "SubmitAsyncWithContext")
 
-		mockClient := NewMockGatewayClient(gomock.NewController(t))
-		mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
-			Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
-		mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
-			Return(nil, nil)
-		mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
-			DoAndReturn(func(ctx context.Context, _ *gateway.SignedCommitStatusRequest, _ ...grpc.CallOption) (*gateway.CommitStatusResponse, error) {
-				err := ctx.Err()
-				if err != nil {
-					return nil, err
-				}
-				return newCommitStatusResponse(peer.TxValidationCode_MVCC_READ_CONFLICT, 101), nil
-			})
+				_, err = commit.StatusWithContext(ctx)
+				require.NoError(t, err, "StatusWithContext")
+			},
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			var endorseCtxErr error
+			var submitCtxErr error
+			var commitStatusCtxErr error
 
-		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
 
-		proposal, err := contract.NewProposal("transaction")
-		require.NoError(t, err, "NewProposal")
+			mockClient := NewMockGatewayClient(gomock.NewController(t))
+			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
+				Do(func(ctx context.Context, _ *gateway.EndorseRequest, _ ...grpc.CallOption) {
+					endorseCtxErr = ctx.Err()
+				}).
+				Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil).
+				Times(1)
+			mockClient.EXPECT().Submit(gomock.Any(), gomock.Any()).
+				Do(func(ctx context.Context, _ *gateway.SubmitRequest, _ ...grpc.CallOption) {
+					submitCtxErr = ctx.Err()
+				}).
+				Return(nil, nil).
+				Times(1)
+			mockClient.EXPECT().CommitStatus(gomock.Any(), gomock.Any()).
+				Do(func(ctx context.Context, _ *gateway.SignedCommitStatusRequest, _ ...grpc.CallOption) {
+					commitStatusCtxErr = ctx.Err()
+				}).
+				Return(newCommitStatusResponse(peer.TxValidationCode_VALID, 1), nil).
+				Times(1)
 
-		transaction, err := proposal.Endorse()
-		require.NoError(t, err, "Endorse")
+			contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
-		commit, err := transaction.Submit()
-		require.NoError(t, err, "Submit")
+			testCase.run(t, ctx, contract)
 
-		_, err = commit.StatusWithContext(ctx)
-
-		require.ErrorIs(t, err, context.Canceled, "StatusWithContext")
-	})
+			require.ErrorIs(t, endorseCtxErr, context.Canceled, "endorse context")
+			require.ErrorIs(t, submitCtxErr, context.Canceled, "submit context")
+			require.ErrorIs(t, commitStatusCtxErr, context.Canceled, "commit status context")
+		})
+	}
 
 	t.Run("Uses default context for commit status", func(t *testing.T) {
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
