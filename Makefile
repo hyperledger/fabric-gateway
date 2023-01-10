@@ -16,7 +16,8 @@ scenario_dir := $(base_dir)/scenario
 PEER_IMAGE_PULL ?= hyperledger-fabric.jfrog.io/fabric-peer:amd64-2.5-stable
 
 # PEER_IMAGE_TAG is what to tag the pulled peer image as, it will also be used in docker-compose to reference the image
-# In fabric-gateway main branch this version tag should correspond to the version in the fabric main branch
+# In fabric-gateway main branch this version tag should correspond to the version in the forthcoming Fabric development
+# branch.
 PEER_IMAGE_TAG ?= 2.5
 
 # TWO_DIGIT_VERSION specifies which chaincode images to pull, they will be tagged to be consistent with PEER_IMAGE_TAG
@@ -134,7 +135,13 @@ vendor-chaincode:
 scenario-test-go: vendor-chaincode
 	go install github.com/cucumber/godog/cmd/godog@v0.12
 	cd $(scenario_dir)/go && \
-		SOFTHSM2_CONF="$${HOME}/softhsm2.conf" go test -tags pkcs11 -v -args "$(scenario_dir)/features/"
+		PEER_IMAGE_TAG="$(PEER_IMAGE_TAG)" SOFTHSM2_CONF="$${HOME}/softhsm2.conf" go test -timeout 20m -tags pkcs11 -v -args "$(scenario_dir)/features/"
+
+.PHONEY: scenario-test-go-no-hsm
+scenario-test-go-no-hsm: vendor-chaincode
+	go install github.com/cucumber/godog/cmd/godog@v0.12
+	cd $(scenario_dir)/go && \
+		PEER_IMAGE_TAG="$(PEER_IMAGE_TAG)" SOFTHSM2_CONF="$${HOME}/softhsm2.conf" go test -timeout 20m -tags pkcs11 -v --godog.tags='~@hsm' -args "$(scenario_dir)/features/"
 
 .PHONEY: scenario-test-node
 scenario-test-node: vendor-chaincode build-node
@@ -142,15 +149,26 @@ scenario-test-node: vendor-chaincode build-node
 	cd "$(scenario_dir)/node" && \
 		rm -rf package-lock.json node_modules && \
 		npm install && \
-		SOFTHSM2_CONF="$${HOME}/softhsm2.conf" npm test
+		PEER_IMAGE_TAG="$(PEER_IMAGE_TAG)" SOFTHSM2_CONF="$${HOME}/softhsm2.conf" npm test
+
+.PHONEY: scenario-test-node-no-hsm
+scenario-test-node-no-hsm: vendor-chaincode build-node
+	go install github.com/hyperledger/fabric-ca/cmd/fabric-ca-client@latest
+	cd "$(scenario_dir)/node" && \
+		rm -rf package-lock.json node_modules && \
+		npm install && \
+		PEER_IMAGE_TAG="$(PEER_IMAGE_TAG)" SOFTHSM2_CONF="$${HOME}/softhsm2.conf" npm run test:no-hsm
 
 .PHONEY: scenario-test-java
 scenario-test-java: vendor-chaincode build-java
 	cd "$(java_dir)" && \
-		mvn verify
+		PEER_IMAGE_TAG="$(PEER_IMAGE_TAG)" mvn verify
 
 .PHONEY: scenario-test
 scenario-test: scenario-test-go scenario-test-node scenario-test-java
+
+.PHONEY: scenario-test-no-hsm
+scenario-test: scenario-test-go-no-hsm scenario-test-node-no-hsm scenario-test-java
 
 .PHONEY: generate-docs-node
 generate-docs-node: build-node
@@ -174,7 +192,7 @@ pull-latest-peer:
 	docker tag $(PEER_IMAGE_PULL) hyperledger/fabric-peer:$(PEER_IMAGE_TAG)
 	# also need to retag the following images for the chaincode builder
 	for IMAGE in baseos ccenv javaenv nodeenv; do \
-		docker pull hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION); \
+		docker pull hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION) || docker pull --platform amd64 hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION); \
 		docker tag hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION) hyperledger/fabric-$$IMAGE:$(PEER_IMAGE_TAG); \
 	done
 

@@ -1,17 +1,18 @@
 package scenario
 
 import (
-	"flag"
 	"os"
 	"testing"
 
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
+	"github.com/spf13/pflag"
 )
 
 var opts = godog.Options{
 	Output: colors.Colored(os.Stdout),
-	Strict: true,
+	// Default configuration
+	Format: "pretty",
 }
 
 func init() {
@@ -19,8 +20,8 @@ func init() {
 }
 
 func TestMain(m *testing.M) {
-	flag.Parse()
-	opts.Paths = flag.Args()
+	pflag.Parse()
+	opts.Paths = pflag.Args()
 
 	status := godog.TestSuite{
 		Name:                 "godogs",
