@@ -9,9 +9,11 @@
         "build": "npm-run-all clean compile lint",
         "clean": "rimraf dist",
         "cucumber": "cucumber-js --format cucumber-console-formatter --require 'src/**/*.ts' --require-module ts-node/register ../features",
+        "cucumber:no-hsm": "cucumber-js --tags 'not @hsm' --format cucumber-console-formatter --require 'src/**/*.ts' --require-module ts-node/register ../features",
         "compile": "tsc",
         "lint": "eslint . --ext .ts",
-        "test": "npm-run-all build cucumber"
+        "test": "npm-run-all build cucumber",
+        "test:no-hsm": "npm-run-all build cucumber:no-hsm"
     },
     "private": true,
     "author": "",

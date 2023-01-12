@@ -12,7 +12,7 @@
 # limitations under the License.
 #
 
-version: '2'
+version: '3.8'
 
 services:
   clinopeer:
@@ -29,5 +29,4 @@ services:
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: /bin/bash
     volumes:
-      - /var/run/:/host/var/run/
       - ../crypto-material:/etc/hyperledger/config/

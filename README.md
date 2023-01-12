@@ -56,6 +56,7 @@ The following Makefile targets are available:
 - `make scenario-test-node` - run the scenario tests for Node client API
 - `make scenario-test-java` - run the scenario tests for Java client API
 - `make scenario-test` - run the scenario tests for all client language implementations
+- `make scenario-test-no-hsm` - run the scenario tests for all client language implementations, excluding HSM tests
 - `make test` - run all unit and scenario tests
 
 ### Scenario tests
