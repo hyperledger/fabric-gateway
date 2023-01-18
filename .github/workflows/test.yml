@@ -1,0 +1,20 @@
+name: Test
+
+on:
+  workflow_call:
+
+jobs:
+  verify-versions:
+    uses: ./.github/workflows/verify-versions.yml
+
+  docs:
+    needs: verify-versions
+    uses: ./.github/workflows/build-docs.yml
+
+  unit-test:
+    needs: verify-versions
+    uses: ./.github/workflows/unit-test.yml
+
+  scenario-test:
+    needs: verify-versions
+    uses: ./.github/workflows/scenario-test.yml

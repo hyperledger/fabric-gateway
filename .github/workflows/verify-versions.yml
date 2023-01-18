@@ -1,0 +1,58 @@
+name: Verify versions
+
+on:
+  workflow_call:
+
+env:
+  GATEWAY_VERSION: 1.1.2
+
+jobs:
+  go:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-22.04
+    name: Verify Go version
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+      - name: Check Go module version
+        shell: bash
+        run: |
+          echo "Build ref: ${GITHUB_REF}"
+          GO_GATEWAY_VERSION=${GITHUB_REF#refs/tags/v}
+          echo "Expected version: ${GATEWAY_VERSION}"
+          echo "Go module version (git tag): ${GO_GATEWAY_VERSION}"
+          [ "${GO_GATEWAY_VERSION}" = "${GATEWAY_VERSION}" ] || exit 1
+
+  node:
+    runs-on: ubuntu-22.04
+    name: Verify Node version
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check Node package version
+        shell: bash
+        working-directory: node
+        run: |
+          PACKAGE_GATEWAY_VERSION=$(jq --raw-output .version package.json)
+          echo "Expected version: ${GATEWAY_VERSION}"
+          echo "package.json version: ${PACKAGE_GATEWAY_VERSION}"
+          [ "${PACKAGE_GATEWAY_VERSION}" = "${GATEWAY_VERSION}" ] || exit 1
+
+  java:
+    runs-on: ubuntu-22.04
+    name: Verify Java version
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+      - name: Check Java artifact version
+        shell: bash
+        working-directory: java
+        run: |
+          POM_GATEWAY_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "Expected version: ${GATEWAY_VERSION}"
+          echo "pom.xml version: ${POM_GATEWAY_VERSION}"
+          [ "${POM_GATEWAY_VERSION%-SNAPSHOT}" = "${GATEWAY_VERSION}" ] || exit 1
