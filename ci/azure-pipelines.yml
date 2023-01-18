@@ -10,16 +10,7 @@ trigger:
   tags:
     include:
     - v*
-pr:
-- main
-
-schedules:
-  - cron: "0 23 * * *"
-    displayName: "Nightly build"
-    branches:
-      include:
-        - main
-    always: true
+pr: none
 
 variables:
   - group: credentials

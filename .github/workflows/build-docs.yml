@@ -1,0 +1,37 @@
+name: Build documentation
+on:
+  workflow_call:
+
+jobs:
+  node:
+    runs-on: ubuntu-22.04
+    name: Node documentation
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Generate documentation
+        run: make generate-docs-node
+      - name: Upload documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: nodedoc
+          path: node/apidocs/
+
+  java:
+    runs-on: ubuntu-22.04
+    name: Java documentation
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+      - name: Generate JavaDoc
+        run: make generate-docs-java
+      - name: Upload JavaDoc
+        uses: actions/upload-artifact@v3
+        with:
+          name: javadoc
+          path: java/target/site/apidocs/
