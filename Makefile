@@ -27,7 +27,7 @@ TWO_DIGIT_VERSION ?= 2.4
 SOFTHSM2_CONF ?= $(HOME)/softhsm2.conf
 
 .PHONEY: build
-build: build-node build-java
+build: build-node
 
 .PHONEY: build-node
 build-node:
@@ -36,11 +36,6 @@ build-node:
 		npm run build && \
 		rm -f fabric-gateway-dev.tgz && \
 		mv $$(npm pack) fabric-gateway-dev.tgz
-
-.PHONEY: build-java
-build-java:
-	cd "$(java_dir)" && \
-		mvn install -DskipTests
 
 .PHONEY: unit-test
 unit-test: generate unit-test-go unit-test-node unit-test-java
@@ -161,9 +156,9 @@ scenario-test-node-no-hsm: vendor-chaincode build-node
 		PEER_IMAGE_TAG="$(PEER_IMAGE_TAG)" npm run test:no-hsm
 
 .PHONEY: scenario-test-java
-scenario-test-java: vendor-chaincode build-java
+scenario-test-java: vendor-chaincode
 	cd "$(java_dir)" && \
-		PEER_IMAGE_TAG="$(PEER_IMAGE_TAG)" mvn verify
+		PEER_IMAGE_TAG="$(PEER_IMAGE_TAG)" mvn -Dmaven.javadoc.skip=true verify
 
 .PHONEY: scenario-test
 scenario-test: scenario-test-go scenario-test-node scenario-test-java
