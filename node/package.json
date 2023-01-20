@@ -19,13 +19,14 @@
         "url": "https://www.hyperledger.org/use/fabric"
     },
     "scripts": {
-        "build": "npm-run-all clean compile lint copy-non-ts-source",
+        "build": "npm-run-all clean compile copy-non-ts-source",
         "clean": "rm -rf apidocs dist src/protos",
         "compile": "tsc --project tsconfig.build.json",
         "copy-non-ts-source": "rsync -rv --prune-empty-dirs --include='*.d.ts' --exclude='*.ts' src/ dist",
         "generate-apidoc": "typedoc",
         "lint": "eslint . --ext .ts",
-        "test": "jest"
+        "test": "npm-run-all lint unit-test",
+        "unit-test": "jest"
     },
     "license": "Apache-2.0",
     "dependencies": {

@@ -26,8 +26,12 @@ TWO_DIGIT_VERSION ?= 2.4
 
 SOFTHSM2_CONF ?= $(HOME)/softhsm2.conf
 
+.PHONEY: default
+default:
+	@echo 'No default target.'
+
 .PHONEY: build
-build: build-node
+build: build-node build-java
 
 .PHONEY: build-node
 build-node:
@@ -36,6 +40,11 @@ build-node:
 		npm run build && \
 		rm -f fabric-gateway-dev.tgz && \
 		mv $$(npm pack) fabric-gateway-dev.tgz
+
+.PHONEY: build-java
+build-java:
+	cd "$(java_dir)" && \
+		mvn -DskipTests install
 
 .PHONEY: unit-test
 unit-test: generate unit-test-go unit-test-node unit-test-java
@@ -171,8 +180,9 @@ fabric-ca-client:
 	go install -tags pkcs11 github.com/hyperledger/fabric-ca/cmd/fabric-ca-client@latest
 
 .PHONEY: generate-docs-node
-generate-docs-node: build-node
+generate-docs-node:
 	cd "$(node_dir)" && \
+		npm install && \
 		npm run generate-apidoc
 
 .PHONEY: generate-docs-java
