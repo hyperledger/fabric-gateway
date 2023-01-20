@@ -55,4 +55,4 @@ jobs:
           POM_GATEWAY_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "Expected version: ${GATEWAY_VERSION}"
           echo "pom.xml version: ${POM_GATEWAY_VERSION}"
-          [ "${POM_GATEWAY_VERSION%-SNAPSHOT}" = "${GATEWAY_VERSION}" ] || exit 1
+          [ "${POM_GATEWAY_VERSION%%-*}" = "${GATEWAY_VERSION}" ] || exit 1

@@ -69,7 +69,7 @@ unit-test-java:
 
 .PHONEY: lint
 lint:
-	"$(base_dir)/ci/check_gofmt.sh" "$(go_dir)" "$(scenario_dir)/go"
+	"$(base_dir)/scripts/check_gofmt.sh" "$(go_dir)" "$(scenario_dir)/go"
 	go install honnef.co/go/tools/cmd/staticcheck@latest
 	staticcheck -f stylish -tags="pkcs11" "$(go_dir)/..." "$(scenario_dir)/go"
 	go vet -tags pkcs11 "$(go_dir)/..." "$(scenario_dir)/go"

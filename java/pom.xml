@@ -328,13 +328,18 @@
             </plugin>
         </plugins>
     </reporting>
-
     <distributionManagement>
         <repository>
-            <id>fabric-maven</id>
-            <name>Hyperledger Artifactory Repository</name>
-            <url>https://hyperledger-fabric.jfrog.io/artifactory/fabric-maven</url>
+            <id>ossrh</id>
+            <name>Central Repository OSSRH</name>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
+        <snapshotRepository>
+            <uniqueVersion>true</uniqueVersion>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/hyperledger/fabric-gateway</url>
+        </snapshotRepository>
     </distributionManagement>
     <profiles>
         <profile>
