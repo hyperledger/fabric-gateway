@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-base_dir := $(PWD)
+base_dir := $(patsubst %/,%,$(dir $(realpath $(lastword $(MAKEFILE_LIST)))))
 
 go_dir := $(base_dir)/pkg
 node_dir := $(base_dir)/node
@@ -220,3 +220,7 @@ clean-java:
 .PHONEY: clean-generated
 clean-generated:
 	find "$(go_dir)" -name '*_mock_test.go' -delete
+
+.PHONEY: shellcheck
+shellcheck:
+	cd "$(base_dir)" && ./scripts/shellcheck.sh
