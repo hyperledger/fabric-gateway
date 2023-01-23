@@ -191,7 +191,7 @@ generate-docs-java:
 		mvn javadoc:javadoc
 
 .PHONEY: test
-test: unit-test scenario-test
+test: shellcheck unit-test scenario-test
 
 .PHONEY: all
 all: test

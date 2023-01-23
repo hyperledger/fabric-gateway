@@ -1,11 +1,11 @@
 # Releasing
 
-The following artifacts are created as a result of releasing the Hyperledger Fabric Gateway SDKs:
+The following artifacts are created as a result of releasing the Hyperledger Fabric Gateway client API:
 
-- npm modules
+- npm package
     - [@hyperledger/fabric-gateway](https://www.npmjs.com/package/@hyperledger/fabric-gateway)
-- Java libraries
-    - [fabric-gateway](https://search.maven.org/artifact/org.hyperledger.fabric/fabric-gateway)
+- Java artifact
+    - [fabric-gateway](https://central.sonatype.dev/artifact/org.hyperledger.fabric/fabric-gateway/1.0.0/versions)
 
 ## Before releasing
 
@@ -22,19 +22,6 @@ When drafting the release, create a new tag for the new version (with a `v` pref
 
 See previous releases for examples of the title and description.
 
-## Publish Java SDK to the Central repository
-
-The automated build process currently only [publishes the Java SDK to Hyperledger's repository](https://hyperledger-fabric.jfrog.io/ui/repos/tree/General/fabric-maven%2Forg%2Fhyperledger%2Ffabric%2Ffabric-gateway).
-
-To publish it to the Central Repository requires an additional manual step (tbc):
-
-```
-mvn deploy:deploy-file -DpomFile=<path-to-pom> \
-  -Dfile=<path-to-file> \
-  -DrepositoryId=<id-to-map-on-server-section-of-settings.xml> \
-  -Durl=<url-of-the-repository-to-deploy>
-```
-
 ## After releasing
 
 The following tasks are required after releasing:
@@ -50,9 +37,9 @@ The Hyperledger Fabric Gateway client APIs follow the [Go module version numberi
 
 The following files need to be modified when updating the version number, and these are checked by the build process to ensure they match a tagged release:
 
-- The `GATEWAY_VERSION` variable in `ci/azure-pipelines.yml`
-- The `version` element in `java/pom.xml`
-- The `version` property in `node/package.json`
+- The `GATEWAY_VERSION` variable in [.github/workflows/verify-versions.yml](.github/workflows/verify-versions.yml)
+- The `version` element in [java/pom.xml](java/pom.xml)
+- The `version` property in [node/package.json](node/package.json)
 
 **Note:** there is no file to update for the Go SDK, which is versioned by the release tag.
 
