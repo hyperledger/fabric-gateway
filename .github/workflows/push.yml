@@ -14,29 +14,37 @@ jobs:
     name: Publish API documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout source
+        uses: actions/checkout@v3
+        with:
+          path: source
+      - name: Checkout publish
+        uses: actions/checkout@v3
         with:
           ref: gh-pages
+          path: publish
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
       - name: Remove old API documentation
         shell: bash
-        run: rm -rf "${GITHUB_REF_NAME}/api"
+        run: rm -rf "${GITHUB_REF_NAME}/api"  
+        working-directory: publish
       - name: Download JavaDoc
         uses: actions/download-artifact@v3
         with:
           name: java-doc
-          path: ${{ github.ref_name }}/api/java
+          path: publish/${{ github.ref_name }}/api/java
       - name: Download Node documentation
         uses: actions/download-artifact@v3
         with:
           name: node-doc
-          path: ${{ github.ref_name }}/api/node
+          path: publish/${{ github.ref_name }}/api/node
       - name: Publish
+        working-directory: publish
         env:
           USER_NAME: 'Hyperledger Bot'
           USER_EMAIL: 'hyperledger-bot@hyperledger.org'
           COMMIT_REF: ${{ github.sha }}
-        run: ./.github/scripts/git_push_changes.sh
+        run: ${{ github.workspace }}/source/.github/scripts/git_push_changes.sh
 
   publish-node:
     needs: build
@@ -69,11 +77,12 @@ jobs:
         with:
           java-version: 8
           distribution: temurin
+          cache: maven
           gpg-private-key: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
       - name: Publish
         env:
-          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
         run: ${{ github.workspace }}/.github/scripts/maven_publish_snapshot.sh
         working-directory: java

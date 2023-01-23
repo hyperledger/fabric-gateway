@@ -48,6 +48,7 @@ jobs:
         with:
           java-version: 17
           distribution: temurin
+          cache: maven
       - name: Check Java artifact version
         shell: bash
         working-directory: java

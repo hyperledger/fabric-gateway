@@ -101,6 +101,7 @@ jobs:
         with:
           java-version: ${{ matrix.java-version }}
           distribution: temurin
+          cache: maven
       - uses: actions/setup-go@v3
         with:
           go-version: ${{ env.DEFAULT_GO_VERSION }}

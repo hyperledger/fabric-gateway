@@ -28,6 +28,7 @@ jobs:
         with:
           java-version: 17
           distribution: temurin
+          cache: maven
       - name: Generate JavaDoc
         run: make generate-docs-java
       - name: Upload JavaDoc
