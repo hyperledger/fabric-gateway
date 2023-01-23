@@ -6,5 +6,5 @@ POM_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpressi
 GATEWAY_VERSION="${POM_VERSION%%-*}"
 PUBLISH_VERSION="${GATEWAY_VERSION}-SNAPSHOT"
 
-mvn --batch-mode versions:set -DnewVersion="${PUBLISH_VERSION}"
-mvn --batch-mode -DskipTests deploy
+mvn --batch-mode --no-transfer-progress versions:set -DnewVersion="${PUBLISH_VERSION}"
+mvn --batch-mode --no-transfer-progress --activate-profiles release -DskipTests deploy
