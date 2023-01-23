@@ -2,6 +2,8 @@
 
 For information on using the Fabric Gateway, including client API documentation, please visit the [Fabric Gateway documentation](https://hyperledger.github.io/fabric-gateway/).
 
+For information on reporting issues, suggesting enhancements and contributing code, please review the [contributing guide](CONTRIBUTING.md).
+
 ## Overview
 
 The original proposal is described in the [Fabric Gateway RFC](https://hyperledger.github.io/fabric-rfcs/text/0000-fabric-gateway.html).
@@ -18,28 +20,22 @@ See the [gateway.proto file](https://github.com/hyperledger/fabric-protos/blob/m
 
 This repository comprises three functionally equivalent client APIs, written in Go, Typescript, and Java. In order to
 build these components, the following needs to be installed and available in the PATH:
-- Go 1.17
-- Node 14
-- Java 8
-- Docker
-- Make
-- Maven
+- [Go 1.17](https://go.dev/)
+- [Node 14](https://nodejs.org/)
+- [Java 8](https://adoptium.net/)
+- [Docker](https://www.docker.com/)
+- [Make](https://www.gnu.org/software/make/)
+- [Maven](https://maven.apache.org/)
+- [ShellCheck](https://github.com/koalaman/shellcheck#readme) (for linting shell scripts)
 
-In order to run any of the Hardware Security Module (HSM) tests, the following must also be installed:
+In order to run any of the Hardware Security Module (HSM) tests, [SoftHSM v2](https://www.opendnssec.org/softhsm/) is required. This can either be:
 
-- SoftHSM, which can either be:
-  - installed using the package manager for your host system:
-    - Ubuntu: `sudo apt install softhsm2`
-    - macOS: `brew install softhsm`
-    - Windows: **unsupported**
-  - or compiled and installed from source:
-    1. install openssl 1.0.0+ or botan 1.10.0+
-    2. download the source code from <https://dist.opendnssec.org/source/softhsm-2.5.0.tar.gz>
-    3. `tar -xvf softhsm-2.5.0.tar.gz`
-    4. `cd softhsm-2.5.0`
-    5. `./configure --disable-gost` (would require additional libraries, turn it off unless you need 'gost' algorithm support for the Russian market)
-    6. `make`
-    7. `sudo make install`
+- installed using the package manager for your host system:
+  - Ubuntu: `sudo apt install softhsm2`
+  - macOS: `brew install softhsm`
+  - Windows: **unsupported**
+- or compiled and installed from source, following the [SoftHSM2 install instructions](https://wiki.opendnssec.org/display/SoftHSMDOCS/SoftHSM+Documentation+v2)
+  - It is recommended to use the `--disable-gost` option unless you need **gost** algorithm support for the Russian market, since it requires additional libraries.
 
 ### Build using make
 
@@ -57,7 +53,8 @@ The following Makefile targets are available:
 - `make scenario-test-java` - run the scenario tests for Java client API
 - `make scenario-test` - run the scenario tests for all client language implementations
 - `make scenario-test-no-hsm` - run the scenario tests for all client language implementations, excluding HSM tests
-- `make test` - run all unit and scenario tests
+- `make shellcheck` - check for script errors
+- `make test` - run all tests
 
 ### Scenario tests
 
@@ -66,7 +63,3 @@ of docker containers.  The clients connect to the gateway to submit transactions
 
 The tests are defined as feature files using the Cucumber BDD framework.  The same set of feature files
 is used across all three client language implementations to ensure consistency of behaviour.
-
-### Run Samples
-
-Refer to [Fabric-Samples](https://github.com/hyperledger/fabric-samples) for sample applications developed using fabic-gateway.
