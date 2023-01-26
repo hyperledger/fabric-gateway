@@ -295,29 +295,26 @@ func TestEvaluateTransaction(t *testing.T) {
 	})
 
 	t.Run("Uses specified context", func(t *testing.T) {
-		var actual context.Context
-
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		cancel()
 
 		mockClient := NewMockGatewayClient(gomock.NewController(t))
 		mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
-			Do(func(ctx context.Context, _ *gateway.EvaluateRequest, _ ...grpc.CallOption) {
-				actual = ctx
-			}).
-			Return(newEvaluateResponse(nil), nil).
-			Times(1)
+			DoAndReturn(func(ctx context.Context, _ *gateway.EvaluateRequest, _ ...grpc.CallOption) (*gateway.EvaluateResponse, error) {
+				err := ctx.Err()
+				if err != nil {
+					return nil, err
+				}
+				return newEvaluateResponse(nil), nil
+			})
 
 		contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
 		_, err = proposal.EvaluateWithContext(ctx)
-		require.NoError(t, err, "Evaluate")
 
-		require.Nil(t, actual.Err(), "context not done before explicit cancel")
-		cancel()
-		require.NotNil(t, actual.Err(), "context done after explicit cancel")
+		require.ErrorIs(t, err, context.Canceled, "EvaluateWithContext")
 	})
 
 	t.Run("Uses default context", func(t *testing.T) {
