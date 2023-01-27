@@ -40,7 +40,7 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
       - name: Install SoftHSM
-        run: ./.github/scripts/install_softhsm.sh
+        run: sudo apt install -y softhsm
         env:
           TMPDIR: ${{ runner.temp }}
       - name: Generate mocks
@@ -76,7 +76,7 @@ jobs:
       - name: Run unit tests
         run: make unit-test-node
       - name: Install SoftHSM
-        run: ./.github/scripts/install_softhsm.sh
+        run: sudo apt install -y softhsm
         env:
           TMPDIR: ${{ runner.temp }}
       - name: Pull Fabric Docker images

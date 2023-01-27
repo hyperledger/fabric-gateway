@@ -23,6 +23,7 @@ func findSoftHSMLibrary(t *testing.T) string {
 		"/usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so",
 		"/usr/local/lib/softhsm/libsofthsm2.so",
 		"/usr/lib/libacsp-pkcs11.so",
+		"/opt/homebrew/lib/softhsm/libsofthsm2.so",
 	}
 
 	for _, libraryLocation := range libraryLocations {
@@ -47,7 +48,6 @@ func TestNewHSMSignerFactory(t *testing.T) {
 	})
 
 	t.Run("Library found", func(t *testing.T) {
-
 		// SoftHSM must be installed for this to pass
 		hsmSignerFactory, err := NewHSMSignerFactory(findSoftHSMLibrary(t))
 		require.NoError(t, err)

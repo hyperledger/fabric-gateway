@@ -27,12 +27,12 @@ import (
 var hsmSignerFactory *identity.HSMSignerFactory
 
 func findSoftHSMLibrary() (string, error) {
-
 	libraryLocations := []string{
 		"/usr/lib/softhsm/libsofthsm2.so",
 		"/usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so",
 		"/usr/local/lib/softhsm/libsofthsm2.so",
 		"/usr/lib/libacsp-pkcs11.so",
+		"/opt/homebrew/lib/softhsm/libsofthsm2.so",
 	}
 
 	for _, libraryLocation := range libraryLocations {

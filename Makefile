@@ -18,13 +18,14 @@ PEER_IMAGE_PULL ?= hyperledger-fabric.jfrog.io/fabric-peer:amd64-2.5-stable
 # PEER_IMAGE_TAG is what to tag the pulled peer image as, it will also be used in docker-compose to reference the image
 # In fabric-gateway main branch this version tag should correspond to the version in the forthcoming Fabric development
 # branch.
-PEER_IMAGE_TAG ?= 2.5
+export PEER_IMAGE_TAG ?= 2.5
 
 # TWO_DIGIT_VERSION specifies which chaincode images to pull, they will be tagged to be consistent with PEER_IMAGE_TAG
 # In fabric-gateway main branch it should typically be the latest released chaincode version available in dockerhub.
 TWO_DIGIT_VERSION ?= 2.4
 
-SOFTHSM2_CONF ?= $(HOME)/softhsm2.conf
+export SOFTHSM2_CONF ?= $(base_dir)/softhsm2.conf
+TMPDIR ?= /tmp
 
 .PHONEY: default
 default:
@@ -54,8 +55,8 @@ unit-test-go: lint
 	go test -timeout 10s -coverprofile="$(base_dir)/cover.out" "$(go_dir)/..."
 
 .PHONEY: unit-test-go-pkcs11
-unit-test-go-pkcs11: lint
-	SOFTHSM2_CONF="$(SOFTHSM2_CONF)" go test -tags pkcs11 -timeout 10s -coverprofile="$(base_dir)/cover.out" "$(go_dir)/..."
+unit-test-go-pkcs11: lint setup-softhsm
+	go test -tags pkcs11 -timeout 10s -coverprofile="$(base_dir)/cover.out" "$(go_dir)/..."
 
 .PHONEY: unit-test-node
 unit-test-node: build-node
@@ -138,36 +139,35 @@ vendor-chaincode:
 		GO111MODULE=on go mod vendor
 
 .PHONEY: scenario-test-go
-scenario-test-go: vendor-chaincode fabric-ca-client
+scenario-test-go: vendor-chaincode fabric-ca-client setup-softhsm
 	go install github.com/cucumber/godog/cmd/godog@v0.12
 	cd $(scenario_dir)/go && \
-		PEER_IMAGE_TAG="$(PEER_IMAGE_TAG)" SOFTHSM2_CONF="$(SOFTHSM2_CONF)" go test -timeout 20m -tags pkcs11 -v -args "$(scenario_dir)/features/"
+		go test -timeout 20m -tags pkcs11 -v -args "$(scenario_dir)/features/"
 
 .PHONEY: scenario-test-go-no-hsm
 scenario-test-go-no-hsm: vendor-chaincode
 	go install github.com/cucumber/godog/cmd/godog@v0.12
 	cd $(scenario_dir)/go && \
-		PEER_IMAGE_TAG="$(PEER_IMAGE_TAG)" go test -timeout 20m -tags pkcs11 -v --godog.tags='~@hsm' -args "$(scenario_dir)/features/"
+		go test -timeout 20m -tags pkcs11 -v --godog.tags='~@hsm' -args "$(scenario_dir)/features/"
 
 .PHONEY: scenario-test-node
-scenario-test-node: vendor-chaincode build-node fabric-ca-client
+scenario-test-node: vendor-chaincode build-node fabric-ca-client setup-softhsm
 	cd "$(scenario_dir)/node" && \
 		rm -rf package-lock.json node_modules && \
 		npm install && \
-		PEER_IMAGE_TAG="$(PEER_IMAGE_TAG)" SOFTHSM2_CONF="$(SOFTHSM2_CONF)" npm test
+		npm test
 
 .PHONEY: scenario-test-node-no-hsm
-scenario-test-node-no-hsm: vendor-chaincode build-node
-	go install github.com/hyperledger/fabric-ca/cmd/fabric-ca-client@latest
+scenario-test-node-no-hsm: vendor-chaincode build-node fabric-ca-client
 	cd "$(scenario_dir)/node" && \
 		rm -rf package-lock.json node_modules && \
 		npm install && \
-		PEER_IMAGE_TAG="$(PEER_IMAGE_TAG)" npm run test:no-hsm
+		npm run test:no-hsm
 
 .PHONEY: scenario-test-java
 scenario-test-java: vendor-chaincode
 	cd "$(java_dir)" && \
-		PEER_IMAGE_TAG="$(PEER_IMAGE_TAG)" mvn -Dmaven.javadoc.skip=true verify
+		mvn -Dmaven.javadoc.skip=true verify
 
 .PHONEY: scenario-test
 scenario-test: scenario-test-go scenario-test-node scenario-test-java
@@ -178,6 +178,12 @@ scenario-test: scenario-test-go-no-hsm scenario-test-node-no-hsm scenario-test-j
 .PHONEY: fabric-ca-client
 fabric-ca-client:
 	go install -tags pkcs11 github.com/hyperledger/fabric-ca/cmd/fabric-ca-client@latest
+
+.PHONEY: setup-softhsm
+setup-softhsm:
+	mkdir -p "$(TMPDIR)/softhsm"
+	echo "directories.tokendir = $(TMPDIR)/softhsm" > "$(SOFTHSM2_CONF)"
+	softhsm2-util --init-token --slot 0 --label 'ForFabric' --pin 98765432 --so-pin 1234 || true
 
 .PHONEY: generate-docs-node
 generate-docs-node:

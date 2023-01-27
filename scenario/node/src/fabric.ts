@@ -68,6 +68,7 @@ export function findSoftHSMPKCS11Lib(): string {
         '/usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so',
         '/usr/local/lib/softhsm/libsofthsm2.so',
         '/usr/lib/libacsp-pkcs11.so',
+        '/opt/homebrew/lib/softhsm/libsofthsm2.so',
     ];
 
     for (const pathnameToTry of commonSoftHSMPathNames) {

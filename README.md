@@ -43,13 +43,16 @@ In order to run any of the Hardware Security Module (HSM) tests, [SoftHSM v2](ht
 
 The following Makefile targets are available:
 - `make generate` - generate mock implementations used by unit tests
-- `make unit-test-go` - run unit tests for the Go client API
+- `make unit-test-go` - run unit tests for the Go client API, excluding HSM tests
+- `make unit-test-go-pkcs11` - run unit tests for the Go client API, including HSM tests
 - `make unit-test-node` - run unit tests for the Node client API
 - `make unit-test-java` - run unit tests for the Java client API
 - `make unit-test` - run unit tests for all client language implementations
 - `make pull-latest-peer` - fetch the latest peer docker image containing the gateway server
-- `make scenario-test-go` - run the scenario (end to end integration) tests for Go client API
-- `make scenario-test-node` - run the scenario tests for Node client API
+- `make scenario-test-go` - run the scenario (end to end integration) tests for Go client API, including HSM tests
+- `make scenario-test-go-no-hsm` - run the scenario (end to end integration) tests for Go client API, excluding HSM tests
+- `make scenario-test-node` - run the scenario tests for Node client API, including HSM tests
+- `make scenario-test-node-no-hsm` - run the scenario tests for Node client API, excluding HSM tests
 - `make scenario-test-java` - run the scenario tests for Java client API
 - `make scenario-test` - run the scenario tests for all client language implementations
 - `make scenario-test-no-hsm` - run the scenario tests for all client language implementations, excluding HSM tests
