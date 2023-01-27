@@ -14,6 +14,7 @@ POSSIBLE_LIB_LOC=(
     '/usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so'
     '/usr/local/lib/softhsm/libsofthsm2.so'
     '/usr/lib/libacsp-pkcs11.so'
+    '/opt/homebrew/lib/softhsm/libsofthsm2.so'
 )
 for TEST_LIB in "${POSSIBLE_LIB_LOC[@]}"; do
     if [ -f "${TEST_LIB}" ]; then
@@ -24,11 +25,8 @@ done
 [ -z "${HSM2_LIB}" ] && echo No SoftHSM PKCS11 Library found, ensure you have installed softhsm2 && exit 1
 
 # Update the client config file to point to the softhsm pkcs11 library
-# which must be in $HOME/softhsm directory
-CLIENT_CONFIG_TEMPLATE=./ca-client-config/fabric-ca-client-config-template.yaml
 CLIENT_CONFIG=./ca-client-config/fabric-ca-client-config.yaml
-cp "${CLIENT_CONFIG_TEMPLATE}" "${CLIENT_CONFIG}"
-sed -i "s+REPLACE_ME_HSMLIB+${HSM2_LIB}+g" "${CLIENT_CONFIG}"
+sed "s+REPLACE_ME_HSMLIB+${HSM2_LIB}+g" < ca-client-config/fabric-ca-client-config-template.yaml > "${CLIENT_CONFIG}"
 
 # create the users, remove any existing users
 CRYPTO_PATH="${PWD}/crypto-material/hsm"
