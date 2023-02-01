@@ -9,10 +9,10 @@ package identity
 import (
 	"crypto"
 	"crypto/ecdsa"
+	"crypto/rand"
 	"encoding/asn1"
 	"fmt"
 	"math/big"
-	"math/rand"
 	"testing"
 
 	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
