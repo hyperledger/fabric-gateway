@@ -52,11 +52,13 @@ unit-test: generate lint unit-test-go unit-test-node unit-test-java
 
 .PHONEY: unit-test-go
 unit-test-go:
-	go test -timeout 10s -coverprofile="$(base_dir)/cover.out" "$(go_dir)/..."
+	cd '$(base_dir)' && \
+		go test -timeout 10s -coverprofile=cover.out '$(go_dir)/...'
 
 .PHONEY: unit-test-go-pkcs11
-unit-test-go-pkcs11: lint setup-softhsm
-	go test -tags pkcs11 -timeout 10s -coverprofile="$(base_dir)/cover.out" "$(go_dir)/..."
+unit-test-go-pkcs11: setup-softhsm
+	cd '$(base_dir)' && \
+		go test -tags pkcs11 -timeout 10s -coverprofile=cover.out '$(go_dir)/...'
 
 .PHONEY: unit-test-node
 unit-test-node: build-node
@@ -69,11 +71,19 @@ unit-test-java:
 		mvn test
 
 .PHONEY: lint
-lint:
-	docker pull golangci/golangci-lint
+lint: staticcheck golangci-lint
+
+.PHONEY: staticcheck
+staticcheck:
+	go install honnef.co/go/tools/cmd/staticcheck@latest
+	staticcheck -f stylish -tags=pkcs11 '$(go_dir)/...' '$(scenario_dir)/go'
+
+.PHONEY: golangci-lint
+golangci-lint:
+	docker pull golangci/golangci-lint:latest
 	docker run --tty --rm \
-		--volume $(base_dir)/.cache/golangci-lint:/root/.cache \
-		--volume $(base_dir):/app \
+		--volume '$(base_dir)/.cache/golangci-lint:/root/.cache' \
+		--volume '$(base_dir):/app' \
 		--workdir /app \
 		golangci/golangci-lint \
 		golangci-lint run --verbose
@@ -97,35 +107,36 @@ scan-go-nancy:
 .PHONEY: scan-go-osv-scanner
 scan-go-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
-	osv-scanner go.mod
+	osv-scanner '$(base_dir)/go.mod'
 
 .PHONEY: scan-node
 scan-node: scan-node-npm-audit scan-node-osv-scanner
 
 .PHONEY: scan-node-npm-audit
 scan-node-npm-audit:
-	cd "$(node_dir)" && \
+	cd '$(node_dir)' && \
 		npm install --package-lock-only && \
 		npm audit --omit=dev
 
 .PHONEY: scan-node-osv-scanner
 scan-node-osv-scanner:
-	cd "$(node_dir)" && npm install --package-lock-only
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
-	osv-scanner node/package-lock.json
+	cd '$(node_dir)' && \
+		npm install --package-lock-only && \
+		osv-scanner package-lock.json
 
 .PHONEY: scan-java
 scan-java: scan-java-dependency-check scan-java-osv-scanner
 
 .PHONEY: scan-java-dependency-check
 scan-java-dependency-check:
-	cd "$(java_dir)" && \
+	cd '$(java_dir)' && \
 		mvn dependency-check:check -P owasp
 
 .PHONEY: scan-java-osv-scanner
 scan-java-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
-	osv-scanner java/pom.xml
+	osv-scanner '$(java_dir)/pom.xml'
 
 .PHONEY: generate
 generate:
