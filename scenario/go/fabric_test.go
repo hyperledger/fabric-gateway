@@ -320,7 +320,11 @@ func deployChaincode(ccType, ccName, version, channelName, signaturePolicy strin
 
 func createAndJoinChannels() error {
 	fmt.Println("createAndJoinChannels")
-	startAllPeers()
+
+	if err := startAllPeers(); err != nil {
+		return err
+	}
+
 	if !channelsJoined {
 		for _, orderer := range orderers {
 			tlsdir := fmt.Sprintf("/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/%s/tls", orderer.address)

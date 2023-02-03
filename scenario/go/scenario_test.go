@@ -46,7 +46,7 @@ var (
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctx.AfterSuite(func() {
 		if os.Getenv("GATEWAY_NO_SHUTDOWN") != "TRUE" {
-			stopFabric()
+			_ = stopFabric()
 		}
 	})
 }

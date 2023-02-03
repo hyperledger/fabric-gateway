@@ -83,7 +83,7 @@ func (factory *HSMSignerFactory) NewHSMSigner(options HSMSignerOptions) (Sign, H
 
 	privateKeyHandle, err := factory.findObjectInHSM(session, pkcs11.CKO_PRIVATE_KEY, options.Identifier)
 	if err != nil {
-		factory.ctx.CloseSession(session) //#nosec G104 -- A close error doesn't matter as already failed
+		_ = factory.ctx.CloseSession(session)
 		return nil, nil, err
 	}
 
@@ -97,7 +97,7 @@ func (factory *HSMSignerFactory) NewHSMSigner(options HSMSignerOptions) (Sign, H
 
 // Dispose of resources held by the factory when it is no longer needed.
 func (factory *HSMSignerFactory) Dispose() {
-	factory.ctx.Finalize() //#nosec G104 -- Caller can't do anything useful with any error
+	_ = factory.ctx.Finalize()
 }
 
 func (factory *HSMSignerFactory) findSlotForLabel(label string) (uint, error) {
@@ -124,7 +124,9 @@ func (factory *HSMSignerFactory) findObjectInHSM(session pkcs11.SessionHandle, k
 	if err := factory.ctx.FindObjectsInit(session, template); err != nil {
 		return 0, fmt.Errorf("findObjectsInit failed: %w", err)
 	}
-	defer factory.ctx.FindObjectsFinal(session)
+	defer func() {
+		_ = factory.ctx.FindObjectsFinal(session)
+	}()
 
 	// single session instance, assume one hit only
 	objs, _, err := factory.ctx.FindObjects(session, 1)
@@ -146,7 +148,7 @@ func (factory *HSMSignerFactory) createSession(slot uint, pin string) (pkcs11.Se
 	}
 
 	if err := factory.ctx.Login(session, pkcs11.CKU_USER, pin); err != nil && err != pkcs11.Error(pkcs11.CKR_USER_ALREADY_LOGGED_IN) {
-		factory.ctx.CloseSession(session) //#nosec G104 -- A close error doesn't matter as already failed
+		_ = factory.ctx.CloseSession(session)
 		return 0, fmt.Errorf("login failed: %w", err)
 	}
 

@@ -1,0 +1,17 @@
+# See https://golangci-lint.run/usage/configuration/
+
+run:
+  build-tags:
+    - pkcs11
+
+linters:
+  enable:
+    - errcheck
+    - gofmt
+    - goimports
+    - gosec
+    - gosimple
+    - govet
+    - staticcheck
+    - typecheck
+    - unused

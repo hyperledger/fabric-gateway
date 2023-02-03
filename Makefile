@@ -48,10 +48,10 @@ build-java:
 		mvn -DskipTests install
 
 .PHONEY: unit-test
-unit-test: generate unit-test-go unit-test-node unit-test-java
+unit-test: generate lint unit-test-go unit-test-node unit-test-java
 
 .PHONEY: unit-test-go
-unit-test-go: lint
+unit-test-go:
 	go test -timeout 10s -coverprofile="$(base_dir)/cover.out" "$(go_dir)/..."
 
 .PHONEY: unit-test-go-pkcs11
@@ -70,15 +70,13 @@ unit-test-java:
 
 .PHONEY: lint
 lint:
-	"$(base_dir)/scripts/check_gofmt.sh" "$(go_dir)" "$(scenario_dir)/go"
-	# staticcheck 2022.1.3 (v0.3.3) does not work with go1.20 so use @master instead of @latest until a new version is released
-	if [ "$(shell go env GOVERSION | cut -d . -f 2)" -ge 19 ]; then \
-		go install honnef.co/go/tools/cmd/staticcheck@master; \
-		staticcheck -f stylish -tags="pkcs11" "$(go_dir)/..." "$(scenario_dir)/go"; \
-	fi
-	go vet -tags pkcs11 "$(go_dir)/..." "$(scenario_dir)/go"
-	go install github.com/securego/gosec/v2/cmd/gosec@latest
-	gosec -tags pkcs11 -exclude-generated "$(go_dir)/..."
+	docker pull golangci/golangci-lint
+	docker run --tty --rm \
+		--volume $(base_dir)/.cache/golangci-lint:/root/.cache \
+		--volume $(base_dir):/app \
+		--workdir /app \
+		golangci/golangci-lint \
+		golangci-lint run --verbose
 
 .PHONEY: scan
 scan: scan-go scan-node scan-java

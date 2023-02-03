@@ -32,7 +32,8 @@ func TestFileCheckpointer(t *testing.T) {
 		expected, fileName := newCheckpointer(t)
 		defer expected.Close()
 
-		expected.CheckpointTransaction(uint64(1), "TRANSACTION_ID")
+		err = expected.CheckpointTransaction(uint64(1), "TRANSACTION_ID")
+		require.NoError(t, err)
 
 		actual, err := NewFileCheckpointer(fileName)
 		require.NoError(t, err, "NewFileCheckpointer")
@@ -64,7 +65,7 @@ func TestFileCheckpointer(t *testing.T) {
 
 		data, err := json.Marshal(&BadState{})
 		require.NoError(t, err, "Marshal")
-		require.NoError(t, os.WriteFile(fileName, data, 0644), "WriteFile")
+		require.NoError(t, os.WriteFile(fileName, data, 0600), "WriteFile")
 
 		_, err = NewFileCheckpointer(fileName)
 

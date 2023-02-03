@@ -19,10 +19,10 @@ See the [gateway.proto file](https://github.com/hyperledger/fabric-protos/blob/m
 ### Install pre-reqs
 
 This repository comprises three functionally equivalent client APIs, written in Go, Typescript, and Java. In order to
-build these components, the following needs to be installed and available in the PATH:
-- [Go 1.18](https://go.dev/)
-- [Node 14](https://nodejs.org/)
-- [Java 8](https://adoptium.net/)
+build these components, the following need to be installed and available in the PATH:
+- [Go 1.18+](https://go.dev/)
+- [Node 14+](https://nodejs.org/)
+- [Java 8+](https://adoptium.net/)
 - [Docker](https://www.docker.com/)
 - [Make](https://www.gnu.org/software/make/)
 - [Maven](https://maven.apache.org/)
@@ -43,6 +43,7 @@ In order to run any of the Hardware Security Module (HSM) tests, [SoftHSM v2](ht
 
 The following Makefile targets are available:
 - `make generate` - generate mock implementations used by unit tests
+- `make lint` - run linting checks for the Go code
 - `make unit-test-go` - run unit tests for the Go client API, excluding HSM tests
 - `make unit-test-go-pkcs11` - run unit tests for the Go client API, including HSM tests
 - `make unit-test-node` - run unit tests for the Node client API

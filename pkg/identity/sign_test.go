@@ -24,7 +24,8 @@ func TestSigner(t *testing.T) {
 	require.NoError(t, err)
 
 	digest := make([]byte, 256/8)
-	rand.Read(digest)
+	_, err = rand.Read(digest)
+	require.NoError(t, err)
 
 	t.Run("Create signer with unsupported private key type fails", func(t *testing.T) {
 		var privateKey crypto.PrivateKey
@@ -73,9 +74,10 @@ func BenchmarkECDSA(b *testing.B) {
 	require.NoError(b, err)
 
 	digest := make([]byte, 256/8)
-	rand.Read(digest)
+	_, err = rand.Read(digest)
+	require.NoError(b, err)
 
 	for i := 0; i < b.N; i++ {
-		sign(digest)
+		_, _ = sign(digest)
 	}
 }

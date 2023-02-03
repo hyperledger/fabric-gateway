@@ -84,7 +84,8 @@ func TestCheckpointer(t *testing.T) {
 				checkpointer := tc.newCheckpointer(t)
 				defer checkpointer.Close()
 
-				checkpointer.CheckpointBlock(blockNumber)
+				err = checkpointer.CheckpointBlock(blockNumber)
+				require.NoError(t, err)
 
 				assertState(t, checkpointer, blockNumber+1, "")
 			})
@@ -94,7 +95,8 @@ func TestCheckpointer(t *testing.T) {
 				checkpointer := tc.newCheckpointer(t)
 				defer checkpointer.Close()
 
-				checkpointer.CheckpointTransaction(blockNumber, "txn1")
+				err = checkpointer.CheckpointTransaction(blockNumber, "txn1")
+				require.NoError(t, err)
 
 				assertState(t, checkpointer, blockNumber, "txn1")
 			})
@@ -107,7 +109,8 @@ func TestCheckpointer(t *testing.T) {
 				checkpointer := tc.newCheckpointer(t)
 				defer checkpointer.Close()
 
-				checkpointer.CheckpointChaincodeEvent(event)
+				err = checkpointer.CheckpointChaincodeEvent(event)
+				require.NoError(t, err)
 
 				assertState(t, checkpointer, event.BlockNumber, event.TransactionID)
 			})
