@@ -103,18 +103,14 @@ func ExampleContract_SubmitAsync() {
 
 	// Submit transaction to the orderer.
 	result, commit, err := contract.SubmitAsync("transactionName", client.WithArguments("one", "two"))
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 
 	// Use transaction result to update UI or return REST response after successful submit to the orderer.
 	fmt.Printf("Result: %s", result)
 
 	// Wait for transaction commit.
 	status, err := commit.Status()
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 	if !status.Successful {
 		panic(fmt.Errorf("transaction %s failed to commit with status code %d", status.TransactionID, int32(status.Code)))
 	}
@@ -124,24 +120,16 @@ func ExampleContract_NewProposal() {
 	var contract *client.Contract // Obtained from Network.
 
 	proposal, err := contract.NewProposal("transactionName", client.WithArguments("one", "two"))
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 
 	transaction, err := proposal.Endorse()
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 
 	commit, err := transaction.Submit()
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 
 	status, err := commit.Status()
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 
 	fmt.Printf("Commit status code: %d, Result: %s\n", int32(status.Code), transaction.Result())
 }
@@ -153,69 +141,46 @@ func ExampleContract_offlineSign() {
 
 	// Create a transaction proposal.
 	unsignedProposal, err := contract.NewProposal("transactionName", client.WithArguments("one", "two"))
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 
 	// Off-line sign the proposal.
 	proposalBytes, err := unsignedProposal.Bytes()
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 	proposalDigest := unsignedProposal.Digest()
 	proposalSignature, err := sign(proposalDigest)
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 	signedProposal, err := gateway.NewSignedProposal(proposalBytes, proposalSignature)
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 
 	// Endorse proposal to create an endorsed transaction.
 	unsignedTransaction, err := signedProposal.Endorse()
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 
 	// Off-line sign the transaction.
 	transactionBytes, err := unsignedTransaction.Bytes()
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 	digest := unsignedTransaction.Digest()
 	transactionSignature, err := sign(digest)
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 	signedTransaction, err := gateway.NewSignedTransaction(transactionBytes, transactionSignature)
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 
 	// Submit transaction to the orderer.
 	unsignedCommit, err := signedTransaction.Submit()
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 
 	// Off-line sign the transaction commit status request
 	commitBytes, err := unsignedCommit.Bytes()
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 	commitDigest := unsignedCommit.Digest()
 	commitSignature, err := sign(commitDigest)
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 	signedCommit, err := gateway.NewSignedCommit(commitBytes, commitSignature)
+	panicOnError(err)
 
 	// Wait for transaction commit.
 	status, err := signedCommit.Status()
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 	if !status.Successful {
 		panic(fmt.Errorf("transaction %s failed to commit with status code %d", status.TransactionID, int32(status.Code)))
 	}

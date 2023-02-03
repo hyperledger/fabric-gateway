@@ -20,9 +20,7 @@ func ExampleNetwork_ChaincodeEvents() {
 	defer cancel()
 
 	events, err := network.ChaincodeEvents(ctx, "chaincodeName", client.WithStartBlock(101))
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 
 	for event := range events {
 		fmt.Printf("Received event: %#v\n", event)
@@ -46,16 +44,14 @@ func ExampleNetwork_ChaincodeEvents_checkpoint() {
 				client.WithStartBlock(101), // Ignored if the checkpointer has checkpoint state
 				client.WithCheckpoint(checkpointer),
 			)
-			if err != nil {
-				panic(err)
-			}
+			panicOnError(err)
 
 			for event := range events {
 				// Process event
 				checkpointer.CheckpointChaincodeEvent(event)
 			}
 
-			ctx.Err() // Reason events channel closed
+			_ = ctx.Err() // Reason events channel closed
 		}()
 	}
 }
@@ -67,9 +63,7 @@ func ExampleNetwork_BlockEvents() {
 	defer cancel()
 
 	events, err := network.BlockEvents(ctx, client.WithStartBlock(101))
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 
 	for event := range events {
 		fmt.Printf("Received block number %d\n", event.GetHeader().GetNumber())
@@ -92,16 +86,14 @@ func ExampleNetwork_BlockEvents_checkpoint() {
 				client.WithStartBlock(101), // Ignored if the checkpointer has checkpoint state
 				client.WithCheckpoint(checkpointer),
 			)
-			if err != nil {
-				panic(err)
-			}
+			panicOnError(err)
 
 			for event := range events {
 				// Process then checkpoint block
 				checkpointer.CheckpointBlock(event.GetHeader().GetNumber())
 			}
 
-			ctx.Err() // Reason events channel closed
+			_ = ctx.Err() // Reason events channel closed
 		}()
 	}
 }
@@ -113,9 +105,7 @@ func ExampleNetwork_FilteredBlockEvents() {
 	defer cancel()
 
 	events, err := network.FilteredBlockEvents(ctx, client.WithStartBlock(101))
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 
 	for event := range events {
 		fmt.Printf("Received block number %d\n", event.GetNumber())
@@ -130,9 +120,7 @@ func ExampleNetwork_BlockAndPrivateDataEvents() {
 	defer cancel()
 
 	events, err := network.BlockAndPrivateDataEvents(ctx, client.WithStartBlock(101))
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 
 	for event := range events {
 		fmt.Printf("Received block number %d\n", event.GetBlock().GetHeader().GetNumber())
