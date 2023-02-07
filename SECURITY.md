@@ -8,7 +8,7 @@ The [latest release](https://github.com/hyperledger/fabric-gateway/releases/late
 
 ## Reporting a vulnerability
 
-Suspected security vulnerabilities in this project can be reported directly to project maintainers by email. Current project maintainers are listed in the [MAINTAINERS.md](MAINTAINERS.md) file. The maintainers will work with you to confirm the vulnerability, deliver a fix, and then release a security bulletin.
+Suspected security vulnerabilities in this project can be reported using the repository's [security advisories page](https://github.com/hyperledger/fabric-gateway/security/advisories). Guidance can be found in the GitHub documentation on [privately reporting a security vulnerability](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing/privately-reporting-a-security-vulnerability). The maintainers will work with you to confirm the vulnerability, deliver a fix, and then release a security bulletin.
 
 ## Vulnerabilities in dependencies
 
