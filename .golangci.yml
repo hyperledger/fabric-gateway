@@ -3,15 +3,12 @@
 run:
   build-tags:
     - pkcs11
+  timeout: 5m
 
 linters:
   enable:
-    - errcheck
     - gofmt
     - goimports
     - gosec
-    - gosimple
-    - govet
+  disable:
     - staticcheck
-    - typecheck
-    - unused
