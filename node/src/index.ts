@@ -18,7 +18,7 @@ export { CommitStatusError } from './commitstatuserror';
 export { Contract } from './contract';
 export { EndorseError } from './endorseerror';
 export { EventsOptions } from './eventsbuilder';
-export { connect, ConnectOptions, Gateway } from './gateway';
+export { connect, ConnectOptions, Gateway, GrpcClient } from './gateway';
 export { ErrorDetail, GatewayError } from './gatewayerror';
 export { Hash } from './hash/hash';
 export * as hash from './hash/hashes';

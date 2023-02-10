@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CallOptions, Client } from '@grpc/grpc-js';
+import { CallOptions, ChannelInterface, ClientDuplexStream, ClientReadableStream, ClientUnaryCall, ClientWritableStream, Deadline, Metadata, requestCallback } from '@grpc/grpc-js';
 import { common, gateway, peer } from '@hyperledger/fabric-protos';
 import { ChaincodeEventsRequest, Commit, Proposal, Transaction } from '.';
 import { BlockAndPrivateDataEventsRequest, BlockAndPrivateDataEventsRequestImpl, BlockEventsRequest, BlockEventsRequestImpl, FilteredBlockEventsRequest, FilteredBlockEventsRequestImpl } from './blockeventsrequest';
@@ -18,6 +18,27 @@ import { Network, NetworkImpl } from './network';
 import { ProposalImpl } from './proposal';
 import { SigningIdentity } from './signingidentity';
 import { TransactionImpl } from './transaction';
+
+/**
+ * Interface describing the public API of the gRPC Client class.
+ */
+export interface GrpcClient {
+    close(): void;
+    getChannel(): ChannelInterface;
+    waitForReady(deadline: Deadline, callback: (error?: Error) => void): void;
+    makeUnaryRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, metadata: Metadata, options: CallOptions, callback: requestCallback<ResponseType>): ClientUnaryCall;
+    makeUnaryRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, metadata: Metadata, callback: requestCallback<ResponseType>): ClientUnaryCall;
+    makeUnaryRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, options: CallOptions, callback: requestCallback<ResponseType>): ClientUnaryCall;
+    makeUnaryRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, callback: requestCallback<ResponseType>): ClientUnaryCall;
+    makeClientStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, metadata: Metadata, options: CallOptions, callback: requestCallback<ResponseType>): ClientWritableStream<RequestType>;
+    makeClientStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, metadata: Metadata, callback: requestCallback<ResponseType>): ClientWritableStream<RequestType>;
+    makeClientStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, options: CallOptions, callback: requestCallback<ResponseType>): ClientWritableStream<RequestType>;
+    makeClientStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, callback: requestCallback<ResponseType>): ClientWritableStream<RequestType>;
+    makeServerStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, metadata: Metadata, options?: CallOptions): ClientReadableStream<ResponseType>;
+    makeServerStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, options?: CallOptions): ClientReadableStream<ResponseType>;
+    makeBidiStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, metadata: Metadata, options?: CallOptions): ClientDuplexStream<RequestType, ResponseType>;
+    makeBidiStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, options?: CallOptions): ClientDuplexStream<RequestType, ResponseType>;
+}
 
 /**
  * Options used when connecting to a Fabric Gateway.
@@ -47,7 +68,7 @@ export interface ConnectOptions {
      * A gRPC client connection to a Fabric Gateway. This should be shared by all gateway instances connecting to the
      * same Fabric Gateway. The client connection will not be closed when the gateway is closed.
      */
-    client: Client;
+    client: GrpcClient;
 
     /**
      * Client identity used by the gateway.

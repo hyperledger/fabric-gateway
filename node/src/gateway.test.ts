@@ -31,7 +31,7 @@ describe('Gateway', () => {
         it('throws if no identity supplied', () => {
             const options = {
                 client,
-            } as ConnectOptions;
+            } as unknown as ConnectOptions;
             expect(() => connect(options)).toThrow();
         });
     });
