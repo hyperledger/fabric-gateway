@@ -107,7 +107,7 @@ scan-go-nancy:
 .PHONEY: scan-go-osv-scanner
 scan-go-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
-	osv-scanner '$(base_dir)/go.mod'
+	osv-scanner --lockfile='$(base_dir)/go.mod'
 
 .PHONEY: scan-node
 scan-node: scan-node-npm-audit scan-node-osv-scanner
@@ -123,7 +123,7 @@ scan-node-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
 	cd '$(node_dir)' && \
 		npm install --package-lock-only && \
-		osv-scanner package-lock.json
+		osv-scanner --lockfile=package-lock.json
 
 .PHONEY: scan-java
 scan-java: scan-java-dependency-check scan-java-osv-scanner
@@ -136,7 +136,7 @@ scan-java-dependency-check:
 .PHONEY: scan-java-osv-scanner
 scan-java-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
-	osv-scanner '$(java_dir)/pom.xml'
+	osv-scanner --lockfile='$(java_dir)/pom.xml'
 
 .PHONEY: generate
 generate:
