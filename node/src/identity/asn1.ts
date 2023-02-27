@@ -8,7 +8,6 @@
 // @ts-nocheck
 
 import { define } from 'asn1.js';
-import BN from 'bn.js';
 import { KeyObject } from 'crypto';
 
 const ECPrivateKey = define('ECPrivateKey', function() {
@@ -20,13 +19,6 @@ const ECPrivateKey = define('ECPrivateKey', function() {
     );
 });
 
-const ECSignature = define('ECSignature', function() {
-    return this.seq().obj(
-        this.key('r').int(),
-        this.key('s').int()
-    );
-});
-
 export function ecPrivateKeyAsRaw(privateKey: KeyObject): { privateKey: Buffer, curveObjectId: number[] } {
     const privateKeyPem = privateKey.export({ format: 'der', type: 'sec1' });
     const decodedDer = ECPrivateKey.decode(privateKeyPem, 'der');
@@ -34,8 +26,4 @@ export function ecPrivateKeyAsRaw(privateKey: KeyObject): { privateKey: Buffer, 
         privateKey: decodedDer.privateKey,
         curveObjectId: decodedDer.parameters,
     };
-}
-
-export function ecRawSignatureAsDer(r: BN, s: BN): Buffer {
-    return ECSignature.encode({ r, s }, 'der');
 }

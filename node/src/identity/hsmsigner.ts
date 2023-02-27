@@ -4,10 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import BN from 'bn.js';
-import * as elliptic from 'elliptic';
+import { P256 } from '@noble/curves/p256';
 import * as pkcs11js from 'pkcs11js';
-import { ecRawSignatureAsDer } from './asn1';
 import { Signer } from './signer';
 
 export interface HSMSignerOptions {
@@ -82,7 +80,6 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
     newSigner(hsmSignerOptions: Readonly<HSMSignerOptions>): HSMSigner {
         const options = sanitizeOptions(hsmSignerOptions);
 
-        const supportedKeySize = 256;
         const pkcs11 = this.#pkcs11;
         const slot = this.#findSlotForLabel(options.label);
         const session = pkcs11.C_OpenSession(slot, pkcs11js.CKF_SERIAL_SESSION);
@@ -97,26 +94,13 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
             throw err;
         }
 
-        const definedCurves = elliptic.curves as unknown as Record<string, elliptic.curves.PresetCurve>;
-        const ecdsaCurve = definedCurves[`p${supportedKeySize}`];
-
-        // currently the only supported curve is p256 and it will always have an 'n' value
-        const curveBigNum = ecdsaCurve.n!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
-        const halfOrder = curveBigNum.shrn(1);
+        const compactSignatureLength = P256.CURVE.nByteLength * 2;
 
         return {
             signer: (digest) => {
                 pkcs11.C_SignInit(session, { mechanism: pkcs11js.CKM_ECDSA }, privateKeyHandle);
-                const sig = pkcs11.C_Sign(session, Buffer.from(digest), Buffer.alloc(supportedKeySize));
-
-                const r = new BN(sig.slice(0, sig.length / 2).toString('hex'), 16);
-                let s = new BN(sig.slice(sig.length / 2).toString('hex'), 16);
-
-                if (s.cmp(halfOrder) === 1) {
-                    s = curveBigNum.sub(s);
-                }
-
-                const signature = new Uint8Array(ecRawSignatureAsDer(r, s));
+                const compactSignature = pkcs11.C_Sign(session, Buffer.from(digest), Buffer.alloc(compactSignatureLength));
+                const signature = P256.Signature.fromCompact(compactSignature).normalizeS().toDERRawBytes();
                 return Promise.resolve(signature);
             },
             close: () => pkcs11.C_CloseSession(session),
