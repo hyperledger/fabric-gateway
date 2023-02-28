@@ -32,8 +32,8 @@
     "dependencies": {
         "@grpc/grpc-js": "^1.8.7",
         "@hyperledger/fabric-protos": "~0.2.0",
+        "@noble/curves": "^0.7.3",
         "asn1.js": "^5.4.1",
-        "elliptic": "^6.5.4",
         "google-protobuf": "^3.21.2"
     },
     "optionalDependencies": {

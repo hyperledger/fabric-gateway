@@ -4,15 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { CurveFn } from '@noble/curves/abstract/weierstrass';
+import { P256 } from '@noble/curves/p256';
+import { P384 } from '@noble/curves/p384';
 import { KeyObject } from 'crypto';
-import { ec as EC } from 'elliptic';
 import { ecPrivateKeyAsRaw } from './asn1';
 import { HSMSignerFactory, HSMSignerFactoryImpl as HSMSignerFactoryImplType } from './hsmsigner';
 import { Signer } from './signer';
 
-const namedCurves: Record<string, EC> = {
-    '1.2.840.10045.3.1.7': new EC('p256'),
-    '1.3.132.0.34': new EC('p384'),
+const namedCurves: Record<string, CurveFn> = {
+    '1.2.840.10045.3.1.7': P256,
+    '1.3.132.0.34': P384,
 };
 
 /**
@@ -38,18 +40,16 @@ export function newPrivateKeySigner(key: KeyObject): Signer {
 }
 
 function newECPrivateKeySigner(key: KeyObject): Signer {
-    const { privateKey: rawKey, curveObjectId } = ecPrivateKeyAsRaw(key);
+    const { privateKey, curveObjectId } = ecPrivateKeyAsRaw(key);
     const curve = getCurve(curveObjectId);
-    const keyPair = curve.keyFromPrivate(rawKey, 'hex');
 
     return (digest) => {
-        const signature = curve.sign(digest, keyPair, { canonical: true });
-        const signatureBytes = new Uint8Array(signature.toDER());
-        return Promise.resolve(signatureBytes);
+        const signature = curve.sign(digest, privateKey, { lowS: true }).toDERRawBytes();
+        return Promise.resolve(signature);
     };
 }
 
-function getCurve(objectIdBytes: number[]): EC {
+function getCurve(objectIdBytes: number[]): CurveFn {
     const objectId = objectIdBytes.join('.');
     const curve = namedCurves[objectId];
     if (!curve) {
