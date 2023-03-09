@@ -9,4 +9,3 @@ vendor/
 .DS_Store
 *.iml
 softhsm2.conf
-.cache/
