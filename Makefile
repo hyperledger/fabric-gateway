@@ -11,6 +11,8 @@ node_dir := $(base_dir)/node
 java_dir := $(base_dir)/java
 scenario_dir := $(base_dir)/scenario
 
+go_bin_dir := $(shell go env GOPATH)/bin
+
 # PEER_IMAGE_PULL is where to pull peer image from, it can be set by external env variable
 # In fabric-gateway main branch it should reflect the location of the latest fabric main branch image
 PEER_IMAGE_PULL ?= hyperledger-fabric.jfrog.io/fabric-peer:amd64-2.5-stable
@@ -78,9 +80,15 @@ staticcheck:
 	go install honnef.co/go/tools/cmd/staticcheck@latest
 	staticcheck -f stylish -tags=pkcs11 '$(go_dir)/...' '$(scenario_dir)/go'
 
+.PHONEY: install-golangci-lint
+install-golangci-lint:
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go_bin_dir)
+
+$(go_bin_dir)/golangci-lint:
+	$(MAKE) install-golangci-lint
+
 .PHONEY: golangci-lint
-golangci-lint:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin
+golangci-lint: $(go_bin_dir)/golangci-lint
 	golangci-lint run
 
 .PHONEY: scan
@@ -175,13 +183,13 @@ scenario-test-node-no-hsm: vendor-chaincode build-node fabric-ca-client
 .PHONEY: scenario-test-java
 scenario-test-java: vendor-chaincode
 	cd "$(java_dir)" && \
-		mvn -Dmaven.javadoc.skip=true verify
+		mvn -Dmaven.javadoc.skip=true -DskipUnitTests verify
 
 .PHONEY: scenario-test
 scenario-test: scenario-test-go scenario-test-node scenario-test-java
 
 .PHONEY: scenario-test-no-hsm
-scenario-test: scenario-test-go-no-hsm scenario-test-node-no-hsm scenario-test-java
+scenario-test-no-hsm: scenario-test-go-no-hsm scenario-test-node-no-hsm scenario-test-java
 
 .PHONEY: fabric-ca-client
 fabric-ca-client:
