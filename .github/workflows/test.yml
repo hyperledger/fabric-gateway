@@ -22,10 +22,10 @@ jobs:
       - uses: actions/checkout@v3
       - run: make shellcheck
       
-  lint:
+  staticcheck:
     needs: verify-versions
     runs-on: ubuntu-latest
-    name: Lint
+    name: Staticcheck
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
@@ -34,7 +34,23 @@ jobs:
       - name: Generate mocks
         run: make generate
       - name: Lint
-        run: make lint
+        run: make staticcheck
+
+  golangci:
+    needs: verify-versions
+    runs-on: ubuntu-latest
+    name: golangci-lint
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.DEFAULT_GO_VERSION }}
+      - name: Generate mocks
+        run: make generate
+      - name: Lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
 
   go:
     needs: verify-versions

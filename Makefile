@@ -80,13 +80,8 @@ staticcheck:
 
 .PHONEY: golangci-lint
 golangci-lint:
-	docker pull golangci/golangci-lint:latest
-	docker run --tty --rm \
-		--volume '$(base_dir)/.cache/golangci-lint:/root/.cache' \
-		--volume '$(base_dir):/app' \
-		--workdir /app \
-		golangci/golangci-lint \
-		golangci-lint run --verbose
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin
+	golangci-lint run
 
 .PHONEY: scan
 scan: scan-go scan-node scan-java
@@ -222,7 +217,7 @@ pull-latest-peer:
 	# also need to retag the following images for the chaincode builder
 	for IMAGE in baseos ccenv javaenv nodeenv; do \
 		docker pull hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION) || docker pull --platform amd64 hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION); \
-		docker tag hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION) hyperledger/fabric-$$IMAGE:$(PEER_IMAGE_TAG); \
+		docker tag hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION) hyperledger/fabric-$${IMAGE}:$(PEER_IMAGE_TAG); \
 	done
 
 .PHONEY: clean
