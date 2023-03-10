@@ -42,6 +42,7 @@
         <protobufVersion>3.21.12</protobufVersion> <!-- keep in step with the version used by io.grpc:grpc-protobuf -->
         <enforceJavaVersion>1.8</enforceJavaVersion> <!-- this is overridden in the release profile -->
         <bouncyCastleVersion>1.72</bouncyCastleVersion>
+        <skipUnitTests>${skipTests}</skipUnitTests>
     </properties>
 
     <dependencyManagement>
@@ -79,19 +80,13 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-suite</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -113,7 +108,7 @@
         </dependency>
         <dependency>
             <groupId>io.cucumber</groupId>
-            <artifactId>cucumber-junit</artifactId>
+            <artifactId>cucumber-junit-platform-engine</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -165,14 +160,14 @@
             <extension>
                 <groupId>kr.motd.maven</groupId>
                 <artifactId>os-maven-plugin</artifactId>
-                <version>1.6.2</version>
+                <version>1.7.1</version>
             </extension>
         </extensions>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.2.1</version>
                 <executions>
                     <execution>
                         <id>enforce-version</id>
@@ -205,7 +200,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
+                <version>3.11.0</version>
                 <configuration>
                     <source>${javaVersion}</source>
                     <target>${javaVersion}</target>
@@ -220,55 +215,50 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M7</version>
+                <version>3.0.0-M9</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>me.fabriciorby</groupId>
+                        <artifactId>maven-surefire-junit5-tree-reporter</artifactId>
+                        <version>1.1.0</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
-                    <excludes>
-                        <exclude>**/scenario/**</exclude>
-                    </excludes>
+                    <properties>
+                        <configurationParameters>
+                            cucumber.junit-platform.naming-strategy=long
+                        </configurationParameters>
+                    </properties>
                 </configuration>
                 <executions>
                     <execution>
-                        <id>scenarios</id>
+                        <id>default-test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <skipTests>${skipUnitTests}</skipTests>
+                            <excludes>
+                                <exclude>**/scenario/**</exclude>
+                            </excludes>
+                            <reportFormat>plain</reportFormat>
+                            <consoleOutputReporter>
+                                <disable>true</disable>
+                            </consoleOutputReporter>
+                            <statelessTestsetInfoReporter
+                                    implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporterUnicode">
+                            </statelessTestsetInfoReporter>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>scenario-test</id>
                         <phase>integration-test</phase>
                         <goals>
                             <goal>test</goal>
                         </goals>
                         <configuration>
-                            <excludes>
-                                <exclude>none</exclude>
-                            </excludes>
                             <includes>
-                                <include>**/RunScenarioTest</include>
-                            </includes>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>setup</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                        <configuration>
-                            <excludes>
-                                <exclude>none</exclude>
-                            </excludes>
-                            <includes>
-                                <include>**/SetupScenarioTest</include>
-                            </includes>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>cleanup</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                        <configuration>
-                            <excludes>
-                                <exclude>none</exclude>
-                            </excludes>
-                            <includes>
-                                <include>**/CleanupScenarioTest</include>
+                                <include>**/scenario/**/*Test.java</include>
                             </includes>
                         </configuration>
                     </execution>
@@ -277,21 +267,23 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>3.5.0</version>
                 <configuration>
                     <show>public</show>
                     <doctitle>Hyperledger Fabric Gateway client API for Java</doctitle>
                     <nohelp>true</nohelp>
                     <failOnError>true</failOnError>
+                    <failOnWarnings>true</failOnWarnings>
                     <links>
-                        <link>https://docs.oracle.com/javase/8/docs/api/</link>
                         <link>https://grpc.github.io/grpc-java/javadoc/</link>
                     </links>
                     <source>${javaVersion}</source>
-                    <detectJavaApiLink>false</detectJavaApiLink>
+                    <detectJavaApiLink>true</detectJavaApiLink>
                     <additionalJOptions>
                         <additionalJOption>${additionalJavadocOpts}</additionalJOption>
                     </additionalJOptions>
+                    <doclint>all,-missing</doclint>
+                    <quiet>true</quiet>
                 </configuration>
                 <executions>
                     <execution>
@@ -305,7 +297,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.5.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -380,7 +372,7 @@
                             <dependency>
                                 <groupId>com.puppycrawl.tools</groupId>
                                 <artifactId>checkstyle</artifactId>
-                                <version>10.8.0</version>
+                                <version>10.8.1</version>
                             </dependency>
                         </dependencies>
                     </plugin>
@@ -425,7 +417,7 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-assembly-plugin</artifactId>
-                        <version>3.4.2</version>
+                        <version>3.5.0</version>
                         <configuration>
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>
