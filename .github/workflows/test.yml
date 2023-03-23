@@ -30,7 +30,7 @@ jobs:
       SOFTHSM2_CONF: ${{ github.workspace }}/softhsm2.conf
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
         with:
           go-version: ${{ env.DEFAULT_GO_VERSION }}
       - name: Generate mocks
@@ -41,6 +41,7 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: latest
+          skip-pkg-cache: true
 
   go_unit:
     needs: verify-versions
@@ -57,7 +58,7 @@ jobs:
       SOFTHSM2_CONF: ${{ github.workspace }}/softhsm2.conf
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
         with:
           go-version: ${{ matrix.go-version }}
       - name: Install SoftHSM
@@ -84,7 +85,7 @@ jobs:
       SOFTHSM2_CONF: ${{ github.workspace }}/softhsm2.conf
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
         with:
           go-version: ${{ matrix.go-version }}
       - name: Install SoftHSM
@@ -137,7 +138,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
         with:
           go-version: ${{ env.DEFAULT_GO_VERSION }}
       - name: Install SoftHSM
@@ -188,7 +189,7 @@ jobs:
           java-version: ${{ matrix.java-version }}
           distribution: temurin
           cache: maven
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
         with:
           go-version: ${{ env.DEFAULT_GO_VERSION }}
       - name: Pull Fabric Docker images
