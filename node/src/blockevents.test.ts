@@ -101,8 +101,7 @@ describe('Block Events', () => {
         expect(actualCreator).toEqual(gateway.getIdentity());
     }
 
-    interface TestCase {
-        description: string;
+    const testCases: Record<string, {
         mockResponse(stream: DuplexStreamResponseStub<common.Envelope, peer.DeliverResponse>): void;
         mockError(err: ServiceError): void;
         getEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<unknown>>;
@@ -110,11 +109,8 @@ describe('Block Events', () => {
         getCallOptions(): CallOptions[];
         newBlockResponse(blockNumber: number): peer.DeliverResponse;
         getBlockFromResponse(response: peer.DeliverResponse): common.Block | peer.FilteredBlock | peer.BlockAndPrivateData | undefined;
-    }
-
-    const testCases: TestCase[] = [
-        {
-            description: 'Blocks',
+    }> = {
+        'Blocks': {
             mockResponse(stream) {
                 client.mockBlockEventsResponse(stream);
             },
@@ -146,8 +142,7 @@ describe('Block Events', () => {
                 return response.getBlock();
             },
         },
-        {
-            description: 'Filtered blocks',
+        'Filtered blocks': {
             mockResponse(stream) {
                 client.mockFilteredBlockEventsResponse(stream);
             },
@@ -176,8 +171,7 @@ describe('Block Events', () => {
                 return response.getFilteredBlock();
             },
         },
-        {
-            description: 'Blocks and private data',
+        'Blocks and private data': {
             mockResponse(stream) {
                 client.mockBlockAndPrivateDataEventsResponse(stream);
             },
@@ -214,8 +208,9 @@ describe('Block Events', () => {
                 return response.getBlockAndPrivateData();
             },
         },
-    ];
-    testCases.forEach(testCase => describe(`${testCase.description}`, () => {
+    };
+
+    Object.entries(testCases).forEach(([testName, testCase]) => describe(`${testName}`, () => {
         it('sends valid request with default start position', async () => {
             const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
             testCase.mockResponse(stream);

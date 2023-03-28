@@ -81,11 +81,11 @@ func TestSubmitTransaction(t *testing.T) {
 
 		_, err = proposal.Endorse()
 
-		require.Errorf(t, err, expected.Error(), "error message")
 		require.Equal(t, status.Code(expected), status.Code(err), "status code")
 		var actual *EndorseError
-		require.ErrorAsf(t, err, &actual, "error type: %T", err)
+		require.ErrorAs(t, err, &actual, "error type: %T", err)
 		require.Equal(t, proposal.TransactionID(), actual.TransactionID, "transaction ID")
+		require.ErrorContains(t, err, expected.Error(), "message")
 	})
 
 	t.Run("Returns submit error", func(t *testing.T) {
@@ -104,11 +104,11 @@ func TestSubmitTransaction(t *testing.T) {
 
 		_, err = transaction.Submit()
 
-		require.Errorf(t, err, expected.Error(), "error message")
 		require.Equal(t, status.Code(expected), status.Code(err), "status code")
 		var actual *SubmitError
-		require.ErrorAsf(t, err, &actual, "error type: %T", err)
+		require.ErrorAs(t, err, &actual, "error type: %T", err)
 		require.Equal(t, proposal.TransactionID(), actual.TransactionID, "transaction ID")
+		require.ErrorContains(t, err, expected.Error(), "message")
 	})
 
 	t.Run("Returns commit status error", func(t *testing.T) {
@@ -131,31 +131,28 @@ func TestSubmitTransaction(t *testing.T) {
 
 		_, err = commit.Status()
 
-		require.Errorf(t, err, expected.Error(), "error message")
 		require.Equal(t, status.Code(expected), status.Code(err), "status code")
 		var actual *CommitStatusError
-		require.ErrorAsf(t, err, &actual, "error type: %T", err)
+		require.ErrorAs(t, err, &actual, "error type: %T", err)
 		require.Equal(t, proposal.TransactionID(), actual.TransactionID, "transaction ID")
+		require.ErrorContains(t, err, expected.Error(), "message")
 	})
 
-	for _, testCase := range []struct {
-		name string
-		run  func(t *testing.T, contract *Contract) ([]byte, error)
+	for name, testCase := range map[string]struct {
+		run func(t *testing.T, contract *Contract) ([]byte, error)
 	}{
-		{
-			name: "SubmitTransaction returns result for committed transaction",
+		"SubmitTransaction returns result for committed transaction": {
 			run: func(t *testing.T, contract *Contract) ([]byte, error) {
 				return contract.SubmitTransaction("transaction")
 			},
 		},
-		{
-			name: "SubmitWithContext returns result for committed transaction",
+		"SubmitWithContext returns result for committed transaction": {
 			run: func(t *testing.T, contract *Contract) ([]byte, error) {
 				return contract.SubmitWithContext(context.Background(), "transactionName")
 			},
 		},
 	} {
-		t.Run(testCase.name, func(t *testing.T) {
+		t.Run(name, func(t *testing.T) {
 			expected := []byte("TRANSACTION_RESULT")
 			mockClient := NewMockGatewayClient(gomock.NewController(t))
 			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
@@ -174,26 +171,21 @@ func TestSubmitTransaction(t *testing.T) {
 		})
 	}
 
-	for _, testCase := range []struct {
-		name string
-		run  func(t *testing.T, contract *Contract) ([]byte, error)
+	for testName, testCase := range map[string]struct {
+		run func(t *testing.T, contract *Contract) ([]byte, error)
 	}{
-		{
-			name: "SubmitTransaction returns commit error for invalid commit status",
+		"SubmitTransaction returns commit error for invalid commit status": {
 			run: func(t *testing.T, contract *Contract) ([]byte, error) {
 				return contract.SubmitTransaction("transaction")
 			},
 		},
-		{
-			name: "SubmitWithContext returns commit error for invalid commit status",
+		"SubmitWithContext returns commit error for invalid commit status": {
 			run: func(t *testing.T, contract *Contract) ([]byte, error) {
 				return contract.SubmitWithContext(context.Background(), "transactionName")
 			},
 		},
 	} {
-		t.Run(testCase.name, func(t *testing.T) {
-			expectedError := peer.TxValidationCode_name[int32(peer.TxValidationCode_MVCC_READ_CONFLICT)]
-
+		t.Run(testName, func(t *testing.T) {
 			mockClient := NewMockGatewayClient(gomock.NewController(t))
 			mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
 				Return(AssertNewEndorseResponse(t, "TRANSACTION_RESULT", "network"), nil)
@@ -205,9 +197,8 @@ func TestSubmitTransaction(t *testing.T) {
 			contract := AssertNewTestContract(t, "chaincode", WithGatewayClient(mockClient))
 			_, err := testCase.run(t, contract)
 
-			require.Errorf(t, err, expectedError, "error message")
 			var actual *CommitError
-			require.ErrorAsf(t, err, &actual, "error type: %T", err)
+			require.ErrorAs(t, err, &actual, "error type: %T", err)
 			require.NotEmpty(t, actual.TransactionID, "transaction ID")
 			require.Equal(t, peer.TxValidationCode_MVCC_READ_CONFLICT, actual.Code, "validation code")
 		})
@@ -716,19 +707,16 @@ func TestSubmitTransaction(t *testing.T) {
 		require.ErrorIs(t, err, context.DeadlineExceeded)
 	})
 
-	for _, testCase := range []struct {
-		name string
-		run  func(*testing.T, context.Context, *Contract)
+	for name, testCase := range map[string]struct {
+		run func(*testing.T, context.Context, *Contract)
 	}{
-		{
-			name: "SubmitWithContext uses specified context",
+		"SubmitWithContext uses specified context": {
 			run: func(t *testing.T, ctx context.Context, contract *Contract) {
 				_, err := contract.SubmitWithContext(ctx, "transaction")
 				require.NoError(t, err, "SubmitWithContext")
 			},
 		},
-		{
-			name: "SubmitAsyncWithContext uses specified context",
+		"SubmitAsyncWithContext uses specified context": {
 			run: func(t *testing.T, ctx context.Context, contract *Contract) {
 				_, commit, err := contract.SubmitAsyncWithContext(ctx, "transaction")
 				require.NoError(t, err, "SubmitAsyncWithContext")
@@ -738,7 +726,7 @@ func TestSubmitTransaction(t *testing.T) {
 			},
 		},
 	} {
-		t.Run(testCase.name, func(t *testing.T) {
+		t.Run(name, func(t *testing.T) {
 			var endorseCtxErr error
 			var submitCtxErr error
 			var commitStatusCtxErr error

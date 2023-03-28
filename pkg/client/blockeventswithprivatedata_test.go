@@ -37,7 +37,8 @@ func TestBlockAndPrivateDataEvents(t *testing.T) {
 		_, err := network.BlockAndPrivateDataEvents(ctx)
 
 		require.Equal(t, status.Code(expected), status.Code(err), "status code")
-		require.Errorf(t, err, expected.Error(), "error message")
+		require.ErrorIs(t, err, expected, "error type: %T", err)
+		require.ErrorContains(t, err, expected.Error(), "message")
 	})
 
 	t.Run("Sends valid request with default start position", func(t *testing.T) {

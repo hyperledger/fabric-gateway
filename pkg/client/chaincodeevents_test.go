@@ -56,7 +56,8 @@ func TestChaincodeEvents(t *testing.T) {
 		_, err := network.ChaincodeEvents(ctx, "CHAINCODE")
 
 		require.Equal(t, status.Code(expected), status.Code(err), "status code")
-		require.Errorf(t, err, expected.Error(), "error message")
+		require.ErrorIs(t, err, expected, "error type: %T", err)
+		require.ErrorContains(t, err, expected.Error(), "message")
 	})
 
 	t.Run("Sends valid request with default start position", func(t *testing.T) {
@@ -328,6 +329,7 @@ func TestChaincodeEvents(t *testing.T) {
 		}
 		test.AssertProtoEqual(t, expected, actual)
 	})
+
 	t.Run("Sends valid request with no start block and checkpoint transaction ID", func(t *testing.T) {
 		controller := gomock.NewController(t)
 		mockClient := NewMockGatewayClient(controller)
@@ -375,6 +377,7 @@ func TestChaincodeEvents(t *testing.T) {
 		}
 		test.AssertProtoEqual(t, expected, actual)
 	})
+
 	t.Run("Sends valid request with with start block and checkpoint chaincode event", func(t *testing.T) {
 		controller := gomock.NewController(t)
 		mockClient := NewMockGatewayClient(controller)
