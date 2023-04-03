@@ -26,6 +26,6 @@ go get github.com/hyperledger/fabric-gateway
 
 ## Compatibility
 
-This API requires Fabric 2.4 with a Gateway enabled Peer. Additional compatibility information is available in the documentation:
+This API requires Fabric v2.4 (or later) with a Gateway enabled Peer. Additional compatibility information is available in the documentation:
 
 - https://hyperledger.github.io/fabric-gateway/
