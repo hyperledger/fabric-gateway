@@ -50,12 +50,11 @@ func TestOfflineSign(t *testing.T) {
 	}
 
 	type Invocation struct {
-		Description string
-		Invoke      func() error
+		Invoke func() error
 	}
 
 	type Signable struct {
-		Invocations []Invocation
+		Invocations map[string]Invocation
 		OfflineSign func([]byte) *Signable
 		State       interface{}
 		Recreate    func() *Signable
@@ -64,16 +63,14 @@ func TestOfflineSign(t *testing.T) {
 	var newSignableFromProposal func(t *testing.T, gateway *Gateway, proposal *Proposal) *Signable
 	newSignableFromProposal = func(t *testing.T, gateway *Gateway, proposal *Proposal) *Signable {
 		return &Signable{
-			Invocations: []Invocation{
-				{
-					Description: "Evaluate",
+			Invocations: map[string]Invocation{
+				"Evaluate": {
 					Invoke: func() error {
 						_, err := proposal.Evaluate()
 						return err
 					},
 				},
-				{
-					Description: "Endorse",
+				"Endorse": {
 					Invoke: func() error {
 						_, err := proposal.Endorse()
 						return err
@@ -113,9 +110,8 @@ func TestOfflineSign(t *testing.T) {
 	var newSignableFromTransaction func(t *testing.T, gateway *Gateway, transaction *Transaction) *Signable
 	newSignableFromTransaction = func(t *testing.T, gateway *Gateway, transaction *Transaction) *Signable {
 		return &Signable{
-			Invocations: []Invocation{
-				{
-					Description: "Submit",
+			Invocations: map[string]Invocation{
+				"Submit": {
 					Invoke: func() error {
 						_, err := transaction.Submit()
 						return err
@@ -153,9 +149,8 @@ func TestOfflineSign(t *testing.T) {
 	var newSignableFromCommit func(t *testing.T, gateway *Gateway, commit *Commit) *Signable
 	newSignableFromCommit = func(t *testing.T, gateway *Gateway, commit *Commit) *Signable {
 		return &Signable{
-			Invocations: []Invocation{
-				{
-					Description: "Status",
+			Invocations: map[string]Invocation{
+				"Status": {
 					Invoke: func() error {
 						_, err := commit.Status()
 						return err
@@ -193,9 +188,8 @@ func TestOfflineSign(t *testing.T) {
 	var newSignableFromChaincodeEventsRequest func(t *testing.T, gateway *Gateway, request *ChaincodeEventsRequest) *Signable
 	newSignableFromChaincodeEventsRequest = func(t *testing.T, gateway *Gateway, request *ChaincodeEventsRequest) *Signable {
 		return &Signable{
-			Invocations: []Invocation{
-				{
-					Description: "Events",
+			Invocations: map[string]Invocation{
+				"Events": {
 					Invoke: func() error {
 						ctx, cancel := context.WithCancel(context.Background())
 						defer cancel()
@@ -234,9 +228,8 @@ func TestOfflineSign(t *testing.T) {
 	var newSignableFromBlockEventsRequest func(t *testing.T, gateway *Gateway, request *BlockEventsRequest) *Signable
 	newSignableFromBlockEventsRequest = func(t *testing.T, gateway *Gateway, request *BlockEventsRequest) *Signable {
 		return &Signable{
-			Invocations: []Invocation{
-				{
-					Description: "Events",
+			Invocations: map[string]Invocation{
+				"Events": {
 					Invoke: func() error {
 						ctx, cancel := context.WithCancel(context.Background())
 						defer cancel()
@@ -275,9 +268,8 @@ func TestOfflineSign(t *testing.T) {
 	var newSignableFromFilteredBlockEventsRequest func(t *testing.T, gateway *Gateway, request *FilteredBlockEventsRequest) *Signable
 	newSignableFromFilteredBlockEventsRequest = func(t *testing.T, gateway *Gateway, request *FilteredBlockEventsRequest) *Signable {
 		return &Signable{
-			Invocations: []Invocation{
-				{
-					Description: "Events",
+			Invocations: map[string]Invocation{
+				"Events": {
 					Invoke: func() error {
 						ctx, cancel := context.WithCancel(context.Background())
 						defer cancel()
@@ -316,9 +308,8 @@ func TestOfflineSign(t *testing.T) {
 	var newSignableFromBlockAndPrivateDataEventsRequest func(t *testing.T, gateway *Gateway, request *BlockAndPrivateDataEventsRequest) *Signable
 	newSignableFromBlockAndPrivateDataEventsRequest = func(t *testing.T, gateway *Gateway, request *BlockAndPrivateDataEventsRequest) *Signable {
 		return &Signable{
-			Invocations: []Invocation{
-				{
-					Description: "Events",
+			Invocations: map[string]Invocation{
+				"Events": {
 					Invoke: func() error {
 						ctx, cancel := context.WithCancel(context.Background())
 						defer cancel()
@@ -354,14 +345,10 @@ func TestOfflineSign(t *testing.T) {
 		}
 	}
 
-	type TableTest struct {
-		Description string
-		Create      func(*testing.T) *Signable
-	}
-
-	tests := []TableTest{
-		{
-			Description: "Proposal",
+	for testName, testCase := range map[string]struct {
+		Create func(*testing.T) *Signable
+	}{
+		"Proposal": {
 			Create: func(t *testing.T) *Signable {
 				mockClient := NewMockGatewayClient(gomock.NewController(t))
 				mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
@@ -390,8 +377,7 @@ func TestOfflineSign(t *testing.T) {
 				return newSignableFromProposal(t, gateway, proposal)
 			},
 		},
-		{
-			Description: "Transaction",
+		"Transaction": {
 			Create: func(t *testing.T) *Signable {
 				mockClient := NewMockGatewayClient(gomock.NewController(t))
 				mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
@@ -421,8 +407,7 @@ func TestOfflineSign(t *testing.T) {
 				return newSignableFromTransaction(t, gateway, transaction)
 			},
 		},
-		{
-			Description: "Commit",
+		"Commit": {
 			Create: func(t *testing.T) *Signable {
 				mockClient := NewMockGatewayClient(gomock.NewController(t))
 				mockClient.EXPECT().Endorse(gomock.Any(), gomock.Any()).
@@ -466,8 +451,7 @@ func TestOfflineSign(t *testing.T) {
 				return newSignableFromCommit(t, gateway, commit)
 			},
 		},
-		{
-			Description: "Chaincode events",
+		"Chaincode events": {
 			Create: func(t *testing.T) *Signable {
 				controller := gomock.NewController(t)
 				mockClient := NewMockGatewayClient(controller)
@@ -493,8 +477,7 @@ func TestOfflineSign(t *testing.T) {
 				return newSignableFromChaincodeEventsRequest(t, gateway, request)
 			},
 		},
-		{
-			Description: "Block events",
+		"Block events": {
 			Create: func(t *testing.T) *Signable {
 				controller := gomock.NewController(t)
 				mockClient := NewMockDeliverClient(controller)
@@ -513,8 +496,7 @@ func TestOfflineSign(t *testing.T) {
 				return newSignableFromBlockEventsRequest(t, gateway, request)
 			},
 		},
-		{
-			Description: "Filtered block events",
+		"Filtered block events": {
 			Create: func(t *testing.T) *Signable {
 				controller := gomock.NewController(t)
 				mockClient := NewMockDeliverClient(controller)
@@ -533,8 +515,7 @@ func TestOfflineSign(t *testing.T) {
 				return newSignableFromFilteredBlockEventsRequest(t, gateway, request)
 			},
 		},
-		{
-			Description: "Block and private data events",
+		"Block and private data events": {
 			Create: func(t *testing.T) *Signable {
 				controller := gomock.NewController(t)
 				mockClient := NewMockDeliverClient(controller)
@@ -553,14 +534,12 @@ func TestOfflineSign(t *testing.T) {
 				return newSignableFromBlockAndPrivateDataEventsRequest(t, gateway, request)
 			},
 		},
-	}
+	} {
+		t.Run(testName, func(t *testing.T) {
+			unsigned := testCase.Create(t)
 
-	for _, test := range tests {
-		t.Run(test.Description, func(t *testing.T) {
-			unsigned := test.Create(t)
-
-			for i, invocation := range unsigned.Invocations {
-				t.Run(invocation.Description, func(t *testing.T) {
+			for invocationName, invocation := range unsigned.Invocations {
+				t.Run(invocationName, func(t *testing.T) {
 					t.Run("Returns error with no signer and no explicit signing", func(t *testing.T) {
 						err := invocation.Invoke()
 						require.Error(t, err)
@@ -571,18 +550,19 @@ func TestOfflineSign(t *testing.T) {
 						expected := []byte("SIGNATURE")
 
 						signed := unsigned.OfflineSign(expected)
-						err := signed.Invocations[i].Invoke()
+						err := signed.Invocations[invocationName].Invoke()
 						require.NoError(t, err)
 
 						require.EqualValues(t, expected, signature)
 					})
+
 					t.Run("retains signature", func(t *testing.T) {
 						signature = nil
 						expected := []byte("SIGNATURE")
 
 						signed := unsigned.OfflineSign(expected)
 						recreated := signed.Recreate()
-						err := recreated.Invocations[i].Invoke()
+						err := recreated.Invocations[invocationName].Invoke()
 						require.NoError(t, err)
 
 						require.EqualValues(t, expected, signature)

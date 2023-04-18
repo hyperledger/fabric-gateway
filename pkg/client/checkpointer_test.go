@@ -35,11 +35,6 @@ func TestCheckpointer(t *testing.T) {
 		Checkpoint
 	}
 
-	type TestCase struct {
-		description     string
-		newCheckpointer func(*testing.T) Checkpointer
-	}
-
 	assertState := func(t *testing.T, checkpoint Checkpoint, blockNumber uint64, transactionID string) {
 		require.Equal(t, blockNumber, checkpoint.BlockNumber(), "BlockNumber")
 		require.Equal(t, transactionID, checkpoint.TransactionID(), "TransactionID")
@@ -49,17 +44,17 @@ func TestCheckpointer(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 
-	testCases := []TestCase{
-		{
-			description: "In-memory",
+	for testName, testCase := range map[string]struct {
+		newCheckpointer func(*testing.T) Checkpointer
+	}{
+		"In-memory": {
 			newCheckpointer: func(t *testing.T) Checkpointer {
 				return &InMemoryAdapter{
-					checkpointer: &InMemoryCheckpointer{},
+					InMemoryCheckpointer{},
 				}
 			},
 		},
-		{
-			description: "File",
+		"File": {
 			newCheckpointer: func(t *testing.T) Checkpointer {
 				fileName := NonExistentFileName(t, tempDir)
 				checkpointer, err := NewFileCheckpointer(fileName)
@@ -68,12 +63,10 @@ func TestCheckpointer(t *testing.T) {
 				return checkpointer
 			},
 		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.description, func(t *testing.T) {
+	} {
+		t.Run(testName, func(t *testing.T) {
 			t.Run("Initial checkpointer state", func(t *testing.T) {
-				checkpointer := tc.newCheckpointer(t)
+				checkpointer := testCase.newCheckpointer(t)
 				defer checkpointer.Close()
 
 				assertState(t, checkpointer, uint64(0), "")
@@ -81,7 +74,7 @@ func TestCheckpointer(t *testing.T) {
 
 			t.Run("CheckpointBlock() sets next block number and empty transaction ID", func(t *testing.T) {
 				blockNumber := uint64(101)
-				checkpointer := tc.newCheckpointer(t)
+				checkpointer := testCase.newCheckpointer(t)
 				defer checkpointer.Close()
 
 				err = checkpointer.CheckpointBlock(blockNumber)
@@ -92,7 +85,7 @@ func TestCheckpointer(t *testing.T) {
 
 			t.Run("CheckpointTransaction() sets block number and transaction ID", func(t *testing.T) {
 				blockNumber := uint64(101)
-				checkpointer := tc.newCheckpointer(t)
+				checkpointer := testCase.newCheckpointer(t)
 				defer checkpointer.Close()
 
 				err = checkpointer.CheckpointTransaction(blockNumber, "txn1")
@@ -106,7 +99,7 @@ func TestCheckpointer(t *testing.T) {
 					BlockNumber:   uint64(101),
 					TransactionID: "txn1",
 				}
-				checkpointer := tc.newCheckpointer(t)
+				checkpointer := testCase.newCheckpointer(t)
 				defer checkpointer.Close()
 
 				err = checkpointer.CheckpointChaincodeEvent(event)
@@ -119,29 +112,21 @@ func TestCheckpointer(t *testing.T) {
 }
 
 type InMemoryAdapter struct {
-	checkpointer *InMemoryCheckpointer
-}
-
-func (adapter *InMemoryAdapter) BlockNumber() uint64 {
-	return adapter.checkpointer.BlockNumber()
-}
-
-func (adapter *InMemoryAdapter) TransactionID() string {
-	return adapter.checkpointer.TransactionID()
+	InMemoryCheckpointer
 }
 
 func (adapter *InMemoryAdapter) CheckpointBlock(blockNumber uint64) error {
-	adapter.checkpointer.CheckpointBlock(blockNumber)
+	adapter.InMemoryCheckpointer.CheckpointBlock(blockNumber)
 	return nil
 }
 
 func (adapter *InMemoryAdapter) CheckpointTransaction(blockNumber uint64, transactionID string) error {
-	adapter.checkpointer.CheckpointTransaction(blockNumber, transactionID)
+	adapter.InMemoryCheckpointer.CheckpointTransaction(blockNumber, transactionID)
 	return nil
 }
 
 func (adapter *InMemoryAdapter) CheckpointChaincodeEvent(event *ChaincodeEvent) error {
-	adapter.checkpointer.CheckpointChaincodeEvent(event)
+	adapter.InMemoryCheckpointer.CheckpointChaincodeEvent(event)
 	return nil
 }
 

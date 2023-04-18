@@ -31,62 +31,61 @@ describe('Checkpointers', () => {
         expect(checkpointer.getTransactionId()).toEqual(transactionId);
     }
 
-    const testCases = [
-        {
-            description: 'In-memory',
+    const testCases: Record<string, {
+        after(): Promise<void>;
+        newCheckpointer(): Promise<Checkpointer>;
+    }> = {
+        'In-memory': {
             after: () => Promise.resolve(),
             newCheckpointer: () => Promise.resolve(checkpointers.inMemory()),
         },
-        {
-            description: 'File',
+        'File': {
             after: () => fs.rm(checkpointFile, { force: true }),
             newCheckpointer: () => checkpointers.file(checkpointFile),
         },
-    ];
+    };
 
-    testCases.forEach(testCase => {
-        describe(`${testCase.description} common behaviour`, () => {
-            let checkpointer: Checkpointer;
+    Object.entries(testCases).forEach(([testName, testCase]) => describe(`${testName} common behaviour`, () => {
+        let checkpointer: Checkpointer;
 
-            beforeEach(async () => {
-                checkpointer = await testCase.newCheckpointer();
-            });
-
-            afterEach(async () => {
-                await testCase.after();
-            });
-
-            it('Initial state is undefined block and no transactions', () => {
-                assertState(checkpointer, undefined);
-            });
-
-            it('Checkpointing a block gives next block number & empty transaction ID', async () => {
-                await checkpointer.checkpointBlock(1n);
-
-                assertState(checkpointer, 1n + 1n);
-            });
-
-            it('Checkpointing a transaction gives valid transaction ID and blocknumber', async () => {
-                await checkpointer.checkpointTransaction(1n, 'tx1');
-
-                assertState(checkpointer, 1n, 'tx1');
-            });
-
-            it('Checkpointing a chaincode event gives valid transaction ID and blocknumber', async () => {
-                const event: ChaincodeEvent = {
-                    blockNumber: BigInt(1),
-                    chaincodeName: 'CHAINCODE',
-                    eventName: 'EVENT1',
-                    transactionId: 'TXN1',
-                    payload: new Uint8Array(),
-                };
-
-                await checkpointer.checkpointChaincodeEvent(event);
-
-                assertState(checkpointer, event.blockNumber, event.transactionId);
-            });
+        beforeEach(async () => {
+            checkpointer = await testCase.newCheckpointer();
         });
-    });
+
+        afterEach(async () => {
+            await testCase.after();
+        });
+
+        it('Initial state is undefined block and no transactions', () => {
+            assertState(checkpointer, undefined);
+        });
+
+        it('Checkpointing a block gives next block number & empty transaction ID', async () => {
+            await checkpointer.checkpointBlock(1n);
+
+            assertState(checkpointer, 1n + 1n);
+        });
+
+        it('Checkpointing a transaction gives valid transaction ID and blocknumber', async () => {
+            await checkpointer.checkpointTransaction(1n, 'tx1');
+
+            assertState(checkpointer, 1n, 'tx1');
+        });
+
+        it('Checkpointing a chaincode event gives valid transaction ID and blocknumber', async () => {
+            const event: ChaincodeEvent = {
+                blockNumber: BigInt(1),
+                chaincodeName: 'CHAINCODE',
+                eventName: 'EVENT1',
+                transactionId: 'TXN1',
+                payload: new Uint8Array(),
+            };
+
+            await checkpointer.checkpointChaincodeEvent(event);
+
+            assertState(checkpointer, event.blockNumber, event.transactionId);
+        });
+    }));
 
     describe('File-specific behaviour', () => {
         afterEach(async () => {

@@ -48,28 +48,26 @@ func TestEvaluateTransaction(t *testing.T) {
 
 		_, err := contract.EvaluateTransaction("transaction")
 
-		require.Errorf(t, err, expected.Error(), "error message")
+		require.ErrorIs(t, err, expected, "error type: %T", err)
+		require.ErrorContains(t, err, expected.Error(), "message")
 		require.Equal(t, status.Code(expected), status.Code(err), "status code")
 	})
 
-	for _, testCase := range []struct {
-		name string
-		run  func(*testing.T, *Contract) ([]byte, error)
+	for name, testCase := range map[string]struct {
+		run func(*testing.T, *Contract) ([]byte, error)
 	}{
-		{
-			name: "EvaluateTransaction returns result",
+		"EvaluateTransaction returns result": {
 			run: func(t *testing.T, contract *Contract) ([]byte, error) {
 				return contract.EvaluateTransaction("transaction")
 			},
 		},
-		{
-			name: "EvaluateWithContext returns result",
+		"EvaluateWithContext returns result": {
 			run: func(t *testing.T, contract *Contract) ([]byte, error) {
 				return contract.EvaluateWithContext(context.Background(), "transaction")
 			},
 		},
 	} {
-		t.Run(testCase.name, func(t *testing.T) {
+		t.Run(name, func(t *testing.T) {
 			expected := []byte("TRANSACTION_RESULT")
 			mockClient := NewMockGatewayClient(gomock.NewController(t))
 			mockClient.EXPECT().Evaluate(gomock.Any(), gomock.Any()).
@@ -311,26 +309,23 @@ func TestEvaluateTransaction(t *testing.T) {
 		require.EqualValues(t, expectedPrice, actualPrice)
 	})
 
-	for _, testCase := range []struct {
-		name string
-		run  func(*testing.T, context.Context, *Contract) ([]byte, error)
+	for name, testCase := range map[string]struct {
+		run func(*testing.T, context.Context, *Contract) ([]byte, error)
 	}{
-		{
-			name: "Proposal uses specified context",
+		"Proposal uses specified context": {
 			run: func(t *testing.T, ctx context.Context, contract *Contract) ([]byte, error) {
 				proposal, err := contract.NewProposal("transaction")
 				require.NoError(t, err, "NewProposal")
 				return proposal.EvaluateWithContext(ctx)
 			},
 		},
-		{
-			name: "Contract uses specified context",
+		"Contract uses specified context": {
 			run: func(t *testing.T, ctx context.Context, contract *Contract) ([]byte, error) {
 				return contract.EvaluateWithContext(ctx, "transaction")
 			},
 		},
 	} {
-		t.Run(testCase.name, func(t *testing.T) {
+		t.Run(name, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			cancel()
 
@@ -371,20 +366,17 @@ func TestEvaluateTransaction(t *testing.T) {
 		require.ErrorIs(t, err, context.DeadlineExceeded)
 	})
 
-	for _, testCase := range []struct {
-		name string
-		run  func(*testing.T, *Contract, []grpc.CallOption) ([]byte, error)
+	for testName, testCase := range map[string]struct {
+		run func(*testing.T, *Contract, []grpc.CallOption) ([]byte, error)
 	}{
-		{
-			name: "Uses specified gRPC call options",
+		"Uses specified gRPC call options": {
 			run: func(t *testing.T, contract *Contract, expected []grpc.CallOption) ([]byte, error) {
 				proposal, err := contract.NewProposal("transaction")
 				require.NoError(t, err, "NewProposal")
 				return proposal.Evaluate(expected...)
 			},
 		},
-		{
-			name: "Uses specified gRPC call options with specified context",
+		"Uses specified gRPC call options with specified context": {
 			run: func(t *testing.T, contract *Contract, expected []grpc.CallOption) ([]byte, error) {
 				proposal, err := contract.NewProposal("transaction")
 				require.NoError(t, err, "NewProposal")
@@ -392,7 +384,7 @@ func TestEvaluateTransaction(t *testing.T) {
 			},
 		},
 	} {
-		t.Run(testCase.name, func(t *testing.T) {
+		t.Run(testName, func(t *testing.T) {
 			var actual []grpc.CallOption
 			expected := grpc.WaitForReady(true)
 
