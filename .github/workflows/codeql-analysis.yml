@@ -10,6 +10,7 @@ on:
   #     - main
   schedule:
     - cron: "15 23 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: read
