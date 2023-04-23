@@ -5,16 +5,16 @@
  */
 
 import { CurveFn } from '@noble/curves/abstract/weierstrass';
-import { P256 } from '@noble/curves/p256';
-import { P384 } from '@noble/curves/p384';
+import { p256 } from '@noble/curves/p256';
+import { p384 } from '@noble/curves/p384';
 import { KeyObject } from 'crypto';
 import { ecPrivateKeyAsRaw } from './asn1';
 import { HSMSignerFactory, HSMSignerFactoryImpl as HSMSignerFactoryImplType } from './hsmsigner';
 import { Signer } from './signer';
 
 const namedCurves: Record<string, CurveFn> = {
-    '1.2.840.10045.3.1.7': P256,
-    '1.3.132.0.34': P384,
+    '1.2.840.10045.3.1.7': p256,
+    '1.3.132.0.34': p384,
 };
 
 /**

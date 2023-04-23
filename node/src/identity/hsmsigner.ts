@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { P256 } from '@noble/curves/p256';
+import { p256 } from '@noble/curves/p256';
 import * as pkcs11js from 'pkcs11js';
 import { Signer } from './signer';
 
@@ -94,13 +94,13 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
             throw err;
         }
 
-        const compactSignatureLength = P256.CURVE.nByteLength * 2;
+        const compactSignatureLength = p256.CURVE.nByteLength * 2;
 
         return {
             signer: (digest) => {
                 pkcs11.C_SignInit(session, { mechanism: pkcs11js.CKM_ECDSA }, privateKeyHandle);
                 const compactSignature = pkcs11.C_Sign(session, Buffer.from(digest), Buffer.alloc(compactSignatureLength));
-                const signature = P256.Signature.fromCompact(compactSignature).normalizeS().toDERRawBytes();
+                const signature = p256.Signature.fromCompact(compactSignature).normalizeS().toDERRawBytes();
                 return Promise.resolve(signature);
             },
             close: () => pkcs11.C_CloseSession(session),

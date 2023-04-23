@@ -38,7 +38,7 @@ final class TransactionContext {
 
     private String newTransactionId() {
         byte[] saltedCreator = GatewayUtils.concat(nonce, signingIdentity.getCreator());
-        byte[] rawTransactionId = Hash.sha256(saltedCreator);
+        byte[] rawTransactionId = Hash.SHA256.apply(saltedCreator);
         byte[] hexTransactionId = Hex.encode(rawTransactionId);
         return new String(hexTransactionId, StandardCharsets.UTF_8);
     }

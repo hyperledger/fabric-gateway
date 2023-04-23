@@ -6,6 +6,10 @@
 
 package org.hyperledger.fabric.client.identity;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.hyperledger.fabric.client.Hash;
+import org.junit.jupiter.api.Test;
+
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
@@ -16,10 +20,6 @@ import java.security.Signature;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.hyperledger.fabric.client.Hash;
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -27,10 +27,8 @@ public final class SignerTest {
     private static final X509Credentials CREDENTIALS = new X509Credentials();
     private static final Provider PROVIDER = new BouncyCastleProvider();
     private static final byte[] MESSAGE = "MESSAGE".getBytes(StandardCharsets.UTF_8);
-    private static final byte[] DIGEST = Hash.sha256(MESSAGE);
 
-    private static void assertValidSignature(X509Certificate certificate, final byte[] signature) throws GeneralSecurityException {
-        Signature verifier = Signature.getInstance("SHA256withECDSA", PROVIDER);
+    private static void assertValidSignature(Signature verifier, X509Certificate certificate, final byte[] signature) throws GeneralSecurityException {
         verifier.initVerify(certificate);
         verifier.update(MESSAGE);
         assertThat(verifier.verify(signature))
@@ -51,9 +49,10 @@ public final class SignerTest {
     @Test
     void sign_with_P256_key() throws GeneralSecurityException {
         Signer signer = Signers.newPrivateKeySigner(CREDENTIALS.getPrivateKey());
-        byte[] signature = signer.sign(DIGEST);
+        byte[] signature = signer.sign(Hash.SHA256.apply(MESSAGE));
 
-        assertValidSignature(CREDENTIALS.getCertificate(), signature);
+        Signature verifier = Signature.getInstance("SHA256withECDSA", PROVIDER);
+        assertValidSignature(verifier, CREDENTIALS.getCertificate(), signature);
     }
 
     @Test
@@ -68,8 +67,9 @@ public final class SignerTest {
     void sign_with_P384_key() throws GeneralSecurityException {
         X509Credentials credentials = new X509Credentials("P-384");
         Signer signer = Signers.newPrivateKeySigner(credentials.getPrivateKey());
-        byte[] signature = signer.sign(DIGEST);
+        byte[] signature = signer.sign(Hash.SHA384.apply(MESSAGE));
 
-        assertValidSignature(credentials.getCertificate(), signature);
+        Signature verifier = Signature.getInstance("SHA384withECDSA", PROVIDER);
+        assertValidSignature(verifier, credentials.getCertificate(), signature);
     }
 }
