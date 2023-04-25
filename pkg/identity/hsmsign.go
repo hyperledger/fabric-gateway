@@ -178,7 +178,7 @@ func (signer *hsmSigner) Sign(digest []byte) ([]byte, error) {
 	r, s := unmarshalConcatSignature(signature)
 
 	// Only Elliptic of 256 byte keys are supported
-	s = canonicalECDSASignatureSValue(s, elliptic.P256().Params().Params().N)
+	s = canonicalECDSASignatureSValue(s, elliptic.P256().Params().N)
 
 	return asn1ECDSASignature(r, s)
 }

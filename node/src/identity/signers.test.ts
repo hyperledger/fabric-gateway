@@ -39,9 +39,9 @@ describe('signers', () => {
             const message = Buffer.from('conga');
 
             const signer = newPrivateKeySigner(privateKey);
-            const digest = createHash('sha256').update(message).digest();
+            const digest = createHash('sha384').update(message).digest();
             const signature = await signer(digest);
-            const valid = verify('sha256', message, publicKey, signature);
+            const valid = verify('sha384', message, publicKey, signature);
 
             expect(valid).toBeTruthy();
         });
