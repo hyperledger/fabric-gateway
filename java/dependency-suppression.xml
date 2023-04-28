@@ -16,4 +16,13 @@
         <packageUrl regex="true">^pkg:maven/org\.hyperledger\.fabric/fabric\-protos@.*$</packageUrl>
         <cve>CVE-2022-36023</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        file name: guava-31.1-android.jar
+        The offending com.google.common.io.Files.createTempDir() method is deprecated and not used.
+        NIST classify this CVE with a CVSS 3.x score of 3.3 (Low).
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.google\.guava/guava@.*$</packageUrl>
+        <vulnerabilityName>CVE-2020-8908</vulnerabilityName>
+    </suppress>
 </suppressions>
