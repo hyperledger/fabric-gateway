@@ -392,7 +392,7 @@
                             <skipProvidedScope>true</skipProvidedScope>
                             <skipTestScope>true</skipTestScope>
                             <skipSystemScope>true</skipSystemScope>
-                            <failBuildOnCVSS>7</failBuildOnCVSS>
+                            <failBuildOnCVSS>4</failBuildOnCVSS>
                             <suppressionFiles>
                                 <suppressionFile>dependency-suppression.xml</suppressionFile>
                             </suppressionFiles>
