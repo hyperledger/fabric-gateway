@@ -24,7 +24,7 @@ export PEER_IMAGE_TAG ?= 2.5
 
 # TWO_DIGIT_VERSION specifies which chaincode images to pull, they will be tagged to be consistent with PEER_IMAGE_TAG
 # In fabric-gateway main branch it should typically be the latest released chaincode version available in dockerhub.
-TWO_DIGIT_VERSION ?= 2.4
+TWO_DIGIT_VERSION ?= 2.5
 
 export SOFTHSM2_CONF ?= $(base_dir)/softhsm2.conf
 TMPDIR ?= /tmp
@@ -224,7 +224,7 @@ pull-latest-peer:
 	docker tag $(PEER_IMAGE_PULL) hyperledger/fabric-peer:$(PEER_IMAGE_TAG)
 	# also need to retag the following images for the chaincode builder
 	for IMAGE in baseos ccenv javaenv nodeenv; do \
-		docker pull hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION) || docker pull --platform amd64 hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION); \
+		docker pull hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION); \
 		docker tag hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION) hyperledger/fabric-$${IMAGE}:$(PEER_IMAGE_TAG); \
 	done
 

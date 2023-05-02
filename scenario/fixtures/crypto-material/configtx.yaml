@@ -51,7 +51,7 @@ Capabilities:
     # safely manipulated without concern for upgrading orderers.  Set the value
     # of the capability to true to require it.
     Application: &ApplicationCapabilities
-        V2_0: true
+        V2_5: true
 ################################################################################
 #
 #   CHANNEL
