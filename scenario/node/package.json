@@ -3,7 +3,7 @@
     "version": "0.0.1",
     "description": "Scenario test for Fabric Gateway",
     "engines": {
-        "node": ">=14.15.0"
+        "node": ">=16.13.0"
     },
     "scripts": {
         "build": "npm-run-all clean compile lint",
@@ -23,10 +23,10 @@
         "@hyperledger/fabric-protos": "~0.2.0"
     },
     "devDependencies": {
-        "@cucumber/cucumber": "^8.2.0",
+        "@cucumber/cucumber": "^9.1.0",
         "@tsconfig/node14": "^1.0.1",
         "@types/jsrsasign": "^10.5.1",
-        "@types/node": "^14.17.32",
+        "@types/node": "^16.18.25",
         "@typescript-eslint/eslint-plugin": "^5.3.0",
         "@typescript-eslint/parser": "^5.3.0",
         "cucumber-console-formatter": "^1.0.0",
@@ -35,6 +35,6 @@
         "jsrsasign": "^10.4.0",
         "npm-run-all": "^4.1.5",
         "ts-node": "^10.8.0",
-        "typescript": "~4.9.4"
+        "typescript": "~5.0.4"
     }
 }

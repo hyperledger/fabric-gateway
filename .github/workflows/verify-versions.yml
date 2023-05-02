@@ -4,7 +4,7 @@ on:
   workflow_call:
 
 env:
-  GATEWAY_VERSION: 1.2.3
+  GATEWAY_VERSION: 1.3.0
 
 jobs:
   go:
