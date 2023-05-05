@@ -24,8 +24,9 @@
     the ledger state using an instantiated smart contract.</p>
 
     <pre><code>
+    import io.grpc.Grpc;
     import io.grpc.ManagedChannel;
-    import io.grpc.ManagedChannelBuilder;
+    import io.grpc.TlsChannelCredentials;
     import org.hyperledger.fabric.client.*;
     import org.hyperledger.fabric.client.identity.*;
 
@@ -38,8 +39,7 @@
         PrivateKey privateKey = Identities.readPrivateKey(keyReader);
         Signer signer = Signers.newPrivateKeySigner(privateKey);
 
-        ManagedChannel grpcChannel = ManagedChannelBuilder.forAddress("gateway.example.org", 1337)
-                .usePlaintext()
+        ManagedChannel grpcChannel = Grpc.newChannelBuilder("gateway.example.org:1337", TlsChannelCredentials.create())
                 .build();
 
         Gateway.Builder builder = Gateway.newInstance()
