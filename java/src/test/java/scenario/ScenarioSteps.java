@@ -15,11 +15,11 @@ import io.cucumber.java.After;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import io.grpc.ChannelCredentials;
+import io.grpc.Grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.Status;
-import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
-import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import io.grpc.TlsChannelCredentials;
 import org.hyperledger.fabric.client.ChaincodeEvent;
 import org.hyperledger.fabric.client.GatewayException;
 import org.hyperledger.fabric.client.identity.Identities;
@@ -330,11 +330,10 @@ public class ScenarioSteps {
     @Given("I connect the gateway to {word}")
     public void connectGateway(String name) throws Exception {
         ConnectionInfo info = peerConnectionInfo.get(name);
-        SslContext sslContext = GrpcSslContexts.forClient()
-                .trustManager(Files.newInputStream(Paths.get(info.tlsRootCertPath)))
+        ChannelCredentials credentials = TlsChannelCredentials.newBuilder()
+                .trustManager(Paths.get(info.tlsRootCertPath).toFile())
                 .build();
-        ManagedChannel channel = NettyChannelBuilder.forTarget(info.url)
-                .sslContext(sslContext)
+        ManagedChannel channel = Grpc.newChannelBuilder(info.url, credentials)
                 .overrideAuthority(info.serverNameOverride)
                 .build();
         currentGateway.connect(channel);

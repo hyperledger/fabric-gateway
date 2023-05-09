@@ -38,10 +38,10 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <grpcVersion>1.54.0</grpcVersion>
-        <protobufVersion>3.21.12</protobufVersion> <!-- keep in step with the version used by io.grpc:grpc-protobuf -->
+        <grpcVersion>1.54.1</grpcVersion>
+        <protobufVersion>3.21.12</protobufVersion> <!-- keep major/minor version in step with one used by io.grpc:grpc-protobuf -->
         <enforceJavaVersion>1.8</enforceJavaVersion> <!-- this is overridden in the release profile -->
-        <bouncyCastleVersion>1.72</bouncyCastleVersion>
+        <bouncyCastleVersion>1.73</bouncyCastleVersion>
         <skipUnitTests>${skipTests}</skipUnitTests>
     </properties>
 
@@ -50,14 +50,14 @@
             <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-bom</artifactId>
-                <version>7.11.2</version>
+                <version>7.12.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.9.2</version>
+                <version>5.9.3</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -130,6 +130,7 @@
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty-shaded</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
@@ -372,7 +373,7 @@
                             <dependency>
                                 <groupId>com.puppycrawl.tools</groupId>
                                 <artifactId>checkstyle</artifactId>
-                                <version>10.9.3</version>
+                                <version>10.10.0</version>
                             </dependency>
                         </dependencies>
                     </plugin>
