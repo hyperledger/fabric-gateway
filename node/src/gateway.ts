@@ -20,7 +20,9 @@ import { SigningIdentity } from './signingidentity';
 import { TransactionImpl } from './transaction';
 
 /**
- * Interface describing the public API of the gRPC Client class.
+ * Interface describing the public API of the gRPC Client class, used to provide better version-to-version type
+ * compatibility between gRPC releases. Application code should use a concrete gRPC Client instance.
+ * @see [gRPC Client API documentation](https://grpc.github.io/grpc/node/grpc.Client.html)
  */
 export interface GrpcClient {
     close(): void;
@@ -67,6 +69,7 @@ export interface ConnectOptions {
     /**
      * A gRPC client connection to a Fabric Gateway. This should be shared by all gateway instances connecting to the
      * same Fabric Gateway. The client connection will not be closed when the gateway is closed.
+     * @see [gRPC Client API documentation](https://grpc.github.io/grpc/node/grpc.Client.html)
      */
     client: GrpcClient;
 
