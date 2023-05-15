@@ -8,8 +8,8 @@
     "scripts": {
         "build": "npm-run-all clean compile lint",
         "clean": "rimraf dist",
-        "cucumber": "cucumber-js --format cucumber-console-formatter --require 'src/**/*.ts' --require-module ts-node/register ../features",
-        "cucumber:no-hsm": "cucumber-js --tags 'not @hsm' --format cucumber-console-formatter --require 'src/**/*.ts' --require-module ts-node/register ../features",
+        "cucumber": "NODE_OPTIONS='--enable-source-maps' cucumber-js --format cucumber-console-formatter --require 'dist/**/*.js' ../features",
+        "cucumber:no-hsm": "NODE_OPTIONS='--enable-source-maps' cucumber-js --tags 'not @hsm' --format cucumber-console-formatter --require 'dist/**/*.js' ../features",
         "compile": "tsc",
         "lint": "eslint . --ext .ts",
         "test": "npm-run-all build cucumber",
@@ -24,7 +24,7 @@
     },
     "devDependencies": {
         "@cucumber/cucumber": "^9.1.0",
-        "@tsconfig/node14": "^1.0.1",
+        "@tsconfig/node16": "^1.0.3",
         "@types/jsrsasign": "^10.5.1",
         "@types/node": "^16.18.25",
         "@typescript-eslint/eslint-plugin": "^5.3.0",
@@ -34,7 +34,6 @@
         "expect": "^29.3.1",
         "jsrsasign": "^10.4.0",
         "npm-run-all": "^4.1.5",
-        "ts-node": "^10.8.0",
         "typescript": "~5.0.4"
     }
 }
