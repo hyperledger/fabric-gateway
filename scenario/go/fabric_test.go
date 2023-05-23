@@ -115,8 +115,25 @@ func GetOrgForMSP(mspID string) string {
 var (
 	fabricRunning     = false
 	channelsJoined    = false
-	runningChaincodes = make(map[string]string)
+	runningChaincodes = make(ChaincodeSet)
 )
+
+type ChaincodeSet map[string]string
+
+func (set ChaincodeSet) policy(chaincodeName string, version string, channelName string) (policy string, exists bool) {
+	key := chaincodeKey(chaincodeName, version, channelName)
+	policy, exists = set[key]
+	return
+}
+
+func chaincodeKey(chaincodeName string, version string, channelName string) string {
+	return chaincodeName + version + channelName
+}
+
+func (set ChaincodeSet) add(chaincodeName string, version string, channelName string, signaturePolicy string) {
+	key := chaincodeKey(chaincodeName, version, channelName)
+	set[key] = signaturePolicy
+}
 
 func startFabric() error {
 	if !fabricRunning {
@@ -190,39 +207,27 @@ func generateHSMUser(hsmUserid string) error {
 
 func deployChaincode(ccType, ccName, version, channelName, signaturePolicy string) error {
 	fmt.Println("deployChaincode")
-	exists := false
+
 	sequence := "1"
-	mangledName := ccName + version + channelName
-	if policy, ok := runningChaincodes[mangledName]; ok {
+
+	if policy, exists := runningChaincodes.policy(ccName, version, channelName); exists {
 		if policy == signaturePolicy {
+			// Nothing to do as already deployed with correct signature policy.
 			return nil
 		}
+
 		// Already exists but different signature policy...
-		// No need to re-install, just increment the sequence number and approve/commit new signature policy
-		exists = true
-		out, err := dockerCommandWithTLS(
-			"exec", "org1_cli", "peer", "lifecycle", "chaincode", "querycommitted",
-			"-o", "orderer1.example.com:7050", "--channelID", channelName, "--name", ccName,
-		)
+		// No need to re-install, just increment the sequence number and approve/commit new signature policy.
+		currentSequence, err := committedSequenceNumber(ccName, channelName)
 		if err != nil {
 			return err
 		}
-
-		pattern := regexp.MustCompile(".*Sequence: ([0-9]+),.*")
-		match := pattern.FindStringSubmatch(out)
-		if len(match) != 2 {
-			return fmt.Errorf("cannot find installed chaincode for Org1")
-		}
-		i, err := strconv.Atoi(match[1])
-		if err != nil {
+		sequence = strconv.Itoa(currentSequence + 1)
+	} else {
+		if err := installChaincode(ccName, ccType, version); err != nil {
 			return err
 		}
-		sequence = fmt.Sprintf("%d", i+1)
 	}
-
-	ccPath := "/opt/gopath/src/github.com/chaincode/" + ccType + "/" + ccName
-	ccLabel := ccName + "v" + version
-	ccPackage := ccName + ".tar.gz"
 
 	// is there a collections_config.json file?
 	var collectionConfig []string
@@ -234,29 +239,77 @@ func deployChaincode(ccType, ccName, version, channelName, signaturePolicy strin
 		}
 	}
 
+	if err := approveChaincode(ccName, version, sequence, channelName, signaturePolicy, collectionConfig); err != nil {
+		return err
+	}
+
+	if err := commitChaincode(ccName, version, sequence, channelName, signaturePolicy, collectionConfig); err != nil {
+		return err
+	}
+
+	runningChaincodes.add(ccName, version, channelName, signaturePolicy)
+	time.Sleep(10 * time.Second)
+
+	return nil
+}
+
+func committedSequenceNumber(chaincodeName string, channelName string) (int, error) {
+	out, err := dockerCommandWithTLS(
+		"exec", "org1_cli", "peer", "lifecycle", "chaincode", "querycommitted",
+		"-o", "orderer1.example.com:7050", "--channelID", channelName, "--name", chaincodeName,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	pattern := regexp.MustCompile(".*Sequence: ([0-9]+),.*")
+	match := pattern.FindStringSubmatch(out)
+	if len(match) != 2 {
+		return 0, fmt.Errorf("cannot find installed chaincode for Org1")
+	}
+	i, err := strconv.Atoi(match[1])
+	if err != nil {
+		return 0, err
+	}
+
+	return i, nil
+}
+
+func installChaincode(name string, language string, version string) error {
+	path := "/opt/gopath/src/github.com/chaincode/" + language + "/" + name
+	pkg := name + ".tar.gz"
+
 	for _, org := range orgs {
-		if !exists {
+		_, err := dockerCommand(
+			"exec", org.cli, "peer", "lifecycle", "chaincode", "package", pkg,
+			"--lang", language,
+			"--label", chaincodeLabel(name, version),
+			"--path", path,
+		)
+		if err != nil {
+			return err
+		}
+
+		for _, peer := range org.peers {
+			env := "CORE_PEER_ADDRESS=" + peer
 			_, err := dockerCommand(
-				"exec", org.cli, "peer", "lifecycle", "chaincode", "package", ccPackage,
-				"--lang", ccType,
-				"--label", ccLabel,
-				"--path", ccPath,
+				"exec", "-e", env, org.cli, "peer", "lifecycle", "chaincode", "install", pkg,
 			)
 			if err != nil {
 				return err
 			}
-
-			for _, peer := range org.peers {
-				env := "CORE_PEER_ADDRESS=" + peer
-				_, err := dockerCommand(
-					"exec", "-e", env, org.cli, "peer", "lifecycle", "chaincode", "install", ccPackage,
-				)
-				if err != nil {
-					return err
-				}
-			}
 		}
+	}
 
+	return nil
+}
+
+func chaincodeLabel(name string, version string) string {
+	return name + "v" + version
+}
+
+func approveChaincode(name string, version string, sequence string, channelName string, signaturePolicy string, collectionConfig []string) error {
+	for _, org := range orgs {
 		out, err := dockerCommand(
 			"exec", org.cli, "peer", "lifecycle", "chaincode", "queryinstalled",
 		)
@@ -264,7 +317,8 @@ func deployChaincode(ccType, ccName, version, channelName, signaturePolicy strin
 			return err
 		}
 
-		pattern := regexp.MustCompile(".*Package ID: (.*), Label: " + ccLabel + ".*")
+		label := chaincodeLabel(name, version)
+		pattern := regexp.MustCompile(".*Package ID: (.*), Label: " + label + ".*")
 		match := pattern.FindStringSubmatch(out)
 		if len(match) != 2 {
 			return fmt.Errorf("cannot find installed chaincode for Org1")
@@ -276,7 +330,7 @@ func deployChaincode(ccType, ccName, version, channelName, signaturePolicy strin
 			"--package-id", packageID,
 			"--channelID", channelName,
 			"--orderer", "orderer1.example.com:7050",
-			"--name", ccName,
+			"--name", name,
 			"--version", version,
 			"--signature-policy", signaturePolicy,
 			"--sequence", sequence,
@@ -289,12 +343,15 @@ func deployChaincode(ccType, ccName, version, channelName, signaturePolicy strin
 		}
 	}
 
-	// commit
+	return nil
+}
+
+func commitChaincode(name string, version string, sequence string, channelName string, signaturePolicy string, collectionConfig []string) error {
 	commitCommand := []string{
 		"exec", "org1_cli", "peer", "lifecycle", "chaincode", "commit",
 		"--channelID", channelName,
 		"--orderer", "orderer1.example.com:7050",
-		"--name", ccName,
+		"--name", name,
 		"--version", version,
 		"--signature-policy", signaturePolicy,
 		"--sequence", sequence,
@@ -311,9 +368,6 @@ func deployChaincode(ccType, ccName, version, channelName, signaturePolicy strin
 	if err != nil {
 		return err
 	}
-
-	runningChaincodes[mangledName] = signaturePolicy
-	time.Sleep(10 * time.Second)
 
 	return nil
 }
