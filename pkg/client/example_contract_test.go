@@ -62,7 +62,7 @@ func ExampleContract_Submit_errorHandling() {
 	if err != nil {
 		switch err := err.(type) {
 		case *client.EndorseError:
-			panic(fmt.Errorf("transaction %s failed to endrose with gRPC status %v: %w", err.TransactionID, status.Code(err), err))
+			panic(fmt.Errorf("transaction %s failed to endorse with gRPC status %v: %w", err.TransactionID, status.Code(err), err))
 		case *client.SubmitError:
 			panic(fmt.Errorf("transaction %s failed to submit to the orderer with gRPC status %v: %w", err.TransactionID, status.Code(err), err))
 		case *client.CommitStatusError:
