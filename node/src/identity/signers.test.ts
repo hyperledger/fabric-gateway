@@ -49,7 +49,20 @@ describe('signers', () => {
         it('throws for unsupported curve', () => {
             const { privateKey } = generateKeyPairSync('ec', { namedCurve: 'secp256k1' });
             expect(() => newPrivateKeySigner(privateKey))
-                .toThrow('1.3.132.0.10');
+                .toThrow('secp256k1');
+        });
+    });
+
+    describe('Ed25519', () => {
+        it('creates valid signer', async () => {
+            const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+            const message = Buffer.from('conga');
+
+            const signer = newPrivateKeySigner(privateKey);
+            const signature = await signer(message);
+            const valid = verify(undefined, message, publicKey, signature);
+
+            expect(valid).toBeTruthy();
         });
     });
 });

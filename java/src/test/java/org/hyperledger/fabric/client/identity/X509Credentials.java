@@ -6,6 +6,21 @@
 
 package org.hyperledger.fabric.client.identity;
 
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.X509v3CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
+import org.bouncycastle.crypto.util.PrivateKeyFactory;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
+import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.bc.BcECContentSignerBuilder;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.math.BigInteger;
@@ -22,21 +37,40 @@ import java.security.spec.ECGenParameterSpec;
 import java.util.Date;
 import java.util.Locale;
 
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.cert.X509v3CertificateBuilder;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.crypto.util.PrivateKeyFactory;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.operator.ContentSigner;
-import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
-import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
-import org.bouncycastle.operator.OperatorCreationException;
-import org.bouncycastle.operator.bc.BcECContentSignerBuilder;
-
 public final class X509Credentials {
+    public enum Curve {
+        P256(() -> {
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("EC", BC_PROVIDER);
+            generator.initialize(new ECGenParameterSpec("P-256"));
+            return generator;
+        }),
+        P384(() -> {
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("EC", BC_PROVIDER);
+            generator.initialize(new ECGenParameterSpec("P-384"));
+            return generator;
+        }),
+        Ed25519(() -> KeyPairGenerator.getInstance("Ed25519", BC_PROVIDER));
+
+        @FunctionalInterface
+        private interface KeyPairGeneratorSupplier {
+            KeyPairGenerator get() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException;
+        }
+
+        private final KeyPairGeneratorSupplier generatorSupplier;
+
+        Curve(final KeyPairGeneratorSupplier generatorSupplier) {
+            this.generatorSupplier = generatorSupplier;
+        }
+
+        public KeyPair generateKeyPair() {
+            try {
+                return generatorSupplier.get().generateKeyPair();
+            } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     private static final Provider BC_PROVIDER = new BouncyCastleProvider();
 
     private final X509Certificate certificate;
@@ -46,24 +80,13 @@ public final class X509Credentials {
      * Create credentials using a P-256 curve.
      */
     public X509Credentials() {
-        this("P-256");
+        this(Curve.P256);
     }
 
-    public X509Credentials(String curveName) {
-        KeyPair keyPair = generateKeyPair(curveName);
+    public X509Credentials(Curve curve) {
+        KeyPair keyPair = curve.generateKeyPair();
         certificate = generateCertificate(keyPair);
         privateKey = keyPair.getPrivate();
-    }
-
-    private KeyPair generateKeyPair(String curveName) {
-        try {
-            KeyPairGenerator generator = KeyPairGenerator.getInstance("EC", BC_PROVIDER);
-            AlgorithmParameterSpec curveParam = new ECGenParameterSpec(curveName);
-            generator.initialize(curveParam);
-            return generator.generateKeyPair();
-        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private X509Certificate generateCertificate(KeyPair keyPair) {
@@ -84,8 +107,10 @@ public final class X509Credentials {
         AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder().find(sigAlgId);
 
         try {
+            KeyPair signerKeys = Curve.P256.generateKeyPair();
+            AsymmetricKeyParameter keyParameter = PrivateKeyFactory.createKey(signerKeys.getPrivate().getEncoded());
             ContentSigner contentSigner = new BcECContentSignerBuilder(sigAlgId, digAlgId)
-                    .build(PrivateKeyFactory.createKey(keyPair.getPrivate().getEncoded()));
+                    .build(keyParameter);
             X509CertificateHolder holder = builder.build(contentSigner);
             return new JcaX509CertificateConverter().getCertificate(holder);
         } catch (IOException e) {

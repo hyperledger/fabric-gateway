@@ -9,6 +9,7 @@ package identity
 import (
 	"crypto"
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/asn1"
 	"fmt"
@@ -20,7 +21,7 @@ import (
 )
 
 func TestSigner(t *testing.T) {
-	privateKey, err := test.NewECDSAPrivateKey()
+	ecdsaPrivateKey, err := test.NewECDSAPrivateKey()
 	require.NoError(t, err)
 
 	digest := make([]byte, 256/8)
@@ -37,21 +38,21 @@ func TestSigner(t *testing.T) {
 	})
 
 	t.Run("Create signer with ECDSA private key", func(t *testing.T) {
-		sign, err := NewPrivateKeySign(privateKey)
+		sign, err := NewPrivateKeySign(ecdsaPrivateKey)
 		require.NoError(t, err)
 
 		signature, err := sign(digest)
 		require.NoError(t, err, "sign")
 
-		isValid := ecdsa.VerifyASN1(&privateKey.PublicKey, digest, signature)
+		isValid := ecdsa.VerifyASN1(&ecdsaPrivateKey.PublicKey, digest, signature)
 		require.True(t, isValid, "valid signature")
 	})
 
 	t.Run("ECDSA signatures are canonical", func(t *testing.T) {
-		sign, err := NewPrivateKeySign(privateKey)
+		sign, err := NewPrivateKeySign(ecdsaPrivateKey)
 		require.NoError(t, err)
 
-		halfOrder := new(big.Int).Rsh(privateKey.Params().N, 1)
+		halfOrder := new(big.Int).Rsh(ecdsaPrivateKey.Params().N, 1)
 
 		for i := 0; i < 10; i++ {
 			signature, err := sign(digest)
@@ -63,6 +64,20 @@ func TestSigner(t *testing.T) {
 
 			require.LessOrEqual(t, signatureRS.S.Cmp(halfOrder), 0, "malleable: S = %v, halfOrder = %v", signatureRS.S, halfOrder)
 		}
+	})
+
+	t.Run("Create signer with Ed25519 private key", func(t *testing.T) {
+		publicKey, privateKey, err := test.NewEd25519KeyPair()
+		require.NoError(t, err)
+
+		sign, err := NewPrivateKeySign(privateKey)
+		require.NoError(t, err)
+
+		signature, err := sign(digest)
+		require.NoError(t, err, "sign")
+
+		isValid := ed25519.Verify(publicKey, digest, signature)
+		require.True(t, isValid, "valid signature")
 	})
 }
 

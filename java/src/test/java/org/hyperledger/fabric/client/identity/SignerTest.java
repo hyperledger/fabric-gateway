@@ -24,7 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public final class SignerTest {
-    private static final X509Credentials CREDENTIALS = new X509Credentials();
     private static final Provider PROVIDER = new BouncyCastleProvider();
     private static final byte[] MESSAGE = "MESSAGE".getBytes(StandardCharsets.UTF_8);
 
@@ -48,16 +47,18 @@ public final class SignerTest {
 
     @Test
     void sign_with_P256_key() throws GeneralSecurityException {
-        Signer signer = Signers.newPrivateKeySigner(CREDENTIALS.getPrivateKey());
+        X509Credentials credentials = new X509Credentials();
+        Signer signer = Signers.newPrivateKeySigner(credentials.getPrivateKey());
         byte[] signature = signer.sign(Hash.SHA256.apply(MESSAGE));
 
         Signature verifier = Signature.getInstance("SHA256withECDSA", PROVIDER);
-        assertValidSignature(verifier, CREDENTIALS.getCertificate(), signature);
+        assertValidSignature(verifier, credentials.getCertificate(), signature);
     }
 
     @Test
     void sign_null_digest_throws_NullPointerException() {
-        Signer signer = Signers.newPrivateKeySigner(CREDENTIALS.getPrivateKey());
+        X509Credentials credentials = new X509Credentials();
+        Signer signer = Signers.newPrivateKeySigner(credentials.getPrivateKey());
 
         assertThatThrownBy(() -> signer.sign(null))
             .isInstanceOf(NullPointerException.class);
@@ -65,11 +66,21 @@ public final class SignerTest {
 
     @Test
     void sign_with_P384_key() throws GeneralSecurityException {
-        X509Credentials credentials = new X509Credentials("P-384");
+        X509Credentials credentials = new X509Credentials(X509Credentials.Curve.P384);
         Signer signer = Signers.newPrivateKeySigner(credentials.getPrivateKey());
         byte[] signature = signer.sign(Hash.SHA384.apply(MESSAGE));
 
         Signature verifier = Signature.getInstance("SHA384withECDSA", PROVIDER);
+        assertValidSignature(verifier, credentials.getCertificate(), signature);
+    }
+
+    @Test
+    void sign_with_Ed25519_key() throws GeneralSecurityException {
+        X509Credentials credentials = new X509Credentials(X509Credentials.Curve.Ed25519);
+        Signer signer = Signers.newPrivateKeySigner(credentials.getPrivateKey());
+        byte[] signature = signer.sign(MESSAGE);
+
+        Signature verifier = Signature.getInstance(credentials.getPrivateKey().getAlgorithm(), PROVIDER);
         assertValidSignature(verifier, credentials.getCertificate(), signature);
     }
 }

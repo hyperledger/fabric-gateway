@@ -25,6 +25,11 @@ func NewECDSAPrivateKey() (*ecdsa.PrivateKey, error) {
 	return ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 }
 
+// NewEd25519KeyPair generates a new public and private key pair for testing
+func NewEd25519KeyPair() (ed25519.PublicKey, ed25519.PrivateKey, error) {
+	return ed25519.GenerateKey(rand.Reader)
+}
+
 func publicKey(priv crypto.PrivateKey) crypto.PublicKey {
 	switch k := priv.(type) {
 	case *rsa.PrivateKey:
