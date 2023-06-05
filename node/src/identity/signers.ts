@@ -4,18 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CurveFn } from '@noble/curves/abstract/weierstrass';
-import { p256 } from '@noble/curves/p256';
-import { p384 } from '@noble/curves/p384';
-import { KeyObject } from 'crypto';
-import { ecPrivateKeyAsRaw } from './asn1';
+import { KeyObject, sign } from 'crypto';
 import { HSMSignerFactory, HSMSignerFactoryImpl as HSMSignerFactoryImplType } from './hsmsigner';
 import { Signer } from './signer';
-
-const namedCurves: Record<string, CurveFn> = {
-    '1.2.840.10045.3.1.7': p256,
-    '1.3.132.0.34': p384,
-};
+import { newECPrivateKeySigner } from './ecdsa';
 
 /**
  * Create a new signing implementation that uses the supplied private key to sign messages.
@@ -23,6 +15,15 @@ const namedCurves: Record<string, CurveFn> = {
  * Currently supported private key types are:
  * - NIST P-256 elliptic curve.
  * - NIST P-384 elliptic curve.
+ * - Ed25519.
+ *
+ * Note that the signer implementations have different expectations on the input data supplied to them.
+ *
+ * The P-256 and P-384 signers operate on a pre-computed message digest, and should be combined with an appropriate
+ * hash algorithm. P-256 is typically used with a SHA-256 hash, and P-384 is typically used with a SHA-384 hash.
+ *
+ * The Ed25519 signer operates on the full message content, and should be combined with a `none` (or no-op) hash
+ * implementation to ensure the complete message is passed to the signer.
  * @param key - A private key.
  * @returns A signing implementation.
  */
@@ -34,29 +35,18 @@ export function newPrivateKeySigner(key: KeyObject): Signer {
     switch (key.asymmetricKeyType) {
     case 'ec':
         return newECPrivateKeySigner(key);
+    case 'ed25519':
+        return newNodePrivateKeySigner(key);
     default:
-        throw new Error(`Unsupported private key type: ${key.asymmetricKeyType ?? 'undefined'}`);
+        throw new Error(`Unsupported private key type: ${String(key.asymmetricKeyType)}`);
     }
 }
 
-function newECPrivateKeySigner(key: KeyObject): Signer {
-    const { privateKey, curveObjectId } = ecPrivateKeyAsRaw(key);
-    const curve = getCurve(curveObjectId);
-
-    return (digest) => {
-        const signature = curve.sign(digest, privateKey, { lowS: true }).toDERRawBytes();
+function newNodePrivateKeySigner(key: KeyObject, hashAlgorithm?: string): Signer {
+    return (message) => {
+        const signature = sign(hashAlgorithm, message, key);
         return Promise.resolve(signature);
     };
-}
-
-function getCurve(objectIdBytes: number[]): CurveFn {
-    const objectId = objectIdBytes.join('.');
-    const curve = namedCurves[objectId];
-    if (!curve) {
-        throw new Error(`Unsupported curve object identifier: ${objectId}`);
-    }
-
-    return curve;
 }
 
 /**

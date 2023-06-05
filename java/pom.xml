@@ -38,8 +38,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <grpcVersion>1.54.1</grpcVersion>
-        <protobufVersion>3.21.12</protobufVersion> <!-- keep major/minor version in step with one used by io.grpc:grpc-protobuf -->
+        <grpcVersion>1.55.1</grpcVersion>
         <enforceJavaVersion>1.8</enforceJavaVersion> <!-- this is overridden in the release profile -->
         <bouncyCastleVersion>1.73</bouncyCastleVersion>
         <skipUnitTests>${skipTests}</skipUnitTests>
@@ -65,13 +64,6 @@
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-bom</artifactId>
                 <version>${grpcVersion}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.google.protobuf</groupId>
-                <artifactId>protobuf-bom</artifactId>
-                <version>${protobufVersion}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -121,12 +113,6 @@
             <artifactId>bcprov-jdk18on</artifactId>
             <version>${bouncyCastleVersion}</version>
         </dependency>
-        <dependency> <!-- Necessary for Java 9+, according to https://github.com/grpc/grpc-java#readme -->
-            <groupId>org.apache.tomcat</groupId>
-            <artifactId>annotations-api</artifactId>
-            <version>6.0.53</version>
-            <scope>provided</scope>
-        </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty-shaded</artifactId>
@@ -139,10 +125,6 @@
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -180,6 +162,9 @@
                                 <requireJavaVersion>
                                     <version>${enforceJavaVersion}</version>
                                 </requireJavaVersion>
+                                <requireMavenVersion>
+                                    <version>3.6.3</version>
+                                </requireMavenVersion>
                             </rules>
                         </configuration>
                     </execution>
@@ -216,12 +201,12 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.1.0</version>
                 <dependencies>
                     <dependency>
                         <groupId>me.fabriciorby</groupId>
                         <artifactId>maven-surefire-junit5-tree-reporter</artifactId>
-                        <version>1.1.0</version>
+                        <version>1.2.1</version>
                     </dependency>
                 </dependencies>
                 <configuration>
@@ -297,18 +282,8 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.6.0</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.3.1</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.2.1</version>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -349,6 +324,15 @@
             </properties>
         </profile>
         <profile>
+            <id>maven-compiler-release</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.release>${javaVersion}</maven.compiler.release>
+            </properties>
+        </profile>
+        <profile>
             <id>checkstyle</id>
             <activation>
                 <jdk>[11,)</jdk>
@@ -378,7 +362,7 @@
                             <dependency>
                                 <groupId>com.puppycrawl.tools</groupId>
                                 <artifactId>checkstyle</artifactId>
-                                <version>10.10.0</version>
+                                <version>10.12.0</version>
                             </dependency>
                         </dependencies>
                     </plugin>
