@@ -38,9 +38,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <grpcVersion>1.55.1</grpcVersion>
+        <grpcVersion>1.56.0</grpcVersion>
         <enforceJavaVersion>1.8</enforceJavaVersion> <!-- this is overridden in the release profile -->
-        <bouncyCastleVersion>1.73</bouncyCastleVersion>
+        <bouncyCastleVersion>1.74</bouncyCastleVersion>
         <skipUnitTests>${skipTests}</skipUnitTests>
     </properties>
 
@@ -49,7 +49,7 @@
             <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-bom</artifactId>
-                <version>7.12.0</version>
+                <version>7.12.1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
