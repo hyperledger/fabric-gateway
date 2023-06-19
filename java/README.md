@@ -28,7 +28,7 @@ Add the following dependency to your project's `pom.xml` file:
 <dependency>
     <groupId>org.hyperledger.fabric</groupId>
     <artifactId>fabric-gateway</artifactId>
-    <version>1.2.2</version>
+    <version>1.3.0</version>
 </dependency>
 ```
 
@@ -38,7 +38,7 @@ A suitable gRPC channel service provider must also be specified (as described in
 <dependency>
     <groupId>io.grpc</groupId>
     <artifactId>grpc-netty-shaded</artifactId>
-    <version>1.55.1</version>
+    <version>1.56.0</version>
     <scope>runtime</scope>
 </dependency>
 ```
@@ -48,13 +48,13 @@ A suitable gRPC channel service provider must also be specified (as described in
 Add the following dependency to your project's `build.gradle` file:
 
 ```groovy
-implementation 'org.hyperledger.fabric:fabric-gateway:1.2.2'
+implementation 'org.hyperledger.fabric:fabric-gateway:1.3.0'
 ```
 
 A suitable gRPC channel service provider must also be specified (as described in the [gRPC security documentation](https://github.com/grpc/grpc-java/blob/master/SECURITY.md#transport-security-tls)), such as:
 
 ```groovy
-runtimeOnly 'io.grpc:grpc-netty-shaded:1.55.1'
+runtimeOnly 'io.grpc:grpc-netty-shaded:1.56.0'
 ```
 
 ## Compatibility
