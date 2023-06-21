@@ -139,8 +139,9 @@ scan-java-dependency-check:
 .PHONEY: scan-java-osv-scanner
 scan-java-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
-	mvn --file '$(java_dir)/pom.xml' help:effective-pom -Doutput='$(TMPDIR)/pom.xml'
-	osv-scanner --lockfile='$(TMPDIR)/pom.xml'
+	cd '$(java_dir)' && \
+		mvn --activate-profiles sbom -DskipTests install
+	osv-scanner --sbom='$(java_dir)/target/bom.json'
 
 .PHONEY: generate
 generate:
