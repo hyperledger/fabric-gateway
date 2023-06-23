@@ -5,3 +5,4 @@ coverage/
 src/protos/
 apidocs/
 package-lock.json
+sbom.json
