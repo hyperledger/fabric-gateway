@@ -125,8 +125,9 @@ scan-node-npm-audit:
 scan-node-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
 	cd '$(node_dir)' && \
-		npm install --package-lock-only && \
-		osv-scanner --lockfile=package-lock.json
+		npm install && \
+		npm run sbom && \
+		osv-scanner --sbom=sbom.json
 
 .PHONEY: scan-java
 scan-java: scan-java-dependency-check scan-java-osv-scanner
