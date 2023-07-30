@@ -60,7 +60,7 @@ unit-test-go:
 .PHONEY: unit-test-go-pkcs11
 unit-test-go-pkcs11: setup-softhsm
 	cd '$(base_dir)' && \
-		go test -tags pkcs11 -race -timeout 10s -coverprofile=cover.out '$(go_dir)/...'
+		go test -tags pkcs11 -timeout 10s -race -coverprofile=cover.out '$(go_dir)/...'
 
 .PHONEY: unit-test-node
 unit-test-node: build-node
