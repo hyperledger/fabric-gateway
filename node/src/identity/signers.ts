@@ -5,9 +5,9 @@
  */
 
 import { KeyObject, sign } from 'crypto';
-import { HSMSignerFactory, HSMSignerFactoryImpl as HSMSignerFactoryImplType } from './hsmsigner';
-import { Signer } from './signer';
 import { newECPrivateKeySigner } from './ecdsa';
+import { HSMSignerFactory, type HSMSignerFactoryImpl as HSMSignerFactoryImplType } from './hsmsigner';
+import { Signer } from './signer';
 
 /**
  * Create a new signing implementation that uses the supplied private key to sign messages.
