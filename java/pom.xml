@@ -39,7 +39,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
         <grpcVersion>1.57.1</grpcVersion>
-        <enforceJavaVersion>1.8</enforceJavaVersion> <!-- this is overridden in the release profile -->
         <bouncyCastleVersion>1.76</bouncyCastleVersion>
         <skipUnitTests>${skipTests}</skipUnitTests>
     </properties>
@@ -160,7 +159,7 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <version>${enforceJavaVersion}</version>
+                                    <version>${javaVersion}</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
                                     <version>3.6.3</version>
@@ -366,7 +365,6 @@
                             </dependency>
                         </dependencies>
                     </plugin>
-
                 </plugins>
             </build>
         </profile>
@@ -427,9 +425,6 @@
         </profile>
         <profile>
             <id>release</id>
-            <properties>
-                <enforceJavaVersion>[1.8,1.9)</enforceJavaVersion> <!-- must use 1.8 JDK for release build -->
-            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -508,5 +503,4 @@
             </build>
         </profile>
     </profiles>
-
 </project>

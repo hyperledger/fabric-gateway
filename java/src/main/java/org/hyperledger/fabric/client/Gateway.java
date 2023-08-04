@@ -16,16 +16,16 @@ import java.util.function.UnaryOperator;
 
 /**
  * The Gateway provides the connection point for an application to access the Fabric network as a specific user. It is
- * instantiated from a Builder instance that is created using {@link #newInstance()} and configured using a gateway URL
- * and a signing identity. It can then be connected to a fabric network using the
- * {@link Builder#connect()} method. Once connected, it can then access individual {@link Network} instances (channels)
- * using the {@link #getNetwork(String) getNetwork} method which in turn can access the {@link Contract} installed on a
- * network and {@link Contract#submitTransaction(String, String...) submit transactions} to the ledger.
+ * instantiated from a Builder instance that is created using {@link #newInstance()}, and configured using a gateway
+ * URL and a signing identity. It can then be connected to a fabric network using the Builder's
+ * {@link Builder#connect() connect()} method. Once connected, it can then access individual {@link Network} instances
+ * (channels) using the {@link #getNetwork(String) getNetwork()} method which in turn can access the {@link Contract}
+ * installed on a network and {@link Contract#submitTransaction(String, String...) submit transactions} to the ledger.
  *
  * <p>Gateway instances should be reused for multiple transaction invocations and only closed once connection to the
  * Fabric network is no longer required.</p>
  *
- * <p>Multiple Gateway instances may share the same underlying gRPC connection by supplying the gRPC {@code Channel} as
+ * <p>Multiple Gateway instances may share the same underlying gRPC connection by supplying the gRPC {@link Channel} as
  * an option to the Gateway connect.</p>
  *
  * <pre>{@code
