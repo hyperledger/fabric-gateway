@@ -1,6 +1,6 @@
 # Overview
 
-The *fabric-gateway* package enables Node.js developers to build client applications using the Hyperledger Fabric programming model as described in the [Developing Applications](https://hyperledger-fabric.readthedocs.io/en/latest/developapps/developing_applications.html) chapter of the Fabric documentation.
+The *fabric-gateway* package enables Node.js developers to build client applications using the Hyperledger Fabric programming model as described in the [Running a Fabric Application](https://hyperledger-fabric.readthedocs.io/en/latest/write_first_app.html) tutorial of the Fabric documentation.
 
 [TypeScript](http://www.typescriptlang.org/) definitions are included in this package.
 
