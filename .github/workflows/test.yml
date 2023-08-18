@@ -107,7 +107,7 @@ jobs:
       fail-fast: false
       matrix:
         node-version:
-          - 18
+          - 20
     env:
       SOFTHSM2_CONF: ${{ github.workspace }}/softhsm2.conf
     steps:
@@ -126,7 +126,7 @@ jobs:
       fail-fast: false
       matrix:
         node-version:
-          - 18
+          - 20
     env:
       SOFTHSM2_CONF: ${{ github.workspace }}/softhsm2.conf
     steps:
