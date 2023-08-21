@@ -109,6 +109,7 @@ jobs:
         node-version:
           - 16
           - 18
+          - 20
     env:
       SOFTHSM2_CONF: ${{ github.workspace }}/softhsm2.conf
     steps:
@@ -129,6 +130,7 @@ jobs:
         node-version:
           - 16
           - 18
+          - 20
     env:
       SOFTHSM2_CONF: ${{ github.workspace }}/softhsm2.conf
     steps:
