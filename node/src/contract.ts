@@ -28,7 +28,7 @@ import { SubmittedTransaction } from './submittedtransaction';
  * signing implementation can be omitted and off-line signing can be carried out by:
  * 1. Returning the serialized proposal, transaction or commit status message along with its digest to the client for
  * them to generate a signature.
- * 1. With the serialized message and signature received from the client to create a signed proposal, transaction or
+ * 2. With the serialized message and signature received from the client to create a signed proposal, transaction or
  * commit using the Gateway's {@link Gateway.newSignedProposal}, {@link Gateway.newSignedTransaction} or
  * {@link Gateway.newSignedCommit} methods respectively.
  *
