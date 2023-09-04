@@ -1,21 +1,21 @@
-import * as crypto from 'crypto';
-import * as jsrsa from 'jsrsasign';
+/*
+ * Copyright IBM Corp. All Rights Reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-export function getSKIFromCertificate(pem: string): Buffer {
-    const key = jsrsa.KEYUTIL.getKey(pem);
-    const uncompressedPoint = getUncompressedPointOnCurve(key as jsrsa.KJUR.crypto.ECDSA);
-    const hashBuffer = crypto.createHash('sha256');
-    hashBuffer.update(uncompressedPoint);
+import { KeyObject, X509Certificate, createHash } from 'node:crypto';
+import { assertDefined } from './utils';
 
-    const digest = hashBuffer.digest('hex');
-    return Buffer.from(digest, 'hex');
+export function getSKIFromCertificate(certificate: X509Certificate): Buffer {
+    const uncompressedPoint = getUncompressedPointOnCurve(certificate.publicKey);
+    return createHash('sha256').update(uncompressedPoint).digest();
 }
 
-function getUncompressedPointOnCurve(key: jsrsa.KJUR.crypto.ECDSA): Buffer {
-    const xyhex = key.getPublicKeyXYHex();
-    const xBuffer = Buffer.from(xyhex.x, 'hex');
-    const yBuffer = Buffer.from(xyhex.y, 'hex');
-    const uncompressedPrefix = Buffer.from('04', 'hex');
-    const uncompressedPoint = Buffer.concat([uncompressedPrefix, xBuffer, yBuffer]);
-    return uncompressedPoint;
+function getUncompressedPointOnCurve(key: KeyObject): Buffer {
+    const jwk = key.export({ format: 'jwk' });
+    const x = Buffer.from(assertDefined(jwk.x, 'x'), 'base64url');
+    const y = Buffer.from(assertDefined(jwk.y, 'y'), 'base64url');
+    const prefix = Buffer.from('04', 'hex');
+    return Buffer.concat([prefix, x, y]);
 }

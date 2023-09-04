@@ -7,14 +7,14 @@
 import { DataTable, setWorldConstructor } from '@cucumber/cucumber';
 import * as grpc from '@grpc/grpc-js';
 import { ChaincodeEvent, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers } from '@hyperledger/fabric-gateway';
-import * as crypto from 'crypto';
+import { KeyObject, X509Certificate, createPrivateKey } from 'crypto';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { findSoftHSMPKCS11Lib, fixturesDir, getOrgForMsp } from './fabric';
 import { getSKIFromCertificate } from './fabricski';
 import { GatewayContext } from './gatewaycontext';
 import { TransactionInvocation } from './transactioninvocation';
-import { assertDefined, Constructor, isInstanceOf } from './utils';
+import { Constructor, assertDefined, isInstanceOf } from './utils';
 
 let hsmSignerFactory: HSMSignerFactory;
 
@@ -78,11 +78,11 @@ async function newSigner(user: string, mspId: string): Promise<Signer> {
     return signers.newPrivateKeySigner(privateKey);
 }
 
-async function readPrivateKey(user: string, mspId: string): Promise<crypto.KeyObject> {
+async function readPrivateKey(user: string, mspId: string): Promise<KeyObject> {
     const credentialsPath = getCredentialsPath(user, mspId);
     const keyPath = path.join(credentialsPath, 'keystore', 'key.pem');
     const privateKeyPem = await fs.readFile(keyPath);
-    return crypto.createPrivateKey(privateKeyPem);
+    return createPrivateKey(privateKeyPem);
 }
 
 function getCredentialsPath(user: string, mspId: string): string {
@@ -104,8 +104,9 @@ async function newHSMSigner(user: string): Promise<HSMSigner> {
         hsmSignerFactory = signers.newHSMSignerFactory(findSoftHSMPKCS11Lib());
     }
 
-    const certificate = await readHSMCertificate(user);
-    const ski = getSKIFromCertificate(certificate.toString());
+    const certificatePem = await readHSMCertificate(user);
+    const certificate = new X509Certificate(certificatePem);
+    const ski = getSKIFromCertificate(certificate);
     const hsmConfigOptions: HSMSignerOptions = {
         label: 'ForFabric',
         pin: '98765432',
