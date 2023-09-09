@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { KeyObject, sign } from 'crypto';
-import { newECPrivateKeySigner } from './ecdsa';
+import { KeyObject, sign } from 'node:crypto';
+import { type newECPrivateKeySigner as newECPrivateKeySignerType } from './ecdsa';
 import { HSMSignerFactory, type HSMSignerFactoryImpl as HSMSignerFactoryImplType } from './hsmsigner';
 import { Signer } from './signer';
 
@@ -24,6 +24,25 @@ import { Signer } from './signer';
  *
  * The Ed25519 signer operates on the full message content, and should be combined with a `none` (or no-op) hash
  * implementation to ensure the complete message is passed to the signer.
+ *
+ * ## Big-endian considerations
+ *
+ * For users of big-endian systems, such as s390x, the current P-256 and P-384 signer implementations are unsupported.
+ * Instead you should use an alternative implementation that operates correctly on big-endian systems.
+ * Implementations based on Node's crypto module can be used, for example:
+ *
+ * ```typescript
+ * import { sign } from 'node:crypto';
+ *
+ * const nodeSigner = (message) => {
+ *     const signature = sign(undefined, message, privateKey);
+ *     return Promise.resolve(signature);
+ * };
+ * ```
+ *
+ * Since Node's crypto signing expects the full message content, signers should be combined with a `none` (or no-op)
+ * hash implementation.
+ *
  * @param key - A private key.
  * @returns A signing implementation.
  */
@@ -33,8 +52,12 @@ export function newPrivateKeySigner(key: KeyObject): Signer {
     }
 
     switch (key.asymmetricKeyType) {
-    case 'ec':
+    case 'ec': {
+        // Dynamic module load to prevent unnecessary load of @noble/hashes transitive dependency on big-endian systems
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { newECPrivateKeySigner } = require('./ecdsa') as { newECPrivateKeySigner: typeof newECPrivateKeySignerType };
         return newECPrivateKeySigner(key);
+    }
     case 'ed25519':
         return newNodePrivateKeySigner(key);
     default:
