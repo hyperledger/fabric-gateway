@@ -4,12 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { generateKeyPairSync } from 'crypto';
+import { generateKeyPairSync } from 'node:crypto';
+import { dirname, sep as pathSeparator } from 'node:path';
 import type { signers as SignersType } from '.';
 
 function isLoaded(moduleName: string): boolean {
     const moduleFile = require.resolve(moduleName);
-    return !!Object.values(require.cache).find(m => m?.filename === moduleFile);
+    const moduleDir = dirname(moduleFile) + pathSeparator;
+    return !!Object.values(require.cache).find(m => m?.filename.startsWith(moduleDir));
 }
 
 describe('optional pkcs11js dependency', () => {

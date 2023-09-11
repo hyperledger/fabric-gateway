@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { KeyObject, sign } from 'crypto';
+import { KeyObject, sign } from 'node:crypto';
 import { newECPrivateKeySigner } from './ecdsa';
 import { HSMSignerFactory, type HSMSignerFactoryImpl as HSMSignerFactoryImplType } from './hsmsigner';
 import { Signer } from './signer';
@@ -24,6 +24,7 @@ import { Signer } from './signer';
  *
  * The Ed25519 signer operates on the full message content, and should be combined with a `none` (or no-op) hash
  * implementation to ensure the complete message is passed to the signer.
+ *
  * @param key - A private key.
  * @returns A signing implementation.
  */

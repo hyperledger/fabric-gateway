@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { p256 } from '@noble/curves/p256';
 import * as pkcs11js from 'pkcs11js';
+import { ECSignature } from './ecdsa';
 import { Signer } from './signer';
 
 export interface HSMSignerOptions {
@@ -94,13 +94,11 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
             throw err;
         }
 
-        const compactSignatureLength = p256.CURVE.nByteLength * 2;
-
         return {
             signer: (digest) => {
                 pkcs11.C_SignInit(session, { mechanism: pkcs11js.CKM_ECDSA }, privateKeyHandle);
-                const compactSignature = pkcs11.C_Sign(session, Buffer.from(digest), Buffer.alloc(compactSignatureLength));
-                const signature = p256.Signature.fromCompact(compactSignature).normalizeS().toDERRawBytes();
+                const compactSignature = pkcs11.C_Sign(session, Buffer.from(digest), Buffer.alloc(256));
+                const signature = new ECSignature('P-256', compactSignature).normalise().toDER();
                 return Promise.resolve(signature);
             },
             close: () => pkcs11.C_CloseSession(session),
