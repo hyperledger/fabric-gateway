@@ -39,7 +39,7 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           java-version: 21
-          distribution: temurin
+          distribution: oracle
           cache: maven
           gpg-private-key: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
@@ -59,7 +59,7 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           java-version: 21
-          distribution: temurin
+          distribution: oracle
           cache: maven
           server-id: ossrh
           server-username: MAVEN_USERNAME

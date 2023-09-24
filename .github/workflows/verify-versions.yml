@@ -43,7 +43,7 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           java-version: 21
-          distribution: temurin
+          distribution: oracle
           cache: maven
       - name: Check Java artifact version
         shell: bash
