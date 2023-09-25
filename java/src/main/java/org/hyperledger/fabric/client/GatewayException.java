@@ -6,10 +6,13 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.List;
-
 import io.grpc.StatusRuntimeException;
 import org.hyperledger.fabric.protos.gateway.ErrorDetail;
+
+import java.io.CharArrayWriter;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.util.List;
 
 /**
  * Thrown if an error is encountered while invoking gRPC services on a gateway peer. Since the gateway delegates much
@@ -44,5 +47,50 @@ public class GatewayException extends Exception {
      */
     public List<ErrorDetail> getDetails() {
         return grpcStatus.getDetails();
+    }
+
+    /**
+     * {@inheritDoc}
+     * This implementation appends any gRPC error details to the stack trace.
+     */
+    @Override
+    public void printStackTrace() {
+        printStackTrace(System.err);
+    }
+
+    /**
+     * {@inheritDoc}
+     * This implementation appends any gRPC error details to the stack trace.
+     */
+    @Override
+    public void printStackTrace(final PrintStream out) {
+        printStackTrace(new PrintWriter(out));
+    }
+
+    /**
+     * {@inheritDoc}
+     * This implementation appends any gRPC error details to the stack trace.
+     */
+    @Override
+    public void printStackTrace(final PrintWriter out) {
+        CharArrayWriter message = new CharArrayWriter();
+
+        try (PrintWriter printer = new PrintWriter(message)) {
+            super.printStackTrace(printer);
+            printer.flush();
+        }
+
+        List<ErrorDetail> details = getDetails();
+        if (!details.isEmpty()) {
+            message.append("Error details:\n");
+            for (ErrorDetail detail : details) {
+                message.append("    address: ").append(detail.getAddress())
+                        .append("; mspId: ").append(detail.getMspId())
+                        .append("; message: ").append(detail.getMessage())
+                        .append('\n');
+            }
+        }
+
+        out.print(message);
     }
 }

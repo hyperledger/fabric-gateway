@@ -9,31 +9,25 @@
     <property name="fileExtensions" value="java, properties, xml"/>
 
     <!-- Excludes all 'module-info.java' files              -->
-    <!-- See https://checkstyle.org/config_filefilters.html -->
+    <!-- See https://checkstyle.org/filefilters/ -->
     <module name="BeforeExecutionExclusionFileFilter">
         <property name="fileNamePattern" value="module\-info\.java$"/>
     </module>
 
-    <!-- Only public (API, SPI) classes must have Javadoc -->
-<!--    <module name="SuppressionSingleFilter">-->
-<!--        <property name="checks" value=".*Javadoc.*"/>-->
-<!--        <property name="files" value="src/main/java/org/hyperledger/fabric/client/impl"/>-->
-<!--    </module>-->
-
     <!-- Checks that a package-info.java file exists for each package.     -->
-    <!-- See https://checkstyle.org/config_javadoc.html#JavadocPackage -->
+    <!-- See https://checkstyle.org/checks/javadoc/javadocpackage.html -->
     <module name="JavadocPackage"/>
 
     <!-- Checks whether files end with a new line.                        -->
-    <!-- See https://checkstyle.org/config_misc.html#NewlineAtEndOfFile -->
+    <!-- See https://checkstyle.org/checks/misc/newlineatendoffile.html -->
     <module name="NewlineAtEndOfFile"/>
 
     <!-- Checks that property files contain the same keys.         -->
-    <!-- See https://checkstyle.org/config_misc.html#Translation -->
+    <!-- See https://checkstyle.org/checks/misc/translation.html -->
     <module name="Translation"/>
 
     <!-- Checks for Size Violations.                    -->
-    <!-- See https://checkstyle.org/config_sizes.html -->
+    <!-- See https://checkstyle.org/checks/sizes/ -->
     <module name="FileLength"/>
     <module name="LineLength">
         <property name="fileExtensions" value="java"/>
@@ -42,11 +36,11 @@
     </module>
 
     <!-- Checks for whitespace                               -->
-    <!-- See https://checkstyle.org/config_whitespace.html -->
+    <!-- See https://checkstyle.org/checks/whitespace/ -->
     <module name="FileTabCharacter"/>
 
     <!-- Miscellaneous other checks.                   -->
-    <!-- See https://checkstyle.org/config_misc.html -->
+    <!-- See https://checkstyle.org/checks/misc/ -->
     <module name="RegexpSingleline">
         <property name="format" value="\s+$"/>
         <property name="minimum" value="0"/>
@@ -55,7 +49,7 @@
     </module>
 
     <!-- Checks for Headers                                -->
-    <!-- See https://checkstyle.org/config_header.html   -->
+    <!-- See https://checkstyle.org/checks/header/   -->
     <module name="RegexpHeader">
         <property name="headerFile" value="java-copyright-header.txt"/>
         <property name="fileExtensions" value="java"/>
@@ -77,7 +71,7 @@
         </module>
 
         <!-- Checks for Javadoc comments.                     -->
-        <!-- See https://checkstyle.org/config_javadoc.html -->
+        <!-- See https://checkstyle.org/checks/javadoc/ -->
         <module name="InvalidJavadocPosition"/>
         <module name="JavadocContentLocation"/>
         <module name="JavadocMethod"/>
@@ -95,7 +89,7 @@
         <module name="NonEmptyAtclauseDescription"/>
 
         <!-- Checks for Naming Conventions.                  -->
-        <!-- See https://checkstyle.org/config_naming.html -->
+        <!-- See https://checkstyle.org/checks/naming/ -->
         <module name="ConstantName"/>
         <module name="LocalFinalVariableName"/>
         <module name="LocalVariableName"/>
@@ -107,7 +101,7 @@
         <module name="TypeName"/>
 
         <!-- Checks for imports                              -->
-        <!-- See https://checkstyle.org/config_import.html -->
+        <!-- See https://checkstyle.org/checks/imports/ -->
         <module name="AvoidStarImport"/>
         <module name="IllegalImport"/> <!-- defaults to sun.* packages -->
         <module name="RedundantImport"/>
@@ -116,12 +110,12 @@
         </module>
 
         <!-- Checks for Size Violations.                    -->
-        <!-- See https://checkstyle.org/config_sizes.html -->
+        <!-- See https://checkstyle.org/checks/sizes/ -->
         <module name="MethodLength"/>
         <module name="ParameterNumber"/>
 
         <!-- Checks for whitespace                               -->
-        <!-- See https://checkstyle.org/config_whitespace.html -->
+        <!-- See https://checkstyle.org/checks/whitespace/ -->
         <module name="EmptyLineSeparator">
             <property name="allowNoEmptyLineBetweenFields" value="true"/>
             <property name="allowMultipleEmptyLines" value="false"/>
@@ -139,12 +133,12 @@
         <module name="WhitespaceAround"/>
 
         <!-- Modifier Checks                                    -->
-        <!-- See https://checkstyle.org/config_modifiers.html -->
+        <!-- See https://checkstyle.org/checks/modifier/ -->
         <module name="ModifierOrder"/>
         <module name="RedundantModifier"/>
 
         <!-- Checks for blocks. You know, those {}'s         -->
-        <!-- See https://checkstyle.org/config_blocks.html -->
+        <!-- See https://checkstyle.org/checks/blocks/ -->
         <module name="AvoidNestedBlocks"/>
         <module name="EmptyBlock"/>
         <module name="LeftCurly"/>
@@ -152,7 +146,7 @@
         <module name="RightCurly"/>
 
         <!-- Checks for common coding problems               -->
-        <!-- See https://checkstyle.org/config_coding.html -->
+        <!-- See https://checkstyle.org/checks/coding/ -->
         <module name="EmptyStatement"/>
         <module name="EqualsHashCode"/>
         <module name="IllegalInstantiation"/>
@@ -171,7 +165,7 @@
         <module name="UnusedLocalVariable"/>
 
         <!-- Checks for class design                         -->
-        <!-- See https://checkstyle.org/config_design.html -->
+        <!-- See https://checkstyle.org/checks/design/ -->
         <module name="DesignForExtension"/>
         <module name="FinalClass"/>
         <module name="HideUtilityClassConstructor"/>
@@ -179,13 +173,13 @@
         <module name="VisibilityModifier"/>
 
         <!-- Checks for metrics                            -->
-        <!-- See https://checkstyle.org/config_metrics.html -->
+        <!-- See https://checkstyle.org/checks/metrics/ -->
         <module name="CyclomaticComplexity">
             <property name="max" value="10"/>
         </module>
 
         <!-- Miscellaneous other checks.                   -->
-        <!-- See https://checkstyle.org/config_misc.html -->
+        <!-- See https://checkstyle.org/checks/misc/ -->
         <module name="ArrayTypeStyle"/>
         <module name="FinalParameters"/>
         <module name="Indentation"/>

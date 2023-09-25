@@ -31,7 +31,6 @@ final class GrpcStatus {
         return StatusProto.fromStatusAndTrailers(status, trailers)
                 .getDetailsList()
                 .stream()
-                .filter(any -> any.is(ErrorDetail.class))
                 .map(any -> {
                     try {
                         return any.unpack(ErrorDetail.class);
