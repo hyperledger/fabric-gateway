@@ -9,12 +9,12 @@ import { common, ledger, msp, orderer, peer } from '@hyperledger/fabric-protos';
 import { CloseableAsyncIterable } from '.';
 import { BlockEventsOptions } from './blockeventsbuilder';
 import { BlockAndPrivateDataEventsRequest, BlockEventsRequest, FilteredBlockEventsRequest } from './blockeventsrequest';
-import { assertDefined, Gateway, internalConnect, InternalConnectOptions } from './gateway';
+import * as checkpointers from './checkpointers';
+import { Gateway, InternalConnectOptions, assertDefined, internalConnect } from './gateway';
 import { GatewayError } from './gatewayerror';
 import { Identity } from './identity/identity';
 import { Network } from './network';
 import { DuplexStreamResponseStub, MockGatewayGrpcClient, newDuplexStreamResponse, readElements } from './testutils.test';
-import * as checkpointers from './checkpointers';
 
 function assertStartPositionToBeSpecified(seekInfo: orderer.SeekInfo, blockNumber: number): void {
     const start = seekInfo.getStart();
@@ -432,6 +432,19 @@ describe('Block Events', () => {
 
             const events = await testCase.getEvents();
             events.close();
+
+            expect(stream.cancel).toHaveBeenCalled();
+        });
+
+        it('resource clean-up cancels gRPC stream', async () => {
+            const responses = [testCase.newBlockResponse(1), testCase.newBlockResponse(2)];
+            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>(responses);
+            testCase.mockResponse(stream);
+
+            {
+                // @ts-expect-error Assigned to unused variable for resource cleanup
+                using events = await testCase.getEvents(); // eslint-disable-line @typescript-eslint/no-unused-vars
+            }
 
             expect(stream.cancel).toHaveBeenCalled();
         });

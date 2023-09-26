@@ -9,7 +9,7 @@ import { common, gateway, peer } from '@hyperledger/fabric-protos';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { chaincodeEventsMethod, CloseableAsyncIterable, commitStatusMethod, deliverFilteredMethod, deliverMethod, deliverWithPrivateDataMethod, DuplexStreamResponse, endorseMethod, evaluateMethod, GatewayGrpcClient, ServerStreamResponse, submitMethod } from './client';
+import { CloseableAsyncIterable, DuplexStreamResponse, GatewayGrpcClient, ServerStreamResponse, chaincodeEventsMethod, commitStatusMethod, deliverFilteredMethod, deliverMethod, deliverWithPrivateDataMethod, endorseMethod, evaluateMethod, submitMethod } from './client';
 
 /* eslint-disable jest/no-export */
 
@@ -320,9 +320,13 @@ export interface CloseableAsyncIterableStub<T> extends CloseableAsyncIterable<T>
     close: jest.Mock<void, void[]>;
 }
 
+// @ts-expect-error Polyfill for Symbol.dispose if not present
+Symbol.dispose ??= Symbol('Symbol.dispose');
+
 export function newCloseableAsyncIterable<T>(values: T[]): CloseableAsyncIterableStub<T> {
     return Object.assign(newAsyncIterable(values), {
         close: jest.fn<void, void[]>(),
+        [Symbol.dispose]: jest.fn<void, void[]>(),
     });
 }
 
