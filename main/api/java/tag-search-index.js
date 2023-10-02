@@ -1,1 +1,1 @@
-tagSearchIndex = [{"l":"Serialized Form","h":"","u":"serialized-form.html"}];updateSearchResults();
+tagSearchIndex = [{"l":"Off-line signing","h":"interface org.hyperledger.fabric.client.Contract","d":"Section","u":"org/hyperledger/fabric/client/Contract.html#off-line-signing-heading"},{"l":"Serialized Form","h":"","u":"serialized-form.html"}];updateSearchResults();
