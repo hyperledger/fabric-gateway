@@ -156,9 +156,17 @@ export function internalConnect(options: Readonly<InternalConnectOptions>): Gate
     return new GatewayImpl(gatewayClient, signingIdentity);
 }
 
+// @ts-expect-error Polyfill for Symbol.dispose if not present
+Symbol.dispose ??= Symbol('Symbol.dispose');
+
 /**
  * Gateway represents the connection of a specific client identity to a Fabric Gateway. A Gateway is obtained using the
  * {@link connect} function.
+ *
+ * This type implements the Disposable interface, allowing instances to be disposed of with ECMAScript explicit
+ * resource management and the `using` keyword instead of calling {@link close} directly.
+ *
+ * @see [ECMAScript explicit resource management](https://github.com/tc39/proposal-explicit-resource-management)
  */
 export interface Gateway {
     /**
@@ -284,6 +292,8 @@ export interface Gateway {
      * contracts obtained using the Gateway, including removing event listeners.
      */
     close(): void;
+
+    [Symbol.dispose](): void;
 }
 
 class GatewayImpl implements Gateway {
@@ -449,6 +459,10 @@ class GatewayImpl implements Gateway {
 
     close(): void {
         // Nothing for now
+    }
+
+    [Symbol.dispose](): void {
+        this.close();
     }
 }
 

@@ -21,7 +21,11 @@ export class CommitError extends Error {
      */
     transactionId: string;
 
-    constructor(properties: Readonly<Omit<CommitError, keyof Error> & Partial<Pick<Error, 'message'>>>) {
+    constructor(properties: Readonly<{
+        code: peer.TxValidationCodeMap[keyof peer.TxValidationCodeMap];
+        transactionId: string;
+        message?: string;
+    }>) {
         super(properties.message);
 
         this.name = CommitError.name;

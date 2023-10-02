@@ -8,7 +8,7 @@ import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
 import { gateway as gatewayproto, orderer, peer } from '@hyperledger/fabric-protos';
 import { ChaincodeEvent } from './chaincodeevent';
 import * as checkpointers from './checkpointers';
-import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
+import { Gateway, InternalConnectOptions, internalConnect } from './gateway';
 import { GatewayError } from './gatewayerror';
 import { Identity } from './identity/identity';
 import { Network } from './network';
@@ -30,7 +30,7 @@ function newChaincodeEvent(blockNumber: number, event: peer.ChaincodeEvent): Cha
     };
 }
 
-interface ExpectedRequest{
+interface ExpectedRequest {
     channelName: string;
     chaincodeName: string;
     typeCase: orderer.SeekPosition.TypeCase;
@@ -369,6 +369,18 @@ describe('Chaincode Events', () => {
                 code: serviceError.code,
                 cause: serviceError,
             });
+        });
+
+        it('resource clean-up cancels gRPC client stream', async () => {
+            const responseStream = newServerStreamResponse([ response1, response2 ]);
+            client.mockChaincodeEventsResponse(responseStream);
+
+            {
+                // @ts-expect-error Assigned to unused variable for resource cleanup
+                using events = await network.getChaincodeEvents('CHAINCODE'); // eslint-disable-line @typescript-eslint/no-unused-vars
+            }
+
+            expect(responseStream.cancel).toHaveBeenCalled();
         });
     });
 });

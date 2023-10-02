@@ -50,7 +50,12 @@ export class GatewayError extends Error {
      */
     cause: ServiceError;
 
-    constructor(properties: Readonly<Omit<GatewayError, keyof Error> & Partial<Pick<Error, 'message'>>>) {
+    constructor(properties: Readonly<{
+        code: number;
+        details: ErrorDetail[];
+        cause: ServiceError;
+        message?: string;
+    }>) {
         super(properties.message);
 
         this.name = GatewayError.name;

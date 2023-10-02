@@ -33,15 +33,25 @@ export interface GatewayClient {
     blockAndPrivateDataEvents(request: common.Envelope, options?: CallOptions): CloseableAsyncIterable<peer.DeliverResponse>;
 }
 
+// @ts-expect-error Polyfill for Symbol.dispose if not present
+Symbol.dispose ??= Symbol('Symbol.dispose');
+
 /**
  * An async iterable that can be closed when the consumer does not want to read any more elements, freeing up resources
  * that may be held by the iterable.
+ *
+ * This type implements the Disposable interface, allowing instances to be disposed of with ECMAScript explicit
+ * resource management and the `using` keyword instead of calling {@link close} directly.
+ *
+ * @see [ECMAScript explicit resource management](https://github.com/tc39/proposal-explicit-resource-management)
  */
 export interface CloseableAsyncIterable<T> extends AsyncIterable<T> {
     /**
      * Close the iterable to free up resources when no more elements are required.
      */
     close(): void;
+
+    [Symbol.dispose](): void;
 }
 
 /**
@@ -157,6 +167,7 @@ class GatewayClientImpl implements GatewayClient {
             return {
                 [Symbol.asyncIterator]: () => wrapAsyncIterator(serverStream[Symbol.asyncIterator]()),
                 close: () => serverStream.cancel(),
+                [Symbol.dispose]: () => serverStream.cancel(),
             };
         } catch (err) {
             rethrowGrpcError(err);
@@ -202,6 +213,8 @@ class GatewayClientImpl implements GatewayClient {
             return {
                 [Symbol.asyncIterator]: () => wrapAsyncIterator(duplexStream[Symbol.asyncIterator]()),
                 close: () => duplexStream.cancel(),
+                [Symbol.dispose]: () => duplexStream.cancel(),
+
             };
         } catch (err) {
             rethrowGrpcError(err);

@@ -133,6 +133,9 @@ class SignableBlockEventsRequest implements Signable {
     }
 }
 
+// @ts-expect-error Polyfill for Symbol.dispose if not present
+Symbol.dispose ??= Symbol('Symbol.dispose');
+
 export class BlockEventsRequestImpl extends SignableBlockEventsRequest implements BlockEventsRequest {
     readonly #client: GatewayClient;
 
@@ -150,6 +153,7 @@ export class BlockEventsRequestImpl extends SignableBlockEventsRequest implement
                 response => getBlock(response, () => response.getBlock()),
             ),
             close: () => responses.close(),
+            [Symbol.dispose]: () => responses.close(),
         };
     }
 }
@@ -171,6 +175,7 @@ export class FilteredBlockEventsRequestImpl extends SignableBlockEventsRequest i
                 response => getBlock(response, () => response.getFilteredBlock()),
             ),
             close: () => responses.close(),
+            [Symbol.dispose]: () => responses.close(),
         };
     }
 }
@@ -192,6 +197,7 @@ export class BlockAndPrivateDataEventsRequestImpl extends SignableBlockEventsReq
                 response => getBlock(response, () => response.getBlockAndPrivateData()),
             ),
             close: () => responses.close(),
+            [Symbol.dispose]: () => responses.close(),
         };
     }
 }

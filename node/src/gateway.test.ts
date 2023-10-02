@@ -79,5 +79,20 @@ describe('Gateway', () => {
 
             expect(closeStub).not.toHaveBeenCalled();
         });
+
+        it('called by resource clean-up', () => {
+            const client = new grpc.Client('example.org:1337', grpc.credentials.createInsecure());
+            const options: ConnectOptions = {
+                identity,
+                client,
+            };
+            const closeStub = jest.fn();
+            {
+                // @ts-expect-error Assigned to unused variable for resource cleanup
+                using gateway = Object.assign(connect(options), { close: closeStub }); // eslint-disable-line @typescript-eslint/no-unused-vars
+            }
+
+            expect(closeStub).toHaveBeenCalled();
+        });
     });
 });

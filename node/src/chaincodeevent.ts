@@ -37,6 +37,9 @@ export interface ChaincodeEvent {
     payload: Uint8Array;
 }
 
+// @ts-expect-error Polyfill for Symbol.dispose if not present
+Symbol.dispose ??= Symbol('Symbol.dispose');
+
 export function newChaincodeEvents(responses: CloseableAsyncIterable<gateway.ChaincodeEventsResponse>): CloseableAsyncIterable<ChaincodeEvent> {
     return {
         async* [Symbol.asyncIterator]() { // eslint-disable-line @typescript-eslint/require-await
@@ -48,9 +51,8 @@ export function newChaincodeEvents(responses: CloseableAsyncIterable<gateway.Cha
                 }
             }
         },
-        close: () => {
-            responses.close();
-        },
+        close: () => responses.close(),
+        [Symbol.dispose]: () => responses.close(),
     };
 }
 
