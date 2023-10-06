@@ -105,7 +105,6 @@ jobs:
       fail-fast: false
       matrix:
         node-version:
-          - 16
           - 18
           - 20
     env:
@@ -126,7 +125,6 @@ jobs:
       fail-fast: false
       matrix:
         node-version:
-          - 16
           - 18
           - 20
     env:
