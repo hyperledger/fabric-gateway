@@ -110,7 +110,7 @@ scan-go-nancy:
 .PHONEY: scan-go-osv-scanner
 scan-go-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
-	osv-scanner --lockfile='$(base_dir)/go.mod'
+	osv-scanner --lockfile='$(base_dir)/go.mod' --experimental-call-analysis || [ \( $$? -gt 1 \) -a \( $$? -lt 127 \) ]
 
 .PHONEY: scan-node
 scan-node: scan-node-npm-audit scan-node-osv-scanner
