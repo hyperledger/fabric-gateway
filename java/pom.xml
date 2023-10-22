@@ -38,7 +38,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <grpcVersion>1.58.0</grpcVersion>
+        <grpcVersion>1.59.0</grpcVersion>
         <bouncyCastleVersion>1.76</bouncyCastleVersion>
         <skipUnitTests>${skipTests}</skipUnitTests>
     </properties>
@@ -380,7 +380,7 @@
                     <plugin>
                         <groupId>org.owasp</groupId>
                         <artifactId>dependency-check-maven</artifactId>
-                        <version>8.4.0</version>
+                        <version>8.4.2</version>
                         <configuration>
                             <skipProvidedScope>true</skipProvidedScope>
                             <skipTestScope>true</skipTestScope>
