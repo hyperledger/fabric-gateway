@@ -4,7 +4,7 @@ layout: home
 
 The Fabric Gateway is a core component of a Hyperledger Fabric blockchain network, and coordinates the actions required to submit transactions and query ledger state on behalf of client applications. By using the Gateway, client applications only need to connect to a single endpoint in a Fabric network.
 
-## Fabric Gateway v1.3
+## Fabric Gateway v1.4
 
 There are samples for Go, Node, and Java in the [fabric-samples](https://github.com/hyperledger/fabric-samples) repository, which are a great place to start if you want to try out the new Fabric Gateway!
 
@@ -42,7 +42,7 @@ The following table shows versions of Fabric, programming language runtimes, and
 |     | Tested | Supported |
 | --- | ------ | --------- |
 | **Fabric** | 2.5 | 2.4.4+ |
-| **Go** | 1.19, 1.20, 1.21 | 1.19, 1.20, 1.21 |
-| **Node** | 16, 18 | 16, 18 |
+| **Go** | 1.20, 1.21 | 1.20, 1.21 |
+| **Node** | 18, 20 | 18, 20 |
 | **Java** | 8, 11, 17, 21 | 8, 11, 17, 21 |
 | **Platform** | Ubuntu 22.04 | |
