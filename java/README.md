@@ -18,7 +18,7 @@ The Gateway client API documentation for Java is available here:
 
 ## Installation
 
-The Fabric Gateway client API package is published to [Maven Central](https://search.maven.org/artifact/org.hyperledger.fabric/fabric-gateway).
+The Fabric Gateway client API package is published to [Maven Central](https://central.sonatype.com/artifact/org.hyperledger.fabric/fabric-gateway).
 
 ### Maven
 
@@ -28,7 +28,7 @@ Add the following dependency to your project's `pom.xml` file:
 <dependency>
     <groupId>org.hyperledger.fabric</groupId>
     <artifactId>fabric-gateway</artifactId>
-    <version>1.3.0</version>
+    <version>1.4.0</version>
 </dependency>
 ```
 
@@ -38,7 +38,7 @@ A suitable gRPC channel service provider must also be specified (as described in
 <dependency>
     <groupId>io.grpc</groupId>
     <artifactId>grpc-netty-shaded</artifactId>
-    <version>1.56.0</version>
+    <version>1.59.0</version>
     <scope>runtime</scope>
 </dependency>
 ```
@@ -48,13 +48,13 @@ A suitable gRPC channel service provider must also be specified (as described in
 Add the following dependency to your project's `build.gradle` file:
 
 ```groovy
-implementation 'org.hyperledger.fabric:fabric-gateway:1.3.0'
+implementation 'org.hyperledger.fabric:fabric-gateway:1.4.0'
 ```
 
 A suitable gRPC channel service provider must also be specified (as described in the [gRPC security documentation](https://github.com/grpc/grpc-java/blob/master/SECURITY.md#transport-security-tls)), such as:
 
 ```groovy
-runtimeOnly 'io.grpc:grpc-netty-shaded:1.56.0'
+runtimeOnly 'io.grpc:grpc-netty-shaded:1.59.0'
 ```
 
 ## Compatibility
