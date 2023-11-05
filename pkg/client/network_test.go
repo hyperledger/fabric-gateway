@@ -9,8 +9,8 @@ package client
 import (
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func AssertNewTestNetwork(t *testing.T, networkName string, options ...ConnectOption) *Network {
