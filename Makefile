@@ -78,7 +78,8 @@ lint: staticcheck golangci-lint
 .PHONEY: staticcheck
 staticcheck:
 	go install honnef.co/go/tools/cmd/staticcheck@latest
-	staticcheck -f stylish -tags=pkcs11 '$(go_dir)/...' '$(scenario_dir)/go'
+	staticcheck -f stylish -tags=pkcs11 '$(go_dir)/...'
+	cd '$(scenario_dir)/go' && staticcheck -f stylish -tags=pkcs11 ./...
 
 .PHONEY: install-golangci-lint
 install-golangci-lint:
