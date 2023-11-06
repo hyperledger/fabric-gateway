@@ -36,7 +36,7 @@ It is helpful to create work-in-progress pull requests as [draft](https://docs.g
 
 ### Go
 
-Go code uses [testify](https://github.com/stretchr/testify) for assertions, and [gomock](https://github.com/golang/mock) for mock implementations. The standard [errors](https://pkg.go.dev/errors) package is used; not any third-party error packages.
+Go code uses [testify](https://github.com/stretchr/testify) for assertions, and [gomock](https://github.com/uber-go/mock) for mock implementations. The standard [errors](https://pkg.go.dev/errors) package is used; not any third-party error packages.
 
 Consider recommendations from these resources:
 

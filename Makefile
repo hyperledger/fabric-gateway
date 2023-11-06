@@ -146,7 +146,7 @@ scan-java-osv-scanner:
 
 .PHONEY: generate
 generate:
-	go install github.com/golang/mock/mockgen@v1.6
+	go install go.uber.org/mock/mockgen@latest
 	go generate "$(go_dir)/..."
 
 .PHONEY: vendor-chaincode
