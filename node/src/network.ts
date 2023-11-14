@@ -32,7 +32,7 @@ import { SigningIdentity } from './signingidentity';
  *         startBlock: BigInt(101), // Ignored if the checkpointer has checkpoint state
  *     });
  *     try {
- *         for async (const event of events) {
+ *         for await (const event of events) {
  *             // Process then checkpoint event
  *             await checkpointer.checkpointChaincodeEvent(event)
  *         }
@@ -54,7 +54,7 @@ import { SigningIdentity } from './signingidentity';
  *         startBlock: BigInt(101), // Ignored if the checkpointer has checkpoint state
  *     });
  *     try {
- *         for async (const event of events) {
+ *         for await (const event of events) {
  *             // Process then checkpoint block
  *             await checkpointer.checkpointBlock(event.getHeader().getNumber())
  *         }
@@ -91,7 +91,7 @@ export interface Network {
      * ```typescript
      * const events = await network.getChaincodeEvents(chaincodeName, { startBlock: BigInt(101) });
      * try {
-     *     for async (const event of events) {
+     *     for await (const event of events) {
      *         // Process event
      *     }
      * } finally {
@@ -173,7 +173,7 @@ export interface Network {
      * ```typescript
      * const events = await network.getBlockAndPrivateEventsData({ startBlock: BigInt(101) });
      * try {
-     *     for async (const event of events) {
+     *     for await (const event of events) {
      *         // Process block and private data event
      *     }
      * } finally {

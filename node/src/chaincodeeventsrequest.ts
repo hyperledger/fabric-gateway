@@ -25,7 +25,7 @@ export interface ChaincodeEventsRequest extends Signable {
      * ```typescript
      * const events = await request.getEvents();
      * try {
-     *     for async (const event of events) {
+     *     for await (const event of events) {
      *         // Process event
      *     }
      * } finally {
