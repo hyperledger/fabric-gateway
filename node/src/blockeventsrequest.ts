@@ -78,7 +78,7 @@ export interface BlockAndPrivateDataEventsRequest extends Signable {
      * ```typescript
      * const events = await network.getBlockAndPrivateEventsData();
      * try {
-     *     for async (const event of events) {
+     *     for await (const event of events) {
      *         // Process block and private data event
      *     }
      * } finally {
