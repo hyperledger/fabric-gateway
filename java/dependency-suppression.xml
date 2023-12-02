@@ -16,4 +16,11 @@
         <packageUrl regex="true">^pkg:maven/org\.hyperledger\.fabric/fabric\-protos@.*$</packageUrl>
         <cve>CVE-2022-36023</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        CVE relates to attach on gRPC servers (not clients) and is dependent on the Netty version used
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.grpc/grpc\-.*$</packageUrl>
+        <cve>CVE-2023-44487</cve>
+    </suppress>
 </suppressions>

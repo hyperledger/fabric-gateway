@@ -38,8 +38,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <grpcVersion>1.59.0</grpcVersion>
-        <bouncyCastleVersion>1.76</bouncyCastleVersion>
+        <bouncyCastleVersion>1.77</bouncyCastleVersion>
         <skipUnitTests>${skipTests}</skipUnitTests>
     </properties>
 
@@ -48,21 +47,21 @@
             <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-bom</artifactId>
-                <version>7.14.0</version>
+                <version>7.14.1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.10.0</version>
+                <version>5.10.1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-bom</artifactId>
-                <version>${grpcVersion}</version>
+                <version>1.59.1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -205,7 +204,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.1.2</version>
+                <version>3.2.2</version>
                 <dependencies>
                     <dependency>
                         <groupId>me.fabriciorby</groupId>
@@ -257,7 +256,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.6.0</version>
+                <version>3.6.2</version>
                 <configuration>
                     <show>public</show>
                     <doctitle>Hyperledger Fabric Gateway client API for Java</doctitle>
@@ -346,7 +345,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-checkstyle-plugin</artifactId>
-                        <version>3.3.0</version>
+                        <version>3.3.1</version>
                         <configuration>
                             <configLocation>checkstyle.xml</configLocation>
                             <consoleOutput>true</consoleOutput>
@@ -366,7 +365,7 @@
                             <dependency>
                                 <groupId>com.puppycrawl.tools</groupId>
                                 <artifactId>checkstyle</artifactId>
-                                <version>10.12.4</version>
+                                <version>10.12.5</version>
                             </dependency>
                         </dependencies>
                     </plugin>
@@ -380,7 +379,7 @@
                     <plugin>
                         <groupId>org.owasp</groupId>
                         <artifactId>dependency-check-maven</artifactId>
-                        <version>8.4.2</version>
+                        <version>9.0.2</version>
                         <configuration>
                             <skipProvidedScope>true</skipProvidedScope>
                             <skipTestScope>true</skipTestScope>
@@ -389,6 +388,7 @@
                             <suppressionFiles>
                                 <suppressionFile>dependency-suppression.xml</suppressionFile>
                             </suppressionFiles>
+                            <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
                         </configuration>
                         <executions>
                             <execution>
@@ -408,7 +408,7 @@
                     <plugin>
                         <groupId>org.cyclonedx</groupId>
                         <artifactId>cyclonedx-maven-plugin</artifactId>
-                        <version>2.7.9</version>
+                        <version>2.7.10</version>
                         <configuration>
                             <includeCompileScope>true</includeCompileScope>
                             <includeProvidedScope>false</includeProvidedScope>
