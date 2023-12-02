@@ -277,7 +277,8 @@ final class GatewayClient {
                 try {
                     next = queue.take();
                 } catch (InterruptedException e) {
-                    throw new NoSuchElementException();
+                    Thread.currentThread().interrupt();
+                    next = () -> null;
                 }
             }
 
