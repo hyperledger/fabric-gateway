@@ -48,7 +48,7 @@ import org.hyperledger.fabric.protos.peer.FilteredBlock;
  *                 // Process then checkpoint event
  *                 checkpointer.checkpointChaincodeEvent(event);
  *             });
- *         } catch (io.grpc.StatusRuntimeException e) {
+ *         } catch (GatewayRuntimeException e) {
  *             // Connection error
  *         }
  *     }
@@ -67,7 +67,7 @@ import org.hyperledger.fabric.protos.peer.FilteredBlock;
  *                 // Process then checkpoint block
  *                 checkpointer.checkpointBlock(event.getHeader().getNumber());
  *             });
- *         } catch (io.grpc.StatusRuntimeException e) {
+ *         } catch (GatewayRuntimeException e) {
  *             // Connection error
  *         }
  *     }

@@ -6,22 +6,6 @@
 
 package org.hyperledger.fabric.client;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.FileAttribute;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.Stream;
-
 import com.google.protobuf.ByteString;
 import io.grpc.BindableService;
 import io.grpc.ManagedChannel;
@@ -53,18 +37,39 @@ import org.hyperledger.fabric.protos.peer.Transaction;
 import org.hyperledger.fabric.protos.peer.TransactionAction;
 import org.hyperledger.fabric.protos.peer.TxValidationCode;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
 public final class TestUtils {
     private static final TestUtils INSTANCE = new TestUtils();
     private static final String TEST_FILE_PREFIX = "fg-test-";
 
     private final AtomicLong currentTransactionId = new AtomicLong();
     private final X509Credentials credentials = new X509Credentials();
+    private final ExecutorService executor = Executors.newCachedThreadPool();
 
     public static TestUtils getInstance() {
         return INSTANCE;
     }
 
-    private TestUtils() { }
+    private TestUtils() {
+        Runtime.getRuntime().addShutdownHook(new Thread(executor::shutdownNow));
+    }
 
     public X509Credentials getCredentials() {
         return credentials;
@@ -250,20 +255,23 @@ public final class TestUtils {
 
         try {
             Stream<Response> responses = stubCall.apply(requestQueue.stream()); // Stub invocation may throw exception
-            responseFuture = CompletableFuture.runAsync(() -> {
-                try {
-                    requestCountLatch.await();
-                    responses.forEachOrdered(responseObserver::onNext);
-                    responseObserver.onCompleted();
-                } catch (Throwable t) {
-                    responseObserver.onError(t);
-                }
-            });
+            responseFuture = CompletableFuture.runAsync(
+                    () -> {
+                        try {
+                            requestCountLatch.await();
+                            responses.forEachOrdered(responseObserver::onNext);
+                            responseObserver.onCompleted();
+                        } catch (Throwable t) {
+                            responseObserver.onError(t);
+                        }
+                    },
+                    executor
+            );
         } catch (Exception e) {
             responseObserver.onError(e);
         }
 
-        CompletableFuture<Void> finalResponseFuture = responseFuture;
+        final CompletableFuture<Void> finalResponseFuture = responseFuture;
         responseObserver.setOnCancelHandler(() -> finalResponseFuture.cancel(true)); // Avoids gRPC error if cancel is called more than once
         return streamObserverFromQueue(
                 requestQueue,
