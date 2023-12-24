@@ -4,17 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataTable, setWorldConstructor } from '@cucumber/cucumber';
+import { DataTable, IWorldOptions, setWorldConstructor, World } from '@cucumber/cucumber';
 import * as grpc from '@grpc/grpc-js';
 import { ChaincodeEvent, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers } from '@hyperledger/fabric-gateway';
-import { KeyObject, X509Certificate, createPrivateKey } from 'crypto';
+import { createPrivateKey, KeyObject, X509Certificate } from 'crypto';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { findSoftHSMPKCS11Lib, fixturesDir, getOrgForMsp } from './fabric';
 import { getSKIFromCertificate } from './fabricski';
 import { GatewayContext } from './gatewaycontext';
 import { TransactionInvocation } from './transactioninvocation';
-import { Constructor, assertDefined, isInstanceOf } from './utils';
+import { assertDefined, Constructor, isInstanceOf } from './utils';
 
 let hsmSignerFactory: HSMSignerFactory;
 
@@ -120,11 +120,15 @@ async function readHSMCertificate(user: string): Promise<Buffer> {
     return await fs.readFile(certPath);
 }
 
-export class CustomWorld {
+export class CustomWorld extends World {
     #gateways: Record<string, GatewayContext> = {};
     #currentGateway?: GatewayContext;
     #transaction?: TransactionInvocation;
     #lastCommittedBlockNumber = BigInt(0);
+
+    constructor(options: IWorldOptions) {
+        super(options);
+    }
 
     async createGateway(name: string, user: string, mspId: string): Promise<void> {
         const identity = await newIdentity(user, mspId);
