@@ -23,7 +23,6 @@ jobs:
         with:
           ref: gh-pages
           path: publish
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}
       - name: Remove old API documentation
         shell: bash
         run: rm -rf "${GITHUB_REF_NAME}/api"  
@@ -41,8 +40,8 @@ jobs:
       - name: Publish
         working-directory: publish
         env:
-          USER_NAME: 'Hyperledger Bot'
-          USER_EMAIL: 'hyperledger-bot@hyperledger.org'
+          USER_NAME: github-actions
+          USER_EMAIL: github-actions@github.com
           COMMIT_REF: ${{ github.sha }}
         run: ${{ github.workspace }}/source/.github/scripts/git_push_changes.sh
 
