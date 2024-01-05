@@ -100,7 +100,7 @@ scan-go: scan-go-govulncheck scan-go-nancy scan-go-osv-scanner
 .PHONEY: scan-go-govulncheck
 scan-go-govulncheck:
 	go install golang.org/x/vuln/cmd/govulncheck@latest
-	govulncheck "$(go_dir)/..."
+	govulncheck -tags pkcs11 "$(go_dir)/..."
 
 .PHONEY: scan-go-nancy
 scan-go-nancy:
@@ -110,7 +110,7 @@ scan-go-nancy:
 .PHONEY: scan-go-osv-scanner
 scan-go-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
-	osv-scanner --lockfile='$(base_dir)/go.mod' --experimental-call-analysis || [ \( $$? -gt 1 \) -a \( $$? -lt 127 \) ]
+	osv-scanner --lockfile='$(base_dir)/go.mod' || [ \( $$? -gt 1 \) -a \( $$? -lt 127 \) ]
 
 .PHONEY: scan-node
 scan-node: scan-node-npm-audit scan-node-osv-scanner
