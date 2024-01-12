@@ -26,11 +26,20 @@ export interface GatewayClient {
     evaluate(request: gateway.EvaluateRequest, options?: CallOptions): Promise<gateway.EvaluateResponse>;
     endorse(request: gateway.EndorseRequest, options?: CallOptions): Promise<gateway.EndorseResponse>;
     submit(request: gateway.SubmitRequest, options?: CallOptions): Promise<gateway.SubmitResponse>;
-    commitStatus(request: gateway.SignedCommitStatusRequest, options?: CallOptions): Promise<gateway.CommitStatusResponse>;
-    chaincodeEvents(request: gateway.SignedChaincodeEventsRequest, options?: CallOptions): CloseableAsyncIterable<gateway.ChaincodeEventsResponse>;
+    commitStatus(
+        request: gateway.SignedCommitStatusRequest,
+        options?: CallOptions,
+    ): Promise<gateway.CommitStatusResponse>;
+    chaincodeEvents(
+        request: gateway.SignedChaincodeEventsRequest,
+        options?: CallOptions,
+    ): CloseableAsyncIterable<gateway.ChaincodeEventsResponse>;
     blockEvents(request: common.Envelope, options?: CallOptions): CloseableAsyncIterable<peer.DeliverResponse>;
     filteredBlockEvents(request: common.Envelope, options?: CallOptions): CloseableAsyncIterable<peer.DeliverResponse>;
-    blockAndPrivateDataEvents(request: common.Envelope, options?: CallOptions): CloseableAsyncIterable<peer.DeliverResponse>;
+    blockAndPrivateDataEvents(
+        request: common.Envelope,
+        options?: CallOptions,
+    ): CloseableAsyncIterable<peer.DeliverResponse>;
 }
 
 // @ts-expect-error Polyfill for Symbol.dispose if not present
@@ -72,12 +81,40 @@ export interface DuplexStreamResponse<RequestType, ResponseType> extends ServerS
  * Subset of the grpc-js Client used by GatewayClient to aid mocking.
  */
 export interface GatewayGrpcClient {
-    makeUnaryRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, options: CallOptions, callback: requestCallback<ResponseType>): ClientUnaryCall;
-    makeServerStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, options: CallOptions): ServerStreamResponse<ResponseType>;
-    makeBidiStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, options: CallOptions): DuplexStreamResponse<RequestType, ResponseType>;
+    makeUnaryRequest<RequestType, ResponseType>(
+        method: string,
+        serialize: (value: RequestType) => Buffer,
+        deserialize: (value: Buffer) => ResponseType,
+        argument: RequestType,
+        options: CallOptions,
+        callback: requestCallback<ResponseType>,
+    ): ClientUnaryCall;
+    makeServerStreamRequest<RequestType, ResponseType>(
+        method: string,
+        serialize: (value: RequestType) => Buffer,
+        deserialize: (value: Buffer) => ResponseType,
+        argument: RequestType,
+        options: CallOptions,
+    ): ServerStreamResponse<ResponseType>;
+    makeBidiStreamRequest<RequestType, ResponseType>(
+        method: string,
+        serialize: (value: RequestType) => Buffer,
+        deserialize: (value: Buffer) => ResponseType,
+        options: CallOptions,
+    ): DuplexStreamResponse<RequestType, ResponseType>;
 }
 
-type DefaultCallOptions = Pick<ConnectOptions, 'commitStatusOptions' | 'endorseOptions' | 'evaluateOptions' | 'submitOptions' | 'chaincodeEventsOptions' | 'blockEventsOptions' | 'filteredBlockEventsOptions' | 'blockAndPrivateDataEventsOptions'>;
+type DefaultCallOptions = Pick<
+    ConnectOptions,
+    | 'commitStatusOptions'
+    | 'endorseOptions'
+    | 'evaluateOptions'
+    | 'submitOptions'
+    | 'chaincodeEventsOptions'
+    | 'blockEventsOptions'
+    | 'filteredBlockEventsOptions'
+    | 'blockAndPrivateDataEventsOptions'
+>;
 
 class GatewayClientImpl implements GatewayClient {
     readonly #client: GatewayGrpcClient;
@@ -89,65 +126,75 @@ class GatewayClientImpl implements GatewayClient {
     }
 
     evaluate(request: gateway.EvaluateRequest, options?: Readonly<CallOptions>): Promise<gateway.EvaluateResponse> {
-        return new Promise((resolve, reject) => this.#client.makeUnaryRequest(
-            evaluateMethod,
-            serialize,
-            deserializeEvaluateResponse,
-            request,
-            buildOptions(this.#defaultOptions.evaluateOptions, options),
-            newUnaryCallback(resolve, reject)
-        ));
+        return new Promise((resolve, reject) =>
+            this.#client.makeUnaryRequest(
+                evaluateMethod,
+                serialize,
+                deserializeEvaluateResponse,
+                request,
+                buildOptions(this.#defaultOptions.evaluateOptions, options),
+                newUnaryCallback(resolve, reject),
+            ),
+        );
     }
 
     endorse(request: gateway.EndorseRequest, options?: Readonly<CallOptions>): Promise<gateway.EndorseResponse> {
-        return new Promise((resolve, reject) => this.#client.makeUnaryRequest(
-            endorseMethod,
-            serialize,
-            deserializeEndorseResponse,
-            request,
-            buildOptions(this.#defaultOptions.endorseOptions, options),
-            newUnaryCallback(
-                resolve,
-                reject,
-                err => new EndorseError(Object.assign(err, { transactionId: request.getTransactionId() }))
+        return new Promise((resolve, reject) =>
+            this.#client.makeUnaryRequest(
+                endorseMethod,
+                serialize,
+                deserializeEndorseResponse,
+                request,
+                buildOptions(this.#defaultOptions.endorseOptions, options),
+                newUnaryCallback(
+                    resolve,
+                    reject,
+                    (err) => new EndorseError(Object.assign(err, { transactionId: request.getTransactionId() })),
+                ),
             ),
-        ));
+        );
     }
 
     submit(request: gateway.SubmitRequest, options?: Readonly<CallOptions>): Promise<gateway.SubmitResponse> {
-        return new Promise((resolve, reject) => this.#client.makeUnaryRequest(
-            submitMethod,
-            serialize,
-            deserializeSubmitResponse,
-            request,
-            buildOptions(this.#defaultOptions.submitOptions, options),
-            newUnaryCallback(
-                resolve,
-                reject,
-                err => new SubmitError(Object.assign(err, { transactionId: request.getTransactionId() })),
+        return new Promise((resolve, reject) =>
+            this.#client.makeUnaryRequest(
+                submitMethod,
+                serialize,
+                deserializeSubmitResponse,
+                request,
+                buildOptions(this.#defaultOptions.submitOptions, options),
+                newUnaryCallback(
+                    resolve,
+                    reject,
+                    (err) => new SubmitError(Object.assign(err, { transactionId: request.getTransactionId() })),
+                ),
             ),
-        ));
+        );
     }
 
-    commitStatus(request: gateway.SignedCommitStatusRequest, options?: Readonly<CallOptions>): Promise<gateway.CommitStatusResponse> {
-        return new Promise((resolve, reject) => this.#client.makeUnaryRequest(
-            commitStatusMethod,
-            serialize,
-            deserializeCommitStatusResponse,
-            request,
-            buildOptions(this.#defaultOptions.commitStatusOptions, options),
-            newUnaryCallback(
-                resolve,
-                reject,
-                err => {
+    commitStatus(
+        request: gateway.SignedCommitStatusRequest,
+        options?: Readonly<CallOptions>,
+    ): Promise<gateway.CommitStatusResponse> {
+        return new Promise((resolve, reject) =>
+            this.#client.makeUnaryRequest(
+                commitStatusMethod,
+                serialize,
+                deserializeCommitStatusResponse,
+                request,
+                buildOptions(this.#defaultOptions.commitStatusOptions, options),
+                newUnaryCallback(resolve, reject, (err) => {
                     const req = gateway.CommitStatusRequest.deserializeBinary(request.getRequest_asU8());
                     return new CommitStatusError(Object.assign(err, { transactionId: req.getTransactionId() }));
-                },
-            )
-        ));
+                }),
+            ),
+        );
     }
 
-    chaincodeEvents(request: gateway.SignedChaincodeEventsRequest, options?: Readonly<CallOptions>): CloseableAsyncIterable<gateway.ChaincodeEventsResponse> {
+    chaincodeEvents(
+        request: gateway.SignedChaincodeEventsRequest,
+        options?: Readonly<CallOptions>,
+    ): CloseableAsyncIterable<gateway.ChaincodeEventsResponse> {
         return this.#makeServerStreamRequest(
             chaincodeEventsMethod,
             deserializeChaincodeEventsResponse,
@@ -160,14 +207,24 @@ class GatewayClientImpl implements GatewayClient {
         method: string,
         deserialize: (value: Buffer) => ResponseType,
         argument: RequestType,
-        options: CallOptions
+        options: CallOptions,
     ): CloseableAsyncIterable<ResponseType> {
         try {
-            const serverStream = this.#client.makeServerStreamRequest(method, serialize, deserialize, argument, options);
+            const serverStream = this.#client.makeServerStreamRequest(
+                method,
+                serialize,
+                deserialize,
+                argument,
+                options,
+            );
             return {
                 [Symbol.asyncIterator]: () => wrapAsyncIterator(serverStream[Symbol.asyncIterator]()),
-                close: () => serverStream.cancel(),
-                [Symbol.dispose]: () => serverStream.cancel(),
+                close: () => {
+                    serverStream.cancel();
+                },
+                [Symbol.dispose]: () => {
+                    serverStream.cancel();
+                },
             };
         } catch (err) {
             rethrowGrpcError(err);
@@ -192,7 +249,10 @@ class GatewayClientImpl implements GatewayClient {
         );
     }
 
-    blockAndPrivateDataEvents(request: common.Envelope, options?: CallOptions): CloseableAsyncIterable<peer.DeliverResponse> {
+    blockAndPrivateDataEvents(
+        request: common.Envelope,
+        options?: CallOptions,
+    ): CloseableAsyncIterable<peer.DeliverResponse> {
         return this.#makeBidiStreamRequest(
             deliverWithPrivateDataMethod,
             deserializeDeliverResponse,
@@ -205,16 +265,19 @@ class GatewayClientImpl implements GatewayClient {
         method: string,
         deserialize: (value: Buffer) => ResponseType,
         request: RequestType,
-        options: CallOptions
+        options: CallOptions,
     ): CloseableAsyncIterable<ResponseType> {
         try {
             const duplexStream = this.#client.makeBidiStreamRequest(method, serialize, deserialize, options);
             duplexStream.write(request);
             return {
                 [Symbol.asyncIterator]: () => wrapAsyncIterator(duplexStream[Symbol.asyncIterator]()),
-                close: () => duplexStream.cancel(),
-                [Symbol.dispose]: () => duplexStream.cancel(),
-
+                close: () => {
+                    duplexStream.cancel();
+                },
+                [Symbol.dispose]: () => {
+                    duplexStream.cancel();
+                },
             };
         } catch (err) {
             rethrowGrpcError(err);
@@ -229,16 +292,18 @@ function buildOptions(defaultOptions: (() => CallOptions) | undefined, options?:
 function newUnaryCallback<T>(
     resolve: (value: T) => void,
     reject: (reason: Error) => void,
-    wrap: (err: GatewayError) => GatewayError = (err => err)
+    wrap: (err: GatewayError) => GatewayError = (err) => err,
 ): requestCallback<T> {
     return (err, value) => {
         if (err) {
-            return reject(wrap(newGatewayError(err)));
+            reject(wrap(newGatewayError(err)));
+            return;
         }
         if (value == null) {
-            return reject(new Error('No result returned'));
+            reject(new Error('No result returned'));
+            return;
         }
-        return resolve(value);
+        resolve(value);
     };
 }
 
@@ -250,7 +315,7 @@ function wrapAsyncIterator<T>(iterator: AsyncIterator<T>): AsyncIterator<T> {
             } catch (err) {
                 rethrowGrpcError(err);
             }
-        }
+        },
     };
 }
 
@@ -262,10 +327,12 @@ function rethrowGrpcError(err: unknown): never {
 }
 
 function isServiceError(err: unknown): err is ServiceError {
-    return typeof (err as ServiceError).code === 'number' &&
+    return (
+        typeof (err as ServiceError).code === 'number' &&
         typeof (err as ServiceError).details === 'string' &&
         (err as ServiceError).metadata instanceof Metadata &&
-        err instanceof Error;
+        err instanceof Error
+    );
 }
 
 function serialize(message: Message): Buffer {

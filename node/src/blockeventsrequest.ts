@@ -128,7 +128,7 @@ class SignableBlockEventsRequest implements Signable {
     }
 
     #isSigned(): boolean {
-        const signatureLength = this.#request.getSignature()?.length || 0;
+        const signatureLength = this.#request.getSignature().length || 0;
         return signatureLength > 0;
     }
 }
@@ -148,12 +148,16 @@ export class BlockEventsRequestImpl extends SignableBlockEventsRequest implement
         const signedRequest = await this.getSignedRequest();
         const responses = this.#client.blockEvents(signedRequest, options);
         return {
-            [Symbol.asyncIterator]: () => mapAsyncIterator(
-                responses[Symbol.asyncIterator](),
-                response => getBlock(response, () => response.getBlock()),
-            ),
-            close: () => responses.close(),
-            [Symbol.dispose]: () => responses.close(),
+            [Symbol.asyncIterator]: () =>
+                mapAsyncIterator(responses[Symbol.asyncIterator](), (response) =>
+                    getBlock(response, () => response.getBlock()),
+                ),
+            close: () => {
+                responses.close();
+            },
+            [Symbol.dispose]: () => {
+                responses.close();
+            },
         };
     }
 }
@@ -170,17 +174,24 @@ export class FilteredBlockEventsRequestImpl extends SignableBlockEventsRequest i
         const signedRequest = await this.getSignedRequest();
         const responses = this.#client.filteredBlockEvents(signedRequest, options);
         return {
-            [Symbol.asyncIterator]: () => mapAsyncIterator(
-                responses[Symbol.asyncIterator](),
-                response => getBlock(response, () => response.getFilteredBlock()),
-            ),
-            close: () => responses.close(),
-            [Symbol.dispose]: () => responses.close(),
+            [Symbol.asyncIterator]: () =>
+                mapAsyncIterator(responses[Symbol.asyncIterator](), (response) =>
+                    getBlock(response, () => response.getFilteredBlock()),
+                ),
+            close: () => {
+                responses.close();
+            },
+            [Symbol.dispose]: () => {
+                responses.close();
+            },
         };
     }
 }
 
-export class BlockAndPrivateDataEventsRequestImpl extends SignableBlockEventsRequest implements BlockAndPrivateDataEventsRequest {
+export class BlockAndPrivateDataEventsRequestImpl
+    extends SignableBlockEventsRequest
+    implements BlockAndPrivateDataEventsRequest
+{
     readonly #client: GatewayClient;
 
     constructor(options: Readonly<BlockEventsRequestOptions>) {
@@ -192,12 +203,16 @@ export class BlockAndPrivateDataEventsRequestImpl extends SignableBlockEventsReq
         const signedRequest = await this.getSignedRequest();
         const responses = this.#client.blockAndPrivateDataEvents(signedRequest, options);
         return {
-            [Symbol.asyncIterator]: () => mapAsyncIterator(
-                responses[Symbol.asyncIterator](),
-                response => getBlock(response, () => response.getBlockAndPrivateData()),
-            ),
-            close: () => responses.close(),
-            [Symbol.dispose]: () => responses.close(),
+            [Symbol.asyncIterator]: () =>
+                mapAsyncIterator(responses[Symbol.asyncIterator](), (response) =>
+                    getBlock(response, () => response.getBlockAndPrivateData()),
+                ),
+            close: () => {
+                responses.close();
+            },
+            [Symbol.dispose]: () => {
+                responses.close();
+            },
         };
     }
 }
@@ -210,7 +225,7 @@ function mapAsyncIterator<T, R>(iterator: AsyncIterator<T>, map: (element: T) =>
                 done: result.done,
                 value: map(result.value as T),
             };
-        }
+        },
     };
 }
 

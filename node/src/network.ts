@@ -5,7 +5,12 @@
  */
 
 import { common, peer } from '@hyperledger/fabric-protos';
-import { BlockAndPrivateDataEventsBuilder, BlockEventsBuilder, BlockEventsOptions, FilteredBlockEventsBuilder } from './blockeventsbuilder';
+import {
+    BlockAndPrivateDataEventsBuilder,
+    BlockEventsBuilder,
+    BlockEventsOptions,
+    FilteredBlockEventsBuilder,
+} from './blockeventsbuilder';
 import { BlockAndPrivateDataEventsRequest, BlockEventsRequest, FilteredBlockEventsRequest } from './blockeventsrequest';
 import { ChaincodeEvent } from './chaincodeevent';
 import { ChaincodeEventsBuilder, ChaincodeEventsOptions } from './chaincodeeventsbuilder';
@@ -99,7 +104,10 @@ export interface Network {
      * }
      * ```
      */
-    getChaincodeEvents(chaincodeName: string, options?: ChaincodeEventsOptions): Promise<CloseableAsyncIterable<ChaincodeEvent>>;
+    getChaincodeEvents(
+        chaincodeName: string,
+        options?: ChaincodeEventsOptions,
+    ): Promise<CloseableAsyncIterable<ChaincodeEvent>>;
 
     /**
      * Create a request to receive chaincode events emitted by transaction functions of a specific chaincode. Supports
@@ -130,9 +138,9 @@ export interface Network {
     getBlockEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<common.Block>>;
 
     /**
-      * Create a request to receive block events. Supports off-line signing flow.
-      * @param options - Event listening options.
-      */
+     * Create a request to receive block events. Supports off-line signing flow.
+     * @param options - Event listening options.
+     */
     newBlockEventsRequest(options?: BlockEventsOptions): BlockEventsRequest;
 
     /**
@@ -157,9 +165,9 @@ export interface Network {
     getFilteredBlockEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<peer.FilteredBlock>>;
 
     /**
-      * Create a request to receive filtered block events. Supports off-line signing flow.
-      * @param options - Event listening options.
-      */
+     * Create a request to receive filtered block events. Supports off-line signing flow.
+     * @param options - Event listening options.
+     */
     newFilteredBlockEventsRequest(options?: BlockEventsOptions): FilteredBlockEventsRequest;
 
     /**
@@ -181,12 +189,14 @@ export interface Network {
      * }
      * ```
      */
-    getBlockAndPrivateDataEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<peer.BlockAndPrivateData>>;
+    getBlockAndPrivateDataEvents(
+        options?: BlockEventsOptions,
+    ): Promise<CloseableAsyncIterable<peer.BlockAndPrivateData>>;
 
     /**
-      * Create a request to receive block and private data events. Supports off-line signing flow.
-      * @param options - Event listening options.
-      */
+     * Create a request to receive block and private data events. Supports off-line signing flow.
+     * @param options - Event listening options.
+     */
     newBlockAndPrivateDataEventsRequest(options?: BlockEventsOptions): BlockAndPrivateDataEventsRequest;
 }
 
@@ -221,21 +231,25 @@ export class NetworkImpl implements Network {
         });
     }
 
-    async getChaincodeEvents(chaincodeName: string, options?: Readonly<ChaincodeEventsOptions>): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
-        return  this.newChaincodeEventsRequest(chaincodeName, options).getEvents();
+    async getChaincodeEvents(
+        chaincodeName: string,
+        options?: Readonly<ChaincodeEventsOptions>,
+    ): Promise<CloseableAsyncIterable<ChaincodeEvent>> {
+        return this.newChaincodeEventsRequest(chaincodeName, options).getEvents();
     }
 
-    newChaincodeEventsRequest(chaincodeName: string, options: Readonly<ChaincodeEventsOptions> = {}): ChaincodeEventsRequest {
-        return new ChaincodeEventsBuilder(Object.assign(
-            {},
-            options,
-            {
+    newChaincodeEventsRequest(
+        chaincodeName: string,
+        options: Readonly<ChaincodeEventsOptions> = {},
+    ): ChaincodeEventsRequest {
+        return new ChaincodeEventsBuilder(
+            Object.assign({}, options, {
                 chaincodeName: chaincodeName,
                 channelName: this.#channelName,
                 client: this.#client,
                 signingIdentity: this.#signingIdentity,
-            },
-        )).build();
+            }),
+        ).build();
     }
 
     async getBlockEvents(options?: Readonly<BlockEventsOptions>): Promise<CloseableAsyncIterable<common.Block>> {
@@ -243,46 +257,44 @@ export class NetworkImpl implements Network {
     }
 
     newBlockEventsRequest(options: Readonly<BlockEventsOptions> = {}): BlockEventsRequest {
-        return new BlockEventsBuilder(Object.assign(
-            {},
-            options,
-            {
+        return new BlockEventsBuilder(
+            Object.assign({}, options, {
                 channelName: this.#channelName,
                 client: this.#client,
                 signingIdentity: this.#signingIdentity,
-            },
-        )).build();
+            }),
+        ).build();
     }
 
-    async getFilteredBlockEvents(options?: Readonly<BlockEventsOptions>): Promise<CloseableAsyncIterable<peer.FilteredBlock>> {
+    async getFilteredBlockEvents(
+        options?: Readonly<BlockEventsOptions>,
+    ): Promise<CloseableAsyncIterable<peer.FilteredBlock>> {
         return this.newFilteredBlockEventsRequest(options).getEvents();
     }
 
     newFilteredBlockEventsRequest(options: Readonly<BlockEventsOptions> = {}): FilteredBlockEventsRequest {
-        return new FilteredBlockEventsBuilder(Object.assign(
-            {},
-            options,
-            {
+        return new FilteredBlockEventsBuilder(
+            Object.assign({}, options, {
                 channelName: this.#channelName,
                 client: this.#client,
                 signingIdentity: this.#signingIdentity,
-            },
-        )).build();
+            }),
+        ).build();
     }
 
-    async getBlockAndPrivateDataEvents(options?: Readonly<BlockEventsOptions>): Promise<CloseableAsyncIterable<peer.BlockAndPrivateData>> {
+    async getBlockAndPrivateDataEvents(
+        options?: Readonly<BlockEventsOptions>,
+    ): Promise<CloseableAsyncIterable<peer.BlockAndPrivateData>> {
         return this.newBlockAndPrivateDataEventsRequest(options).getEvents();
     }
 
     newBlockAndPrivateDataEventsRequest(options: Readonly<BlockEventsOptions> = {}): BlockAndPrivateDataEventsRequest {
-        return new BlockAndPrivateDataEventsBuilder(Object.assign(
-            {},
-            options,
-            {
+        return new BlockAndPrivateDataEventsBuilder(
+            Object.assign({}, options, {
                 channelName: this.#channelName,
                 client: this.#client,
                 signingIdentity: this.#signingIdentity,
-            },
-        )).build();
+            }),
+        ).build();
     }
 }

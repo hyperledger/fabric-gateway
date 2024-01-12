@@ -31,7 +31,7 @@ export function assertDefined<T>(value: T | undefined, property: string): T {
 }
 
 export interface Constructor<T> {
-    new (...args: any[]): T; // eslint-disable-line @typescript-eslint/no-explicit-any
+    new (...args: never[]): T;
 }
 
 export function isInstanceOf<T>(o: unknown, type: Constructor<T>): o is T {

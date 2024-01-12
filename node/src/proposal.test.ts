@@ -8,38 +8,35 @@ import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
 import { common, gateway as gatewayproto, msp, peer } from '@hyperledger/fabric-protos';
 import { Contract } from './contract';
 import { EndorseError } from './endorseerror';
-import { Gateway, internalConnect } from './gateway';
+import { Gateway, assertDefined, internalConnect } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
 import { MockGatewayGrpcClient, newEndorseResponse } from './testutils.test';
 
 function assertDecodeEvaluateRequest(request: gatewayproto.EvaluateRequest): peer.Proposal {
-    const proposalBytes = request.getProposedTransaction()?.getProposalBytes_asU8();
-    expect(proposalBytes).toBeDefined(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
-    return peer.Proposal.deserializeBinary(proposalBytes!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+    let proposalBytes = request.getProposedTransaction()?.getProposalBytes_asU8();
+    proposalBytes = assertDefined(proposalBytes, 'proposalBytes is undefined');
+    return peer.Proposal.deserializeBinary(proposalBytes);
 }
 
 function assertDecodeEndorseRequest(request: gatewayproto.EndorseRequest): peer.Proposal {
-    const proposalBytes = request.getProposedTransaction()?.getProposalBytes_asU8();
-    expect(proposalBytes).toBeDefined(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
-    return peer.Proposal.deserializeBinary(proposalBytes!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+    let proposalBytes = request.getProposedTransaction()?.getProposalBytes_asU8();
+    proposalBytes = assertDefined(proposalBytes, 'proposalBytes is undefined');
+    return peer.Proposal.deserializeBinary(proposalBytes);
 }
 
 function assertDecodeChaincodeSpec(proposal: peer.Proposal): peer.ChaincodeSpec {
     const payload = peer.ChaincodeProposalPayload.deserializeBinary(proposal.getPayload_asU8());
     const invocationSpec = peer.ChaincodeInvocationSpec.deserializeBinary(payload.getInput_asU8());
-    expect(invocationSpec.getChaincodeSpec()).toBeDefined();
-    return invocationSpec.getChaincodeSpec()!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+    const chaincodeSpec = invocationSpec.getChaincodeSpec();
+    return assertDefined(chaincodeSpec, 'chaincodeSpec is undefined');
 }
 
 function assertDecodeArgsAsStrings(proposal: peer.Proposal): string[] {
     const chaincodeSpec = assertDecodeChaincodeSpec(proposal);
-    expect(chaincodeSpec.getInput()).toBeDefined();
-
-    const args = chaincodeSpec.getInput()!.getArgsList_asU8(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
-    expect(args).toBeDefined();
-
-    return args.map(arg => Buffer.from(arg).toString());
+    const input = assertDefined(chaincodeSpec.getInput(), 'input is undefined');
+    const args = input.getArgsList_asU8();
+    return args.map((arg) => Buffer.from(arg).toString());
 }
 
 function assertDecodeHeader(proposal: peer.Proposal): common.Header {
@@ -100,7 +97,7 @@ describe('Proposal', () => {
             hash,
             client,
             evaluateOptions,
-            endorseOptions
+            endorseOptions,
         });
         network = gateway.getNetwork('CHANNEL_NAME');
         contract = network.getContract('CHAINCODE_NAME');
@@ -186,7 +183,7 @@ describe('Proposal', () => {
 
         it('includes bytes arguments in proposal', async () => {
             const expected = ['one', 'two', 'three'];
-            const args = expected.map(arg => Buffer.from(arg));
+            const args = expected.map((arg) => Buffer.from(arg));
 
             await contract.evaluateTransaction('TRANSACTION_NAME', ...args);
 
@@ -198,8 +195,8 @@ describe('Proposal', () => {
 
         it('incldues bytes transient data in proposal', async () => {
             const transientData = {
-                'uno': new Uint8Array(Buffer.from('one')),
-                'dos': new Uint8Array(Buffer.from('two')),
+                uno: new Uint8Array(Buffer.from('one')),
+                dos: new Uint8Array(Buffer.from('two')),
             };
             await contract.evaluate('TRANSACTION_NAME', { transientData });
 
@@ -215,8 +212,8 @@ describe('Proposal', () => {
 
         it('incldues string transient data in proposal', async () => {
             const transientData = {
-                'uno': 'one',
-                'dos': 'two',
+                uno: 'one',
+                dos: 'two',
             };
             await contract.evaluate('TRANSACTION_NAME', { transientData });
 
@@ -227,13 +224,13 @@ describe('Proposal', () => {
 
             const actual = Object.fromEntries(payload.getTransientmapMap().getEntryList());
             const expected: Record<string, Uint8Array> = {};
-            Object.entries(transientData).forEach(([k, v]) => expected[k] = new Uint8Array(Buffer.from(v)));
+            Object.entries(transientData).forEach(([k, v]) => (expected[k] = new Uint8Array(Buffer.from(v))));
 
             expect(actual).toEqual(expected);
         });
 
         it('sets endorsing orgs', async () => {
-            await contract.evaluate('TRANSACTION_NAME', { endorsingOrganizations: ['org1']});
+            await contract.evaluate('TRANSACTION_NAME', { endorsingOrganizations: ['org1'] });
 
             const evaluateRequest = client.getEvaluateRequests()[0];
             const actualOrgs = evaluateRequest.getTargetOrganizationsList();
@@ -246,7 +243,9 @@ describe('Proposal', () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
             const evaluateRequest = client.getEvaluateRequests()[0];
-            const signature = Buffer.from(evaluateRequest.getProposedTransaction()?.getSignature_asU8() ?? '').toString();
+            const signature = Buffer.from(
+                evaluateRequest.getProposedTransaction()?.getSignature_asU8() ?? '',
+            ).toString();
             expect(signature).toBe('MY_SIGNATURE');
         });
 
@@ -257,7 +256,9 @@ describe('Proposal', () => {
             await newProposal.evaluate();
 
             const evaluateRequest = client.getEvaluateRequests()[0];
-            const signature = Buffer.from(evaluateRequest.getProposedTransaction()?.getSignature_asU8() ?? '').toString();
+            const signature = Buffer.from(
+                evaluateRequest.getProposedTransaction()?.getSignature_asU8() ?? '',
+            ).toString();
             expect(signature).toBe('MY_SIGNATURE');
         });
 
@@ -427,7 +428,7 @@ describe('Proposal', () => {
 
         it('includes bytes arguments in proposal', async () => {
             const expected = ['one', 'two', 'three'];
-            const args = expected.map(arg => Buffer.from(arg));
+            const args = expected.map((arg) => Buffer.from(arg));
 
             await contract.submitTransaction('TRANSACTION_NAME', ...args);
 
@@ -443,7 +444,9 @@ describe('Proposal', () => {
             await contract.submitTransaction('TRANSACTION_NAME');
 
             const endorseRequest = client.getEndorseRequests()[0];
-            const signature = Buffer.from(endorseRequest.getProposedTransaction()?.getSignature_asU8() ?? '').toString();
+            const signature = Buffer.from(
+                endorseRequest.getProposedTransaction()?.getSignature_asU8() ?? '',
+            ).toString();
             expect(signature).toBe('MY_SIGNATURE');
         });
 
@@ -454,7 +457,9 @@ describe('Proposal', () => {
             await newProposal.endorse();
 
             const endorseRequest = client.getEndorseRequests()[0];
-            const signature = Buffer.from(endorseRequest.getProposedTransaction()?.getSignature_asU8() ?? '').toString();
+            const signature = Buffer.from(
+                endorseRequest.getProposedTransaction()?.getSignature_asU8() ?? '',
+            ).toString();
             expect(signature).toBe('MY_SIGNATURE');
         });
 

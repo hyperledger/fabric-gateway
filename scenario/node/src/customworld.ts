@@ -4,9 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataTable, IWorldOptions, setWorldConstructor, World } from '@cucumber/cucumber';
+import { DataTable, setWorldConstructor, World } from '@cucumber/cucumber';
 import * as grpc from '@grpc/grpc-js';
-import { ChaincodeEvent, HSMSigner, HSMSignerFactory, HSMSignerOptions, Identity, Signer, signers } from '@hyperledger/fabric-gateway';
+import {
+    ChaincodeEvent,
+    HSMSigner,
+    HSMSignerFactory,
+    HSMSignerOptions,
+    Identity,
+    Signer,
+    signers,
+} from '@hyperledger/fabric-gateway';
 import { createPrivateKey, KeyObject, X509Certificate } from 'crypto';
 import { promises as fs } from 'fs';
 import * as path from 'path';
@@ -16,7 +24,7 @@ import { GatewayContext } from './gatewaycontext';
 import { TransactionInvocation } from './transactioninvocation';
 import { assertDefined, Constructor, isInstanceOf } from './utils';
 
-let hsmSignerFactory: HSMSignerFactory;
+let hsmSignerFactory: HSMSignerFactory | undefined;
 
 interface ConnectionInfo {
     readonly url: string;
@@ -27,42 +35,52 @@ interface ConnectionInfo {
 
 const peerConnectionInfo: Record<string, ConnectionInfo> = {
     'peer0.org1.example.com': {
-        url:                'localhost:7051',
+        url: 'localhost:7051',
         serverNameOverride: 'peer0.org1.example.com',
-        tlsRootCertPath:    fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt',
-        running:            true,
+        tlsRootCertPath:
+            fixturesDir +
+            '/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt',
+        running: true,
     },
     'peer1.org1.example.com': {
-        url:                'localhost:9051',
+        url: 'localhost:9051',
         serverNameOverride: 'peer1.org1.example.com',
-        tlsRootCertPath:    fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt',
-        running:            true,
+        tlsRootCertPath:
+            fixturesDir +
+            '/crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt',
+        running: true,
     },
     'peer0.org2.example.com': {
-        url:                'localhost:8051',
+        url: 'localhost:8051',
         serverNameOverride: 'peer0.org2.example.com',
-        tlsRootCertPath:    fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt',
-        running:            true,
+        tlsRootCertPath:
+            fixturesDir +
+            '/crypto-material/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt',
+        running: true,
     },
     'peer1.org2.example.com': {
-        url:                'localhost:10051',
+        url: 'localhost:10051',
         serverNameOverride: 'peer1.org2.example.com',
-        tlsRootCertPath:    fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls/ca.crt',
-        running:            true,
+        tlsRootCertPath:
+            fixturesDir +
+            '/crypto-material/crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls/ca.crt',
+        running: true,
     },
     'peer0.org3.example.com': {
-        url:                'localhost:11051',
+        url: 'localhost:11051',
         serverNameOverride: 'peer0.org3.example.com',
-        tlsRootCertPath:    fixturesDir + '/crypto-material/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt',
-        running:            true,
-    }
+        tlsRootCertPath:
+            fixturesDir +
+            '/crypto-material/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt',
+        running: true,
+    },
 };
 
 async function newIdentity(user: string, mspId: string): Promise<Identity> {
     const certificate = await readCertificate(user, mspId);
     return {
         mspId,
-        credentials: certificate
+        credentials: certificate,
     };
 }
 
@@ -87,15 +105,23 @@ async function readPrivateKey(user: string, mspId: string): Promise<KeyObject> {
 
 function getCredentialsPath(user: string, mspId: string): string {
     const org = getOrgForMsp(mspId);
-    return path.join(fixturesDir, 'crypto-material', 'crypto-config', 'peerOrganizations', `${org}`,
-        'users', `${user}@${org}`, 'msp');
+    return path.join(
+        fixturesDir,
+        'crypto-material',
+        'crypto-config',
+        'peerOrganizations',
+        org,
+        'users',
+        `${user}@${org}`,
+        'msp',
+    );
 }
 
 async function newHSMIdentity(user: string, mspId: string): Promise<Identity> {
     const certificate = await readHSMCertificate(user);
     return {
         mspId,
-        credentials: certificate
+        credentials: certificate,
     };
 }
 
@@ -110,7 +136,7 @@ async function newHSMSigner(user: string): Promise<HSMSigner> {
     const hsmConfigOptions: HSMSignerOptions = {
         label: 'ForFabric',
         pin: '98765432',
-        identifier: ski
+        identifier: ski,
     };
     return hsmSignerFactory.newSigner(hsmConfigOptions);
 }
@@ -125,10 +151,6 @@ export class CustomWorld extends World {
     #currentGateway?: GatewayContext;
     #transaction?: TransactionInvocation;
     #lastCommittedBlockNumber = BigInt(0);
-
-    constructor(options: IWorldOptions) {
-        super(options);
-    }
 
     async createGateway(name: string, user: string, mspId: string): Promise<void> {
         const identity = await newIdentity(user, mspId);
@@ -151,7 +173,7 @@ export class CustomWorld extends World {
 
     async createGatewayWithHSMUser(name: string, user: string, mspId: string): Promise<void> {
         const identity = await newHSMIdentity(user, mspId);
-        const {signer, close} = await newHSMSigner(user);
+        const { signer, close } = await newHSMSigner(user);
         const gateway = new GatewayContext(identity, signer, close);
         this.#gateways[name] = gateway;
         this.#currentGateway = gateway;
@@ -177,7 +199,7 @@ export class CustomWorld extends World {
         let grpcOptions: Record<string, unknown> = {};
         if (peer.serverNameOverride) {
             grpcOptions = {
-                'grpc.ssl_target_name_override': peer.serverNameOverride
+                'grpc.ssl_target_name_override': peer.serverNameOverride,
             };
         }
         const client = new grpc.Client(peer.url, credentials, grpcOptions);
@@ -207,7 +229,9 @@ export class CustomWorld extends World {
     }
 
     async listenForChaincodeEventsUsingCheckpointer(listenerName: string, chaincodeName: string): Promise<void> {
-        await this.getCurrentGateway().listenForChaincodeEventsUsingCheckpointer(listenerName, chaincodeName, { checkpoint: this.getCurrentGateway().getCheckpointer() });
+        await this.getCurrentGateway().listenForChaincodeEventsUsingCheckpointer(listenerName, chaincodeName, {
+            checkpoint: this.getCurrentGateway().getCheckpointer(),
+        });
     }
 
     async replayChaincodeEvents(listenerName: string, chaincodeName: string, startBlock: bigint): Promise<void> {
@@ -218,21 +242,26 @@ export class CustomWorld extends World {
         return await this.getCurrentGateway().nextChaincodeEvent(listenerName);
     }
 
-
     async listenForBlockEvents(listenerName: string): Promise<void> {
         await this.getCurrentGateway().listenForBlockEvents(listenerName);
     }
 
     async listenForBlockEventsUsingCheckpointer(listenerName: string): Promise<void> {
-        await this.getCurrentGateway().listenForBlockEventsUsingCheckpointer(listenerName,  { checkpoint: this.getCurrentGateway().getCheckpointer() });
+        await this.getCurrentGateway().listenForBlockEventsUsingCheckpointer(listenerName, {
+            checkpoint: this.getCurrentGateway().getCheckpointer(),
+        });
     }
 
     async listenForFilteredBlockEventsUsingCheckpointer(listenerName: string): Promise<void> {
-        await this.getCurrentGateway().listenForFilteredBlockEventsUsingCheckpointer(listenerName,  { checkpoint: this.getCurrentGateway().getCheckpointer() });
+        await this.getCurrentGateway().listenForFilteredBlockEventsUsingCheckpointer(listenerName, {
+            checkpoint: this.getCurrentGateway().getCheckpointer(),
+        });
     }
 
     async listenForBlockAndPrivateDataEventsUsingCheckpointer(listenerName: string): Promise<void> {
-        await this.getCurrentGateway().listenForBlockAndPrivateDataEventsUsingCheckpointer(listenerName, { checkpoint: this.getCurrentGateway().getCheckpointer() });
+        await this.getCurrentGateway().listenForBlockAndPrivateDataEventsUsingCheckpointer(listenerName, {
+            checkpoint: this.getCurrentGateway().getCheckpointer(),
+        });
     }
 
     async replayBlockEvents(listenerName: string, startBlock: bigint): Promise<void> {

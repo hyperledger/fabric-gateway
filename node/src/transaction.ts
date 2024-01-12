@@ -108,7 +108,7 @@ export class TransactionImpl implements Transaction {
     }
 
     #isSigned(): boolean {
-        const signatureLength = this.#envelope.getSignature_asU8()?.length || 0;
+        const signatureLength = this.#envelope.getSignature_asU8().length || 0;
         return signatureLength > 0;
     }
 

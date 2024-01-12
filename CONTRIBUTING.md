@@ -48,9 +48,13 @@ Consider recommendations from these resources:
 
 Node code is written only in [TypeScript](https://www.typescriptlang.org/), and uses [Jest](https://jestjs.io/) as the testing framework.
 
+[ESLint](https://typescript-eslint.io/) is used to apply linting checks. Consider using an [editor integration](https://eslint.org/docs/latest/use/integrations) to avoid linting failures.
+
+[Prettier](https://prettier.io/) is used to apply consistent code formatting. Consider using an [editor integration](https://prettier.io/docs/en/editors) to help match Prettier's formatting.
+
 ### Java
 
-Java code uses [JUnit](https://junit.org/) as the test runner, [AssertJ](https://assertj.github.io/doc/) for assertions, and [Mockito](https://site.mockito.org/) for mock implementations.
+Java code uses [JUnit](https://junit.org/) as the test runner, [AssertJ](https://assertj.github.io/doc/) for assertions, and [Mockito](https://site.mockito.org/) for mock implementations. [Checkstyle](https://checkstyle.org/) is used to apply both linting checks and consistent code formatting.
 
 Consider recommendations from these resources:
 

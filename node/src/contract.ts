@@ -232,11 +232,11 @@ export class ContractImpl implements Contract {
         return this.#contractName;
     }
 
-    async evaluateTransaction(name: string, ...args: Array<string|Uint8Array>): Promise<Uint8Array> {
+    async evaluateTransaction(name: string, ...args: Array<string | Uint8Array>): Promise<Uint8Array> {
         return this.evaluate(name, { arguments: args });
     }
 
-    async submitTransaction(name: string, ...args: Array<string|Uint8Array>): Promise<Uint8Array> {
+    async submitTransaction(name: string, ...args: Array<string | Uint8Array>): Promise<Uint8Array> {
         return this.submit(name, { arguments: args });
     }
 
@@ -261,17 +261,15 @@ export class ContractImpl implements Contract {
     }
 
     newProposal(transactionName: string, options: Readonly<ProposalOptions> = {}): Proposal {
-        return new ProposalBuilder(Object.assign(
-            {},
-            options,
-            {
+        return new ProposalBuilder(
+            Object.assign({}, options, {
                 client: this.#client,
                 signingIdentity: this.#signingIdentity,
                 channelName: this.#channelName,
                 chaincodeName: this.#chaincodeName,
                 transactionName: this.#getQualifiedTransactionName(transactionName),
-            },
-        )).build();
+            }),
+        ).build();
     }
 
     #getQualifiedTransactionName(transactionName: string): string {

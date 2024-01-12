@@ -47,7 +47,9 @@ function parseResultFromPayload(payload: common.Payload): Uint8Array {
 function parseResultFromTransactionAction(transactionAction: peer.TransactionAction): Uint8Array {
     const actionPayload = peer.ChaincodeActionPayload.deserializeBinary(transactionAction.getPayload_asU8());
     const endorsedAction = assertDefined(actionPayload.getAction(), 'Missing endorsed action');
-    const responsePayload = peer.ProposalResponsePayload.deserializeBinary(endorsedAction.getProposalResponsePayload_asU8());
+    const responsePayload = peer.ProposalResponsePayload.deserializeBinary(
+        endorsedAction.getProposalResponsePayload_asU8(),
+    );
     const chaincodeAction = peer.ChaincodeAction.deserializeBinary(responsePayload.getExtension_asU8());
     const chaincodeResponse = assertDefined(chaincodeAction.getResponse(), 'Missing chaincode response');
     return chaincodeResponse.getPayload_asU8();

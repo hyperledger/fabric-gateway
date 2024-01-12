@@ -143,8 +143,7 @@ export class ProposalBuilder {
     }
 
     #getArgsAsBytes(): Uint8Array[] {
-        return Array.of(this.#options.transactionName, ...(this.#options.arguments ?? []))
-            .map(asBytes);
+        return Array.of(this.#options.transactionName, ...(this.#options.arguments ?? [])).map(asBytes);
     }
 
     #getTransientData(): Record<string, Uint8Array> {

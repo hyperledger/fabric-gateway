@@ -14,7 +14,9 @@ import { Identity } from './identity/identity';
 import { Network } from './network';
 import { MockGatewayGrpcClient, newServerStreamResponse, readElements } from './testutils.test';
 
-function assertDecodeChaincodeEventsRequest(signedRequest: gatewayproto.SignedChaincodeEventsRequest): gatewayproto.ChaincodeEventsRequest {
+function assertDecodeChaincodeEventsRequest(
+    signedRequest: gatewayproto.SignedChaincodeEventsRequest,
+): gatewayproto.ChaincodeEventsRequest {
     const requestBytes = signedRequest.getRequest_asU8();
     expect(requestBytes).toBeDefined();
     return gatewayproto.ChaincodeEventsRequest.deserializeBinary(requestBytes);
@@ -23,10 +25,10 @@ function assertDecodeChaincodeEventsRequest(signedRequest: gatewayproto.SignedCh
 function newChaincodeEvent(blockNumber: number, event: peer.ChaincodeEvent): ChaincodeEvent {
     return {
         blockNumber: BigInt(blockNumber),
-        chaincodeName: event.getChaincodeId() ?? '',
-        eventName: event.getEventName() ?? '',
-        transactionId: event.getTxId() ?? '',
-        payload: event.getPayload_asU8() ?? new Uint8Array(),
+        chaincodeName: event.getChaincodeId(),
+        eventName: event.getEventName(),
+        transactionId: event.getTxId(),
+        payload: event.getPayload_asU8(),
     };
 }
 
@@ -38,7 +40,10 @@ interface ExpectedRequest {
     transactionId?: string;
 }
 
-function assertChaincodeEventRequest(actual: gatewayproto.ChaincodeEventsRequest, expectedRequest: ExpectedRequest): void {
+function assertChaincodeEventRequest(
+    actual: gatewayproto.ChaincodeEventsRequest,
+    expectedRequest: ExpectedRequest,
+): void {
     expect(actual.getChannelId()).toBe(expectedRequest.channelName);
     expect(actual.getChaincodeId()).toBe(expectedRequest.chaincodeName);
 
@@ -72,19 +77,19 @@ describe('Chaincode Events', () => {
     const event1 = new peer.ChaincodeEvent();
     event1.setChaincodeId('CHAINCODE');
     event1.setTxId('tx1');
-    event1.setEventName('event1'),
+    event1.setEventName('event1');
     event1.setPayload(Buffer.from('payload1'));
 
     const event2 = new peer.ChaincodeEvent();
     event2.setChaincodeId('CHAINCODE');
     event2.setTxId('tx2');
-    event2.setEventName('event2'),
+    event2.setEventName('event2');
     event2.setPayload(Buffer.from('payload2'));
 
     const event3 = new peer.ChaincodeEvent();
     event3.setChaincodeId('CHAINCODE');
     event3.setTxId('tx3');
-    event3.setEventName('event3'),
+    event3.setEventName('event3');
     event3.setPayload(Buffer.from('payload3'));
 
     beforeEach(() => {
@@ -120,7 +125,7 @@ describe('Chaincode Events', () => {
             const expected: ExpectedRequest = {
                 channelName: channelName,
                 chaincodeName: 'CHAINCODE',
-                typeCase: orderer.SeekPosition.TypeCase.NEXT_COMMIT
+                typeCase: orderer.SeekPosition.TypeCase.NEXT_COMMIT,
             };
 
             const request = assertDecodeChaincodeEventsRequest(signedRequest);
@@ -129,9 +134,7 @@ describe('Chaincode Events', () => {
 
         it('throws with negative specified start block number', async () => {
             const startBlock = BigInt(-1);
-            return expect(network.getChaincodeEvents('CHAINCODE', { startBlock }))
-                .rejects
-                .toThrow();
+            return expect(network.getChaincodeEvents('CHAINCODE', { startBlock })).rejects.toThrow();
         });
 
         it('sends valid request with specified start block number', async () => {
@@ -146,7 +149,7 @@ describe('Chaincode Events', () => {
                 channelName: channelName,
                 chaincodeName: 'CHAINCODE',
                 typeCase: orderer.SeekPosition.TypeCase.SPECIFIED,
-                blockNumber: startBlock
+                blockNumber: startBlock,
             };
 
             const request = assertDecodeChaincodeEventsRequest(signedRequest);
@@ -157,7 +160,7 @@ describe('Chaincode Events', () => {
             const startBlock = BigInt(418);
             const checkpointer = checkpointers.inMemory();
 
-            await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpoint: checkpointer});
+            await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpoint: checkpointer });
 
             const signedRequest = client.getChaincodeEventsRequests()[0];
             expect(signedRequest.getSignature()).toEqual(signature);
@@ -167,7 +170,7 @@ describe('Chaincode Events', () => {
                 chaincodeName: 'CHAINCODE',
                 typeCase: orderer.SeekPosition.TypeCase.SPECIFIED,
                 blockNumber: startBlock,
-                transactionId: ''
+                transactionId: '',
             };
             const request = assertDecodeChaincodeEventsRequest(signedRequest);
             assertChaincodeEventRequest(request, expected);
@@ -178,7 +181,7 @@ describe('Chaincode Events', () => {
             const checkpointer = checkpointers.inMemory();
             await checkpointer.checkpointBlock(1n);
 
-            await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpoint: checkpointer});
+            await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpoint: checkpointer });
 
             const signedRequest = client.getChaincodeEventsRequests()[0];
             expect(signedRequest.getSignature()).toEqual(signature);
@@ -187,8 +190,8 @@ describe('Chaincode Events', () => {
                 channelName: channelName,
                 chaincodeName: 'CHAINCODE',
                 typeCase: orderer.SeekPosition.TypeCase.SPECIFIED,
-                blockNumber: 1n+ 1n,
-                transactionId: ''
+                blockNumber: 1n + 1n,
+                transactionId: '',
             };
             const request = assertDecodeChaincodeEventsRequest(signedRequest);
             assertChaincodeEventRequest(request, expected);
@@ -199,7 +202,7 @@ describe('Chaincode Events', () => {
             const checkpointer = checkpointers.inMemory();
             await checkpointer.checkpointTransaction(1n, 'txn1');
 
-            await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpoint: checkpointer});
+            await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpoint: checkpointer });
 
             const signedRequest = client.getChaincodeEventsRequests()[0];
             expect(signedRequest.getSignature()).toEqual(signature);
@@ -209,7 +212,7 @@ describe('Chaincode Events', () => {
                 chaincodeName: 'CHAINCODE',
                 typeCase: orderer.SeekPosition.TypeCase.SPECIFIED,
                 blockNumber: 1n,
-                transactionId: 'txn1'
+                transactionId: 'txn1',
             };
             const request = assertDecodeChaincodeEventsRequest(signedRequest);
             assertChaincodeEventRequest(request, expected);
@@ -218,7 +221,7 @@ describe('Chaincode Events', () => {
         it('Sends valid request with no start block and fresh checkpointer', async () => {
             const checkpointer = checkpointers.inMemory();
 
-            await network.getChaincodeEvents('CHAINCODE', { checkpoint: checkpointer});
+            await network.getChaincodeEvents('CHAINCODE', { checkpoint: checkpointer });
 
             const signedRequest = client.getChaincodeEventsRequests()[0];
             expect(signedRequest.getSignature()).toEqual(signature);
@@ -237,7 +240,7 @@ describe('Chaincode Events', () => {
             const checkpointer = checkpointers.inMemory();
             await checkpointer.checkpointTransaction(1n, 'txn1');
 
-            await network.getChaincodeEvents('CHAINCODE', { checkpoint: checkpointer});
+            await network.getChaincodeEvents('CHAINCODE', { checkpoint: checkpointer });
 
             const signedRequest = client.getChaincodeEventsRequests()[0];
             expect(signedRequest.getSignature()).toEqual(signature);
@@ -247,7 +250,7 @@ describe('Chaincode Events', () => {
                 chaincodeName: 'CHAINCODE',
                 typeCase: orderer.SeekPosition.TypeCase.SPECIFIED,
                 blockNumber: 1n,
-                transactionId: 'txn1'
+                transactionId: 'txn1',
             };
 
             const request = assertDecodeChaincodeEventsRequest(signedRequest);
@@ -256,7 +259,7 @@ describe('Chaincode Events', () => {
 
         it('Sends valid request with with start block and checkpointer chaincode event', async () => {
             const checkpointer = checkpointers.inMemory();
-            const event: ChaincodeEvent =  {
+            const event: ChaincodeEvent = {
                 blockNumber: BigInt(1),
                 chaincodeName: 'chaincode',
                 eventName: 'event1',
@@ -275,7 +278,7 @@ describe('Chaincode Events', () => {
                 chaincodeName: 'CHAINCODE',
                 typeCase: orderer.SeekPosition.TypeCase.SPECIFIED,
                 blockNumber: 1n,
-                transactionId: 'txn1'
+                transactionId: 'txn1',
             };
 
             const request = assertDecodeChaincodeEventsRequest(signedRequest);
@@ -285,8 +288,7 @@ describe('Chaincode Events', () => {
         it('uses specified call options', async () => {
             const deadline = Date.now() + 1000;
 
-            await network.newChaincodeEventsRequest('CHAINCODE')
-                .getEvents({ deadline });
+            await network.newChaincodeEventsRequest('CHAINCODE').getEvents({ deadline });
 
             const actual = client.getChaincodeEventsOptions()[0];
             expect(actual.deadline).toBe(deadline);
@@ -303,8 +305,7 @@ describe('Chaincode Events', () => {
             const expected = chaincodeEventsOptions().deadline;
             const deadline = Date.now() + 1000;
 
-            await network.newChaincodeEventsRequest('CHAINCODE')
-                .getEvents({ deadline });
+            await network.newChaincodeEventsRequest('CHAINCODE').getEvents({ deadline });
 
             expect(chaincodeEventsOptions().deadline).toBe(expected);
         });
@@ -326,11 +327,11 @@ describe('Chaincode Events', () => {
     describe('event delivery', () => {
         const response1 = new gatewayproto.ChaincodeEventsResponse();
         response1.setBlockNumber(1);
-        response1.setEventsList([ event1, event2 ]);
+        response1.setEventsList([event1, event2]);
 
         const response2 = new gatewayproto.ChaincodeEventsResponse();
         response2.setBlockNumber(2);
-        response2.setEventsList([ event3 ]);
+        response2.setEventsList([event3]);
 
         const expectedEvents = [
             newChaincodeEvent(1, event1),
@@ -339,7 +340,7 @@ describe('Chaincode Events', () => {
         ];
 
         it('returns events as AsyncIterable', async () => {
-            client.mockChaincodeEventsResponse(newServerStreamResponse([ response1, response2 ]));
+            client.mockChaincodeEventsResponse(newServerStreamResponse([response1, response2]));
 
             const events = await network.getChaincodeEvents('CHAINCODE');
 
@@ -348,7 +349,7 @@ describe('Chaincode Events', () => {
         });
 
         it('closing iterable cancels gRPC client stream', async () => {
-            const responseStream = newServerStreamResponse([ response1, response2 ]);
+            const responseStream = newServerStreamResponse([response1, response2]);
             client.mockChaincodeEventsResponse(responseStream);
 
             const events = await network.getChaincodeEvents('CHAINCODE');
@@ -358,7 +359,9 @@ describe('Chaincode Events', () => {
         });
 
         it('throws GatewayError on call ServiceError', async () => {
-            client.mockChaincodeEventsResponse(newServerStreamResponse<gatewayproto.ChaincodeEventsResponse>([ serviceError ]));
+            client.mockChaincodeEventsResponse(
+                newServerStreamResponse<gatewayproto.ChaincodeEventsResponse>([serviceError]),
+            );
 
             const events = await network.getChaincodeEvents('CHAINCODE');
             const t = readElements(events, 1);
@@ -372,12 +375,13 @@ describe('Chaincode Events', () => {
         });
 
         it('resource clean-up cancels gRPC client stream', async () => {
-            const responseStream = newServerStreamResponse([ response1, response2 ]);
+            const responseStream = newServerStreamResponse([response1, response2]);
             client.mockChaincodeEventsResponse(responseStream);
 
             {
                 // @ts-expect-error Assigned to unused variable for resource cleanup
-                using events = await network.getChaincodeEvents('CHAINCODE'); // eslint-disable-line @typescript-eslint/no-unused-vars
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                using events = await network.getChaincodeEvents('CHAINCODE');
             }
 
             expect(responseStream.cancel).toHaveBeenCalled();

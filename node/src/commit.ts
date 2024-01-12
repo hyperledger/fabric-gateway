@@ -83,13 +83,12 @@ export class CommitImpl implements Commit {
     }
 
     #isSigned(): boolean {
-        const signatureLength = this.#signedRequest.getSignature()?.length || 0;
+        const signatureLength = this.#signedRequest.getSignature().length || 0;
         return signatureLength > 0;
     }
 
-
     #newStatus(response: gateway.CommitStatusResponse): Status {
-        const code = response.getResult() ?? StatusCode.INVALID_OTHER_REASON;
+        const code = response.getResult();
         return {
             blockNumber: BigInt(response.getBlockNumber()),
             code,

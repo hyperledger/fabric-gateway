@@ -15,7 +15,7 @@ export interface Signable {
     getBytes(): Uint8Array;
 
     /**
-      * Get the digest of the signable object. This is used to generate a digital signature.
-      */
+     * Get the digest of the signable object. This is used to generate a digital signature.
+     */
     getDigest(): Uint8Array;
 }

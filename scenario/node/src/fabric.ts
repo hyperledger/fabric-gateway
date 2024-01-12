@@ -14,8 +14,10 @@ const dockerComposeDir = path.join(fixturesDir, 'docker-compose');
 const dockerComposeFile = 'docker-compose-tls.yaml';
 
 const tlsOptions = [
-    '--tls', 'true',
-    '--cafile', '/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem',
+    '--tls',
+    'true',
+    '--cafile',
+    '/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem',
 ];
 
 interface OrgInfo {
@@ -48,18 +50,13 @@ const orgs: Record<string, OrgInfo> = {
 };
 
 const orderers: Array<OrdererInfo> = [
-    {address: 'orderer1.example.com', port: '7053'},
-    {address: 'orderer2.example.com', port: '8053'},
-    {address: 'orderer3.example.com', port: '9053'},
+    { address: 'orderer1.example.com', port: '7053' },
+    { address: 'orderer2.example.com', port: '8053' },
+    { address: 'orderer3.example.com', port: '9053' },
 ];
 
 export function getOrgForMsp(mspId: string): string {
-    const org = orgs[mspId]?.orgName;
-    if (!org) {
-        throw new Error(`Unknown MSP: ${mspId}`);
-    }
-
-    return org;
+    return orgs[mspId].orgName;
 }
 
 export function findSoftHSMPKCS11Lib(): string {
@@ -94,7 +91,7 @@ function dockerCommandWithTLS(...args: string[]): string {
 }
 
 async function sleep(ms: number): Promise<void> {
-    await new Promise<void>(resolve => setTimeout(resolve, ms));
+    await new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
 interface ChaincodeDefinition {
@@ -113,14 +110,16 @@ export class Fabric {
     constructor() {
         this.runningPeers = Object.fromEntries(
             Object.values(orgs)
-                .flatMap(org => org.peers)
-                .map(hostPort => hostPort.split(':')[0])
-                .map(host => [host, true])
+                .flatMap((org) => org.peers)
+                .map((hostPort) => hostPort.split(':')[0])
+                .map((host) => [host, true]),
         );
     }
 
     dockerDown(): void {
-        const out = spawnSync('docker-compose', ['-f', dockerComposeFile, '-p', 'node', 'down'], { cwd: dockerComposeDir });
+        const out = spawnSync('docker-compose', ['-f', dockerComposeFile, '-p', 'node', 'down'], {
+            cwd: dockerComposeDir,
+        });
         console.log(out.output.toString());
     }
 
@@ -132,7 +131,9 @@ export class Fabric {
         const generateOut = execFileSync('./generate.sh', { cwd: fixturesDir });
         console.log(generateOut.toString());
 
-        const dockerComposeOut = spawnSync('docker-compose', ['-f', dockerComposeFile, '-p', 'node', 'up', '-d'], { cwd: dockerComposeDir });
+        const dockerComposeOut = spawnSync('docker-compose', ['-f', dockerComposeFile, '-p', 'node', 'up', '-d'], {
+            cwd: dockerComposeDir,
+        });
         console.log(dockerComposeOut.output.toString());
 
         this.fabricRunning = true;
@@ -152,15 +153,26 @@ export class Fabric {
         }
 
         for (const ord of orderers) {
-            const orddir = '/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/' + ord.address;
+            const orddir =
+                '/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/' + ord.address;
             dockerCommand(
-                'exec', 'org1_cli', 'osnadmin', 'channel', 'join',
-                '--channelID', 'mychannel',
-                '--config-block', '/etc/hyperledger/configtx/mychannel.block',
-                '-o', ord.address + ':' + ord.port,
-                '--ca-file', '/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem',
-                '--client-cert', orddir + '/tls/server.crt',
-                '--client-key', orddir + '/tls/server.key',
+                'exec',
+                'org1_cli',
+                'osnadmin',
+                'channel',
+                'join',
+                '--channelID',
+                'mychannel',
+                '--config-block',
+                '/etc/hyperledger/configtx/mychannel.block',
+                '-o',
+                ord.address + ':' + ord.port,
+                '--ca-file',
+                '/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem',
+                '--client-cert',
+                orddir + '/tls/server.crt',
+                '--client-key',
+                orddir + '/tls/server.key',
             );
         }
 
@@ -168,9 +180,15 @@ export class Fabric {
             for (const peer of org.peers) {
                 const env = 'CORE_PEER_ADDRESS=' + peer;
                 dockerCommandWithTLS(
-                    'exec', '-e', env, org.cli,
-                    'peer', 'channel', 'join',
-                    '-b', '/etc/hyperledger/configtx/mychannel.block'
+                    'exec',
+                    '-e',
+                    env,
+                    org.cli,
+                    'peer',
+                    'channel',
+                    'join',
+                    '-b',
+                    '/etc/hyperledger/configtx/mychannel.block',
                 );
             }
         }
@@ -179,7 +197,13 @@ export class Fabric {
         await sleep(10000);
     }
 
-    async deployChaincode(ccType: string, ccName: string, version: string, channelName: string, signaturePolicy: string): Promise<void> {
+    async deployChaincode(
+        ccType: string,
+        ccName: string,
+        version: string,
+        channelName: string,
+        signaturePolicy: string,
+    ): Promise<void> {
         let exists = false;
         let sequence = '1';
         const mangledName = ccName + version + channelName;
@@ -192,8 +216,19 @@ export class Fabric {
             // No need to re-install, just increment the sequence number and approve/commit new signature policy
             exists = true;
             const out = dockerCommandWithTLS(
-                'exec', 'org1_cli', 'peer', 'lifecycle', 'chaincode', 'querycommitted',
-                '-o', 'orderer1.example.com:7050', '--channelID', channelName, '--name', ccName);
+                'exec',
+                'org1_cli',
+                'peer',
+                'lifecycle',
+                'chaincode',
+                'querycommitted',
+                '-o',
+                'orderer1.example.com:7050',
+                '--channelID',
+                channelName,
+                '--name',
+                ccName,
+            );
             const pattern = new RegExp('.*Sequence: ([0-9]+),.*');
             const match = out.match(pattern);
             if (match === null || match.length < 2) {
@@ -233,36 +268,57 @@ export class Fabric {
             const packageID = match[1];
 
             dockerCommandWithTLS(
-                'exec', orgInfo.cli,
-                'peer', 'lifecycle', 'chaincode', 'approveformyorg',
-                '--package-id', packageID,
-                '--channelID', channelName,
-                '--name', ccName,
-                '--version', version,
-                '--signature-policy', signaturePolicy,
-                '--sequence', sequence,
+                'exec',
+                orgInfo.cli,
+                'peer',
+                'lifecycle',
+                'chaincode',
+                'approveformyorg',
+                '--package-id',
+                packageID,
+                '--channelID',
+                channelName,
+                '--name',
+                ccName,
+                '--version',
+                version,
+                '--signature-policy',
+                signaturePolicy,
+                '--sequence',
+                sequence,
                 '--waitForEvent',
-                ...collectionsConfig
+                ...collectionsConfig,
             );
         }
 
         // commit
         dockerCommandWithTLS(
-            'exec', 'org1_cli',
-            'peer', 'lifecycle', 'chaincode', 'commit',
-            '--channelID', channelName,
-            '--name', ccName,
-            '--version', version,
-            '--signature-policy', signaturePolicy,
-            '--sequence', sequence,
+            'exec',
+            'org1_cli',
+            'peer',
+            'lifecycle',
+            'chaincode',
+            'commit',
+            '--channelID',
+            channelName,
+            '--name',
+            ccName,
+            '--version',
+            version,
+            '--signature-policy',
+            signaturePolicy,
+            '--sequence',
+            sequence,
             '--waitForEvent',
-            '--peerAddresses', 'peer0.org1.example.com:7051',
-            '--peerAddresses', 'peer0.org2.example.com:8051',
+            '--peerAddresses',
+            'peer0.org1.example.com:7051',
+            '--peerAddresses',
+            'peer0.org2.example.com:8051',
             '--tlsRootCertFiles',
             '/etc/hyperledger/configtx/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt',
             '--tlsRootCertFiles',
             '/etc/hyperledger/configtx/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt',
-            ...collectionsConfig
+            ...collectionsConfig,
         );
 
         this.runningChaincodes[mangledName] = signaturePolicy;
@@ -270,21 +326,40 @@ export class Fabric {
     }
 
     private async installChaincode(chaincode: ChaincodeDefinition): Promise<void> {
-        const orgInstalls = Object.values(orgs).map(orgInfo => this.installChaincodeToOrg(chaincode, orgInfo));
+        const orgInstalls = Object.values(orgs).map((orgInfo) => this.installChaincodeToOrg(chaincode, orgInfo));
         await Promise.all(orgInstalls);
     }
 
     private async installChaincodeToOrg(chaincode: ChaincodeDefinition, orgInfo: OrgInfo): Promise<void> {
         dockerCommand(
-            'exec', orgInfo.cli, 'peer', 'lifecycle', 'chaincode', 'package', chaincode.package,
-            '--lang', chaincode.type,
-            '--label', chaincode.label,
-            '--path', chaincode.path,
+            'exec',
+            orgInfo.cli,
+            'peer',
+            'lifecycle',
+            'chaincode',
+            'package',
+            chaincode.package,
+            '--lang',
+            chaincode.type,
+            '--label',
+            chaincode.label,
+            '--path',
+            chaincode.path,
         );
 
-        const peerInstalls = orgInfo.peers.map(peer => {
+        const peerInstalls = orgInfo.peers.map((peer) => {
             const env = 'CORE_PEER_ADDRESS=' + peer;
-            dockerCommand('exec', '-e', env, orgInfo.cli, 'peer', 'lifecycle', 'chaincode', 'install', chaincode.package);
+            dockerCommand(
+                'exec',
+                '-e',
+                env,
+                orgInfo.cli,
+                'peer',
+                'lifecycle',
+                'chaincode',
+                'install',
+                chaincode.package,
+            );
         });
 
         await Promise.all(peerInstalls);
@@ -302,7 +377,7 @@ export class Fabric {
     }
 
     private async startAllPeers(): Promise<void> {
-        const stoppedPeers = Object.keys(this.runningPeers).filter(peer => !this.runningPeers[peer]);
+        const stoppedPeers = Object.keys(this.runningPeers).filter((peer) => !this.runningPeers[peer]);
         if (stoppedPeers.length === 0) {
             return;
         }

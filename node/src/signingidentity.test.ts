@@ -15,7 +15,7 @@ describe('SigningIdentity', () => {
     beforeEach(() => {
         identity = {
             mspId: 'MSP_ID',
-            credentials: Uint8Array.from(Buffer.from('CREDENTIALS'))
+            credentials: Uint8Array.from(Buffer.from('CREDENTIALS')),
         };
     });
 

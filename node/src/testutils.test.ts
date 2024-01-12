@@ -9,20 +9,43 @@ import { common, gateway, peer } from '@hyperledger/fabric-protos';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { CloseableAsyncIterable, DuplexStreamResponse, GatewayGrpcClient, ServerStreamResponse, chaincodeEventsMethod, commitStatusMethod, deliverFilteredMethod, deliverMethod, deliverWithPrivateDataMethod, endorseMethod, evaluateMethod, submitMethod } from './client';
+import {
+    CloseableAsyncIterable,
+    DuplexStreamResponse,
+    GatewayGrpcClient,
+    ServerStreamResponse,
+    chaincodeEventsMethod,
+    commitStatusMethod,
+    deliverFilteredMethod,
+    deliverMethod,
+    deliverWithPrivateDataMethod,
+    endorseMethod,
+    evaluateMethod,
+    submitMethod,
+} from './client';
 
 /* eslint-disable jest/no-export */
 
-it('Test utilities', () => { // eslint-disable-line jest/expect-expect
+// eslint-disable-next-line jest/expect-expect
+it('Test utilities', () => {
     // Empty test to keep Jest happy
 });
 
-type MockUnaryRequest<RequestType, ResponseType> = jest.Mock<grpc.ClientUnaryCall, [RequestType, grpc.CallOptions, grpc.requestCallback<ResponseType>]>;
-type MockServerStreamRequest<RequestType, ResponseType> = jest.Mock<ServerStreamResponse<ResponseType>, [RequestType, grpc.CallOptions]>;
-type MockDuplexStreamRequest<RequestType, ResponseType> = jest.Mock<DuplexStreamResponse<RequestType, ResponseType>, [grpc.CallOptions]>;
+type MockUnaryRequest<RequestType, ResponseType> = jest.Mock<
+    grpc.ClientUnaryCall,
+    [RequestType, grpc.CallOptions, grpc.requestCallback<ResponseType>]
+>;
+type MockServerStreamRequest<RequestType, ResponseType> = jest.Mock<
+    ServerStreamResponse<ResponseType>,
+    [RequestType, grpc.CallOptions]
+>;
+type MockDuplexStreamRequest<RequestType, ResponseType> = jest.Mock<
+    DuplexStreamResponse<RequestType, ResponseType>,
+    [grpc.CallOptions]
+>;
 
 const emptyDuplexStreamResponse = {
-    async* [Symbol.asyncIterator]() {
+    async *[Symbol.asyncIterator]() {
         // Nothing
     },
     cancel(): void {
@@ -30,11 +53,11 @@ const emptyDuplexStreamResponse = {
     },
     write(): boolean {
         return true;
-    }
+    },
 };
 
 const emptyServerStreamResponse = {
-    async* [Symbol.asyncIterator]() {
+    async *[Symbol.asyncIterator]() {
         // Nothing
     },
     cancel(): void {
@@ -43,8 +66,14 @@ const emptyServerStreamResponse = {
 };
 
 export class MockGatewayGrpcClient implements GatewayGrpcClient {
-    readonly #chaincodeEventsMock = jest.fn() as MockServerStreamRequest<gateway.SignedChaincodeEventsRequest, gateway.ChaincodeEventsResponse>;
-    readonly #commitStatusMock = jest.fn() as MockUnaryRequest<gateway.SignedCommitStatusRequest, gateway.CommitStatusResponse>;
+    readonly #chaincodeEventsMock = jest.fn() as MockServerStreamRequest<
+        gateway.SignedChaincodeEventsRequest,
+        gateway.ChaincodeEventsResponse
+    >;
+    readonly #commitStatusMock = jest.fn() as MockUnaryRequest<
+        gateway.SignedCommitStatusRequest,
+        gateway.CommitStatusResponse
+    >;
     readonly #deliverMock = jest.fn() as MockDuplexStreamRequest<common.Envelope, peer.DeliverResponse>;
     readonly #deliverFilteredMock = jest.fn() as MockDuplexStreamRequest<common.Envelope, peer.DeliverResponse>;
     readonly #deliverWithPrivateDataMock = jest.fn() as MockDuplexStreamRequest<common.Envelope, peer.DeliverResponse>;
@@ -52,16 +81,19 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
     readonly #evaluateMock = jest.fn() as MockUnaryRequest<gateway.EvaluateRequest, gateway.EvaluateResponse>;
     readonly #submitMock = jest.fn() as MockUnaryRequest<gateway.SubmitRequest, gateway.SubmitResponse>;
 
-    #unaryMocks: Record<string, MockUnaryRequest<any, any>> = { // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    #unaryMocks: Record<string, MockUnaryRequest<any, any>> = {
         [commitStatusMethod]: this.#commitStatusMock,
         [endorseMethod]: this.#endorseMock,
         [evaluateMethod]: this.#evaluateMock,
         [submitMethod]: this.#submitMock,
     };
-    #serverStreamMocks: Record<string, MockServerStreamRequest<any, any>> = {  // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    #serverStreamMocks: Record<string, MockServerStreamRequest<any, any>> = {
         [chaincodeEventsMethod]: this.#chaincodeEventsMock,
     };
-    #duplexStreamMocks: Record<string, MockDuplexStreamRequest<any, any>> = {  // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    #duplexStreamMocks: Record<string, MockDuplexStreamRequest<any, any>> = {
         [deliverMethod]: this.#deliverMock,
         [deliverFilteredMethod]: this.#deliverFilteredMock,
         [deliverWithPrivateDataMethod]: this.#deliverWithPrivateDataMock,
@@ -85,12 +117,9 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
         deserialize: (value: Buffer) => ResponseType,
         argument: RequestType,
         options: grpc.CallOptions,
-        callback: grpc.requestCallback<ResponseType>
+        callback: grpc.requestCallback<ResponseType>,
     ): grpc.ClientUnaryCall {
         const mock = this.#unaryMocks[method];
-        if (!mock) {
-            throw new Error(`No unary mock for ${method}`);
-        }
         return mock(argument, options, callback);
     }
 
@@ -99,12 +128,9 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
         serialize: (value: RequestType) => Buffer,
         deserialize: (value: Buffer) => ResponseType,
         argument: RequestType,
-        options: grpc.CallOptions
+        options: grpc.CallOptions,
     ): ServerStreamResponse<ResponseType> {
         const mock = this.#serverStreamMocks[method];
-        if (!mock) {
-            throw new Error(`No server stream mock for ${method}`);
-        }
         return mock(argument, options); // eslint-disable-line @typescript-eslint/no-unsafe-return
     }
 
@@ -112,65 +138,62 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
         method: string,
         serialize: (value: RequestType) => Buffer,
         deserialize: (value: Buffer) => ResponseType,
-        options: grpc.CallOptions
+        options: grpc.CallOptions,
     ): DuplexStreamResponse<RequestType, ResponseType> {
         const mock = this.#duplexStreamMocks[method];
-        if (!mock) {
-            throw new Error(`No duplex stream mock for ${method}`);
-        }
         return mock(options); // eslint-disable-line @typescript-eslint/no-unsafe-return
     }
 
     getChaincodeEventsRequests(): gateway.SignedChaincodeEventsRequest[] {
-        return this.#chaincodeEventsMock.mock.calls.map(call => call[0]);
+        return this.#chaincodeEventsMock.mock.calls.map((call) => call[0]);
     }
 
     getCommitStatusRequests(): gateway.SignedCommitStatusRequest[] {
-        return this.#commitStatusMock.mock.calls.map(call => call[0]);
+        return this.#commitStatusMock.mock.calls.map((call) => call[0]);
     }
 
     getEndorseRequests(): gateway.EndorseRequest[] {
-        return this.#endorseMock.mock.calls.map(call => call[0]);
+        return this.#endorseMock.mock.calls.map((call) => call[0]);
     }
 
     getEvaluateRequests(): gateway.EvaluateRequest[] {
-        return this.#evaluateMock.mock.calls.map(call => call[0]);
+        return this.#evaluateMock.mock.calls.map((call) => call[0]);
     }
 
     getSubmitRequests(): gateway.SubmitRequest[] {
-        return this.#submitMock.mock.calls.map(call => call[0]);
+        return this.#submitMock.mock.calls.map((call) => call[0]);
     }
 
     getBlockEventsOptions(): grpc.CallOptions[] {
-        return this.#deliverMock.mock.calls.map(call => call[0]);
+        return this.#deliverMock.mock.calls.map((call) => call[0]);
     }
 
     getBlockAndPrivateDataEventsOptions(): grpc.CallOptions[] {
-        return this.#deliverWithPrivateDataMock.mock.calls.map(call => call[0]);
+        return this.#deliverWithPrivateDataMock.mock.calls.map((call) => call[0]);
     }
 
     getChaincodeEventsOptions(): grpc.CallOptions[] {
-        return this.#chaincodeEventsMock.mock.calls.map(call => call[1]);
+        return this.#chaincodeEventsMock.mock.calls.map((call) => call[1]);
     }
 
     getCommitStatusOptions(): grpc.CallOptions[] {
-        return this.#commitStatusMock.mock.calls.map(call => call[1]);
+        return this.#commitStatusMock.mock.calls.map((call) => call[1]);
     }
 
     getEndorseOptions(): grpc.CallOptions[] {
-        return this.#endorseMock.mock.calls.map(call => call[1]);
+        return this.#endorseMock.mock.calls.map((call) => call[1]);
     }
 
     getEvaluateOptions(): grpc.CallOptions[] {
-        return this.#evaluateMock.mock.calls.map(call => call[1]);
+        return this.#evaluateMock.mock.calls.map((call) => call[1]);
     }
 
     getFilteredBlockEventsOptions(): grpc.CallOptions[] {
-        return this.#deliverFilteredMock.mock.calls.map(call => call[0]);
+        return this.#deliverFilteredMock.mock.calls.map((call) => call[0]);
     }
 
     getSubmitOptions(): grpc.CallOptions[] {
-        return this.#submitMock.mock.calls.map(call => call[1]);
+        return this.#submitMock.mock.calls.map((call) => call[1]);
     }
 
     mockCommitStatusResponse(response: gateway.CommitStatusResponse): void {
@@ -248,15 +271,14 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
 
 function fakeUnaryCall<ResponseType>(err: grpc.ServiceError | undefined, response: ResponseType | undefined) {
     return (request: unknown, options: grpc.CallOptions, callback: grpc.requestCallback<ResponseType>) => {
-        setImmediate(() => callback(err ?? null, response));
+        setImmediate(() => {
+            callback(err ?? null, response);
+        });
         return {} as grpc.ClientUnaryCall;
     };
 }
 
-export function newEndorseResponse(options: {
-    result: Uint8Array;
-    channelName?: string;
-}): gateway.EndorseResponse {
+export function newEndorseResponse(options: { result: Uint8Array; channelName?: string }): gateway.EndorseResponse {
     const chaincodeResponse = new peer.Response();
     chaincodeResponse.setPayload(options.result);
 
@@ -317,7 +339,7 @@ export async function readElements<T>(
 }
 
 export interface CloseableAsyncIterableStub<T> extends CloseableAsyncIterable<T> {
-    close: jest.Mock<void, void[]>;
+    close: jest.Mock<void, []>;
 }
 
 // @ts-expect-error Polyfill for Symbol.dispose if not present
@@ -325,40 +347,43 @@ Symbol.dispose ??= Symbol('Symbol.dispose');
 
 export function newCloseableAsyncIterable<T>(values: T[]): CloseableAsyncIterableStub<T> {
     return Object.assign(newAsyncIterable(values), {
-        close: jest.fn<void, void[]>(),
-        [Symbol.dispose]: jest.fn<void, void[]>(),
+        close: jest.fn<undefined, []>(),
+        [Symbol.dispose]: jest.fn<undefined, []>(),
     });
 }
 
 export interface ServerStreamResponseStub<T> extends ServerStreamResponse<T> {
-    cancel: jest.Mock<void, void[]>;
+    cancel: jest.Mock<undefined, []>;
 }
 
 export function newServerStreamResponse<T>(values: (T | Error)[]): ServerStreamResponseStub<T> {
     return Object.assign(newAsyncIterable(values), {
-        cancel: jest.fn<void, void[]>(),
+        cancel: jest.fn<undefined, []>(),
     });
 }
 
 function newAsyncIterable<T>(values: (T | Error)[]): AsyncIterable<T> {
     return {
-        async* [Symbol.asyncIterator]() { // eslint-disable-line @typescript-eslint/require-await
+        [Symbol.asyncIterator]: async function* () {
             for (const value of values) {
                 if (value instanceof Error) {
-                    throw value;
+                    return Promise.reject(value);
                 }
                 yield value;
             }
-        }
+        },
     };
 }
 
-export interface DuplexStreamResponseStub<RequestType, ResponseType> extends DuplexStreamResponse<RequestType, ResponseType> {
-    cancel: jest.Mock<void, void[]>;
+export interface DuplexStreamResponseStub<RequestType, ResponseType>
+    extends DuplexStreamResponse<RequestType, ResponseType> {
+    cancel: jest.Mock<undefined, []>;
     write: jest.Mock<boolean, RequestType[]>;
 }
 
-export function newDuplexStreamResponse<RequestType, ResponseType>(values: (ResponseType | Error)[]): DuplexStreamResponseStub<RequestType, ResponseType> {
+export function newDuplexStreamResponse<RequestType, ResponseType>(
+    values: (ResponseType | Error)[],
+): DuplexStreamResponseStub<RequestType, ResponseType> {
     return Object.assign(newServerStreamResponse(values), {
         write: jest.fn<boolean, RequestType[]>(),
     });

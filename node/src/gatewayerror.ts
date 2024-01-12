@@ -50,12 +50,14 @@ export class GatewayError extends Error {
      */
     cause: ServiceError;
 
-    constructor(properties: Readonly<{
-        code: number;
-        details: ErrorDetail[];
-        cause: ServiceError;
-        message?: string;
-    }>) {
+    constructor(
+        properties: Readonly<{
+            code: number;
+            details: ErrorDetail[];
+            cause: ServiceError;
+            message?: string;
+        }>,
+    ) {
         super(properties.message);
 
         this.name = GatewayError.name;
@@ -66,10 +68,10 @@ export class GatewayError extends Error {
 }
 
 export function newGatewayError(err: ServiceError): GatewayError {
-    const metadata = err.metadata?.get('grpc-status-details-bin') || [];
+    const metadata = err.metadata.get('grpc-status-details-bin');
     const details = metadata
-        .flatMap(metadataValue => google.rpc.Status.deserializeBinary(Buffer.from(metadataValue)).getDetailsList())
-        .map(statusDetail => {
+        .flatMap((metadataValue) => google.rpc.Status.deserializeBinary(Buffer.from(metadataValue)).getDetailsList())
+        .map((statusDetail) => {
             const endpointError = gateway.ErrorDetail.deserializeBinary(statusDetail.getValue_asU8());
             const detail: ErrorDetail = {
                 address: endpointError.getAddress(),

@@ -16,13 +16,15 @@ export class EndorseError extends GatewayError {
      */
     transactionId: string;
 
-    constructor(properties: Readonly<{
-        code: number;
-        details: ErrorDetail[];
-        cause: ServiceError;
-        transactionId: string;
-        message?: string;
-    }>) {
+    constructor(
+        properties: Readonly<{
+            code: number;
+            details: ErrorDetail[];
+            cause: ServiceError;
+            transactionId: string;
+            message?: string;
+        }>,
+    ) {
         super(properties);
 
         this.name = EndorseError.name;

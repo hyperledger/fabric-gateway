@@ -8,48 +8,6 @@ import { Mechanism, Pkcs11Error, SessionInfo, SlotInfo, Template, TokenInfo } fr
 import { HSMSignerOptions } from './hsmsigner';
 import { newHSMSignerFactory } from './signers';
 
-const pkcs11Stub = {
-    load: (): void => { return; },
-    C_Initialize: (): void => { return; },
-    C_GetInfo: (): string => 'Info',
-    C_GetSlotList: (): Buffer[] => [],
-    C_GetTokenInfo: (slot: Buffer): TokenInfo | null => null, // eslint-disable-line @typescript-eslint/no-unused-vars
-    C_GetSlotInfo: (slot: Buffer): SlotInfo | string => `${slot.toString()}`,
-    C_GetMechanismList: (_slot: Buffer): string[] => ['ECDSA'], // eslint-disable-line @typescript-eslint/no-unused-vars
-    C_OpenSession: (): void => { return; },
-    C_GetSessionInfo: (): SessionInfo | void => { return; },
-    C_Login: (): void => { return; },
-    C_Logout: (session: Buffer): void => { return; }, // eslint-disable-line @typescript-eslint/no-unused-vars
-    C_CloseSession: (): void => { return; },
-    C_Finalize: (): void => { return; },
-    C_FindObjectsInit: (session: Buffer, template: Template): void => { return; }, // eslint-disable-line @typescript-eslint/no-unused-vars
-    C_FindObjects: (session: Buffer, limit: number): Buffer[] => { return []; }, // eslint-disable-line @typescript-eslint/no-unused-vars
-    C_FindObjectsFinal: (session: Buffer): void => { return; }, // eslint-disable-line @typescript-eslint/no-unused-vars
-    C_SignInit: (session: Buffer, mechanism: Mechanism, key: Buffer): void => { return; }, // eslint-disable-line @typescript-eslint/no-unused-vars
-    C_Sign: (session: Buffer, digest: Buffer, store: Buffer): Buffer => { return digest; }, // eslint-disable-line @typescript-eslint/no-unused-vars
-};
-
-const resetPkcs11Stub: () => void = () => {
-    pkcs11Stub.load = (): void => { return; };
-    pkcs11Stub.C_Initialize = (): void => { return; };
-    pkcs11Stub.C_GetInfo = (): string => 'Info';
-    pkcs11Stub.C_GetSlotList = (): Buffer[] => [];
-    pkcs11Stub.C_GetTokenInfo = (slot: Buffer): TokenInfo | null => null; // eslint-disable-line @typescript-eslint/no-unused-vars
-    pkcs11Stub.C_GetSlotInfo = (slot: Buffer): SlotInfo | string => `${slot.toString()}`;
-    pkcs11Stub.C_GetMechanismList = (slot: Buffer): string[] => ['ECDSA']; // eslint-disable-line @typescript-eslint/no-unused-vars
-    pkcs11Stub.C_OpenSession = (): void => { return; };
-    pkcs11Stub.C_GetSessionInfo = (): void => { return; };
-    pkcs11Stub.C_Login = (): void => { return; };
-    pkcs11Stub.C_Logout = (session: Buffer): void => { return; }, // eslint-disable-line @typescript-eslint/no-unused-vars
-    pkcs11Stub.C_CloseSession = (): void => { return; };
-    pkcs11Stub.C_Finalize = (): void => { return; };
-    pkcs11Stub.C_FindObjectsInit = (session: Buffer, template: Template): void => { return; }; // eslint-disable-line @typescript-eslint/no-unused-vars
-    pkcs11Stub.C_FindObjects = (session: Buffer, limit: number): Buffer[] => { return []; }; // eslint-disable-line @typescript-eslint/no-unused-vars
-    pkcs11Stub.C_FindObjectsFinal = (session: Buffer): void => { return; }; // eslint-disable-line @typescript-eslint/no-unused-vars
-    pkcs11Stub.C_SignInit = (session: Buffer, mechanism: Mechanism, key: Buffer): void => { return; }; // eslint-disable-line @typescript-eslint/no-unused-vars
-    pkcs11Stub.C_Sign = (session: Buffer, digest: Buffer, store: Buffer): Buffer => { return Buffer.from(digest); }; // eslint-disable-line @typescript-eslint/no-unused-vars
-};
-
 const CKO_PRIVATE_KEY = 179;
 const CKA_ID = 54;
 const CKA_CLASS = 67;
@@ -63,8 +21,106 @@ const CKR_USER_ALREADY_LOGGED_IN = 256;
 const hsmOptions: HSMSignerOptions = {
     label: 'ForFabric',
     pin: '98765432',
-    identifier: 'id'
+    identifier: 'id',
 };
+
+// eslint-disable @typescript-eslint/no-unused-vars
+
+const pkcs11Stub = {
+    load: (): void => {
+        return;
+    },
+    C_Initialize: (): void => {
+        return;
+    },
+    C_GetInfo: (): string => 'Info',
+    C_GetSlotList: (): Buffer[] => [],
+    C_GetTokenInfo: (slot: Buffer): TokenInfo | null => null,
+    C_GetSlotInfo: (slot: Buffer): SlotInfo | string => slot.toString(),
+    C_GetMechanismList: (slot: Buffer): string[] => ['ECDSA'],
+    C_OpenSession: (): void => {
+        return;
+    },
+    C_GetSessionInfo: (): SessionInfo | void => {
+        return;
+    },
+    C_Login: (): void => {
+        return;
+    },
+    C_Logout: (session: Buffer): void => {
+        return;
+    },
+    C_CloseSession: (): void => {
+        return;
+    },
+    C_Finalize: (): void => {
+        return;
+    },
+    C_FindObjectsInit: (session: Buffer, template: Template): void => {
+        return;
+    },
+    C_FindObjects: (session: Buffer, limit: number): Buffer[] => {
+        return [];
+    },
+    C_FindObjectsFinal: (session: Buffer): void => {
+        return;
+    },
+    C_SignInit: (session: Buffer, mechanism: Mechanism, key: Buffer): void => {
+        return;
+    },
+    C_Sign: (session: Buffer, digest: Buffer, store: Buffer): Buffer => {
+        return digest;
+    },
+};
+
+const resetPkcs11Stub: () => void = () => {
+    pkcs11Stub.load = (): void => {
+        return;
+    };
+    pkcs11Stub.C_Initialize = (): void => {
+        return;
+    };
+    pkcs11Stub.C_GetInfo = (): string => 'Info';
+    pkcs11Stub.C_GetSlotList = (): Buffer[] => [];
+    pkcs11Stub.C_GetTokenInfo = (slot: Buffer): TokenInfo | null => null;
+    pkcs11Stub.C_GetSlotInfo = (slot: Buffer): SlotInfo | string => slot.toString();
+    pkcs11Stub.C_GetMechanismList = (slot: Buffer): string[] => ['ECDSA'];
+    pkcs11Stub.C_OpenSession = (): void => {
+        return;
+    };
+    pkcs11Stub.C_GetSessionInfo = (): void => {
+        return;
+    };
+    pkcs11Stub.C_Login = (): void => {
+        return;
+    };
+    pkcs11Stub.C_Logout = (session: Buffer): void => {
+        return;
+    };
+    pkcs11Stub.C_CloseSession = (): void => {
+        return;
+    };
+    pkcs11Stub.C_Finalize = (): void => {
+        return;
+    };
+    pkcs11Stub.C_FindObjectsInit = (session: Buffer, template: Template): void => {
+        return;
+    };
+    pkcs11Stub.C_FindObjects = (session: Buffer, limit: number): Buffer[] => {
+        return [];
+    };
+    pkcs11Stub.C_FindObjectsFinal = (session: Buffer): void => {
+        return;
+    };
+    pkcs11Stub.C_SignInit = (session: Buffer, mechanism: Mechanism, key: Buffer): void => {
+        return;
+    };
+    pkcs11Stub.C_Sign = (session: Buffer, digest: Buffer, store: Buffer): Buffer => {
+        return Buffer.from(digest);
+    };
+};
+
+// eslint-enable @typescript-eslint/no-unused-vars
 
 jest.mock('pkcs11js', () => {
     class PKCS11 {
@@ -94,7 +150,7 @@ jest.mock('pkcs11js', () => {
         CKM_ECDSA,
         CKF_SERIAL_SESSION,
         CKU_USER,
-        CKR_USER_ALREADY_LOGGED_IN
+        CKR_USER_ALREADY_LOGGED_IN,
     };
     return exports;
 });
@@ -105,18 +161,17 @@ describe('when creating or disposing of an HSM Signer Factory', () => {
     });
 
     it('throws if library option is not valid', () => {
-        pkcs11Stub.C_Initialize = () => { throw new Error('Some Error'); };
-        expect(() => newHSMSignerFactory('somelibrary'))
-            .toThrow('Some Error');
+        pkcs11Stub.C_Initialize = () => {
+            throw new Error('Some Error');
+        };
+        expect(() => newHSMSignerFactory('somelibrary')).toThrow('Some Error');
 
-        expect(() => newHSMSignerFactory(''))
-            .toThrow('library must be provided');
+        expect(() => newHSMSignerFactory('')).toThrow('library must be provided');
     });
 
     it('can be disposed', () => {
         const hsmSignerFactory = newHSMSignerFactory('somelibrary');
-        expect(() => hsmSignerFactory.dispose())
-            .not.toThrow();
+        expect(() => hsmSignerFactory.dispose()).not.toThrow();
     });
 });
 
@@ -133,90 +188,94 @@ describe('When using an HSM Signer', () => {
     const mockSession = Buffer.from('mockSession');
     const mockPrivateKeyHandle = Buffer.from('someobject');
 
-    const HSMSignature = 'a5f6e5dd8c46ee4094ebb908b719572022f64ed4bbc21f1f5aa4e49163f4f56c4c6ca8b0393836c79045b1be2f25b1cd2b2b253a213fc9248b7e18574c4170b4';
-    const DERSignature = '3045022100a5f6e5dd8c46ee4094ebb908b719572022f64ed4bbc21f1f5aa4e49163f4f56c02204c6ca8b0393836c79045b1be2f25b1cd2b2b253a213fc9248b7e18574c4170b4';
+    const HSMSignature =
+        'a5f6e5dd8c46ee4094ebb908b719572022f64ed4bbc21f1f5aa4e49163f4f56c4c6ca8b0393836c79045b1be2f25b1cd2b2b253a213fc9248b7e18574c4170b4';
+    const DERSignature =
+        '3045022100a5f6e5dd8c46ee4094ebb908b719572022f64ed4bbc21f1f5aa4e49163f4f56c02204c6ca8b0393836c79045b1be2f25b1cd2b2b253a213fc9248b7e18574c4170b4';
     const hsmSignerFactory = newHSMSignerFactory('somelibrary');
 
     beforeEach(() => {
         resetPkcs11Stub();
         pkcs11Stub.C_GetTokenInfo = mockTokenInfo;
         pkcs11Stub.C_GetSlotList = () => [slot1, slot2];
-        pkcs11Stub.C_OpenSession = () => { return mockSession; };
+        pkcs11Stub.C_OpenSession = () => {
+            return mockSession;
+        };
         pkcs11Stub.C_FindObjectsInit = jest.fn();
         pkcs11Stub.C_FindObjectsFinal = jest.fn();
-        pkcs11Stub.C_FindObjects = jest.fn(() => { return [mockPrivateKeyHandle]; });
+        pkcs11Stub.C_FindObjects = jest.fn(() => {
+            return [mockPrivateKeyHandle];
+        });
     });
 
     it('throws if label, pin or identifier are blank or not provided', () => {
         const badHSMOptions: HSMSignerOptions = {
             label: '',
             pin: '98765432',
-            identifier: 'id'
+            identifier: 'id',
         };
 
-        expect(() => hsmSignerFactory.newSigner(badHSMOptions))
-            .toThrow('label property must be provided');
+        expect(() => hsmSignerFactory.newSigner(badHSMOptions)).toThrow('label property must be provided');
 
         badHSMOptions.label = 'ForFabric';
         badHSMOptions.pin = '';
-        expect(() => hsmSignerFactory.newSigner(badHSMOptions))
-            .toThrow('pin property must be provided');
+        expect(() => hsmSignerFactory.newSigner(badHSMOptions)).toThrow('pin property must be provided');
 
         badHSMOptions.pin = '98765432';
         badHSMOptions.identifier = '';
-        expect(() => hsmSignerFactory.newSigner(badHSMOptions))
-            .toThrow('identifier property must be provided');
+        expect(() => hsmSignerFactory.newSigner(badHSMOptions)).toThrow('identifier property must be provided');
 
         const noLabelOptions = {
             pin: '98765432',
-            identifier: 'id'
+            identifier: 'id',
         };
-        expect(() => hsmSignerFactory.newSigner(noLabelOptions as HSMSignerOptions))
-            .toThrow('label property must be provided');
+        expect(() => hsmSignerFactory.newSigner(noLabelOptions as HSMSignerOptions)).toThrow(
+            'label property must be provided',
+        );
 
         const noPinOptions = {
             label: 'ForFabric',
-            identifier: 'id'
+            identifier: 'id',
         };
-        expect(() => hsmSignerFactory.newSigner(noPinOptions as HSMSignerOptions))
-            .toThrow('pin property must be provided');
+        expect(() => hsmSignerFactory.newSigner(noPinOptions as HSMSignerOptions)).toThrow(
+            'pin property must be provided',
+        );
 
         const noIdentifierOptions = {
             label: 'ForFabric',
-            pin: '98765432'
+            pin: '98765432',
         };
-        expect(() => hsmSignerFactory.newSigner(noIdentifierOptions as HSMSignerOptions))
-            .toThrow('identifier property must be provided');
+        expect(() => hsmSignerFactory.newSigner(noIdentifierOptions as HSMSignerOptions)).toThrow(
+            'identifier property must be provided',
+        );
     });
 
     it('throws an error if no slots are returned', () => {
         pkcs11Stub.C_GetSlotList = () => [];
-        expect(() => hsmSignerFactory.newSigner(hsmOptions))
-            .toThrow('No pkcs11 slots can be found');
+        expect(() => hsmSignerFactory.newSigner(hsmOptions)).toThrow('No pkcs11 slots can be found');
     });
 
     it('throws an error if label cannot be found and there are slots', () => {
         const badHSMOptions: HSMSignerOptions = {
             label: 'someunknownlabel',
             pin: '98765432',
-            identifier: 'id'
+            identifier: 'id',
         };
 
-        expect(() => hsmSignerFactory.newSigner(badHSMOptions))
-            .toThrow('label someunknownlabel cannot be found in the pkcs11 slot list');
+        expect(() => hsmSignerFactory.newSigner(badHSMOptions)).toThrow(
+            'label someunknownlabel cannot be found in the pkcs11 slot list',
+        );
     });
 
     it('finds the correct slot when the correct label is available', () => {
         pkcs11Stub.C_OpenSession = jest.fn();
-        expect(() => hsmSignerFactory.newSigner(hsmOptions))
-            .not.toThrow();
+        expect(() => hsmSignerFactory.newSigner(hsmOptions)).not.toThrow();
         expect(pkcs11Stub.C_OpenSession).toHaveBeenCalledWith(slot1, CKF_SERIAL_SESSION);
     });
 
     it('defaults to a CKU_USER if none provided', () => {
         pkcs11Stub.C_Login = jest.fn();
-        expect(() => hsmSignerFactory.newSigner(hsmOptions))
-            .not.toThrow();
+        expect(() => hsmSignerFactory.newSigner(hsmOptions)).not.toThrow();
         expect(pkcs11Stub.C_Login).toHaveBeenCalledWith(mockSession, CKU_USER, hsmOptions.pin);
     });
 
@@ -225,27 +284,28 @@ describe('When using an HSM Signer', () => {
             label: 'ForFabric',
             pin: '98765432',
             identifier: 'id',
-            userType: 100
+            userType: 100,
         };
 
         pkcs11Stub.C_Login = jest.fn();
-        expect(() => hsmSignerFactory.newSigner(hsmOptionsWithUserType))
-            .not.toThrow();
+        expect(() => hsmSignerFactory.newSigner(hsmOptionsWithUserType)).not.toThrow();
         expect(pkcs11Stub.C_Login).toHaveBeenCalledWith(mockSession, hsmOptionsWithUserType.userType, hsmOptions.pin);
     });
 
     it('throws if pkcs11 open session throws an error', () => {
-        pkcs11Stub.C_OpenSession = () => { throw new Error('Some Error'); };
-        expect(() => hsmSignerFactory.newSigner(hsmOptions))
-            .toThrow('Some Error');
+        pkcs11Stub.C_OpenSession = () => {
+            throw new Error('Some Error');
+        };
+        expect(() => hsmSignerFactory.newSigner(hsmOptions)).toThrow('Some Error');
     });
 
     it('throws if pkcs11 login throws an error', () => {
-        pkcs11Stub.C_Login = () => { throw new Error('Some Error'); };
+        pkcs11Stub.C_Login = () => {
+            throw new Error('Some Error');
+        };
         pkcs11Stub.C_CloseSession = jest.fn();
         pkcs11Stub.C_GetSlotList = () => [slot1, slot2];
-        expect(() => hsmSignerFactory.newSigner(hsmOptions))
-            .toThrow('Some Error');
+        expect(() => hsmSignerFactory.newSigner(hsmOptions)).toThrow('Some Error');
         expect(pkcs11Stub.C_CloseSession).toHaveBeenCalledWith(mockSession);
     });
 
@@ -256,19 +316,21 @@ describe('When using an HSM Signer', () => {
             message: 'CKR_USER_ALREADY_LOGGED_IN',
             nativeStack: '[Native]',
             method: 'C_Login',
-            name: 'error'
+            name: 'error',
         };
-        pkcs11Stub.C_Login = () => { throw alreadyLoggedInError; };
-        expect(() => hsmSignerFactory.newSigner(hsmOptions))
-            .not.toThrow();
+        pkcs11Stub.C_Login = () => {
+            throw alreadyLoggedInError;
+        };
+        expect(() => hsmSignerFactory.newSigner(hsmOptions)).not.toThrow();
         expect(pkcs11Stub.C_CloseSession).not.toHaveBeenCalled();
     });
 
     it('throws and calls find final if it cannot find the HSM object', () => {
         pkcs11Stub.C_CloseSession = jest.fn();
-        pkcs11Stub.C_FindObjects = jest.fn(() => { return []; });
-        expect(() => hsmSignerFactory.newSigner(hsmOptions))
-            .toThrow('Unable to find object in HSM with ID id');
+        pkcs11Stub.C_FindObjects = jest.fn(() => {
+            return [];
+        });
+        expect(() => hsmSignerFactory.newSigner(hsmOptions)).toThrow('Unable to find object in HSM with ID id');
         expect(pkcs11Stub.C_FindObjectsFinal).toHaveBeenCalled();
         expect(pkcs11Stub.C_CloseSession).toHaveBeenCalledWith(mockSession);
     });
@@ -283,18 +345,23 @@ describe('When using an HSM Signer', () => {
             { type: CKA_KEY_TYPE, value: CKK_EC },
         ];
 
-        expect(pkcs11Stub.C_FindObjectsInit).toHaveBeenCalledWith(mockSession, expect.arrayContaining(expectedTemplate));
+        expect(pkcs11Stub.C_FindObjectsInit).toHaveBeenCalledWith(
+            mockSession,
+            expect.arrayContaining(expectedTemplate),
+        );
         expect(pkcs11Stub.C_FindObjects).toHaveBeenCalledWith(mockSession, 1);
         expect(pkcs11Stub.C_FindObjects).toHaveBeenCalledWith(mockSession, 1);
     });
 
     it('signs using the HSM', async () => {
         pkcs11Stub.C_SignInit = jest.fn();
-        pkcs11Stub.C_Sign = jest.fn(() => { return Buffer.from(HSMSignature, 'hex'); });
+        pkcs11Stub.C_Sign = jest.fn(() => {
+            return Buffer.from(HSMSignature, 'hex');
+        });
 
         const digest = Buffer.from('some digest');
 
-        const {signer} = hsmSignerFactory.newSigner(hsmOptions);
+        const { signer } = hsmSignerFactory.newSigner(hsmOptions);
         const signed = await signer(digest);
         expect(signed).toEqual(new Uint8Array(Buffer.from(DERSignature, 'hex')));
 
@@ -303,7 +370,7 @@ describe('When using an HSM Signer', () => {
     });
 
     it('can be closed', () => {
-        const {close} = hsmSignerFactory.newSigner(hsmOptions);
+        const { close } = hsmSignerFactory.newSigner(hsmOptions);
         expect(() => close()).not.toThrow();
     });
 });

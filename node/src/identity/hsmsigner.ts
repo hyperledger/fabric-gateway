@@ -84,7 +84,6 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
         const slot = this.#findSlotForLabel(options.label);
         const session = pkcs11.C_OpenSession(slot, pkcs11js.CKF_SERIAL_SESSION);
 
-
         let privateKeyHandle: Buffer;
         try {
             this.#login(session, options.userType, options.pin);
@@ -112,7 +111,7 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
             throw new Error('No pkcs11 slots can be found');
         }
 
-        const slot = slots.find(slotToCheck => {
+        const slot = slots.find((slotToCheck) => {
             const tokenInfo = this.#pkcs11.C_GetTokenInfo(slotToCheck);
             return tokenInfo?.label?.trim() === pkcs11Label;
         });
@@ -123,7 +122,6 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
 
         return slot;
     }
-
 
     #login(session: Buffer, userType: number, pin: string): void {
         try {
@@ -140,7 +138,7 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
         const pkcs11Template: pkcs11js.Template = [
             { type: pkcs11js.CKA_ID, value: identifier },
             { type: pkcs11js.CKA_CLASS, value: keytype },
-            { type: pkcs11js.CKA_KEY_TYPE, value: pkcs11js.CKK_EC }
+            { type: pkcs11js.CKA_KEY_TYPE, value: pkcs11js.CKK_EC },
         ];
         this.#pkcs11.C_FindObjectsInit(session, pkcs11Template);
 
@@ -158,9 +156,12 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
 }
 
 function sanitizeOptions(hsmSignerOptions: HSMSignerOptions): Required<HSMSignerOptions> {
-    const options = Object.assign({
-        userType: pkcs11js.CKU_USER,
-    }, hsmSignerOptions);
+    const options = Object.assign(
+        {
+            userType: pkcs11js.CKU_USER,
+        },
+        hsmSignerOptions,
+    );
 
     assertNotEmpty(options.label, 'label');
     assertNotEmpty(options.pin, 'pin');

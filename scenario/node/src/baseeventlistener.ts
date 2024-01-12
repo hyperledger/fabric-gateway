@@ -13,7 +13,9 @@ export class BaseEventListener<T> implements EventListener<T> {
 
     constructor(events: CloseableAsyncIterable<T>) {
         this.#iterator = events[Symbol.asyncIterator]();
-        this.#close = () => events.close();
+        this.#close = () => {
+            events.close();
+        };
     }
 
     async next(): Promise<T> {

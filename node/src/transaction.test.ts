@@ -178,7 +178,7 @@ describe('Transaction', () => {
         await contract.submitTransaction('TRANSACTION_NAME');
 
         const statusRequest = client.getCommitStatusRequests()[0];
-        const signature = Buffer.from(statusRequest.getSignature() ?? '').toString();
+        const signature = Buffer.from(statusRequest.getSignature()).toString();
         expect(signature).toBe('MY_SIGNATURE');
     });
 
@@ -195,7 +195,7 @@ describe('Transaction', () => {
         await deserializedSignedCommit.getStatus();
 
         const statusRequest = client.getCommitStatusRequests()[0];
-        const signature = Buffer.from(statusRequest.getSignature() ?? '').toString();
+        const signature = Buffer.from(statusRequest.getSignature()).toString();
         expect(signature).toBe('MY_SIGNATURE');
     });
 
@@ -205,7 +205,7 @@ describe('Transaction', () => {
         await contract.submitTransaction('TRANSACTION_NAME');
 
         expect(signer).toHaveBeenCalledTimes(3); // endorse, submit and commit
-        signer.mock.calls.forEach(call => {
+        signer.mock.calls.forEach((call) => {
             const digest = call[0].toString();
             expect(digest).toBe('MY_DIGEST');
         });
