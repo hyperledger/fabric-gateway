@@ -6,7 +6,14 @@
 
 import { common, orderer } from '@hyperledger/fabric-protos';
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
-import { BlockAndPrivateDataEventsRequest, BlockAndPrivateDataEventsRequestImpl, BlockEventsRequest, BlockEventsRequestImpl, FilteredBlockEventsRequest, FilteredBlockEventsRequestImpl } from './blockeventsrequest';
+import {
+    BlockAndPrivateDataEventsRequest,
+    BlockAndPrivateDataEventsRequestImpl,
+    BlockEventsRequest,
+    BlockEventsRequestImpl,
+    FilteredBlockEventsRequest,
+    FilteredBlockEventsRequestImpl,
+} from './blockeventsrequest';
 import { GatewayClient } from './client';
 import { EventsBuilder, EventsOptions } from './eventsbuilder';
 import { SigningIdentity } from './signingidentity';

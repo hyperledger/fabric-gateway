@@ -6,12 +6,14 @@
         "node": ">=18.12.0"
     },
     "scripts": {
-        "build": "npm-run-all clean compile lint",
+        "build": "npm-run-all clean compile lint format",
         "clean": "rimraf dist",
         "cucumber": "NODE_OPTIONS='--enable-source-maps' cucumber-js --format cucumber-console-formatter --require 'dist/**/*.js' ../features",
         "cucumber:no-hsm": "NODE_OPTIONS='--enable-source-maps' cucumber-js --tags 'not @hsm' --format cucumber-console-formatter --require 'dist/**/*.js' ../features",
         "compile": "tsc",
-        "lint": "eslint . --ext .ts",
+        "format": "prettier '**/*.{ts,js}' --check",
+        "format:fix": "prettier '**/*.{ts,js}' --write",
+        "lint": "eslint .",
         "test": "npm-run-all build cucumber",
         "test:no-hsm": "npm-run-all build cucumber:no-hsm"
     },
@@ -26,12 +28,14 @@
         "@cucumber/cucumber": "^10.0.1",
         "@tsconfig/node18": "^18.2.2",
         "@types/node": "^18.19.1",
-        "@typescript-eslint/eslint-plugin": "^6.13.1",
-        "@typescript-eslint/parser": "^6.13.1",
+        "@typescript-eslint/eslint-plugin": "^6.18.1",
+        "@typescript-eslint/parser": "^6.18.1",
         "cucumber-console-formatter": "^1.0.0",
-        "eslint": "^8.55.0",
+        "eslint": "^8.56.0",
+        "eslint-config-prettier": "^9.1.0",
         "expect": "^29.7.0",
         "npm-run-all": "^4.1.5",
+        "prettier": "^3.2.1",
         "typescript": "~5.3.2"
     }
 }

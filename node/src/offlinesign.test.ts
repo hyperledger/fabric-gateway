@@ -92,7 +92,9 @@ describe('Offline sign', () => {
         it('retains endorsing orgs', async () => {
             const expected = Buffer.from('MY_SIGNATURE');
 
-            const unsignedProposal = contract.newProposal('TRANSACTION_NAME', {endorsingOrganizations: ['org3', 'org5']});
+            const unsignedProposal = contract.newProposal('TRANSACTION_NAME', {
+                endorsingOrganizations: ['org3', 'org5'],
+            });
             const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), expected);
             await signedProposal.evaluate();
 
@@ -137,7 +139,9 @@ describe('Offline sign', () => {
         it('retains endorsing orgs', async () => {
             const expected = Buffer.from('MY_SIGNATURE');
 
-            const unsignedProposal = contract.newProposal('TRANSACTION_NAME', {endorsingOrganizations: ['org3', 'org5']});
+            const unsignedProposal = contract.newProposal('TRANSACTION_NAME', {
+                endorsingOrganizations: ['org3', 'org5'],
+            });
             const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), expected);
             await signedProposal.endorse();
 
@@ -192,7 +196,10 @@ describe('Offline sign', () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
             const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedTransaction = await signedProposal.endorse();
-            const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
+            const signedTransaction = gateway.newSignedTransaction(
+                unsignedTransaction.getBytes(),
+                Buffer.from('SIGNATURE'),
+            );
             const commit = await signedTransaction.submit();
 
             await expect(commit.getStatus()).rejects.toThrow(undefinedSignerMessage);
@@ -204,13 +211,16 @@ describe('Offline sign', () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
             const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedTransaction = await signedProposal.endorse();
-            const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
+            const signedTransaction = gateway.newSignedTransaction(
+                unsignedTransaction.getBytes(),
+                Buffer.from('SIGNATURE'),
+            );
             const unsignedCommit = await signedTransaction.submit();
             const signedCommit = gateway.newSignedCommit(unsignedCommit.getBytes(), expected);
             await signedCommit.getStatus();
 
             const commitRequest = client.getCommitStatusRequests()[0];
-            const actual = Buffer.from(commitRequest.getSignature_asU8() ?? '').toString();
+            const actual = Buffer.from(commitRequest.getSignature_asU8()).toString();
             expect(actual).toBe(expected.toString());
         });
 
@@ -220,7 +230,10 @@ describe('Offline sign', () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
             const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedTransaction = await signedProposal.endorse();
-            const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
+            const signedTransaction = gateway.newSignedTransaction(
+                unsignedTransaction.getBytes(),
+                Buffer.from('SIGNATURE'),
+            );
 
             const unsignedCommit = await signedTransaction.submit();
             const signedCommit = gateway.newSignedCommit(unsignedCommit.getBytes(), expected);
@@ -228,7 +241,7 @@ describe('Offline sign', () => {
             await deserializedSignedCommit.getStatus();
 
             const commitRequest = client.getCommitStatusRequests()[0];
-            const actual = Buffer.from(commitRequest.getSignature_asU8() ?? '').toString();
+            const actual = Buffer.from(commitRequest.getSignature_asU8()).toString();
             expect(actual).toBe(expected.toString());
         });
     });
@@ -248,7 +261,7 @@ describe('Offline sign', () => {
             await signedRequest.getEvents();
 
             const eventsRequest = client.getChaincodeEventsRequests()[0];
-            const actual = Buffer.from(eventsRequest.getSignature_asU8() ?? '').toString();
+            const actual = Buffer.from(eventsRequest.getSignature_asU8()).toString();
             expect(actual).toBe(expected.toString());
         });
 
@@ -261,7 +274,7 @@ describe('Offline sign', () => {
             await deserializedSignedRequest.getEvents();
 
             const eventsRequest = client.getChaincodeEventsRequests()[0];
-            const actual = Buffer.from(eventsRequest.getSignature_asU8() ?? '').toString();
+            const actual = Buffer.from(eventsRequest.getSignature_asU8()).toString();
             expect(actual).toBe(expected.toString());
         });
     });
@@ -284,7 +297,7 @@ describe('Offline sign', () => {
 
             expect(stream.write.mock.calls.length).toBe(1);
             const eventsRequest = stream.write.mock.calls[0][0];
-            const actual = Buffer.from(eventsRequest.getSignature_asU8() ?? '').toString();
+            const actual = Buffer.from(eventsRequest.getSignature_asU8()).toString();
             expect(actual).toBe(expected.toString());
         });
 
@@ -300,7 +313,7 @@ describe('Offline sign', () => {
 
             expect(stream.write.mock.calls.length).toBe(1);
             const eventsRequest = stream.write.mock.calls[0][0];
-            const actual = Buffer.from(eventsRequest.getSignature_asU8() ?? '').toString();
+            const actual = Buffer.from(eventsRequest.getSignature_asU8()).toString();
             expect(actual).toBe(expected.toString());
         });
     });
@@ -323,7 +336,7 @@ describe('Offline sign', () => {
 
             expect(stream.write.mock.calls.length).toBe(1);
             const eventsRequest = stream.write.mock.calls[0][0];
-            const actual = Buffer.from(eventsRequest.getSignature_asU8() ?? '').toString();
+            const actual = Buffer.from(eventsRequest.getSignature_asU8()).toString();
             expect(actual).toBe(expected.toString());
         });
 
@@ -339,7 +352,7 @@ describe('Offline sign', () => {
 
             expect(stream.write.mock.calls.length).toBe(1);
             const eventsRequest = stream.write.mock.calls[0][0];
-            const actual = Buffer.from(eventsRequest.getSignature_asU8() ?? '').toString();
+            const actual = Buffer.from(eventsRequest.getSignature_asU8()).toString();
             expect(actual).toBe(expected.toString());
         });
     });
@@ -357,12 +370,15 @@ describe('Offline sign', () => {
             client.mockBlockAndPrivateDataEventsResponse(stream);
 
             const unsignedRequest = network.newBlockAndPrivateDataEventsRequest();
-            const signedRequest = gateway.newSignedBlockAndPrivateDataEventsRequest(unsignedRequest.getBytes(), expected);
+            const signedRequest = gateway.newSignedBlockAndPrivateDataEventsRequest(
+                unsignedRequest.getBytes(),
+                expected,
+            );
             await signedRequest.getEvents();
 
             expect(stream.write.mock.calls.length).toBe(1);
             const eventsRequest = stream.write.mock.calls[0][0];
-            const actual = Buffer.from(eventsRequest.getSignature_asU8() ?? '').toString();
+            const actual = Buffer.from(eventsRequest.getSignature_asU8()).toString();
             expect(actual).toBe(expected.toString());
         });
 
@@ -372,13 +388,16 @@ describe('Offline sign', () => {
             client.mockBlockAndPrivateDataEventsResponse(stream);
 
             const unsignedRequest = network.newBlockAndPrivateDataEventsRequest();
-            const signedRequest = gateway.newSignedBlockAndPrivateDataEventsRequest(unsignedRequest.getBytes(), expected);
+            const signedRequest = gateway.newSignedBlockAndPrivateDataEventsRequest(
+                unsignedRequest.getBytes(),
+                expected,
+            );
             const deserializedSignedRequest = gateway.newBlockAndPrivateDataEventsRequest(signedRequest.getBytes());
             await deserializedSignedRequest.getEvents();
 
             expect(stream.write.mock.calls.length).toBe(1);
             const eventsRequest = stream.write.mock.calls[0][0];
-            const actual = Buffer.from(eventsRequest.getSignature_asU8() ?? '').toString();
+            const actual = Buffer.from(eventsRequest.getSignature_asU8()).toString();
             expect(actual).toBe(expected.toString());
         });
     });
@@ -444,7 +463,10 @@ describe('Offline sign', () => {
             const unsignedTransaction = await signedProposal.endorse();
             const expected = unsignedTransaction.getTransactionId();
 
-            const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
+            const signedTransaction = gateway.newSignedTransaction(
+                unsignedTransaction.getBytes(),
+                Buffer.from('SIGNATURE'),
+            );
             const actual = signedTransaction.getTransactionId();
 
             expect(actual).toEqual(expected);
@@ -454,7 +476,10 @@ describe('Offline sign', () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
             const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedTransaction = await signedProposal.endorse();
-            const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
+            const signedTransaction = gateway.newSignedTransaction(
+                unsignedTransaction.getBytes(),
+                Buffer.from('SIGNATURE'),
+            );
             const unsignedCommit = await signedTransaction.submit();
             const expected = unsignedCommit.getTransactionId();
 
@@ -468,7 +493,10 @@ describe('Offline sign', () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
             const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedTransaction = await signedProposal.endorse();
-            const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
+            const signedTransaction = gateway.newSignedTransaction(
+                unsignedTransaction.getBytes(),
+                Buffer.from('SIGNATURE'),
+            );
             const unsignedCommit = await signedTransaction.submit();
             const expected = unsignedCommit.getDigest();
 
@@ -482,7 +510,10 @@ describe('Offline sign', () => {
             const unsignedProposal = contract.newProposal('TRANSACTION_NAME');
             const signedProposal = gateway.newSignedProposal(unsignedProposal.getBytes(), Buffer.from('SIGNATURE'));
             const unsignedTransaction = await signedProposal.endorse();
-            const signedTransaction = gateway.newSignedTransaction(unsignedTransaction.getBytes(), Buffer.from('SIGNATURE'));
+            const signedTransaction = gateway.newSignedTransaction(
+                unsignedTransaction.getBytes(),
+                Buffer.from('SIGNATURE'),
+            );
             const unsignedCommit = await signedTransaction.submit();
             const expected = unsignedCommit.getDigest();
 
@@ -546,7 +577,10 @@ describe('Offline sign', () => {
             const unsignedRequest = network.newBlockAndPrivateDataEventsRequest();
             const expected = unsignedRequest.getDigest();
 
-            const signedRequest = gateway.newSignedBlockAndPrivateDataEventsRequest(unsignedRequest.getBytes(), expected);
+            const signedRequest = gateway.newSignedBlockAndPrivateDataEventsRequest(
+                unsignedRequest.getBytes(),
+                expected,
+            );
             const actual = signedRequest.getDigest();
 
             expect(actual).toEqual(expected);

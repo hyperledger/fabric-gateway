@@ -9,14 +9,16 @@ import { peer } from '@hyperledger/fabric-protos';
 /**
  * Enumeration of transaction status codes.
  */
-export const StatusCode = Object.freeze(peer.TxValidationCode) as { [P in keyof typeof peer.TxValidationCode]: typeof peer.TxValidationCode[P] };
+export const StatusCode = Object.freeze(peer.TxValidationCode) as {
+    [P in keyof typeof peer.TxValidationCode]: (typeof peer.TxValidationCode)[P];
+};
 
 export const StatusNames = Object.freeze(
     Object.fromEntries(
         Object.entries(StatusCode)
             .filter(([_, code]) => typeof code === 'number') // eslint-disable-line @typescript-eslint/no-unused-vars
-            .map(([name, code]) => [code, name])
-    ) as { [P in keyof typeof StatusCode as typeof StatusCode[P]]: P }
+            .map(([name, code]) => [code, name]),
+    ) as { [P in keyof typeof StatusCode as (typeof StatusCode)[P]]: P },
 );
 
 /**

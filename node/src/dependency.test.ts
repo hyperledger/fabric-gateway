@@ -11,7 +11,7 @@ import type { signers as SignersType } from '.';
 function isLoaded(moduleName: string): boolean {
     const moduleFile = require.resolve(moduleName);
     const moduleDir = dirname(moduleFile) + pathSeparator;
-    return !!Object.values(require.cache).find(m => m?.filename.startsWith(moduleDir));
+    return !!Object.values(require.cache).find((m) => m?.filename.startsWith(moduleDir));
 }
 
 describe('optional pkcs11js dependency', () => {

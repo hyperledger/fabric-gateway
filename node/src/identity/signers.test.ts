@@ -10,15 +10,13 @@ import { newPrivateKeySigner } from './signers';
 describe('signers', () => {
     it('throws for public key', () => {
         const { publicKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
-        expect(() => newPrivateKeySigner(publicKey))
-            .toThrow(publicKey.type);
+        expect(() => newPrivateKeySigner(publicKey)).toThrow(publicKey.type);
     });
 
     it('throws for unsupported private key type', () => {
         const { privateKey } = generateKeyPairSync('dsa', { modulusLength: 2048, divisorLength: 256 });
 
-        expect(() => newPrivateKeySigner(privateKey))
-            .toThrow(privateKey.asymmetricKeyType);
+        expect(() => newPrivateKeySigner(privateKey)).toThrow(privateKey.asymmetricKeyType);
     });
 
     describe('EC', () => {
@@ -48,8 +46,7 @@ describe('signers', () => {
 
         it('throws for unsupported curve', () => {
             const { privateKey } = generateKeyPairSync('ec', { namedCurve: 'secp256k1' });
-            expect(() => newPrivateKeySigner(privateKey))
-                .toThrow('secp256k1');
+            expect(() => newPrivateKeySigner(privateKey)).toThrow('secp256k1');
         });
     });
 

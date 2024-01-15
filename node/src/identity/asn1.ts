@@ -10,11 +10,8 @@
 import { define } from 'asn1.js';
 import BN from 'bn.js';
 
-const ECSignature = define('ECSignature', function() {
-    return this.seq().obj(
-        this.key('r').int(),
-        this.key('s').int()
-    );
+const ECSignature = define('ECSignature', function () {
+    return this.seq().obj(this.key('r').int(), this.key('s').int());
 });
 
 export function ecSignatureAsDER(r: BN, s: BN): Uint8Array {

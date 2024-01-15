@@ -81,7 +81,7 @@ export class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
     }
 
     #isSigned(): boolean {
-        const signatureLength = this.#signedRequest.getSignature()?.length || 0;
+        const signatureLength = this.#signedRequest.getSignature().length || 0;
         return signatureLength > 0;
     }
 }

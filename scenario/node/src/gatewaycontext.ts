@@ -5,7 +5,20 @@
  */
 
 import * as grpc from '@grpc/grpc-js';
-import { BlockEventsOptions, ChaincodeEvent, ChaincodeEventsOptions, Checkpointer, checkpointers, connect, ConnectOptions, Contract, Gateway, Identity, Network, Signer } from '@hyperledger/fabric-gateway';
+import {
+    BlockEventsOptions,
+    ChaincodeEvent,
+    ChaincodeEventsOptions,
+    Checkpointer,
+    checkpointers,
+    connect,
+    ConnectOptions,
+    Contract,
+    Gateway,
+    Identity,
+    Network,
+    Signer,
+} from '@hyperledger/fabric-gateway';
 import { CheckpointEventListener } from './checkpointeventlistener';
 import { BaseEventListener } from './baseeventlistener';
 import { TransactionInvocation } from './transactioninvocation';
@@ -64,18 +77,30 @@ export class GatewayContext {
         return assertDefined(this.#checkpointer, 'checkpointer');
     }
 
-    async listenForChaincodeEvents(listenerName: string, chaincodeName: string, options?: ChaincodeEventsOptions): Promise<void> {
+    async listenForChaincodeEvents(
+        listenerName: string,
+        chaincodeName: string,
+        options?: ChaincodeEventsOptions,
+    ): Promise<void> {
         this.closeChaincodeEvents(listenerName);
         const events = await this.getNetwork().getChaincodeEvents(chaincodeName, options);
         const listener = new BaseEventListener(events);
         this.#chaincodeEventListeners.set(listenerName, listener);
     }
 
-    async listenForChaincodeEventsUsingCheckpointer(listenerName: string, chaincodeName: string, options?: ChaincodeEventsOptions): Promise<void> {
+    async listenForChaincodeEventsUsingCheckpointer(
+        listenerName: string,
+        chaincodeName: string,
+        options?: ChaincodeEventsOptions,
+    ): Promise<void> {
         this.closeChaincodeEvents(listenerName);
         const events = await this.getNetwork().getChaincodeEvents(chaincodeName, options);
-        const listener = new CheckpointEventListener<ChaincodeEvent>(events, async (event: ChaincodeEvent): Promise <void> => {
-            await this.getCheckpointer().checkpointChaincodeEvent(event);});
+        const listener = new CheckpointEventListener<ChaincodeEvent>(
+            events,
+            async (event: ChaincodeEvent): Promise<void> => {
+                await this.getCheckpointer().checkpointChaincodeEvent(event);
+            },
+        );
         this.#chaincodeEventListeners.set(listenerName, listener);
     }
 
@@ -94,11 +119,14 @@ export class GatewayContext {
     async listenForBlockEventsUsingCheckpointer(listenerName: string, options?: BlockEventsOptions): Promise<void> {
         this.closeBlockEvents(listenerName);
         const events = await this.getNetwork().getBlockEvents(options);
-        const listener = new CheckpointEventListener<common.Block>(events, async (event: common.Block): Promise<void> => {
-            const header = assertDefined(event.getHeader(), 'block header');
-            const blockNumber = header.getNumber();
-            await this.getCheckpointer().checkpointBlock(BigInt(blockNumber));
-        });
+        const listener = new CheckpointEventListener<common.Block>(
+            events,
+            async (event: common.Block): Promise<void> => {
+                const header = assertDefined(event.getHeader(), 'block header');
+                const blockNumber = header.getNumber();
+                await this.getCheckpointer().checkpointBlock(BigInt(blockNumber));
+            },
+        );
         this.#blockEventListeners.set(listenerName, listener);
     }
 
@@ -113,13 +141,19 @@ export class GatewayContext {
         this.#filteredBlockEventListeners.set(listenerName, listener);
     }
 
-    async listenForFilteredBlockEventsUsingCheckpointer(listenerName: string, options?: BlockEventsOptions): Promise<void> {
+    async listenForFilteredBlockEventsUsingCheckpointer(
+        listenerName: string,
+        options?: BlockEventsOptions,
+    ): Promise<void> {
         this.closeFilteredBlockEvents(listenerName);
         const events = await this.getNetwork().getFilteredBlockEvents(options);
-        const listener = new CheckpointEventListener<peer.FilteredBlock>(events, async (event: peer.FilteredBlock): Promise<void> => {
-            const blockNumber = event.getNumber();
-            await this.getCheckpointer().checkpointBlock(BigInt(blockNumber));
-        });
+        const listener = new CheckpointEventListener<peer.FilteredBlock>(
+            events,
+            async (event: peer.FilteredBlock): Promise<void> => {
+                const blockNumber = event.getNumber();
+                await this.getCheckpointer().checkpointBlock(BigInt(blockNumber));
+            },
+        );
         this.#filteredBlockEventListeners.set(listenerName, listener);
     }
 
@@ -134,15 +168,21 @@ export class GatewayContext {
         this.#blockAndPrivateDataEventListeners.set(listenerName, listener);
     }
 
-    async listenForBlockAndPrivateDataEventsUsingCheckpointer(listenerName: string, options?: BlockEventsOptions): Promise<void> {
+    async listenForBlockAndPrivateDataEventsUsingCheckpointer(
+        listenerName: string,
+        options?: BlockEventsOptions,
+    ): Promise<void> {
         this.closeBlockAndPrivateDataEvents(listenerName);
         const events = await this.getNetwork().getBlockAndPrivateDataEvents(options);
-        const listener = new CheckpointEventListener<peer.BlockAndPrivateData>(events, async (event: peer.BlockAndPrivateData): Promise<void>  => {
-            const block = assertDefined(event.getBlock(), 'block');
-            const header = assertDefined(block.getHeader(), 'block header');
-            const blockNumber = header.getNumber();
-            await this.getCheckpointer().checkpointBlock(BigInt(blockNumber));
-        });
+        const listener = new CheckpointEventListener<peer.BlockAndPrivateData>(
+            events,
+            async (event: peer.BlockAndPrivateData): Promise<void> => {
+                const block = assertDefined(event.getBlock(), 'block');
+                const header = assertDefined(block.getHeader(), 'block header');
+                const blockNumber = header.getNumber();
+                await this.getCheckpointer().checkpointBlock(BigInt(blockNumber));
+            },
+        );
         this.#blockAndPrivateDataEventListeners.set(listenerName, listener);
     }
 
@@ -151,15 +191,21 @@ export class GatewayContext {
     }
 
     close(): void {
-        this.#chaincodeEventListeners.forEach(listener => listener.close());
-        this.#blockEventListeners.forEach(listener => listener.close());
-        this.#filteredBlockEventListeners.forEach(listener => listener.close());
-        this.#blockAndPrivateDataEventListeners.forEach(listener => listener.close());
+        this.#chaincodeEventListeners.forEach((listener) => {
+            listener.close();
+        });
+        this.#blockEventListeners.forEach((listener) => {
+            listener.close();
+        });
+        this.#filteredBlockEventListeners.forEach((listener) => {
+            listener.close();
+        });
+        this.#blockAndPrivateDataEventListeners.forEach((listener) => {
+            listener.close();
+        });
         this.#gateway?.close();
         this.#client?.close();
-        if (this.#signerClose) {
-            this.#signerClose();
-        }
+        this.#signerClose?.();
     }
 
     closeChaincodeEvents(listenerName: string): void {
@@ -194,7 +240,10 @@ export class GatewayContext {
     }
 
     private getChaincodeEventListener(listenerName: string): EventListener<ChaincodeEvent> {
-        return assertDefined(this.#chaincodeEventListeners.get(listenerName), `chaincodeEventListener: ${listenerName}`);
+        return assertDefined(
+            this.#chaincodeEventListeners.get(listenerName),
+            `chaincodeEventListener: ${listenerName}`,
+        );
     }
 
     private getBlockEventListener(listenerName: string): EventListener<unknown> {
@@ -202,10 +251,16 @@ export class GatewayContext {
     }
 
     private getFilteredBlockEventListener(listenerName: string): EventListener<unknown> {
-        return assertDefined(this.#filteredBlockEventListeners.get(listenerName), `filteredBlockEventListener: ${listenerName}`);
+        return assertDefined(
+            this.#filteredBlockEventListeners.get(listenerName),
+            `filteredBlockEventListener: ${listenerName}`,
+        );
     }
 
     private getBlockAndPrivateDataEventListener(listenerName: string): EventListener<unknown> {
-        return assertDefined(this.#blockAndPrivateDataEventListeners.get(listenerName), `blockAndPrivateDataEventListener: ${listenerName}`);
+        return assertDefined(
+            this.#blockAndPrivateDataEventListeners.get(listenerName),
+            `blockAndPrivateDataEventListener: ${listenerName}`,
+        );
     }
 }

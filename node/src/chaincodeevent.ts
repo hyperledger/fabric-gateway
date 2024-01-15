@@ -40,28 +40,34 @@ export interface ChaincodeEvent {
 // @ts-expect-error Polyfill for Symbol.dispose if not present
 Symbol.dispose ??= Symbol('Symbol.dispose');
 
-export function newChaincodeEvents(responses: CloseableAsyncIterable<gateway.ChaincodeEventsResponse>): CloseableAsyncIterable<ChaincodeEvent> {
+export function newChaincodeEvents(
+    responses: CloseableAsyncIterable<gateway.ChaincodeEventsResponse>,
+): CloseableAsyncIterable<ChaincodeEvent> {
     return {
-        async* [Symbol.asyncIterator]() { // eslint-disable-line @typescript-eslint/require-await
+        [Symbol.asyncIterator]: async function* () {
             for await (const response of responses) {
-                const blockNumber = BigInt(response.getBlockNumber() ?? 0);
-                const events = response.getEventsList() || [];
+                const blockNumber = BigInt(response.getBlockNumber());
+                const events = response.getEventsList();
                 for (const event of events) {
                     yield newChaincodeEvent(blockNumber, event);
                 }
             }
         },
-        close: () => responses.close(),
-        [Symbol.dispose]: () => responses.close(),
+        close: () => {
+            responses.close();
+        },
+        [Symbol.dispose]: () => {
+            responses.close();
+        },
     };
 }
 
 function newChaincodeEvent(blockNumber: bigint, event: peer.ChaincodeEvent): ChaincodeEvent {
     return {
         blockNumber,
-        chaincodeName: event.getChaincodeId() ?? '',
-        eventName: event.getEventName() ?? '',
-        transactionId: event.getTxId() ?? '',
-        payload: event.getPayload_asU8() || new Uint8Array(),
+        chaincodeName: event.getChaincodeId(),
+        eventName: event.getEventName(),
+        transactionId: event.getTxId(),
+        payload: event.getPayload_asU8(),
     };
 }

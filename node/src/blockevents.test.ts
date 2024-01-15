@@ -14,7 +14,12 @@ import { Gateway, InternalConnectOptions, assertDefined, internalConnect } from 
 import { GatewayError } from './gatewayerror';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { DuplexStreamResponseStub, MockGatewayGrpcClient, newDuplexStreamResponse, readElements } from './testutils.test';
+import {
+    DuplexStreamResponseStub,
+    MockGatewayGrpcClient,
+    newDuplexStreamResponse,
+    readElements,
+} from './testutils.test';
 
 function assertStartPositionToBeSpecified(seekInfo: orderer.SeekInfo, blockNumber: number): void {
     const start = seekInfo.getStart();
@@ -101,16 +106,23 @@ describe('Block Events', () => {
         expect(actualCreator).toEqual(gateway.getIdentity());
     }
 
-    const testCases: Record<string, {
-        mockResponse(stream: DuplexStreamResponseStub<common.Envelope, peer.DeliverResponse>): void;
-        mockError(err: ServiceError): void;
-        getEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<unknown>>;
-        newEventsRequest(options?: BlockEventsOptions): BlockEventsRequest | FilteredBlockEventsRequest | BlockAndPrivateDataEventsRequest;
-        getCallOptions(): CallOptions[];
-        newBlockResponse(blockNumber: number): peer.DeliverResponse;
-        getBlockFromResponse(response: peer.DeliverResponse): common.Block | peer.FilteredBlock | peer.BlockAndPrivateData | undefined;
-    }> = {
-        'Blocks': {
+    const testCases: Record<
+        string,
+        {
+            mockResponse(stream: DuplexStreamResponseStub<common.Envelope, peer.DeliverResponse>): void;
+            mockError(err: ServiceError): void;
+            getEvents(options?: BlockEventsOptions): Promise<CloseableAsyncIterable<unknown>>;
+            newEventsRequest(
+                options?: BlockEventsOptions,
+            ): BlockEventsRequest | FilteredBlockEventsRequest | BlockAndPrivateDataEventsRequest;
+            getCallOptions(): CallOptions[];
+            newBlockResponse(blockNumber: number): peer.DeliverResponse;
+            getBlockFromResponse(
+                response: peer.DeliverResponse,
+            ): common.Block | peer.FilteredBlock | peer.BlockAndPrivateData | undefined;
+        }
+    > = {
+        Blocks: {
             mockResponse(stream) {
                 client.mockBlockEventsResponse(stream);
             },
@@ -210,243 +222,243 @@ describe('Block Events', () => {
         },
     };
 
-    Object.entries(testCases).forEach(([testName, testCase]) => describe(`${testName}`, () => {
-        it('sends valid request with default start position', async () => {
-            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
-            testCase.mockResponse(stream);
+    Object.entries(testCases).forEach(([testName, testCase]) => {
+        // eslint-disable-next-line jest/valid-title
+        describe(testName, () => {
+            it('sends valid request with default start position', async () => {
+                const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
+                testCase.mockResponse(stream);
 
-            await testCase.getEvents();
+                await testCase.getEvents();
 
-            expect(stream.write.mock.calls.length).toBe(1);
-            const request = stream.write.mock.calls[0][0];
+                expect(stream.write.mock.calls.length).toBe(1);
+                const request = stream.write.mock.calls[0][0];
 
-            const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
-            assertValidBlockEventsRequestHeader(payload);
+                const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
+                assertValidBlockEventsRequestHeader(payload);
 
-            const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
+                const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
 
-            assertStartPositionToBeNextCommit(seekInfo);
-            assertStopPosition(seekInfo);
-        });
+                assertStartPositionToBeNextCommit(seekInfo);
+                assertStopPosition(seekInfo);
+            });
 
-        it('throws with negative specified start block number', async () => {
-            const startBlock = BigInt(-1);
-            await expect(network.getBlockEvents({ startBlock }))
-                .rejects
-                .toThrow();
-        });
+            it('throws with negative specified start block number', async () => {
+                const startBlock = BigInt(-1);
+                await expect(network.getBlockEvents({ startBlock })).rejects.toThrow();
+            });
 
-        it('sends valid request with specified start block number', async () => {
-            const startBlock = BigInt(418);
-            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
-            testCase.mockResponse(stream);
+            it('sends valid request with specified start block number', async () => {
+                const startBlock = BigInt(418);
+                const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
+                testCase.mockResponse(stream);
 
-            await testCase.getEvents({ startBlock });
+                await testCase.getEvents({ startBlock });
 
-            expect(stream.write.mock.calls.length).toBe(1);
-            const request = stream.write.mock.calls[0][0];
+                expect(stream.write.mock.calls.length).toBe(1);
+                const request = stream.write.mock.calls[0][0];
 
-            const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
-            assertValidBlockEventsRequestHeader(payload);
+                const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
+                assertValidBlockEventsRequestHeader(payload);
 
-            const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
+                const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
 
-            assertStartPositionToBeSpecified(seekInfo, Number(startBlock));
-            assertStopPosition(seekInfo);
-        });
+                assertStartPositionToBeSpecified(seekInfo, Number(startBlock));
+                assertStopPosition(seekInfo);
+            });
 
-        it('Uses specified start block instead of unset checkpoint', async () => {
-            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
-            testCase.mockResponse(stream);
-            const startBlock = BigInt(418);
-            await testCase.getEvents({startBlock: startBlock, checkpoint: checkpointers.inMemory()});
+            it('Uses specified start block instead of unset checkpoint', async () => {
+                const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
+                testCase.mockResponse(stream);
+                const startBlock = BigInt(418);
+                await testCase.getEvents({ startBlock: startBlock, checkpoint: checkpointers.inMemory() });
 
-            expect(stream.write.mock.calls.length).toBe(1);
-            const request = stream.write.mock.calls[0][0];
+                expect(stream.write.mock.calls.length).toBe(1);
+                const request = stream.write.mock.calls[0][0];
 
-            const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
-            assertValidBlockEventsRequestHeader(payload);
+                const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
+                assertValidBlockEventsRequestHeader(payload);
 
-            const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
+                const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
 
-            assertStartPositionToBeSpecified(seekInfo, Number(startBlock));
-            assertStopPosition(seekInfo);
-        });
+                assertStartPositionToBeSpecified(seekInfo, Number(startBlock));
+                assertStopPosition(seekInfo);
+            });
 
-        it('Uses checkpoint block instead of specified start block', async () => {
-            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
-            testCase.mockResponse(stream);
+            it('Uses checkpoint block instead of specified start block', async () => {
+                const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
+                testCase.mockResponse(stream);
 
-            const startBlock = BigInt(418);
-            const checkpointer = checkpointers.inMemory();
-            await checkpointer.checkpointBlock(1n);
-            await testCase.getEvents({startBlock: startBlock, checkpoint: checkpointer});
+                const startBlock = BigInt(418);
+                const checkpointer = checkpointers.inMemory();
+                await checkpointer.checkpointBlock(1n);
+                await testCase.getEvents({ startBlock: startBlock, checkpoint: checkpointer });
 
-            expect(stream.write.mock.calls.length).toBe(1);
-            const request = stream.write.mock.calls[0][0];
+                expect(stream.write.mock.calls.length).toBe(1);
+                const request = stream.write.mock.calls[0][0];
 
-            const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
-            assertValidBlockEventsRequestHeader(payload);
+                const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
+                assertValidBlockEventsRequestHeader(payload);
 
-            const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
+                const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
 
-            assertStartPositionToBeSpecified(seekInfo, 2);
-            assertStopPosition(seekInfo);
-        });
+                assertStartPositionToBeSpecified(seekInfo, 2);
+                assertStopPosition(seekInfo);
+            });
 
-        it('Uses checkpoint block zero with set transaction ID instead of specified start block', async () => {
-            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
-            testCase.mockResponse(stream);
+            it('Uses checkpoint block zero with set transaction ID instead of specified start block', async () => {
+                const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
+                testCase.mockResponse(stream);
 
-            const startBlock = BigInt(418);
-            const blockNumber = 0n;
-            const checkpointer = checkpointers.inMemory();
-            await checkpointer.checkpointTransaction(blockNumber, 'transactionID');
-            await testCase.getEvents({startBlock: startBlock, checkpoint: checkpointer});
+                const startBlock = BigInt(418);
+                const blockNumber = 0n;
+                const checkpointer = checkpointers.inMemory();
+                await checkpointer.checkpointTransaction(blockNumber, 'transactionID');
+                await testCase.getEvents({ startBlock: startBlock, checkpoint: checkpointer });
 
-            expect(stream.write.mock.calls.length).toBe(1);
-            const request = stream.write.mock.calls[0][0];
+                expect(stream.write.mock.calls.length).toBe(1);
+                const request = stream.write.mock.calls[0][0];
 
-            const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
-            assertValidBlockEventsRequestHeader(payload);
+                const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
+                assertValidBlockEventsRequestHeader(payload);
 
-            const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
+                const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
 
-            assertStartPositionToBeSpecified(seekInfo, Number(blockNumber));
-            assertStopPosition(seekInfo);
-        });
+                assertStartPositionToBeSpecified(seekInfo, Number(blockNumber));
+                assertStopPosition(seekInfo);
+            });
 
-        it('Uses default start block instead of unset checkpoint and no start block', async () => {
-            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
-            testCase.mockResponse(stream);
-            const checkpointer = checkpointers.inMemory();
-            await testCase.getEvents({checkpoint: checkpointer});
+            it('Uses default start block instead of unset checkpoint and no start block', async () => {
+                const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
+                testCase.mockResponse(stream);
+                const checkpointer = checkpointers.inMemory();
+                await testCase.getEvents({ checkpoint: checkpointer });
 
-            expect(stream.write.mock.calls.length).toBe(1);
-            const request = stream.write.mock.calls[0][0];
+                expect(stream.write.mock.calls.length).toBe(1);
+                const request = stream.write.mock.calls[0][0];
 
-            const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
-            assertValidBlockEventsRequestHeader(payload);
+                const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
+                assertValidBlockEventsRequestHeader(payload);
 
-            const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
+                const seekInfo = orderer.SeekInfo.deserializeBinary(payload.getData_asU8());
 
-            assertStartPositionToBeNextCommit(seekInfo);
-            assertStopPosition(seekInfo);
-        });
+                assertStartPositionToBeNextCommit(seekInfo);
+                assertStopPosition(seekInfo);
+            });
 
-        it('uses specified call options', async () => {
-            const deadline = Date.now() + 1000;
+            it('uses specified call options', async () => {
+                const deadline = Date.now() + 1000;
 
-            await testCase.newEventsRequest()
-                .getEvents({ deadline });
+                await testCase.newEventsRequest().getEvents({ deadline });
 
-            const actual = testCase.getCallOptions()[0];
-            expect(actual.deadline).toBe(deadline);
-        });
+                const actual = testCase.getCallOptions()[0];
+                expect(actual.deadline).toBe(deadline);
+            });
 
-        it('uses default call options', async () => {
-            await testCase.getEvents();
+            it('uses default call options', async () => {
+                await testCase.getEvents();
 
-            const actual = testCase.getCallOptions()[0];
-            expect(actual.deadline).toBe(defaultOptions().deadline);
-        });
+                const actual = testCase.getCallOptions()[0];
+                expect(actual.deadline).toBe(defaultOptions().deadline);
+            });
 
-        it('default call options are not modified', async () => {
-            const expected = defaultOptions().deadline;
-            const deadline = Date.now() + 1000;
+            it('default call options are not modified', async () => {
+                const expected = defaultOptions().deadline;
+                const deadline = Date.now() + 1000;
 
-            await network.newBlockEventsRequest()
-                .getEvents({ deadline });
+                await network.newBlockEventsRequest().getEvents({ deadline });
 
-            expect(defaultOptions().deadline).toBe(expected);
-        });
+                expect(defaultOptions().deadline).toBe(expected);
+            });
 
-        it('throws GatewayError on call ServiceError', async () => {
-            testCase.mockError(serviceError);
+            it('throws GatewayError on call ServiceError', async () => {
+                testCase.mockError(serviceError);
 
-            const t = testCase.getEvents();
+                const t = testCase.getEvents();
 
-            await expect(t).rejects.toThrow(GatewayError);
-            await expect(t).rejects.toThrow(serviceError.message);
-            await expect(t).rejects.toMatchObject({
-                code: serviceError.code,
-                cause: serviceError,
+                await expect(t).rejects.toThrow(GatewayError);
+                await expect(t).rejects.toThrow(serviceError.message);
+                await expect(t).rejects.toMatchObject({
+                    code: serviceError.code,
+                    cause: serviceError,
+                });
+            });
+
+            it('throws GatewayError on receive ServiceError', async () => {
+                const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([serviceError]);
+                testCase.mockResponse(stream);
+
+                const events = await testCase.getEvents();
+                const t = readElements(events, 1);
+
+                await expect(t).rejects.toThrow(GatewayError);
+                await expect(t).rejects.toThrow(serviceError.message);
+                await expect(t).rejects.toMatchObject({
+                    code: serviceError.code,
+                    cause: serviceError,
+                });
+            });
+
+            it('throws on receive of status message', async () => {
+                const response = new peer.DeliverResponse();
+                response.setStatus(common.Status.SERVICE_UNAVAILABLE);
+                const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([response]);
+                testCase.mockResponse(stream);
+
+                const events = await testCase.getEvents();
+                const t = readElements(events, 1);
+
+                await expect(t).rejects.toThrow(String(common.Status.SERVICE_UNAVAILABLE));
+            });
+
+            it('throws on receive of unexpected message type', async () => {
+                const response = new peer.DeliverResponse();
+                const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([response]);
+                testCase.mockResponse(stream);
+
+                const events = await testCase.getEvents();
+                const t = readElements(events, 1);
+
+                await expect(t).rejects.toThrow(String(response.getTypeCase()));
+            });
+
+            it('receives events', async () => {
+                const responses = [testCase.newBlockResponse(1), testCase.newBlockResponse(2)];
+                const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>(responses);
+                testCase.mockResponse(stream);
+
+                const events = await testCase.getEvents();
+                const actual = await readElements(events, responses.length);
+
+                const expected = responses.map((response) => testCase.getBlockFromResponse(response));
+
+                expect(actual).toEqual(expected);
+            });
+
+            it('closing iterator cancels gRPC stream', async () => {
+                const responses = [testCase.newBlockResponse(1), testCase.newBlockResponse(2)];
+                const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>(responses);
+                testCase.mockResponse(stream);
+
+                const events = await testCase.getEvents();
+                events.close();
+
+                expect(stream.cancel).toHaveBeenCalled();
+            });
+
+            it('resource clean-up cancels gRPC stream', async () => {
+                const responses = [testCase.newBlockResponse(1), testCase.newBlockResponse(2)];
+                const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>(responses);
+                testCase.mockResponse(stream);
+
+                {
+                    // @ts-expect-error Assigned to unused variable for resource cleanup
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    using events = await testCase.getEvents();
+                }
+
+                expect(stream.cancel).toHaveBeenCalled();
             });
         });
-
-        it('throws GatewayError on receive ServiceError', async () => {
-            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([serviceError]);
-            testCase.mockResponse(stream);
-
-            const events = await testCase.getEvents();
-            const t = readElements(events, 1);
-
-            await expect(t).rejects.toThrow(GatewayError);
-            await expect(t).rejects.toThrow(serviceError.message);
-            await expect(t).rejects.toMatchObject({
-                code: serviceError.code,
-                cause: serviceError,
-            });
-        });
-
-        it('throws on receive of status message', async () => {
-            const response = new peer.DeliverResponse();
-            response.setStatus(common.Status.SERVICE_UNAVAILABLE);
-            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([response]);
-            testCase.mockResponse(stream);
-
-            const events = await testCase.getEvents();
-            const t = readElements(events, 1);
-
-            await expect(t).rejects.toThrow(String(common.Status.SERVICE_UNAVAILABLE));
-        });
-
-        it('throws on receive of unexpected message type', async () => {
-            const response = new peer.DeliverResponse();
-            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([response]);
-            testCase.mockResponse(stream);
-
-            const events = await testCase.getEvents();
-            const t = readElements(events, 1);
-
-            await expect(t).rejects.toThrow(String(response.getTypeCase()));
-        });
-
-        it('receives events', async () => {
-            const responses = [testCase.newBlockResponse(1), testCase.newBlockResponse(2)];
-            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>(responses);
-            testCase.mockResponse(stream);
-
-            const events = await testCase.getEvents();
-            const actual = await readElements(events, responses.length);
-
-            const expected = responses.map(response => testCase.getBlockFromResponse(response));
-
-            expect(actual).toEqual(expected);
-        });
-
-        it('closing iterator cancels gRPC stream', async () => {
-            const responses = [testCase.newBlockResponse(1), testCase.newBlockResponse(2)];
-            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>(responses);
-            testCase.mockResponse(stream);
-
-            const events = await testCase.getEvents();
-            events.close();
-
-            expect(stream.cancel).toHaveBeenCalled();
-        });
-
-        it('resource clean-up cancels gRPC stream', async () => {
-            const responses = [testCase.newBlockResponse(1), testCase.newBlockResponse(2)];
-            const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>(responses);
-            testCase.mockResponse(stream);
-
-            {
-                // @ts-expect-error Assigned to unused variable for resource cleanup
-                using events = await testCase.getEvents(); // eslint-disable-line @typescript-eslint/no-unused-vars
-            }
-
-            expect(stream.cancel).toHaveBeenCalled();
-        });
-    }));
+    });
 });

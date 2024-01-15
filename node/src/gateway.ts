@@ -4,10 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CallOptions, ChannelInterface, ClientDuplexStream, ClientReadableStream, ClientUnaryCall, ClientWritableStream, Deadline, Metadata, requestCallback } from '@grpc/grpc-js';
+import {
+    CallOptions,
+    ChannelInterface,
+    ClientDuplexStream,
+    ClientReadableStream,
+    ClientUnaryCall,
+    ClientWritableStream,
+    Deadline,
+    Metadata,
+    requestCallback,
+} from '@grpc/grpc-js';
 import { common, gateway, peer } from '@hyperledger/fabric-protos';
 import { ChaincodeEventsRequest, Commit, Proposal, Transaction } from '.';
-import { BlockAndPrivateDataEventsRequest, BlockAndPrivateDataEventsRequestImpl, BlockEventsRequest, BlockEventsRequestImpl, FilteredBlockEventsRequest, FilteredBlockEventsRequestImpl } from './blockeventsrequest';
+import {
+    BlockAndPrivateDataEventsRequest,
+    BlockAndPrivateDataEventsRequestImpl,
+    BlockEventsRequest,
+    BlockEventsRequestImpl,
+    FilteredBlockEventsRequest,
+    FilteredBlockEventsRequestImpl,
+} from './blockeventsrequest';
 import { ChaincodeEventsRequestImpl } from './chaincodeeventsrequest';
 import { GatewayClient, GatewayGrpcClient, newGatewayClient } from './client';
 import { CommitImpl } from './commit';
@@ -28,18 +45,79 @@ export interface GrpcClient {
     close(): void;
     getChannel(): ChannelInterface;
     waitForReady(deadline: Deadline, callback: (error?: Error) => void): void;
-    makeUnaryRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, metadata: Metadata, options: CallOptions, callback: requestCallback<ResponseType>): ClientUnaryCall;
-    makeUnaryRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, metadata: Metadata, callback: requestCallback<ResponseType>): ClientUnaryCall;
-    makeUnaryRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, options: CallOptions, callback: requestCallback<ResponseType>): ClientUnaryCall;
-    makeUnaryRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, callback: requestCallback<ResponseType>): ClientUnaryCall;
-    makeClientStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, metadata: Metadata, options: CallOptions, callback: requestCallback<ResponseType>): ClientWritableStream<RequestType>;
-    makeClientStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, metadata: Metadata, callback: requestCallback<ResponseType>): ClientWritableStream<RequestType>;
-    makeClientStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, options: CallOptions, callback: requestCallback<ResponseType>): ClientWritableStream<RequestType>;
-    makeClientStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, callback: requestCallback<ResponseType>): ClientWritableStream<RequestType>;
-    makeServerStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, metadata: Metadata, options?: CallOptions): ClientReadableStream<ResponseType>;
-    makeServerStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, argument: RequestType, options?: CallOptions): ClientReadableStream<ResponseType>;
-    makeBidiStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, metadata: Metadata, options?: CallOptions): ClientDuplexStream<RequestType, ResponseType>;
-    makeBidiStreamRequest<RequestType, ResponseType>(method: string, serialize: (value: RequestType) => Buffer, deserialize: (value: Buffer) => ResponseType, options?: CallOptions): ClientDuplexStream<RequestType, ResponseType>;
+    makeUnaryRequest<RequestType, ResponseType>(
+        method: string,
+        serialize: (value: RequestType) => Buffer,
+        deserialize: (value: Buffer) => ResponseType,
+        argument: RequestType,
+        metadata: Metadata,
+        options: CallOptions,
+        callback: requestCallback<ResponseType>,
+    ): ClientUnaryCall;
+    makeUnaryRequest<RequestType, ResponseType>(
+        method: string,
+        serialize: (value: RequestType) => Buffer,
+        deserialize: (value: Buffer) => ResponseType,
+        argument: RequestType,
+        metadata: CallOptions | Metadata,
+        callback: requestCallback<ResponseType>,
+    ): ClientUnaryCall;
+    makeUnaryRequest<RequestType, ResponseType>(
+        method: string,
+        serialize: (value: RequestType) => Buffer,
+        deserialize: (value: Buffer) => ResponseType,
+        argument: RequestType,
+        callback: requestCallback<ResponseType>,
+    ): ClientUnaryCall;
+    makeClientStreamRequest<RequestType, ResponseType>(
+        method: string,
+        serialize: (value: RequestType) => Buffer,
+        deserialize: (value: Buffer) => ResponseType,
+        metadata: Metadata,
+        options: CallOptions,
+        callback: requestCallback<ResponseType>,
+    ): ClientWritableStream<RequestType>;
+    makeClientStreamRequest<RequestType, ResponseType>(
+        method: string,
+        serialize: (value: RequestType) => Buffer,
+        deserialize: (value: Buffer) => ResponseType,
+        metadata: CallOptions | Metadata,
+        callback: requestCallback<ResponseType>,
+    ): ClientWritableStream<RequestType>;
+    makeClientStreamRequest<RequestType, ResponseType>(
+        method: string,
+        serialize: (value: RequestType) => Buffer,
+        deserialize: (value: Buffer) => ResponseType,
+        callback: requestCallback<ResponseType>,
+    ): ClientWritableStream<RequestType>;
+    makeServerStreamRequest<RequestType, ResponseType>(
+        method: string,
+        serialize: (value: RequestType) => Buffer,
+        deserialize: (value: Buffer) => ResponseType,
+        argument: RequestType,
+        metadata: Metadata,
+        options?: CallOptions,
+    ): ClientReadableStream<ResponseType>;
+    makeServerStreamRequest<RequestType, ResponseType>(
+        method: string,
+        serialize: (value: RequestType) => Buffer,
+        deserialize: (value: Buffer) => ResponseType,
+        argument: RequestType,
+        options?: CallOptions,
+    ): ClientReadableStream<ResponseType>;
+    makeBidiStreamRequest<RequestType, ResponseType>(
+        method: string,
+        serialize: (value: RequestType) => Buffer,
+        deserialize: (value: Buffer) => ResponseType,
+        metadata: Metadata,
+        options?: CallOptions,
+    ): ClientDuplexStream<RequestType, ResponseType>;
+    makeBidiStreamRequest<RequestType, ResponseType>(
+        method: string,
+        serialize: (value: RequestType) => Buffer,
+        deserialize: (value: Buffer) => ResponseType,
+        options?: CallOptions,
+    ): ClientDuplexStream<RequestType, ResponseType>;
 }
 
 /**
@@ -143,12 +221,8 @@ export interface InternalConnectOptions extends Omit<ConnectOptions, 'client'> {
 }
 
 export function internalConnect(options: Readonly<InternalConnectOptions>): Gateway {
-    if (!options.client) {
-        throw new Error('No client connection supplied');
-    }
-    if (!options.identity) {
-        throw new Error('No identity supplied');
-    }
+    assertDefined(options.client, 'No client connection supplied');
+    assertDefined(options.identity, 'No identity supplied');
 
     const signingIdentity = new SigningIdentity(options);
     const gatewayClient = newGatewayClient(options.client, options);
@@ -196,18 +270,18 @@ export interface Gateway {
     newProposal(bytes: Uint8Array): Proposal;
 
     /**
-      * Create a transaction with the specified digital signature. Supports off-line signing flow.
-      * @param bytes - Serialized proposal.
-      * @param signature - Digital signature.
-      * @returns A signed transaction.
-      */
+     * Create a transaction with the specified digital signature. Supports off-line signing flow.
+     * @param bytes - Serialized proposal.
+     * @param signature - Digital signature.
+     * @returns A signed transaction.
+     */
     newSignedTransaction(bytes: Uint8Array, signature: Uint8Array): Transaction;
 
     /**
-      * Recreate a transaction from serialized data.
-      * @param bytes - Serialized proposal.
-      * @returns A transaction.
-      */
+     * Recreate a transaction from serialized data.
+     * @param bytes - Serialized proposal.
+     * @returns A transaction.
+     */
     newTransaction(bytes: Uint8Array): Transaction;
 
     /**
@@ -278,7 +352,10 @@ export interface Gateway {
      * @param signature - Digital signature.
      * @returns A signed block and private data events request.
      */
-    newSignedBlockAndPrivateDataEventsRequest(bytes: Uint8Array, signature: Uint8Array): BlockAndPrivateDataEventsRequest;
+    newSignedBlockAndPrivateDataEventsRequest(
+        bytes: Uint8Array,
+        signature: Uint8Array,
+    ): BlockAndPrivateDataEventsRequest;
 
     /**
      * Recreate a block and private data events request from serialized data.
@@ -313,7 +390,7 @@ class GatewayImpl implements Gateway {
         return new NetworkImpl({
             client: this.#client,
             signingIdentity: this.#signingIdentity,
-            channelName
+            channelName,
         });
     }
 
@@ -438,7 +515,10 @@ class GatewayImpl implements Gateway {
         return result;
     }
 
-    newSignedBlockAndPrivateDataEventsRequest(bytes: Uint8Array, signature: Uint8Array): BlockAndPrivateDataEventsRequest {
+    newSignedBlockAndPrivateDataEventsRequest(
+        bytes: Uint8Array,
+        signature: Uint8Array,
+    ): BlockAndPrivateDataEventsRequest {
         const result = this.newBlockAndPrivateDataEventsRequest(bytes);
         result.setSignature(signature);
 

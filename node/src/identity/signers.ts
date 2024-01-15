@@ -34,12 +34,12 @@ export function newPrivateKeySigner(key: KeyObject): Signer {
     }
 
     switch (key.asymmetricKeyType) {
-    case 'ec':
-        return newECPrivateKeySigner(key);
-    case 'ed25519':
-        return newNodePrivateKeySigner(key);
-    default:
-        throw new Error(`Unsupported private key type: ${String(key.asymmetricKeyType)}`);
+        case 'ec':
+            return newECPrivateKeySigner(key);
+        case 'ed25519':
+            return newNodePrivateKeySigner(key);
+        default:
+            throw new Error(`Unsupported private key type: ${String(key.asymmetricKeyType)}`);
     }
 }
 
@@ -59,8 +59,9 @@ export function newHSMSignerFactory(library: string): HSMSignerFactory {
     }
 
     // Dynamic module load to prevent unnecessary load of optional pkcs11js dependency
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { HSMSignerFactoryImpl } = require('./hsmsigner') as { HSMSignerFactoryImpl: typeof HSMSignerFactoryImplType };
+    const { HSMSignerFactoryImpl } = require('./hsmsigner') as {
+        HSMSignerFactoryImpl: typeof HSMSignerFactoryImplType;
+    };
 
     return new HSMSignerFactoryImpl(library);
 }

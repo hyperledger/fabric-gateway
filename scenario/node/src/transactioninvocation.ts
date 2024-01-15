@@ -80,7 +80,10 @@ export class TransactionInvocation {
         const signedProposal = await this.sign(unsignedProposal, this.gateway.newSignedProposal.bind(this.gateway));
 
         const unsignedTransaction = await signedProposal.endorse();
-        const signedTransaction = await this.sign(unsignedTransaction, this.gateway.newSignedTransaction.bind(this.gateway));
+        const signedTransaction = await this.sign(
+            unsignedTransaction,
+            this.gateway.newSignedTransaction.bind(this.gateway),
+        );
 
         const submitted = await signedTransaction.submit();
         const signedCommit = await this.sign(submitted, this.gateway.newSignedCommit.bind(this.gateway));
@@ -96,7 +99,10 @@ export class TransactionInvocation {
         return submitted.getResult();
     }
 
-    private async sign<T extends Signable>(signable: T, newInstance: (bytes: Uint8Array, signature: Uint8Array) => T): Promise<T> {
+    private async sign<T extends Signable>(
+        signable: T,
+        newInstance: (bytes: Uint8Array, signature: Uint8Array) => T,
+    ): Promise<T> {
         if (!this.offlineSigner) {
             return signable;
         }

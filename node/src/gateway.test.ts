@@ -68,7 +68,7 @@ describe('Gateway', () => {
     describe('close', () => {
         it('does not close supplied gRPC client', () => {
             const client = new grpc.Client('example.org:1337', grpc.credentials.createInsecure());
-            const closeStub = client.close = jest.fn();
+            const closeStub = (client.close = jest.fn());
             const options: ConnectOptions = {
                 identity,
                 client,
@@ -89,7 +89,8 @@ describe('Gateway', () => {
             const closeStub = jest.fn();
             {
                 // @ts-expect-error Assigned to unused variable for resource cleanup
-                using gateway = Object.assign(connect(options), { close: closeStub }); // eslint-disable-line @typescript-eslint/no-unused-vars
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                using gateway = Object.assign(connect(options), { close: closeStub });
             }
 
             expect(closeStub).toHaveBeenCalled();

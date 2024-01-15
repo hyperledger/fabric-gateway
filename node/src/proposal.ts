@@ -94,7 +94,7 @@ export class ProposalImpl implements Proposal {
         return new TransactionImpl({
             client: this.#client,
             signingIdentity: this.#signingIdentity,
-            preparedTransaction: this.#newPreparedTransaction(txEnvelope)
+            preparedTransaction: this.#newPreparedTransaction(txEnvelope),
         });
     }
 
