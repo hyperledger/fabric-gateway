@@ -4,7 +4,7 @@ on:
   workflow_call:
 
 env:
-  DEFAULT_GO_VERSION: '1.21'
+  DEFAULT_GO_VERSION: "1.21"
 
 jobs:
   verify-versions:
@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: make shellcheck
-      
+
   go_lint:
     needs: verify-versions
     runs-on: ubuntu-latest
@@ -30,7 +30,7 @@ jobs:
       SOFTHSM2_CONF: ${{ github.workspace }}/softhsm2.conf
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.DEFAULT_GO_VERSION }}
       - name: Generate mocks
@@ -38,7 +38,7 @@ jobs:
       - name: Staticcheck
         run: make staticcheck
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@2221aee28499deb9551e403a0d876df4b0e70067
         with:
           version: latest
           skip-pkg-cache: true
@@ -51,13 +51,13 @@ jobs:
       fail-fast: false
       matrix:
         go-version:
-          - '1.20'
-          - '1.21'
+          - "1.20"
+          - "1.21"
     env:
       SOFTHSM2_CONF: ${{ github.workspace }}/softhsm2.conf
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
       - name: Install SoftHSM
@@ -77,13 +77,13 @@ jobs:
       fail-fast: false
       matrix:
         go-version:
-          - '1.20'
-          - '1.21'
+          - "1.20"
+          - "1.21"
     env:
       SOFTHSM2_CONF: ${{ github.workspace }}/softhsm2.conf
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
       - name: Install SoftHSM
@@ -134,7 +134,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.DEFAULT_GO_VERSION }}
       - name: Install SoftHSM
@@ -187,7 +187,7 @@ jobs:
           java-version: ${{ matrix.java-version }}
           distribution: temurin
           cache: maven
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.DEFAULT_GO_VERSION }}
       - name: Pull Fabric Docker images
