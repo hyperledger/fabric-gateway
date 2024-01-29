@@ -25,15 +25,15 @@ jobs:
           path: publish
       - name: Remove old API documentation
         shell: bash
-        run: rm -rf "${GITHUB_REF_NAME}/api"  
+        run: rm -rf "${GITHUB_REF_NAME}/api"
         working-directory: publish
       - name: Download JavaDoc
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: java-doc
           path: publish/${{ github.ref_name }}/api/java
       - name: Download Node documentation
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: node-doc
           path: publish/${{ github.ref_name }}/api/node
@@ -54,7 +54,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: "https://registry.npmjs.org"
       - name: Build
         run: make build-node
       - name: Publish

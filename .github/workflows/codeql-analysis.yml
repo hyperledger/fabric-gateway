@@ -28,7 +28,7 @@ jobs:
       matrix:
         include:
           - language: go
-            working-directory: ''
+            working-directory: ""
           - language: java
             working-directory: java
           - language: javascript

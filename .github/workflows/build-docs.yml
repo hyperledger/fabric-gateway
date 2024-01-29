@@ -14,7 +14,7 @@ jobs:
       - name: Generate documentation
         run: make generate-docs-node
       - name: Upload documentation
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: node-doc
           path: node/apidocs/
@@ -32,7 +32,7 @@ jobs:
       - name: Generate JavaDoc
         run: make generate-docs-java
       - name: Upload JavaDoc
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: java-doc
           path: java/target/site/apidocs/
