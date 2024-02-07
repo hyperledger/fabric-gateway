@@ -4,7 +4,7 @@ on:
   workflow_call:
 
 env:
-  DEFAULT_GO_VERSION: "1.21"
+  DEFAULT_GO_VERSION: "1.22"
 
 jobs:
   verify-versions:
@@ -53,6 +53,7 @@ jobs:
         go-version:
           - "1.20"
           - "1.21"
+          - "1.22"
     env:
       SOFTHSM2_CONF: ${{ github.workspace }}/softhsm2.conf
     steps:
@@ -79,6 +80,7 @@ jobs:
         go-version:
           - "1.20"
           - "1.21"
+          - "1.22"
     env:
       SOFTHSM2_CONF: ${{ github.workspace }}/softhsm2.conf
     steps:
