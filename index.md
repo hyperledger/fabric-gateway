@@ -16,21 +16,21 @@ If migrating an existing application from one of the legacy Fabric client SDKs, 
 
 ## Client API
 
-The Fabric Gateway client API is available for several programming languages to support the development of client applications that interact with a Fabric network using the Gateway.  
+The Fabric Gateway client API is available for several programming languages to support the development of client applications that interact with a Fabric network using the Gateway.
 
 ### Go
 
-- [Quickstart guide](https://github.com/hyperledger/fabric-gateway/blob/main/pkg/client/README.md) 
+- [Quickstart guide](https://github.com/hyperledger/fabric-gateway/blob/main/pkg/client/README.md)
 - [API documentation](https://pkg.go.dev/github.com/hyperledger/fabric-gateway/pkg/client)
 
 ### Node
 
-- [Quickstart guide](https://github.com/hyperledger/fabric-gateway/blob/main/node/README.md) 
+- [Quickstart guide](https://github.com/hyperledger/fabric-gateway/blob/main/node/README.md)
 - [API documentation](https://hyperledger.github.io/fabric-gateway/main/api/node/)
 
 ### Java
 
-- [Quickstart guide](https://github.com/hyperledger/fabric-gateway/blob/main/java/README.md) 
+- [Quickstart guide](https://github.com/hyperledger/fabric-gateway/blob/main/java/README.md)
 - [API documentation](https://hyperledger.github.io/fabric-gateway/main/api/java/)
 
 ## Compatibility
@@ -39,10 +39,10 @@ Each minor release version of Fabric Gateway client API targets the current supp
 
 The following table shows versions of Fabric, programming language runtimes, and other dependencies that are explicitly tested and that are supported for use with the Fabric Gateway client API.
 
-|     | Tested | Supported |
-| --- | ------ | --------- |
-| **Fabric** | 2.5 | 2.4.4+ |
-| **Go** | 1.20, 1.21 | 1.20, 1.21 |
-| **Node** | 18, 20 | 18, 20 |
-| **Java** | 8, 11, 17, 21 | 8, 11, 17, 21 |
-| **Platform** | Ubuntu 22.04 | |
+|              | Tested           | Supported        |
+| ------------ | ---------------- | ---------------- |
+| **Fabric**   | 2.5              | 2.4.4+           |
+| **Go**       | 1.20, 1.21, 1.22 | 1.20, 1.21, 1.22 |
+| **Node**     | 18, 20           | 18, 20           |
+| **Java**     | 8, 11, 17, 21    | 8, 11, 17, 21    |
+| **Platform** | Ubuntu 22.04     |                  |
