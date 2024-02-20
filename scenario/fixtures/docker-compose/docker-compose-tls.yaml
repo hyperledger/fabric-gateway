@@ -11,14 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-version: '3.8'
+version: "3.8"
 
 services:
-
   ca0.example.com:
     extends:
-        file: docker-compose-base.yaml
-        service: ca0
+      file: docker-compose-base.yaml
+      service: ca0
     container_name: ca0.example.com
     environment:
       - FABRIC_CA_SERVER_TLS_ENABLED=false
@@ -27,8 +26,8 @@ services:
 
   ca1.example.com:
     extends:
-        file: docker-compose-base.yaml
-        service: ca1
+      file: docker-compose-base.yaml
+      service: ca1
     container_name: ca1.example.com
     environment:
       - FABRIC_CA_SERVER_TLS_ENABLED=false
@@ -37,8 +36,8 @@ services:
 
   orderer1.example.com:
     extends:
-        file: docker-compose-base.yaml
-        service: orderer
+      file: docker-compose-base.yaml
+      service: orderer
     container_name: orderer1.example.com
     environment:
       - ORDERER_GENERAL_LISTENPORT=7050
@@ -79,8 +78,8 @@ services:
 
   peer0.org1.example.com:
     extends:
-        file: docker-compose-base.yaml
-        service: peer
+      file: docker-compose-base.yaml
+      service: peer
     container_name: peer0.org1.example.com
     environment:
       - CORE_PEER_ID=peer0.org1.example.com
@@ -100,7 +99,7 @@ services:
     ports:
       - 7051:7051
     volumes:
-        - ../crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/:/etc/hyperledger/peer
+      - ../crypto-material/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/:/etc/hyperledger/peer
     depends_on:
       - orderer1.example.com
 
@@ -133,8 +132,8 @@ services:
 
   peer0.org2.example.com:
     extends:
-        file: docker-compose-base.yaml
-        service: peer
+      file: docker-compose-base.yaml
+      service: peer
     container_name: peer0.org2.example.com
 
     environment:
@@ -145,7 +144,7 @@ services:
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org2.example.com:8051
       - CORE_PEER_LOCALMSPID=Org2MSP
       - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/peer/msp
-      ## Enable TLS
+      # Enable TLS
       - CORE_PEER_TLS_ENABLED=true
       - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/peer/tls/server.key
       - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/peer/tls/server.crt
@@ -172,7 +171,7 @@ services:
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org2.example.com:10051
       - CORE_PEER_LOCALMSPID=Org2MSP
       - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/peer/msp
-      ## Enable TLS
+      # Enable TLS
       - CORE_PEER_TLS_ENABLED=true
       - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/peer/tls/server.key
       - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/peer/tls/server.crt
@@ -233,7 +232,7 @@ services:
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org3.example.com:11051
       - CORE_PEER_LOCALMSPID=Org3MSP
       - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/peer/msp
-      ## Enable TLS
+      # Enable TLS
       - CORE_PEER_TLS_ENABLED=true
       - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/peer/tls/server.key
       - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/peer/tls/server.crt

@@ -696,12 +696,12 @@ public class ScenarioSteps {
 
     static void startFabric() throws Exception {
         createCryptoMaterial();
-        exec(DOCKER_COMPOSE_DIR, "docker-compose", "-f", DOCKER_COMPOSE_TLS_FILE, "-p", "node", "up", "-d");
+        exec(DOCKER_COMPOSE_DIR, "docker", "compose", "-f", DOCKER_COMPOSE_TLS_FILE, "-p", "node", "up", "-d");
         Thread.sleep(10000);
     }
 
     static void stopFabric() throws Exception {
-        exec(DOCKER_COMPOSE_DIR, "docker-compose", "-f", DOCKER_COMPOSE_TLS_FILE, "-p", "node", "down");
+        exec(DOCKER_COMPOSE_DIR, "docker", "compose", "-f", DOCKER_COMPOSE_TLS_FILE, "-p", "node", "down");
     }
 
     private static void createCryptoMaterial() throws Exception {
