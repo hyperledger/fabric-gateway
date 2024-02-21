@@ -12,7 +12,7 @@
 # limitations under the License.
 #
 
-version: '3.8'
+version: "3.8"
 
 services:
   clinopeer:
@@ -20,13 +20,8 @@ services:
     image: hyperledger/fabric-tools:${TOOLS_IMAGE_TAG}
     tty: true
     environment:
-      - GOPATH=/opt/gopath
-      - FABRIC_CFG_PATH=/etc/hyperledger/config
-
       # LOGGING SETTINGS
       - FABRIC_LOGGING_SPEC=${DOCKER_DEBUG}
-
-    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: /bin/bash
     volumes:
       - ../crypto-material:/etc/hyperledger/config/

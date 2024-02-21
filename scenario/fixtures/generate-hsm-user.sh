@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eo pipefail
+set -eu -o pipefail
 
 # Required environment variables
 : "${SOFTHSM2_CONF:?}"

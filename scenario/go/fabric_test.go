@@ -142,7 +142,7 @@ func startFabric() error {
 		if err != nil {
 			return err
 		}
-		cmd := exec.Command("docker-compose", "-f", dockerComposeFile, "-p", "node", "up", "-d")
+		cmd := exec.Command("docker", "compose", "-f", dockerComposeFile, "-p", "node", "up", "-d")
 		cmd.Dir = dockerComposeDir
 		out, err := cmd.CombinedOutput()
 		if out != nil {
@@ -163,7 +163,7 @@ func startFabric() error {
 func stopFabric() error {
 	if fabricRunning {
 		fmt.Println("stopFabric")
-		cmd := exec.Command("docker-compose", "-f", dockerComposeFile, "-p", "node", "down")
+		cmd := exec.Command("docker", "compose", "-f", dockerComposeFile, "-p", "node", "down")
 		cmd.Dir = dockerComposeDir
 		out, err := cmd.CombinedOutput()
 		if out != nil {

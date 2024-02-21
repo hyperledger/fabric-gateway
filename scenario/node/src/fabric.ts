@@ -117,7 +117,7 @@ export class Fabric {
     }
 
     dockerDown(): void {
-        const out = spawnSync('docker-compose', ['-f', dockerComposeFile, '-p', 'node', 'down'], {
+        const out = spawnSync('docker', ['compose', '-f', dockerComposeFile, '-p', 'node', 'down'], {
             cwd: dockerComposeDir,
         });
         console.log(out.output.toString());
@@ -131,7 +131,7 @@ export class Fabric {
         const generateOut = execFileSync('./generate.sh', { cwd: fixturesDir });
         console.log(generateOut.toString());
 
-        const dockerComposeOut = spawnSync('docker-compose', ['-f', dockerComposeFile, '-p', 'node', 'up', '-d'], {
+        const dockerComposeOut = spawnSync('docker', ['compose', '-f', dockerComposeFile, '-p', 'node', 'up', '-d'], {
             cwd: dockerComposeDir,
         });
         console.log(dockerComposeOut.output.toString());
