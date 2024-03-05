@@ -29,9 +29,10 @@ import (
 
 // Gateway representing the connection of a specific client identity to a Fabric Gateway.
 type Gateway struct {
-	signingID *signingIdentity
-	client    *gatewayClient
-	cancel    context.CancelFunc
+	signingID          *signingIdentity
+	client             *gatewayClient
+	cancel             context.CancelFunc
+	tlsCertificateHash []byte
 }
 
 // Connect to a Fabric Gateway using a client identity, gRPC connection and signing implementation.
@@ -145,6 +146,15 @@ func WithCommitStatusTimeout(timeout time.Duration) ConnectOption {
 	}
 }
 
+// WithTLSClientCertificateHash specifies the SHA-256 hash of the TLS client certificate. This option is required only
+// if mutual TLS authentication is used for the gRPC connection to the Gateway peer.
+func WithTLSClientCertificateHash(certificateHash []byte) ConnectOption {
+	return func(gw *Gateway) error {
+		gw.tlsCertificateHash = certificateHash
+		return nil
+	}
+}
+
 // Close a Gateway when it is no longer required. This releases all resources associated with Networks and Contracts
 // obtained using the Gateway, including removing event listeners.
 func (gw *Gateway) Close() error {
@@ -160,9 +170,10 @@ func (gw *Gateway) Identity() identity.Identity {
 // GetNetwork returns a Network representing the named Fabric channel.
 func (gw *Gateway) GetNetwork(name string) *Network {
 	return &Network{
-		client:    gw.client,
-		signingID: gw.signingID,
-		name:      name,
+		client:             gw.client,
+		signingID:          gw.signingID,
+		name:               name,
+		tlsCertificateHash: gw.tlsCertificateHash,
 	}
 }
 

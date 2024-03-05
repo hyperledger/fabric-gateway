@@ -237,6 +237,15 @@ public interface Gateway extends AutoCloseable {
         Builder hash(Function<byte[], byte[]> hash);
 
         /**
+         * Specify the SHA-256 hash of the TLS client certificate. This option is required only if mutual TLS
+         * authentication is used for the gRPC connection to the Gateway peer.
+         *
+         * @param certificateHash A SHA-256 hash.
+         * @return The builder instance, allowing multiple configuration options to be chained.
+         */
+        Builder tlsClientCertificateHash(byte[] certificateHash);
+
+        /**
          * Specify the default call options for evaluating transactions.
          * <p>A call of:</p>
          * <pre>{@code

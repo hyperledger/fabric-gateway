@@ -167,6 +167,12 @@ export interface ConnectOptions {
     hash?: Hash;
 
     /**
+     * SHA-256 hash of the TLS client certificate. This option is required only if mutual TLS authentication is used
+     * for the gRPC connection to the Gateway peer.
+     */
+    tlsClientCertificateHash?: Uint8Array;
+
+    /**
      * Supplier of default call options for endorsements.
      */
     endorseOptions?: () => CallOptions;
@@ -225,9 +231,13 @@ export function internalConnect(options: Readonly<InternalConnectOptions>): Gate
     assertDefined(options.identity, 'No identity supplied');
 
     const signingIdentity = new SigningIdentity(options);
-    const gatewayClient = newGatewayClient(options.client, options);
+    const client = newGatewayClient(options.client, options);
 
-    return new GatewayImpl(gatewayClient, signingIdentity);
+    return new GatewayImpl({
+        client,
+        signingIdentity,
+        tlsCertificateHash: options.tlsClientCertificateHash,
+    });
 }
 
 // @ts-expect-error Polyfill for Symbol.dispose if not present
@@ -373,13 +383,21 @@ export interface Gateway {
     [Symbol.dispose](): void;
 }
 
+interface GatewayOptions {
+    client: GatewayClient;
+    signingIdentity: SigningIdentity;
+    tlsCertificateHash?: Uint8Array;
+}
+
 class GatewayImpl implements Gateway {
     readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
+    readonly #tlsCertificateHash?: Uint8Array;
 
-    constructor(client: GatewayClient, signingIdentity: SigningIdentity) {
-        this.#client = client;
-        this.#signingIdentity = signingIdentity;
+    constructor(options: Readonly<GatewayOptions>) {
+        this.#client = options.client;
+        this.#signingIdentity = options.signingIdentity;
+        this.#tlsCertificateHash = options.tlsCertificateHash;
     }
 
     getIdentity(): Identity {
@@ -391,6 +409,7 @@ class GatewayImpl implements Gateway {
             client: this.#client,
             signingIdentity: this.#signingIdentity,
             channelName,
+            tlsCertificateHash: this.#tlsCertificateHash,
         });
     }
 

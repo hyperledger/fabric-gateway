@@ -27,6 +27,7 @@ func seekLargestBlockNumber() *orderer.SeekPosition {
 
 type baseBlockEventsBuilder struct {
 	eventsBuilder
+	tlsCertificateHash []byte
 }
 
 func (builder *baseBlockEventsBuilder) payloadBytes() ([]byte, error) {
@@ -58,10 +59,11 @@ func (builder *baseBlockEventsBuilder) payloadBytes() ([]byte, error) {
 
 func (builder *baseBlockEventsBuilder) channelHeaderBytes() ([]byte, error) {
 	channelHeader := &common.ChannelHeader{
-		Type:      int32(common.HeaderType_DELIVER_SEEK_INFO),
-		Timestamp: timestamppb.Now(),
-		ChannelId: builder.eventsBuilder.channelName,
-		Epoch:     0,
+		Type:        int32(common.HeaderType_DELIVER_SEEK_INFO),
+		Timestamp:   timestamppb.Now(),
+		ChannelId:   builder.eventsBuilder.channelName,
+		Epoch:       0,
+		TlsCertHash: builder.tlsCertificateHash,
 	}
 
 	return proto.Marshal(channelHeader)

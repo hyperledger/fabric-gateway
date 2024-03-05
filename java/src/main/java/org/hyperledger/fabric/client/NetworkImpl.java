@@ -6,25 +6,33 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.Objects;
-import java.util.function.UnaryOperator;
-
+import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
 import org.hyperledger.fabric.protos.common.Block;
 import org.hyperledger.fabric.protos.peer.BlockAndPrivateData;
 import org.hyperledger.fabric.protos.peer.FilteredBlock;
 
+import java.util.Objects;
+import java.util.function.UnaryOperator;
+
 final class NetworkImpl implements Network {
     private final GatewayClient client;
     private final SigningIdentity signingIdentity;
     private final String channelName;
+    private final ByteString tlsCertificateHash;
 
-    NetworkImpl(final GatewayClient client, final SigningIdentity signingIdentity, final String channelName) {
+    NetworkImpl(
+        final GatewayClient client,
+        final SigningIdentity signingIdentity,
+        final String channelName,
+        final ByteString tlsCertificateHash
+    ) {
         Objects.requireNonNull(channelName, "network name");
 
         this.client = client;
         this.signingIdentity = signingIdentity;
         this.channelName = channelName;
+        this.tlsCertificateHash = tlsCertificateHash;
     }
 
     @Override
@@ -59,7 +67,7 @@ final class NetworkImpl implements Network {
 
     @Override
     public BlockEventsRequest.Builder newBlockEventsRequest() {
-        return new BlockEventsBuilder(client, signingIdentity, channelName);
+        return new BlockEventsBuilder(client, signingIdentity, channelName, tlsCertificateHash);
     }
 
     @Override
@@ -69,7 +77,7 @@ final class NetworkImpl implements Network {
 
     @Override
     public FilteredBlockEventsRequest.Builder newFilteredBlockEventsRequest() {
-        return new FilteredBlockEventsBuilder(client, signingIdentity, channelName);
+        return new FilteredBlockEventsBuilder(client, signingIdentity, channelName, tlsCertificateHash);
     }
 
     @Override
@@ -79,6 +87,6 @@ final class NetworkImpl implements Network {
 
     @Override
     public BlockAndPrivateDataEventsRequest.Builder newBlockAndPrivateDataEventsRequest() {
-        return new BlockAndPrivateDataEventsBuilder(client, signingIdentity, channelName);
+        return new BlockAndPrivateDataEventsBuilder(client, signingIdentity, channelName, tlsCertificateHash);
     }
 }

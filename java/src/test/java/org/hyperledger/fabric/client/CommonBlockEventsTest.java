@@ -6,14 +6,6 @@
 
 package org.hyperledger.fabric.client;
 
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
@@ -35,12 +27,22 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 public abstract class CommonBlockEventsTest<E> {
     private static final Deadline defaultDeadline = Deadline.after(1, TimeUnit.DAYS);
+    private static final String tlsCertificateHash = "TLS_CLIENT_CERTIFICATE_HASH";
 
     protected GatewayMocker mocker;
     protected DeliverServiceStub stub;
@@ -54,6 +56,7 @@ public abstract class CommonBlockEventsTest<E> {
         stub = mocker.getDeliverServiceStubSpy();
 
         Gateway.Builder builder = mocker.getGatewayBuilder();
+        builder.tlsClientCertificateHash(tlsCertificateHash.getBytes(StandardCharsets.UTF_8));
         setEventsOptions(builder, options -> options.withDeadline(defaultDeadline));
         gateway = builder.connect();
         network = gateway.getNetwork("NETWORK");
@@ -360,4 +363,19 @@ public abstract class CommonBlockEventsTest<E> {
                 .extracting(CallOptions::getDeadline)
                 .isEqualTo(defaultDeadline);
     }
+
+    @Test
+    void sends_request_with_tls_client_certificate_hash() throws Exception {
+        try (CloseableIterator<?> iter = getEvents()) {
+            iter.hasNext(); // Interact with iterator before asserting to ensure async request has been made
+        }
+
+        Envelope request = captureEvents().findFirst().get();
+        Payload payload = Payload.parseFrom(request.getPayload());
+        ChannelHeader channelHeader = ChannelHeader.parseFrom(payload.getHeader().getChannelHeader());
+
+        String actual = channelHeader.getTlsCertHash().toStringUtf8();
+        assertThat(actual).isEqualTo(tlsCertificateHash);
+    }
+
 }
