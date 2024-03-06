@@ -20,9 +20,10 @@ import (
 // To safely handle connection errors during eventing, it is recommended to use a checkpointer to track eventing
 // progress. This allows eventing to be resumed with no loss or duplication of events.
 type Network struct {
-	client    *gatewayClient
-	signingID *signingIdentity
-	name      string
+	client             *gatewayClient
+	signingID          *signingIdentity
+	name               string
+	tlsCertificateHash []byte
 }
 
 // Name of the Fabric channel this network represents.
@@ -103,11 +104,12 @@ func (network *Network) BlockEvents(ctx context.Context, options ...BlockEventsO
 func (network *Network) NewBlockEventsRequest(options ...BlockEventsOption) (*BlockEventsRequest, error) {
 	builder := &blockEventsBuilder{
 		baseBlockEventsBuilder{
-			eventsBuilder{
+			eventsBuilder: eventsBuilder{
 				signingID:   network.signingID,
 				channelName: network.name,
 				client:      network.client,
 			},
+			tlsCertificateHash: network.tlsCertificateHash,
 		},
 	}
 
@@ -134,11 +136,12 @@ func (network *Network) FilteredBlockEvents(ctx context.Context, options ...Bloc
 func (network *Network) NewFilteredBlockEventsRequest(options ...BlockEventsOption) (*FilteredBlockEventsRequest, error) {
 	builder := &filteredBlockEventsBuilder{
 		baseBlockEventsBuilder{
-			eventsBuilder{
+			eventsBuilder: eventsBuilder{
 				signingID:   network.signingID,
 				channelName: network.name,
 				client:      network.client,
 			},
+			tlsCertificateHash: network.tlsCertificateHash,
 		},
 	}
 
@@ -165,11 +168,12 @@ func (network *Network) BlockAndPrivateDataEvents(ctx context.Context, options .
 func (network *Network) NewBlockAndPrivateDataEventsRequest(options ...BlockEventsOption) (*BlockAndPrivateDataEventsRequest, error) {
 	builder := &blockAndPrivateDataEventsBuilder{
 		baseBlockEventsBuilder{
-			eventsBuilder{
+			eventsBuilder: eventsBuilder{
 				signingID:   network.signingID,
 				channelName: network.name,
 				client:      network.client,
 			},
+			tlsCertificateHash: network.tlsCertificateHash,
 		},
 	}
 

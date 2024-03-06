@@ -6,6 +6,7 @@
 
 package org.hyperledger.fabric.client;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -34,6 +35,7 @@ final class GatewayImpl implements Gateway {
         private Identity identity;
         private Signer signer = UNDEFINED_SIGNER; // No signer implementation is required if only offline signing is used
         private Function<byte[], byte[]> hash = Hash.SHA256;
+        private ByteString tlsCertificateHash = ByteString.empty();
         private final DefaultCallOptions.Builder optionsBuilder = DefaultCallOptions.newBuiler();
 
         @Override
@@ -61,6 +63,13 @@ final class GatewayImpl implements Gateway {
         public Builder hash(final Function<byte[], byte[]> hash) {
             Objects.requireNonNull(hash, "hash");
             this.hash = hash;
+            return this;
+        }
+
+        @Override
+        public Builder tlsClientCertificateHash(final byte[] certificateHash) {
+            Objects.requireNonNull(certificateHash, "certificateHash");
+            tlsCertificateHash = ByteString.copyFrom(certificateHash);
             return this;
         }
 
@@ -128,10 +137,12 @@ final class GatewayImpl implements Gateway {
 
     private final GatewayClient client;
     private final SigningIdentity signingIdentity;
+    private final ByteString tlsCertificateHash;
 
     private GatewayImpl(final Builder builder) {
         signingIdentity = new SigningIdentity(builder.identity, builder.hash, builder.signer);
         client = new GatewayClient(builder.grpcChannel, builder.optionsBuilder.build());
+        tlsCertificateHash = builder.tlsCertificateHash;
     }
 
     @Override
@@ -145,7 +156,7 @@ final class GatewayImpl implements Gateway {
 
     @Override
     public Network getNetwork(final String networkName) {
-        return new NetworkImpl(client, signingIdentity, networkName);
+        return new NetworkImpl(client, signingIdentity, networkName, tlsCertificateHash);
     }
 
     @Override

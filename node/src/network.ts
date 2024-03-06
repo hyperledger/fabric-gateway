@@ -8,6 +8,7 @@ import { common, peer } from '@hyperledger/fabric-protos';
 import {
     BlockAndPrivateDataEventsBuilder,
     BlockEventsBuilder,
+    BlockEventsBuilderOptions,
     BlockEventsOptions,
     FilteredBlockEventsBuilder,
 } from './blockeventsbuilder';
@@ -204,17 +205,20 @@ export interface NetworkOptions {
     client: GatewayClient;
     signingIdentity: SigningIdentity;
     channelName: string;
+    tlsCertificateHash?: Uint8Array;
 }
 
 export class NetworkImpl implements Network {
     readonly #client: GatewayClient;
     readonly #signingIdentity: SigningIdentity;
     readonly #channelName: string;
+    readonly #tlsCertificateHash?: Uint8Array;
 
     constructor(options: Readonly<NetworkOptions>) {
         this.#client = options.client;
         this.#signingIdentity = options.signingIdentity;
         this.#channelName = options.channelName;
+        this.#tlsCertificateHash = options.tlsCertificateHash;
     }
 
     getName(): string {
@@ -257,13 +261,8 @@ export class NetworkImpl implements Network {
     }
 
     newBlockEventsRequest(options: Readonly<BlockEventsOptions> = {}): BlockEventsRequest {
-        return new BlockEventsBuilder(
-            Object.assign({}, options, {
-                channelName: this.#channelName,
-                client: this.#client,
-                signingIdentity: this.#signingIdentity,
-            }),
-        ).build();
+        const builderOptions = this.#newBlockEventsBuilderOptions(options);
+        return new BlockEventsBuilder(builderOptions).build();
     }
 
     async getFilteredBlockEvents(
@@ -273,13 +272,8 @@ export class NetworkImpl implements Network {
     }
 
     newFilteredBlockEventsRequest(options: Readonly<BlockEventsOptions> = {}): FilteredBlockEventsRequest {
-        return new FilteredBlockEventsBuilder(
-            Object.assign({}, options, {
-                channelName: this.#channelName,
-                client: this.#client,
-                signingIdentity: this.#signingIdentity,
-            }),
-        ).build();
+        const builderOptions = this.#newBlockEventsBuilderOptions(options);
+        return new FilteredBlockEventsBuilder(builderOptions).build();
     }
 
     async getBlockAndPrivateDataEvents(
@@ -289,12 +283,16 @@ export class NetworkImpl implements Network {
     }
 
     newBlockAndPrivateDataEventsRequest(options: Readonly<BlockEventsOptions> = {}): BlockAndPrivateDataEventsRequest {
-        return new BlockAndPrivateDataEventsBuilder(
-            Object.assign({}, options, {
-                channelName: this.#channelName,
-                client: this.#client,
-                signingIdentity: this.#signingIdentity,
-            }),
-        ).build();
+        const builderOptions = this.#newBlockEventsBuilderOptions(options);
+        return new BlockAndPrivateDataEventsBuilder(builderOptions).build();
+    }
+
+    #newBlockEventsBuilderOptions(options: Readonly<BlockEventsOptions>): BlockEventsBuilderOptions {
+        return Object.assign({}, options, {
+            channelName: this.#channelName,
+            client: this.#client,
+            signingIdentity: this.#signingIdentity,
+            tlsCertificateHash: this.#tlsCertificateHash,
+        });
     }
 }

@@ -523,4 +523,38 @@ func TestBlockEvents(t *testing.T) {
 
 		require.Contains(t, actual, expected, "CallOptions")
 	})
+
+	t.Run("Sends request with TLS client certificate hash", func(t *testing.T) {
+		expected := []byte("TLS_CLIENT_CERTIFICATE_HASH")
+
+		controller := gomock.NewController(t)
+		mockClient := NewMockDeliverClient(controller)
+		mockEvents := NewMockDeliver_DeliverClient(controller)
+
+		mockClient.EXPECT().Deliver(gomock.Any(), gomock.Any()).
+			Return(mockEvents, nil)
+
+		payload := &common.Payload{}
+		mockEvents.EXPECT().Send(gomock.Any()).
+			Do(func(in *common.Envelope) {
+				test.AssertUnmarshal(t, in.GetPayload(), payload)
+			}).
+			Return(nil).
+			Times(1)
+		mockEvents.EXPECT().Recv().
+			Return(nil, errors.New("fake")).
+			AnyTimes()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient), WithTLSClientCertificateHash(expected))
+		_, err := network.BlockEvents(ctx)
+		require.NoError(t, err)
+
+		channelHeader := &common.ChannelHeader{}
+		test.AssertUnmarshal(t, payload.GetHeader().GetChannelHeader(), channelHeader)
+
+		require.Equal(t, expected, channelHeader.GetTlsCertHash())
+	})
 }

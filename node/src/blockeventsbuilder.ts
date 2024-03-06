@@ -37,6 +37,7 @@ export interface BlockEventsBuilderOptions extends EventsOptions {
     client: GatewayClient;
     signingIdentity: SigningIdentity;
     channelName: string;
+    tlsCertificateHash?: Uint8Array;
 }
 
 export class BlockEventsBuilder {
@@ -133,6 +134,9 @@ class BlockEventsEnvelopeBuilder {
         result.setEpoch(0);
         result.setTimestamp(Timestamp.fromDate(new Date()));
         result.setType(common.HeaderType.DELIVER_SEEK_INFO);
+        if (this.#options.tlsCertificateHash) {
+            result.setTlsCertHash(this.#options.tlsCertificateHash);
+        }
         return result;
     }
 

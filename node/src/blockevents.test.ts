@@ -52,6 +52,7 @@ describe('Block Events', () => {
         details: 'DETAILS',
         metadata: new Metadata(),
     });
+    const tlsClientCertificateHash = Uint8Array.from(Buffer.from('TLS_CLIENT_CERTIFICATE_HASH'));
 
     let defaultOptions: () => CallOptions;
     let client: MockGatewayGrpcClient;
@@ -83,6 +84,7 @@ describe('Block Events', () => {
             signer,
             hash,
             client,
+            tlsClientCertificateHash,
             blockEventsOptions: defaultOptions,
             filteredBlockEventsOptions: defaultOptions,
             blockAndPrivateDataEventsOptions: defaultOptions,
@@ -458,6 +460,21 @@ describe('Block Events', () => {
                 }
 
                 expect(stream.cancel).toHaveBeenCalled();
+            });
+
+            it('sends request with TLS client certificate hash', async () => {
+                const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
+                testCase.mockResponse(stream);
+
+                await testCase.getEvents();
+
+                expect(stream.write.mock.calls.length).toBe(1);
+                const request = stream.write.mock.calls[0][0];
+
+                const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
+                const header = assertDefined(payload.getHeader(), 'header');
+                const channelHeader = common.ChannelHeader.deserializeBinary(header.getChannelHeader_asU8());
+                expect(channelHeader.getTlsCertHash_asU8()).toEqual(tlsClientCertificateHash);
             });
         });
     });

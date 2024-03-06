@@ -18,11 +18,17 @@ import org.hyperledger.fabric.protos.orderer.SeekInfo;
 final class BlockEventsEnvelopeBuilder {
     private final SigningIdentity signingIdentity;
     private final String channelName;
+    private final ByteString tlsCertificateHash;
     private final StartPositionBuilder startPositionBuilder = new StartPositionBuilder();
 
-    BlockEventsEnvelopeBuilder(final SigningIdentity signingIdentity, final String channelName) {
+    BlockEventsEnvelopeBuilder(
+        final SigningIdentity signingIdentity,
+        final String channelName,
+        final ByteString tlsCertificateHash
+    ) {
         this.signingIdentity = signingIdentity;
         this.channelName = channelName;
+        this.tlsCertificateHash = tlsCertificateHash;
     }
 
     public BlockEventsEnvelopeBuilder startBlock(final long blockNumber) {
@@ -56,6 +62,7 @@ final class BlockEventsEnvelopeBuilder {
                 .setEpoch(0)
                 .setTimestamp(GatewayUtils.getCurrentTimestamp())
                 .setType(HeaderType.DELIVER_SEEK_INFO_VALUE)
+                .setTlsCertHash(tlsCertificateHash)
                 .build();
     }
 
