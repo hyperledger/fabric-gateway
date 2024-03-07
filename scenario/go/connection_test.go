@@ -9,7 +9,6 @@ package scenario
 import (
 	"context"
 	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
@@ -166,7 +165,11 @@ func NewHSMSigner(user string) (identity.Sign, identity.HSMSignClose, error) {
 		return nil, nil, err
 	}
 
-	ski := getSKI(certificatePEM)
+	ski, err := getSKI(certificatePEM)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	hsmSignerOptions := identity.HSMSignerOptions{
 		Label:      "ForFabric",
 		Pin:        "98765432",
@@ -176,7 +179,7 @@ func NewHSMSigner(user string) (identity.Sign, identity.HSMSignClose, error) {
 	return hsmSignerFactory.NewHSMSigner(hsmSignerOptions)
 }
 
-func getSKI(certPEM []byte) []byte {
+func getSKI(certPEM []byte) ([]byte, error) {
 	block, _ := pem.Decode(certPEM)
 
 	x590cert, _ := x509.ParseCertificate(block.Bytes)
@@ -185,9 +188,14 @@ func getSKI(certPEM []byte) []byte {
 	return skiForKey(pk.(*ecdsa.PublicKey))
 }
 
-func skiForKey(pk *ecdsa.PublicKey) []byte {
-	ski := sha256.Sum256(elliptic.Marshal(pk.Curve, pk.X, pk.Y))
-	return ski[:]
+func skiForKey(publicKey *ecdsa.PublicKey) ([]byte, error) {
+	ecdhPublicKey, err := publicKey.ECDH()
+	if err != nil {
+		return nil, err
+	}
+
+	ski := sha256.Sum256(ecdhPublicKey.Bytes())
+	return ski[:], nil
 }
 
 func certificatePath(user string, mspID string) string {

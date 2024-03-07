@@ -20,7 +20,8 @@ See the [gateway.proto file](https://github.com/hyperledger/fabric-protos/blob/m
 
 This repository comprises three functionally equivalent client APIs, written in Go, Typescript, and Java. In order to
 build these components, the following need to be installed and available in the PATH:
-- [Go 1.20+](https://go.dev/)
+
+- [Go 1.21+](https://go.dev/)
 - [Node 18+](https://nodejs.org/)
 - [Java 8+](https://adoptium.net/)
 - [Docker](https://www.docker.com/)
@@ -42,6 +43,7 @@ In order to run any of the Hardware Security Module (HSM) tests, [SoftHSM v2](ht
 > **Note:** When the repository is first cloned, some mock implementations used for testing will not be present and the Go code will show compile errors. These will be generated when the `unit-test` target is run, or can be generated explicitly by running `make generate`.
 
 The following Makefile targets are available:
+
 - `make generate` - generate mock implementations used by unit tests
 - `make lint` - run linting checks for the Go code
 - `make unit-test-go` - run unit tests for the Go client API, excluding HSM tests
@@ -63,7 +65,7 @@ The following Makefile targets are available:
 ### Scenario tests
 
 The scenario tests create a Fabric network comprising two orgs (one peer in each org) and a single gateway within a set
-of docker containers.  The clients connect to the gateway to submit transactions and query the ledger state.
+of docker containers. The clients connect to the gateway to submit transactions and query the ledger state.
 
-The tests are defined as feature files using the Cucumber BDD framework.  The same set of feature files
+The tests are defined as feature files using the Cucumber BDD framework. The same set of feature files
 is used across all three client language implementations to ensure consistency of behaviour.
