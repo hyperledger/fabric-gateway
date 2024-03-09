@@ -15,14 +15,14 @@ describe('SigningIdentity', () => {
     beforeEach(() => {
         identity = {
             mspId: 'MSP_ID',
-            credentials: Uint8Array.from(Buffer.from('CREDENTIALS')),
+            credentials: new Uint8Array(Buffer.from('CREDENTIALS')),
         };
     });
 
     describe('identity', () => {
         it('changes to returned identity do not modify signing identity', () => {
             const expectedMspId = identity.mspId;
-            const expectedCredentials = Uint8Array.from(identity.credentials); // Copy
+            const expectedCredentials = new Uint8Array(identity.credentials); // Copy
             const signingIdentity = new SigningIdentity({ identity });
 
             const output = signingIdentity.getIdentity();
@@ -31,13 +31,13 @@ describe('SigningIdentity', () => {
 
             const actual = signingIdentity.getIdentity();
             expect(actual.mspId).toBe(expectedMspId);
-            const actualCredentials = Uint8Array.from(actual.credentials); // Ensure it's really a Uint8Array
+            const actualCredentials = new Uint8Array(actual.credentials); // Ensure it's really a Uint8Array
             expect(actualCredentials).toEqual(expectedCredentials);
         });
 
         it('changes to supplied identity do not modify signing identity', () => {
             const expectedMspId = identity.mspId;
-            const expectedCredentials = Uint8Array.from(identity.credentials); // Copy
+            const expectedCredentials = new Uint8Array(identity.credentials); // Copy
 
             const signingIdentity = new SigningIdentity({ identity });
             identity.mspId = 'wrong';
@@ -45,7 +45,7 @@ describe('SigningIdentity', () => {
 
             const actual = signingIdentity.getIdentity();
             expect(actual.mspId).toBe(expectedMspId);
-            const actualCredentials = Uint8Array.from(actual.credentials); // Ensure it's really a Uint8Array
+            const actualCredentials = new Uint8Array(actual.credentials); // Ensure it's really a Uint8Array
             expect(actualCredentials).toEqual(expectedCredentials);
         });
     });
@@ -58,18 +58,18 @@ describe('SigningIdentity', () => {
 
             const actual = msp.SerializedIdentity.deserializeBinary(creator);
             expect(actual.getMspid()).toBe(identity.mspId);
-            const credentials = Uint8Array.from(actual.getIdBytes_asU8()); // Ensure it's really a Uint8Array
+            const credentials = new Uint8Array(actual.getIdBytes_asU8()); // Ensure it's really a Uint8Array
             expect(credentials).toEqual(identity.credentials);
         });
 
         it('changes to returned creator do not modify signing identity', () => {
             const signingIdentity = new SigningIdentity({ identity });
-            const expected = Uint8Array.from(signingIdentity.getCreator()); // Ensure it's really a Uint8Array
+            const expected = new Uint8Array(signingIdentity.getCreator()); // Ensure it's really a Uint8Array
 
             const creator = signingIdentity.getCreator();
             creator.fill(0);
 
-            const actual = Uint8Array.from(signingIdentity.getCreator()); // Ensure it's really a Uint8Array
+            const actual = new Uint8Array(signingIdentity.getCreator()); // Ensure it's really a Uint8Array
             expect(actual).toEqual(expected);
         });
     });
@@ -83,7 +83,7 @@ describe('SigningIdentity', () => {
         });
 
         it('uses supplied signer', async () => {
-            const expected = Uint8Array.from(Buffer.from('SIGNATURE'));
+            const expected = new Uint8Array(Buffer.from('SIGNATURE'));
             const signer: Signer = async () => Promise.resolve(expected);
             const digest = Buffer.from('DIGEST');
             const signingIdentity = new SigningIdentity({ identity, signer });

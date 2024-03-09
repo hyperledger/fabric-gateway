@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import BN from 'bn.js';
-import { KeyObject } from 'crypto';
-import { ec as EC } from 'elliptic';
-import { ecSignatureAsDER } from './asn1';
+import { CurveFn } from '@noble/curves/abstract/weierstrass';
+import { p256 } from '@noble/curves/p256';
+import { p384 } from '@noble/curves/p384';
+import { KeyObject } from 'node:crypto';
 import { Signer } from './signer';
 
-const namedCurves: Record<string, EC> = {
-    'P-256': new EC('p256'),
-    'P-384': new EC('p384'),
+const namedCurves: Record<string, CurveFn> = {
+    'P-256': p256,
+    'P-384': p384,
 };
 
 export function newECPrivateKeySigner(key: KeyObject): Signer {
@@ -28,48 +28,16 @@ export function newECPrivateKeySigner(key: KeyObject): Signer {
     const privateKey = Buffer.from(d, 'base64url');
 
     return (digest) => {
-        const signature = curve.sign(digest, privateKey, { canonical: true });
-        const signatureBytes = new Uint8Array(signature.toDER());
-        return Promise.resolve(signatureBytes);
+        const signature = curve.sign(digest, privateKey, { lowS: true });
+        return Promise.resolve(signature.toDERRawBytes());
     };
 }
 
-function getCurve(name: string): EC {
+function getCurve(name: string): CurveFn {
     const curve = namedCurves[name];
     if (!curve) {
         throw new Error(`Unsupported curve: ${name}`);
     }
 
     return curve;
-}
-
-export class ECSignature {
-    readonly #curve: EC;
-    readonly #r: BN;
-    #s: BN;
-
-    constructor(curveName: string, compactSignature: Uint8Array) {
-        this.#curve = getCurve(curveName);
-
-        const sIndex = compactSignature.length / 2;
-        const r = compactSignature.slice(0, sIndex);
-        const s = compactSignature.slice(sIndex);
-        this.#r = new BN(r);
-        this.#s = new BN(s);
-    }
-
-    normalise(): this {
-        const n = this.#curve.n!;
-        const halfOrder = n.divn(2);
-
-        if (this.#s.gt(halfOrder)) {
-            this.#s = n.sub(this.#s);
-        }
-
-        return this;
-    }
-
-    toDER(): Uint8Array {
-        return ecSignatureAsDER(this.#r, this.#s);
-    }
 }

@@ -28,7 +28,7 @@ export class SigningIdentity {
     constructor(options: Readonly<SigningIdentityOptions>) {
         this.#identity = {
             mspId: options.identity.mspId,
-            credentials: Uint8Array.from(options.identity.credentials),
+            credentials: new Uint8Array(options.identity.credentials),
         };
 
         const serializedIdentity = new msp.SerializedIdentity();
@@ -43,12 +43,12 @@ export class SigningIdentity {
     getIdentity(): Identity {
         return {
             mspId: this.#identity.mspId,
-            credentials: Uint8Array.from(this.#identity.credentials),
+            credentials: new Uint8Array(this.#identity.credentials),
         };
     }
 
     getCreator(): Uint8Array {
-        return Uint8Array.from(this.#creator);
+        return new Uint8Array(this.#creator);
     }
 
     hash(message: Uint8Array): Uint8Array {

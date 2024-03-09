@@ -52,7 +52,7 @@ describe('Block Events', () => {
         details: 'DETAILS',
         metadata: new Metadata(),
     });
-    const tlsClientCertificateHash = Uint8Array.from(Buffer.from('TLS_CLIENT_CERTIFICATE_HASH'));
+    const tlsClientCertificateHash = new Uint8Array(Buffer.from('TLS_CLIENT_CERTIFICATE_HASH'));
 
     let defaultOptions: () => CallOptions;
     let client: MockGatewayGrpcClient;

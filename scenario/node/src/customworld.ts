@@ -15,9 +15,9 @@ import {
     Signer,
     signers,
 } from '@hyperledger/fabric-gateway';
-import { createPrivateKey, KeyObject, X509Certificate } from 'crypto';
-import { promises as fs } from 'fs';
-import * as path from 'path';
+import { createPrivateKey, KeyObject, X509Certificate } from 'node:crypto';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
 import { findSoftHSMPKCS11Lib, fixturesDir, getOrgForMsp } from './fabric';
 import { getSKIFromCertificate } from './fabricski';
 import { GatewayContext } from './gatewaycontext';
