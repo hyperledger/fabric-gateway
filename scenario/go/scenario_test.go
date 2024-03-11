@@ -18,7 +18,6 @@ import (
 	"strings"
 
 	"github.com/cucumber/godog"
-	messages "github.com/cucumber/messages/go/v21"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 	"google.golang.org/grpc"
@@ -257,7 +256,7 @@ func unmarshalArgs(argsJSON string) ([]string, error) {
 	return args, nil
 }
 
-func setTransientData(table *messages.PickleTable) error {
+func setTransientData(table *godog.Table) error {
 	transient := make(map[string][]byte)
 	for _, row := range table.Rows {
 		transient[row.Cells[0].Value] = []byte(row.Cells[1].Value)
@@ -313,7 +312,7 @@ func theTransactionShouldFail() error {
 	return nil
 }
 
-func theResponseShouldBeJSONMatching(arg *messages.PickleDocString) error {
+func theResponseShouldBeJSONMatching(arg *godog.DocString) error {
 	same, err := jsonEqual([]byte(arg.Content), transaction.Result())
 	if err != nil {
 		return err
@@ -357,7 +356,7 @@ func theErrorMessageShouldContain(expected string) error {
 	return nil
 }
 
-func theErrorDetailsShouldBe(table *messages.PickleTable) error {
+func theErrorDetailsShouldBe(table *godog.Table) error {
 	details := transaction.ErrDetails()
 	expected := map[string]*gateway.ErrorDetail{}
 	for _, row := range table.Rows {
