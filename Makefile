@@ -9,6 +9,7 @@ base_dir := $(patsubst %/,%,$(dir $(realpath $(lastword $(MAKEFILE_LIST)))))
 go_dir := $(base_dir)/pkg
 node_dir := $(base_dir)/node
 java_dir := $(base_dir)/java
+web_dir := $(base_dir)/web
 scenario_dir := $(base_dir)/scenario
 
 go_bin_dir := $(shell go env GOPATH)/bin
@@ -48,6 +49,12 @@ build-java:
 	cd '$(java_dir)' && \
 		mvn -DskipTests install
 
+.PHONY: build-web
+build-web:
+	cd "$(web_dir)" && \
+		npm install && \
+		npm run build
+
 .PHONY: unit-test
 unit-test: generate lint unit-test-go unit-test-node unit-test-java
 
@@ -70,6 +77,11 @@ unit-test-node: build-node
 unit-test-java:
 	cd '$(java_dir)' && \
 		mvn test jacoco:report
+
+.PHONY: unit-test-web
+unit-test-web: build-web
+	cd "$(web_dir)" && \
+		npm test
 
 .PHONY: lint
 lint: staticcheck golangci-lint
@@ -232,6 +244,12 @@ generate-docs-node:
 generate-docs-java:
 	cd '$(java_dir)' && \
 		mvn javadoc:javadoc
+
+.PHONY: generate-docs-web
+generate-docs-web:
+	cd "$(web_dir)" && \
+		npm install && \
+		npm run generate-apidoc
 
 .PHONY: test
 test: shellcheck unit-test scenario-test
