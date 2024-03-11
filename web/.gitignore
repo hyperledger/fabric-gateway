@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+*.tgz
+src/protos/
+apidocs/
+package-lock.json
+sbom.json
+fabric-protos-*/
+fabric-gateway-web.js
