@@ -7,18 +7,19 @@ SPDX-License-Identifier: Apache-2.0
 package client_test
 
 import (
+	"crypto/x509"
 	"fmt"
 	"os"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials"
 )
 
 func Example() {
 	// Create gRPC client connection, which should be shared by all gateway connections to this endpoint.
-	clientConnection, err := grpc.Dial("gateway.example.org:1337", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	clientConnection, err := NewGrpcConnection()
 	panicOnError(err)
 	defer clientConnection.Close()
 
@@ -44,6 +45,21 @@ func Example() {
 	evaluateResult, err := contract.EvaluateTransaction("transactionName", "arg1", "arg2")
 	panicOnError(err)
 	fmt.Printf("Evaluate result: %s", string(evaluateResult))
+}
+
+// NewGrpcConnection creates a new gRPC client connection
+func NewGrpcConnection() (*grpc.ClientConn, error) {
+	tlsCertificatePEM, err := os.ReadFile("tlsRootCertificate.pem")
+	panicOnError(err)
+
+	tlsCertificate, err := identity.CertificateFromPEM(tlsCertificatePEM)
+	panicOnError(err)
+
+	certPool := x509.NewCertPool()
+	certPool.AddCert(tlsCertificate)
+	transportCredentials := credentials.NewClientTLSFromCert(certPool, "")
+
+	return grpc.Dial("gateway.example.org:1337", grpc.WithTransportCredentials(transportCredentials))
 }
 
 // NewIdentity creates a client identity for this Gateway connection using an X.509 certificate.

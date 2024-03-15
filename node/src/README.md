@@ -1,6 +1,6 @@
 # Overview
 
-The *fabric-gateway* package enables Node.js developers to build client applications using the Hyperledger Fabric programming model as described in the [Running a Fabric Application](https://hyperledger-fabric.readthedocs.io/en/latest/write_first_app.html) tutorial of the Fabric documentation.
+The _fabric-gateway_ package enables Node.js developers to build client applications using the Hyperledger Fabric programming model as described in the [Running a Fabric Application](https://hyperledger-fabric.readthedocs.io/en/latest/write_first_app.html) tutorial of the Fabric documentation.
 
 [TypeScript](http://www.typescriptlang.org/) definitions are included in this package.
 
@@ -14,9 +14,9 @@ gRPC connections to a Fabric Gateway may be shared by all `Gateway` instances in
 
 The following complete example shows how to connect to a Fabric network, submit a transaction and query the ledger state using an instantiated smart contract.
 
-```typescript
+```TypeScript
 import * as grpc from '@grpc/grpc-js';
-import * as crypto from 'crypto';
+import * as crypto from 'node:crypto';
 import { connect, Identity, signers } from '@hyperledger/fabric-gateway';
 import { promises as fs } from 'fs';
 import { TextDecoder } from 'util';
@@ -31,7 +31,8 @@ async function main(): Promise<void> {
     const privateKey = crypto.createPrivateKey(privateKeyPem);
     const signer = signers.newPrivateKeySigner(privateKey);
 
-    const client = new grpc.Client('gateway.example.org:1337', grpc.credentials.createInsecure());
+    const tlsRootCert = await fs.readFile('path/to/tlsRootCertificate.pem');
+    const client = new grpc.Client('gateway.example.org:1337', grpc.credentials.createSsl(tlsRootCert));
 
     const gateway = connect({ identity, signer, client });
     try {
@@ -45,7 +46,7 @@ async function main(): Promise<void> {
         console.log('Get result:', utf8Decoder.decode(getResult));
     } finally {
         gateway.close();
-        client.close()
+        client.close();
     }
 }
 
