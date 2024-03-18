@@ -6,9 +6,9 @@
 
 import * as grpc from '@grpc/grpc-js';
 import { common, gateway, peer } from '@hyperledger/fabric-protos';
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import {
     CloseableAsyncIterable,
     DuplexStreamResponse,

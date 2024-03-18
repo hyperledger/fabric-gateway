@@ -5,7 +5,7 @@
  */
 
 import { common, peer } from '@hyperledger/fabric-protos';
-import { inspect } from 'util';
+import { inspect } from 'node:util';
 import { assertDefined } from './gateway';
 
 export function parseTransactionEnvelope(envelope: common.Envelope): {

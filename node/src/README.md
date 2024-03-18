@@ -18,8 +18,8 @@ The following complete example shows how to connect to a Fabric network, submit 
 import * as grpc from '@grpc/grpc-js';
 import * as crypto from 'node:crypto';
 import { connect, Identity, signers } from '@hyperledger/fabric-gateway';
-import { promises as fs } from 'fs';
-import { TextDecoder } from 'util';
+import { promises as fs } from 'node:fs';
+import { TextDecoder } from 'node:util';
 
 const utf8Decoder = new TextDecoder();
 

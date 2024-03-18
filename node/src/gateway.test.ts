@@ -61,7 +61,7 @@ describe('Gateway', () => {
             const result = gateway.getIdentity();
 
             expect(result.mspId).toEqual(identity.mspId);
-            expect(Uint8Array.from(result.credentials)).toEqual(Uint8Array.from(identity.credentials));
+            expect(new Uint8Array(result.credentials)).toEqual(new Uint8Array(identity.credentials));
         });
     });
 

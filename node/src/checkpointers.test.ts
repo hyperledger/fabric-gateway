@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { promises as fs } from 'fs';
-import * as path from 'path';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
 import { ChaincodeEvent } from './chaincodeevent';
 import { Checkpointer } from './checkpointer';
 import * as checkpointers from './checkpointers';

@@ -5,7 +5,7 @@
  */
 
 import { common } from '@hyperledger/fabric-protos';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { sha256 } from './hash/hashes';
 import { SigningIdentity } from './signingidentity';
 

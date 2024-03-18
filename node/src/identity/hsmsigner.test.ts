@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { p256 } from '@noble/curves/p256';
+import { createHash } from 'node:crypto';
 import { Mechanism, Pkcs11Error, SessionInfo, SlotInfo, Template, TokenInfo } from 'pkcs11js';
 import { HSMSignerOptions } from './hsmsigner';
 import { newHSMSignerFactory } from './signers';
@@ -188,11 +190,10 @@ describe('When using an HSM Signer', () => {
     const mockSession = Buffer.from('mockSession');
     const mockPrivateKeyHandle = Buffer.from('someobject');
 
-    const HSMSignature =
-        'a5f6e5dd8c46ee4094ebb908b719572022f64ed4bbc21f1f5aa4e49163f4f56c4c6ca8b0393836c79045b1be2f25b1cd2b2b253a213fc9248b7e18574c4170b4';
-    const DERSignature =
-        '3045022100a5f6e5dd8c46ee4094ebb908b719572022f64ed4bbc21f1f5aa4e49163f4f56c02204c6ca8b0393836c79045b1be2f25b1cd2b2b253a213fc9248b7e18574c4170b4';
     const hsmSignerFactory = newHSMSignerFactory('somelibrary');
+
+    const privateKey = p256.utils.randomPrivateKey();
+    const publicKey = p256.getPublicKey(privateKey);
 
     beforeEach(() => {
         resetPkcs11Stub();
@@ -205,6 +206,13 @@ describe('When using an HSM Signer', () => {
         pkcs11Stub.C_FindObjectsFinal = jest.fn();
         pkcs11Stub.C_FindObjects = jest.fn(() => {
             return [mockPrivateKeyHandle];
+        });
+        pkcs11Stub.C_SignInit = jest.fn();
+        pkcs11Stub.C_Sign = jest.fn((session, digest, buffer) => {
+            const signature = p256.sign(digest, privateKey).toCompactRawBytes();
+            signature.forEach((b, i) => buffer.writeUInt8(b, i));
+            // Return buffer of exactly signature length regardless of supplied buffer size
+            return buffer.subarray(0, signature.length);
         });
     });
 
@@ -354,16 +362,14 @@ describe('When using an HSM Signer', () => {
     });
 
     it('signs using the HSM', async () => {
-        pkcs11Stub.C_SignInit = jest.fn();
-        pkcs11Stub.C_Sign = jest.fn(() => {
-            return Buffer.from(HSMSignature, 'hex');
-        });
-
-        const digest = Buffer.from('some digest');
+        const message = Buffer.from('A quick brown fox jumps over the lazy dog');
+        const digest = createHash('sha256').update(message).digest();
 
         const { signer } = hsmSignerFactory.newSigner(hsmOptions);
-        const signed = await signer(digest);
-        expect(signed).toEqual(new Uint8Array(Buffer.from(DERSignature, 'hex')));
+        const signature = await signer(digest);
+
+        const valid = p256.verify(signature, digest, publicKey);
+        expect(valid).toBe(true);
 
         expect(pkcs11Stub.C_SignInit).toHaveBeenCalledWith(mockSession, { mechanism: CKM_ECDSA }, mockPrivateKeyHandle);
         expect(pkcs11Stub.C_Sign).toHaveBeenCalledWith(mockSession, digest, expect.anything());

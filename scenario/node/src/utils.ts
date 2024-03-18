@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { inspect, TextDecoder } from 'util';
+import { inspect, TextDecoder } from 'node:util';
 
 const utf8Decoder = new TextDecoder();
 

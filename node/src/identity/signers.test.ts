@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createHash, generateKeyPairSync, verify } from 'crypto';
+import { createHash, generateKeyPairSync, verify } from 'node:crypto';
 import { newPrivateKeySigner } from './signers';
 
 describe('signers', () => {
