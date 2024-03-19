@@ -38,7 +38,7 @@ export class CommitError extends Error {
 
 export function newCommitError(status: Status): CommitError {
     return new CommitError({
-        message: `Transaction ${status.transactionId} failed to commit with status code ${status.code} (${StatusNames[status.code]})`,
+        message: `Transaction ${status.transactionId} failed to commit with status code ${String(status.code)} (${StatusNames[status.code]})`,
         code: status.code,
         transactionId: status.transactionId,
     });

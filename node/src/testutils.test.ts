@@ -201,7 +201,7 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
     }
 
     mockCommitStatusError(err: grpc.ServiceError): void {
-        this.#commitStatusMock.mockImplementation(fakeUnaryCall(err, undefined));
+        this.#commitStatusMock.mockImplementation(fakeUnaryCall<gateway.CommitStatusResponse>(err, undefined));
     }
 
     mockEndorseResponse(response: gateway.EndorseResponse): void {
@@ -209,7 +209,7 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
     }
 
     mockEndorseError(err: grpc.ServiceError): void {
-        this.#endorseMock.mockImplementation(fakeUnaryCall(err, undefined));
+        this.#endorseMock.mockImplementation(fakeUnaryCall<gateway.EndorseResponse>(err, undefined));
     }
 
     mockEvaluateResponse(response: gateway.EvaluateResponse): void {
@@ -217,7 +217,7 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
     }
 
     mockEvaluateError(err: grpc.ServiceError): void {
-        this.#evaluateMock.mockImplementation(fakeUnaryCall(err, undefined));
+        this.#evaluateMock.mockImplementation(fakeUnaryCall<gateway.EvaluateResponse>(err, undefined));
     }
 
     mockSubmitResponse(response: gateway.SubmitResponse): void {
@@ -225,7 +225,7 @@ export class MockGatewayGrpcClient implements GatewayGrpcClient {
     }
 
     mockSubmitError(err: grpc.ServiceError): void {
-        this.#submitMock.mockImplementation(fakeUnaryCall(err, undefined));
+        this.#submitMock.mockImplementation(fakeUnaryCall<gateway.SubmitResponse>(err, undefined));
     }
 
     mockChaincodeEventsResponse(stream: ServerStreamResponse<gateway.ChaincodeEventsResponse>): void {

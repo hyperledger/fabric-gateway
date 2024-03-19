@@ -93,7 +93,7 @@ export class TransactionInvocation {
         this.blockNumber = status.blockNumber;
 
         if (status.code !== StatusCode.VALID) {
-            throw new Error(`Transaction commit failed with status: ${status.code}`);
+            throw new Error(`Transaction commit failed with status: ${String(status.code)}`);
         }
 
         return submitted.getResult();

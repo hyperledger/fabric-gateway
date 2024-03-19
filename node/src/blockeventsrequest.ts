@@ -231,8 +231,8 @@ function mapAsyncIterator<T, R>(iterator: AsyncIterator<T>, map: (element: T) =>
 
 function getBlock<T>(response: peer.DeliverResponse, getter: () => T | null | undefined): T {
     if (response.getTypeCase() === peer.DeliverResponse.TypeCase.STATUS) {
-        throw new Error(`Unexpected status response: ${response.getStatus()}`);
+        throw new Error(`Unexpected status response: ${String(response.getStatus())}`);
     }
     const block = getter();
-    return assertDefined(block, `Unexpected deliver response type: ${response.getTypeCase()}`);
+    return assertDefined(block, `Unexpected deliver response type: ${String(response.getTypeCase())}`);
 }
