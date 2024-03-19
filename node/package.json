@@ -50,8 +50,8 @@
         "@types/google-protobuf": "^3.15.12",
         "@types/jest": "^29.5.12",
         "@types/node": "^18.19.22",
-        "@typescript-eslint/eslint-plugin": "^7.1.1",
-        "@typescript-eslint/parser": "^7.1.1",
+        "@typescript-eslint/eslint-plugin": "~7.3.1",
+        "@typescript-eslint/parser": "~7.3.1",
         "eslint": "^8.57.0",
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-jest": "^27.9.0",
@@ -61,6 +61,6 @@
         "prettier": "^3.2.5",
         "ts-jest": "^29.1.2",
         "typedoc": "^0.25.11",
-        "typescript": "~5.3.3"
+        "typescript": "~5.4.2"
     }
 }
