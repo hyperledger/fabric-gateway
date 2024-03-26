@@ -33,27 +33,37 @@ public final class MockGatewayService extends GatewayGrpc.GatewayImplBase {
 
     @Override
     public void endorse(final EndorseRequest request, final StreamObserver<EndorseResponse> responseObserver) {
-        testUtils.invokeStubUnaryCall(stub::endorse, request, responseObserver);
+        synchronized (stub) {
+            testUtils.invokeStubUnaryCall(stub::endorse, request, responseObserver);
+        }
     }
 
     @Override
     public void submit(final SubmitRequest request, final StreamObserver<SubmitResponse> responseObserver) {
-        testUtils.invokeStubUnaryCall(stub::submit, request, responseObserver);
+        synchronized (stub) {
+            testUtils.invokeStubUnaryCall(stub::submit, request, responseObserver);
+        }
     }
 
     @Override
     public void evaluate(final EvaluateRequest request, final StreamObserver<EvaluateResponse> responseObserver) {
-        testUtils.invokeStubUnaryCall(stub::evaluate, request, responseObserver);
+        synchronized (stub) {
+            testUtils.invokeStubUnaryCall(stub::evaluate, request, responseObserver);
+        }
     }
 
     @Override
     public void commitStatus(final SignedCommitStatusRequest request, final StreamObserver<CommitStatusResponse> responseObserver) {
-        testUtils.invokeStubUnaryCall(stub::commitStatus, request, responseObserver);
+        synchronized (stub) {
+            testUtils.invokeStubUnaryCall(stub::commitStatus, request, responseObserver);
+        }
     }
 
     @Override
     public void chaincodeEvents(final SignedChaincodeEventsRequest request, final StreamObserver<ChaincodeEventsResponse> responseObserver) {
-        testUtils.invokeStubServerStreamingCall(stub::chaincodeEvents, request, responseObserver);
+        synchronized (stub) {
+            testUtils.invokeStubServerStreamingCall(stub::chaincodeEvents, request, responseObserver);
+        }
     }
 
 }
