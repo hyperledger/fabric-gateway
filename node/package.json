@@ -42,13 +42,13 @@
         "pkcs11js": "^2.1.0"
     },
     "devDependencies": {
-        "@cyclonedx/cyclonedx-npm": "^1.16.1",
-        "@tsconfig/node18": "^18.2.2",
+        "@cyclonedx/cyclonedx-npm": "^1.16.2",
+        "@tsconfig/node18": "^18.2.4",
         "@types/google-protobuf": "^3.15.12",
         "@types/jest": "^29.5.12",
-        "@types/node": "^18.19.22",
-        "@typescript-eslint/eslint-plugin": "~7.3.1",
-        "@typescript-eslint/parser": "~7.3.1",
+        "@types/node": "^18.19.29",
+        "@typescript-eslint/eslint-plugin": "~7.5.0",
+        "@typescript-eslint/parser": "~7.5.0",
         "eslint": "^8.57.0",
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-jest": "^27.9.0",
@@ -58,6 +58,6 @@
         "prettier": "^3.2.5",
         "ts-jest": "^29.1.2",
         "typedoc": "^0.25.11",
-        "typescript": "~5.4.2"
+        "typescript": "~5.4.3"
     }
 }
