@@ -50,6 +50,7 @@ The following Makefile targets are available:
 - `make unit-test-go-pkcs11` - run unit tests for the Go client API, including HSM tests
 - `make unit-test-node` - run unit tests for the Node client API
 - `make unit-test-java` - run unit tests for the Java client API
+- `make unit-test-web` - run unit tests for the Web client API
 - `make unit-test` - run unit tests for all client language implementations
 - `make pull-latest-peer` - fetch the latest peer docker image containing the gateway server
 - `make scenario-test-go` - run the scenario (end to end integration) tests for Go client API, including HSM tests

@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"github.com/cucumber/godog"
@@ -180,10 +179,10 @@ func connectGateway(peer string) error {
 	certPool := x509.NewCertPool()
 	certPool.AddCert(certificate)
 
-	url := conn.host + ":" + strconv.FormatUint(uint64(conn.port), 10)
+	url := fmt.Sprintf("dns:///%s:%d", conn.host, conn.port)
 
 	transportCredentials := credentials.NewClientTLSFromCert(certPool, conn.serverNameOverride)
-	clientConn, err := grpc.Dial(url, grpc.WithTransportCredentials(transportCredentials))
+	clientConn, err := grpc.NewClient(url, grpc.WithTransportCredentials(transportCredentials))
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,7 @@
 {
-    "name": "@hyperledger/fabric-gateway",
+    "name": "@hyperledger/fabric-gateway-web",
     "version": "1.5.0",
-    "description": "Hyperledger Fabric Gateway client API for Node",
+    "description": "Hyperledger Fabric Gateway client API for Web browsers",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "engines": {
@@ -19,8 +19,9 @@
         "url": "https://www.hyperledger.org/use/fabric"
     },
     "scripts": {
-        "build": "npm-run-all clean compile copy-non-ts-source",
-        "clean": "rm -rf apidocs dist src/protos",
+        "build": "npm-run-all clean compile copy-non-ts-source bundle",
+        "bundle": "esbuild dist/index.js --bundle --minify --outfile=fabric-gateway-web.js --analyze",
+        "clean": "rm -rf apidocs dist",
         "compile": "tsc --project tsconfig.build.json",
         "copy-non-ts-source": "rsync -rv --prune-empty-dirs --include='*.d.ts' --exclude='*.ts' src/ dist",
         "format": "prettier '**/*.{ts,js}' --check",
@@ -29,26 +30,19 @@
         "lint": "eslint .",
         "sbom": "cyclonedx-npm --omit dev --output-format JSON --output-file sbom.json",
         "test": "npm-run-all lint format unit-test",
-        "unit-test": "jest"
+        "unit-test": "NODE_OPTIONS='--experimental-global-webcrypto' jest"
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@grpc/grpc-js": "^1.10.0",
-        "@hyperledger/fabric-protos": "^0.3.0",
-        "@noble/curves": "^1.4.0",
+        "@hyperledger/fabric-protos": "0.3.3",
         "google-protobuf": "^3.21.0"
     },
-    "optionalDependencies": {
-        "pkcs11js": "^2.1.0"
-    },
     "devDependencies": {
-        "@cyclonedx/cyclonedx-npm": "^1.16.2",
-        "@tsconfig/node18": "^18.2.4",
         "@types/google-protobuf": "^3.15.12",
         "@types/jest": "^29.5.12",
-        "@types/node": "^18.19.29",
         "@typescript-eslint/eslint-plugin": "~7.5.0",
         "@typescript-eslint/parser": "~7.5.0",
+        "esbuild": "^0.20.2",
         "eslint": "^8.57.0",
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-jest": "^27.9.0",
