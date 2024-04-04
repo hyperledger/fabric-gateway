@@ -59,7 +59,7 @@ func NewGrpcConnection() (*grpc.ClientConn, error) {
 	certPool.AddCert(tlsCertificate)
 	transportCredentials := credentials.NewClientTLSFromCert(certPool, "")
 
-	return grpc.Dial("gateway.example.org:1337", grpc.WithTransportCredentials(transportCredentials))
+	return grpc.NewClient("dns:///gateway.example.org:1337", grpc.WithTransportCredentials(transportCredentials))
 }
 
 // NewIdentity creates a client identity for this Gateway connection using an X.509 certificate.

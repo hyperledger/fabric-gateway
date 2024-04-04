@@ -7,7 +7,7 @@
 
     <groupId>org.hyperledger.fabric</groupId>
     <artifactId>fabric-gateway</artifactId>
-    <version>1.5.0-SNAPSHOT</version>
+    <version>1.5.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>fabric-gateway</name>
@@ -38,7 +38,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <bouncyCastleVersion>1.77</bouncyCastleVersion>
+        <bouncyCastleVersion>1.78</bouncyCastleVersion>
         <skipUnitTests>${skipTests}</skipUnitTests>
     </properties>
 
@@ -61,7 +61,7 @@
             <dependency>
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-bom</artifactId>
-                <version>1.62.2</version>
+                <version>1.63.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -373,7 +373,7 @@
                             <dependency>
                                 <groupId>com.puppycrawl.tools</groupId>
                                 <artifactId>checkstyle</artifactId>
-                                <version>10.14.2</version>
+                                <version>10.15.0</version>
                             </dependency>
                         </dependencies>
                     </plugin>
@@ -387,7 +387,7 @@
                     <plugin>
                         <groupId>org.owasp</groupId>
                         <artifactId>dependency-check-maven</artifactId>
-                        <version>9.0.10</version>
+                        <version>9.1.0</version>
                         <configuration>
                             <skipProvidedScope>true</skipProvidedScope>
                             <skipTestScope>true</skipTestScope>
