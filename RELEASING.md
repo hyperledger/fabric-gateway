@@ -3,9 +3,9 @@
 The following artifacts are created as a result of releasing the Hyperledger Fabric Gateway client API:
 
 - npm package
-    - [@hyperledger/fabric-gateway](https://www.npmjs.com/package/@hyperledger/fabric-gateway)
+  - [@hyperledger/fabric-gateway](https://www.npmjs.com/package/@hyperledger/fabric-gateway)
 - Java artifact
-    - [fabric-gateway](https://central.sonatype.dev/artifact/org.hyperledger.fabric/fabric-gateway/1.0.0/versions)
+  - [fabric-gateway](https://central.sonatype.dev/artifact/org.hyperledger.fabric/fabric-gateway/1.0.0/versions)
 
 ## Before releasing
 
@@ -42,6 +42,8 @@ The following files need to be modified when updating the version number, and th
 - The `version` property in [node/package.json](node/package.json)
 
 **Note:** there is no file to update for the Go SDK, which is versioned by the release tag.
+
+The [scripts/update-versions.sh](scripts/update-versions.sh) script can be used to update the version number in the files listed above. With no arguments, the script will update to the next patch version. An argument supplied to the script specifies the new version number, which should **not** include a leading `v`.
 
 ## Updating the major version
 
