@@ -9,3 +9,5 @@ vendor/
 .DS_Store
 *.iml
 softhsm2.conf
+.python-version
+site/
