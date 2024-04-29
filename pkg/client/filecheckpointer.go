@@ -11,11 +11,11 @@ import (
 	"os"
 )
 
-// FileCheckpointer is a Checkpoint implementation backed by persistent file storage. It can be used to checkpoint
+// FileCheckpointer is a [Checkpoint] implementation backed by persistent file storage. It can be used to checkpoint
 // progress after successfully processing events, allowing eventing to be resumed from this point.
 //
-// Instances should be created using the NewFileCheckpointer() constructor function. Close() should be called when the
-// checkpointer is no longer needed to free resources.
+// Instances should be created using the [NewFileCheckpointer] constructor function. [FileCheckpointer.Close] should
+// be called when the checkpointer is no longer needed to free resources.
 type FileCheckpointer struct {
 	file  *os.File
 	state *checkpointState

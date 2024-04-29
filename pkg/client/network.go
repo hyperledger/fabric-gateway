@@ -15,7 +15,7 @@ import (
 
 // Network represents a network of nodes that are members of a specific Fabric channel. The Network can be used to
 // access deployed smart contracts, and to listen for events emitted when blocks are committed to the ledger. Network
-// instances are obtained from a Gateway using the Gateway's GetNetwork() method.
+// instances are obtained from a Gateway using the [Gateway.GetNetwork] method.
 //
 // To safely handle connection errors during eventing, it is recommended to use a checkpointer to track eventing
 // progress. This allows eventing to be resumed with no loss or duplication of events.

@@ -19,8 +19,8 @@ type Sign = func(digest []byte) ([]byte, error)
 // NewPrivateKeySign returns a Sign function that uses the supplied private key.
 //
 // Currently supported private key types are:
-// - ECDSA.
-// - Ed25519.
+//   - ECDSA.
+//   - Ed25519.
 //
 // Note that the Sign implementations have different expectations on the input data supplied to them.
 //

@@ -20,18 +20,6 @@ import { SubmittedTransaction } from './submittedtransaction';
  * submitted using {@link evaluate} or {@link submit} respectively. The result of a submitted transaction can be
  * accessed prior to its commit to the ledger using {@link submitAsync}.
  *
- * A finer-grained transaction flow can be employed by using {@link newProposal}. This allows retry of individual steps
- * in the flow in response to errors.
- *
- * By default, proposal, transaction and commit status messages will be signed using the signing implementation
- * specified when connecting the Gateway. In cases where an external client holds the signing credentials, a default
- * signing implementation can be omitted and off-line signing can be carried out by:
- * 1. Returning the serialized proposal, transaction or commit status message along with its digest to the client for
- * them to generate a signature.
- * 1. With the serialized message and signature received from the client to create a signed proposal, transaction or
- * commit using the Gateway's {@link Gateway.newSignedProposal}, {@link Gateway.newSignedTransaction} or
- * {@link Gateway.newSignedCommit} methods respectively.
- *
  * @example Evaluate transaction
  * ```typescript
  * const result = await contract.evaluate('transactionName', {
@@ -63,6 +51,9 @@ import { SubmittedTransaction } from './submittedtransaction';
  * }
  * ```
  *
+ * A finer-grained transaction flow can be employed by using {@link newProposal}. This allows retry of individual steps
+ * in the flow in response to errors.
+ *
  * @example Fine-grained submit transaction
  * ```typescript
  * const proposal = contract.newProposal('transactionName');
@@ -72,6 +63,22 @@ import { SubmittedTransaction } from './submittedtransaction';
  * const result = transaction.getResult();
  * const status = await commit.getStatus();
  * ```
+ *
+ * ## Off-line signing
+ *
+ * By default, proposal, transaction and commit status messages will be signed using the signing implementation
+ * specified when connecting the Gateway. In cases where an external client holds the signing credentials, a default
+ * signing implementation can be omitted and off-line signing can be carried out by:
+ * 1. Returning the serialized proposal, transaction or commit status message along with its digest to the client for
+ *    them to generate a signature.
+ * 1. With the serialized message and signature received from the client to create a signed proposal, transaction or
+ *    commit using the {@link Gateway.newSignedProposal}, {@link Gateway.newSignedTransaction} or
+ *    {@link Gateway.newSignedCommit} methods respectively.
+ *
+ * Note that the message digest is created with the hash implementation specified by the
+ * {@link ConnectOptions.hash | hash} option passed to the {@link connect} function used to create the {@link Gateway}
+ * instance. For off-line signing implementations that require the entire message content, a {@link hash.none | none}
+ * (or no-op) hash implementation should be specified.
  *
  * @example Off-line signing
  * ```typescript

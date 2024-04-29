@@ -185,7 +185,7 @@ func stringsAsBytes(strings []string) [][]byte {
 }
 
 // WithTransient specifies the transient data associated with a transaction proposal.
-// This is usually used in combination with WithEndorsingOrganizations for private data scenarios
+// This is usually used in combination with [WithEndorsingOrganizations] for private data scenarios.
 func WithTransient(transient map[string][]byte) ProposalOption {
 	return func(builder *proposalBuilder) error {
 		builder.transient = transient
@@ -194,7 +194,7 @@ func WithTransient(transient map[string][]byte) ProposalOption {
 }
 
 // WithEndorsingOrganizations specifies the organizations that should endorse the transaction proposal.
-// No other organizations will be sent the proposal.  This is usually used in combination with WithTransient
+// No other organizations will be sent the proposal.  This is usually used in combination with [WithTransient]
 // for private data scenarios, or for state-based endorsement when specific organizations have to endorse the proposal.
 func WithEndorsingOrganizations(mspids ...string) ProposalOption {
 	return func(builder *proposalBuilder) error {

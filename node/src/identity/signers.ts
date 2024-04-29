@@ -22,8 +22,8 @@ import { Signer } from './signer';
  * The P-256 and P-384 signers operate on a pre-computed message digest, and should be combined with an appropriate
  * hash algorithm. P-256 is typically used with a SHA-256 hash, and P-384 is typically used with a SHA-384 hash.
  *
- * The Ed25519 signer operates on the full message content, and should be combined with a `none` (or no-op) hash
- * implementation to ensure the complete message is passed to the signer.
+ * The Ed25519 signer operates on the full message content, and should be combined with a {@link hash.none | none} (or
+ * no-op) hash implementation to ensure the complete message is passed to the signer.
  *
  * @param key - A private key.
  * @returns A signing implementation.
