@@ -36,7 +36,7 @@ func newTransactionError(err error, transactionID string) *TransactionError {
 	}
 }
 
-// TransactionError represents an error invoking a transaction. This is a gRPC status error.
+// TransactionError represents an error invoking a transaction. This is a gRPC [status] error.
 type TransactionError struct {
 	*grpcError
 	TransactionID string

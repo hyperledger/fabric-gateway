@@ -71,10 +71,15 @@ import java.util.Optional;
  *     <li>Returning the serialized proposal, transaction or commit status message along with its digest to the client
  *     for them to generate a signature.</li>
  *     <li>On receipt of the serialized message and signature from the client, creating a signed proposal, transaction
- *     or commit using the Gateway's {@link Gateway#newSignedProposal(byte[], byte[])},
+ *     or commit using the {@link Gateway#newSignedProposal(byte[], byte[])},
  *     {@link Gateway#newSignedTransaction(byte[], byte[])} or {@link Gateway#newSignedCommit(byte[], byte[])} methods
  *     respectively.</li>
  * </ol>
+ *
+ * <p>Note that the message digest is created with the hash implementation specified by the
+ * {@link Gateway.Builder#hash(Function)} option used to create the {@link Gateway} instance. For off-line signing
+ * implementations that require the entire message content, a {@link Hash#NONE NONE} (or no-op) hash implementation should
+ * be specified.</p>
  *
  * <p>Signing of a proposal that can then be evaluated or endorsed:</p>
  * <pre>{@code

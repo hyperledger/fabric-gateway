@@ -162,7 +162,8 @@ export interface ConnectOptions {
     signer?: Signer;
 
     /**
-     * Hash implementation used by the gateway to generate digital signatures.
+     * Hash implementation used by the gateway to generate digital signatures. If this option is not specified, SHA-256
+     * is used by default.
      */
     hash?: Hash;
 

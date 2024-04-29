@@ -11,27 +11,30 @@ import (
 )
 
 // Contract represents a smart contract, and allows applications to:
-//
-// - Evaluate transactions that query state from the ledger using the EvaluateTransaction() method.
-//
-// - Submit transactions that store state to the ledger using the SubmitTransaction() method.
+//   - Evaluate transactions that query state from the ledger using the [Contract.EvaluateTransaction] method.
+//   - Submit transactions that store state to the ledger using the [Contract.SubmitTransaction] method.
 //
 // For more complex transaction invocations, such as including transient data, transactions can be evaluated or
-// submitted using the Evaluate() or Submit() methods respectively. The result of a submitted transaction can be
-// accessed prior to its commit to the ledger using SubmitAsync().
+// submitted using the [Contract.Evaluate] or [Contract.Submit] methods respectively. The result of a submitted
+// transaction can be accessed prior to its commit to the ledger using [Contract.SubmitAsync].
 //
-// A finer-grained transaction flow can be employed by using NewProposal(). This allows retry of individual steps in
-// the flow in response to errors.
+// A finer-grained transaction flow can be employed by using [Contract.NewProposal]. This allows retry of individual
+// steps in the flow in response to errors.
+//
+// # Off-line signing
 //
 // By default, proposal, transaction and commit status messages will be signed using the signing implementation
 // specified when connecting the Gateway. In cases where an external client holds the signing credentials, a signing
 // implementation can be omitted when connecting the Gateway and off-line signing can be carried out by:
+//  1. Returning the serialized proposal, transaction or commit status message along with its digest to the client for
+//     them to generate a signature.
+//  2. With the serialized message and signature received from the client to create a signed proposal, transaction or
+//     commit using the [Gateway.NewSignedProposal], [Gateway.NewSignedTransaction] or [Gateway.NewSignedCommit] methods
+//     respectively.
 //
-// 1. Returning the serialized proposal, transaction or commit status message along with its digest to the client for
-// them to generate a signature.
-//
-// 2. With the serialized message and signature received from the client to create a signed proposal, transaction or
-// commit using the Gateway's NewSignedProposal(), NewSignedTransaction() or NewSignedCommit() methods respectively.
+// Note that the message digest is created with the hash implementation specified by the [WithHash] option passed to the
+// [Connect] function used to create the [Gateway] instance. For off-line signing implementations that require the
+// entire message content, a NONE (or no-op) hash implementation should be specified.
 type Contract struct {
 	client        *gatewayClient
 	signingID     *signingIdentity

@@ -228,9 +228,10 @@ public interface Gateway extends AutoCloseable {
         Builder signer(Signer signer);
 
         /**
-         * Specify the hashing implementation used to generate digests of messages sent to the Fabric network.
+         * Specify the hashing implementation used to generate digests of messages sent to the Fabric network. If this
+         * option is not specified, SHA-256 is used by default.
          *
-         * <p>Standard hash implementation are provided in {@link Hash}. The default value is {@link Hash#SHA256}.</p>
+         * <p>Standard hash implementations are provided in {@link Hash}.</p>
          * @param hash A hashing function.
          * @return The builder instance, allowing multiple configuration options to be chained.
          */

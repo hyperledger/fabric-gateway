@@ -87,7 +87,8 @@ func WithSign(sign identity.Sign) ConnectOption {
 	}
 }
 
-// WithHash uses the supplied hashing implementation to generate digital signatures.
+// WithHash uses the supplied hashing implementation to generate digital signatures. If this option is not specified,
+// SHA-256 is used by default.
 func WithHash(hash hash.Hash) ConnectOption {
 	return func(gw *Gateway) error {
 		gw.signingID.hash = hash

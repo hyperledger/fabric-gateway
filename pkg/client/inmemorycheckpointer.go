@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 package client
 
-// InMemoryCheckpointer is a non-persistent Checkpoint implementation. It can be used to checkpoint progress after
+// InMemoryCheckpointer is a non-persistent [Checkpoint] implementation. It can be used to checkpoint progress after
 // successfully processing events, allowing eventing to be resumed from this point.
 type InMemoryCheckpointer struct {
 	blockNumber   uint64
