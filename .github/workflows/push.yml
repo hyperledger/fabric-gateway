@@ -14,36 +14,30 @@ jobs:
     name: Publish API documentation
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-        with:
-          path: source
-      - name: Checkout publish
-        uses: actions/checkout@v4
-        with:
-          ref: gh-pages
-          path: publish
-      - name: Remove old API documentation
-        shell: bash
-        run: rm -rf "${GITHUB_REF_NAME}/api"
-        working-directory: publish
+      - uses: actions/checkout@v4
       - name: Download JavaDoc
         uses: actions/download-artifact@v4
         with:
           name: java-doc
-          path: publish/${{ github.ref_name }}/api/java
+          path: docs/${{ github.ref_name }}/api/java
       - name: Download Node documentation
         uses: actions/download-artifact@v4
         with:
           name: node-doc
-          path: publish/${{ github.ref_name }}/api/node
-      - name: Publish
-        working-directory: publish
+          path: docs/${{ github.ref_name }}/api/node
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - name: Install Material for MkDocs
+        run: pip install mkdocs-material
+      - name: Configure Git user
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+      - name: Deploy to gh-pages
         env:
-          USER_NAME: github-actions
-          USER_EMAIL: github-actions@github.com
           COMMIT_REF: ${{ github.sha }}
-        run: ${{ github.workspace }}/source/.github/scripts/git_push_changes.sh
+        run: mkdocs gh-deploy --force --message "Commit ${COMMIT_REF}"
 
   publish-node:
     needs: build

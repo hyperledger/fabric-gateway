@@ -69,3 +69,7 @@ of docker containers. The clients connect to the gateway to submit transactions 
 
 The tests are defined as feature files using the Cucumber BDD framework. The same set of feature files
 is used across all three client language implementations to ensure consistency of behaviour.
+
+### Documentation
+
+The documentation site is built using [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/). Documentation build configuration is in [mkdocs.yml](mkdocs.yml), and the site content is in the [docs](docs) folder.
