@@ -281,6 +281,7 @@
                     </additionalJOptions>
                     <doclint>all,-missing</doclint>
                     <quiet>true</quiet>
+                    <docfilessubdirs>true</docfilessubdirs>
                 </configuration>
                 <executions>
                     <execution>
