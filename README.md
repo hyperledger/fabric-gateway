@@ -38,6 +38,12 @@ In order to run any of the Hardware Security Module (HSM) tests, [SoftHSM v2](ht
 - or compiled and installed from source, following the [SoftHSM2 install instructions](https://wiki.opendnssec.org/display/SoftHSMDOCS/SoftHSM+Documentation+v2)
   - It is recommended to use the `--disable-gost` option unless you need **gost** algorithm support for the Russian market, since it requires additional libraries.
 
+#### Dev Container
+
+This project includes a [Dev Container](https://containers.dev/) configuration that includes all of the pre-requisite software described above in a Docker container, avoiding the need to install them locally. The only requirement is that [Docker](https://www.docker.com/) is installed and available.
+
+Opening the project folder in an IDE such as [VS Code](https://code.visualstudio.com/docs/devcontainers/containers) (with the [Dev Containers extention](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)) should offer the option of opening in the Dev Container. Alternatively, VS Code allows the remote repository to [opened directly in an isolated Dev Container](https://code.visualstudio.com/docs/devcontainers/containers#_quick-start-open-a-git-repository-or-github-pr-in-an-isolated-container-volume).
+
 ### Build using make
 
 > **Note:** When the repository is first cloned, some mock implementations used for testing will not be present and the Go code will show compile errors. These will be generated when the `unit-test` target is run, or can be generated explicitly by running `make generate`.

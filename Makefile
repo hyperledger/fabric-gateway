@@ -38,7 +38,7 @@ build: build-node build-java
 
 .PHONY: build-node
 build-node:
-	cd "$(node_dir)" && \
+	cd '$(node_dir)' && \
 		npm install && \
 		npm run build && \
 		rm -f fabric-gateway-dev.tgz && \
@@ -46,7 +46,7 @@ build-node:
 
 .PHONY: build-java
 build-java:
-	cd "$(java_dir)" && \
+	cd '$(java_dir)' && \
 		mvn -DskipTests install
 
 .PHONY: unit-test
@@ -64,12 +64,12 @@ unit-test-go-pkcs11: setup-softhsm
 
 .PHONY: unit-test-node
 unit-test-node: build-node
-	cd "$(node_dir)" && \
+	cd '$(node_dir)' && \
 		npm test
 
 .PHONY: unit-test-java
 unit-test-java:
-	cd "$(java_dir)" && \
+	cd '$(java_dir)' && \
 		mvn test
 
 .PHONY: lint
@@ -82,7 +82,7 @@ staticcheck:
 
 .PHONY: install-golangci-lint
 install-golangci-lint:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go_bin_dir)
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b '$(go_bin_dir)'
 
 $(go_bin_dir)/golangci-lint:
 	$(MAKE) install-golangci-lint
@@ -100,12 +100,12 @@ scan-go: scan-go-govulncheck scan-go-nancy scan-go-osv-scanner
 .PHONY: scan-go-govulncheck
 scan-go-govulncheck:
 	go install golang.org/x/vuln/cmd/govulncheck@latest
-	govulncheck -tags pkcs11 "$(go_dir)/..."
+	govulncheck -tags pkcs11 '$(go_dir)/...'
 
 .PHONY: scan-go-nancy
 scan-go-nancy:
 	go install github.com/sonatype-nexus-community/nancy@latest
-	go list -json -deps "$(go_dir)/..." | nancy sleuth
+	go list -json -deps '$(go_dir)/...' | nancy sleuth
 
 .PHONY: scan-go-osv-scanner
 scan-go-osv-scanner:
@@ -147,44 +147,44 @@ scan-java-osv-scanner:
 .PHONY: generate
 generate:
 	go install go.uber.org/mock/mockgen@latest
-	go generate "$(go_dir)/..."
+	go generate '$(go_dir)/...'
 
 .PHONY: vendor-chaincode
 vendor-chaincode:
-	cd "$(scenario_dir)/fixtures/chaincode/golang/basic" && \
+	cd '$(scenario_dir)/fixtures/chaincode/golang/basic' && \
 		GO111MODULE=on go mod vendor
-	cd "$(scenario_dir)/fixtures/chaincode/golang/private" && \
+	cd '$(scenario_dir)/fixtures/chaincode/golang/private' && \
 		GO111MODULE=on go mod vendor
 
 .PHONY: scenario-test-go
 scenario-test-go: vendor-chaincode fabric-ca-client setup-softhsm
 	go install github.com/cucumber/godog/cmd/godog@v0.12
-	cd $(scenario_dir)/go && \
-		go test -timeout 20m -tags pkcs11 -v -args "$(scenario_dir)/features/"
+	cd '$(scenario_dir)/go' && \
+		go test -timeout 20m -tags pkcs11 -v -args '$(scenario_dir)/features/'
 
 .PHONY: scenario-test-go-no-hsm
 scenario-test-go-no-hsm: vendor-chaincode
 	go install github.com/cucumber/godog/cmd/godog@v0.12
-	cd $(scenario_dir)/go && \
-		go test -timeout 20m -tags pkcs11 -v --godog.tags='~@hsm' -args "$(scenario_dir)/features/"
+	cd '$(scenario_dir)/go' && \
+		go test -timeout 20m -tags pkcs11 -v --godog.tags='~@hsm' -args '$(scenario_dir)/features/'
 
 .PHONY: scenario-test-node
 scenario-test-node: vendor-chaincode build-node fabric-ca-client setup-softhsm
-	cd "$(scenario_dir)/node" && \
+	cd '$(scenario_dir)/node' && \
 		rm -rf package-lock.json node_modules && \
 		npm install && \
 		npm test
 
 .PHONY: scenario-test-node-no-hsm
 scenario-test-node-no-hsm: vendor-chaincode build-node fabric-ca-client
-	cd "$(scenario_dir)/node" && \
+	cd '$(scenario_dir)/node' && \
 		rm -rf package-lock.json node_modules && \
 		npm install && \
 		npm run test:no-hsm
 
 .PHONY: scenario-test-java
 scenario-test-java: vendor-chaincode
-	cd "$(java_dir)" && \
+	cd '$(java_dir)' && \
 		mvn -Dmaven.javadoc.skip=true -DskipUnitTests verify
 
 .PHONY: scenario-test
@@ -199,23 +199,24 @@ fabric-ca-client:
 
 .PHONY: setup-softhsm
 setup-softhsm:
-	mkdir -p "$(TMPDIR)/softhsm"
-	echo "directories.tokendir = $(TMPDIR)/softhsm" > "$(SOFTHSM2_CONF)"
+	mkdir -p '$(TMPDIR)/softhsm'
+	echo 'directories.tokendir = $(TMPDIR)/softhsm' > '$(SOFTHSM2_CONF)'
 	softhsm2-util --init-token --slot 0 --label 'ForFabric' --pin 98765432 --so-pin 1234 || true
 
 .PHONY: generate-docs
 generate-docs:
-	cd "$(base_dir)" && mkdocs build --strict
+	pip install --quiet --upgrade --requirement '$(base_dir)/requirements.txt'
+	cd '$(base_dir)' && TZ=UTC mkdocs build --strict
 
 .PHONY: generate-docs-node
 generate-docs-node:
-	cd "$(node_dir)" && \
+	cd '$(node_dir)' && \
 		npm install && \
 		npm run generate-apidoc
 
 .PHONY: generate-docs-java
 generate-docs-java:
-	cd "$(java_dir)" && \
+	cd '$(java_dir)' && \
 		mvn javadoc:javadoc
 
 .PHONY: test
@@ -226,12 +227,12 @@ all: test
 
 .PHONY: pull-latest-peer
 pull-latest-peer:
-	docker pull $(PEER_IMAGE_PULL)
-	docker tag $(PEER_IMAGE_PULL) hyperledger/fabric-peer:$(PEER_IMAGE_TAG)
+	docker pull '$(PEER_IMAGE_PULL)'
+	docker tag '$(PEER_IMAGE_PULL)' 'hyperledger/fabric-peer:$(PEER_IMAGE_TAG)'
 	# also need to retag the following images for the chaincode builder
 	for IMAGE in baseos ccenv javaenv nodeenv; do \
-		docker pull hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION); \
-		docker tag hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION) hyperledger/fabric-$${IMAGE}:$(PEER_IMAGE_TAG); \
+		docker pull "hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION)"; \
+		docker tag "hyperledger/fabric-$${IMAGE}:$(TWO_DIGIT_VERSION)" "hyperledger/fabric-$${IMAGE}:$(PEER_IMAGE_TAG)"; \
 	done
 
 .PHONY: clean
@@ -239,22 +240,22 @@ clean: clean-generated clean-node clean-java clean-docs
 
 .PHONY: clean-node
 clean-node:
-	rm -rf "$(node_dir)/package-lock.json" "$(node_dir)/node_modules"
+	rm -rf '$(node_dir)/package-lock.json' '$(node_dir)/node_modules'
 
 .PHONY: clean-java
 clean-java:
-	cd "$(java_dir)" && mvn clean
+	cd '$(java_dir)' && mvn clean
 
 .PHONY: clean-generated
 clean-generated:
-	find "$(go_dir)" -name '*_mock_test.go' -delete
+	find '$(go_dir)' -name '*_mock_test.go' -delete
 
 .PHONY: clean-docs
 clean-docs:
-	rm -rf "$(base_dir)/site"
-	rm -rf "$(node_dir)/apidocs"
-	rm -rf "$(java_dir)/target/site/apidocs"
+	rm -rf '$(base_dir)/site'
+	rm -rf '$(node_dir)/apidocs'
+	rm -rf '$(java_dir)/target/site/apidocs'
 
 .PHONY: shellcheck
 shellcheck:
-	cd "$(base_dir)" && ./scripts/shellcheck.sh
+	cd '$(base_dir)' && ./scripts/shellcheck.sh
