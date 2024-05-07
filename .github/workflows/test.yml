@@ -38,7 +38,7 @@ jobs:
       - name: Staticcheck
         run: make staticcheck
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v5
+        uses: golangci/golangci-lint-action@v6
         with:
           version: latest
 
