@@ -1,0 +1,36 @@
+{
+    "name": "Ubuntu",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+        "ghcr.io/devcontainers/features/go:1": {},
+        "ghcr.io/devcontainers/features/java:1": {
+            "installMaven": true
+        },
+        "ghcr.io/devcontainers/features/node:1": {},
+        "ghcr.io/devcontainers/features/python:1": {
+            "installTools": false
+        },
+        "ghcr.io/devcontainers-contrib/features/apt-get-packages:1": {
+            "packages": "softhsm2"
+        },
+        "ghcr.io/devcontainers-contrib/features/gh-release:1": {
+            "repo": "koalaman/shellcheck",
+            "binaryNames": "shellcheck"
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "go.buildTags": "pkcs11"
+            },
+            "extensions": [
+                "esbenp.prettier-vscode",
+                "github.vscode-github-actions",
+                "ms-vscode.makefile-tools",
+                "timonwong.shellcheck"
+            ]
+        }
+    },
+    "postStartCommand": ["make", "generate"]
+}
