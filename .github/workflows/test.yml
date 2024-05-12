@@ -3,9 +3,6 @@ name: Test
 on:
   workflow_call:
 
-env:
-  DEFAULT_GO_VERSION: "1.22"
-
 jobs:
   verify-versions:
     uses: ./.github/workflows/verify-versions.yml
@@ -32,7 +29,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.DEFAULT_GO_VERSION }}
+          go-version: stable
       - name: Generate mocks
         run: make generate
       - name: Staticcheck
@@ -135,7 +132,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.DEFAULT_GO_VERSION }}
+          go-version: stable
       - name: Install SoftHSM
         run: sudo apt install -y softhsm
         env:
@@ -186,7 +183,7 @@ jobs:
           cache: maven
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.DEFAULT_GO_VERSION }}
+          go-version: stable
       - name: Pull Fabric Docker images
         run: make pull-latest-peer
       - name: Run scenario tests
