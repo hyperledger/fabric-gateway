@@ -12,32 +12,35 @@ jobs:
   publish-docs:
     needs: build
     name: Publish API documentation
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Download site
+        uses: actions/download-artifact@v4
+        with:
+          name: site-doc
       - name: Download JavaDoc
         uses: actions/download-artifact@v4
         with:
           name: java-doc
-          path: docs/${{ github.ref_name }}/api/java
+          path: ${{ github.ref_name }}/api/java
       - name: Download Node documentation
         uses: actions/download-artifact@v4
         with:
           name: node-doc
-          path: docs/${{ github.ref_name }}/api/node
-      - uses: actions/setup-python@v5
+          path: ${{ github.ref_name }}/api/node
+      - name: Upload GitHub Pages content
+        uses: actions/upload-pages-artifact@v3
         with:
-          python-version: 3.x
-      - name: Install Material for MkDocs
-        run: pip install mkdocs-material
-      - name: Configure Git user
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-      - name: Deploy to gh-pages
-        env:
-          COMMIT_REF: ${{ github.sha }}
-        run: mkdocs gh-deploy --force --message "Commit ${COMMIT_REF}"
+          path: .
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   publish-node:
     needs: build
