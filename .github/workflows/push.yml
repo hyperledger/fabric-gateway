@@ -11,13 +11,18 @@ jobs:
 
   publish-docs:
     needs: build
-    name: Publish API documentation
+    name: Publish documentation
     permissions:
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+    # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     steps:
       - name: Download site
@@ -34,6 +39,8 @@ jobs:
         with:
           name: node-doc
           path: ${{ github.ref_name }}/api/node
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
       - name: Upload GitHub Pages content
         uses: actions/upload-pages-artifact@v3
         with:
