@@ -158,13 +158,11 @@ vendor-chaincode:
 
 .PHONY: scenario-test-go
 scenario-test-go: vendor-chaincode fabric-ca-client setup-softhsm
-	go install github.com/cucumber/godog/cmd/godog@v0.12
 	cd '$(scenario_dir)/go' && \
 		go test -timeout 20m -tags pkcs11 -v -args '$(scenario_dir)/features/'
 
 .PHONY: scenario-test-go-no-hsm
 scenario-test-go-no-hsm: vendor-chaincode
-	go install github.com/cucumber/godog/cmd/godog@v0.12
 	cd '$(scenario_dir)/go' && \
 		go test -timeout 20m -tags pkcs11 -v --godog.tags='~@hsm' -args '$(scenario_dir)/features/'
 

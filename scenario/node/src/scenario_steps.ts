@@ -10,7 +10,7 @@ import { ErrorDetail, GatewayError } from '@hyperledger/fabric-gateway';
 import expect from 'expect';
 import { CustomWorld } from './customworld';
 import { Fabric } from './fabric';
-import { bytesAsString, toError } from './utils';
+import { assertDefined, bytesAsString, toError } from './utils';
 
 setDefaultTimeout(30 * 1000);
 
@@ -321,13 +321,16 @@ Then('the error details should be', function (this: CustomWorld, dataTable: Data
     const err = this.getErrorOfType(GatewayError);
 
     const expectedDetails = new Map<string, ErrorDetail>();
-    dataTable.raw().forEach((row) =>
-        expectedDetails.set(row[0], {
-            address: row[0],
-            mspId: row[1],
-            message: row[2],
-        }),
-    );
+    dataTable.raw().forEach((row, i) => {
+        const address = assertDefined(row[0], `no address defined for row ${String(i)}`);
+        const mspId = assertDefined(row[1], `no MSP ID defined for row ${String(i)}`);
+        const message = assertDefined(row[2], `no message defined for row ${String(i)}`);
+        expectedDetails.set(address, {
+            address,
+            mspId,
+            message,
+        });
+    });
 
     err.details.forEach((actual) => {
         const expected = expectedDetails.get(actual.address);

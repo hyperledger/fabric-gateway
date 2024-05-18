@@ -7,6 +7,7 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
+import { assertDefined } from './utils';
 
 export const fixturesDir = path.resolve(__dirname, '..', '..', 'fixtures');
 
@@ -56,7 +57,8 @@ const orderers: Array<OrdererInfo> = [
 ];
 
 export function getOrgForMsp(mspId: string): string {
-    return orgs[mspId].orgName;
+    const org = assertDefined(orgs[mspId], `no org defined for MSP ID: ${mspId}`);
+    return org.orgName;
 }
 
 export function findSoftHSMPKCS11Lib(): string {
@@ -111,7 +113,7 @@ export class Fabric {
         this.runningPeers = Object.fromEntries(
             Object.values(orgs)
                 .flatMap((org) => org.peers)
-                .map((hostPort) => hostPort.split(':')[0])
+                .map((hostPort) => assertDefined(hostPort.split(':')[0], 'hostPort'))
                 .map((host) => [host, true]),
         );
     }
@@ -231,10 +233,8 @@ export class Fabric {
             );
             const pattern = new RegExp('.*Sequence: ([0-9]+),.*');
             const match = out.match(pattern);
-            if (match === null || match.length < 2) {
-                throw new Error(`Chaincode ${ccName} not found on org1 peers`);
-            }
-            sequence = (Number.parseInt(match[1]) + 1).toString();
+            const sequenceNumber = assertDefined(match?.[1], `Chaincode ${ccName} not found on org1 peers`);
+            sequence = (Number.parseInt(sequenceNumber) + 1).toString();
         }
 
         const ccPath = `/opt/gopath/src/github.com/chaincode/${ccType}/${ccName}`;
@@ -262,10 +262,7 @@ export class Fabric {
 
             const pattern = new RegExp('.*Package ID: (.*), Label: ' + ccLabel + '.*');
             const match = out.match(pattern);
-            if (match === null || match.length < 2) {
-                throw new Error(`Chaincode ${ccLabel} not found on ${orgName} peers`);
-            }
-            const packageID = match[1];
+            const packageID = assertDefined(match?.[1], `Chaincode ${ccLabel} not found on ${orgName} peers`);
 
             dockerCommandWithTLS(
                 'exec',

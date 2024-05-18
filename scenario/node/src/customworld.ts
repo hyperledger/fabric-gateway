@@ -76,6 +76,10 @@ const peerConnectionInfo: Record<string, ConnectionInfo> = {
     },
 };
 
+function getPeerConnectionInfo(address: string): ConnectionInfo {
+    return assertDefined(peerConnectionInfo[address], `no connection info for peer: ${address}`);
+}
+
 async function newIdentity(user: string, mspId: string): Promise<Identity> {
     const certificate = await readCertificate(user, mspId);
     return {
@@ -193,7 +197,7 @@ export class CustomWorld extends World {
 
     async connect(address: string): Promise<void> {
         // address is the name of the peer, lookup the connection info
-        const peer = peerConnectionInfo[address];
+        const peer = getPeerConnectionInfo(address);
         const tlsRootCert = await fs.readFile(peer.tlsRootCertPath);
         const credentials = grpc.credentials.createSsl(tlsRootCert);
         let grpcOptions: Record<string, unknown> = {};

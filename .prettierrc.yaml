@@ -1,4 +1,4 @@
 overrides:
-  - files: "*.{js,ts}"
+  - files: "*.{mj,cj,j,t}s"
     options:
       singleQuote: true

@@ -9,7 +9,7 @@ import { gateway as gatewayproto, peer } from '@hyperledger/fabric-protos';
 import { CommitError } from './commiterror';
 import { CommitStatusError } from './commitstatuserror';
 import { Contract } from './contract';
-import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
+import { Gateway, InternalConnectOptions, internalConnect } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
 import { SubmitError } from './submiterror';
@@ -132,17 +132,17 @@ describe('Transaction', () => {
 
     it('sets endorsing orgs', async () => {
         await contract.submit('TRANSACTION_NAME', { endorsingOrganizations: ['org1', 'org3'] });
-        const actualOrgs = client.getEndorseRequests()[0].getEndorsingOrganizationsList();
+        const actualOrgs = client.getEndorseRequest().getEndorsingOrganizationsList();
         expect(actualOrgs).toStrictEqual(['org1', 'org3']);
     });
 
     it('includes transaction ID in submit request', async () => {
         await contract.submitTransaction('TRANSACTION_NAME');
 
-        const endorseRequest = client.getEndorseRequests()[0];
+        const endorseRequest = client.getEndorseRequest();
         const expected = endorseRequest.getTransactionId();
 
-        const submitRequest = client.getSubmitRequests()[0];
+        const submitRequest = client.getSubmitRequest();
         const actual = submitRequest.getTransactionId();
 
         expect(actual).toBe(expected);
@@ -153,7 +153,7 @@ describe('Transaction', () => {
 
         await contract.submitTransaction('TRANSACTION_NAME');
 
-        const submitRequest = client.getSubmitRequests()[0];
+        const submitRequest = client.getSubmitRequest();
         const signature = Buffer.from(submitRequest.getPreparedTransaction()?.getSignature_asU8() ?? '').toString();
         expect(signature).toBe('MY_SIGNATURE');
     });
@@ -167,7 +167,7 @@ describe('Transaction', () => {
         const signedTransaction = gateway.newTransaction(unsignedTransaction.getBytes());
         await signedTransaction.submit();
 
-        const submitRequest = client.getSubmitRequests()[0];
+        const submitRequest = client.getSubmitRequest();
         const signature = Buffer.from(submitRequest.getPreparedTransaction()?.getSignature_asU8() ?? '').toString();
         expect(signature).toBe('MY_SIGNATURE');
     });
@@ -177,7 +177,7 @@ describe('Transaction', () => {
 
         await contract.submitTransaction('TRANSACTION_NAME');
 
-        const statusRequest = client.getCommitStatusRequests()[0];
+        const statusRequest = client.getCommitStatusRequest();
         const signature = Buffer.from(statusRequest.getSignature()).toString();
         expect(signature).toBe('MY_SIGNATURE');
     });
@@ -194,7 +194,7 @@ describe('Transaction', () => {
         const deserializedSignedCommit = gateway.newCommit(unsignedCommit.getBytes());
         await deserializedSignedCommit.getStatus();
 
-        const statusRequest = client.getCommitStatusRequests()[0];
+        const statusRequest = client.getCommitStatusRequest();
         const signature = Buffer.from(statusRequest.getSignature()).toString();
         expect(signature).toBe('MY_SIGNATURE');
     });
@@ -206,7 +206,7 @@ describe('Transaction', () => {
 
         expect(signer).toHaveBeenCalledTimes(3); // endorse, submit and commit
         signer.mock.calls.forEach((call) => {
-            const digest = call[0].toString();
+            const digest = call[0]?.toString();
             expect(digest).toBe('MY_DIGEST');
         });
     });
@@ -273,7 +273,7 @@ describe('Transaction', () => {
 
         await transaction.submit({ deadline });
 
-        const actual = client.getSubmitOptions()[0];
+        const actual = client.getSubmitOption();
         expect(actual.deadline).toBe(deadline);
     });
 
@@ -282,7 +282,7 @@ describe('Transaction', () => {
 
         await transaction.submit();
 
-        const actual = client.getSubmitOptions()[0];
+        const actual = client.getSubmitOption();
         expect(actual.deadline).toBe(submitOptions().deadline);
     });
 
@@ -303,7 +303,7 @@ describe('Transaction', () => {
 
         await commit.getStatus({ deadline });
 
-        const actual = client.getCommitStatusOptions()[0];
+        const actual = client.getCommitStatusOption();
         expect(actual.deadline).toBe(deadline);
     });
 
@@ -313,7 +313,7 @@ describe('Transaction', () => {
 
         await commit.getStatus();
 
-        const actual = client.getCommitStatusOptions()[0];
+        const actual = client.getCommitStatusOption();
         expect(actual.deadline).toBe(commitStatusOptions().deadline);
     });
 
