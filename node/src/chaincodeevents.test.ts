@@ -119,7 +119,7 @@ describe('Chaincode Events', () => {
         it('sends valid request with default start position', async () => {
             await network.getChaincodeEvents('CHAINCODE');
 
-            const signedRequest = client.getChaincodeEventsRequests()[0];
+            const signedRequest = client.getChaincodeEventsRequest();
             expect(signedRequest.getSignature()).toEqual(signature);
 
             const expected: ExpectedRequest = {
@@ -142,7 +142,7 @@ describe('Chaincode Events', () => {
 
             await network.getChaincodeEvents('CHAINCODE', { startBlock });
 
-            const signedRequest = client.getChaincodeEventsRequests()[0];
+            const signedRequest = client.getChaincodeEventsRequest();
             expect(signedRequest.getSignature()).toEqual(signature);
 
             const expected: ExpectedRequest = {
@@ -162,7 +162,7 @@ describe('Chaincode Events', () => {
 
             await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpoint: checkpointer });
 
-            const signedRequest = client.getChaincodeEventsRequests()[0];
+            const signedRequest = client.getChaincodeEventsRequest();
             expect(signedRequest.getSignature()).toEqual(signature);
 
             const expected: ExpectedRequest = {
@@ -183,7 +183,7 @@ describe('Chaincode Events', () => {
 
             await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpoint: checkpointer });
 
-            const signedRequest = client.getChaincodeEventsRequests()[0];
+            const signedRequest = client.getChaincodeEventsRequest();
             expect(signedRequest.getSignature()).toEqual(signature);
 
             const expected: ExpectedRequest = {
@@ -204,7 +204,7 @@ describe('Chaincode Events', () => {
 
             await network.getChaincodeEvents('CHAINCODE', { startBlock: startBlock, checkpoint: checkpointer });
 
-            const signedRequest = client.getChaincodeEventsRequests()[0];
+            const signedRequest = client.getChaincodeEventsRequest();
             expect(signedRequest.getSignature()).toEqual(signature);
 
             const expected: ExpectedRequest = {
@@ -223,7 +223,7 @@ describe('Chaincode Events', () => {
 
             await network.getChaincodeEvents('CHAINCODE', { checkpoint: checkpointer });
 
-            const signedRequest = client.getChaincodeEventsRequests()[0];
+            const signedRequest = client.getChaincodeEventsRequest();
             expect(signedRequest.getSignature()).toEqual(signature);
 
             const expected: ExpectedRequest = {
@@ -242,7 +242,7 @@ describe('Chaincode Events', () => {
 
             await network.getChaincodeEvents('CHAINCODE', { checkpoint: checkpointer });
 
-            const signedRequest = client.getChaincodeEventsRequests()[0];
+            const signedRequest = client.getChaincodeEventsRequest();
             expect(signedRequest.getSignature()).toEqual(signature);
 
             const expected: ExpectedRequest = {
@@ -270,7 +270,7 @@ describe('Chaincode Events', () => {
             await checkpointer.checkpointChaincodeEvent(event);
             await network.getChaincodeEvents('CHAINCODE', { checkpoint: checkpointer });
 
-            const signedRequest = client.getChaincodeEventsRequests()[0];
+            const signedRequest = client.getChaincodeEventsRequest();
             expect(signedRequest.getSignature()).toEqual(signature);
 
             const expected: ExpectedRequest = {
@@ -290,14 +290,14 @@ describe('Chaincode Events', () => {
 
             await network.newChaincodeEventsRequest('CHAINCODE').getEvents({ deadline });
 
-            const actual = client.getChaincodeEventsOptions()[0];
+            const actual = client.getChaincodeEventsOption();
             expect(actual.deadline).toBe(deadline);
         });
 
         it('uses default call options', async () => {
             await network.getChaincodeEvents('CHAINCODE');
 
-            const actual = client.getChaincodeEventsOptions()[0];
+            const actual = client.getChaincodeEventsOption();
             expect(actual.deadline).toBe(chaincodeEventsOptions().deadline);
         });
 

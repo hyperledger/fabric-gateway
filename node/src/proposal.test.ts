@@ -132,7 +132,7 @@ describe('Proposal', () => {
         it('includes channel name in proposal', async () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
-            const evaluateRequest = client.getEvaluateRequests()[0];
+            const evaluateRequest = client.getEvaluateRequest();
             const proposal = assertDecodeEvaluateRequest(evaluateRequest);
             const channelHeader = assertDecodeChannelHeader(proposal);
             expect(channelHeader.getChannelId()).toBe(network.getName());
@@ -141,7 +141,7 @@ describe('Proposal', () => {
         it('includes chaincode name in proposal', async () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
-            const evaluateRequest = client.getEvaluateRequests()[0];
+            const evaluateRequest = client.getEvaluateRequest();
             const proposal = assertDecodeEvaluateRequest(evaluateRequest);
             const chaincodeSpec = assertDecodeChaincodeSpec(proposal);
             expect(chaincodeSpec.getChaincodeId()).toBeDefined();
@@ -153,7 +153,7 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('MY_TRANSACTION');
 
-            const evaluateRequest = client.getEvaluateRequests()[0];
+            const evaluateRequest = client.getEvaluateRequest();
             const proposal = assertDecodeEvaluateRequest(evaluateRequest);
             const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings[0]).toBe('MY_TRANSACTION');
@@ -164,7 +164,7 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('MY_TRANSACTION');
 
-            const evaluateRequest = client.getEvaluateRequests()[0];
+            const evaluateRequest = client.getEvaluateRequest();
             const proposal = assertDecodeEvaluateRequest(evaluateRequest);
             const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings[0]).toBe('MY_CONTRACT:MY_TRANSACTION');
@@ -175,7 +175,7 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('TRANSACTION_NAME', ...expected);
 
-            const evaluateRequest = client.getEvaluateRequests()[0];
+            const evaluateRequest = client.getEvaluateRequest();
             const proposal = assertDecodeEvaluateRequest(evaluateRequest);
             const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings.slice(1)).toStrictEqual(expected);
@@ -187,7 +187,7 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('TRANSACTION_NAME', ...args);
 
-            const evaluateRequest = client.getEvaluateRequests()[0];
+            const evaluateRequest = client.getEvaluateRequest();
             const proposal = assertDecodeEvaluateRequest(evaluateRequest);
             const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings.slice(1)).toStrictEqual(expected);
@@ -200,7 +200,7 @@ describe('Proposal', () => {
             };
             await contract.evaluate('TRANSACTION_NAME', { transientData });
 
-            const evaluateRequest = client.getEvaluateRequests()[0];
+            const evaluateRequest = client.getEvaluateRequest();
             const proposal_bytes = evaluateRequest.getProposedTransaction()?.getProposalBytes_asU8() ?? Buffer.from('');
             const proposal = peer.Proposal.deserializeBinary(proposal_bytes);
             const payload = peer.ChaincodeProposalPayload.deserializeBinary(proposal.getPayload_asU8());
@@ -217,7 +217,7 @@ describe('Proposal', () => {
             };
             await contract.evaluate('TRANSACTION_NAME', { transientData });
 
-            const evaluateRequest = client.getEvaluateRequests()[0];
+            const evaluateRequest = client.getEvaluateRequest();
             const proposal_bytes = evaluateRequest.getProposedTransaction()?.getProposalBytes_asU8() ?? Buffer.from('');
             const proposal = peer.Proposal.deserializeBinary(proposal_bytes);
             const payload = peer.ChaincodeProposalPayload.deserializeBinary(proposal.getPayload_asU8());
@@ -232,7 +232,7 @@ describe('Proposal', () => {
         it('sets endorsing orgs', async () => {
             await contract.evaluate('TRANSACTION_NAME', { endorsingOrganizations: ['org1'] });
 
-            const evaluateRequest = client.getEvaluateRequests()[0];
+            const evaluateRequest = client.getEvaluateRequest();
             const actualOrgs = evaluateRequest.getTargetOrganizationsList();
             expect(actualOrgs).toStrictEqual(['org1']);
         });
@@ -242,7 +242,7 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
-            const evaluateRequest = client.getEvaluateRequests()[0];
+            const evaluateRequest = client.getEvaluateRequest();
             const signature = Buffer.from(
                 evaluateRequest.getProposedTransaction()?.getSignature_asU8() ?? '',
             ).toString();
@@ -255,7 +255,7 @@ describe('Proposal', () => {
             const newProposal = gateway.newProposal(unsignedProposal.getBytes());
             await newProposal.evaluate();
 
-            const evaluateRequest = client.getEvaluateRequests()[0];
+            const evaluateRequest = client.getEvaluateRequest();
             const signature = Buffer.from(
                 evaluateRequest.getProposedTransaction()?.getSignature_asU8() ?? '',
             ).toString();
@@ -263,13 +263,12 @@ describe('Proposal', () => {
         });
 
         it('uses hash', async () => {
-            hash.mockReturnValue(Buffer.from('MY_DIGEST'));
+            const expected = Buffer.from('MY_DIGEST');
+            hash.mockReturnValue(expected);
 
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
-            expect(signer).toHaveBeenCalled();
-            const digest = signer.mock.calls[0][0].toString();
-            expect(digest).toBe('MY_DIGEST');
+            expect(signer).toHaveBeenCalledWith(expected);
         });
 
         it('uses identity', async () => {
@@ -277,7 +276,7 @@ describe('Proposal', () => {
 
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
-            const evaluateRequest = client.getEvaluateRequests()[0];
+            const evaluateRequest = client.getEvaluateRequest();
             const proposal = assertDecodeEvaluateRequest(evaluateRequest);
             const signatureHeader = assertDecodeSignatureHeader(proposal);
 
@@ -293,7 +292,7 @@ describe('Proposal', () => {
 
             const expected = network.getName();
 
-            const evaluateRequest = client.getEvaluateRequests()[0];
+            const evaluateRequest = client.getEvaluateRequest();
             expect(evaluateRequest.getChannelId()).toBe(expected);
 
             const proposalProto = assertDecodeEvaluateRequest(evaluateRequest);
@@ -309,7 +308,7 @@ describe('Proposal', () => {
             const expected = proposal.getTransactionId();
             expect(expected).not.toHaveLength(0);
 
-            const evaluateRequest = client.getEvaluateRequests()[0];
+            const evaluateRequest = client.getEvaluateRequest();
             expect(evaluateRequest.getTransactionId()).toBe(expected);
 
             const proposalProto = assertDecodeEvaluateRequest(evaluateRequest);
@@ -323,14 +322,14 @@ describe('Proposal', () => {
 
             await proposal.evaluate({ deadline });
 
-            const actual = client.getEvaluateOptions()[0];
+            const actual = client.getEvaluateOption();
             expect(actual.deadline).toBe(deadline);
         });
 
         it('uses default call options', async () => {
             await contract.evaluate('TRANSACTION_NAME');
 
-            const actual = client.getEvaluateOptions()[0];
+            const actual = client.getEvaluateOption();
             expect(actual.deadline).toBe(evaluateOptions().deadline);
         });
 
@@ -377,7 +376,7 @@ describe('Proposal', () => {
         it('includes channel name in proposal', async () => {
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            const endorseRequest = client.getEndorseRequests()[0];
+            const endorseRequest = client.getEndorseRequest();
             const proposal = assertDecodeEndorseRequest(endorseRequest);
             const channelHeader = assertDecodeChannelHeader(proposal);
             expect(channelHeader.getChannelId()).toBe(network.getName());
@@ -386,7 +385,7 @@ describe('Proposal', () => {
         it('includes chaincode name in proposal', async () => {
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            const endorseRequest = client.getEndorseRequests()[0];
+            const endorseRequest = client.getEndorseRequest();
             const proposal = assertDecodeEndorseRequest(endorseRequest);
             const chaincodeSpec = assertDecodeChaincodeSpec(proposal);
             expect(chaincodeSpec.getChaincodeId()).toBeDefined();
@@ -398,7 +397,7 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('MY_TRANSACTION');
 
-            const endorseRequest = client.getEndorseRequests()[0];
+            const endorseRequest = client.getEndorseRequest();
             const proposal = assertDecodeEndorseRequest(endorseRequest);
             const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings[0]).toBe('MY_TRANSACTION');
@@ -409,7 +408,7 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('MY_TRANSACTION');
 
-            const endorseRequest = client.getEndorseRequests()[0];
+            const endorseRequest = client.getEndorseRequest();
             const proposal = assertDecodeEndorseRequest(endorseRequest);
             const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings[0]).toBe('MY_CONTRACT:MY_TRANSACTION');
@@ -420,7 +419,7 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('TRANSACTION_NAME', ...expected);
 
-            const endorseRequest = client.getEndorseRequests()[0];
+            const endorseRequest = client.getEndorseRequest();
             const proposal = assertDecodeEndorseRequest(endorseRequest);
             const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings.slice(1)).toStrictEqual(expected);
@@ -432,7 +431,7 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('TRANSACTION_NAME', ...args);
 
-            const endorseRequest = client.getEndorseRequests()[0];
+            const endorseRequest = client.getEndorseRequest();
             const proposal = assertDecodeEndorseRequest(endorseRequest);
             const argStrings = assertDecodeArgsAsStrings(proposal);
             expect(argStrings.slice(1)).toStrictEqual(expected);
@@ -443,7 +442,7 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            const endorseRequest = client.getEndorseRequests()[0];
+            const endorseRequest = client.getEndorseRequest();
             const signature = Buffer.from(
                 endorseRequest.getProposedTransaction()?.getSignature_asU8() ?? '',
             ).toString();
@@ -456,7 +455,7 @@ describe('Proposal', () => {
             const newProposal = gateway.newProposal(unsignedProposal.getBytes());
             await newProposal.endorse();
 
-            const endorseRequest = client.getEndorseRequests()[0];
+            const endorseRequest = client.getEndorseRequest();
             const signature = Buffer.from(
                 endorseRequest.getProposedTransaction()?.getSignature_asU8() ?? '',
             ).toString();
@@ -464,13 +463,12 @@ describe('Proposal', () => {
         });
 
         it('uses hash', async () => {
-            hash.mockReturnValue(Buffer.from('MY_DIGEST'));
+            const expected = Buffer.from('MY_DIGEST');
+            hash.mockReturnValue(expected);
 
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            expect(signer).toHaveBeenCalled();
-            const digest = signer.mock.calls[0][0].toString();
-            expect(digest).toBe('MY_DIGEST');
+            expect(signer).toHaveBeenCalledWith(expected);
         });
 
         it('uses identity', async () => {
@@ -478,7 +476,7 @@ describe('Proposal', () => {
 
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            const endorseRequest = client.getEndorseRequests()[0];
+            const endorseRequest = client.getEndorseRequest();
             const proposal = assertDecodeEndorseRequest(endorseRequest);
             const signatureHeader = assertDecodeSignatureHeader(proposal);
 
@@ -492,7 +490,7 @@ describe('Proposal', () => {
         it('includes channel name in request', async () => {
             await contract.submitTransaction('TRANSACTION_NAME');
 
-            const endorseRequest = client.getEndorseRequests()[0];
+            const endorseRequest = client.getEndorseRequest();
             expect(endorseRequest.getChannelId()).toBe(network.getName());
         });
 
@@ -507,7 +505,7 @@ describe('Proposal', () => {
             const commit = await transaction.submit();
             expect(commit.getTransactionId()).toBe(expected);
 
-            const endorseRequest = client.getEndorseRequests()[0];
+            const endorseRequest = client.getEndorseRequest();
             expect(endorseRequest.getTransactionId()).toBe(expected);
 
             const proposalProto = assertDecodeEndorseRequest(endorseRequest);
@@ -521,7 +519,7 @@ describe('Proposal', () => {
 
             await proposal.endorse({ deadline });
 
-            const actual = client.getEndorseOptions()[0];
+            const actual = client.getEndorseOption();
             expect(actual.deadline).toBe(deadline);
         });
 
@@ -530,7 +528,7 @@ describe('Proposal', () => {
 
             await proposal.endorse();
 
-            const actual = client.getEndorseOptions()[0];
+            const actual = client.getEndorseOption();
             expect(actual.deadline).toBe(endorseOptions().deadline);
         });
 

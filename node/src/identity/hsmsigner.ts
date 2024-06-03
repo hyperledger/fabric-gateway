@@ -106,20 +106,22 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
                 const signature = p256.Signature.fromCompact(compactSignature).normalizeS().toDERRawBytes();
                 return Promise.resolve(signature);
             },
-            close: () => pkcs11.C_CloseSession(session),
+            close: () => {
+                pkcs11.C_CloseSession(session);
+            },
         };
     }
 
     #findSlotForLabel(pkcs11Label: string): Buffer {
         const slots = this.#pkcs11.C_GetSlotList(true);
 
-        if (!slots || slots.length === 0) {
+        if (slots.length === 0) {
             throw new Error('No pkcs11 slots can be found');
         }
 
         const slot = slots.find((slotToCheck) => {
             const tokenInfo = this.#pkcs11.C_GetTokenInfo(slotToCheck);
-            return tokenInfo?.label?.trim() === pkcs11Label;
+            return tokenInfo.label.trim() === pkcs11Label;
         });
 
         if (!slot) {
@@ -148,16 +150,16 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
         ];
         this.#pkcs11.C_FindObjectsInit(session, pkcs11Template);
 
-        const hsmObjects = this.#pkcs11.C_FindObjects(session, 1);
+        const hsmObject = this.#pkcs11.C_FindObjects(session, 1)[0];
 
-        if (!hsmObjects || hsmObjects.length === 0) {
+        if (!hsmObject) {
             this.#pkcs11.C_FindObjectsFinal(session);
             throw new Error(`Unable to find object in HSM with ID ${identifier.toString()}`);
         }
 
         this.#pkcs11.C_FindObjectsFinal(session);
 
-        return hsmObjects[0];
+        return hsmObject;
     }
 }
 

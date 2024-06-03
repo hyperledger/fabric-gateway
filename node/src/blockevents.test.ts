@@ -117,7 +117,7 @@ describe('Block Events', () => {
             newEventsRequest(
                 options?: BlockEventsOptions,
             ): BlockEventsRequest | FilteredBlockEventsRequest | BlockAndPrivateDataEventsRequest;
-            getCallOptions(): CallOptions[];
+            getCallOption(): CallOptions;
             newBlockResponse(blockNumber: number): peer.DeliverResponse;
             getBlockFromResponse(
                 response: peer.DeliverResponse,
@@ -137,8 +137,8 @@ describe('Block Events', () => {
             newEventsRequest(options?) {
                 return network.newBlockEventsRequest(options);
             },
-            getCallOptions() {
-                return client.getBlockEventsOptions();
+            getCallOption() {
+                return client.getBlockEventsOption();
             },
             newBlockResponse(blockNumber) {
                 const header = new common.BlockHeader();
@@ -169,8 +169,8 @@ describe('Block Events', () => {
             newEventsRequest(options?) {
                 return network.newFilteredBlockEventsRequest(options);
             },
-            getCallOptions() {
-                return client.getFilteredBlockEventsOptions();
+            getCallOption() {
+                return client.getFilteredBlockEventsOption();
             },
             newBlockResponse(blockNumber) {
                 const block = new peer.FilteredBlock();
@@ -198,8 +198,8 @@ describe('Block Events', () => {
             newEventsRequest(options?) {
                 return network.newBlockAndPrivateDataEventsRequest(options);
             },
-            getCallOptions() {
-                return client.getBlockAndPrivateDataEventsOptions();
+            getCallOption() {
+                return client.getBlockAndPrivateDataEventsOption();
             },
             newBlockResponse(blockNumber) {
                 const header = new common.BlockHeader();
@@ -227,15 +227,14 @@ describe('Block Events', () => {
     Object.entries(testCases).forEach(([testName, testCase]) => {
         // eslint-disable-next-line jest/valid-title
         describe(testName, () => {
+            // eslint-disable-next-line jest/expect-expect
             it('sends valid request with default start position', async () => {
                 const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
                 testCase.mockResponse(stream);
 
                 await testCase.getEvents();
 
-                expect(stream.write.mock.calls.length).toBe(1);
-                const request = stream.write.mock.calls[0][0];
-
+                const request = stream.getRequest();
                 const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
                 assertValidBlockEventsRequestHeader(payload);
 
@@ -250,6 +249,7 @@ describe('Block Events', () => {
                 await expect(network.getBlockEvents({ startBlock })).rejects.toThrow();
             });
 
+            // eslint-disable-next-line jest/expect-expect
             it('sends valid request with specified start block number', async () => {
                 const startBlock = BigInt(418);
                 const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
@@ -257,9 +257,7 @@ describe('Block Events', () => {
 
                 await testCase.getEvents({ startBlock });
 
-                expect(stream.write.mock.calls.length).toBe(1);
-                const request = stream.write.mock.calls[0][0];
-
+                const request = stream.getRequest();
                 const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
                 assertValidBlockEventsRequestHeader(payload);
 
@@ -269,15 +267,14 @@ describe('Block Events', () => {
                 assertStopPosition(seekInfo);
             });
 
+            // eslint-disable-next-line jest/expect-expect
             it('Uses specified start block instead of unset checkpoint', async () => {
                 const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
                 testCase.mockResponse(stream);
                 const startBlock = BigInt(418);
                 await testCase.getEvents({ startBlock: startBlock, checkpoint: checkpointers.inMemory() });
 
-                expect(stream.write.mock.calls.length).toBe(1);
-                const request = stream.write.mock.calls[0][0];
-
+                const request = stream.getRequest();
                 const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
                 assertValidBlockEventsRequestHeader(payload);
 
@@ -287,6 +284,7 @@ describe('Block Events', () => {
                 assertStopPosition(seekInfo);
             });
 
+            // eslint-disable-next-line jest/expect-expect
             it('Uses checkpoint block instead of specified start block', async () => {
                 const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
                 testCase.mockResponse(stream);
@@ -296,9 +294,7 @@ describe('Block Events', () => {
                 await checkpointer.checkpointBlock(1n);
                 await testCase.getEvents({ startBlock: startBlock, checkpoint: checkpointer });
 
-                expect(stream.write.mock.calls.length).toBe(1);
-                const request = stream.write.mock.calls[0][0];
-
+                const request = stream.getRequest();
                 const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
                 assertValidBlockEventsRequestHeader(payload);
 
@@ -308,6 +304,7 @@ describe('Block Events', () => {
                 assertStopPosition(seekInfo);
             });
 
+            // eslint-disable-next-line jest/expect-expect
             it('Uses checkpoint block zero with set transaction ID instead of specified start block', async () => {
                 const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
                 testCase.mockResponse(stream);
@@ -318,9 +315,7 @@ describe('Block Events', () => {
                 await checkpointer.checkpointTransaction(blockNumber, 'transactionID');
                 await testCase.getEvents({ startBlock: startBlock, checkpoint: checkpointer });
 
-                expect(stream.write.mock.calls.length).toBe(1);
-                const request = stream.write.mock.calls[0][0];
-
+                const request = stream.getRequest();
                 const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
                 assertValidBlockEventsRequestHeader(payload);
 
@@ -330,15 +325,14 @@ describe('Block Events', () => {
                 assertStopPosition(seekInfo);
             });
 
+            // eslint-disable-next-line jest/expect-expect
             it('Uses default start block instead of unset checkpoint and no start block', async () => {
                 const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
                 testCase.mockResponse(stream);
                 const checkpointer = checkpointers.inMemory();
                 await testCase.getEvents({ checkpoint: checkpointer });
 
-                expect(stream.write.mock.calls.length).toBe(1);
-                const request = stream.write.mock.calls[0][0];
-
+                const request = stream.getRequest();
                 const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
                 assertValidBlockEventsRequestHeader(payload);
 
@@ -353,14 +347,14 @@ describe('Block Events', () => {
 
                 await testCase.newEventsRequest().getEvents({ deadline });
 
-                const actual = testCase.getCallOptions()[0];
+                const actual = testCase.getCallOption();
                 expect(actual.deadline).toBe(deadline);
             });
 
             it('uses default call options', async () => {
                 await testCase.getEvents();
 
-                const actual = testCase.getCallOptions()[0];
+                const actual = testCase.getCallOption();
                 expect(actual.deadline).toBe(defaultOptions().deadline);
             });
 
@@ -468,9 +462,7 @@ describe('Block Events', () => {
 
                 await testCase.getEvents();
 
-                expect(stream.write.mock.calls.length).toBe(1);
-                const request = stream.write.mock.calls[0][0];
-
+                const request = stream.getRequest();
                 const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
                 const header = assertDefined(payload.getHeader(), 'header');
                 const channelHeader = common.ChannelHeader.deserializeBinary(header.getChannelHeader_asU8());

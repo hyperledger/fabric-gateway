@@ -26,7 +26,7 @@ const hsmOptions: HSMSignerOptions = {
     identifier: 'id',
 };
 
-// eslint-disable @typescript-eslint/no-unused-vars
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 const pkcs11Stub = {
     load: (): void => {
@@ -43,7 +43,7 @@ const pkcs11Stub = {
     C_OpenSession: (): void => {
         return;
     },
-    C_GetSessionInfo: (): SessionInfo | void => {
+    C_GetSessionInfo: (): SessionInfo | undefined => {
         return;
     },
     C_Login: (): void => {
@@ -90,7 +90,7 @@ const resetPkcs11Stub: () => void = () => {
     pkcs11Stub.C_OpenSession = (): void => {
         return;
     };
-    pkcs11Stub.C_GetSessionInfo = (): void => {
+    pkcs11Stub.C_GetSessionInfo = (): SessionInfo | undefined => {
         return;
     };
     pkcs11Stub.C_Login = (): void => {
@@ -122,9 +122,10 @@ const resetPkcs11Stub: () => void = () => {
     };
 };
 
-// eslint-enable @typescript-eslint/no-unused-vars
+/* eslint-enable */
 
 jest.mock('pkcs11js', () => {
+    // eslint-disable-next-line @typescript-eslint/no-extraneous-class
     class PKCS11 {
         constructor() {
             return pkcs11Stub;
@@ -173,7 +174,9 @@ describe('when creating or disposing of an HSM Signer Factory', () => {
 
     it('can be disposed', () => {
         const hsmSignerFactory = newHSMSignerFactory('somelibrary');
-        expect(() => hsmSignerFactory.dispose()).not.toThrow();
+        expect(() => {
+            hsmSignerFactory.dispose();
+        }).not.toThrow();
     });
 });
 
@@ -377,6 +380,8 @@ describe('When using an HSM Signer', () => {
 
     it('can be closed', () => {
         const { close } = hsmSignerFactory.newSigner(hsmOptions);
-        expect(() => close()).not.toThrow();
+        expect(() => {
+            close();
+        }).not.toThrow();
     });
 });

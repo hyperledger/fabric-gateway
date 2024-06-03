@@ -8,7 +8,8 @@ import * as hashes from './hashes';
 
 describe('hashes', () => {
     Object.entries(hashes).forEach(([name, hash]) => {
-        describe(`${name}`, () => {
+        // eslint-disable-next-line jest/valid-title
+        describe(name, () => {
             it('Hashes of identical data are identical', () => {
                 const message = Buffer.from('foobar');
 
