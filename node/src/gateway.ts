@@ -37,9 +37,9 @@ import { SigningIdentity } from './signingidentity';
 import { TransactionImpl } from './transaction';
 
 /**
- * Interface describing the public API of the gRPC Client class, used to provide better version-to-version type
- * compatibility between gRPC releases. Application code should use a concrete gRPC Client instance.
- * @see [gRPC Client API documentation](https://grpc.github.io/grpc/node/grpc.Client.html)
+ * Interface describing the public API of the gRPC [Client](https://grpc.github.io/grpc/node/grpc.Client.html) class,
+ * used to provide better version-to-version type compatibility between gRPC releases. Application code should use a
+ * concrete gRPC [Client](https://grpc.github.io/grpc/node/grpc.Client.html) instance.
  */
 export interface GrpcClient {
     close(): void;
@@ -145,9 +145,9 @@ export interface GrpcClient {
  */
 export interface ConnectOptions {
     /**
-     * A gRPC client connection to a Fabric Gateway. This should be shared by all gateway instances connecting to the
-     * same Fabric Gateway. The client connection will not be closed when the gateway is closed.
-     * @see [gRPC Client API documentation](https://grpc.github.io/grpc/node/grpc.Client.html)
+     * A gRPC [Client](https://grpc.github.io/grpc/node/grpc.Client.html) connection to a Fabric Gateway. This should be
+     * shared by all gateway instances connecting to the same Fabric Gateway. The client connection will not be closed
+     * when the gateway is closed.
      */
     client: GrpcClient;
 
@@ -174,42 +174,50 @@ export interface ConnectOptions {
     tlsClientCertificateHash?: Uint8Array;
 
     /**
-     * Supplier of default call options for endorsements.
+     * Supplier of default gRPC [CallOptions](https://grpc.github.io/grpc/node/grpc.Client.html#~CallOptions) for
+     * endorsements.
      */
     endorseOptions?: () => CallOptions;
 
     /**
-     * Supplier of default call options for evaluating transactions.
+     * Supplier of default gRPC [CallOptions](https://grpc.github.io/grpc/node/grpc.Client.html#~CallOptions) for
+     * evaluating transactions.
      */
     evaluateOptions?: () => CallOptions;
 
     /**
-     * Supplier of default call options for submit of transactions to the orderer.
+     * Supplier of default gRPC [CallOptions](https://grpc.github.io/grpc/node/grpc.Client.html#~CallOptions) for
+     * submit of transactions to the orderer.
      */
     submitOptions?: () => CallOptions;
 
     /**
-     * Supplier of default call options for retrieving transaction commit status.
+     * Supplier of default gRPC [CallOptions](https://grpc.github.io/grpc/node/grpc.Client.html#~CallOptions) for
+     * retrieving transaction commit status.
      */
     commitStatusOptions?: () => CallOptions;
 
     /**
-     * Supplier of default call options for chaincode events.
+     * Supplier of default gRPC [CallOptions](https://grpc.github.io/grpc/node/grpc.Client.html#~CallOptions) for
+     * chaincode events.
      */
     chaincodeEventsOptions?: () => CallOptions;
 
     /**
-     * Supplier of default call options for block events.
+     * Supplier of default gRPC [CallOptions](https://grpc.github.io/grpc/node/grpc.Client.html#~CallOptions) for
+     * block events.
      */
     blockEventsOptions?: () => CallOptions;
 
     /**
-     * Supplier of default call options for filtered block events.
+     * Supplier of default gRPC [CallOptions](https://grpc.github.io/grpc/node/grpc.Client.html#~CallOptions) for
+     * filtered block events.
      */
     filteredBlockEventsOptions?: () => CallOptions;
 
     /**
-     * Supplier of default call options for block and private data events.
+     * Supplier of default gRPC [CallOptions](https://grpc.github.io/grpc/node/grpc.Client.html#~CallOptions) for
+     * block and private data events.
      */
     blockAndPrivateDataEventsOptions?: () => CallOptions;
 }

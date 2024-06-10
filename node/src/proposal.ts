@@ -25,7 +25,7 @@ export interface Proposal extends Signable {
      * Evaluate the transaction proposal and obtain its result, without updating the ledger. This runs the transaction
      * on a peer to obtain a transaction result, but does not submit the endorsed transaction to the orderer to be
      * committed to the ledger.
-     * @param options - gRPC call options.
+     * @param options - gRPC [CallOptions](https://grpc.github.io/grpc/node/grpc.Client.html#~CallOptions).
      * @returns The result returned by the transaction function.
      * @throws {@link GatewayError}
      * Thrown if the gRPC service invocation fails.
@@ -34,7 +34,7 @@ export interface Proposal extends Signable {
 
     /**
      * Obtain endorsement for the transaction proposal from sufficient peers to allow it to be committed to the ledger.
-     * @param options - gRPC call options.
+     * @param options - gRPC [CallOptions](https://grpc.github.io/grpc/node/grpc.Client.html#~CallOptions).
      * @returns An endorsed transaction that can be submitted to the ledger.
      * @throws {@link EndorseError}
      * Thrown if the gRPC service invocation fails.

@@ -18,7 +18,7 @@ export interface Commit extends Signable {
     /**
      * Get status of the committed transaction. If the transaction has not yet committed, this method blocks until the
      * commit occurs.
-     * @param options - gRPC call options.
+     * @param options - gRPC [CallOptions](https://grpc.github.io/grpc/node/grpc.Client.html#~CallOptions).
      * @throws {@link CommitStatusError}
      * Thrown if the gRPC service invocation fails.
      */

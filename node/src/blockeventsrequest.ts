@@ -17,7 +17,7 @@ import { SigningIdentity } from './signingidentity';
 export interface BlockEventsRequest extends Signable {
     /**
      * Get block events.
-     * @param options - gRPC call
+     * @param options - gRPC [CallOptions](https://grpc.github.io/grpc/node/grpc.Client.html#~CallOptions).
      * @returns Block protocol buffer messages. The iterator should be closed after use to complete the eventing
      * session.
      * @throws {@link GatewayError}
@@ -43,7 +43,7 @@ export interface BlockEventsRequest extends Signable {
 export interface FilteredBlockEventsRequest extends Signable {
     /**
      * Get filtered block events.
-     * @param options - gRPC call
+     * @param options - gRPC [CallOptions](https://grpc.github.io/grpc/node/grpc.Client.html#~CallOptions).
      * @returns Filtered block protocol buffer messages. The iterator should be closed after use to complete the
      * eventing session.
      * @throws {@link GatewayError}
@@ -69,7 +69,7 @@ export interface FilteredBlockEventsRequest extends Signable {
 export interface BlockAndPrivateDataEventsRequest extends Signable {
     /**
      * Get block and private data events.
-     * @param options - gRPC call
+     * @param options - gRPC [CallOptions](https://grpc.github.io/grpc/node/grpc.Client.html#~CallOptions).
      * @returns Block and private data protocol buffer messages. The iterator should be closed after use to complete
      * the eventing session.
      * @throws {@link GatewayError}
