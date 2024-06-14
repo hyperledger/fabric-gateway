@@ -209,7 +209,7 @@ public final class SubmitTransactionTest {
             ByteString serializedIdentity =
                     mocker.getSignatureHeader(request.getProposedTransaction()).getCreator();
 
-            byte[] expected = GatewayUtils.serializeIdentity(identity);
+            byte[] expected = GatewayUtils.newSerializedIdentity(identity).toByteArray();
             assertThat(serializedIdentity.toByteArray()).isEqualTo(expected);
         }
     }

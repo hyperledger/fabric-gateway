@@ -50,12 +50,11 @@ final class GatewayUtils {
         }
     }
 
-    public static byte[] serializeIdentity(final Identity identity) {
+    public static SerializedIdentity newSerializedIdentity(final Identity identity) {
         return SerializedIdentity.newBuilder()
                 .setMspid(identity.getMspId())
                 .setIdBytes(ByteString.copyFrom(identity.getCredentials()))
-                .build()
-                .toByteArray();
+                .build();
     }
 
     public static void requireNonNullArgument(final Object value, final String message) {
