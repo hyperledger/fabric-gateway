@@ -195,6 +195,7 @@ public interface Gateway extends AutoCloseable {
      * Close the gateway connection and all associated resources, including removing listeners attached to networks and
      * contracts created by the gateway.
      */
+    @Override
     void close();
 
     /**
@@ -261,7 +262,7 @@ public interface Gateway extends AutoCloseable {
          * @deprecated Replaced by {@link #evaluateOptions(UnaryOperator)}.
          */
         @Deprecated
-        default Builder evaluateOptions(CallOption... options) {
+        default Builder evaluateOptions(final CallOption... options) {
             return evaluateOptions(GatewayUtils.asCallOptions(options));
         }
 
@@ -287,7 +288,7 @@ public interface Gateway extends AutoCloseable {
          * @deprecated Replaced by {@link #endorseOptions(UnaryOperator)}.
          */
         @Deprecated
-        default Builder endorseOptions(CallOption... options) {
+        default Builder endorseOptions(final CallOption... options) {
             return endorseOptions(GatewayUtils.asCallOptions(options));
         }
 
@@ -313,7 +314,7 @@ public interface Gateway extends AutoCloseable {
          * @deprecated Replaced by {@link #submitOptions(UnaryOperator)}.
          */
         @Deprecated
-        default Builder submitOptions(CallOption... options) {
+        default Builder submitOptions(final CallOption... options) {
             return submitOptions(GatewayUtils.asCallOptions(options));
         }
 
@@ -339,7 +340,7 @@ public interface Gateway extends AutoCloseable {
          * @deprecated Replaced by {@link #commitStatusOptions(UnaryOperator)}.
          */
         @Deprecated
-        default Builder commitStatusOptions(CallOption... options) {
+        default Builder commitStatusOptions(final CallOption... options) {
             return commitStatusOptions(GatewayUtils.asCallOptions(options));
         }
 
@@ -365,7 +366,7 @@ public interface Gateway extends AutoCloseable {
          * @deprecated Replaced by {@link #chaincodeEventsOptions(UnaryOperator)}.
          */
         @Deprecated
-        default Builder chaincodeEventsOptions(CallOption... options) {
+        default Builder chaincodeEventsOptions(final CallOption... options) {
             return chaincodeEventsOptions(GatewayUtils.asCallOptions(options));
         }
 

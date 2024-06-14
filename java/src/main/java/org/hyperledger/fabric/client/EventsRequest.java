@@ -46,7 +46,7 @@ public interface EventsRequest<T> extends Signable {
      * @deprecated Replaced by {@link #getEvents(UnaryOperator)}.
      */
     @Deprecated
-    default CloseableIterator<T> getEvents(CallOption... options) {
+    default CloseableIterator<T> getEvents(final CallOption... options) {
         return getEvents(GatewayUtils.asCallOptions(options));
     }
 }

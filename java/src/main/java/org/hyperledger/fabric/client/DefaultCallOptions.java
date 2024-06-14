@@ -79,6 +79,7 @@ final class DefaultCallOptions {
 
         return stub.withInterceptors(new ClientInterceptor() {
             @Override
+            @SuppressWarnings("PMD.GenericsNaming")
             public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
                     final MethodDescriptor<ReqT, RespT> methodDescriptor,
                     final CallOptions callOptions,

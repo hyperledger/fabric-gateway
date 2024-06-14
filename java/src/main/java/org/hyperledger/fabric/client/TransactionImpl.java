@@ -74,7 +74,7 @@ final class TransactionImpl implements Transaction {
                 .build();
         client.submit(submitRequest, options);
 
-        return new SubmittedTransactionImpl(client, signingIdentity, getTransactionId(), newSignedCommitStatusRequest(), getResult());
+        return new SubmittedTransactionImpl(client, signingIdentity, getTransactionId(), newSignedCommitStatusRequest(), result);
     }
 
     void setSignature(final byte[] signature) {

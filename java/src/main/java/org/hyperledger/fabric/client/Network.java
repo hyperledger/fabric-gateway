@@ -109,7 +109,7 @@ public interface Network {
      * @throws NullPointerException if the chaincode name is null.
      * @see #newChaincodeEventsRequest(String)
      */
-    default CloseableIterator<ChaincodeEvent> getChaincodeEvents(String chaincodeName) {
+    default CloseableIterator<ChaincodeEvent> getChaincodeEvents(final String chaincodeName) {
         return getChaincodeEvents(chaincodeName, GatewayUtils.asCallOptions());
     }
 
@@ -138,7 +138,7 @@ public interface Network {
      * @deprecated Replaced by {@link #getChaincodeEvents(String, UnaryOperator)}.
      */
     @Deprecated
-    default CloseableIterator<ChaincodeEvent> getChaincodeEvents(String chaincodeName, CallOption... options) {
+    default CloseableIterator<ChaincodeEvent> getChaincodeEvents(final String chaincodeName, final CallOption... options) {
         return getChaincodeEvents(chaincodeName, GatewayUtils.asCallOptions(options));
     }
 

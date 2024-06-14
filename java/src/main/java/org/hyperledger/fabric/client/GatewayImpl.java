@@ -26,7 +26,11 @@ import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 final class GatewayImpl implements Gateway {
-    public static final class Builder implements Gateway.Builder {
+    private final GatewayClient client;
+    private final SigningIdentity signingIdentity;
+    private final ByteString tlsCertificateHash;
+
+    static final class Builder implements Gateway.Builder {
         private static final Signer UNDEFINED_SIGNER = (digest) -> {
             throw new UnsupportedOperationException("No signing implementation supplied");
         };
@@ -135,10 +139,6 @@ final class GatewayImpl implements Gateway {
         }
     }
 
-    private final GatewayClient client;
-    private final SigningIdentity signingIdentity;
-    private final ByteString tlsCertificateHash;
-
     private GatewayImpl(final Builder builder) {
         signingIdentity = new SigningIdentity(builder.identity, builder.hash, builder.signer);
         client = new GatewayClient(builder.grpcChannel, builder.optionsBuilder.build());
@@ -152,6 +152,7 @@ final class GatewayImpl implements Gateway {
 
     @Override
     public void close() {
+        // Nothing to do for now
     }
 
     @Override

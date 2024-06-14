@@ -51,7 +51,7 @@ public interface Proposal extends Signable {
      * @deprecated Replaced by {@link #evaluate(UnaryOperator)}.
      */
     @Deprecated
-    default byte[] evaluate(CallOption... options) throws GatewayException {
+    default byte[] evaluate(final CallOption... options) throws GatewayException {
         return evaluate(GatewayUtils.asCallOptions(options));
     }
 
@@ -83,7 +83,7 @@ public interface Proposal extends Signable {
      * @deprecated Replaced by {@link #endorse(UnaryOperator)}.
      */
     @Deprecated
-    default Transaction endorse(CallOption... options) throws EndorseException {
+    default Transaction endorse(final CallOption... options) throws EndorseException {
         return endorse(GatewayUtils.asCallOptions(options));
     }
 
@@ -136,6 +136,7 @@ public interface Proposal extends Signable {
          * @param mspids The Member Services Provider IDs of the endorsing organizations.
          * @return This builder.
          */
+        @SuppressWarnings("PMD.LinguisticNaming")
         Builder setEndorsingOrganizations(String... mspids);
 
         /**

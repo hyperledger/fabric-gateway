@@ -6,6 +6,7 @@
 
 package org.hyperledger.fabric.client;
 
+import java.security.ProviderException;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 
@@ -42,11 +43,11 @@ final class SigningIdentity {
         try {
             return signer.sign(digest);
         } catch (GeneralSecurityException e) {
-            throw new RuntimeException(e);
+            throw new ProviderException(e);
         }
     }
 
     public byte[] getCreator() {
-        return creator;
+        return creator.clone();
     }
 }

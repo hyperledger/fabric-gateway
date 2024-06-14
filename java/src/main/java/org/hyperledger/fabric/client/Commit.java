@@ -48,7 +48,7 @@ public interface Commit extends Signable {
      * @deprecated Replaced by {@link #getStatus(UnaryOperator)}.
      */
     @Deprecated
-    default Status getStatus(CallOption... options) throws CommitStatusException {
+    default Status getStatus(final CallOption... options) throws CommitStatusException {
         return getStatus(GatewayUtils.asCallOptions(options));
     }
 }

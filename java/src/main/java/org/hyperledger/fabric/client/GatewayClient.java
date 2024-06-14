@@ -6,6 +6,12 @@
 
 package org.hyperledger.fabric.client;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.Context;
+import io.grpc.StatusRuntimeException;
+import io.grpc.stub.StreamObserver;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -19,13 +25,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
-
-import com.google.protobuf.InvalidProtocolBufferException;
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.Context;
-import io.grpc.StatusRuntimeException;
-import io.grpc.stub.StreamObserver;
 import org.hyperledger.fabric.protos.common.Envelope;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
@@ -120,17 +119,18 @@ final class GatewayClient {
         return invokeDuplexStreamingCall(stub::deliverWithPrivateData, request);
     }
 
-    private <Response> CloseableIterator<Response> invokeServerStreamingCall(final Supplier<Iterator<Response>> call) {
+    private <T> CloseableIterator<T> invokeServerStreamingCall(final Supplier<Iterator<T>> call) {
         Context.CancellableContext context = Context.current().withCancellation();
         return invokeStreamingCall(context, call);
     }
 
-    private <Response> CloseableIterator<Response> invokeStreamingCall(
+    @SuppressWarnings({"PMD.AvoidCatchingGenericException", "PMD.AvoidCatchingGenericException"})
+    private <T> CloseableIterator<T> invokeStreamingCall(
             final Context.CancellableContext context,
-            final Supplier<Iterator<Response>> call
+            final Supplier<Iterator<T>> call
     ) {
         try {
-            Iterator<Response> iterator = context.wrap(call::get).call();
+            Iterator<T> iterator = context.wrap(call::get).call();
             return new ResponseIterator<>(context, iterator);
         } catch (StatusRuntimeException e) {
             context.cancel(e);
@@ -141,7 +141,7 @@ final class GatewayClient {
         } catch (Exception e) {
             // Should never happen calling a Supplier
             context.cancel(e);
-            throw new RuntimeException(e);
+            throw new AssertionError(e);
         }
     }
 
@@ -178,24 +178,26 @@ final class GatewayClient {
         }
     }
 
-    private <Request, Response> CloseableIterator<Response> invokeDuplexStreamingCall(
-            final Function<StreamObserver<Response>, StreamObserver<Request>> call,
-            final Request request
+    @SuppressWarnings("PMD.GenericsNaming")
+    private <ReqT, RespT> CloseableIterator<RespT> invokeDuplexStreamingCall(
+            final Function<StreamObserver<RespT>, StreamObserver<ReqT>> call,
+            final ReqT request
     ) {
-        ResponseObserver<Response> responseObserver = new ResponseObserver<>();
+        ResponseObserver<RespT> responseObserver = new ResponseObserver<>();
 
         Context.CancellableContext context = Context.current().withCancellation();
         // Complete response observer synchronously if client cancels the context
         context.addListener(context1 -> responseObserver.onCompleted(), Runnable::run);
 
         return invokeStreamingCall(context, () -> {
-            StreamObserver<Request> requestObserver = call.apply(responseObserver);
+            StreamObserver<ReqT> requestObserver = call.apply(responseObserver);
             requestObserver.onNext(request);
             return responseObserver;
         });
     }
 
     private static final class ResponseObserver<T> implements StreamObserver<T>, Iterator<T> {
+        @SuppressWarnings("PMD.LooseCoupling")
         private final LinkedTransferQueue<Supplier<T>> queue = new LinkedTransferQueue<>();
         private final ExecutorService executor = Executors.newSingleThreadExecutor();
         private Supplier<T> next;
@@ -209,7 +211,7 @@ final class GatewayClient {
                 // Ignore cancellation
             } catch (ExecutionException e) {
                 // Should never happen
-                throw new RuntimeException(e);
+                throw new AssertionError(e);
             }
         }
 
@@ -262,6 +264,7 @@ final class GatewayClient {
         }
 
         @Override
+        @SuppressWarnings("PMD.NullAssignment")
         public T next() {
             T result = readNext().get();
             if (result == null) {
