@@ -310,6 +310,7 @@
                 <artifactId>maven-pmd-plugin</artifactId>
                 <version>3.23.0</version>
                 <configuration>
+                    <skip>${skipUnitTests}</skip>
                     <printFailingErrors>true</printFailingErrors>
                     <linkXRef>false</linkXRef>
                     <rulesets>
@@ -366,21 +367,30 @@
             </properties>
         </profile>
         <profile>
-            <id>checkstyle</id>
+            <id>spotless</id>
             <activation>
                 <jdk>[11,)</jdk>
             </activation>
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-checkstyle-plugin</artifactId>
-                        <version>3.3.1</version>
+                        <groupId>com.diffplug.spotless</groupId>
+                        <artifactId>spotless-maven-plugin</artifactId>
+                        <version>2.43.0</version>
                         <configuration>
-                            <configLocation>checkstyle.xml</configLocation>
-                            <consoleOutput>true</consoleOutput>
-                            <failsOnError>true</failsOnError>
-                            <linkXRef>false</linkXRef>
+                            <checkSkip>${skipUnitTests}</checkSkip>
+                            <java>
+                                <trimTrailingWhitespace/>
+                                <endWithNewline/>
+                                <palantirJavaFormat>
+                                    <version>2.47.0</version>
+                                    <style>PALANTIR</style>
+                                    <formatJavadoc>false</formatJavadoc>
+                                </palantirJavaFormat>
+                                <licenseHeader>
+                                    <file>${project.basedir}/license-header.txt</file>
+                                </licenseHeader>
+                            </java>
                         </configuration>
                         <executions>
                             <execution>
@@ -390,13 +400,6 @@
                                 </goals>
                             </execution>
                         </executions>
-                        <dependencies>
-                            <dependency>
-                                <groupId>com.puppycrawl.tools</groupId>
-                                <artifactId>checkstyle</artifactId>
-                                <version>10.15.0</version>
-                            </dependency>
-                        </dependencies>
                     </plugin>
                 </plugins>
             </build>

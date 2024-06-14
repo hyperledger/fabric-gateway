@@ -67,6 +67,7 @@ The following Makefile targets are available:
 - `make scenario-test-no-hsm` - run the scenario tests for all client language implementations, excluding HSM tests
 - `make shellcheck` - check for script errors
 - `make test` - run all tests
+- `make format` - fix all code formatting
 
 ### Scenario tests
 
