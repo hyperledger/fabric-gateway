@@ -14,7 +14,6 @@ import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Integer;
@@ -28,11 +27,12 @@ final class ECSignature {
 
     static ECSignature fromBytes(final byte[] derSignature) throws GeneralSecurityException {
         try (ByteArrayInputStream inStream = new ByteArrayInputStream(derSignature);
-             ASN1InputStream asnInputStream = new ASN1InputStream(inStream)) {
+                ASN1InputStream asnInputStream = new ASN1InputStream(inStream)) {
             ASN1Primitive asn1 = asnInputStream.readObject();
 
             if (!(asn1 instanceof ASN1Sequence)) {
-                throw new GeneralSecurityException("Invalid signature type: " + asn1.getClass().getTypeName());
+                throw new GeneralSecurityException(
+                        "Invalid signature type: " + asn1.getClass().getTypeName());
             }
 
             ASN1Sequence asn1Sequence = (ASN1Sequence) asn1;
@@ -42,7 +42,8 @@ final class ECSignature {
                     .map(asn1Primitive -> (ASN1Integer) asn1Primitive)
                     .collect(Collectors.toList());
             if (signatureParts.size() != 2) {
-                throw new GeneralSecurityException("Invalid signature. Expected 2 values but got " + signatureParts.size());
+                throw new GeneralSecurityException(
+                        "Invalid signature. Expected 2 values but got " + signatureParts.size());
             }
 
             return new ECSignature(signatureParts.get(0), signatureParts.get(1));

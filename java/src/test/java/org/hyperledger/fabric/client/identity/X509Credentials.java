@@ -6,21 +6,6 @@
 
 package org.hyperledger.fabric.client.identity;
 
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.cert.X509v3CertificateBuilder;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
-import org.bouncycastle.crypto.util.PrivateKeyFactory;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.operator.ContentSigner;
-import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
-import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
-import org.bouncycastle.operator.OperatorCreationException;
-import org.bouncycastle.operator.bc.BcECContentSignerBuilder;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.math.BigInteger;
@@ -35,6 +20,20 @@ import java.security.cert.X509Certificate;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Date;
 import java.util.Locale;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.X509v3CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
+import org.bouncycastle.crypto.util.PrivateKeyFactory;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
+import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.bc.BcECContentSignerBuilder;
 
 public final class X509Credentials {
     public enum Curve {
@@ -91,8 +90,10 @@ public final class X509Credentials {
     private X509Certificate generateCertificate(KeyPair keyPair) {
         X500Name dnName = new X500Name("CN=John Doe");
         Date validityBeginDate = new Date(System.currentTimeMillis() - 24L * 60 * 60 * 1000); // Yesterday
-        Date validityEndDate = new Date(System.currentTimeMillis() + 2L * 365 * 24 * 60 * 60 * 1000); // 2 years from now
-        SubjectPublicKeyInfo subPubKeyInfo = SubjectPublicKeyInfo.getInstance(keyPair.getPublic().getEncoded());
+        Date validityEndDate =
+                new Date(System.currentTimeMillis() + 2L * 365 * 24 * 60 * 60 * 1000); // 2 years from now
+        SubjectPublicKeyInfo subPubKeyInfo =
+                SubjectPublicKeyInfo.getInstance(keyPair.getPublic().getEncoded());
         X509v3CertificateBuilder builder = new X509v3CertificateBuilder(
                 dnName,
                 BigInteger.valueOf(System.currentTimeMillis()),
@@ -107,9 +108,9 @@ public final class X509Credentials {
 
         try {
             KeyPair signerKeys = Curve.P256.generateKeyPair();
-            AsymmetricKeyParameter keyParameter = PrivateKeyFactory.createKey(signerKeys.getPrivate().getEncoded());
-            ContentSigner contentSigner = new BcECContentSignerBuilder(sigAlgId, digAlgId)
-                    .build(keyParameter);
+            AsymmetricKeyParameter keyParameter =
+                    PrivateKeyFactory.createKey(signerKeys.getPrivate().getEncoded());
+            ContentSigner contentSigner = new BcECContentSignerBuilder(sigAlgId, digAlgId).build(keyParameter);
             X509CertificateHolder holder = builder.build(contentSigner);
             return new JcaX509CertificateConverter().getCertificate(holder);
         } catch (IOException e) {

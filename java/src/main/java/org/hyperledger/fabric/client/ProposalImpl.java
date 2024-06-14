@@ -6,10 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.UnaryOperator;
-
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
+import java.util.function.UnaryOperator;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
 import org.hyperledger.fabric.protos.gateway.EndorseResponse;
 import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
@@ -23,8 +22,11 @@ final class ProposalImpl implements Proposal {
     private final String channelName;
     private ProposedTransaction proposedTransaction;
 
-    ProposalImpl(final GatewayClient client, final SigningIdentity signingIdentity,
-            final String channelName, final ProposedTransaction proposedTransaction) {
+    ProposalImpl(
+            final GatewayClient client,
+            final SigningIdentity signingIdentity,
+            final String channelName,
+            final ProposedTransaction proposedTransaction) {
         this.client = client;
         this.signingIdentity = signingIdentity;
         this.channelName = channelName;
@@ -85,9 +87,8 @@ final class ProposalImpl implements Proposal {
                 .setSignature(ByteString.copyFrom(signature))
                 .build();
 
-        proposedTransaction = proposedTransaction.toBuilder()
-                .setProposal(signedProposal)
-                .build();
+        proposedTransaction =
+                proposedTransaction.toBuilder().setProposal(signedProposal).build();
     }
 
     private void sign() {

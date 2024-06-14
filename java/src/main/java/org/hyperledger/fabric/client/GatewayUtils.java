@@ -6,6 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
+import com.google.protobuf.ByteString;
+import com.google.protobuf.Timestamp;
+import io.grpc.CallOptions;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -13,10 +16,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
-
-import com.google.protobuf.ByteString;
-import com.google.protobuf.Timestamp;
-import io.grpc.CallOptions;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.protos.msp.SerializedIdentity;
 import org.hyperledger.fabric.protos.orderer.SeekPosition;
@@ -27,15 +26,16 @@ import org.hyperledger.fabric.protos.orderer.SeekSpecified;
  */
 final class GatewayUtils {
     // Private constructor to prevent instantiation
-    private GatewayUtils() { }
+    private GatewayUtils() {}
 
     public static String toString(final Object o) {
-        return o != null ? o.getClass().getSimpleName() + '@' + Integer.toHexString(System.identityHashCode(o)) : "null";
+        return o != null
+                ? o.getClass().getSimpleName() + '@' + Integer.toHexString(System.identityHashCode(o))
+                : "null";
     }
 
     public static String toString(final Object o, final String... additionalInfo) {
-        return toString(o) + Arrays.stream(additionalInfo)
-                .collect(Collectors.joining(", ", "(", ")"));
+        return toString(o) + Arrays.stream(additionalInfo).collect(Collectors.joining(", ", "(", ")"));
     }
 
     public static byte[] concat(final byte[]... bytes) {
@@ -73,13 +73,10 @@ final class GatewayUtils {
     }
 
     public static SeekPosition seekLargestBlockNumber() {
-        SeekSpecified largestBlockNumber = SeekSpecified.newBuilder()
-                .setNumber(Long.MAX_VALUE)
-                .build();
+        SeekSpecified largestBlockNumber =
+                SeekSpecified.newBuilder().setNumber(Long.MAX_VALUE).build();
 
-        return SeekPosition.newBuilder()
-                .setSpecified(largestBlockNumber)
-                .build();
+        return SeekPosition.newBuilder().setSpecified(largestBlockNumber).build();
     }
 
     @SuppressWarnings("deprecation")

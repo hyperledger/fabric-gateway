@@ -14,6 +14,23 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Stream;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
@@ -37,24 +54,6 @@ import org.hyperledger.fabric.protos.peer.Transaction;
 import org.hyperledger.fabric.protos.peer.TransactionAction;
 import org.hyperledger.fabric.protos.peer.TxValidationCode;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.FileAttribute;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.Stream;
-
 public final class TestUtils {
     private static final TestUtils INSTANCE = new TestUtils();
     private static final String TEST_FILE_PREFIX = "fg-test-";
@@ -77,7 +76,8 @@ public final class TestUtils {
 
     public ManagedChannel newChannelForServices(BindableService service, BindableService... additionalServices) {
         String serverName = InProcessServerBuilder.generateName();
-        InProcessServerBuilder serverBuilder = InProcessServerBuilder.forName(serverName).addService(service);
+        InProcessServerBuilder serverBuilder =
+                InProcessServerBuilder.forName(serverName).addService(service);
         for (BindableService additionalService : additionalServices) {
             serverBuilder.addService(additionalService);
         }
@@ -99,9 +99,7 @@ public final class TestUtils {
     public Gateway.Builder newGatewayBuilder() {
         Identity id = new X509Identity("msp1", credentials.getCertificate());
         Signer signer = Signers.newPrivateKeySigner(credentials.getPrivateKey());
-        return Gateway.newInstance()
-                .identity(id)
-                .signer(signer);
+        return Gateway.newInstance().identity(id).signer(signer);
     }
 
     public EndorseResponse newEndorseResponse(String value, String channelName) {
@@ -112,57 +110,47 @@ public final class TestUtils {
     }
 
     public SubmitResponse newSubmitResponse() {
-        return SubmitResponse.newBuilder()
-                .build();
+        return SubmitResponse.newBuilder().build();
     }
 
     public EvaluateResponse newEvaluateResponse(String value) {
-        return EvaluateResponse.newBuilder()
-                .setResult(newResponse(value))
-                .build();
+        return EvaluateResponse.newBuilder().setResult(newResponse(value)).build();
     }
 
     public Response newResponse(String value) {
-        return Response.newBuilder()
-                .setPayload(ByteString.copyFromUtf8(value))
-                .build();
+        return Response.newBuilder().setPayload(ByteString.copyFromUtf8(value)).build();
     }
 
     public PreparedTransaction newPreparedTransaction(String result, String channelName) {
-        ChannelHeader channelHeader = ChannelHeader.newBuilder()
-                .setChannelId(channelName)
-                .build();
+        ChannelHeader channelHeader =
+                ChannelHeader.newBuilder().setChannelId(channelName).build();
         Header header = Header.newBuilder()
                 .setChannelHeader(channelHeader.toByteString())
                 .build();
 
-        ChaincodeAction chaincodeAction = ChaincodeAction.newBuilder()
-                .setResponse(newResponse(result))
-                .build();
+        ChaincodeAction chaincodeAction =
+                ChaincodeAction.newBuilder().setResponse(newResponse(result)).build();
         ProposalResponsePayload responsePayload = ProposalResponsePayload.newBuilder()
                 .setExtension(chaincodeAction.toByteString())
                 .build();
         ChaincodeEndorsedAction endorsedAction = ChaincodeEndorsedAction.newBuilder()
                 .setProposalResponsePayload(responsePayload.toByteString())
                 .build();
-        ChaincodeActionPayload actionPayload = ChaincodeActionPayload.newBuilder()
-                .setAction(endorsedAction)
-                .build();
+        ChaincodeActionPayload actionPayload =
+                ChaincodeActionPayload.newBuilder().setAction(endorsedAction).build();
         TransactionAction transactionAction = TransactionAction.newBuilder()
                 .setPayload(actionPayload.toByteString())
                 .build();
-        Transaction transaction = Transaction.newBuilder()
-                .addActions(transactionAction)
-                .build();
+        Transaction transaction =
+                Transaction.newBuilder().addActions(transactionAction).build();
 
         Payload payload = Payload.newBuilder()
                 .setHeader(header)
                 .setData(transaction.toByteString())
                 .build();
 
-        Envelope envelope = Envelope.newBuilder()
-                .setPayload(payload.toByteString())
-                .build();
+        Envelope envelope =
+                Envelope.newBuilder().setPayload(payload.toByteString()).build();
 
         return PreparedTransaction.newBuilder()
                 .setTransactionId(newFakeTransactionId())
@@ -171,9 +159,7 @@ public final class TestUtils {
     }
 
     public CommitStatusResponse newCommitStatusResponse(TxValidationCode status) {
-        return CommitStatusResponse.newBuilder()
-                .setResult(status)
-                .build();
+        return CommitStatusResponse.newBuilder().setResult(status).build();
     }
 
     public CommitStatusResponse newCommitStatusResponse(TxValidationCode status, long blockNumber) {
@@ -198,6 +184,7 @@ public final class TestUtils {
             public int read(char[] cbuf, int offset, int length) throws IOException {
                 throw new IOException(failMessage);
             }
+
             @Override
             public void close() {
                 // do nothing
@@ -220,8 +207,7 @@ public final class TestUtils {
     public <Request, Response> void invokeStubUnaryCall(
             final Function<Request, Response> stubCall,
             final Request request,
-            final StreamObserver<Response> responseObserver
-    ) {
+            final StreamObserver<Response> responseObserver) {
         try {
             Response response = stubCall.apply(request);
             responseObserver.onNext(response);
@@ -234,8 +220,7 @@ public final class TestUtils {
     public <Request, Response> void invokeStubServerStreamingCall(
             final Function<Request, Stream<Response>> stubCall,
             final Request request,
-            final StreamObserver<Response> responseObserver
-    ) {
+            final StreamObserver<Response> responseObserver) {
         try {
             stubCall.apply(request).forEachOrdered(responseObserver::onNext);
             responseObserver.onCompleted();
@@ -247,8 +232,7 @@ public final class TestUtils {
     public <Request, Response> StreamObserver<Request> invokeStubDuplexCall(
             final Function<Stream<Request>, Stream<Response>> stubCall,
             final ServerCallStreamObserver<Response> responseObserver,
-            final int initialRequestCount
-    ) {
+            final int initialRequestCount) {
         BlockingQueue<Request> requestQueue = new LinkedBlockingQueue<>();
         CountDownLatch requestCountLatch = new CountDownLatch(initialRequestCount);
         CompletableFuture<Void> responseFuture = CompletableFuture.completedFuture(null);
@@ -265,28 +249,26 @@ public final class TestUtils {
                             responseObserver.onError(t);
                         }
                     },
-                    executor
-            );
+                    executor);
         } catch (Exception e) {
             responseObserver.onError(e);
         }
 
         final CompletableFuture<Void> finalResponseFuture = responseFuture;
-        responseObserver.setOnCancelHandler(() -> finalResponseFuture.cancel(true)); // Avoids gRPC error if cancel is called more than once
+        responseObserver.setOnCancelHandler(
+                () -> finalResponseFuture.cancel(true)); // Avoids gRPC error if cancel is called more than once
         return streamObserverFromQueue(
                 requestQueue,
                 request -> requestCountLatch.countDown(),
-                throwable -> { },
-                () -> finalResponseFuture.cancel(true)
-        );
+                throwable -> {},
+                () -> finalResponseFuture.cancel(true));
     }
 
     private <T> StreamObserver<T> streamObserverFromQueue(
             final BlockingQueue<T> queue,
             final Consumer<T> onNextListener,
             final Consumer<Throwable> onError,
-            final Runnable onCompleted
-    ) {
+            final Runnable onCompleted) {
         return new StreamObserver<T>() {
             @Override
             public void onNext(final T request) {

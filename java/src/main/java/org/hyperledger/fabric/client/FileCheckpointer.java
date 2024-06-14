@@ -10,7 +10,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -37,11 +36,8 @@ import java.util.Set;
 public final class FileCheckpointer implements Checkpointer, AutoCloseable {
     private static final String CONFIG_KEY_BLOCK = "blockNumber";
     private static final String CONFIG_KEY_TRANSACTIONID = "transactionId";
-    private static final Set<OpenOption> OPEN_OPTIONS = Collections.unmodifiableSet(EnumSet.of(
-            StandardOpenOption.CREATE,
-            StandardOpenOption.READ,
-            StandardOpenOption.WRITE
-    ));
+    private static final Set<OpenOption> OPEN_OPTIONS = Collections.unmodifiableSet(
+            EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE));
 
     private OptionalLong blockNumber = OptionalLong.empty();
     private Optional<String> transactionId = Optional.empty();
@@ -139,8 +135,12 @@ public final class FileCheckpointer implements Checkpointer, AutoCloseable {
     @SuppressWarnings("PMD.AvoidCatchingGenericException")
     private void parseJson(final JsonObject json) throws IOException {
         try {
-            blockNumber = json.has(CONFIG_KEY_BLOCK) ? OptionalLong.of(json.get(CONFIG_KEY_BLOCK).getAsLong()) : OptionalLong.empty();
-            transactionId = json.has(CONFIG_KEY_TRANSACTIONID) ? Optional.of(json.get(CONFIG_KEY_TRANSACTIONID).getAsString()) : Optional.empty();
+            blockNumber = json.has(CONFIG_KEY_BLOCK)
+                    ? OptionalLong.of(json.get(CONFIG_KEY_BLOCK).getAsLong())
+                    : OptionalLong.empty();
+            transactionId = json.has(CONFIG_KEY_TRANSACTIONID)
+                    ? Optional.of(json.get(CONFIG_KEY_TRANSACTIONID).getAsString())
+                    : Optional.empty();
         } catch (RuntimeException e) {
             throw new IOException("Bad format of checkpoint data from file: " + path, e);
         }

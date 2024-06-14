@@ -6,10 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
+import io.grpc.CallOptions;
 import java.util.Map;
 import java.util.function.UnaryOperator;
-
-import io.grpc.CallOptions;
 
 /**
  * A Fabric Gateway transaction proposal, which can be used to evaluate a transaction to query ledger state, or obtain

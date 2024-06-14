@@ -7,8 +7,8 @@
 package org.hyperledger.fabric.client;
 
 import com.google.protobuf.ByteString;
-import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 import java.util.Objects;
+import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 
 final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
     private final GatewayClient client;
@@ -18,8 +18,11 @@ final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
     private final StartPositionBuilder startPositionBuilder = new StartPositionBuilder();
     private String afterTransactionId;
 
-    ChaincodeEventsBuilder(final GatewayClient client, final SigningIdentity signingIdentity, final String channelName,
-                           final String chaincodeName) {
+    ChaincodeEventsBuilder(
+            final GatewayClient client,
+            final SigningIdentity signingIdentity,
+            final String channelName,
+            final String chaincodeName) {
         Objects.requireNonNull(channelName, "channel name");
         Objects.requireNonNull(chaincodeName, "chaincode name");
 
@@ -57,11 +60,12 @@ final class ChaincodeEventsBuilder implements ChaincodeEventsRequest.Builder {
 
     private org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest newChaincodeEventsRequestProto() {
         ByteString creator = ByteString.copyFrom(signingIdentity.getCreator());
-        org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest.Builder builder = org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest.newBuilder()
-                .setChannelId(channelName)
-                .setChaincodeId(chaincodeName)
-                .setIdentity(creator)
-                .setStartPosition(startPositionBuilder.build());
+        org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest.Builder builder =
+                org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest.newBuilder()
+                        .setChannelId(channelName)
+                        .setChaincodeId(chaincodeName)
+                        .setIdentity(creator)
+                        .setStartPosition(startPositionBuilder.build());
         if (afterTransactionId != null) {
             builder.setAfterTransactionId(afterTransactionId);
         }

@@ -1,13 +1,12 @@
 /*
- *  Copyright 2022 IBM All Rights Reserved.
+ * Copyright 2022 IBM All Rights Reserved.
  *
- *  SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 package org.hyperledger.fabric.client;
 
 import java.util.stream.Stream;
-
 import org.hyperledger.fabric.protos.common.Envelope;
 import org.hyperledger.fabric.protos.peer.DeliverResponse;
 

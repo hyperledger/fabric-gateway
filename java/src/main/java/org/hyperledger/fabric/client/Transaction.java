@@ -6,9 +6,8 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.UnaryOperator;
-
 import io.grpc.CallOptions;
+import java.util.function.UnaryOperator;
 
 /**
  * An endorsed transaction that can be submitted to the orderer for commit to the ledger.

@@ -40,9 +40,8 @@ class SignableBlockEventsRequest implements Signable {
     }
 
     void setSignature(final byte[] signature) {
-        request = request.toBuilder()
-                .setSignature(ByteString.copyFrom(signature))
-                .build();
+        request =
+                request.toBuilder().setSignature(ByteString.copyFrom(signature)).build();
     }
 
     private boolean isSigned() {

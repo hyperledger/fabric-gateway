@@ -6,12 +6,11 @@
 
 package org.hyperledger.fabric.client;
 
+import java.security.GeneralSecurityException;
 import java.security.ProviderException;
+import java.util.function.Function;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
-
-import java.security.GeneralSecurityException;
-import java.util.function.Function;
 
 final class SigningIdentity {
     private final Identity identity;

@@ -6,10 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
+import io.grpc.CallOptions;
 import java.util.NoSuchElementException;
 import java.util.function.UnaryOperator;
-
-import io.grpc.CallOptions;
 import org.hyperledger.fabric.protos.common.Block;
 import org.hyperledger.fabric.protos.common.Envelope;
 import org.hyperledger.fabric.protos.peer.DeliverResponse;

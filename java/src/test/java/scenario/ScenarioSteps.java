@@ -6,6 +6,8 @@
 
 package scenario;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -20,18 +22,6 @@ import io.grpc.Grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.Status;
 import io.grpc.TlsChannelCredentials;
-import org.hyperledger.fabric.client.ChaincodeEvent;
-import org.hyperledger.fabric.client.GatewayException;
-import org.hyperledger.fabric.client.identity.Identities;
-import org.hyperledger.fabric.client.identity.Identity;
-import org.hyperledger.fabric.client.identity.Signer;
-import org.hyperledger.fabric.client.identity.Signers;
-import org.hyperledger.fabric.client.identity.X509Identity;
-import org.hyperledger.fabric.protos.common.Block;
-import org.hyperledger.fabric.protos.gateway.ErrorDetail;
-import org.hyperledger.fabric.protos.peer.BlockAndPrivateData;
-import org.hyperledger.fabric.protos.peer.FilteredBlock;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -60,19 +50,30 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.hyperledger.fabric.client.ChaincodeEvent;
+import org.hyperledger.fabric.client.GatewayException;
+import org.hyperledger.fabric.client.identity.Identities;
+import org.hyperledger.fabric.client.identity.Identity;
+import org.hyperledger.fabric.client.identity.Signer;
+import org.hyperledger.fabric.client.identity.Signers;
+import org.hyperledger.fabric.client.identity.X509Identity;
+import org.hyperledger.fabric.protos.common.Block;
+import org.hyperledger.fabric.protos.gateway.ErrorDetail;
+import org.hyperledger.fabric.protos.peer.BlockAndPrivateData;
+import org.hyperledger.fabric.protos.peer.FilteredBlock;
 
 public class ScenarioSteps {
     private static final Map<String, String> runningChaincodes = new HashMap<>();
     private static boolean channelsJoined = false;
     private static final String DOCKER_COMPOSE_TLS_FILE = "docker-compose-tls.yaml";
-    private static final Path FIXTURES_DIR = Paths.get("..", "scenario", "fixtures").toAbsolutePath();
-    private static final Path DOCKER_COMPOSE_DIR = Paths.get(FIXTURES_DIR.toString(), "docker-compose")
-            .toAbsolutePath();
+    private static final Path FIXTURES_DIR =
+            Paths.get("..", "scenario", "fixtures").toAbsolutePath();
+    private static final Path DOCKER_COMPOSE_DIR =
+            Paths.get(FIXTURES_DIR.toString(), "docker-compose").toAbsolutePath();
     private static final String DEFAULT_LISTENER_NAME = "";
 
     private static final Map<String, String> MSP_ID_TO_ORG_MAP;
+
     static {
         Map<String, String> mspIdToOrgMap = new HashMap<>();
         mspIdToOrgMap.put("Org1MSP", "org1.example.com");
@@ -82,27 +83,49 @@ public class ScenarioSteps {
     }
 
     private static final Map<String, ConnectionInfo> peerConnectionInfo = new HashMap<>();
+
     static {
-        String certPathTemplate = FIXTURES_DIR + "/crypto-material/crypto-config/peerOrganizations/org$O.example.com/peers/peer$P.org$O.example.com/tls/ca.crt";
-        peerConnectionInfo.put("peer0.org1.example.com",
-                new ConnectionInfo("localhost:7051", "peer0.org1.example.com", certPathTemplate.replace("$P", "0").replace("$O", "1")));
-        peerConnectionInfo.put("peer1.org1.example.com",
-                new ConnectionInfo("localhost:9051", "peer1.org1.example.com", certPathTemplate.replace("$P", "1").replace("$O", "1")));
-        peerConnectionInfo.put("peer0.org2.example.com",
-                new ConnectionInfo("localhost:8051", "peer0.org2.example.com", certPathTemplate.replace("$P", "0").replace("$O", "2")));
-        peerConnectionInfo.put("peer1.org2.example.com",
-                new ConnectionInfo("localhost:10051", "peer1.org2.example.com", certPathTemplate.replace("$P", "1").replace("$O", "2")));
-        peerConnectionInfo.put("peer0.org3.example.com",
-                new ConnectionInfo("localhost:11051", "peer0.org3.example.com", certPathTemplate.replace("$P", "0").replace("$O", "3")));
+        String certPathTemplate = FIXTURES_DIR
+                + "/crypto-material/crypto-config/peerOrganizations/org$O.example.com/peers/peer$P.org$O.example.com/tls/ca.crt";
+        peerConnectionInfo.put(
+                "peer0.org1.example.com",
+                new ConnectionInfo(
+                        "localhost:7051",
+                        "peer0.org1.example.com",
+                        certPathTemplate.replace("$P", "0").replace("$O", "1")));
+        peerConnectionInfo.put(
+                "peer1.org1.example.com",
+                new ConnectionInfo(
+                        "localhost:9051",
+                        "peer1.org1.example.com",
+                        certPathTemplate.replace("$P", "1").replace("$O", "1")));
+        peerConnectionInfo.put(
+                "peer0.org2.example.com",
+                new ConnectionInfo(
+                        "localhost:8051",
+                        "peer0.org2.example.com",
+                        certPathTemplate.replace("$P", "0").replace("$O", "2")));
+        peerConnectionInfo.put(
+                "peer1.org2.example.com",
+                new ConnectionInfo(
+                        "localhost:10051",
+                        "peer1.org2.example.com",
+                        certPathTemplate.replace("$P", "1").replace("$O", "2")));
+        peerConnectionInfo.put(
+                "peer0.org3.example.com",
+                new ConnectionInfo(
+                        "localhost:11051",
+                        "peer0.org3.example.com",
+                        certPathTemplate.replace("$P", "0").replace("$O", "3")));
     }
 
     private static final Collection<OrgConfig> ORG_CONFIGS;
+
     static {
         List<OrgConfig> orgConfigs = Arrays.asList(
                 new OrgConfig("org1_cli", "peer0.org1.example.com:7051", "peer1.org1.example.com:9051"),
                 new OrgConfig("org2_cli", "peer0.org2.example.com:8051", "peer1.org2.example.com:10051"),
-                new OrgConfig("org3_cli", "peer0.org3.example.com:11051")
-        );
+                new OrgConfig("org3_cli", "peer0.org3.example.com:11051"));
         ORG_CONFIGS = Collections.unmodifiableCollection(orgConfigs);
     }
 
@@ -124,12 +147,12 @@ public class ScenarioSteps {
     }
 
     private static final Collection<OrdererConfig> ORDERER_CONFIGS;
+
     static {
         List<OrdererConfig> ordererConfigs = Arrays.asList(
                 new OrdererConfig("orderer1.example.com", "7053"),
                 new OrdererConfig("orderer2.example.com", "8053"),
-                new OrdererConfig("orderer3.example.com", "9053")
-        );
+                new OrdererConfig("orderer3.example.com", "9053"));
         ORDERER_CONFIGS = Collections.unmodifiableCollection(ordererConfigs);
     }
 
@@ -172,27 +195,43 @@ public class ScenarioSteps {
     }
 
     @Given("I have deployed a Fabric network")
-    public void deployFabricNetwork() {
-    }
+    public void deployFabricNetwork() {}
 
     @Given("I have created and joined all channels")
     public void createAndJoinAllChannels() throws IOException, InterruptedException {
         // TODO this only does mychannel
         startAllPeers();
         if (!channelsJoined) {
-            final List<String> tlsOptions = Arrays.asList("--tls", "true", "--cafile",
+            final List<String> tlsOptions = Arrays.asList(
+                    "--tls",
+                    "true",
+                    "--cafile",
                     "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem");
 
             for (OrdererConfig orderer : ORDERER_CONFIGS) {
-                String ordDir = "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/" + orderer.address;
+                String ordDir = "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/"
+                        + orderer.address;
                 List<String> createChannelCommand = new ArrayList<>();
-                Collections.addAll(createChannelCommand, "docker", "exec", "org1_cli", "osnadmin", "channel", "join",
-                        "--channelID", "mychannel",
-                        "--config-block", "/etc/hyperledger/configtx/mychannel.block",
-                        "-o", orderer.address + ":" + orderer.port,
-                        "--ca-file", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem",
-                        "--client-cert", ordDir + "/tls/server.crt",
-                        "--client-key", ordDir + "/tls/server.key");
+                Collections.addAll(
+                        createChannelCommand,
+                        "docker",
+                        "exec",
+                        "org1_cli",
+                        "osnadmin",
+                        "channel",
+                        "join",
+                        "--channelID",
+                        "mychannel",
+                        "--config-block",
+                        "/etc/hyperledger/configtx/mychannel.block",
+                        "-o",
+                        orderer.address + ":" + orderer.port,
+                        "--ca-file",
+                        "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem",
+                        "--client-cert",
+                        ordDir + "/tls/server.crt",
+                        "--client-key",
+                        ordDir + "/tls/server.key");
                 exec(createChannelCommand);
             }
 
@@ -200,21 +239,36 @@ public class ScenarioSteps {
                 for (String peer : org.peers) {
                     String env = "CORE_PEER_ADDRESS=" + peer;
                     List<String> joinChannelCommand = new ArrayList<>();
-                    Collections.addAll(joinChannelCommand, "docker", "exec", "-e", env, org.cli, "peer", "channel", "join",
-                            "-b", "/etc/hyperledger/configtx/mychannel.block");
+                    Collections.addAll(
+                            joinChannelCommand,
+                            "docker",
+                            "exec",
+                            "-e",
+                            env,
+                            org.cli,
+                            "peer",
+                            "channel",
+                            "join",
+                            "-b",
+                            "/etc/hyperledger/configtx/mychannel.block");
                     joinChannelCommand.addAll(tlsOptions);
                     exec(joinChannelCommand);
                 }
-
             }
 
             channelsJoined = true;
         }
     }
 
-    @Given("I deploy {word} chaincode named {word} at version {word} for all organizations on channel {word} with endorsement policy {}")
-    public void deployChaincode(String ccType, String ccName, String version, String channelName, String signaturePolicy) throws IOException, InterruptedException {
-        final List<String> tlsOptions = Arrays.asList("--tls", "true", "--cafile",
+    @Given(
+            "I deploy {word} chaincode named {word} at version {word} for all organizations on channel {word} with endorsement policy {}")
+    public void deployChaincode(
+            String ccType, String ccName, String version, String channelName, String signaturePolicy)
+            throws IOException, InterruptedException {
+        final List<String> tlsOptions = Arrays.asList(
+                "--tls",
+                "true",
+                "--cafile",
                 "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem");
 
         boolean exists = false;
@@ -228,8 +282,21 @@ public class ScenarioSteps {
             // No need to re-install, just increment the sequence number and approve/commit new signature policy
             exists = true;
             List<String> queryCommand = new ArrayList<>();
-            Collections.addAll(queryCommand,"docker", "exec", "org1_cli", "peer", "lifecycle", "chaincode", "querycommitted",
-                    "-o", "orderer1.example.com:7050", "--channelID", channelName, "--name", ccName);
+            Collections.addAll(
+                    queryCommand,
+                    "docker",
+                    "exec",
+                    "org1_cli",
+                    "peer",
+                    "lifecycle",
+                    "chaincode",
+                    "querycommitted",
+                    "-o",
+                    "orderer1.example.com:7050",
+                    "--channelID",
+                    channelName,
+                    "--name",
+                    ccName);
             queryCommand.addAll(tlsOptions);
             String out = exec(queryCommand);
             Pattern regex = Pattern.compile(".*Sequence: (\\d+),.*");
@@ -243,21 +310,47 @@ public class ScenarioSteps {
             sequence = String.valueOf(seqInt + 1);
         }
 
-        String ccPath = Paths.get(FileSystems.getDefault().getSeparator(), "opt", "gopath", "src",
-                "github.com", "chaincode", ccType, ccName).toString();
+        String ccPath = Paths.get(
+                        FileSystems.getDefault().getSeparator(),
+                        "opt",
+                        "gopath",
+                        "src",
+                        "github.com",
+                        "chaincode",
+                        ccType,
+                        ccName)
+                .toString();
         String ccLabel = ccName + "v" + version;
         String ccPackage = ccName + ".tar.gz";
 
         String collectionsConfig = null;
-        String collectionsFile = Paths.get("chaincode", ccType, ccName, "collections_config.json").toString();
-        if (Paths.get(FIXTURES_DIR.toString(), collectionsFile).toAbsolutePath().toFile().exists()) {
-            collectionsConfig = Paths.get("/opt/gopath/src/github.com", collectionsFile).toString();
+        String collectionsFile = Paths.get("chaincode", ccType, ccName, "collections_config.json")
+                .toString();
+        if (Paths.get(FIXTURES_DIR.toString(), collectionsFile)
+                .toAbsolutePath()
+                .toFile()
+                .exists()) {
+            collectionsConfig =
+                    Paths.get("/opt/gopath/src/github.com", collectionsFile).toString();
         }
 
         for (OrgConfig org : ORG_CONFIGS) {
             if (!exists) {
-                exec("docker", "exec", org.cli, "peer", "lifecycle", "chaincode", "package", ccPackage, "--lang",
-                        ccType, "--label", ccLabel, "--path", ccPath);
+                exec(
+                        "docker",
+                        "exec",
+                        org.cli,
+                        "peer",
+                        "lifecycle",
+                        "chaincode",
+                        "package",
+                        ccPackage,
+                        "--lang",
+                        ccType,
+                        "--label",
+                        ccLabel,
+                        "--path",
+                        ccPath);
 
                 for (String peer : org.peers) {
                     String env = "CORE_PEER_ADDRESS=" + peer;
@@ -265,8 +358,7 @@ public class ScenarioSteps {
                 }
             }
 
-            String installed = exec("docker", "exec", org.cli, "peer", "lifecycle", "chaincode",
-                    "queryinstalled");
+            String installed = exec("docker", "exec", org.cli, "peer", "lifecycle", "chaincode", "queryinstalled");
             Pattern regex = Pattern.compile(".*Package ID: (.*), Label: " + ccLabel + ".*");
             Matcher matcher = regex.matcher(installed);
             if (!matcher.matches()) {
@@ -276,11 +368,29 @@ public class ScenarioSteps {
             String packageId = matcher.group(1);
 
             List<String> approveCommand = new ArrayList<>();
-            Collections.addAll(approveCommand, "docker", "exec", org.cli, "peer", "lifecycle", "chaincode",
-                    "approveformyorg", "--package-id", packageId, "--channelID", channelName, "--name", ccName,
-                    "--version", version, "--signature-policy", signaturePolicy,
-                    "--sequence", sequence, "--waitForEvent");
-            if(collectionsConfig != null) {
+            Collections.addAll(
+                    approveCommand,
+                    "docker",
+                    "exec",
+                    org.cli,
+                    "peer",
+                    "lifecycle",
+                    "chaincode",
+                    "approveformyorg",
+                    "--package-id",
+                    packageId,
+                    "--channelID",
+                    channelName,
+                    "--name",
+                    ccName,
+                    "--version",
+                    version,
+                    "--signature-policy",
+                    signaturePolicy,
+                    "--sequence",
+                    sequence,
+                    "--waitForEvent");
+            if (collectionsConfig != null) {
                 Collections.addAll(approveCommand, "--collections-config", collectionsConfig);
             }
             approveCommand.addAll(tlsOptions);
@@ -289,20 +399,35 @@ public class ScenarioSteps {
 
         // commit
         List<String> commitCommand = new ArrayList<>();
-        Collections.addAll(commitCommand, "docker", "exec", "org1_cli", "peer", "lifecycle", "chaincode", "commit",
-                "--channelID", channelName,
-                "--name", ccName,
-                "--version", version,
-                "--signature-policy", signaturePolicy,
-                "--sequence", sequence,
+        Collections.addAll(
+                commitCommand,
+                "docker",
+                "exec",
+                "org1_cli",
+                "peer",
+                "lifecycle",
+                "chaincode",
+                "commit",
+                "--channelID",
+                channelName,
+                "--name",
+                ccName,
+                "--version",
+                version,
+                "--signature-policy",
+                signaturePolicy,
+                "--sequence",
+                sequence,
                 "--waitForEvent",
-                "--peerAddresses", "peer0.org1.example.com:7051",
-                "--peerAddresses", "peer0.org2.example.com:8051",
+                "--peerAddresses",
+                "peer0.org1.example.com:7051",
+                "--peerAddresses",
+                "peer0.org2.example.com:8051",
                 "--tlsRootCertFiles",
                 "/etc/hyperledger/configtx/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
                 "--tlsRootCertFiles",
                 "/etc/hyperledger/configtx/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt");
-        if(collectionsConfig != null) {
+        if (collectionsConfig != null) {
             Collections.addAll(commitCommand, "--collections-config", collectionsConfig);
         }
         commitCommand.addAll(tlsOptions);
@@ -313,7 +438,8 @@ public class ScenarioSteps {
     }
 
     @Given("I create a gateway named {word} for user {word} in MSP {word}")
-    public void createGateway(String name, String user, String mspId) throws CertificateException, InvalidKeyException, IOException {
+    public void createGateway(String name, String user, String mspId)
+            throws CertificateException, InvalidKeyException, IOException {
         Identity identity = newIdentity(user, mspId);
         Signer signer = newSigner(user, mspId);
         currentGateway = new GatewayContext(identity, signer);
@@ -321,7 +447,8 @@ public class ScenarioSteps {
     }
 
     @Given("I create a gateway named {word} without signer for user {word} in MSP {word}")
-    public void createGatewayWithoutSigner(String name, String user, String mspId) throws CertificateException, IOException {
+    public void createGatewayWithoutSigner(String name, String user, String mspId)
+            throws CertificateException, IOException {
         Identity identity = newIdentity(user, mspId);
         currentGateway = new GatewayContext(identity);
         gateways.put(name, currentGateway);
@@ -412,7 +539,7 @@ public class ScenarioSteps {
     }
 
     @When("I use the checkpointer to listen for chaincode events from {word}")
-    public void listenForChaincodeEventsUsingCheckpointer(String chaincodeName){
+    public void listenForChaincodeEventsUsingCheckpointer(String chaincodeName) {
         currentGateway.listenForChaincodeEventsUsingCheckpointer(DEFAULT_LISTENER_NAME, chaincodeName);
     }
 
@@ -457,7 +584,7 @@ public class ScenarioSteps {
     }
 
     @When("I use the checkpointer to listen for block and private data events")
-    public void listenForBlockAndPrivateDataUsingCheckpointer(){
+    public void listenForBlockAndPrivateDataUsingCheckpointer() {
         currentGateway.listenForBlockAndPrivateDataUsingCheckpointer(DEFAULT_LISTENER_NAME);
     }
 
@@ -586,7 +713,8 @@ public class ScenarioSteps {
     }
 
     @Then("I should receive a chaincode event named {string} with payload {string} on {string}")
-    public void assertReceiveChaincodeEventOnListener(String eventName, String payload, String listenerName) throws InterruptedException, IOException {
+    public void assertReceiveChaincodeEventOnListener(String eventName, String payload, String listenerName)
+            throws InterruptedException, IOException {
         ChaincodeEvent event = currentGateway.nextChaincodeEvent(listenerName);
         assertThat(event.getEventName()).isEqualTo(eventName);
         assertThat(new String(event.getPayload(), StandardCharsets.UTF_8)).isEqualTo(payload);
@@ -609,7 +737,8 @@ public class ScenarioSteps {
     }
 
     @Then("I should receive a filtered block event on {string}")
-    public void assertReceiveFilteredBlockEventOnListener(String listenerName) throws InterruptedException, IOException {
+    public void assertReceiveFilteredBlockEventOnListener(String listenerName)
+            throws InterruptedException, IOException {
         FilteredBlock event = currentGateway.nextFilteredBlockEvent(listenerName);
         assertThat(event).isNotNull();
     }
@@ -620,7 +749,8 @@ public class ScenarioSteps {
     }
 
     @Then("I should receive a block and private data event on {string}")
-    public void assertReceiveBlockAndPrivateDataEventOnListener(String listenerName) throws InterruptedException, IOException {
+    public void assertReceiveBlockAndPrivateDataEventOnListener(String listenerName)
+            throws InterruptedException, IOException {
         BlockAndPrivateData event = currentGateway.nextBlockAndPrivateDataEvent(listenerName);
         assertThat(event).isNotNull();
     }
@@ -674,7 +804,7 @@ public class ScenarioSteps {
 
         // get STDERR for the process and print it
         try (InputStream errorStream = process.getErrorStream();
-             BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream))) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream))) {
             for (String line; (line = reader.readLine()) != null; ) {
                 System.err.println(line);
                 sb.append(line);
@@ -683,14 +813,16 @@ public class ScenarioSteps {
 
         // get STDOUT for the process and print it
         try (InputStream inputStream = process.getInputStream();
-             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
             for (String line; (line = reader.readLine()) != null; ) {
                 System.out.println(line);
                 sb.append(line);
             }
         }
 
-        assertThat(exitCode).withFailMessage("Failed to execute command: %s", commandString).isEqualTo(0);
+        assertThat(exitCode)
+                .withFailMessage("Failed to execute command: %s", commandString)
+                .isEqualTo(0);
         return sb.toString();
     }
 
@@ -727,7 +859,8 @@ public class ScenarioSteps {
         if (privateKey instanceof ECPrivateKey) {
             return Signers.newPrivateKeySigner(privateKey);
         }
-        throw new RuntimeException("Unexpected private key type: " + privateKey.getClass().getSimpleName());
+        throw new RuntimeException(
+                "Unexpected private key type: " + privateKey.getClass().getSimpleName());
     }
 
     private static String getOrgForMspId(String mspId) {
@@ -739,8 +872,17 @@ public class ScenarioSteps {
     }
 
     private static Path getCredentialPath(String user, String org) {
-        return Paths.get("..", "scenario", "fixtures", "crypto-material", "crypto-config",
-                "peerOrganizations", org, "users", user + "@" + org, "msp");
+        return Paths.get(
+                "..",
+                "scenario",
+                "fixtures",
+                "crypto-material",
+                "crypto-config",
+                "peerOrganizations",
+                org,
+                "users",
+                user + "@" + org,
+                "msp");
     }
 
     private static X509Certificate readX509Certificate(final Path certificatePath)

@@ -144,7 +144,8 @@ public interface Contract {
      * @throws CommitException if the transaction commits unsuccessfully.
      * @throws NullPointerException if the transaction name is null.
      */
-    byte[] submitTransaction(String name) throws EndorseException, CommitException, SubmitException, CommitStatusException;
+    byte[] submitTransaction(String name)
+            throws EndorseException, CommitException, SubmitException, CommitStatusException;
 
     /**
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
@@ -166,7 +167,8 @@ public interface Contract {
      * @throws CommitException if the transaction commits unsuccessfully.
      * @throws NullPointerException if the transaction name is null.
      */
-    byte[] submitTransaction(String name, String... args) throws EndorseException, SubmitException, CommitStatusException, CommitException;
+    byte[] submitTransaction(String name, String... args)
+            throws EndorseException, SubmitException, CommitStatusException, CommitException;
 
     /**
      * Submit a transaction to the ledger and return its result only after it is committed to the ledger. The
@@ -189,7 +191,8 @@ public interface Contract {
      * @throws CommitException if the transaction commits unsuccessfully.
      * @throws NullPointerException if the transaction name is null.
      */
-    byte[] submitTransaction(String name, byte[]... args) throws EndorseException, CommitException, SubmitException, CommitStatusException;
+    byte[] submitTransaction(String name, byte[]... args)
+            throws EndorseException, CommitException, SubmitException, CommitStatusException;
 
     /**
      * Evaluate a transaction function and return its results. A transaction proposal will be evaluated on endorsing

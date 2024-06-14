@@ -6,10 +6,24 @@
 
 package org.hyperledger.fabric.client;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
 import io.grpc.StatusRuntimeException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.X509Identity;
@@ -21,21 +35,6 @@ import org.hyperledger.fabric.protos.peer.TxValidationCode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 
 public final class SubmitTransactionTest {
     private static final TestUtils utils = TestUtils.getInstance();
@@ -79,7 +78,8 @@ public final class SubmitTransactionTest {
     @Test
     void returns_gateway_response() throws Exception {
         doReturn(utils.newEndorseResponse("MY_RESULT", "CHANNEL_NAME"))
-                .when(stub).endorse(any());
+                .when(stub)
+                .endorse(any());
 
         byte[] actual = contract.submitTransaction("TRANSACTION_NAME");
 
@@ -91,33 +91,35 @@ public final class SubmitTransactionTest {
         contract.submitTransaction("TRANSACTION_NAME");
 
         EndorseRequest request = mocker.captureEndorse();
-        String actual = mocker.getChaincodeSpec(request.getProposedTransaction()).getChaincodeId().getName();
+        String actual = mocker.getChaincodeSpec(request.getProposedTransaction())
+                .getChaincodeId()
+                .getName();
 
         assertThat(actual).isEqualTo(contract.getChaincodeName());
     }
 
     @Test
     void sends_transaction_name_for_default_contract() throws Exception {
-        network.getContract("CHAINCODE_NAME")
-                .submitTransaction("MY_TRANSACTION_NAME");
+        network.getContract("CHAINCODE_NAME").submitTransaction("MY_TRANSACTION_NAME");
 
         EndorseRequest request = mocker.captureEndorse();
-        List<String> chaincodeArgs = mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
-                .map(ByteString::toStringUtf8)
-                .collect(Collectors.toList());
+        List<String> chaincodeArgs =
+                mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
+                        .map(ByteString::toStringUtf8)
+                        .collect(Collectors.toList());
 
         assertThat(chaincodeArgs).first().isEqualTo("MY_TRANSACTION_NAME");
     }
 
     @Test
     void sends_transaction_name_for_specified_contract() throws Exception {
-        network.getContract("CHAINCODE_NAME", "MY_CONTRACT")
-                .submitTransaction("MY_TRANSACTION_NAME");
+        network.getContract("CHAINCODE_NAME", "MY_CONTRACT").submitTransaction("MY_TRANSACTION_NAME");
 
         EndorseRequest request = mocker.captureEndorse();
-        List<String> chaincodeArgs = mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
-                .map(ByteString::toStringUtf8)
-                .collect(Collectors.toList());
+        List<String> chaincodeArgs =
+                mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
+                        .map(ByteString::toStringUtf8)
+                        .collect(Collectors.toList());
 
         assertThat(chaincodeArgs).first().isEqualTo("MY_CONTRACT:MY_TRANSACTION_NAME");
     }
@@ -127,10 +129,11 @@ public final class SubmitTransactionTest {
         contract.submitTransaction("TRANSACTION_NAME", "one", "two", "three");
 
         EndorseRequest request = mocker.captureEndorse();
-        List<String> chaincodeArgs = mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
-                .skip(1)
-                .map(ByteString::toStringUtf8)
-                .collect(Collectors.toList());
+        List<String> chaincodeArgs =
+                mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
+                        .skip(1)
+                        .map(ByteString::toStringUtf8)
+                        .collect(Collectors.toList());
 
         assertThat(chaincodeArgs).containsExactly("one", "two", "three");
     }
@@ -143,10 +146,11 @@ public final class SubmitTransactionTest {
         contract.submitTransaction("TRANSACTION_NAME", arguments);
 
         EndorseRequest request = mocker.captureEndorse();
-        byte[][] chaincodeArgs = mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
-                .skip(1)
-                .map(ByteString::toByteArray)
-                .toArray(byte[][]::new);
+        byte[][] chaincodeArgs =
+                mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
+                        .skip(1)
+                        .map(ByteString::toByteArray)
+                        .toArray(byte[][]::new);
 
         assertThat(chaincodeArgs).isDeepEqualTo(arguments);
     }
@@ -161,10 +165,12 @@ public final class SubmitTransactionTest {
                 .submit();
 
         EndorseRequest request = mocker.captureEndorse();
-        Map<String, ByteString> transientData = mocker.getProposalPayload(request.getProposedTransaction()).getTransientMapMap();
-        assertThat(transientData).containsOnly(
-                entry("uno", ByteString.copyFrom("one", StandardCharsets.UTF_8)),
-                entry("dos", ByteString.copyFrom("two", StandardCharsets.UTF_8)));
+        Map<String, ByteString> transientData =
+                mocker.getProposalPayload(request.getProposedTransaction()).getTransientMapMap();
+        assertThat(transientData)
+                .containsOnly(
+                        entry("uno", ByteString.copyFrom("one", StandardCharsets.UTF_8)),
+                        entry("dos", ByteString.copyFrom("two", StandardCharsets.UTF_8)));
     }
 
     @Test
@@ -184,9 +190,7 @@ public final class SubmitTransactionTest {
     void uses_signer_for_endorse() throws Exception {
         Signer signer = (digest) -> "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
         try (Gateway gateway = mocker.getGatewayBuilder().signer(signer).connect()) {
-            gateway.getNetwork("NETWORK")
-                    .getContract("CHAINCODE_NAME")
-                    .submitTransaction("TRANSACTION_NAME");
+            gateway.getNetwork("NETWORK").getContract("CHAINCODE_NAME").submitTransaction("TRANSACTION_NAME");
 
             EndorseRequest request = mocker.captureEndorse();
             String signature = request.getProposedTransaction().getSignature().toStringUtf8();
@@ -199,12 +203,11 @@ public final class SubmitTransactionTest {
     void uses_identity() throws Exception {
         Identity identity = new X509Identity("MY_MSP_ID", utils.getCredentials().getCertificate());
         try (Gateway gateway = mocker.getGatewayBuilder().identity(identity).connect()) {
-            gateway.getNetwork("NETWORK")
-                    .getContract("CHAINCODE_NAME")
-                    .submitTransaction("TRANSACTION_NAME");
+            gateway.getNetwork("NETWORK").getContract("CHAINCODE_NAME").submitTransaction("TRANSACTION_NAME");
 
             EndorseRequest request = mocker.captureEndorse();
-            ByteString serializedIdentity = mocker.getSignatureHeader(request.getProposedTransaction()).getCreator();
+            ByteString serializedIdentity =
+                    mocker.getSignatureHeader(request.getProposedTransaction()).getCreator();
 
             byte[] expected = GatewayUtils.serializeIdentity(identity);
             assertThat(serializedIdentity.toByteArray()).isEqualTo(expected);
@@ -213,19 +216,18 @@ public final class SubmitTransactionTest {
 
     @Test
     void sends_network_name_in_proposal_for_default_contract() throws Exception {
-       network.getContract("CHAINCODE_NAME")
-                .submitTransaction("TRANSACTION_NAME");
+        network.getContract("CHAINCODE_NAME").submitTransaction("TRANSACTION_NAME");
 
         EndorseRequest request = mocker.captureEndorse();
-        String networkName = mocker.getChannelHeader(request.getProposedTransaction()).getChannelId();
+        String networkName =
+                mocker.getChannelHeader(request.getProposedTransaction()).getChannelId();
 
         assertThat(networkName).isEqualTo(network.getName());
     }
 
     @Test
     void sends_network_name_in_proposed_transaction_for_default_contract() throws Exception {
-        network.getContract("CHAINCODE_NAME")
-                .submitTransaction("TRANSACTION_NAME");
+        network.getContract("CHAINCODE_NAME").submitTransaction("TRANSACTION_NAME");
 
         EndorseRequest request = mocker.captureEndorse();
         String networkName = request.getChannelId();
@@ -235,19 +237,18 @@ public final class SubmitTransactionTest {
 
     @Test
     void sends_network_name_in_proposal_for_specified_contract() throws Exception {
-        network.getContract("CHAINCODE_NAME", "CONTRACT_NAME")
-                .submitTransaction("TRANSACTION_NAME");
+        network.getContract("CHAINCODE_NAME", "CONTRACT_NAME").submitTransaction("TRANSACTION_NAME");
 
         EndorseRequest request = mocker.captureEndorse();
-        String networkName = mocker.getChannelHeader(request.getProposedTransaction()).getChannelId();
+        String networkName =
+                mocker.getChannelHeader(request.getProposedTransaction()).getChannelId();
 
         assertThat(networkName).isEqualTo(network.getName());
     }
 
     @Test
     void sends_network_name_in_proposed_transaction_for_specified_contract() throws Exception {
-        network.getContract("CHAINCODE_NAME", "CONTRACT_NAME")
-                .submitTransaction("TRANSACTION_NAME");
+        network.getContract("CHAINCODE_NAME", "CONTRACT_NAME").submitTransaction("TRANSACTION_NAME");
 
         EndorseRequest request = mocker.captureEndorse();
         String networkName = request.getChannelId();
@@ -283,9 +284,7 @@ public final class SubmitTransactionTest {
     void uses_signer_for_submit() throws Exception {
         Signer signer = (digest) -> "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
         try (Gateway gateway = mocker.getGatewayBuilder().signer(signer).connect()) {
-            gateway.getNetwork("NETWORK")
-                    .getContract("CHAINCODE_NAME")
-                    .submitTransaction("TRANSACTION_NAME");
+            gateway.getNetwork("NETWORK").getContract("CHAINCODE_NAME").submitTransaction("TRANSACTION_NAME");
 
             SubmitRequest request = mocker.captureSubmit();
             String signature = request.getPreparedTransaction().getSignature().toStringUtf8();
@@ -303,10 +302,9 @@ public final class SubmitTransactionTest {
             return "SIGNATURE".getBytes(StandardCharsets.UTF_8);
         };
 
-        try (Gateway gateway = mocker.getGatewayBuilder().hash(hash).signer(signer).connect()) {
-            gateway.getNetwork("NETWORK")
-                    .getContract("CHAINCODE_NAME")
-                    .submitTransaction("TRANSACTION_NAME");
+        try (Gateway gateway =
+                mocker.getGatewayBuilder().hash(hash).signer(signer).connect()) {
+            gateway.getNetwork("NETWORK").getContract("CHAINCODE_NAME").submitTransaction("TRANSACTION_NAME");
 
             assertThat(actual).hasSameElementsAs(Arrays.asList("MY_DIGEST", "MY_DIGEST"));
         }
@@ -330,9 +328,8 @@ public final class SubmitTransactionTest {
         StatusRuntimeException expected = new StatusRuntimeException(io.grpc.Status.UNAVAILABLE);
         doThrow(expected).when(stub).submit(any());
 
-        Transaction transaction = contract.newProposal("TRANSACTION_NAME")
-                .build()
-                .endorse();
+        Transaction transaction =
+                contract.newProposal("TRANSACTION_NAME").build().endorse();
 
         SubmitException e = catchThrowableOfType(transaction::submit, SubmitException.class);
         assertThat(e.getTransactionId()).isEqualTo(transaction.getTransactionId());
@@ -345,10 +342,8 @@ public final class SubmitTransactionTest {
         StatusRuntimeException expected = new StatusRuntimeException(io.grpc.Status.UNAVAILABLE);
         doThrow(expected).when(stub).commitStatus(any());
 
-        SubmittedTransaction commit = contract.newProposal("TRANSACTION_NAME")
-                .build()
-                .endorse()
-                .submitAsync();
+        SubmittedTransaction commit =
+                contract.newProposal("TRANSACTION_NAME").build().endorse().submitAsync();
 
         CommitStatusException e = catchThrowableOfType(commit::getStatus, CommitStatusException.class);
         assertThat(e.getTransactionId()).isEqualTo(commit.getTransactionId());
@@ -359,11 +354,11 @@ public final class SubmitTransactionTest {
     @Test
     void throws_on_commit_failure() throws EndorseException {
         doReturn(utils.newCommitStatusResponse(TxValidationCode.MVCC_READ_CONFLICT))
-                .when(stub).commitStatus(any());
+                .when(stub)
+                .commitStatus(any());
 
-        Transaction transaction = contract.newProposal("TRANSACTION_NAME")
-                .build()
-                .endorse();
+        Transaction transaction =
+                contract.newProposal("TRANSACTION_NAME").build().endorse();
 
         CommitException e = catchThrowableOfType(transaction::submit, CommitException.class);
 
@@ -401,7 +396,8 @@ public final class SubmitTransactionTest {
     @Test
     void commit_returns_transaction_validation_code() throws EndorseException, SubmitException, CommitStatusException {
         doReturn(utils.newCommitStatusResponse(TxValidationCode.MVCC_READ_CONFLICT))
-                .when(stub).commitStatus(any());
+                .when(stub)
+                .commitStatus(any());
 
         Status status = contract.newProposal("TRANSACTION_NAME")
                 .build()
@@ -413,7 +409,8 @@ public final class SubmitTransactionTest {
     }
 
     @Test
-    void commit_returns_successful_for_successful_transaction() throws EndorseException, SubmitException, CommitStatusException {
+    void commit_returns_successful_for_successful_transaction()
+            throws EndorseException, SubmitException, CommitStatusException {
         Status status = contract.newProposal("TRANSACTION_NAME")
                 .build()
                 .endorse()
@@ -424,9 +421,11 @@ public final class SubmitTransactionTest {
     }
 
     @Test
-    void commit_returns_unsuccessful_for_failed_transaction() throws EndorseException, SubmitException, CommitStatusException {
+    void commit_returns_unsuccessful_for_failed_transaction()
+            throws EndorseException, SubmitException, CommitStatusException {
         doReturn(utils.newCommitStatusResponse(TxValidationCode.MVCC_READ_CONFLICT))
-                .when(stub).commitStatus(any());
+                .when(stub)
+                .commitStatus(any());
 
         Status status = contract.newProposal("TRANSACTION_NAME")
                 .build()
@@ -440,7 +439,8 @@ public final class SubmitTransactionTest {
     @Test
     void commit_returns_block_number() throws EndorseException, SubmitException, CommitStatusException {
         doReturn(utils.newCommitStatusResponse(TxValidationCode.MVCC_READ_CONFLICT, 101))
-                .when(stub).commitStatus(any());
+                .when(stub)
+                .commitStatus(any());
 
         Status status = contract.newProposal("TRANSACTION_NAME")
                 .build()
@@ -456,30 +456,20 @@ public final class SubmitTransactionTest {
     void endorse_uses_legacy_specified_call_options() throws EndorseException {
         Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
 
-        contract.newProposal("TRANSACTION_NAME")
-                .build()
-                .endorse(CallOption.deadline(expected));
+        contract.newProposal("TRANSACTION_NAME").build().endorse(CallOption.deadline(expected));
 
         List<CallOptions> actual = mocker.captureCallOptions();
-        assertThat(actual)
-                .first()
-                .extracting(CallOptions::getDeadline)
-                .isEqualTo(expected);
+        assertThat(actual).first().extracting(CallOptions::getDeadline).isEqualTo(expected);
     }
 
     @Test
     void endorse_uses_specified_call_options() throws EndorseException {
         Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
 
-        contract.newProposal("TRANSACTION_NAME")
-                .build()
-                .endorse(options -> options.withDeadline(expected));
+        contract.newProposal("TRANSACTION_NAME").build().endorse(options -> options.withDeadline(expected));
 
         List<CallOptions> actual = mocker.captureCallOptions();
-        assertThat(actual)
-                .first()
-                .extracting(CallOptions::getDeadline)
-                .isEqualTo(expected);
+        assertThat(actual).first().extracting(CallOptions::getDeadline).isEqualTo(expected);
     }
 
     @Test
@@ -498,23 +488,15 @@ public final class SubmitTransactionTest {
         }
 
         List<CallOptions> actual = mocker.captureCallOptions();
-        assertThat(actual)
-                .first()
-                .extracting(CallOptions::getDeadline)
-                .isEqualTo(expected);
+        assertThat(actual).first().extracting(CallOptions::getDeadline).isEqualTo(expected);
     }
 
     @Test
     void endorse_uses_default_call_options() throws EndorseException {
-        contract.newProposal("TRANSACTION_NAME")
-                .build()
-                .endorse();
+        contract.newProposal("TRANSACTION_NAME").build().endorse();
 
         List<CallOptions> actual = mocker.captureCallOptions();
-        assertThat(actual)
-                .first()
-                .extracting(CallOptions::getDeadline)
-                .isEqualTo(defaultEndorseDeadline);
+        assertThat(actual).first().extracting(CallOptions::getDeadline).isEqualTo(defaultEndorseDeadline);
     }
 
     @Test
@@ -522,41 +504,34 @@ public final class SubmitTransactionTest {
     void submit_uses_legacy_specified_call_options_for_submit_and_commitStatus()
             throws CommitException, EndorseException, SubmitException, CommitStatusException {
         Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
-        Transaction transaction = contract.newProposal("TRANSACTION_NAME")
-                .build()
-                .endorse();
+        Transaction transaction =
+                contract.newProposal("TRANSACTION_NAME").build().endorse();
         mocker.reset();
 
         transaction.submit(CallOption.deadline(expected));
 
         List<CallOptions> actual = mocker.captureCallOptions();
-        assertThat(actual)
-                .hasSize(2)
-                .extracting(CallOptions::getDeadline)
-                .containsOnly(expected);
+        assertThat(actual).hasSize(2).extracting(CallOptions::getDeadline).containsOnly(expected);
     }
 
     @Test
-    void submit_uses_specified_call_options_for_submit_and_commitStatus() throws CommitException, EndorseException, SubmitException, CommitStatusException {
+    void submit_uses_specified_call_options_for_submit_and_commitStatus()
+            throws CommitException, EndorseException, SubmitException, CommitStatusException {
         Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
-        Transaction transaction = contract.newProposal("TRANSACTION_NAME")
-                .build()
-                .endorse();
+        Transaction transaction =
+                contract.newProposal("TRANSACTION_NAME").build().endorse();
         mocker.reset();
 
         transaction.submit(options -> options.withDeadline(expected));
 
         List<CallOptions> actual = mocker.captureCallOptions();
-        assertThat(actual)
-                .hasSize(2)
-                .extracting(CallOptions::getDeadline)
-                .containsOnly(expected);
+        assertThat(actual).hasSize(2).extracting(CallOptions::getDeadline).containsOnly(expected);
     }
 
     @Test
     @SuppressWarnings("deprecation")
-    void submit_uses_legacy_default_call_options_for_submit_and_commitStatus() throws CommitException, EndorseException, SubmitException,
-            CommitStatusException {
+    void submit_uses_legacy_default_call_options_for_submit_and_commitStatus()
+            throws CommitException, EndorseException, SubmitException, CommitStatusException {
         Deadline submitDeadline = Deadline.after(1, TimeUnit.MINUTES);
         Deadline commitStatusDeadline = Deadline.after(2, TimeUnit.MINUTES);
 
@@ -565,7 +540,8 @@ public final class SubmitTransactionTest {
                 .commitStatusOptions(CallOption.deadline(commitStatusDeadline))
                 .connect()) {
             Transaction transaction = gateway.getNetwork("NETWORK")
-                    .getContract("CHAINCODE_NAME").newProposal("TRANSACTION_NAME")
+                    .getContract("CHAINCODE_NAME")
+                    .newProposal("TRANSACTION_NAME")
                     .build()
                     .endorse();
             mocker.reset();
@@ -581,10 +557,10 @@ public final class SubmitTransactionTest {
     }
 
     @Test
-    void submit_uses_default_call_options_for_submit_and_commitStatus() throws CommitException, EndorseException, SubmitException, CommitStatusException {
-        Transaction transaction = contract.newProposal("TRANSACTION_NAME")
-                .build()
-                .endorse();
+    void submit_uses_default_call_options_for_submit_and_commitStatus()
+            throws CommitException, EndorseException, SubmitException, CommitStatusException {
+        Transaction transaction =
+                contract.newProposal("TRANSACTION_NAME").build().endorse();
         mocker.reset();
 
         transaction.submit();

@@ -6,11 +6,10 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.ArrayList;
+import java.util.List;
 import org.hyperledger.fabric.protos.common.ChannelHeader;
 import org.hyperledger.fabric.protos.common.Envelope;
 import org.hyperledger.fabric.protos.common.Header;
@@ -48,7 +47,8 @@ final class TransactionEnvelopeParser {
     }
 
     private ByteString parseResult(final Payload payload) throws InvalidProtocolBufferException {
-        org.hyperledger.fabric.protos.peer.Transaction transaction = org.hyperledger.fabric.protos.peer.Transaction.parseFrom(payload.getData());
+        org.hyperledger.fabric.protos.peer.Transaction transaction =
+                org.hyperledger.fabric.protos.peer.Transaction.parseFrom(payload.getData());
 
         List<InvalidProtocolBufferException> parseExceptions = new ArrayList<>();
 
@@ -67,7 +67,8 @@ final class TransactionEnvelopeParser {
 
     private ByteString parseResult(final TransactionAction transactionAction) throws InvalidProtocolBufferException {
         ChaincodeActionPayload actionPayload = ChaincodeActionPayload.parseFrom(transactionAction.getPayload());
-        ProposalResponsePayload responsePayload = ProposalResponsePayload.parseFrom(actionPayload.getAction().getProposalResponsePayload());
+        ProposalResponsePayload responsePayload =
+                ProposalResponsePayload.parseFrom(actionPayload.getAction().getProposalResponsePayload());
         ChaincodeAction chaincodeAction = ChaincodeAction.parseFrom(responsePayload.getExtension());
         return chaincodeAction.getResponse().getPayload();
     }

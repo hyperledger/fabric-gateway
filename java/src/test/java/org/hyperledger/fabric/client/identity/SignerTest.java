@@ -6,9 +6,8 @@
 
 package org.hyperledger.fabric.client.identity;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.hyperledger.fabric.client.Hash;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -19,15 +18,16 @@ import java.security.Provider;
 import java.security.Signature;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.hyperledger.fabric.client.Hash;
+import org.junit.jupiter.api.Test;
 
 public final class SignerTest {
     private static final Provider PROVIDER = new BouncyCastleProvider();
     private static final byte[] MESSAGE = "MESSAGE".getBytes(StandardCharsets.UTF_8);
 
-    private static void assertValidSignature(Signature verifier, X509Certificate certificate, final byte[] signature) throws GeneralSecurityException {
+    private static void assertValidSignature(Signature verifier, X509Certificate certificate, final byte[] signature)
+            throws GeneralSecurityException {
         verifier.initVerify(certificate);
         verifier.update(MESSAGE);
         assertThat(verifier.verify(signature))
@@ -36,7 +36,8 @@ public final class SignerTest {
     }
 
     @Test
-    void new_signer_from_unsupported_private_key_type_throws_IllegalArgumentException() throws NoSuchAlgorithmException {
+    void new_signer_from_unsupported_private_key_type_throws_IllegalArgumentException()
+            throws NoSuchAlgorithmException {
         KeyPairGenerator generator = KeyPairGenerator.getInstance("DSA", new BouncyCastleProvider());
         generator.initialize(2048);
         KeyPair keyPair = generator.generateKeyPair();
@@ -60,8 +61,7 @@ public final class SignerTest {
         X509Credentials credentials = new X509Credentials();
         Signer signer = Signers.newPrivateKeySigner(credentials.getPrivateKey());
 
-        assertThatThrownBy(() -> signer.sign(null))
-            .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> signer.sign(null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test

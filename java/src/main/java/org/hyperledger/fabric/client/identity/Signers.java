@@ -45,10 +45,10 @@ public final class Signers {
             return new PrivateKeySigner(privateKey, ED25519_ALGORITHM);
         }
 
-        throw new IllegalArgumentException("Unsupported private key type: " + privateKey.getClass().getTypeName()
-                + " (" + privateKey.getAlgorithm() + ")");
+        throw new IllegalArgumentException("Unsupported private key type: "
+                + privateKey.getClass().getTypeName() + " (" + privateKey.getAlgorithm() + ")");
     }
 
     // Private constructor to prevent instantiation
-    private Signers() { }
+    private Signers() {}
 }

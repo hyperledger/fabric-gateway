@@ -8,11 +8,10 @@ package org.hyperledger.fabric.client;
 
 import io.grpc.CallOptions;
 import io.grpc.Channel;
-import org.hyperledger.fabric.client.identity.Identity;
-import org.hyperledger.fabric.client.identity.Signer;
-
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
+import org.hyperledger.fabric.client.identity.Identity;
+import org.hyperledger.fabric.client.identity.Signer;
 
 /**
  * The Gateway provides the connection point for an application to access the Fabric network as a specific user. It is

@@ -23,7 +23,11 @@ final class ChaincodeEventImpl implements ChaincodeEvent {
         this.chaincodeName = event.getChaincodeId();
         this.eventName = event.getEventName();
         this.payload = event.getPayload();
-        this.hash = Objects.hash(blockNumber, transactionId, chaincodeName, eventName); // Ignore potentially large payload; this is good enough
+        this.hash = Objects.hash(
+                blockNumber,
+                transactionId,
+                chaincodeName,
+                eventName); // Ignore potentially large payload; this is good enough
     }
 
     @Override
@@ -73,7 +77,8 @@ final class ChaincodeEventImpl implements ChaincodeEvent {
 
     @Override
     public String toString() {
-        return GatewayUtils.toString(this,
+        return GatewayUtils.toString(
+                this,
                 "blockNumber: " + blockNumber,
                 "transactionId: " + transactionId,
                 "chaincodeName: " + chaincodeName,

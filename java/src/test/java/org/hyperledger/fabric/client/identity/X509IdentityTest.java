@@ -6,13 +6,12 @@
 
 package org.hyperledger.fabric.client.identity;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public final class X509IdentityTest {
     private static final String mspId = "mspId";

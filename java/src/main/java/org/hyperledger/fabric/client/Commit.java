@@ -6,9 +6,8 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.UnaryOperator;
-
 import io.grpc.CallOptions;
+import java.util.function.UnaryOperator;
 
 /**
  * Allows access to information about a transaction that is committed to the ledger.

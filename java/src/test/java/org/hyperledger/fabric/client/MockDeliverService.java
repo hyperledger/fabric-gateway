@@ -27,21 +27,24 @@ public final class MockDeliverService extends DeliverGrpc.DeliverImplBase {
     @Override
     public StreamObserver<Envelope> deliver(final StreamObserver<DeliverResponse> responseObserver) {
         synchronized (stub) {
-            return testUtils.invokeStubDuplexCall(stub::blockEvents, (ServerCallStreamObserver<DeliverResponse>) responseObserver, 1);
+            return testUtils.invokeStubDuplexCall(
+                    stub::blockEvents, (ServerCallStreamObserver<DeliverResponse>) responseObserver, 1);
         }
     }
 
     @Override
     public StreamObserver<Envelope> deliverFiltered(final StreamObserver<DeliverResponse> responseObserver) {
         synchronized (stub) {
-            return testUtils.invokeStubDuplexCall(stub::filteredBlockEvents, (ServerCallStreamObserver<DeliverResponse>) responseObserver, 1);
+            return testUtils.invokeStubDuplexCall(
+                    stub::filteredBlockEvents, (ServerCallStreamObserver<DeliverResponse>) responseObserver, 1);
         }
     }
 
     @Override
     public StreamObserver<Envelope> deliverWithPrivateData(final StreamObserver<DeliverResponse> responseObserver) {
         synchronized (stub) {
-            return testUtils.invokeStubDuplexCall(stub::blockAndPrivateDataEvents, (ServerCallStreamObserver<DeliverResponse>) responseObserver, 1);
+            return testUtils.invokeStubDuplexCall(
+                    stub::blockAndPrivateDataEvents, (ServerCallStreamObserver<DeliverResponse>) responseObserver, 1);
         }
     }
 }

@@ -6,18 +6,17 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.UnaryOperator;
-import java.util.stream.Stream;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 
 import io.grpc.CallOptions;
+import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 import org.hyperledger.fabric.protos.common.Block;
 import org.hyperledger.fabric.protos.common.BlockHeader;
 import org.hyperledger.fabric.protos.common.Envelope;
 import org.hyperledger.fabric.protos.peer.DeliverResponse;
-
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 
 public final class BlockEventsTest extends CommonBlockEventsTest<Block> {
     @Override
@@ -28,9 +27,7 @@ public final class BlockEventsTest extends CommonBlockEventsTest<Block> {
     @Override
     protected DeliverResponse newDeliverResponse(final long blockNumber) {
         return DeliverResponse.newBuilder()
-                .setBlock(Block.newBuilder()
-                        .setHeader(BlockHeader.newBuilder().setNumber(blockNumber))
-                )
+                .setBlock(Block.newBuilder().setHeader(BlockHeader.newBuilder().setNumber(blockNumber)))
                 .build();
     }
 
@@ -69,4 +66,3 @@ public final class BlockEventsTest extends CommonBlockEventsTest<Block> {
         return response.getBlock();
     }
 }
-

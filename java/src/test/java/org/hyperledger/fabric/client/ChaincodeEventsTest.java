@@ -6,17 +6,23 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsRequest;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
@@ -24,13 +30,6 @@ import org.hyperledger.fabric.protos.orderer.SeekPosition;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 
 public final class ChaincodeEventsTest {
     private static final Deadline defaultDeadline = Deadline.after(1, TimeUnit.DAYS);
@@ -62,7 +61,9 @@ public final class ChaincodeEventsTest {
     }
 
     void assertStartPosition(final ChaincodeEventsRequest actual, final Checkpoint checkpoint) {
-        long blockNumber = checkpoint.getBlockNumber().orElseThrow(() -> new IllegalArgumentException("No checkoint block number set"));
+        long blockNumber = checkpoint
+                .getBlockNumber()
+                .orElseThrow(() -> new IllegalArgumentException("No checkoint block number set"));
         String transactionId = checkpoint.getTransactionId().orElse("");
         assertStartPosition(actual, blockNumber, transactionId);
     }
@@ -98,11 +99,10 @@ public final class ChaincodeEventsTest {
         GatewayRuntimeException e = catchThrowableOfType(
                 () -> {
                     try (CloseableIterator<ChaincodeEvent> events = network.getChaincodeEvents("CHAINCODE_NAME")) {
-                        events.forEachRemaining(event -> { });
+                        events.forEachRemaining(event -> {});
                     }
                 },
-                GatewayRuntimeException.class
-        );
+                GatewayRuntimeException.class);
         assertThat(e.getStatus()).isEqualTo(expected.getStatus());
         assertThat(e).hasCauseInstanceOf(StatusRuntimeException.class);
     }
@@ -131,7 +131,8 @@ public final class ChaincodeEventsTest {
     }
 
     @Test
-    void sends_valid_request_with_specified_start_block_number_using_sign_bit_for_unsigned_64bit_value() throws Exception {
+    void sends_valid_request_with_specified_start_block_number_using_sign_bit_for_unsigned_64bit_value()
+            throws Exception {
         long startBlock = -1;
         EventsRequest<ChaincodeEvent> eventsRequest = network.newChaincodeEventsRequest("CHAINCODE_NAME")
                 .startBlock(startBlock)
@@ -226,14 +227,15 @@ public final class ChaincodeEventsTest {
     }
 
     @Test
-    void uses_checkpointed_chaincode_event_block_and_transaction() throws  Exception {
+    void uses_checkpointed_chaincode_event_block_and_transaction() throws Exception {
         long blockNumber = 1;
-        org.hyperledger.fabric.protos.peer.ChaincodeEvent event = org.hyperledger.fabric.protos.peer.ChaincodeEvent.newBuilder()
-                .setChaincodeId("CHAINCODE_NAME")
-                .setTxId("tx1")
-                .setEventName("event")
-                .setPayload(ByteString.copyFromUtf8("payload1"))
-                .build();
+        org.hyperledger.fabric.protos.peer.ChaincodeEvent event =
+                org.hyperledger.fabric.protos.peer.ChaincodeEvent.newBuilder()
+                        .setChaincodeId("CHAINCODE_NAME")
+                        .setTxId("tx1")
+                        .setEventName("event")
+                        .setPayload(ByteString.copyFromUtf8("payload1"))
+                        .build();
         ChaincodeEventImpl chaincodeEvent = new ChaincodeEventImpl(blockNumber, event);
         Checkpointer checkpointer = new InMemoryCheckpointer();
 
@@ -252,24 +254,27 @@ public final class ChaincodeEventsTest {
 
     @Test
     void returns_events() {
-        org.hyperledger.fabric.protos.peer.ChaincodeEvent event1 = org.hyperledger.fabric.protos.peer.ChaincodeEvent.newBuilder()
-                .setChaincodeId("CHAINCODE_NAME")
-                .setTxId("tx1")
-                .setEventName("event1")
-                .setPayload(ByteString.copyFromUtf8("payload1"))
-                .build();
-        org.hyperledger.fabric.protos.peer.ChaincodeEvent event2 = org.hyperledger.fabric.protos.peer.ChaincodeEvent.newBuilder()
-                .setChaincodeId("CHAINCODE_NAME")
-                .setTxId("tx2")
-                .setEventName("event2")
-                .setPayload(ByteString.copyFromUtf8("payload2"))
-                .build();
-        org.hyperledger.fabric.protos.peer.ChaincodeEvent event3 = org.hyperledger.fabric.protos.peer.ChaincodeEvent.newBuilder()
-                .setChaincodeId("CHAINCODE_NAME")
-                .setTxId("tx3")
-                .setEventName("event3")
-                .setPayload(ByteString.copyFromUtf8("payload3"))
-                .build();
+        org.hyperledger.fabric.protos.peer.ChaincodeEvent event1 =
+                org.hyperledger.fabric.protos.peer.ChaincodeEvent.newBuilder()
+                        .setChaincodeId("CHAINCODE_NAME")
+                        .setTxId("tx1")
+                        .setEventName("event1")
+                        .setPayload(ByteString.copyFromUtf8("payload1"))
+                        .build();
+        org.hyperledger.fabric.protos.peer.ChaincodeEvent event2 =
+                org.hyperledger.fabric.protos.peer.ChaincodeEvent.newBuilder()
+                        .setChaincodeId("CHAINCODE_NAME")
+                        .setTxId("tx2")
+                        .setEventName("event2")
+                        .setPayload(ByteString.copyFromUtf8("payload2"))
+                        .build();
+        org.hyperledger.fabric.protos.peer.ChaincodeEvent event3 =
+                org.hyperledger.fabric.protos.peer.ChaincodeEvent.newBuilder()
+                        .setChaincodeId("CHAINCODE_NAME")
+                        .setTxId("tx3")
+                        .setEventName("event3")
+                        .setPayload(ByteString.copyFromUtf8("payload3"))
+                        .build();
 
         Stream<ChaincodeEventsResponse> responses = Stream.of(
                 ChaincodeEventsResponse.newBuilder()
@@ -280,30 +285,27 @@ public final class ChaincodeEventsTest {
                 ChaincodeEventsResponse.newBuilder()
                         .setBlockNumber(2)
                         .addEvents(event3)
-                        .build()
-        );
+                        .build());
         doReturn(responses).when(stub).chaincodeEvents(any());
 
         try (CloseableIterator<ChaincodeEvent> actual = network.getChaincodeEvents("CHAINCODE_NAME")) {
             List<ChaincodeEvent> expected = Arrays.asList(
                     new ChaincodeEventImpl(1, event1),
                     new ChaincodeEventImpl(1, event2),
-                    new ChaincodeEventImpl(2, event3)
-            );
-            assertThat(actual)
-                    .toIterable()
-                    .hasSameElementsAs(expected);
+                    new ChaincodeEventImpl(2, event3));
+            assertThat(actual).toIterable().hasSameElementsAs(expected);
         }
     }
 
     @Test
     void close_stops_receiving_events() {
-        org.hyperledger.fabric.protos.peer.ChaincodeEvent event1 = org.hyperledger.fabric.protos.peer.ChaincodeEvent.newBuilder()
-                .setChaincodeId("CHAINCODE_NAME")
-                .setTxId("tx1")
-                .setEventName("event1")
-                .setPayload(ByteString.copyFromUtf8("payload1"))
-                .build();
+        org.hyperledger.fabric.protos.peer.ChaincodeEvent event1 =
+                org.hyperledger.fabric.protos.peer.ChaincodeEvent.newBuilder()
+                        .setChaincodeId("CHAINCODE_NAME")
+                        .setTxId("tx1")
+                        .setEventName("event1")
+                        .setPayload(ByteString.copyFromUtf8("payload1"))
+                        .build();
         ChaincodeEventsResponse response = ChaincodeEventsResponse.newBuilder()
                 .setBlockNumber(1)
                 .addEvents(event1)
@@ -319,10 +321,8 @@ public final class ChaincodeEventsTest {
             eventIter.close();
         }
 
-        GatewayRuntimeException e = catchThrowableOfType(
-                () -> eventIter.forEachRemaining(event -> { }),
-                GatewayRuntimeException.class
-        );
+        GatewayRuntimeException e =
+                catchThrowableOfType(() -> eventIter.forEachRemaining(event -> {}), GatewayRuntimeException.class);
         assertThat(e).hasCauseInstanceOf(StatusRuntimeException.class);
         assertThat(e.getStatus().getCode()).isEqualTo(Status.Code.CANCELLED);
     }
@@ -334,21 +334,18 @@ public final class ChaincodeEventsTest {
         assertRequestInitiated(() -> network.getChaincodeEvents("CHAINCODE_NAME", CallOption.deadline(expected)));
 
         List<CallOptions> actual = mocker.captureCallOptions();
-        assertThat(actual).first()
-                .extracting(CallOptions::getDeadline)
-                .isEqualTo(expected);
+        assertThat(actual).first().extracting(CallOptions::getDeadline).isEqualTo(expected);
     }
 
     @Test
     void uses_specified_call_options() {
         Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
 
-        assertRequestInitiated(() -> network.getChaincodeEvents("CHAINCODE_NAME", options -> options.withDeadline(expected)));
+        assertRequestInitiated(
+                () -> network.getChaincodeEvents("CHAINCODE_NAME", options -> options.withDeadline(expected)));
 
         List<CallOptions> actual = mocker.captureCallOptions();
-        assertThat(actual).first()
-                .extracting(CallOptions::getDeadline)
-                .isEqualTo(expected);
+        assertThat(actual).first().extracting(CallOptions::getDeadline).isEqualTo(expected);
     }
 
     @Test
@@ -364,9 +361,7 @@ public final class ChaincodeEventsTest {
         }
 
         List<CallOptions> actual = mocker.captureCallOptions();
-        assertThat(actual).first()
-                .extracting(CallOptions::getDeadline)
-                .isEqualTo(expected);
+        assertThat(actual).first().extracting(CallOptions::getDeadline).isEqualTo(expected);
     }
 
     @Test
@@ -374,8 +369,6 @@ public final class ChaincodeEventsTest {
         assertRequestInitiated(() -> network.getChaincodeEvents("CHAINCODE_NAME"));
 
         List<CallOptions> actual = mocker.captureCallOptions();
-        assertThat(actual).first()
-                .extracting(CallOptions::getDeadline)
-                .isEqualTo(defaultDeadline);
+        assertThat(actual).first().extracting(CallOptions::getDeadline).isEqualTo(defaultDeadline);
     }
 }

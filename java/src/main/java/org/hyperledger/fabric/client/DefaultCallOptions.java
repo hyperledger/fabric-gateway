@@ -6,14 +6,13 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.UnaryOperator;
-
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
 import io.grpc.MethodDescriptor;
 import io.grpc.stub.AbstractStub;
+import java.util.function.UnaryOperator;
 
 final class DefaultCallOptions {
     private final UnaryOperator<CallOptions> evaluate;
@@ -56,7 +55,8 @@ final class DefaultCallOptions {
         return applyOptions(applyOptions(stub, additional), commitStatus);
     }
 
-    public <T extends AbstractStub<T>> T applyChaincodeEvents(final T stub, final UnaryOperator<CallOptions> additional) {
+    public <T extends AbstractStub<T>> T applyChaincodeEvents(
+            final T stub, final UnaryOperator<CallOptions> additional) {
         return applyOptions(applyOptions(stub, additional), chaincodeEvents);
     }
 
@@ -64,11 +64,13 @@ final class DefaultCallOptions {
         return applyOptions(applyOptions(stub, additional), blockEvents);
     }
 
-    public <T extends AbstractStub<T>> T applyFilteredBlockEvents(final T stub, final UnaryOperator<CallOptions> additional) {
+    public <T extends AbstractStub<T>> T applyFilteredBlockEvents(
+            final T stub, final UnaryOperator<CallOptions> additional) {
         return applyOptions(applyOptions(stub, additional), filteredBlockEvents);
     }
 
-    public <T extends AbstractStub<T>> T applyBlockAndPrivateDataEvents(final T stub, final UnaryOperator<CallOptions> additional) {
+    public <T extends AbstractStub<T>> T applyBlockAndPrivateDataEvents(
+            final T stub, final UnaryOperator<CallOptions> additional) {
         return applyOptions(applyOptions(stub, additional), blockAndPrivateDataEvents);
     }
 
@@ -83,8 +85,7 @@ final class DefaultCallOptions {
             public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
                     final MethodDescriptor<ReqT, RespT> methodDescriptor,
                     final CallOptions callOptions,
-                    final Channel channel
-            ) {
+                    final Channel channel) {
                 return channel.newCall(methodDescriptor, operator.apply(callOptions));
             }
         });

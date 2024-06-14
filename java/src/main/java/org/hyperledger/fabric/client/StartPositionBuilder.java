@@ -11,11 +11,12 @@ import org.hyperledger.fabric.protos.orderer.SeekPosition;
 import org.hyperledger.fabric.protos.orderer.SeekSpecified;
 
 final class StartPositionBuilder implements Builder<SeekPosition> {
-    private final SeekPosition.Builder builder = SeekPosition.newBuilder()
-            .setNextCommit(SeekNextCommit.getDefaultInstance());
+    private final SeekPosition.Builder builder =
+            SeekPosition.newBuilder().setNextCommit(SeekNextCommit.getDefaultInstance());
 
     public StartPositionBuilder startBlock(final long blockNumber) {
-        SeekSpecified specified = SeekSpecified.newBuilder().setNumber(blockNumber).build();
+        SeekSpecified specified =
+                SeekSpecified.newBuilder().setNumber(blockNumber).build();
         builder.setSpecified(specified);
         return this;
     }

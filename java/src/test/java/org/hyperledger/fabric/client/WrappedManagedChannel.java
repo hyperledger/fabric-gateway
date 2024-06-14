@@ -6,13 +6,12 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Wrapper for an existing managed channel to allow mocking of final channel implementation classes.
@@ -51,7 +50,8 @@ public class WrappedManagedChannel extends ManagedChannel {
     }
 
     @Override
-    public <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(final MethodDescriptor<RequestT, ResponseT> methodDescriptor, final CallOptions callOptions) {
+    public <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
+            final MethodDescriptor<RequestT, ResponseT> methodDescriptor, final CallOptions callOptions) {
         return channel.newCall(methodDescriptor, callOptions);
     }
 

@@ -6,16 +6,15 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.concurrent.TimeUnit;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public final class NetworkTest {
     private static final TestUtils testUtils = TestUtils.getInstance();
@@ -26,7 +25,9 @@ public final class NetworkTest {
 
     @BeforeEach
     void beforeEach() {
-        channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
+        channel = ManagedChannelBuilder.forAddress("example.org", 1337)
+                .usePlaintext()
+                .build();
         gateway = testUtils.newGatewayBuilder().connection(channel).connect();
         network = gateway.getNetwork("ch1");
     }

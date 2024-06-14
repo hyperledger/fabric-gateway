@@ -12,9 +12,12 @@ import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 final class SubmittedTransactionImpl extends CommitImpl implements SubmittedTransaction {
     private final ByteString result;
 
-    SubmittedTransactionImpl(final GatewayClient client, final SigningIdentity signingIdentity,
-                             final String transactionId, final SignedCommitStatusRequest signedRequest,
-                             final ByteString result) {
+    SubmittedTransactionImpl(
+            final GatewayClient client,
+            final SigningIdentity signingIdentity,
+            final String transactionId,
+            final SignedCommitStatusRequest signedRequest,
+            final ByteString result) {
         super(client, signingIdentity, transactionId, signedRequest);
         this.result = result;
     }

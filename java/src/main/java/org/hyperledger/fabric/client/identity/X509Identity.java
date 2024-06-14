@@ -59,8 +59,7 @@ public final class X509Identity implements Identity {
         }
 
         X509Identity that = (X509Identity) other;
-        return Objects.equals(this.mspId, that.mspId)
-                && Arrays.equals(this.credentials, that.credentials);
+        return Objects.equals(this.mspId, that.mspId) && Arrays.equals(this.credentials, that.credentials);
     }
 
     @Override

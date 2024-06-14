@@ -22,10 +22,7 @@ final class BlockEventsEnvelopeBuilder {
     private final StartPositionBuilder startPositionBuilder = new StartPositionBuilder();
 
     BlockEventsEnvelopeBuilder(
-        final SigningIdentity signingIdentity,
-        final String channelName,
-        final ByteString tlsCertificateHash
-    ) {
+            final SigningIdentity signingIdentity, final String channelName, final ByteString tlsCertificateHash) {
         this.signingIdentity = signingIdentity;
         this.channelName = channelName;
         this.tlsCertificateHash = tlsCertificateHash;
@@ -37,9 +34,7 @@ final class BlockEventsEnvelopeBuilder {
     }
 
     public Envelope build() {
-        return Envelope.newBuilder()
-                .setPayload(newPayload().toByteString())
-                .build();
+        return Envelope.newBuilder().setPayload(newPayload().toByteString()).build();
     }
 
     private Payload newPayload() {
@@ -68,9 +63,7 @@ final class BlockEventsEnvelopeBuilder {
 
     private SignatureHeader newSignatureHeader() {
         ByteString creator = ByteString.copyFrom(signingIdentity.getCreator());
-        return SignatureHeader.newBuilder()
-                .setCreator(creator)
-                .build();
+        return SignatureHeader.newBuilder().setCreator(creator).build();
     }
 
     private SeekInfo newSeekInfo() {

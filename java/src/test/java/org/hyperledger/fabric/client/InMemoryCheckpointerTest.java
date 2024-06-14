@@ -1,3 +1,9 @@
+/*
+ * Copyright 2024 IBM All Rights Reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package org.hyperledger.fabric.client;
 
 public class InMemoryCheckpointerTest extends CommonCheckpointerTest {
@@ -8,6 +14,5 @@ public class InMemoryCheckpointerTest extends CommonCheckpointerTest {
     }
 
     @Override
-    protected void tearDown() {
-    }
+    protected void tearDown() {}
 }

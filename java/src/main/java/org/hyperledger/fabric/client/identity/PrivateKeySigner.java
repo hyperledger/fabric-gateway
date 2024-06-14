@@ -6,12 +6,11 @@
 
 package org.hyperledger.fabric.client.identity;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
 import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.Signature;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 final class PrivateKeySigner implements Signer {
     private static final Provider PROVIDER = new BouncyCastleProvider();

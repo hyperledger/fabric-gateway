@@ -6,11 +6,10 @@
 
 package org.hyperledger.fabric.client.identity;
 
-import org.bouncycastle.asn1.ASN1Integer;
-
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.interfaces.ECPrivateKey;
+import org.bouncycastle.asn1.ASN1Integer;
 
 final class ECPrivateKeySigner implements Signer {
     private static final String ALGORITHM_NAME = "NONEwithECDSA";

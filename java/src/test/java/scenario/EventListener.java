@@ -10,5 +10,6 @@ import java.io.IOException;
 
 public interface EventListener<T> {
     T next() throws InterruptedException, IOException;
+
     void close();
 }

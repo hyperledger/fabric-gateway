@@ -6,9 +6,8 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.UnaryOperator;
-
 import io.grpc.CallOptions;
+import java.util.function.UnaryOperator;
 
 /**
  * A Fabric Gateway call to obtain events.

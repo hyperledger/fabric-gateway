@@ -6,18 +6,19 @@
 
 package org.hyperledger.fabric.client;
 
+import io.grpc.CallOptions;
 import java.util.NoSuchElementException;
 import java.util.function.UnaryOperator;
-
-import io.grpc.CallOptions;
 import org.hyperledger.fabric.protos.common.Envelope;
 import org.hyperledger.fabric.protos.peer.BlockAndPrivateData;
 import org.hyperledger.fabric.protos.peer.DeliverResponse;
 
-final class BlockAndPrivateDataEventsRequestImpl extends SignableBlockEventsRequest implements BlockAndPrivateDataEventsRequest {
+final class BlockAndPrivateDataEventsRequestImpl extends SignableBlockEventsRequest
+        implements BlockAndPrivateDataEventsRequest {
     private final GatewayClient client;
 
-    BlockAndPrivateDataEventsRequestImpl(final GatewayClient client, final SigningIdentity signingIdentity, final Envelope request) {
+    BlockAndPrivateDataEventsRequestImpl(
+            final GatewayClient client, final SigningIdentity signingIdentity, final Envelope request) {
         super(signingIdentity, request);
         this.client = client;
     }

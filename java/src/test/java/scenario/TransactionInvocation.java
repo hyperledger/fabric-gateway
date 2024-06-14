@@ -6,10 +6,11 @@
 
 package scenario;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.security.GeneralSecurityException;
 import java.util.Map;
 import java.util.concurrent.Callable;
-
 import org.hyperledger.fabric.client.Commit;
 import org.hyperledger.fabric.client.CommitStatusException;
 import org.hyperledger.fabric.client.Contract;
@@ -22,8 +23,6 @@ import org.hyperledger.fabric.client.SubmitException;
 import org.hyperledger.fabric.client.SubmittedTransaction;
 import org.hyperledger.fabric.client.Transaction;
 import org.hyperledger.fabric.client.identity.Signer;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public final class TransactionInvocation {
     private final Gateway gateway;
@@ -47,13 +46,15 @@ public final class TransactionInvocation {
         proposalBuilder.setEndorsingOrganizations(orgs);
     }
 
-    public static TransactionInvocation prepareToSubmit(final Gateway gateway, final Contract contract, final String transactionName) {
+    public static TransactionInvocation prepareToSubmit(
+            final Gateway gateway, final Contract contract, final String transactionName) {
         TransactionInvocation invocation = new TransactionInvocation(gateway, contract, transactionName);
         invocation.action = invocation::submit;
         return invocation;
     }
 
-    public static TransactionInvocation prepareToEvaluate(final Gateway gateway, final Contract contract, final String transactionName) {
+    public static TransactionInvocation prepareToEvaluate(
+            final Gateway gateway, final Contract contract, final String transactionName) {
         TransactionInvocation invocation = new TransactionInvocation(gateway, contract, transactionName);
         invocation.action = invocation::evaluate;
         return invocation;

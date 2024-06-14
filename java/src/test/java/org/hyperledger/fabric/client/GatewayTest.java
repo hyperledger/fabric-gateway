@@ -6,10 +6,12 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.concurrent.TimeUnit;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.concurrent.TimeUnit;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
@@ -18,9 +20,6 @@ import org.hyperledger.fabric.client.identity.X509Identity;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public final class GatewayTest {
     private static final X509Credentials credentials = new X509Credentials();
@@ -33,7 +32,9 @@ public final class GatewayTest {
 
     @BeforeEach()
     void beforeEach() {
-        channel = ManagedChannelBuilder.forAddress("example.org", 1337).usePlaintext().build();
+        channel = ManagedChannelBuilder.forAddress("example.org", 1337)
+                .usePlaintext()
+                .build();
     }
 
     @AfterEach
@@ -46,29 +47,21 @@ public final class GatewayTest {
 
     @Test
     void connect_with_no_identity_throws() {
-        Gateway.Builder builder = Gateway.newInstance()
-                .connection(channel);
+        Gateway.Builder builder = Gateway.newInstance().connection(channel);
 
-        assertThatThrownBy(builder::connect)
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(builder::connect).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void connect_with_no_connection_details_throws() {
-        Gateway.Builder builder = Gateway.newInstance()
-                .identity(identity)
-                .signer(signer);
+        Gateway.Builder builder = Gateway.newInstance().identity(identity).signer(signer);
 
-        assertThatThrownBy(builder::connect)
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(builder::connect).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void uses_supplied_identity() {
-        gateway = Gateway.newInstance()
-                .identity(identity)
-                .connection(channel)
-                .connect();
+        gateway = Gateway.newInstance().identity(identity).connection(channel).connect();
 
         Identity result = gateway.getIdentity();
 

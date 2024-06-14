@@ -8,7 +8,6 @@ package org.hyperledger.fabric.client;
 
 import java.util.Collections;
 import java.util.Iterator;
-
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 
 final class ChaincodeEventIterator implements CloseableIterator<ChaincodeEvent> {
