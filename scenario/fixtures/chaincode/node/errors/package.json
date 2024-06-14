@@ -4,13 +4,12 @@
     "description": "My Smart Contract",
     "main": "index.js",
     "scripts": {
-        "pretest": "npm run lint",
         "test": "echo 'No tests implemented' && exit 1",
         "start": "fabric-chaincode-node start"
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "fabric-contract-api": "^2.5.4",
-        "fabric-shim": "^2.5.4"
+        "fabric-contract-api": "~2.5",
+        "fabric-shim": "~2.5"
     }
 }
