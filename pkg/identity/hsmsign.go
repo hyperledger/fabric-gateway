@@ -1,11 +1,8 @@
+// Copyright IBM Corp. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 //go:build pkcs11
 // +build pkcs11
-
-/*
-Copyright 2021 IBM All Rights Reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
 
 package identity
 

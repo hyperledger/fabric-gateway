@@ -9,8 +9,10 @@ linters:
   disable-all: true
   enable:
     - errcheck
+    - gocognit
     - gocyclo
     - gofmt
+    - goheader
     - goimports
     - gosec
     - gosimple
@@ -21,5 +23,14 @@ linters:
     - unused
 
 linters-settings:
+  gocognit:
+    min-complexity: 15
   gocyclo:
     min-complexity: 10
+  goheader:
+    values:
+      const:
+        COMPANY: IBM Corp.
+    template: |-
+      Copyright {{ COMPANY }} All Rights Reserved.
+      SPDX-License-Identifier: Apache-2.0

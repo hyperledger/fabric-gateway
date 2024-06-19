@@ -1,8 +1,5 @@
-/*
-Copyright 2020 IBM All Rights Reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
+// Copyright IBM Corp. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 // Package hash provides hash implementations used for digital signature of messages sent to a Fabric network.
 package hash
