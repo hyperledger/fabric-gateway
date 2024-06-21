@@ -119,58 +119,42 @@ public final class GatewayMocker implements AutoCloseable {
     }
 
     public EndorseRequest captureEndorse() {
-        synchronized (gatewaySpy) {
-            Mockito.verify(gatewaySpy).endorse(endorseRequestCaptor.capture());
-        }
+        Mockito.verify(gatewaySpy).endorse(endorseRequestCaptor.capture());
         return endorseRequestCaptor.getValue();
     }
 
     public EvaluateRequest captureEvaluate() {
-        synchronized (gatewaySpy) {
-            Mockito.verify(gatewaySpy).evaluate(evaluateRequestCaptor.capture());
-        }
+        Mockito.verify(gatewaySpy).evaluate(evaluateRequestCaptor.capture());
         return evaluateRequestCaptor.getValue();
     }
 
     public SubmitRequest captureSubmit() {
-        synchronized (gatewaySpy) {
-            Mockito.verify(gatewaySpy).submit(submitRequestCaptor.capture());
-        }
+        Mockito.verify(gatewaySpy).submit(submitRequestCaptor.capture());
         return submitRequestCaptor.getValue();
     }
 
     public SignedCommitStatusRequest captureCommitStatus() {
-        synchronized (gatewaySpy) {
-            Mockito.verify(gatewaySpy).commitStatus(commitStatusRequestCaptor.capture());
-        }
+        Mockito.verify(gatewaySpy).commitStatus(commitStatusRequestCaptor.capture());
         return commitStatusRequestCaptor.getValue();
     }
 
     public SignedChaincodeEventsRequest captureChaincodeEvents() {
-        synchronized (gatewaySpy) {
-            Mockito.verify(gatewaySpy).chaincodeEvents(chaincodeEventsRequestCaptor.capture());
-        }
+        Mockito.verify(gatewaySpy).chaincodeEvents(chaincodeEventsRequestCaptor.capture());
         return chaincodeEventsRequestCaptor.getValue();
     }
 
     public Stream<Envelope> captureBlockEvents() {
-        synchronized (deliverSpy) {
-            Mockito.verify(deliverSpy).blockEvents(deliverRequestCaptor.capture());
-        }
+        Mockito.verify(deliverSpy).blockEvents(deliverRequestCaptor.capture());
         return deliverRequestCaptor.getValue();
     }
 
     public Stream<Envelope> captureFilteredBlockEvents() {
-        synchronized (deliverSpy) {
-            Mockito.verify(deliverSpy).filteredBlockEvents(deliverFilteredRequestCaptor.capture());
-        }
+        Mockito.verify(deliverSpy).filteredBlockEvents(deliverFilteredRequestCaptor.capture());
         return deliverFilteredRequestCaptor.getValue();
     }
 
     public Stream<Envelope> captureBlockAndPrivateDataEvents() {
-        synchronized (deliverSpy) {
-            Mockito.verify(deliverSpy).blockAndPrivateDataEvents(deliverWithPrivateDataRequestCaptor.capture());
-        }
+        Mockito.verify(deliverSpy).blockAndPrivateDataEvents(deliverWithPrivateDataRequestCaptor.capture());
         return deliverWithPrivateDataRequestCaptor.getValue();
     }
 
