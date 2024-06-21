@@ -6,9 +6,8 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.List;
-
 import io.grpc.StatusRuntimeException;
+import java.util.List;
 import org.hyperledger.fabric.protos.gateway.ErrorDetail;
 
 /**

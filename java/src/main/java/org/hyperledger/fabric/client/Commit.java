@@ -6,9 +6,8 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.UnaryOperator;
-
 import io.grpc.CallOptions;
+import java.util.function.UnaryOperator;
 
 /**
  * Allows access to information about a transaction that is committed to the ledger.
@@ -48,7 +47,7 @@ public interface Commit extends Signable {
      * @deprecated Replaced by {@link #getStatus(UnaryOperator)}.
      */
     @Deprecated
-    default Status getStatus(CallOption... options) throws CommitStatusException {
+    default Status getStatus(final CallOption... options) throws CommitStatusException {
         return getStatus(GatewayUtils.asCallOptions(options));
     }
 }

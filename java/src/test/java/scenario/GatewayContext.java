@@ -6,12 +6,11 @@
 
 package scenario;
 
+import io.grpc.ManagedChannel;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import io.grpc.ManagedChannel;
 import org.hyperledger.fabric.client.ChaincodeEvent;
 import org.hyperledger.fabric.client.Checkpointer;
 import org.hyperledger.fabric.client.CloseableIterator;
@@ -38,14 +37,11 @@ public class GatewayContext {
     private Contract contract;
 
     public GatewayContext(Identity identity) {
-        gatewayBuilder = Gateway.newInstance()
-                .identity(identity);
+        gatewayBuilder = Gateway.newInstance().identity(identity);
     }
 
     public GatewayContext(Identity identity, Signer signer) {
-        gatewayBuilder = Gateway.newInstance()
-                .identity(identity)
-                .signer(signer);
+        gatewayBuilder = Gateway.newInstance().identity(identity).signer(signer);
     }
 
     public void connect(ManagedChannel channel) {
@@ -93,7 +89,8 @@ public class GatewayContext {
         receiveChaincodeEvents(listenerName, iter);
     }
 
-    private void receiveChaincodeEventsUsingCheckpointer(final String listenerName, final CloseableIterator<ChaincodeEvent> iter) {
+    private void receiveChaincodeEventsUsingCheckpointer(
+            final String listenerName, final CloseableIterator<ChaincodeEvent> iter) {
         closeChaincodeEvents(listenerName);
         EventListener<ChaincodeEvent> e = new CheckpointEventListener<>(iter, checkpointer::checkpointChaincodeEvent);
         chaincodeEventListeners.put(listenerName, e);
@@ -113,16 +110,15 @@ public class GatewayContext {
     }
 
     public void listenForBlockEventsUsingCheckpointer(String listenerName) {
-        CloseableIterator<Block> iter = network.newBlockEventsRequest()
-                .checkpoint(checkpointer)
-                .build()
-                .getEvents();
+        CloseableIterator<Block> iter =
+                network.newBlockEventsRequest().checkpoint(checkpointer).build().getEvents();
         receiveBlockEventsUsingCheckpointer(listenerName, iter);
     }
 
     private void receiveBlockEventsUsingCheckpointer(final String listenerName, final CloseableIterator<Block> iter) {
         closeBlockEvents(listenerName);
-        EventListener<Block> e = new CheckpointEventListener<>(iter, event-> checkpointer.checkpointBlock(event.getHeader().getNumber()));
+        EventListener<Block> e = new CheckpointEventListener<>(
+                iter, event -> checkpointer.checkpointBlock(event.getHeader().getNumber()));
         blockEventListeners.put(listenerName, e);
     }
 
@@ -134,13 +130,15 @@ public class GatewayContext {
         receiveFilteredBlockEventsUsingCheckpointer(listenerName, iter);
     }
 
-    private void receiveFilteredBlockEventsUsingCheckpointer(final String listenerName, final CloseableIterator<FilteredBlock> iter) {
+    private void receiveFilteredBlockEventsUsingCheckpointer(
+            final String listenerName, final CloseableIterator<FilteredBlock> iter) {
         closeFilteredBlockEvents(listenerName);
-        EventListener<FilteredBlock> e = new CheckpointEventListener<>(iter, event-> checkpointer.checkpointBlock(event.getNumber()));
+        EventListener<FilteredBlock> e =
+                new CheckpointEventListener<>(iter, event -> checkpointer.checkpointBlock(event.getNumber()));
         filteredBlockEventListeners.put(listenerName, e);
     }
 
-    public void  listenForBlockAndPrivateDataUsingCheckpointer(String listenerName) {
+    public void listenForBlockAndPrivateDataUsingCheckpointer(String listenerName) {
         CloseableIterator<BlockAndPrivateData> iter = network.newBlockAndPrivateDataEventsRequest()
                 .checkpoint(checkpointer)
                 .build()
@@ -148,17 +146,19 @@ public class GatewayContext {
         receiveBlockAndPrivateDataEventsUsingCheckpointer(listenerName, iter);
     }
 
-    private void receiveBlockAndPrivateDataEventsUsingCheckpointer(final String listenerName, final CloseableIterator<BlockAndPrivateData> iter) {
+    private void receiveBlockAndPrivateDataEventsUsingCheckpointer(
+            final String listenerName, final CloseableIterator<BlockAndPrivateData> iter) {
         closeBlockAndPrivateDataEvents(listenerName);
-        EventListener<BlockAndPrivateData> e = new CheckpointEventListener<>(iter, event-> checkpointer.checkpointBlock(event.getBlock().getHeader().getNumber()));
+        EventListener<BlockAndPrivateData> e = new CheckpointEventListener<>(
+                iter,
+                event -> checkpointer.checkpointBlock(
+                        event.getBlock().getHeader().getNumber()));
         blockAndPrivateDataEventListeners.put(listenerName, e);
     }
 
     public void replayBlockEvents(String listenerName, long startBlock) {
-        CloseableIterator<Block> iter = network.newBlockEventsRequest()
-                .startBlock(startBlock)
-                .build()
-                .getEvents();
+        CloseableIterator<Block> iter =
+                network.newBlockEventsRequest().startBlock(startBlock).build().getEvents();
         receiveBlockEvents(listenerName, iter);
     }
 
@@ -204,12 +204,14 @@ public class GatewayContext {
         receiveBlockAndPrivateDataEvents(listenerName, iter);
     }
 
-    private void receiveBlockAndPrivateDataEvents(final String listenerName, final CloseableIterator<BlockAndPrivateData> iter) {
+    private void receiveBlockAndPrivateDataEvents(
+            final String listenerName, final CloseableIterator<BlockAndPrivateData> iter) {
         closeBlockAndPrivateDataEvents(listenerName);
         blockAndPrivateDataEventListeners.put(listenerName, new BasicEventListener<>(iter));
     }
 
-    public BlockAndPrivateData nextBlockAndPrivateDataEvent(String listenerName) throws InterruptedException, IOException {
+    public BlockAndPrivateData nextBlockAndPrivateDataEvent(String listenerName)
+            throws InterruptedException, IOException {
         return blockAndPrivateDataEventListeners.get(listenerName).next();
     }
 

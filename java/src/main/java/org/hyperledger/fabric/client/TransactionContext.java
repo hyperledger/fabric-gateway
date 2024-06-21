@@ -7,11 +7,10 @@
 package org.hyperledger.fabric.client;
 
 import com.google.protobuf.ByteString;
-import org.bouncycastle.util.encoders.Hex;
-import org.hyperledger.fabric.protos.common.SignatureHeader;
-
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import org.bouncycastle.util.encoders.Hex;
+import org.hyperledger.fabric.protos.common.SignatureHeader;
 
 final class TransactionContext {
     private static final int NONCE_LENGTH = 24;

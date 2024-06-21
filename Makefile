@@ -257,3 +257,19 @@ clean-docs:
 .PHONY: shellcheck
 shellcheck:
 	cd '$(base_dir)' && ./scripts/shellcheck.sh
+
+.PHONY: format
+format: format-go format-node format-java
+
+.PHONY: format-go
+format-go:
+	cd '$(base_dir)' && gofmt -l -s -w .
+
+.PHONY: format-node
+format-node:
+	cd '$(node_dir)' && npm run format:fix
+
+.PHONY: format-java
+format-java:
+	cd '$(java_dir)' && mvn spotless:apply
+

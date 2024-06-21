@@ -7,12 +7,11 @@
 package org.hyperledger.fabric.client;
 
 import io.grpc.StatusRuntimeException;
-import org.hyperledger.fabric.protos.gateway.ErrorDetail;
-
 import java.io.CharArrayWriter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.List;
+import org.hyperledger.fabric.protos.gateway.ErrorDetail;
 
 /**
  * Thrown if an error is encountered while invoking gRPC services on a gateway peer. Since the gateway delegates much
@@ -84,9 +83,12 @@ public class GatewayException extends Exception {
         if (!details.isEmpty()) {
             message.append("Error details:\n");
             for (ErrorDetail detail : details) {
-                message.append("    address: ").append(detail.getAddress())
-                        .append("; mspId: ").append(detail.getMspId())
-                        .append("; message: ").append(detail.getMessage())
+                message.append("    address: ")
+                        .append(detail.getAddress())
+                        .append("; mspId: ")
+                        .append(detail.getMspId())
+                        .append("; message: ")
+                        .append(detail.getMessage())
                         .append('\n');
             }
         }

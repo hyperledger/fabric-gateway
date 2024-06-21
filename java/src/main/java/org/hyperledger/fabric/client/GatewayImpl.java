@@ -10,6 +10,9 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.protos.common.ChannelHeader;
@@ -21,19 +24,20 @@ import org.hyperledger.fabric.protos.gateway.ProposedTransaction;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
-
 final class GatewayImpl implements Gateway {
-    public static final class Builder implements Gateway.Builder {
+    private final GatewayClient client;
+    private final SigningIdentity signingIdentity;
+    private final ByteString tlsCertificateHash;
+
+    static final class Builder implements Gateway.Builder {
         private static final Signer UNDEFINED_SIGNER = (digest) -> {
             throw new UnsupportedOperationException("No signing implementation supplied");
         };
 
         private Channel grpcChannel;
         private Identity identity;
-        private Signer signer = UNDEFINED_SIGNER; // No signer implementation is required if only offline signing is used
+        private Signer signer =
+                UNDEFINED_SIGNER; // No signer implementation is required if only offline signing is used
         private Function<byte[], byte[]> hash = Hash.SHA256;
         private ByteString tlsCertificateHash = ByteString.empty();
         private final DefaultCallOptions.Builder optionsBuilder = DefaultCallOptions.newBuiler();
@@ -135,10 +139,6 @@ final class GatewayImpl implements Gateway {
         }
     }
 
-    private final GatewayClient client;
-    private final SigningIdentity signingIdentity;
-    private final ByteString tlsCertificateHash;
-
     private GatewayImpl(final Builder builder) {
         signingIdentity = new SigningIdentity(builder.identity, builder.hash, builder.signer);
         client = new GatewayClient(builder.grpcChannel, builder.optionsBuilder.build());
@@ -152,6 +152,7 @@ final class GatewayImpl implements Gateway {
 
     @Override
     public void close() {
+        // Nothing to do for now
     }
 
     @Override
@@ -171,7 +172,8 @@ final class GatewayImpl implements Gateway {
         try {
             ProposedTransaction proposedTransaction = ProposedTransaction.parseFrom(bytes);
             org.hyperledger.fabric.protos.peer.Proposal proposal =
-                    org.hyperledger.fabric.protos.peer.Proposal.parseFrom(proposedTransaction.getProposal().getProposalBytes());
+                    org.hyperledger.fabric.protos.peer.Proposal.parseFrom(
+                            proposedTransaction.getProposal().getProposalBytes());
             Header header = Header.parseFrom(proposal.getHeader());
             ChannelHeader channelHeader = ChannelHeader.parseFrom(header.getChannelHeader());
 
@@ -273,7 +275,8 @@ final class GatewayImpl implements Gateway {
     }
 
     @Override
-    public BlockAndPrivateDataEventsRequest newSignedBlockAndPrivateDataEventsRequest(final byte[] bytes, final byte[] signature) {
+    public BlockAndPrivateDataEventsRequest newSignedBlockAndPrivateDataEventsRequest(
+            final byte[] bytes, final byte[] signature) {
         BlockAndPrivateDataEventsRequestImpl result = newBlockAndPrivateDataEventsRequest(bytes);
         result.setSignature(signature);
         return result;

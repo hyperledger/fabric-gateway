@@ -6,10 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.UnaryOperator;
-
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
+import java.util.function.UnaryOperator;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 import org.hyperledger.fabric.protos.gateway.SignedChaincodeEventsRequest;
 
@@ -18,8 +17,10 @@ final class ChaincodeEventsRequestImpl implements ChaincodeEventsRequest {
     private final SigningIdentity signingIdentity;
     private SignedChaincodeEventsRequest signedRequest;
 
-    ChaincodeEventsRequestImpl(final GatewayClient client, final SigningIdentity signingIdentity,
-                               final SignedChaincodeEventsRequest signedRequest) {
+    ChaincodeEventsRequestImpl(
+            final GatewayClient client,
+            final SigningIdentity signingIdentity,
+            final SignedChaincodeEventsRequest signedRequest) {
         this.client = client;
         this.signingIdentity = signingIdentity;
         this.signedRequest = signedRequest;

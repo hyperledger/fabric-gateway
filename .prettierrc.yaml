@@ -1,4 +1,0 @@
-overrides:
-  - files: "*.{mj,cj,j,t}s"
-    options:
-      singleQuote: true

@@ -6,10 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.UnaryOperator;
-
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
+import java.util.function.UnaryOperator;
 import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
 import org.hyperledger.fabric.protos.gateway.SignedCommitStatusRequest;
 
@@ -19,8 +18,11 @@ class CommitImpl implements Commit {
     private final String transactionId;
     private SignedCommitStatusRequest signedRequest;
 
-    CommitImpl(final GatewayClient client, final SigningIdentity signingIdentity,
-                final String transactionId, final SignedCommitStatusRequest signedRequest) {
+    CommitImpl(
+            final GatewayClient client,
+            final SigningIdentity signingIdentity,
+            final String transactionId,
+            final SignedCommitStatusRequest signedRequest) {
         this.client = client;
         this.signingIdentity = signingIdentity;
         this.transactionId = transactionId;

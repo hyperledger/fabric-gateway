@@ -16,7 +16,6 @@ import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
@@ -79,7 +78,8 @@ public final class Identities {
         if (pemObject instanceof X509CertificateHolder) {
             return (X509CertificateHolder) pemObject;
         } else {
-            throw new CertificateException("Unexpected PEM content type: " + pemObject.getClass().getSimpleName());
+            throw new CertificateException(
+                    "Unexpected PEM content type: " + pemObject.getClass().getSimpleName());
         }
     }
 
@@ -122,7 +122,8 @@ public final class Identities {
         } else if (pemObject instanceof PrivateKeyInfo) {
             privateKeyInfo = (PrivateKeyInfo) pemObject;
         } else {
-            throw new InvalidKeyException("Unexpected PEM content type: " + pemObject.getClass().getSimpleName());
+            throw new InvalidKeyException(
+                    "Unexpected PEM content type: " + pemObject.getClass().getSimpleName());
         }
         return privateKeyInfo;
     }
@@ -163,5 +164,5 @@ public final class Identities {
     }
 
     // Private constructor to prevent instantiation
-    private Identities() { }
+    private Identities() {}
 }

@@ -6,9 +6,8 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.UnaryOperator;
-
 import io.grpc.CallOptions;
+import java.util.function.UnaryOperator;
 
 /**
  * A Fabric Gateway call to obtain events.
@@ -46,7 +45,7 @@ public interface EventsRequest<T> extends Signable {
      * @deprecated Replaced by {@link #getEvents(UnaryOperator)}.
      */
     @Deprecated
-    default CloseableIterator<T> getEvents(CallOption... options) {
+    default CloseableIterator<T> getEvents(final CallOption... options) {
         return getEvents(GatewayUtils.asCallOptions(options));
     }
 }

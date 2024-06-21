@@ -20,3 +20,6 @@ indent_size = 2
 
 [*.md]
 indent_size = 2
+
+[*.{mj,cj,j,t}s]
+quote_type = single

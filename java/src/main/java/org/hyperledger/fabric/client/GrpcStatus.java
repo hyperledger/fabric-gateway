@@ -6,12 +6,11 @@
 
 package org.hyperledger.fabric.client;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import io.grpc.protobuf.StatusProto;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import com.google.protobuf.InvalidProtocolBufferException;
-import io.grpc.protobuf.StatusProto;
 import org.hyperledger.fabric.protos.gateway.ErrorDetail;
 
 final class GrpcStatus {
@@ -28,9 +27,7 @@ final class GrpcStatus {
     }
 
     public List<ErrorDetail> getDetails() {
-        return StatusProto.fromStatusAndTrailers(status, trailers)
-                .getDetailsList()
-                .stream()
+        return StatusProto.fromStatusAndTrailers(status, trailers).getDetailsList().stream()
                 .map(any -> {
                     try {
                         return any.unpack(ErrorDetail.class);

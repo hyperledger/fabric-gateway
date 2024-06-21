@@ -1,17 +1,16 @@
 /*
- *  Copyright 2020 IBM All Rights Reserved.
+ * Copyright 2020 IBM All Rights Reserved.
  *
- *  SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 package org.hyperledger.fabric.client;
 
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 import org.hyperledger.fabric.protos.gateway.CommitStatusResponse;
 import org.hyperledger.fabric.protos.gateway.EndorseRequest;
@@ -57,11 +56,16 @@ public class GatewayServiceStub {
     private String newPayload(SignedProposal requestProposal) {
         // create a mock payload string by concatenating the chaincode name, tx name and arguments from the request
         try {
-            org.hyperledger.fabric.protos.peer.Proposal proposal = org.hyperledger.fabric.protos.peer.Proposal.parseFrom(requestProposal.getProposalBytes());
-            ChaincodeProposalPayload chaincodeProposalPayload = ChaincodeProposalPayload.parseFrom(proposal.getPayload());
-            ChaincodeInvocationSpec chaincodeInvocationSpec = ChaincodeInvocationSpec.parseFrom(chaincodeProposalPayload.getInput());
-            String chaincodeId = chaincodeInvocationSpec.getChaincodeSpec().getChaincodeId().getName();
-            List<ByteString> args = chaincodeInvocationSpec.getChaincodeSpec().getInput().getArgsList();
+            org.hyperledger.fabric.protos.peer.Proposal proposal =
+                    org.hyperledger.fabric.protos.peer.Proposal.parseFrom(requestProposal.getProposalBytes());
+            ChaincodeProposalPayload chaincodeProposalPayload =
+                    ChaincodeProposalPayload.parseFrom(proposal.getPayload());
+            ChaincodeInvocationSpec chaincodeInvocationSpec =
+                    ChaincodeInvocationSpec.parseFrom(chaincodeProposalPayload.getInput());
+            String chaincodeId =
+                    chaincodeInvocationSpec.getChaincodeSpec().getChaincodeId().getName();
+            List<ByteString> args =
+                    chaincodeInvocationSpec.getChaincodeSpec().getInput().getArgsList();
             return chaincodeId + args.stream().map(ByteString::toStringUtf8).collect(Collectors.joining());
         } catch (InvalidProtocolBufferException ex) {
             return ex.getMessage();

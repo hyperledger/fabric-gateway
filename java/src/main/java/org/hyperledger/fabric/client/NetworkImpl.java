@@ -8,12 +8,11 @@ package org.hyperledger.fabric.client;
 
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
+import java.util.Objects;
+import java.util.function.UnaryOperator;
 import org.hyperledger.fabric.protos.common.Block;
 import org.hyperledger.fabric.protos.peer.BlockAndPrivateData;
 import org.hyperledger.fabric.protos.peer.FilteredBlock;
-
-import java.util.Objects;
-import java.util.function.UnaryOperator;
 
 final class NetworkImpl implements Network {
     private final GatewayClient client;
@@ -22,11 +21,10 @@ final class NetworkImpl implements Network {
     private final ByteString tlsCertificateHash;
 
     NetworkImpl(
-        final GatewayClient client,
-        final SigningIdentity signingIdentity,
-        final String channelName,
-        final ByteString tlsCertificateHash
-    ) {
+            final GatewayClient client,
+            final SigningIdentity signingIdentity,
+            final String channelName,
+            final ByteString tlsCertificateHash) {
         Objects.requireNonNull(channelName, "network name");
 
         this.client = client;
@@ -51,7 +49,8 @@ final class NetworkImpl implements Network {
     }
 
     @Override
-    public CloseableIterator<ChaincodeEvent> getChaincodeEvents(final String chaincodeName, final UnaryOperator<CallOptions> options) {
+    public CloseableIterator<ChaincodeEvent> getChaincodeEvents(
+            final String chaincodeName, final UnaryOperator<CallOptions> options) {
         return newChaincodeEventsRequest(chaincodeName).build().getEvents(options);
     }
 
@@ -81,7 +80,8 @@ final class NetworkImpl implements Network {
     }
 
     @Override
-    public CloseableIterator<BlockAndPrivateData> getBlockAndPrivateDataEvents(final UnaryOperator<CallOptions> options) {
+    public CloseableIterator<BlockAndPrivateData> getBlockAndPrivateDataEvents(
+            final UnaryOperator<CallOptions> options) {
         return newBlockAndPrivateDataEventsRequest().build().getEvents(options);
     }
 

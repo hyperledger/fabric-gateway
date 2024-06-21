@@ -6,14 +6,13 @@
 
 package org.hyperledger.fabric.client;
 
+import com.google.protobuf.ByteString;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import com.google.protobuf.ByteString;
 import org.hyperledger.fabric.protos.common.ChannelHeader;
 import org.hyperledger.fabric.protos.common.Header;
 import org.hyperledger.fabric.protos.common.HeaderType;
@@ -35,14 +34,16 @@ final class ProposalBuilder implements Proposal.Builder {
     private final ChaincodeProposalPayload.Builder payloadBuilder = ChaincodeProposalPayload.newBuilder();
     private Set<String> endorsingOrgs = Collections.emptySet();
 
-    ProposalBuilder(final GatewayClient client, final SigningIdentity signingIdentity,
-                    final String channelName, final String chaincodeName, final String transactionName) {
+    ProposalBuilder(
+            final GatewayClient client,
+            final SigningIdentity signingIdentity,
+            final String channelName,
+            final String chaincodeName,
+            final String transactionName) {
         this.client = client;
         this.signingIdentity = signingIdentity;
         this.channelName = channelName;
-        this.chaincodeId = ChaincodeID.newBuilder()
-                .setName(chaincodeName)
-                .build();
+        this.chaincodeId = ChaincodeID.newBuilder().setName(chaincodeName).build();
 
         inputBuilder.addArgs(ByteString.copyFrom(transactionName, StandardCharsets.UTF_8));
     }
@@ -134,9 +135,7 @@ final class ProposalBuilder implements Proposal.Builder {
     }
 
     private ChaincodeHeaderExtension newChaincodeHeaderExtension() {
-        return ChaincodeHeaderExtension.newBuilder()
-                .setChaincodeId(chaincodeId)
-                .build();
+        return ChaincodeHeaderExtension.newBuilder().setChaincodeId(chaincodeId).build();
     }
 
     private ChaincodeProposalPayload newChaincodeProposalPayload() {

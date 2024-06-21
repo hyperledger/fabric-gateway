@@ -6,20 +6,15 @@
 
 package org.hyperledger.fabric.client;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
-import org.hyperledger.fabric.client.identity.Identity;
-import org.hyperledger.fabric.client.identity.Signer;
-import org.hyperledger.fabric.client.identity.X509Identity;
-import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -28,9 +23,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import org.hyperledger.fabric.client.identity.Identity;
+import org.hyperledger.fabric.client.identity.Signer;
+import org.hyperledger.fabric.client.identity.X509Identity;
+import org.hyperledger.fabric.protos.gateway.EvaluateRequest;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public final class EvaluateTransactionTest {
     private static final TestUtils utils = TestUtils.getInstance();
@@ -69,8 +68,7 @@ public final class EvaluateTransactionTest {
 
     @Test
     void returns_gateway_response() throws GatewayException {
-        doReturn(utils.newEvaluateResponse("MY_RESULT"))
-                .when(stub).evaluate(any());
+        doReturn(utils.newEvaluateResponse("MY_RESULT")).when(stub).evaluate(any());
 
         byte[] actual = contract.evaluateTransaction("TRANSACTION_NAME");
 
@@ -82,33 +80,35 @@ public final class EvaluateTransactionTest {
         contract.evaluateTransaction("TRANSACTION_NAME");
 
         EvaluateRequest request = mocker.captureEvaluate();
-        String actual = mocker.getChaincodeSpec(request.getProposedTransaction()).getChaincodeId().getName();
+        String actual = mocker.getChaincodeSpec(request.getProposedTransaction())
+                .getChaincodeId()
+                .getName();
 
         assertThat(actual).isEqualTo(contract.getChaincodeName());
     }
 
     @Test
     void sends_transaction_name_for_default_contract() throws InvalidProtocolBufferException, GatewayException {
-        network.getContract("CHAINCODE_NAME")
-                .evaluateTransaction("MY_TRANSACTION_NAME");
+        network.getContract("CHAINCODE_NAME").evaluateTransaction("MY_TRANSACTION_NAME");
 
         EvaluateRequest request = mocker.captureEvaluate();
-        List<String> chaincodeArgs = mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
-                .map(ByteString::toStringUtf8)
-                .collect(Collectors.toList());
+        List<String> chaincodeArgs =
+                mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
+                        .map(ByteString::toStringUtf8)
+                        .collect(Collectors.toList());
 
         assertThat(chaincodeArgs).first().isEqualTo("MY_TRANSACTION_NAME");
     }
 
     @Test
     void sends_transaction_name_for_specified_contract() throws InvalidProtocolBufferException, GatewayException {
-        network.getContract("CHAINCODE_NAME", "MY_CONTRACT")
-                .evaluateTransaction("MY_TRANSACTION_NAME");
+        network.getContract("CHAINCODE_NAME", "MY_CONTRACT").evaluateTransaction("MY_TRANSACTION_NAME");
 
         EvaluateRequest request = mocker.captureEvaluate();
-        List<String> chaincodeArgs = mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
-                .map(ByteString::toStringUtf8)
-                .collect(Collectors.toList());
+        List<String> chaincodeArgs =
+                mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
+                        .map(ByteString::toStringUtf8)
+                        .collect(Collectors.toList());
 
         assertThat(chaincodeArgs).first().isEqualTo("MY_CONTRACT:MY_TRANSACTION_NAME");
     }
@@ -118,10 +118,11 @@ public final class EvaluateTransactionTest {
         contract.evaluateTransaction("TRANSACTION_NAME", "one", "two", "three");
 
         EvaluateRequest request = mocker.captureEvaluate();
-        List<String> chaincodeArgs = mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
-                .skip(1)
-                .map(ByteString::toStringUtf8)
-                .collect(Collectors.toList());
+        List<String> chaincodeArgs =
+                mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
+                        .skip(1)
+                        .map(ByteString::toStringUtf8)
+                        .collect(Collectors.toList());
 
         assertThat(chaincodeArgs).containsExactly("one", "two", "three");
     }
@@ -134,10 +135,11 @@ public final class EvaluateTransactionTest {
         contract.evaluateTransaction("TRANSACTION_NAME", arguments);
 
         EvaluateRequest request = mocker.captureEvaluate();
-        byte[][] chaincodeArgs = mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
-                .skip(1)
-                .map(ByteString::toByteArray)
-                .toArray(byte[][]::new);
+        byte[][] chaincodeArgs =
+                mocker.getChaincodeSpec(request.getProposedTransaction()).getInput().getArgsList().stream()
+                        .skip(1)
+                        .map(ByteString::toByteArray)
+                        .toArray(byte[][]::new);
 
         assertThat(chaincodeArgs).isDeepEqualTo(arguments);
     }
@@ -146,9 +148,7 @@ public final class EvaluateTransactionTest {
     void uses_signer() throws GatewayException {
         Signer signer = (digest) -> "MY_SIGNATURE".getBytes(StandardCharsets.UTF_8);
         try (Gateway gateway = mocker.getGatewayBuilder().signer(signer).connect()) {
-            gateway.getNetwork("NETWORK")
-                    .getContract("CHAINCODE_NAME")
-                    .evaluateTransaction("TRANSACTION_NAME");
+            gateway.getNetwork("NETWORK").getContract("CHAINCODE_NAME").evaluateTransaction("TRANSACTION_NAME");
 
             EvaluateRequest request = mocker.captureEvaluate();
             String signature = request.getProposedTransaction().getSignature().toStringUtf8();
@@ -166,10 +166,9 @@ public final class EvaluateTransactionTest {
             return "SIGNATURE".getBytes(StandardCharsets.UTF_8);
         };
 
-        try (Gateway gateway = mocker.getGatewayBuilder().hash(hash).signer(signer).connect()) {
-            gateway.getNetwork("NETWORK")
-                    .getContract("CHAINCODE_NAME")
-                    .evaluateTransaction("TRANSACTION_NAME");
+        try (Gateway gateway =
+                mocker.getGatewayBuilder().hash(hash).signer(signer).connect()) {
+            gateway.getNetwork("NETWORK").getContract("CHAINCODE_NAME").evaluateTransaction("TRANSACTION_NAME");
 
             assertThat(actual.get()).isEqualTo("MY_DIGEST");
         }
@@ -189,33 +188,31 @@ public final class EvaluateTransactionTest {
     void uses_identity() throws Exception {
         Identity identity = new X509Identity("MY_MSP_ID", utils.getCredentials().getCertificate());
         try (Gateway gateway = mocker.getGatewayBuilder().identity(identity).connect()) {
-            gateway.getNetwork("NETWORK")
-                    .getContract("CHAINCODE_NAME")
-                    .evaluateTransaction("TRANSACTION_NAME");
+            gateway.getNetwork("NETWORK").getContract("CHAINCODE_NAME").evaluateTransaction("TRANSACTION_NAME");
 
             EvaluateRequest request = mocker.captureEvaluate();
-            ByteString serializedIdentity = mocker.getSignatureHeader(request.getProposedTransaction()).getCreator();
+            ByteString serializedIdentity =
+                    mocker.getSignatureHeader(request.getProposedTransaction()).getCreator();
 
-            byte[] expected = GatewayUtils.serializeIdentity(identity);
+            byte[] expected = GatewayUtils.newSerializedIdentity(identity).toByteArray();
             assertThat(serializedIdentity.toByteArray()).isEqualTo(expected);
         }
     }
 
     @Test
     void sends_network_name_in_proposal_for_default_contract() throws InvalidProtocolBufferException, GatewayException {
-        network.getContract("CHAINCODE_NAME")
-                .evaluateTransaction("TRANSACTION_NAME");
+        network.getContract("CHAINCODE_NAME").evaluateTransaction("TRANSACTION_NAME");
 
         EvaluateRequest request = mocker.captureEvaluate();
-        String networkName = mocker.getChannelHeader(request.getProposedTransaction()).getChannelId();
+        String networkName =
+                mocker.getChannelHeader(request.getProposedTransaction()).getChannelId();
 
         assertThat(networkName).isEqualTo(network.getName());
     }
 
     @Test
     void sends_network_name_in_proposed_transaction_for_default_contract() throws GatewayException {
-        network.getContract("CHAINCODE_NAME")
-                .evaluateTransaction("TRANSACTION_NAME");
+        network.getContract("CHAINCODE_NAME").evaluateTransaction("TRANSACTION_NAME");
 
         EvaluateRequest request = mocker.captureEvaluate();
         String networkName = request.getChannelId();
@@ -224,20 +221,20 @@ public final class EvaluateTransactionTest {
     }
 
     @Test
-    void sends_network_name_in_proposal_for_specified_contract() throws InvalidProtocolBufferException, GatewayException {
-        network.getContract("CHAINCODE_NAME", "CONTRACT_NAME")
-                .evaluateTransaction("TRANSACTION_NAME");
+    void sends_network_name_in_proposal_for_specified_contract()
+            throws InvalidProtocolBufferException, GatewayException {
+        network.getContract("CHAINCODE_NAME", "CONTRACT_NAME").evaluateTransaction("TRANSACTION_NAME");
 
         EvaluateRequest request = mocker.captureEvaluate();
-        String networkName = mocker.getChannelHeader(request.getProposedTransaction()).getChannelId();
+        String networkName =
+                mocker.getChannelHeader(request.getProposedTransaction()).getChannelId();
 
         assertThat(networkName).isEqualTo(network.getName());
     }
 
     @Test
     void sends_network_name_in_proposed_transaction_for_specified_contract() throws GatewayException {
-        network.getContract("CHAINCODE_NAME", "CONTRACT_NAME")
-                .evaluateTransaction("TRANSACTION_NAME");
+        network.getContract("CHAINCODE_NAME", "CONTRACT_NAME").evaluateTransaction("TRANSACTION_NAME");
 
         EvaluateRequest request = mocker.captureEvaluate();
         String networkName = request.getChannelId();
@@ -268,10 +265,11 @@ public final class EvaluateTransactionTest {
                 .evaluate();
 
         EvaluateRequest request = mocker.captureEvaluate();
-        Map<String, ByteString> transientData = mocker.getProposalPayload(request.getProposedTransaction()).getTransientMapMap();
-        assertThat(transientData).containsOnly(
-                entry("uno", ByteString.copyFromUtf8("one")),
-                entry("dos", ByteString.copyFromUtf8("two")));
+        Map<String, ByteString> transientData =
+                mocker.getProposalPayload(request.getProposedTransaction()).getTransientMapMap();
+        assertThat(transientData)
+                .containsOnly(
+                        entry("uno", ByteString.copyFromUtf8("one")), entry("dos", ByteString.copyFromUtf8("two")));
     }
 
     @Test
@@ -283,10 +281,11 @@ public final class EvaluateTransactionTest {
                 .evaluate();
 
         EvaluateRequest request = mocker.captureEvaluate();
-        Map<String, ByteString> transientData = mocker.getProposalPayload(request.getProposedTransaction()).getTransientMapMap();
-        assertThat(transientData).containsOnly(
-                entry("uno", ByteString.copyFromUtf8("one")),
-                entry("dos", ByteString.copyFromUtf8("two")));
+        Map<String, ByteString> transientData =
+                mocker.getProposalPayload(request.getProposedTransaction()).getTransientMapMap();
+        assertThat(transientData)
+                .containsOnly(
+                        entry("uno", ByteString.copyFromUtf8("one")), entry("dos", ByteString.copyFromUtf8("two")));
     }
 
     @Test
@@ -306,28 +305,20 @@ public final class EvaluateTransactionTest {
     void uses_legacy_specified_call_options() throws GatewayException {
         Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
 
-        contract.newProposal("TRANSACTION_NAME")
-                .build()
-                .evaluate(CallOption.deadline(expected));
+        contract.newProposal("TRANSACTION_NAME").build().evaluate(CallOption.deadline(expected));
 
         List<CallOptions> actual = mocker.captureCallOptions();
-        assertThat(actual).first()
-                .extracting(CallOptions::getDeadline)
-                .isEqualTo(expected);
+        assertThat(actual).first().extracting(CallOptions::getDeadline).isEqualTo(expected);
     }
 
     @Test
     void uses_specified_call_options() throws GatewayException {
         Deadline expected = Deadline.after(1, TimeUnit.MINUTES);
 
-        contract.newProposal("TRANSACTION_NAME")
-                .build()
-                .evaluate(callOptions -> callOptions.withDeadline(expected));
+        contract.newProposal("TRANSACTION_NAME").build().evaluate(callOptions -> callOptions.withDeadline(expected));
 
         List<CallOptions> actual = mocker.captureCallOptions();
-        assertThat(actual).first()
-                .extracting(CallOptions::getDeadline)
-                .isEqualTo(expected);
+        assertThat(actual).first().extracting(CallOptions::getDeadline).isEqualTo(expected);
     }
 
     @Test
@@ -346,20 +337,14 @@ public final class EvaluateTransactionTest {
         }
 
         List<CallOptions> actual = mocker.captureCallOptions();
-        assertThat(actual).first()
-                .extracting(CallOptions::getDeadline)
-                .isEqualTo(expected);
+        assertThat(actual).first().extracting(CallOptions::getDeadline).isEqualTo(expected);
     }
 
     @Test
     void uses_default_call_options() throws GatewayException {
-        contract.newProposal("TRANSACTION_NAME")
-                .build()
-                .evaluate();
+        contract.newProposal("TRANSACTION_NAME").build().evaluate();
 
         List<CallOptions> actual = mocker.captureCallOptions();
-        assertThat(actual).first()
-                .extracting(CallOptions::getDeadline)
-                .isEqualTo(defaultDeadline);
+        assertThat(actual).first().extracting(CallOptions::getDeadline).isEqualTo(defaultDeadline);
     }
 }

@@ -1,13 +1,17 @@
+/*
+ * Copyright 2024 IBM All Rights Reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package org.hyperledger.fabric.client;
 
-
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
 
 public class FileCheckpointerTest extends CommonCheckpointerTest {
     private FileCheckpointer checkpointer;
@@ -47,9 +51,9 @@ public class FileCheckpointerTest extends CommonCheckpointerTest {
 
     @Test
     void block_number_zero_is_persisted_correctly() throws IOException {
-         getCheckpointerInstance();
-         checkpointer.checkpointBlock(0);
-         assertCheckpoint(this.checkpointer, 1);
+        getCheckpointerInstance();
+        checkpointer.checkpointBlock(0);
+        assertCheckpoint(this.checkpointer, 1);
     }
 
     @Test

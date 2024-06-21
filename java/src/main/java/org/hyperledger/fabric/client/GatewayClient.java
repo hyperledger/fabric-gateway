@@ -6,6 +6,12 @@
 
 package org.hyperledger.fabric.client;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.Context;
+import io.grpc.StatusRuntimeException;
+import io.grpc.stub.StreamObserver;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -19,13 +25,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
-
-import com.google.protobuf.InvalidProtocolBufferException;
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.Context;
-import io.grpc.StatusRuntimeException;
-import io.grpc.stub.StreamObserver;
 import org.hyperledger.fabric.protos.common.Envelope;
 import org.hyperledger.fabric.protos.gateway.ChaincodeEventsResponse;
 import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
@@ -56,7 +55,8 @@ final class GatewayClient {
         this.defaultOptions = defaultOptions;
     }
 
-    public EvaluateResponse evaluate(final EvaluateRequest request, final UnaryOperator<CallOptions> options) throws GatewayException {
+    public EvaluateResponse evaluate(final EvaluateRequest request, final UnaryOperator<CallOptions> options)
+            throws GatewayException {
         GatewayGrpc.GatewayBlockingStub stub = defaultOptions.applyEvaluate(gatewayBlockingStub, options);
         try {
             return stub.evaluate(request);
@@ -65,7 +65,8 @@ final class GatewayClient {
         }
     }
 
-    public EndorseResponse endorse(final EndorseRequest request, final UnaryOperator<CallOptions> options) throws EndorseException {
+    public EndorseResponse endorse(final EndorseRequest request, final UnaryOperator<CallOptions> options)
+            throws EndorseException {
         GatewayGrpc.GatewayBlockingStub stub = defaultOptions.applyEndorse(gatewayBlockingStub, options);
         try {
             return stub.endorse(request);
@@ -74,7 +75,8 @@ final class GatewayClient {
         }
     }
 
-    public SubmitResponse submit(final SubmitRequest request, final UnaryOperator<CallOptions> options) throws SubmitException {
+    public SubmitResponse submit(final SubmitRequest request, final UnaryOperator<CallOptions> options)
+            throws SubmitException {
         GatewayGrpc.GatewayBlockingStub stub = defaultOptions.applySubmit(gatewayBlockingStub, options);
         try {
             return stub.submit(request);
@@ -83,7 +85,9 @@ final class GatewayClient {
         }
     }
 
-    public CommitStatusResponse commitStatus(final SignedCommitStatusRequest request, final UnaryOperator<CallOptions> options) throws CommitStatusException {
+    public CommitStatusResponse commitStatus(
+            final SignedCommitStatusRequest request, final UnaryOperator<CallOptions> options)
+            throws CommitStatusException {
         GatewayGrpc.GatewayBlockingStub stub = defaultOptions.applyCommitStatus(gatewayBlockingStub, options);
         try {
             return stub.commitStatus(request);
@@ -100,37 +104,40 @@ final class GatewayClient {
         }
     }
 
-    public CloseableIterator<ChaincodeEventsResponse> chaincodeEvents(final SignedChaincodeEventsRequest request, final UnaryOperator<CallOptions> options) {
+    public CloseableIterator<ChaincodeEventsResponse> chaincodeEvents(
+            final SignedChaincodeEventsRequest request, final UnaryOperator<CallOptions> options) {
         GatewayGrpc.GatewayBlockingStub stub = defaultOptions.applyChaincodeEvents(gatewayBlockingStub, options);
         return invokeServerStreamingCall(() -> stub.chaincodeEvents(request));
     }
 
-    public CloseableIterator<DeliverResponse> blockEvents(final Envelope request, final UnaryOperator<CallOptions> options) {
+    public CloseableIterator<DeliverResponse> blockEvents(
+            final Envelope request, final UnaryOperator<CallOptions> options) {
         DeliverGrpc.DeliverStub stub = defaultOptions.applyBlockEvents(deliverAsyncStub, options);
         return invokeDuplexStreamingCall(stub::deliver, request);
     }
 
-    public CloseableIterator<DeliverResponse> filteredBlockEvents(final Envelope request, final UnaryOperator<CallOptions> options) {
+    public CloseableIterator<DeliverResponse> filteredBlockEvents(
+            final Envelope request, final UnaryOperator<CallOptions> options) {
         DeliverGrpc.DeliverStub stub = defaultOptions.applyFilteredBlockEvents(deliverAsyncStub, options);
         return invokeDuplexStreamingCall(stub::deliverFiltered, request);
     }
 
-    public CloseableIterator<DeliverResponse> blockAndPrivateDataEvents(final Envelope request, final UnaryOperator<CallOptions> options) {
+    public CloseableIterator<DeliverResponse> blockAndPrivateDataEvents(
+            final Envelope request, final UnaryOperator<CallOptions> options) {
         DeliverGrpc.DeliverStub stub = defaultOptions.applyBlockAndPrivateDataEvents(deliverAsyncStub, options);
         return invokeDuplexStreamingCall(stub::deliverWithPrivateData, request);
     }
 
-    private <Response> CloseableIterator<Response> invokeServerStreamingCall(final Supplier<Iterator<Response>> call) {
+    private <T> CloseableIterator<T> invokeServerStreamingCall(final Supplier<Iterator<T>> call) {
         Context.CancellableContext context = Context.current().withCancellation();
         return invokeStreamingCall(context, call);
     }
 
-    private <Response> CloseableIterator<Response> invokeStreamingCall(
-            final Context.CancellableContext context,
-            final Supplier<Iterator<Response>> call
-    ) {
+    @SuppressWarnings({"PMD.AvoidCatchingGenericException", "PMD.AvoidCatchingGenericException"})
+    private <T> CloseableIterator<T> invokeStreamingCall(
+            final Context.CancellableContext context, final Supplier<Iterator<T>> call) {
         try {
-            Iterator<Response> iterator = context.wrap(call::get).call();
+            Iterator<T> iterator = context.wrap(call::get).call();
             return new ResponseIterator<>(context, iterator);
         } catch (StatusRuntimeException e) {
             context.cancel(e);
@@ -141,7 +148,7 @@ final class GatewayClient {
         } catch (Exception e) {
             // Should never happen calling a Supplier
             context.cancel(e);
-            throw new RuntimeException(e);
+            throw new AssertionError(e);
         }
     }
 
@@ -178,25 +185,26 @@ final class GatewayClient {
         }
     }
 
-    private <Request, Response> CloseableIterator<Response> invokeDuplexStreamingCall(
-            final Function<StreamObserver<Response>, StreamObserver<Request>> call,
-            final Request request
-    ) {
-        ResponseObserver<Response> responseObserver = new ResponseObserver<>();
+    @SuppressWarnings("PMD.GenericsNaming")
+    private <ReqT, RespT> CloseableIterator<RespT> invokeDuplexStreamingCall(
+            final Function<StreamObserver<RespT>, StreamObserver<ReqT>> call, final ReqT request) {
+        ResponseObserver<RespT> responseObserver = new ResponseObserver<>();
 
         Context.CancellableContext context = Context.current().withCancellation();
         // Complete response observer synchronously if client cancels the context
         context.addListener(context1 -> responseObserver.onCompleted(), Runnable::run);
 
         return invokeStreamingCall(context, () -> {
-            StreamObserver<Request> requestObserver = call.apply(responseObserver);
+            StreamObserver<ReqT> requestObserver = call.apply(responseObserver);
             requestObserver.onNext(request);
             return responseObserver;
         });
     }
 
     private static final class ResponseObserver<T> implements StreamObserver<T>, Iterator<T> {
+        @SuppressWarnings("PMD.LooseCoupling")
         private final LinkedTransferQueue<Supplier<T>> queue = new LinkedTransferQueue<>();
+
         private final ExecutorService executor = Executors.newSingleThreadExecutor();
         private Supplier<T> next;
 
@@ -209,7 +217,7 @@ final class GatewayClient {
                 // Ignore cancellation
             } catch (ExecutionException e) {
                 // Should never happen
-                throw new RuntimeException(e);
+                throw new AssertionError(e);
             }
         }
 
@@ -262,6 +270,7 @@ final class GatewayClient {
         }
 
         @Override
+        @SuppressWarnings("PMD.NullAssignment")
         public T next() {
             T result = readNext().get();
             if (result == null) {

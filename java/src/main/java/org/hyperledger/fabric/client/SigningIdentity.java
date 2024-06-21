@@ -6,17 +6,18 @@
 
 package org.hyperledger.fabric.client;
 
+import java.security.GeneralSecurityException;
+import java.security.ProviderException;
+import java.util.function.Function;
 import org.hyperledger.fabric.client.identity.Identity;
 import org.hyperledger.fabric.client.identity.Signer;
-
-import java.security.GeneralSecurityException;
-import java.util.function.Function;
+import org.hyperledger.fabric.protos.msp.SerializedIdentity;
 
 final class SigningIdentity {
     private final Identity identity;
     private final Function<byte[], byte[]> hash;
     private final Signer signer;
-    private final byte[] creator;
+    private final SerializedIdentity creator;
 
     SigningIdentity(final Identity identity, final Function<byte[], byte[]> hash, final Signer signer) {
         this.identity = identity;
@@ -27,7 +28,7 @@ final class SigningIdentity {
         GatewayUtils.requireNonNullArgument(this.hash, "No hash implementation supplied");
         GatewayUtils.requireNonNullArgument(this.signer, "No signing implementation supplied");
 
-        this.creator = GatewayUtils.serializeIdentity(identity);
+        this.creator = GatewayUtils.newSerializedIdentity(identity);
     }
 
     public Identity getIdentity() {
@@ -42,11 +43,11 @@ final class SigningIdentity {
         try {
             return signer.sign(digest);
         } catch (GeneralSecurityException e) {
-            throw new RuntimeException(e);
+            throw new ProviderException(e);
         }
     }
 
     public byte[] getCreator() {
-        return creator;
+        return creator.toByteArray();
     }
 }

@@ -1,18 +1,21 @@
 /*
- *  Copyright 2020 IBM All Rights Reserved.
+ * Copyright 2020 IBM All Rights Reserved.
  *
- *  SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 package org.hyperledger.fabric.client;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.spy;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import org.hyperledger.fabric.protos.common.ChannelHeader;
 import org.hyperledger.fabric.protos.common.Envelope;
 import org.hyperledger.fabric.protos.common.Header;
@@ -31,10 +34,6 @@ import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.mockito.MockitoSession;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.spy;
-
 /**
  * Registers mock Gateway and Deliver gRPC services with a real gRPC channel, and connects a Gateway instance to that
  * channel, for use in unit tests. Provides access to the Gateway and Deliver service implementation stubs so that
@@ -49,15 +48,33 @@ public final class GatewayMocker implements AutoCloseable {
     private final Gateway.Builder builder;
 
     private final MockitoSession mockitoSession;
-    @Captor private ArgumentCaptor<EndorseRequest> endorseRequestCaptor;
-    @Captor private ArgumentCaptor<EvaluateRequest> evaluateRequestCaptor;
-    @Captor private ArgumentCaptor<SubmitRequest> submitRequestCaptor;
-    @Captor private ArgumentCaptor<SignedCommitStatusRequest> commitStatusRequestCaptor;
-    @Captor private ArgumentCaptor<SignedChaincodeEventsRequest> chaincodeEventsRequestCaptor;
-    @Captor private ArgumentCaptor<Stream<Envelope>> deliverRequestCaptor;
-    @Captor private ArgumentCaptor<Stream<Envelope>> deliverFilteredRequestCaptor;
-    @Captor private ArgumentCaptor<Stream<Envelope>> deliverWithPrivateDataRequestCaptor;
-    @Captor private ArgumentCaptor<CallOptions> callOptionsCaptor;
+
+    @Captor
+    private ArgumentCaptor<EndorseRequest> endorseRequestCaptor;
+
+    @Captor
+    private ArgumentCaptor<EvaluateRequest> evaluateRequestCaptor;
+
+    @Captor
+    private ArgumentCaptor<SubmitRequest> submitRequestCaptor;
+
+    @Captor
+    private ArgumentCaptor<SignedCommitStatusRequest> commitStatusRequestCaptor;
+
+    @Captor
+    private ArgumentCaptor<SignedChaincodeEventsRequest> chaincodeEventsRequestCaptor;
+
+    @Captor
+    private ArgumentCaptor<Stream<Envelope>> deliverRequestCaptor;
+
+    @Captor
+    private ArgumentCaptor<Stream<Envelope>> deliverFilteredRequestCaptor;
+
+    @Captor
+    private ArgumentCaptor<Stream<Envelope>> deliverWithPrivateDataRequestCaptor;
+
+    @Captor
+    private ArgumentCaptor<CallOptions> callOptionsCaptor;
 
     public GatewayMocker() {
         this(utils.newGatewayBuilder());
@@ -65,9 +82,7 @@ public final class GatewayMocker implements AutoCloseable {
 
     public GatewayMocker(final Gateway.Builder builder) {
         this.builder = builder;
-        mockitoSession = Mockito.mockitoSession()
-                .initMocks(this)
-                .startMocking();
+        mockitoSession = Mockito.mockitoSession().initMocks(this).startMocking();
 
         gatewaySpy = spy(new GatewayServiceStub());
         MockGatewayService gatewayService = new MockGatewayService(gatewaySpy);
@@ -167,20 +182,24 @@ public final class GatewayMocker implements AutoCloseable {
     public ChaincodeSpec getChaincodeSpec(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
         org.hyperledger.fabric.protos.peer.Proposal proposal = getProposal(proposedTransaction);
         ChaincodeProposalPayload chaincodeProposalPayload = ChaincodeProposalPayload.parseFrom(proposal.getPayload());
-        ChaincodeInvocationSpec chaincodeInvocationSpec = ChaincodeInvocationSpec.parseFrom(chaincodeProposalPayload.getInput());
+        ChaincodeInvocationSpec chaincodeInvocationSpec =
+                ChaincodeInvocationSpec.parseFrom(chaincodeProposalPayload.getInput());
         return chaincodeInvocationSpec.getChaincodeSpec();
     }
 
-    public ChaincodeProposalPayload getProposalPayload(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
+    public ChaincodeProposalPayload getProposalPayload(SignedProposal proposedTransaction)
+            throws InvalidProtocolBufferException {
         org.hyperledger.fabric.protos.peer.Proposal proposal = getProposal(proposedTransaction);
         return ChaincodeProposalPayload.parseFrom(proposal.getPayload());
     }
 
-    public org.hyperledger.fabric.protos.peer.Proposal getProposal(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
+    public org.hyperledger.fabric.protos.peer.Proposal getProposal(SignedProposal proposedTransaction)
+            throws InvalidProtocolBufferException {
         return org.hyperledger.fabric.protos.peer.Proposal.parseFrom(proposedTransaction.getProposalBytes());
     }
 
-    public SignatureHeader getSignatureHeader(SignedProposal proposedTransaction) throws InvalidProtocolBufferException {
+    public SignatureHeader getSignatureHeader(SignedProposal proposedTransaction)
+            throws InvalidProtocolBufferException {
         Header header = getHeader(proposedTransaction);
         return SignatureHeader.parseFrom(header.getSignatureHeader());
     }

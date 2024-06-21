@@ -16,12 +16,20 @@ final class ContractImpl implements Contract {
     private final String chaincodeName;
     private final String contractName;
 
-    ContractImpl(final GatewayClient client, final SigningIdentity signingIdentity, final String channelName, final String chaincodeName) {
+    ContractImpl(
+            final GatewayClient client,
+            final SigningIdentity signingIdentity,
+            final String channelName,
+            final String chaincodeName) {
         this(client, signingIdentity, channelName, chaincodeName, null);
     }
 
-    ContractImpl(final GatewayClient client, final SigningIdentity signingIdentity,
-                 final String channelName, final String chaincodeName, final String contractName) {
+    ContractImpl(
+            final GatewayClient client,
+            final SigningIdentity signingIdentity,
+            final String channelName,
+            final String chaincodeName,
+            final String contractName) {
         Objects.requireNonNull(chaincodeName, "chaincode name");
 
         this.client = client;
@@ -32,52 +40,36 @@ final class ContractImpl implements Contract {
     }
 
     @Override
-    public byte[] submitTransaction(final String name) throws EndorseException, CommitException, SubmitException, CommitStatusException {
-        return newProposal(name)
-                .build()
-                .endorse()
-                .submit();
+    public byte[] submitTransaction(final String name)
+            throws EndorseException, CommitException, SubmitException, CommitStatusException {
+        return newProposal(name).build().endorse().submit();
     }
 
     @Override
-    public byte[] submitTransaction(final String name, final String... args) throws EndorseException, CommitException, SubmitException, CommitStatusException {
-        return newProposal(name)
-                .addArguments(args)
-                .build()
-                .endorse()
-                .submit();
+    public byte[] submitTransaction(final String name, final String... args)
+            throws EndorseException, CommitException, SubmitException, CommitStatusException {
+        return newProposal(name).addArguments(args).build().endorse().submit();
     }
 
     @Override
-    public byte[] submitTransaction(final String name, final byte[]... args) throws EndorseException, CommitException, SubmitException, CommitStatusException {
-        return newProposal(name)
-                .addArguments(args)
-                .build()
-                .endorse()
-                .submit();
+    public byte[] submitTransaction(final String name, final byte[]... args)
+            throws EndorseException, CommitException, SubmitException, CommitStatusException {
+        return newProposal(name).addArguments(args).build().endorse().submit();
     }
 
     @Override
     public byte[] evaluateTransaction(final String name) throws GatewayException {
-        return newProposal(name)
-                .build()
-                .evaluate();
+        return newProposal(name).build().evaluate();
     }
 
     @Override
     public byte[] evaluateTransaction(final String name, final String... args) throws GatewayException {
-        return newProposal(name)
-                .addArguments(args)
-                .build()
-                .evaluate();
+        return newProposal(name).addArguments(args).build().evaluate();
     }
 
     @Override
     public byte[] evaluateTransaction(final String name, final byte[]... args) throws GatewayException {
-        return newProposal(name)
-                .addArguments(args)
-                .build()
-                .evaluate();
+        return newProposal(name).addArguments(args).build().evaluate();
     }
 
     @Override
@@ -98,8 +90,6 @@ final class ContractImpl implements Contract {
 
     private String qualifiedTransactionName(final String name) {
         Objects.requireNonNull(name, "transaction name");
-        return getContractName()
-                .map(contractName -> contractName + ":" + name)
-                .orElse(name);
+        return getContractName().map(contractName -> contractName + ":" + name).orElse(name);
     }
 }

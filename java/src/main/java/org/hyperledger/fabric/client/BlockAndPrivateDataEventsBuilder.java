@@ -7,9 +7,8 @@
 package org.hyperledger.fabric.client;
 
 import com.google.protobuf.ByteString;
-import org.hyperledger.fabric.protos.common.Envelope;
-
 import java.util.Objects;
+import org.hyperledger.fabric.protos.common.Envelope;
 
 final class BlockAndPrivateDataEventsBuilder implements BlockAndPrivateDataEventsRequest.Builder {
     private final GatewayClient client;
@@ -17,11 +16,10 @@ final class BlockAndPrivateDataEventsBuilder implements BlockAndPrivateDataEvent
     private final BlockEventsEnvelopeBuilder envelopeBuilder;
 
     BlockAndPrivateDataEventsBuilder(
-        final GatewayClient client,
-        final SigningIdentity signingIdentity,
-        final String channelName,
-        final ByteString tlsCertificateHash
-    ) {
+            final GatewayClient client,
+            final SigningIdentity signingIdentity,
+            final String channelName,
+            final ByteString tlsCertificateHash) {
         Objects.requireNonNull(channelName, "channel name");
 
         this.client = client;

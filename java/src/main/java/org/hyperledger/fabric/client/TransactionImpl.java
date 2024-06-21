@@ -6,10 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.UnaryOperator;
-
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
+import java.util.function.UnaryOperator;
 import org.hyperledger.fabric.protos.common.Envelope;
 import org.hyperledger.fabric.protos.gateway.CommitStatusRequest;
 import org.hyperledger.fabric.protos.gateway.PreparedTransaction;
@@ -23,7 +22,10 @@ final class TransactionImpl implements Transaction {
     private PreparedTransaction preparedTransaction;
     private final ByteString result;
 
-    TransactionImpl(final GatewayClient client, final SigningIdentity signingIdentity, final PreparedTransaction preparedTransaction) {
+    TransactionImpl(
+            final GatewayClient client,
+            final SigningIdentity signingIdentity,
+            final PreparedTransaction preparedTransaction) {
         this.client = client;
         this.signingIdentity = signingIdentity;
         this.preparedTransaction = preparedTransaction;
@@ -55,7 +57,8 @@ final class TransactionImpl implements Transaction {
     }
 
     @Override
-    public byte[] submit(final UnaryOperator<CallOptions> options) throws SubmitException, CommitStatusException, CommitException {
+    public byte[] submit(final UnaryOperator<CallOptions> options)
+            throws SubmitException, CommitStatusException, CommitException {
         Status status = submitAsync(options).getStatus(options);
         if (!status.isSuccessful()) {
             throw new CommitException(status);
@@ -74,7 +77,8 @@ final class TransactionImpl implements Transaction {
                 .build();
         client.submit(submitRequest, options);
 
-        return new SubmittedTransactionImpl(client, signingIdentity, getTransactionId(), newSignedCommitStatusRequest(), getResult());
+        return new SubmittedTransactionImpl(
+                client, signingIdentity, getTransactionId(), newSignedCommitStatusRequest(), result);
     }
 
     void setSignature(final byte[] signature) {
@@ -82,9 +86,8 @@ final class TransactionImpl implements Transaction {
                 .setSignature(ByteString.copyFrom(signature))
                 .build();
 
-        preparedTransaction = preparedTransaction.toBuilder()
-                .setEnvelope(envelope)
-                .build();
+        preparedTransaction =
+                preparedTransaction.toBuilder().setEnvelope(envelope).build();
     }
 
     private void sign() {

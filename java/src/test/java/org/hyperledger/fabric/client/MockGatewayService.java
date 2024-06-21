@@ -53,17 +53,19 @@ public final class MockGatewayService extends GatewayGrpc.GatewayImplBase {
     }
 
     @Override
-    public void commitStatus(final SignedCommitStatusRequest request, final StreamObserver<CommitStatusResponse> responseObserver) {
+    public void commitStatus(
+            final SignedCommitStatusRequest request, final StreamObserver<CommitStatusResponse> responseObserver) {
         synchronized (stub) {
             testUtils.invokeStubUnaryCall(stub::commitStatus, request, responseObserver);
         }
     }
 
     @Override
-    public void chaincodeEvents(final SignedChaincodeEventsRequest request, final StreamObserver<ChaincodeEventsResponse> responseObserver) {
+    public void chaincodeEvents(
+            final SignedChaincodeEventsRequest request,
+            final StreamObserver<ChaincodeEventsResponse> responseObserver) {
         synchronized (stub) {
             testUtils.invokeStubServerStreamingCall(stub::chaincodeEvents, request, responseObserver);
         }
     }
-
 }

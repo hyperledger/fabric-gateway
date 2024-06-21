@@ -7,15 +7,14 @@
 package scenario;
 
 import io.grpc.Status;
-import org.hyperledger.fabric.client.CloseableIterator;
-import org.hyperledger.fabric.client.GatewayRuntimeException;
-
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+import org.hyperledger.fabric.client.CloseableIterator;
+import org.hyperledger.fabric.client.GatewayRuntimeException;
 
 public final class BasicEventListener<T> implements EventListener<T> {
     private final BlockingQueue<T> eventQueue = new SynchronousQueue<>();

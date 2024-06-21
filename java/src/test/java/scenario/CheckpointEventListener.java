@@ -1,7 +1,12 @@
+/*
+ * Copyright 2024 IBM All Rights Reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package scenario;
 
 import java.io.IOException;
-
 import org.hyperledger.fabric.client.CloseableIterator;
 
 public final class CheckpointEventListener<T> implements EventListener<T> {

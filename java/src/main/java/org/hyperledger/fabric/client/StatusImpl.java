@@ -45,7 +45,8 @@ final class StatusImpl implements Status {
 
     @Override
     public String toString() {
-        return GatewayUtils.toString(this,
+        return GatewayUtils.toString(
+                this,
                 "transactionId: " + transactionId,
                 "code: " + code.getNumber() + " (" + code.name() + ")",
                 "blockNumber: " + blockNumber);

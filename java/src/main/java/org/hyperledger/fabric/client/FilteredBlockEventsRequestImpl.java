@@ -6,10 +6,9 @@
 
 package org.hyperledger.fabric.client;
 
+import io.grpc.CallOptions;
 import java.util.NoSuchElementException;
 import java.util.function.UnaryOperator;
-
-import io.grpc.CallOptions;
 import org.hyperledger.fabric.protos.common.Envelope;
 import org.hyperledger.fabric.protos.peer.DeliverResponse;
 import org.hyperledger.fabric.protos.peer.FilteredBlock;
@@ -17,7 +16,8 @@ import org.hyperledger.fabric.protos.peer.FilteredBlock;
 final class FilteredBlockEventsRequestImpl extends SignableBlockEventsRequest implements FilteredBlockEventsRequest {
     private final GatewayClient client;
 
-    FilteredBlockEventsRequestImpl(final GatewayClient client, final SigningIdentity signingIdentity, final Envelope request) {
+    FilteredBlockEventsRequestImpl(
+            final GatewayClient client, final SigningIdentity signingIdentity, final Envelope request) {
         super(signingIdentity, request);
         this.client = client;
     }

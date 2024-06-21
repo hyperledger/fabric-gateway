@@ -6,12 +6,11 @@
 
 package org.hyperledger.fabric.client;
 
+import io.grpc.CallOptions;
+import io.grpc.Deadline;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.UnaryOperator;
-
-import io.grpc.CallOptions;
-import io.grpc.Deadline;
 
 /**
  * Options defining runtime behavior of a gRPC service invocation.

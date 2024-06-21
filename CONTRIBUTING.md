@@ -54,7 +54,7 @@ Node code is written only in [TypeScript](https://www.typescriptlang.org/), and 
 
 ### Java
 
-Java code uses [JUnit](https://junit.org/) as the test runner, [AssertJ](https://assertj.github.io/doc/) for assertions, and [Mockito](https://site.mockito.org/) for mock implementations. [Checkstyle](https://checkstyle.org/) is used to apply both linting checks and consistent code formatting.
+Java code uses [JUnit](https://junit.org/) as the test runner, [AssertJ](https://assertj.github.io/doc/) for assertions, and [Mockito](https://site.mockito.org/) for mock implementations. [PMD](https://pmd.github.io/) is used to perform static analysis of the code, and [Spotless](https://github.com/diffplug/spotless) (with [Palantir Java format](https://github.com/palantir/palantir-java-format) rules) checks consistent code formatting. 
 
 Consider recommendations from these resources:
 

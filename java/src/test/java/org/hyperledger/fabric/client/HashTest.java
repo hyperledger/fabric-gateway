@@ -6,17 +6,16 @@
 
 package org.hyperledger.fabric.client;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.nio.charset.StandardCharsets;
+import java.security.Security;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-
-import java.nio.charset.StandardCharsets;
-import java.security.Security;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public final class HashTest {
     @BeforeAll

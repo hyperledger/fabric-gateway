@@ -6,7 +6,7 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.Arrays;
+import com.google.protobuf.ByteString;
 import java.util.Objects;
 
 final class ChaincodeEventImpl implements ChaincodeEvent {
@@ -14,7 +14,7 @@ final class ChaincodeEventImpl implements ChaincodeEvent {
     private final String transactionId;
     private final String chaincodeName;
     private final String eventName;
-    private final byte[] payload;
+    private final ByteString payload;
     private final int hash;
 
     ChaincodeEventImpl(final long blockNumber, final org.hyperledger.fabric.protos.peer.ChaincodeEvent event) {
@@ -22,8 +22,12 @@ final class ChaincodeEventImpl implements ChaincodeEvent {
         this.transactionId = event.getTxId();
         this.chaincodeName = event.getChaincodeId();
         this.eventName = event.getEventName();
-        this.payload = event.getPayload().toByteArray();
-        this.hash = Objects.hash(blockNumber, transactionId, chaincodeName, eventName); // Ignore potentially large payload; this is good enough
+        this.payload = event.getPayload();
+        this.hash = Objects.hash(
+                blockNumber,
+                transactionId,
+                chaincodeName,
+                eventName); // Ignore potentially large payload; this is good enough
     }
 
     @Override
@@ -48,7 +52,7 @@ final class ChaincodeEventImpl implements ChaincodeEvent {
 
     @Override
     public byte[] getPayload() {
-        return payload;
+        return payload.toByteArray();
     }
 
     @Override
@@ -63,7 +67,7 @@ final class ChaincodeEventImpl implements ChaincodeEvent {
                 && Objects.equals(this.transactionId, that.transactionId)
                 && Objects.equals(this.chaincodeName, that.chaincodeName)
                 && Objects.equals(this.eventName, that.eventName)
-                && Arrays.equals(this.payload, that.payload);
+                && Objects.equals(this.payload, that.payload);
     }
 
     @Override
@@ -73,11 +77,12 @@ final class ChaincodeEventImpl implements ChaincodeEvent {
 
     @Override
     public String toString() {
-        return GatewayUtils.toString(this,
+        return GatewayUtils.toString(
+                this,
                 "blockNumber: " + blockNumber,
                 "transactionId: " + transactionId,
                 "chaincodeName: " + chaincodeName,
                 "eventName: " + eventName,
-                "payload: " + Arrays.toString(payload));
+                "payload: " + payload);
     }
 }

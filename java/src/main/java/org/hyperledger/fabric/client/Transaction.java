@@ -6,9 +6,8 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.UnaryOperator;
-
 import io.grpc.CallOptions;
+import java.util.function.UnaryOperator;
 
 /**
  * An endorsed transaction that can be submitted to the orderer for commit to the ledger.
@@ -63,7 +62,7 @@ public interface Transaction extends Signable {
      * @deprecated Replaced by {@link #submit(UnaryOperator)}.
      */
     @Deprecated
-    default byte[] submit(CallOption... options) throws SubmitException, CommitStatusException, CommitException {
+    default byte[] submit(final CallOption... options) throws SubmitException, CommitStatusException, CommitException {
         return submit(GatewayUtils.asCallOptions(options));
     }
 
@@ -98,7 +97,7 @@ public interface Transaction extends Signable {
      * @deprecated Replaced by {@link #submit(UnaryOperator)}.
      */
     @Deprecated
-    default SubmittedTransaction submitAsync(CallOption... options) throws SubmitException {
+    default SubmittedTransaction submitAsync(final CallOption... options) throws SubmitException {
         return submitAsync(GatewayUtils.asCallOptions(options));
     }
 }

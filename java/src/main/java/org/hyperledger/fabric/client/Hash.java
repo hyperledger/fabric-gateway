@@ -32,6 +32,8 @@ public enum Hash implements Function<byte[], byte[]> {
     /** SHA3-384 hash. */
     SHA3_384(message -> digest("SHA3-384", message));
 
+    private final Function<byte[], byte[]> implementation;
+
     /**
      * SHA-256 hash the supplied message to create a digest for signing.
      * @deprecated Replaced by {@link #SHA256}
@@ -43,8 +45,6 @@ public enum Hash implements Function<byte[], byte[]> {
         return SHA256.apply(message);
     }
 
-    private final Function<byte[], byte[]> implementation;
-
     Hash(final Function<byte[], byte[]> implementation) {
         this.implementation = implementation;
     }
@@ -54,6 +54,7 @@ public enum Hash implements Function<byte[], byte[]> {
      * @param message Message to be hashed.
      * @return Message digest.
      */
+    @Override
     public byte[] apply(final byte[] message) {
         return implementation.apply(message);
     }
@@ -64,7 +65,7 @@ public enum Hash implements Function<byte[], byte[]> {
             return digest.digest(message);
         } catch (NoSuchAlgorithmException e) {
             // Should never happen with standard algorithm
-            throw new RuntimeException(e);
+            throw new AssertionError(e);
         }
     }
 }

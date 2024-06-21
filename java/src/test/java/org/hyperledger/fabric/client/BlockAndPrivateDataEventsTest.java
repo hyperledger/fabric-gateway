@@ -6,20 +6,19 @@
 
 package org.hyperledger.fabric.client;
 
-import java.util.function.UnaryOperator;
-import java.util.stream.Stream;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 
 import io.grpc.CallOptions;
+import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 import org.hyperledger.fabric.protos.common.Block;
 import org.hyperledger.fabric.protos.common.BlockHeader;
 import org.hyperledger.fabric.protos.common.Envelope;
 import org.hyperledger.fabric.protos.ledger.rwset.TxPvtReadWriteSet;
 import org.hyperledger.fabric.protos.peer.BlockAndPrivateData;
 import org.hyperledger.fabric.protos.peer.DeliverResponse;
-
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 
 public final class BlockAndPrivateDataEventsTest extends CommonBlockEventsTest<BlockAndPrivateData> {
     @Override
@@ -32,10 +31,8 @@ public final class BlockAndPrivateDataEventsTest extends CommonBlockEventsTest<B
         return DeliverResponse.newBuilder()
                 .setBlockAndPrivateData(BlockAndPrivateData.newBuilder()
                         .setBlock(Block.newBuilder()
-                                .setHeader(BlockHeader.newBuilder().setNumber(blockNumber))
-                        )
-                        .putPrivateDataMap(0, TxPvtReadWriteSet.newBuilder().build())
-                )
+                                .setHeader(BlockHeader.newBuilder().setNumber(blockNumber)))
+                        .putPrivateDataMap(0, TxPvtReadWriteSet.newBuilder().build()))
                 .build();
     }
 
@@ -74,4 +71,3 @@ public final class BlockAndPrivateDataEventsTest extends CommonBlockEventsTest<B
         return response.getBlockAndPrivateData();
     }
 }
-
