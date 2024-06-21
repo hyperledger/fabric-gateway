@@ -122,13 +122,11 @@ public abstract class CommonBlockEventsTest<E> {
         StatusRuntimeException expected = new StatusRuntimeException(Status.UNAVAILABLE);
         stubDoThrow(expected);
 
-        GatewayRuntimeException e = catchThrowableOfType(
-                () -> {
-                    try (CloseableIterator<?> iter = getEvents()) {
-                        iter.forEachRemaining(event -> {});
-                    }
-                },
-                GatewayRuntimeException.class);
+        GatewayRuntimeException e = catchThrowableOfType(GatewayRuntimeException.class, () -> {
+            try (CloseableIterator<?> iter = getEvents()) {
+                iter.forEachRemaining(event -> {});
+            }
+        });
 
         assertThat(e.getStatus()).isEqualTo(expected.getStatus());
         assertThat(e).hasCauseInstanceOf(StatusRuntimeException.class);

@@ -96,13 +96,11 @@ public final class ChaincodeEventsTest {
         StatusRuntimeException expected = new StatusRuntimeException(Status.UNAVAILABLE);
         doThrow(expected).when(stub).chaincodeEvents(any());
 
-        GatewayRuntimeException e = catchThrowableOfType(
-                () -> {
-                    try (CloseableIterator<ChaincodeEvent> events = network.getChaincodeEvents("CHAINCODE_NAME")) {
-                        events.forEachRemaining(event -> {});
-                    }
-                },
-                GatewayRuntimeException.class);
+        GatewayRuntimeException e = catchThrowableOfType(GatewayRuntimeException.class, () -> {
+            try (CloseableIterator<ChaincodeEvent> events = network.getChaincodeEvents("CHAINCODE_NAME")) {
+                events.forEachRemaining(event -> {});
+            }
+        });
         assertThat(e.getStatus()).isEqualTo(expected.getStatus());
         assertThat(e).hasCauseInstanceOf(StatusRuntimeException.class);
     }
@@ -322,7 +320,7 @@ public final class ChaincodeEventsTest {
         }
 
         GatewayRuntimeException e =
-                catchThrowableOfType(() -> eventIter.forEachRemaining(event -> {}), GatewayRuntimeException.class);
+                catchThrowableOfType(GatewayRuntimeException.class, () -> eventIter.forEachRemaining(event -> {}));
         assertThat(e).hasCauseInstanceOf(StatusRuntimeException.class);
         assertThat(e.getStatus().getCode()).isEqualTo(Status.Code.CANCELLED);
     }

@@ -23,7 +23,7 @@ build these components, the following need to be installed and available in the 
 
 - [Go 1.21+](https://go.dev/)
 - [Node 18+](https://nodejs.org/)
-- [Java 8+](https://adoptium.net/)
+- [Java 11+](https://adoptium.net/)
 - [Docker](https://www.docker.com/)
 - [Make](https://www.gnu.org/software/make/)
 - [Maven](https://maven.apache.org/)
