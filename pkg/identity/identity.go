@@ -1,8 +1,5 @@
-/*
-Copyright 2020 IBM All Rights Reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
+// Copyright IBM Corp. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 // Package identity defines a client identity and signing implementation used to interact with a Fabric network.
 //

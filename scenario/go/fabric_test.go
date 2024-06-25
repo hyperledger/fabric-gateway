@@ -1,8 +1,5 @@
-/*
-Copyright 2020 IBM All Rights Reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
+// Copyright IBM Corp. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 package scenario
 
@@ -379,40 +376,40 @@ func createAndJoinChannels() error {
 		return err
 	}
 
-	if !channelsJoined {
-		for _, orderer := range orderers {
-			tlsdir := fmt.Sprintf("/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/%s/tls", orderer.address)
-			_, err := dockerCommand(
-				"exec", "org1_cli", "osnadmin", "channel", "join",
-				"--channelID", "mychannel",
-				"--config-block", "/etc/hyperledger/configtx/mychannel.block",
-				"-o", fmt.Sprintf("%s:%s", orderer.address, orderer.port),
-				"--ca-file", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem",
-				"--client-cert", tlsdir+"/server.crt",
-				"--client-key", tlsdir+"/server.key",
-			)
-			if err != nil {
+	if channelsJoined {
+		return nil
+	}
+
+	for _, orderer := range orderers {
+		tlsdir := fmt.Sprintf("/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/%s/tls", orderer.address)
+		if _, err := dockerCommand(
+			"exec", "org1_cli", "osnadmin", "channel", "join",
+			"--channelID", "mychannel",
+			"--config-block", "/etc/hyperledger/configtx/mychannel.block",
+			"-o", fmt.Sprintf("%s:%s", orderer.address, orderer.port),
+			"--ca-file", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem",
+			"--client-cert", tlsdir+"/server.crt",
+			"--client-key", tlsdir+"/server.key",
+		); err != nil {
+			return err
+		}
+	}
+
+	for _, org := range orgs {
+		for _, peer := range org.peers {
+			env := "CORE_PEER_ADDRESS=" + peer
+			if _, err := dockerCommandWithTLS(
+				"exec", "-e", env, org.cli, "peer", "channel", "join",
+				"-b", "/etc/hyperledger/configtx/mychannel.block",
+			); err != nil {
 				return err
 			}
 		}
-
-		for _, org := range orgs {
-			for _, peer := range org.peers {
-				env := "CORE_PEER_ADDRESS=" + peer
-				_, err := dockerCommandWithTLS(
-					"exec", "-e", env, org.cli, "peer", "channel", "join",
-					"-b", "/etc/hyperledger/configtx/mychannel.block",
-				)
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		channelsJoined = true
-		time.Sleep(10 * time.Second)
-
 	}
+
+	channelsJoined = true
+	time.Sleep(10 * time.Second)
+
 	return nil
 }
 

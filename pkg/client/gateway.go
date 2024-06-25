@@ -1,8 +1,5 @@
-/*
-Copyright 2020 IBM All Rights Reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
+// Copyright IBM Corp. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 // Package client enables Go developers to build client applications using the Hyperledger Fabric programming model.
 //
