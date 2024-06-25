@@ -317,7 +317,7 @@ public final class SubmitTransactionTest {
 
         Proposal proposal = contract.newProposal("TRANSACTION_NAME").build();
 
-        EndorseException e = catchThrowableOfType(proposal::endorse, EndorseException.class);
+        EndorseException e = catchThrowableOfType(EndorseException.class, proposal::endorse);
         assertThat(e.getTransactionId()).isEqualTo(proposal.getTransactionId());
         assertThat(e.getStatus()).isEqualTo(expected.getStatus());
         assertThat(e).hasCauseInstanceOf(StatusRuntimeException.class);
@@ -331,7 +331,7 @@ public final class SubmitTransactionTest {
         Transaction transaction =
                 contract.newProposal("TRANSACTION_NAME").build().endorse();
 
-        SubmitException e = catchThrowableOfType(transaction::submit, SubmitException.class);
+        SubmitException e = catchThrowableOfType(SubmitException.class, transaction::submit);
         assertThat(e.getTransactionId()).isEqualTo(transaction.getTransactionId());
         assertThat(e.getStatus()).isEqualTo(expected.getStatus());
         assertThat(e).hasCauseInstanceOf(StatusRuntimeException.class);
@@ -345,7 +345,7 @@ public final class SubmitTransactionTest {
         SubmittedTransaction commit =
                 contract.newProposal("TRANSACTION_NAME").build().endorse().submitAsync();
 
-        CommitStatusException e = catchThrowableOfType(commit::getStatus, CommitStatusException.class);
+        CommitStatusException e = catchThrowableOfType(CommitStatusException.class, commit::getStatus);
         assertThat(e.getTransactionId()).isEqualTo(commit.getTransactionId());
         assertThat(e.getStatus()).isEqualTo(expected.getStatus());
         assertThat(e).hasCauseInstanceOf(StatusRuntimeException.class);
@@ -360,7 +360,7 @@ public final class SubmitTransactionTest {
         Transaction transaction =
                 contract.newProposal("TRANSACTION_NAME").build().endorse();
 
-        CommitException e = catchThrowableOfType(transaction::submit, CommitException.class);
+        CommitException e = catchThrowableOfType(CommitException.class, transaction::submit);
 
         assertThat(e).hasMessageContaining(TxValidationCode.MVCC_READ_CONFLICT.name());
         assertThat(e.getCode()).isEqualTo(TxValidationCode.MVCC_READ_CONFLICT);
