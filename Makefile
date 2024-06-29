@@ -110,7 +110,7 @@ scan-go-nancy:
 .PHONY: scan-go-osv-scanner
 scan-go-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
-	osv-scanner --lockfile='$(base_dir)/go.mod' || [ \( $$? -gt 1 \) -a \( $$? -lt 127 \) ]
+	osv-scanner scan --lockfile='$(base_dir)/go.mod' || [ \( $$? -gt 1 \) -a \( $$? -lt 127 \) ]
 
 .PHONY: scan-node
 scan-node: scan-node-npm-audit scan-node-osv-scanner
@@ -127,7 +127,7 @@ scan-node-osv-scanner:
 	cd '$(node_dir)' && \
 		npm install && \
 		npm run sbom && \
-		osv-scanner --sbom=sbom.json
+		osv-scanner scan --sbom=sbom.json
 
 .PHONY: scan-java
 scan-java: scan-java-dependency-check scan-java-osv-scanner
@@ -140,9 +140,7 @@ scan-java-dependency-check:
 .PHONY: scan-java-osv-scanner
 scan-java-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
-	cd '$(java_dir)' && \
-		mvn --activate-profiles sbom -DskipTests install
-	osv-scanner --sbom='$(java_dir)/target/bom.json'
+	osv-scanner scan --lockfile='$(java_dir)/pom.xml'
 
 .PHONY: generate
 generate:
