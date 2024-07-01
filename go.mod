@@ -1,6 +1,6 @@
 module github.com/hyperledger/fabric-gateway
 
-go 1.21
+go 1.21.0
 
 require (
 	github.com/cucumber/godog v0.14.0
