@@ -110,6 +110,7 @@ scan-go-nancy:
 .PHONY: scan-go-osv-scanner
 scan-go-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
+	echo "GoVersionOverride = '$$(go env GOVERSION | sed 's/^go//')'" > osv-scanner.toml
 	osv-scanner scan --lockfile='$(base_dir)/go.mod' || [ \( $$? -gt 1 \) -a \( $$? -lt 127 \) ]
 
 .PHONY: scan-node

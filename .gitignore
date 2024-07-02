@@ -11,3 +11,4 @@ vendor/
 softhsm2.conf
 .python-version
 site/
+osv-scanner.toml
