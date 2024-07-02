@@ -5,7 +5,6 @@ cover.out
 fabric-protos/
 protos/
 vendor/
-**/*_mock_test.go
 .DS_Store
 *.iml
 softhsm2.conf

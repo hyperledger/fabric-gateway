@@ -50,7 +50,7 @@ build-java:
 		mvn -DskipTests install
 
 .PHONY: unit-test
-unit-test: generate lint unit-test-go unit-test-node unit-test-java
+unit-test: lint unit-test-go unit-test-node unit-test-java
 
 .PHONY: unit-test-go
 unit-test-go:
@@ -232,7 +232,7 @@ pull-latest-peer:
 	done
 
 .PHONY: clean
-clean: clean-generated clean-node clean-java clean-docs
+clean: clean-node clean-java clean-docs
 
 .PHONY: clean-node
 clean-node:

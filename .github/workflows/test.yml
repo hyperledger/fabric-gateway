@@ -30,8 +30,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: stable
-      - name: Generate mocks
-        run: make generate
       - name: Staticcheck
         run: make staticcheck
       - name: golangci-lint
@@ -60,8 +58,6 @@ jobs:
         run: sudo apt install -y softhsm
         env:
           TMPDIR: ${{ runner.temp }}
-      - name: Generate mocks
-        run: make generate
       - name: Run unit tests
         run: make unit-test-go-pkcs11
 
@@ -86,8 +82,6 @@ jobs:
         run: sudo apt install -y softhsm
         env:
           TMPDIR: ${{ runner.temp }}
-      - name: Generate mocks
-        run: make generate
       - name: Pull Fabric Docker images
         run: make pull-latest-peer
       - name: Run scenario tests

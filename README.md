@@ -46,11 +46,8 @@ Opening the project folder in an IDE such as [VS Code](https://code.visualstudio
 
 ### Build using make
 
-> **Note:** When the repository is first cloned, some mock implementations used for testing will not be present and the Go code will show compile errors. These will be generated when the `unit-test` target is run, or can be generated explicitly by running `make generate`.
-
 The following Makefile targets are available:
 
-- `make generate` - generate mock implementations used by unit tests
 - `make lint` - run linting checks for the Go code
 - `make unit-test-go` - run unit tests for the Go client API, excluding HSM tests
 - `make unit-test-go-pkcs11` - run unit tests for the Go client API, including HSM tests
