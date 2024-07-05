@@ -32,6 +32,8 @@ jobs:
           languages: ${{ matrix.language }}
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
+        env:
+          GOFLAGS: "-tags=pkcs11"
         with:
           working-directory: ${{ matrix.working-directory }}
       - name: Perform CodeQL Analysis
