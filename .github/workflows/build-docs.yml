@@ -2,6 +2,9 @@ name: Build documentation
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   node:
     runs-on: ubuntu-22.04

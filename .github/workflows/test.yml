@@ -3,6 +3,9 @@ name: Test
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   verify-versions:
     uses: ./.github/workflows/verify-versions.yml

@@ -3,6 +3,9 @@ name: Verify versions
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
 env:
   GATEWAY_VERSION: 1.5.2
 
