@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -u -o pipefail
+
 fileCount=0
 failCount=0
 

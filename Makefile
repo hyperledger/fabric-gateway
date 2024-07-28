@@ -70,7 +70,7 @@ unit-test-node: build-node
 .PHONY: unit-test-java
 unit-test-java:
 	cd '$(java_dir)' && \
-		mvn test
+		mvn test jacoco:report
 
 .PHONY: lint
 lint: staticcheck golangci-lint
@@ -271,4 +271,3 @@ format-node:
 .PHONY: format-java
 format-java:
 	cd '$(java_dir)' && mvn spotless:apply
-
