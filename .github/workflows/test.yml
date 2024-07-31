@@ -52,6 +52,9 @@ jobs:
         go-version:
           - "1.21"
           - "1.22"
+        include:
+          - go-version: "1.22"
+            coverage: true
     env:
       SOFTHSM2_CONF: ${{ github.workspace }}/softhsm2.conf
     steps:
@@ -67,6 +70,11 @@ jobs:
         run: make generate
       - name: Run unit tests
         run: make unit-test-go-pkcs11
+      - name: Coverage report
+        if: ${{ matrix.coverage }}
+        run: |
+          echo '### Unit test coverage' >> ${GITHUB_STEP_SUMMARY}
+          go tool cover -func cover.out | tail -1 | sed 's/[^0-9]*/Statement coverage: /' >> ${GITHUB_STEP_SUMMARY}
 
   go_scenario:
     needs: verify-versions
@@ -171,7 +179,7 @@ jobs:
       - name: Coverage report
         if: ${{ matrix.coverage }}
         run: |
-          echo '### Java unit test coverage' >> ${GITHUB_STEP_SUMMARY}
+          echo '### Unit test coverage' >> ${GITHUB_STEP_SUMMARY}
           ${{ github.workspace }}/.github/scripts/jacoco2markdown.sh java/target/site/jacoco/jacoco.csv >> ${GITHUB_STEP_SUMMARY}
 
   java_scenario:
