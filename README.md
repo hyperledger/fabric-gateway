@@ -1,5 +1,9 @@
 # Hyperledger Fabric Gateway
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/7278/badge)](https://www.bestpractices.dev/projects/7278)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/hyperledger/fabric-gateway/badge)](https://scorecard.dev/viewer/?uri=github.com/hyperledger/fabric-gateway)
+[![Go Report Card](https://goreportcard.com/badge/github.com/hyperledger/fabric-gateway)](https://goreportcard.com/report/github.com/hyperledger/fabric-gateway)
+
 For information on using the Fabric Gateway, including client API documentation, please visit the [Fabric Gateway documentation](https://hyperledger.github.io/fabric-gateway/).
 
 For information on reporting issues, suggesting enhancements and contributing code, please review the [contributing guide](CONTRIBUTING.md).
