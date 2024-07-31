@@ -19,9 +19,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        language:
+          - go
+          - java
+          - javascript
         include:
-          - language: go
-            working-directory: ""
           - language: java
             working-directory: java
           - language: javascript
@@ -38,6 +40,6 @@ jobs:
         env:
           GOFLAGS: "-tags=pkcs11"
         with:
-          working-directory: ${{ matrix.working-directory }}
+          working-directory: ${{ matrix.working-directory || '' }}
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
