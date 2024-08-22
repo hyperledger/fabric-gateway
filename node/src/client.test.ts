@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/* eslint-disable jest/no-export */
-
 import * as grpc from '@grpc/grpc-js';
 import { common, gateway } from '@hyperledger/fabric-protos';
 import { GatewayClient, newGatewayClient } from './client';

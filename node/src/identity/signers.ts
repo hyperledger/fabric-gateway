@@ -59,7 +59,7 @@ export function newHSMSignerFactory(library: string): HSMSignerFactory {
     }
 
     // Dynamic module load to prevent unnecessary load of optional pkcs11js dependency
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { HSMSignerFactoryImpl } = require('./hsmsigner') as {
         HSMSignerFactoryImpl: typeof HSMSignerFactoryImplType;
     };
