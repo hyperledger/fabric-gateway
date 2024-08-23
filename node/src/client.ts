@@ -203,10 +203,10 @@ class GatewayClientImpl implements GatewayClient {
         );
     }
 
-    #makeServerStreamRequest<RequestType extends Message, ResponseType>(
+    #makeServerStreamRequest<ResponseType>(
         method: string,
         deserialize: (value: Buffer) => ResponseType,
-        argument: RequestType,
+        argument: Message,
         options: CallOptions,
     ): CloseableAsyncIterable<ResponseType> {
         try {
@@ -261,10 +261,10 @@ class GatewayClientImpl implements GatewayClient {
         );
     }
 
-    #makeBidiStreamRequest<RequestType extends Message, ResponseType>(
+    #makeBidiStreamRequest<ResponseType>(
         method: string,
         deserialize: (value: Buffer) => ResponseType,
-        request: RequestType,
+        request: Message,
         options: CallOptions,
     ): CloseableAsyncIterable<ResponseType> {
         try {

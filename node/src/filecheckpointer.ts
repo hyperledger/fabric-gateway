@@ -68,6 +68,7 @@ export class FileCheckPointer implements Checkpointer {
     async #readFile(): Promise<Buffer | undefined> {
         try {
             return await fs.promises.readFile(this.#path);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
             // ignore file not exist error.
         }

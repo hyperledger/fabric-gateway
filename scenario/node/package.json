@@ -7,7 +7,7 @@
     },
     "scripts": {
         "build": "npm-run-all clean compile lint format",
-        "clean": "rimraf dist",
+        "clean": "rm -rf dist",
         "cucumber": "NODE_OPTIONS='--enable-source-maps' cucumber-js --format cucumber-console-formatter --require 'dist/**/*.js' ../features",
         "cucumber:no-hsm": "NODE_OPTIONS='--enable-source-maps' cucumber-js --tags 'not @hsm' --format cucumber-console-formatter --require 'dist/**/*.js' ../features",
         "compile": "tsc",
@@ -25,16 +25,16 @@
         "@hyperledger/fabric-protos": "^0.3.0"
     },
     "devDependencies": {
-        "@cucumber/cucumber": "^10.4.0",
+        "@cucumber/cucumber": "^10.9.0",
         "@tsconfig/node18": "^18.2.4",
-        "@types/node": "^18.19.31",
+        "@types/node": "^18.19.45",
         "cucumber-console-formatter": "^1.0.0",
-        "eslint": "^8.57.0",
+        "eslint": "^9.9.0",
         "eslint-config-prettier": "^9.1.0",
         "expect": "^29.7.0",
         "npm-run-all": "^4.1.5",
-        "prettier": "^3.2.5",
-        "typescript": "~5.4.5",
-        "typescript-eslint": "^7.9.0"
+        "prettier": "^3.3.3",
+        "typescript": "~5.5.4",
+        "typescript-eslint": "^8.2.0"
     }
 }

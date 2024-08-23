@@ -20,7 +20,7 @@ describe('optional pkcs11js dependency', () => {
         expect(isLoaded('pkcs11js')).toBe(false);
 
         const { privateKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { signers } = require('.') as { signers: typeof SignersType };
         signers.newPrivateKeySigner(privateKey);
 
