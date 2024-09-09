@@ -251,7 +251,7 @@ clean-generated:
 clean-docs:
 	rm -rf '$(base_dir)/site'
 	rm -rf '$(node_dir)/apidocs'
-	rm -rf '$(java_dir)/target/site/apidocs'
+	rm -rf '$(java_dir)/target/reports/apidocs'
 
 .PHONY: shellcheck
 shellcheck:

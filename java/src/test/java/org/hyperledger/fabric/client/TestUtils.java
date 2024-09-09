@@ -273,8 +273,8 @@ public final class TestUtils {
             @Override
             public void onNext(final T request) {
                 try {
-                    onNextListener.accept(request);
                     queue.put(request);
+                    onNextListener.accept(request);
                 } catch (InterruptedException e) {
                     onError.accept(e);
                 }
