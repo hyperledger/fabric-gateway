@@ -115,6 +115,7 @@ jobs:
         node-version:
           - 18
           - 20
+          - 22
     env:
       SOFTHSM2_CONF: ${{ github.workspace }}/softhsm2.conf
     steps:
@@ -134,7 +135,7 @@ jobs:
       matrix:
         node-version:
           - 18
-          - 20
+          - 22
     env:
       SOFTHSM2_CONF: ${{ github.workspace }}/softhsm2.conf
     steps:
