@@ -44,7 +44,7 @@ jobs:
 
   go_unit:
     needs: verify-versions
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: Unit test Go
     strategy:
       fail-fast: false
@@ -64,7 +64,7 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
       - name: Install SoftHSM
-        run: sudo apt install -y softhsm
+        run: sudo apt install -y softhsm2
         env:
           TMPDIR: ${{ runner.temp }}
       - name: Generate mocks
@@ -79,7 +79,7 @@ jobs:
 
   go_scenario:
     needs: verify-versions
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: Scenario test Go
     strategy:
       fail-fast: false
@@ -95,7 +95,7 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
       - name: Install SoftHSM
-        run: sudo apt install -y softhsm
+        run: sudo apt install -y softhsm2
         env:
           TMPDIR: ${{ runner.temp }}
       - name: Generate mocks
@@ -107,7 +107,7 @@ jobs:
 
   node_unit:
     needs: verify-versions
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: Unit test Node
     strategy:
       fail-fast: false
@@ -128,7 +128,7 @@ jobs:
 
   node_scenario:
     needs: verify-versions
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: Scenario test Node
     strategy:
       fail-fast: false
@@ -147,7 +147,7 @@ jobs:
         with:
           go-version: stable
       - name: Install SoftHSM
-        run: sudo apt install -y softhsm
+        run: sudo apt install -y softhsm2
         env:
           TMPDIR: ${{ runner.temp }}
       - name: Pull Fabric Docker images
@@ -157,7 +157,7 @@ jobs:
 
   java_unit:
     needs: verify-versions
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: Unit test Java
     strategy:
       fail-fast: false
@@ -186,7 +186,7 @@ jobs:
 
   java_scenario:
     needs: verify-versions
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: Scenario test Java
     strategy:
       fail-fast: false

@@ -7,7 +7,7 @@ permissions:
 
 jobs:
   node:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: Node documentation
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +23,7 @@ jobs:
           path: node/apidocs/
 
   java:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: Java documentation
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +41,7 @@ jobs:
           path: java/target/reports/apidocs/
 
   site:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: Documentation site
     steps:
       - uses: actions/checkout@v4
