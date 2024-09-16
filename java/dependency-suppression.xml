@@ -16,4 +16,12 @@
         <packageUrl regex="true">^pkg:maven/org\.hyperledger\.fabric/fabric\-protos@.*$</packageUrl>
         <cve>CVE-2022-36023</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        file name: fabric-protos-*.jar
+        CVE relates to github.com/hyperledger/fabric Go module
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.hyperledger\.fabric/fabric-protos@.*$</packageUrl>
+        <cve>CVE-2024-45244</cve>
+    </suppress>
 </suppressions>
