@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.hyperledger.fabric</groupId>
@@ -38,7 +38,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <bouncyCastleVersion>1.78</bouncyCastleVersion>
+        <bouncyCastleVersion>1.78.1</bouncyCastleVersion>
         <skipUnitTests>${skipTests}</skipUnitTests>
         <pmdVersion>7.5.0</pmdVersion>
     </properties>
@@ -48,7 +48,7 @@
             <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-bom</artifactId>
-                <version>7.18.1</version>
+                <version>7.19.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -62,7 +62,15 @@
             <dependency>
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-bom</artifactId>
-                <version>1.63.0</version>
+                <version>1.66.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- Override transitive dependency from grpc-protobuf:1.66.0 to avoid CVE-2024-7254 -->
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-bom</artifactId>
+                <version>3.25.5</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -133,7 +141,7 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.10.1</version>
+            <version>2.11.0</version>
         </dependency>
         <dependency>
             <groupId>org.hyperledger.fabric</groupId>
@@ -198,7 +206,8 @@
                     <showWarnings>true</showWarnings>
                     <compilerArgs>
                         <arg>-Xlint</arg>
-                        <arg>-Xlint:-options</arg> <!-- Disable command line warnings, seen when building against multiple releases: -->
+                        <arg>-Xlint:-options</arg> <!-- Disable command line warnings, seen when
+                        building against multiple releases: -->
                         <arg>-Werror</arg>
                     </compilerArgs>
                 </configuration>
@@ -235,7 +244,8 @@
                             <consoleOutputReporter>
                                 <disable>true</disable>
                             </consoleOutputReporter>
-                            <statelessTestsetInfoReporter implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporter">
+                            <statelessTestsetInfoReporter
+                                implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporter">
                                 <theme>UNICODE</theme>
                                 <printStacktraceOnError>true</printStacktraceOnError>
                                 <printStacktraceOnFailure>true</printStacktraceOnFailure>
