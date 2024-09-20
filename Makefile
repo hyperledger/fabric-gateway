@@ -126,8 +126,8 @@ scan-node-npm-audit:
 scan-node-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
 	cd '$(node_dir)' && \
-		npm install && \
-		npm run sbom && \
+		npm install --package-lock-only && \
+		npm sbom --omit dev --package-lock-only --sbom-format cyclonedx > sbom.json && \
 		osv-scanner scan --sbom=sbom.json
 
 .PHONY: scan-java

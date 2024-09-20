@@ -27,7 +27,6 @@
         "format:fix": "prettier '**/*.{ts,js}' --write",
         "generate-apidoc": "typedoc",
         "lint": "eslint src",
-        "sbom": "cyclonedx-npm --omit dev --output-format JSON --output-file sbom.json",
         "test": "npm-run-all lint format unit-test",
         "unit-test": "jest"
     },
@@ -42,7 +41,6 @@
         "pkcs11js": "^2.1.0"
     },
     "devDependencies": {
-        "@cyclonedx/cyclonedx-npm": "^1.19.3",
         "@eslint/eslintrc": "^3.1.0",
         "@eslint/js": "^9.9.0",
         "@tsconfig/node18": "^18.2.4",
