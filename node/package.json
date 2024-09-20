@@ -1,6 +1,6 @@
 {
     "name": "@hyperledger/fabric-gateway",
-    "version": "1.5.2",
+    "version": "1.6.0",
     "description": "Hyperledger Fabric Gateway client API for Node",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -42,12 +42,12 @@
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3.1.0",
-        "@eslint/js": "^9.9.0",
+        "@eslint/js": "^9.11.0",
         "@tsconfig/node18": "^18.2.4",
         "@types/google-protobuf": "^3.15.12",
         "@types/jest": "^29.5.12",
-        "@types/node": "^18.19.45",
-        "eslint": "^9.9.0",
+        "@types/node": "^18.19.50",
+        "eslint": "^9.11.0",
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-jest": "^28.8.0",
         "eslint-plugin-tsdoc": "^0.3.0",
