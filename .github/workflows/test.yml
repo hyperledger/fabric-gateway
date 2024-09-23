@@ -50,7 +50,6 @@ jobs:
       fail-fast: false
       matrix:
         go-version:
-          - "1.21"
           - "1.22"
           - "1.23"
         include:
@@ -85,7 +84,7 @@ jobs:
       fail-fast: false
       matrix:
         go-version:
-          - "1.21"
+          - "1.22"
           - "1.23"
     env:
       SOFTHSM2_CONF: ${{ github.workspace }}/softhsm2.conf
