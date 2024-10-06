@@ -38,7 +38,7 @@ A suitable gRPC channel service provider must also be specified (as described in
 <dependency>
     <groupId>io.grpc</groupId>
     <artifactId>grpc-netty-shaded</artifactId>
-    <version>1.68.0</version>
+    <version>1.67.1</version>
     <scope>runtime</scope>
 </dependency>
 ```
@@ -54,7 +54,7 @@ implementation 'org.hyperledger.fabric:fabric-gateway:1.6.0'
 A suitable gRPC channel service provider must also be specified (as described in the [gRPC security documentation](https://github.com/grpc/grpc-java/blob/master/SECURITY.md#transport-security-tls)), such as:
 
 ```groovy
-runtimeOnly 'io.grpc:grpc-netty-shaded:1.68.0'
+runtimeOnly 'io.grpc:grpc-netty-shaded:1.67.1'
 ```
 
 ## Compatibility
