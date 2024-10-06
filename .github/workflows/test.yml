@@ -99,8 +99,6 @@ jobs:
           TMPDIR: ${{ runner.temp }}
       - name: Generate mocks
         run: make generate
-      - name: Pull Fabric Docker images
-        run: make pull-latest-peer
       - name: Run scenario tests
         run: make scenario-test-go
 
@@ -149,8 +147,6 @@ jobs:
         run: sudo apt install -y softhsm2
         env:
           TMPDIR: ${{ runner.temp }}
-      - name: Pull Fabric Docker images
-        run: make pull-latest-peer
       - name: Run scenario tests
         run: make scenario-test-node
 
@@ -203,7 +199,5 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: stable
-      - name: Pull Fabric Docker images
-        run: make pull-latest-peer
       - name: Run scenario tests
         run: make scenario-test-java
