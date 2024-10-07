@@ -40,7 +40,7 @@
         <javaVersion>8</javaVersion>
         <bouncyCastleVersion>1.78.1</bouncyCastleVersion>
         <skipUnitTests>${skipTests}</skipUnitTests>
-        <pmdVersion>7.5.0</pmdVersion>
+        <pmdVersion>7.6.0</pmdVersion>
     </properties>
 
     <dependencyManagement>
@@ -48,29 +48,29 @@
             <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-bom</artifactId>
-                <version>7.19.0</version>
+                <version>7.20.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.11.0</version>
+                <version>5.11.2</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-bom</artifactId>
-                <version>1.68.0</version>
+                <version>1.67.1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <!-- Override transitive dependency from grpc-protobuf:1.66.0 to avoid CVE-2024-7254 -->
+            <!-- Override transitive dependency from grpc-protobuf to avoid CVE-2024-7254 -->
             <dependency>
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-bom</artifactId>
-                <version>3.25.5</version>
+                <version>4.28.2</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -97,7 +97,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>5.13.0</version>
+            <version>5.14.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -146,7 +146,7 @@
         <dependency>
             <groupId>org.hyperledger.fabric</groupId>
             <artifactId>fabric-protos</artifactId>
-            <version>0.3.3</version>
+            <version>0.3.4</version>
         </dependency>
     </dependencies>
 
@@ -530,7 +530,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.2.5</version>
+                        <version>3.2.6</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>

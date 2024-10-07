@@ -8,31 +8,9 @@ import (
 	"testing"
 
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
-	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
 )
-
-//go:generate mockgen -destination ./gateway_mock_test.go -package ${GOPACKAGE} github.com/hyperledger/fabric-protos-go-apiv2/gateway GatewayClient,Gateway_ChaincodeEventsClient
-//go:generate mockgen -destination ./deliver_mock_test.go -package ${GOPACKAGE} github.com/hyperledger/fabric-protos-go-apiv2/peer DeliverClient,Deliver_DeliverClient,Deliver_DeliverFilteredClient,Deliver_DeliverWithPrivateDataClient
-
-// WithGatewayClient uses the supplied client for the Gateway. Allows a stub implementation to be used for testing.
-func WithGatewayClient(client gateway.GatewayClient) ConnectOption {
-	return func(gateway *Gateway) error {
-		gateway.client.grpcGatewayClient = client
-		return nil
-	}
-}
-
-// WithDeliverClient uses the supplied client for the Deliver service. Allows a stub implementation to be used for testing.
-func WithDeliverClient(client peer.DeliverClient) ConnectOption {
-	return func(gateway *Gateway) error {
-		gateway.client.grpcDeliverClient = client
-		return nil
-	}
-}
 
 // WithIdentity uses the supplied identity for the Gateway.
 func WithIdentity(id identity.Identity) ConnectOption {
@@ -45,8 +23,7 @@ func WithIdentity(id identity.Identity) ConnectOption {
 func AssertNewTestGateway(t *testing.T, options ...ConnectOption) *Gateway {
 	defaultOptions := []ConnectOption{
 		WithSign(TestCredentials.sign),
-		WithGatewayClient(NewMockGatewayClient(gomock.NewController(t))),
-		WithDeliverClient(NewMockDeliverClient(gomock.NewController(t))),
+		WithClientConnection(NewMockClientConnInterface(t)),
 	}
 	options = append(defaultOptions, options...)
 	gateway, err := Connect(TestCredentials.Identity(), options...)
@@ -94,8 +71,7 @@ func TestGateway(t *testing.T) {
 
 	t.Run("GetNetwork returns correctly named Network", func(t *testing.T) {
 		networkName := "network"
-		mockClient := NewMockGatewayClient(gomock.NewController(t))
-		gateway := AssertNewTestGateway(t, WithGatewayClient(mockClient))
+		gateway := AssertNewTestGateway(t)
 
 		network := gateway.GetNetwork(networkName)
 
@@ -104,8 +80,7 @@ func TestGateway(t *testing.T) {
 	})
 
 	t.Run("Identity returns connecting identity", func(t *testing.T) {
-		mockClient := NewMockGatewayClient(gomock.NewController(t))
-		gateway := AssertNewTestGateway(t, WithIdentity(id), WithGatewayClient(mockClient))
+		gateway := AssertNewTestGateway(t, WithIdentity(id))
 
 		result := gateway.Identity()
 

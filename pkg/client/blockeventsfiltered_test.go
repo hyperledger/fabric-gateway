@@ -6,14 +6,13 @@ package client
 import (
 	"context"
 	"errors"
+	"io"
 	"testing"
 
-	"github.com/hyperledger/fabric-gateway/pkg/internal/test"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -22,14 +21,14 @@ import (
 func TestFilteredBlockEvents(t *testing.T) {
 	t.Run("Returns connect error", func(t *testing.T) {
 		expected := NewStatusError(t, codes.Aborted, "BLOCK_EVENTS_ERROR")
-		mockClient := NewMockDeliverClient(gomock.NewController(t))
-		mockClient.EXPECT().DeliverFiltered(gomock.Any(), gomock.Any()).
-			Return(nil, expected)
+
+		mockConnection := NewMockClientConnInterface(t)
+		ExpectDeliverFiltered(mockConnection, WithNewStreamError(expected))
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
+		network := AssertNewTestNetwork(t, "NETWORK", WithClientConnection(mockConnection))
 		_, err := network.FilteredBlockEvents(ctx)
 
 		require.Equal(t, status.Code(expected), status.Code(err), "status code")
@@ -37,109 +36,146 @@ func TestFilteredBlockEvents(t *testing.T) {
 		require.ErrorContains(t, err, expected.Error(), "message")
 	})
 
-	t.Run("Sends valid request with default start position", func(t *testing.T) {
-		controller := gomock.NewController(t)
-		mockClient := NewMockDeliverClient(controller)
-		mockEvents := NewMockDeliver_DeliverFilteredClient(controller)
-
-		mockClient.EXPECT().DeliverFiltered(gomock.Any(), gomock.Any()).
-			Return(mockEvents, nil)
-
-		payload := &common.Payload{}
-		mockEvents.EXPECT().Send(gomock.Any()).
-			Do(func(in *common.Envelope) {
-				test.AssertUnmarshal(t, in.GetPayload(), payload)
-			}).
-			Return(nil).
-			Times(1)
-		mockEvents.EXPECT().Recv().
-			Return(nil, errors.New("fake")).
-			AnyTimes()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
-		_, err := network.FilteredBlockEvents(ctx)
-		require.NoError(t, err)
-
-		AssertValidBlockEventRequestHeader(t, payload, network.Name())
-		actual := &orderer.SeekInfo{}
-		test.AssertUnmarshal(t, payload.GetData(), actual)
-
-		expected := &orderer.SeekInfo{
-			Start: &orderer.SeekPosition{
-				Type: &orderer.SeekPosition_NextCommit{
-					NextCommit: &orderer.SeekNextCommit{},
-				},
-			},
-			Stop: seekLargestBlockNumber(),
-		}
-
-		test.AssertProtoEqual(t, expected, actual)
-	})
-
-	t.Run("Sends valid request with specified start block number", func(t *testing.T) {
-		controller := gomock.NewController(t)
-		mockClient := NewMockDeliverClient(controller)
-		mockEvents := NewMockDeliver_DeliverFilteredClient(controller)
-
-		mockClient.EXPECT().DeliverFiltered(gomock.Any(), gomock.Any()).
-			Return(mockEvents, nil)
-
-		payload := &common.Payload{}
-		mockEvents.EXPECT().Send(gomock.Any()).
-			Do(func(in *common.Envelope) {
-				test.AssertUnmarshal(t, in.GetPayload(), payload)
-			}).
-			Return(nil).
-			Times(1)
-		mockEvents.EXPECT().Recv().
-			Return(nil, errors.New("fake")).
-			AnyTimes()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
-		_, err := network.FilteredBlockEvents(ctx, WithStartBlock(418))
-		require.NoError(t, err)
-
-		AssertValidBlockEventRequestHeader(t, payload, network.Name())
-		actual := &orderer.SeekInfo{}
-		test.AssertUnmarshal(t, payload.GetData(), actual)
-
-		expected := &orderer.SeekInfo{
-			Start: &orderer.SeekPosition{
-				Type: &orderer.SeekPosition_Specified{
-					Specified: &orderer.SeekSpecified{
-						Number: 418,
+	for testName, testCase := range map[string]struct {
+		options  []BlockEventsOption
+		expected *orderer.SeekInfo
+	}{
+		"Sends valid request with default start position": {
+			options: nil,
+			expected: &orderer.SeekInfo{
+				Start: &orderer.SeekPosition{
+					Type: &orderer.SeekPosition_NextCommit{
+						NextCommit: &orderer.SeekNextCommit{},
 					},
 				},
+				Stop: seekLargestBlockNumber(),
 			},
-			Stop: seekLargestBlockNumber(),
-		}
+		},
+		"Sends valid request with specified start block number": {
+			options: []BlockEventsOption{
+				WithStartBlock(418),
+			},
+			expected: &orderer.SeekInfo{
+				Start: &orderer.SeekPosition{
+					Type: &orderer.SeekPosition_Specified{
+						Specified: &orderer.SeekSpecified{
+							Number: 418,
+						},
+					},
+				},
+				Stop: seekLargestBlockNumber(),
+			},
+		},
+		"Uses specified start block instead of unset checkpoint": {
+			options: []BlockEventsOption{
+				WithStartBlock(418),
+				WithCheckpoint(new(InMemoryCheckpointer)),
+			},
+			expected: &orderer.SeekInfo{
+				Start: &orderer.SeekPosition{
+					Type: &orderer.SeekPosition_Specified{
+						Specified: &orderer.SeekSpecified{
+							Number: 418,
+						},
+					},
+				},
+				Stop: seekLargestBlockNumber(),
+			},
+		},
+		"Uses checkpoint block instead of specified start block": {
+			options: func() []BlockEventsOption {
+				checkpointer := new(InMemoryCheckpointer)
+				checkpointer.CheckpointBlock(500)
+				return []BlockEventsOption{
+					WithStartBlock(418),
+					WithCheckpoint(checkpointer),
+				}
+			}(),
+			expected: &orderer.SeekInfo{
+				Start: &orderer.SeekPosition{
+					Type: &orderer.SeekPosition_Specified{
+						Specified: &orderer.SeekSpecified{
+							Number: 501,
+						},
+					},
+				},
+				Stop: seekLargestBlockNumber(),
+			},
+		},
+		"Uses checkpoint block zero with set transaction ID instead of specified start block": {
+			options: func() []BlockEventsOption {
+				checkpointer := new(InMemoryCheckpointer)
+				checkpointer.CheckpointTransaction(0, "transctionId")
+				return []BlockEventsOption{
+					WithStartBlock(418),
+					WithCheckpoint(checkpointer),
+				}
+			}(),
+			expected: &orderer.SeekInfo{
+				Start: &orderer.SeekPosition{
+					Type: &orderer.SeekPosition_Specified{
+						Specified: &orderer.SeekSpecified{
+							Number: 0,
+						},
+					},
+				},
+				Stop: seekLargestBlockNumber(),
+			},
+		},
+		"Uses default start position with unset checkpoint and no start block": {
+			options: []BlockEventsOption{
+				WithCheckpoint(new(InMemoryCheckpointer)),
+			},
+			expected: &orderer.SeekInfo{
+				Start: &orderer.SeekPosition{
+					Type: &orderer.SeekPosition_NextCommit{
+						NextCommit: &orderer.SeekNextCommit{},
+					},
+				},
+				Stop: seekLargestBlockNumber(),
+			},
+		},
+	} {
+		t.Run(testName, func(t *testing.T) {
+			mockConnection := NewMockClientConnInterface(t)
+			mockStream := NewMockClientStream(t)
+			ExpectDeliverFiltered(mockConnection, WithNewStreamResult(mockStream))
 
-		test.AssertProtoEqual(t, expected, actual)
-	})
+			messages := make(chan *common.Envelope, 1)
+			ExpectSendMsg(mockStream, CaptureSendMsg(messages))
+			mockStream.EXPECT().CloseSend().Maybe().Return(nil)
+			ExpectRecvMsg(mockStream).Maybe().Return(io.EOF)
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			network := AssertNewTestNetwork(t, "NETWORK", WithClientConnection(mockConnection))
+			_, err := network.FilteredBlockEvents(ctx, testCase.options...)
+			require.NoError(t, err)
+
+			payload := &common.Payload{}
+			AssertUnmarshal(t, (<-messages).GetPayload(), payload)
+			AssertValidBlockEventRequestHeader(t, payload, network.Name())
+			actual := &orderer.SeekInfo{}
+			AssertUnmarshal(t, payload.GetData(), actual)
+
+			AssertProtoEqual(t, testCase.expected, actual)
+		})
+	}
 
 	t.Run("Closes event channel on receive error", func(t *testing.T) {
-		controller := gomock.NewController(t)
-		mockClient := NewMockDeliverClient(controller)
-		mockEvents := NewMockDeliver_DeliverFilteredClient(controller)
+		mockConnection := NewMockClientConnInterface(t)
+		mockStream := NewMockClientStream(t)
+		ExpectDeliverFiltered(mockConnection, WithNewStreamResult(mockStream))
 
-		mockClient.EXPECT().DeliverFiltered(gomock.Any(), gomock.Any()).
-			Return(mockEvents, nil)
-
-		mockEvents.EXPECT().Send(gomock.Any()).
-			Return(nil)
-		mockEvents.EXPECT().Recv().
-			Return(nil, errors.New("fake"))
+		ExpectSendMsg(mockStream)
+		mockStream.EXPECT().CloseSend().Maybe().Return(nil)
+		ExpectRecvMsg(mockStream).Return(errors.New("fake"))
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
+		network := AssertNewTestNetwork(t, "NETWORK", WithClientConnection(mockConnection))
 		receive, err := network.FilteredBlockEvents(ctx, WithStartBlock(418))
 		require.NoError(t, err)
 
@@ -149,17 +185,7 @@ func TestFilteredBlockEvents(t *testing.T) {
 	})
 
 	t.Run("Receives events", func(t *testing.T) {
-		controller := gomock.NewController(t)
-		mockClient := NewMockDeliverClient(controller)
-		mockEvents := NewMockDeliver_DeliverFilteredClient(controller)
-
-		mockClient.EXPECT().DeliverFiltered(gomock.Any(), gomock.Any()).
-			Return(mockEvents, nil)
-
-		mockEvents.EXPECT().Send(gomock.Any()).
-			Return(nil)
-
-		blocks := []*peer.FilteredBlock{
+		expected := []*peer.FilteredBlock{
 			{
 				ChannelId: "NETWORK",
 				Number:    1,
@@ -179,45 +205,44 @@ func TestFilteredBlockEvents(t *testing.T) {
 				},
 			},
 		}
-		responseIndex := 0
-		mockEvents.EXPECT().Recv().
-			DoAndReturn(func() (*peer.DeliverResponse, error) {
-				if responseIndex >= len(blocks) {
-					return nil, errors.New("fake")
-				}
-				response := &peer.DeliverResponse{
-					Type: &peer.DeliverResponse_FilteredBlock{
-						FilteredBlock: blocks[responseIndex],
-					},
-				}
-				responseIndex++
-				return response, nil
-			}).
-			AnyTimes()
+
+		mockConnection := NewMockClientConnInterface(t)
+		mockStream := NewMockClientStream(t)
+		ExpectDeliverFiltered(mockConnection, WithNewStreamResult(mockStream))
+
+		ExpectSendMsg(mockStream)
+		mockStream.EXPECT().CloseSend().Maybe().Return(nil)
+
+		var responses []*peer.DeliverResponse
+		for _, block := range expected {
+			responses = append(responses, &peer.DeliverResponse{
+				Type: &peer.DeliverResponse_FilteredBlock{
+					FilteredBlock: block,
+				},
+			})
+		}
+		ExpectRecvMsg(mockStream, WithRecvMsgs(responses...))
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
+		network := AssertNewTestNetwork(t, "NETWORK", WithClientConnection(mockConnection))
 		receive, err := network.FilteredBlockEvents(ctx)
 		require.NoError(t, err)
 
-		for _, event := range blocks {
+		for _, event := range expected {
 			actual := <-receive
-			test.AssertProtoEqual(t, event, actual)
+			AssertProtoEqual(t, event, actual)
 		}
 	})
 
 	t.Run("Closes event channel on non-block message", func(t *testing.T) {
-		controller := gomock.NewController(t)
-		mockClient := NewMockDeliverClient(controller)
-		mockEvents := NewMockDeliver_DeliverFilteredClient(controller)
+		mockConnection := NewMockClientConnInterface(t)
+		mockStream := NewMockClientStream(t)
+		ExpectDeliverFiltered(mockConnection, WithNewStreamResult(mockStream))
 
-		mockClient.EXPECT().DeliverFiltered(gomock.Any(), gomock.Any()).
-			Return(mockEvents, nil)
-
-		mockEvents.EXPECT().Send(gomock.Any()).
-			Return(nil)
+		ExpectSendMsg(mockStream)
+		mockStream.EXPECT().CloseSend().Maybe().Return(nil)
 
 		block := &peer.FilteredBlock{
 			ChannelId: "NETWORK",
@@ -245,22 +270,12 @@ func TestFilteredBlockEvents(t *testing.T) {
 				},
 			},
 		}
-		responseIndex := 0
-		mockEvents.EXPECT().Recv().
-			DoAndReturn(func() (*peer.DeliverResponse, error) {
-				if responseIndex >= len(responses) {
-					return nil, errors.New("fake")
-				}
-				response := responses[responseIndex]
-				responseIndex++
-				return response, nil
-			}).
-			AnyTimes()
+		ExpectRecvMsg(mockStream, WithRecvMsgs(responses...))
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
+		network := AssertNewTestNetwork(t, "NETWORK", WithClientConnection(mockConnection))
 		receive, err := network.FilteredBlockEvents(ctx)
 		require.NoError(t, err)
 
@@ -271,75 +286,58 @@ func TestFilteredBlockEvents(t *testing.T) {
 		}
 		for _, event := range expected {
 			actual := <-receive
-			test.AssertProtoEqual(t, event, actual)
+			AssertProtoEqual(t, event, actual)
 		}
 	})
 
 	t.Run("Uses specified gRPC call options", func(t *testing.T) {
-		var actual []grpc.CallOption
 		expected := grpc.WaitForReady(true)
 
-		controller := gomock.NewController(t)
-		mockClient := NewMockDeliverClient(controller)
-		mockEvents := NewMockDeliver_DeliverClient(controller)
+		mockConnection := NewMockClientConnInterface(t)
+		mockStream := NewMockClientStream(t)
+		options := make(chan []grpc.CallOption, 1)
+		ExpectDeliverFiltered(mockConnection, CaptureNewStreamOptions(options), WithNewStreamResult(mockStream))
 
-		mockClient.EXPECT().DeliverFiltered(gomock.Any(), gomock.Any()).
-			Do(func(_ context.Context, opts ...grpc.CallOption) {
-				actual = opts
-			}).
-			Return(mockEvents, nil).
-			Times(1)
-
-		mockEvents.EXPECT().Send(gomock.Any()).
-			Return(nil).
-			AnyTimes()
-		mockEvents.EXPECT().Recv().
-			Return(nil, errors.New("fake")).
-			AnyTimes()
+		ExpectSendMsg(mockStream)
+		mockStream.EXPECT().CloseSend().Maybe().Return(nil)
+		ExpectRecvMsg(mockStream).Maybe().Return(io.EOF)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient))
+		network := AssertNewTestNetwork(t, "NETWORK", WithClientConnection(mockConnection))
 		request, err := network.NewFilteredBlockEventsRequest()
 		require.NoError(t, err, "NewFilteredBlockEventsRequest")
 
 		_, err = request.Events(ctx, expected)
 		require.NoError(t, err, "Events")
 
-		require.Contains(t, actual, expected, "CallOptions")
+		require.Contains(t, (<-options), expected, "CallOptions")
 	})
 
 	t.Run("Sends request with TLS client certificate hash", func(t *testing.T) {
 		expected := []byte("TLS_CLIENT_CERTIFICATE_HASH")
 
-		controller := gomock.NewController(t)
-		mockClient := NewMockDeliverClient(controller)
-		mockEvents := NewMockDeliver_DeliverClient(controller)
+		mockConnection := NewMockClientConnInterface(t)
+		mockStream := NewMockClientStream(t)
+		ExpectDeliverFiltered(mockConnection, WithNewStreamResult(mockStream))
 
-		mockClient.EXPECT().DeliverFiltered(gomock.Any(), gomock.Any()).
-			Return(mockEvents, nil)
-
-		payload := &common.Payload{}
-		mockEvents.EXPECT().Send(gomock.Any()).
-			Do(func(in *common.Envelope) {
-				test.AssertUnmarshal(t, in.GetPayload(), payload)
-			}).
-			Return(nil).
-			Times(1)
-		mockEvents.EXPECT().Recv().
-			Return(nil, errors.New("fake")).
-			AnyTimes()
+		requests := make(chan *common.Envelope, 1)
+		ExpectSendMsg(mockStream, CaptureSendMsg(requests))
+		mockStream.EXPECT().CloseSend().Maybe().Return(nil)
+		ExpectRecvMsg(mockStream).Maybe().Return(io.EOF)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		network := AssertNewTestNetwork(t, "NETWORK", WithDeliverClient(mockClient), WithTLSClientCertificateHash(expected))
+		network := AssertNewTestNetwork(t, "NETWORK", WithClientConnection(mockConnection), WithTLSClientCertificateHash(expected))
 		_, err := network.FilteredBlockEvents(ctx)
 		require.NoError(t, err)
 
+		payload := &common.Payload{}
+		AssertUnmarshal(t, (<-requests).GetPayload(), payload)
 		channelHeader := &common.ChannelHeader{}
-		test.AssertUnmarshal(t, payload.GetHeader().GetChannelHeader(), channelHeader)
+		AssertUnmarshal(t, payload.GetHeader().GetChannelHeader(), channelHeader)
 
 		require.Equal(t, expected, channelHeader.GetTlsCertHash())
 	})
