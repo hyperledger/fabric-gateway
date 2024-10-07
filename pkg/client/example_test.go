@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
+	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -25,7 +26,8 @@ func Example() {
 	sign := NewSign()
 
 	// Create a Gateway connection for a specific client identity.
-	gateway, err := client.Connect(id, client.WithSign(sign), client.WithClientConnection(clientConnection))
+	gateway, err := client.Connect(id, client.WithSign(sign), client.WithHash(hash.SHA256),
+		client.WithClientConnection(clientConnection))
 	panicOnError(err)
 	defer gateway.Close()
 
