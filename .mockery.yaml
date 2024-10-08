@@ -1,0 +1,13 @@
+with-expecter: true
+exported: true
+filename: "{{.InterfaceName | lower}}_mock_test.go"
+mockname: "Mock{{.InterfaceName | firstUpper}}"
+unroll-variadic: false
+packages:
+  google.golang.org/grpc:
+    config:
+      dir: pkg/client
+      outpkg: client
+    interfaces:
+      ClientConnInterface:
+      ClientStream:
