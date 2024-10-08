@@ -20,6 +20,11 @@ machine_hardware := $(shell uname -m)
 export SOFTHSM2_CONF ?= $(base_dir)/softhsm2.conf
 TMPDIR ?= /tmp
 
+# These should match names in Docker .env file
+export FABRIC_VERSION ?= 2.5
+export NODEENV_VERSION ?= 2.5
+export CA_VERSION ?= 1.5
+
 .PHONY: default
 default:
 	@echo 'No default target.'
@@ -188,6 +193,14 @@ scenario-test: scenario-test-go scenario-test-node scenario-test-java
 
 .PHONY: scenario-test-no-hsm
 scenario-test-no-hsm: scenario-test-go-no-hsm scenario-test-node-no-hsm scenario-test-java
+
+.PHONY: pull-docker-images
+pull-docker-images:
+	for IMAGE in peer orderer baseos ccenv tools; do \
+		docker pull --quiet "hyperledger/fabric-$${IMAGE}:$(FABRIC_VERSION)"; \
+	done
+	docker pull --quiet 'hyperledger/fabric-nodeenv:$(NODEENV_VERSION)'
+	docker pull --quiet 'hyperledger/fabric-ca:$(CA_VERSION)'
 
 .PHONY: fabric-ca-client
 fabric-ca-client:

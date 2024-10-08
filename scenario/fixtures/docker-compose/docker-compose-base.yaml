@@ -15,7 +15,7 @@ version: "3.8"
 
 services:
   ca0:
-    image: hyperledger/fabric-ca:${FABRIC_CA_IMAGE_TAG}
+    image: hyperledger/fabric-ca:${CA_VERSION}
     environment:
       - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
       - FABRIC_CA_SERVER_CA_NAME=ca-org1
@@ -30,7 +30,7 @@ services:
     container_name: ca_peerOrg1
 
   ca1:
-    image: hyperledger/fabric-ca:${FABRIC_CA_IMAGE_TAG}
+    image: hyperledger/fabric-ca:${CA_VERSION}
     environment:
       - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
       - FABRIC_CA_SERVER_CA_NAME=ca-org2
@@ -45,7 +45,7 @@ services:
 
   orderer:
     container_name: orderer
-    image: hyperledger/fabric-orderer:${ORDERER_IMAGE_TAG}
+    image: hyperledger/fabric-orderer:${FABRIC_VERSION}
     environment:
       - ORDERER_GENERAL_LOGLEVEL=${DOCKER_DEBUG}
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
@@ -75,7 +75,7 @@ services:
 
   peer:
     container_name: peer
-    image: hyperledger/fabric-peer:${PEER_IMAGE_TAG}
+    image: hyperledger/fabric-peer:${FABRIC_VERSION}
     environment:
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
       - CORE_PEER_ADDRESSAUTODETECT=true

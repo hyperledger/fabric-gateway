@@ -17,7 +17,7 @@ version: "3.8"
 services:
   clinopeer:
     container_name: cli
-    image: hyperledger/fabric-tools:${TOOLS_IMAGE_TAG}
+    image: hyperledger/fabric-tools:${FABRIC_VERSION}
     tty: true
     environment:
       # LOGGING SETTINGS
