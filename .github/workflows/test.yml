@@ -175,9 +175,9 @@ jobs:
         run: make unit-test-java
       - name: Coverage report
         if: ${{ matrix.coverage }}
-        run: |
-          echo '### Unit test coverage' >> ${GITHUB_STEP_SUMMARY}
-          ${{ github.workspace }}/.github/scripts/jacoco2markdown.sh java/target/site/jacoco/jacoco.csv >> ${GITHUB_STEP_SUMMARY}
+        uses: bestbeforetoday/jacoco-summary-action@v1
+        with:
+          coverage-file: java/target/site/jacoco/jacoco.csv
 
   java_scenario:
     needs: verify-versions
