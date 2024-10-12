@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"go.uber.org/mock/gomock"
 )
 
 func AssertNewTestNetwork(t *testing.T, networkName string, options ...ConnectOption) *Network {
@@ -18,8 +17,7 @@ func AssertNewTestNetwork(t *testing.T, networkName string, options ...ConnectOp
 func TestNetwork(t *testing.T) {
 	t.Run("GetContract returns correctly named Contract", func(t *testing.T) {
 		chaincodeName := "chaincode"
-		mockClient := NewMockGatewayClient(gomock.NewController(t))
-		network := AssertNewTestNetwork(t, "network", WithGatewayClient(mockClient))
+		network := AssertNewTestNetwork(t, "network")
 
 		contract := network.GetContract(chaincodeName)
 
@@ -31,8 +29,7 @@ func TestNetwork(t *testing.T) {
 	t.Run("GetContractWithName returns correctly named Contract", func(t *testing.T) {
 		chaincodeName := "chaincode"
 		contractName := "contract"
-		mockClient := NewMockGatewayClient(gomock.NewController(t))
-		network := AssertNewTestNetwork(t, "network", WithGatewayClient(mockClient))
+		network := AssertNewTestNetwork(t, "network")
 
 		contract := network.GetContractWithName(chaincodeName, contractName)
 

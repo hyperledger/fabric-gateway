@@ -13,6 +13,10 @@ scenario_dir := $(base_dir)/scenario
 
 go_bin_dir := $(shell go env GOPATH)/bin
 
+mockery_version := 2.46.2
+kernel_name := $(shell uname -s)
+machine_hardware := $(shell uname -m)
+
 export SOFTHSM2_CONF ?= $(base_dir)/softhsm2.conf
 TMPDIR ?= /tmp
 
@@ -130,10 +134,18 @@ scan-java-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
 	osv-scanner scan --lockfile='$(java_dir)/pom.xml'
 
+.PHONY: install-mockery
+install-mockery:
+	curl --fail --location \
+		'https://github.com/vektra/mockery/releases/download/v$(mockery_version)/mockery_$(mockery_version)_$(kernel_name)_$(machine_hardware).tar.gz' \
+		| tar -C '$(go_bin_dir)' -xzf - mockery
+
+$(go_bin_dir)/mockery:
+	$(MAKE) install-mockery
+
 .PHONY: generate
-generate:
-	go install go.uber.org/mock/mockgen@latest
-	go generate '$(go_dir)/...'
+generate: $(go_bin_dir)/mockery clean-generated
+	cd '$(base_dir)' && mockery
 
 .PHONY: vendor-chaincode
 vendor-chaincode:
