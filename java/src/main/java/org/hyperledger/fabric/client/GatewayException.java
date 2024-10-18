@@ -63,7 +63,9 @@ public class GatewayException extends Exception {
      */
     @Override
     public void printStackTrace(final PrintStream out) {
-        printStackTrace(new PrintWriter(out));
+        PrintWriter writer = new PrintWriter(out);
+        printStackTrace(writer);
+        writer.flush();
     }
 
     /**
@@ -76,7 +78,6 @@ public class GatewayException extends Exception {
 
         try (PrintWriter printer = new PrintWriter(message)) {
             super.printStackTrace(printer);
-            printer.flush();
         }
 
         List<ErrorDetail> details = getDetails();

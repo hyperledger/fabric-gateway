@@ -12,9 +12,10 @@ import com.google.protobuf.Any;
 import com.google.rpc.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.protobuf.StatusProto;
-import java.io.CharArrayWriter;
-import java.io.PrintWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -37,16 +38,42 @@ public final class GatewayExceptionTest {
                         .build());
         GatewayException e = new GatewayException(newStatusRuntimeException(Code.ABORTED, "STATUS_MESSAGE", details));
 
-        CharArrayWriter actual = new CharArrayWriter();
-        try (PrintWriter out = new PrintWriter(actual)) {
+        ByteArrayOutputStream actual = new ByteArrayOutputStream();
+        try (PrintStream out = new PrintStream(actual)) {
             e.printStackTrace(out);
-            out.flush();
         }
 
         List<String> expected = details.stream()
                 .flatMap(detail -> Stream.of(detail.getAddress(), detail.getMspId(), detail.getMessage()))
                 .collect(Collectors.toList());
         assertThat(actual.toString()).contains(expected);
+    }
+
+    @Test
+    void message_from_StatusRuntimeException_is_printed() {
+        GatewayException e = new GatewayException(
+                newStatusRuntimeException(Code.ABORTED, "STATUS_MESSAGE", Collections.emptyList()));
+
+        ByteArrayOutputStream actual = new ByteArrayOutputStream();
+        try (PrintStream out = new PrintStream(actual)) {
+            e.printStackTrace(out);
+        }
+
+        String expected = e.getCause().getLocalizedMessage();
+        assertThat(actual.toString()).contains(expected);
+    }
+
+    @Test
+    void print_stream_passed_to_printStackTrace_not_closed() {
+        GatewayException e = new GatewayException(newStatusRuntimeException(Code.ABORTED, "", Collections.emptyList()));
+
+        ByteArrayOutputStream actual = new ByteArrayOutputStream();
+        try (PrintStream out = new PrintStream(actual)) {
+            e.printStackTrace(out);
+            out.println("EXPECTED_SUBSEQUENT_MESSAGE");
+        }
+
+        assertThat(actual.toString()).contains("EXPECTED_SUBSEQUENT_MESSAGE");
     }
 
     private StatusRuntimeException newStatusRuntimeException(Code code, String message, List<ErrorDetail> details) {
