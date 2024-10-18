@@ -28,7 +28,7 @@ Add the following dependency to your project's `pom.xml` file:
 <dependency>
     <groupId>org.hyperledger.fabric</groupId>
     <artifactId>fabric-gateway</artifactId>
-    <version>1.6.0</version>
+    <version>1.7.0</version>
 </dependency>
 ```
 
@@ -48,7 +48,7 @@ A suitable gRPC channel service provider must also be specified (as described in
 Add the following dependency to your project's `build.gradle` file:
 
 ```groovy
-implementation platform('org.hyperledger.fabric:fabric-gateway:1.6.0')
+implementation platform('org.hyperledger.fabric:fabric-gateway:1.7.0')
 implementation 'org.hyperledger.fabric:fabric-gateway'
 ```
 
