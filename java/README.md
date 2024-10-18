@@ -48,13 +48,18 @@ A suitable gRPC channel service provider must also be specified (as described in
 Add the following dependency to your project's `build.gradle` file:
 
 ```groovy
-implementation 'org.hyperledger.fabric:fabric-gateway:1.6.0'
+implementation platform('org.hyperledger.fabric:fabric-gateway:1.6.0')
+implementation 'org.hyperledger.fabric:fabric-gateway'
 ```
+
+Note the **platform** import, which ensures that any transitive dependency management required by the fabric-gateway package is also applied to your Gradle project.
 
 A suitable gRPC channel service provider must also be specified (as described in the [gRPC security documentation](https://github.com/grpc/grpc-java/blob/master/SECURITY.md#transport-security-tls)), such as:
 
 ```groovy
-runtimeOnly 'io.grpc:grpc-netty-shaded:1.67.1'
+implementation platform('io.grpc:grpc-bom:1.67.1')
+compileOnly 'io.grpc:grpc-api'
+runtimeOnly 'io.grpc:grpc-netty-shaded'
 ```
 
 ## Compatibility
