@@ -40,6 +40,10 @@ func AssertProtoEqual(t *testing.T, expected protoreflect.ProtoMessage, actual p
 }
 
 func formatProto(message proto.Message) string {
+	if message == nil {
+		return fmt.Sprintf("%T", message)
+	}
+
 	marshal := prototext.MarshalOptions{
 		Multiline:    true,
 		Indent:       "\t",
