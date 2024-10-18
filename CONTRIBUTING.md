@@ -12,15 +12,15 @@ Here are a few guidelines to help you contribute successfully...
 
 ## Issues
 
-Issues are tracked in the GitHub repository [Issues](https://github.com/hyperledger/fabric-gateway/issues). *Please do not use issues to ask questions.*
+Issues are tracked in the GitHub repository [Issues](https://github.com/hyperledger/fabric-gateway/issues). _Please do not use issues to ask questions._
 
 If you find a bug which we don't already know about, you can help us by creating a new issue describing the problem. Please include as much detail as possible to help us track down the cause.
 
 ## Enhancements
 
-If you have a proposal for new functionality, either for the community to consider or that you would like to contribute yourself, please first raise an issue describing this functionality. Make the title something reasonably short but descriptive, and include a [user story](https://en.wikipedia.org/wiki/User_story) description of the enhancement, followed by any supporting information. For example, [issue #198](https://github.com/hyperledger/fabric-gateway/issues/198). The *"So that"* statement provides useful context about the motivation for the enhancement, and helps in determining whether any changes successfully satisfy the requirement.
+If you have a proposal for new functionality, either for the community to consider or that you would like to contribute yourself, please first raise an issue describing this functionality. Make the title something reasonably short but descriptive, and include a [user story](https://en.wikipedia.org/wiki/User_story) description of the enhancement, followed by any supporting information. For example, [issue #198](https://github.com/hyperledger/fabric-gateway/issues/198). The _"So that"_ statement provides useful context about the motivation for the enhancement, and helps in determining whether any changes successfully satisfy the requirement.
 
-*Make sure you have the support of the maintainers and community before investing a lot of effort in project enhancements.*
+_Make sure you have the support of the maintainers and community before investing a lot of effort in project enhancements._
 
 ## Contributing code
 
@@ -36,7 +36,7 @@ It is helpful to create work-in-progress pull requests as [draft](https://docs.g
 
 ### Go
 
-Go code uses [testify](https://github.com/stretchr/testify) for assertions, and [gomock](https://github.com/uber-go/mock) for mock implementations. The standard [errors](https://pkg.go.dev/errors) package is used; not any third-party error packages.
+Go code uses [testify](https://github.com/stretchr/testify) for assertions, and [mockery](https://vektra.github.io/mockery/) for mock implementations. The standard [errors](https://pkg.go.dev/errors) package is used; not any third-party error packages.
 
 Consider recommendations from these resources:
 
@@ -54,7 +54,7 @@ Node code is written only in [TypeScript](https://www.typescriptlang.org/), and 
 
 ### Java
 
-Java code uses [JUnit](https://junit.org/) as the test runner, [AssertJ](https://assertj.github.io/doc/) for assertions, and [Mockito](https://site.mockito.org/) for mock implementations. [PMD](https://pmd.github.io/) is used to perform static analysis of the code, and [Spotless](https://github.com/diffplug/spotless) (with [Palantir Java format](https://github.com/palantir/palantir-java-format) rules) checks consistent code formatting. 
+Java code uses [JUnit](https://junit.org/) as the test runner, [AssertJ](https://assertj.github.io/doc/) for assertions, and [Mockito](https://site.mockito.org/) for mock implementations. [PMD](https://pmd.github.io/) is used to perform static analysis of the code, and [Spotless](https://github.com/diffplug/spotless) (with [Palantir Java format](https://github.com/palantir/palantir-java-format) rules) checks consistent code formatting.
 
 Consider recommendations from these resources:
 
