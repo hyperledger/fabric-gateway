@@ -25,22 +25,55 @@ The Fabric Gateway client API package is published to [Maven Central](https://ce
 Add the following dependency to your project's `pom.xml` file:
 
 ```xml
-<dependency>
-    <groupId>org.hyperledger.fabric</groupId>
-    <artifactId>fabric-gateway</artifactId>
-    <version>1.6.0</version>
-</dependency>
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-bom</artifactId>
+            <version>4.28.2</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
+<dependencies>
+    <dependency>
+        <groupId>org.hyperledger.fabric</groupId>
+        <artifactId>fabric-gateway</artifactId>
+        <version>1.7.0</version>
+    </dependency>
+</dependencies>
 ```
+
+Note the **pom** import in the `dependencyManagement` section, which ensures that v4 of the Java protocol buffers package is resolved by your project.
 
 A suitable gRPC channel service provider must also be specified (as described in the [gRPC security documentation](https://github.com/grpc/grpc-java/blob/master/SECURITY.md#transport-security-tls)), such as:
 
 ```xml
-<dependency>
-    <groupId>io.grpc</groupId>
-    <artifactId>grpc-netty-shaded</artifactId>
-    <version>1.67.1</version>
-    <scope>runtime</scope>
-</dependency>
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-bom</artifactId>
+            <version>1.67.1</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
+<dependencies>
+    <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-api</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-netty-shaded</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+</dependencies>
 ```
 
 ### Gradle
@@ -48,11 +81,11 @@ A suitable gRPC channel service provider must also be specified (as described in
 Add the following dependency to your project's `build.gradle` file:
 
 ```groovy
-implementation platform('org.hyperledger.fabric:fabric-gateway:1.6.0')
-implementation 'org.hyperledger.fabric:fabric-gateway'
+implementation 'org.hyperledger.fabric:fabric-gateway:1.7.0'
+implementation platform('com.google.protobuf:protobuf-bom:4.28.2')
 ```
 
-Note the **platform** import, which ensures that any transitive dependency management required by the fabric-gateway package is also applied to your Gradle project.
+Note the **platform** import, which ensures that v4 of the Java protocol buffers package is resolved by your project.
 
 A suitable gRPC channel service provider must also be specified (as described in the [gRPC security documentation](https://github.com/grpc/grpc-java/blob/master/SECURITY.md#transport-security-tls)), such as:
 
