@@ -10,6 +10,7 @@ import (
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
+	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 	"google.golang.org/grpc/status"
 )
 
@@ -57,22 +58,42 @@ func ExampleContract_Submit_errorHandling() {
 
 	result, err := contract.Submit("transactionName")
 	if err != nil {
-		switch err := err.(type) {
-		case *client.EndorseError:
-			panic(fmt.Errorf("transaction %s failed to endorse with gRPC status %v: %w", err.TransactionID, status.Code(err), err))
-		case *client.SubmitError:
-			panic(fmt.Errorf("transaction %s failed to submit to the orderer with gRPC status %v: %w", err.TransactionID, status.Code(err), err))
-		case *client.CommitStatusError:
+		var endorseErr *client.EndorseError
+		var submitErr *client.SubmitError
+		var commitStatusErr *client.CommitStatusError
+		var commitErr *client.CommitError
+
+		if errors.As(err, &endorseErr) {
+			fmt.Printf("Endorse error for transaction %s with gRPC status %v: %s\n",
+				endorseErr.TransactionID, status.Code(endorseErr), endorseErr)
+		} else if errors.As(err, &submitErr) {
+			fmt.Printf("Submit error for transaction %s with gRPC status %v: %s\n",
+				submitErr.TransactionID, status.Code(submitErr), submitErr)
+		} else if errors.As(err, &commitStatusErr) {
 			if errors.Is(err, context.DeadlineExceeded) {
-				panic(fmt.Errorf("timeout waiting for transaction %s commit status: %w", err.TransactionID, err))
+				fmt.Printf("Timeout waiting for transaction %s commit status: %s",
+					commitStatusErr.TransactionID, commitStatusErr)
 			} else {
-				panic(fmt.Errorf("transaction %s failed to obtain commit status with gRPC status %v: %w", err.TransactionID, status.Code(err), err))
+				fmt.Printf("Error obtaining commit status for transaction %s with gRPC status %v: %s\n",
+					commitStatusErr.TransactionID, status.Code(commitStatusErr), commitStatusErr)
 			}
-		case *client.CommitError:
-			panic(fmt.Errorf("transaction %s failed to commit with status %d: %w", err.TransactionID, int32(err.Code), err))
-		default:
-			panic(err)
+		} else if errors.As(err, &commitErr) {
+			fmt.Printf("Transaction %s failed to commit with status %d: %s\n",
+				commitErr.TransactionID, int32(commitErr.Code), err)
+		} else {
+			fmt.Printf("unexpected error type %T: %s", err, err)
 		}
+
+		// Any error that originates from a peer or orderer node external to the gateway will have its details
+		// embedded within the gRPC status error. The following code shows how to extract that.
+		for _, detail := range status.Convert(err).Details() {
+			switch detail := detail.(type) {
+			case *gateway.ErrorDetail:
+				fmt.Printf("- address: %s; mspId: %s; message: %s\n", detail.Address, detail.MspId, detail.Message)
+			}
+		}
+
+		panic(err)
 	}
 
 	fmt.Printf("Result: %s, Err: %v", result, err)
@@ -156,8 +177,8 @@ func ExampleContract_offlineSign() {
 	// Off-line sign the transaction.
 	transactionBytes, err := unsignedTransaction.Bytes()
 	panicOnError(err)
-	digest := unsignedTransaction.Digest()
-	transactionSignature, err := sign(digest)
+	transactionDigest := unsignedTransaction.Digest()
+	transactionSignature, err := sign(transactionDigest)
 	panicOnError(err)
 	signedTransaction, err := gateway.NewSignedTransaction(transactionBytes, transactionSignature)
 	panicOnError(err)

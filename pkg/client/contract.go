@@ -88,12 +88,12 @@ func (contract *Contract) EvaluateWithContext(ctx context.Context, transactionNa
 // ledger. The transaction function will be evaluated on endorsing peers and then submitted to the ordering service to
 // be committed to the ledger.
 //
-// This method may return different error types depending on the point in the transaction invocation that a failure
-// occurs. The error can be inspected with errors.Is or errors.As.
-//
 // This method is equivalent to:
 //
 //	contract.Submit(name, client.WithArguments(args...))
+//
+// This method may return different error types depending on the point in the transaction flow that a failure occurs.
+// See the [Contract.Submit] documentation for more details.
 func (contract *Contract) SubmitTransaction(name string, args ...string) ([]byte, error) {
 	return contract.Submit(name, WithArguments(args...))
 }
@@ -102,8 +102,15 @@ func (contract *Contract) SubmitTransaction(name string, args ...string) ([]byte
 // provides greater control over the transaction proposal content and the endorsing peers on which it is evaluated.
 // This allows transaction functions to be submitted where the proposal must include transient data.
 //
-// This method may return different error types depending on the point in the transaction invocation that a failure
-// occurs. The error can be inspected with errors.Is or errors.As.
+// This method may return different error types depending on the point in the transaction flow that a failure occurs:
+//
+//   - [EndorseError] if the endorse invocation fails.
+//   - [SubmitError] if the submit invocation fails.
+//   - [CommitStatusError] if the commit status invocation fails.
+//   - [CommitError] if the transaction commits unsuccessfully.
+//
+// The error may wrap an underlying [context.DeadlineExceeded] if the operation failed due to a timeout. The error can
+// be inspected with [errors.Is] or [errors.As].
 func (contract *Contract) Submit(transactionName string, options ...ProposalOption) ([]byte, error) {
 	result, commit, err := contract.SubmitAsync(transactionName, options...)
 	if err != nil {
@@ -127,8 +134,8 @@ func (contract *Contract) Submit(transactionName string, options ...ProposalOpti
 // content and the endorsing peers on which it is evaluated. This allows transaction functions to be submitted where
 // the proposal must include transient data.
 //
-// This method may return different error types depending on the point in the transaction invocation that a failure
-// occurs. The error can be inspected with errors.Is or errors.As.
+// This method may return different error types depending on the point in the transaction flow that a failure occurs.
+// See the [Contract.Submit] documentation for more details.
 func (contract *Contract) SubmitWithContext(ctx context.Context, transactionName string, options ...ProposalOption) ([]byte, error) {
 
 	result, commit, err := contract.SubmitAsyncWithContext(ctx, transactionName, options...)
@@ -151,8 +158,13 @@ func (contract *Contract) SubmitWithContext(ctx context.Context, transactionName
 // SubmitAsync submits a transaction to the ledger and returns its result immediately after successfully sending to the
 // orderer, along with a Commit that can be used to wait for it to be committed to the ledger.
 //
-// This method may return different error types depending on the point in the transaction invocation that a failure
-// occurs. The error can be inspected with errors.Is or errors.As.
+// This method may return different error types depending on the point in the transaction flow that a failure occurs:
+//
+//   - [EndorseError] if the endorse invocation fails.
+//   - [SubmitError] if the submit invocation fails.
+//
+// The error may wrap an underlying [context.DeadlineExceeded] if the operation failed due to a timeout. The error can
+// be inspected with [errors.Is] or [errors.As].
 func (contract *Contract) SubmitAsync(transactionName string, options ...ProposalOption) ([]byte, *Commit, error) {
 	proposal, err := contract.NewProposal(transactionName, options...)
 	if err != nil {
@@ -178,8 +190,13 @@ func (contract *Contract) SubmitAsync(transactionName string, options ...Proposa
 // immediately after successfully sending to the orderer, along with a Commit that can be used to wait for it to be
 // committed to the ledger.
 //
-// This method may return different error types depending on the point in the transaction invocation that a failure
-// occurs. The error can be inspected with errors.Is or errors.As.
+// This method may return different error types depending on the point in the transaction flow that a failure occurs:
+//
+//   - [EndorseError] if the endorse invocation fails.
+//   - [SubmitError] if the submit invocation fails.
+//
+// The error may wrap an underlying [context.DeadlineExceeded] if the operation failed due to a timeout. The error can
+// be inspected with [errors.Is] or [errors.As].
 func (contract *Contract) SubmitAsyncWithContext(ctx context.Context, transactionName string, options ...ProposalOption) ([]byte, *Commit, error) {
 	proposal, err := contract.NewProposal(transactionName, options...)
 	if err != nil {
