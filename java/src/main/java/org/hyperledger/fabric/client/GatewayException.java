@@ -7,7 +7,6 @@
 package org.hyperledger.fabric.client;
 
 import io.grpc.StatusRuntimeException;
-import java.io.CharArrayWriter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.List;
@@ -19,6 +18,8 @@ import org.hyperledger.fabric.protos.gateway.ErrorDetail;
  * more of those nodes. In that case, the details will contain errors information from those nodes.
  */
 public class GatewayException extends Exception {
+    // Ignore similarity with unchecked GatewayRuntimeException - CPD-OFF
+
     private static final long serialVersionUID = 1L;
 
     private final transient GrpcStatus grpcStatus;
@@ -63,9 +64,7 @@ public class GatewayException extends Exception {
      */
     @Override
     public void printStackTrace(final PrintStream out) {
-        PrintWriter writer = new PrintWriter(out);
-        printStackTrace(writer);
-        writer.flush();
+        new GrpcStackTracePrinter(super::printStackTrace, grpcStatus).printStackTrace(out);
     }
 
     /**
@@ -74,26 +73,8 @@ public class GatewayException extends Exception {
      */
     @Override
     public void printStackTrace(final PrintWriter out) {
-        CharArrayWriter message = new CharArrayWriter();
-
-        try (PrintWriter printer = new PrintWriter(message)) {
-            super.printStackTrace(printer);
-        }
-
-        List<ErrorDetail> details = getDetails();
-        if (!details.isEmpty()) {
-            message.append("Error details:\n");
-            for (ErrorDetail detail : details) {
-                message.append("    address: ")
-                        .append(detail.getAddress())
-                        .append("; mspId: ")
-                        .append(detail.getMspId())
-                        .append("; message: ")
-                        .append(detail.getMessage())
-                        .append('\n');
-            }
-        }
-
-        out.print(message);
+        new GrpcStackTracePrinter(super::printStackTrace, grpcStatus).printStackTrace(out);
     }
+
+    // CPD-ON
 }

@@ -7,6 +7,8 @@
 package org.hyperledger.fabric.client;
 
 import io.grpc.StatusRuntimeException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.util.List;
 import org.hyperledger.fabric.protos.gateway.ErrorDetail;
 
@@ -16,6 +18,8 @@ import org.hyperledger.fabric.protos.gateway.ErrorDetail;
  * more of those nodes. In that case, the details will contain errors information from those nodes.
  */
 public class GatewayRuntimeException extends RuntimeException {
+    // Ignore similarity with checked GatewayException - CPD-OFF
+
     private static final long serialVersionUID = 1L;
 
     private final transient GrpcStatus grpcStatus;
@@ -44,4 +48,33 @@ public class GatewayRuntimeException extends RuntimeException {
     public List<ErrorDetail> getDetails() {
         return grpcStatus.getDetails();
     }
+
+    /**
+     * {@inheritDoc}
+     * This implementation appends any gRPC error details to the stack trace.
+     */
+    @Override
+    public void printStackTrace() {
+        printStackTrace(System.err);
+    }
+
+    /**
+     * {@inheritDoc}
+     * This implementation appends any gRPC error details to the stack trace.
+     */
+    @Override
+    public void printStackTrace(final PrintStream out) {
+        new GrpcStackTracePrinter(super::printStackTrace, grpcStatus).printStackTrace(out);
+    }
+
+    /**
+     * {@inheritDoc}
+     * This implementation appends any gRPC error details to the stack trace.
+     */
+    @Override
+    public void printStackTrace(final PrintWriter out) {
+        new GrpcStackTracePrinter(super::printStackTrace, grpcStatus).printStackTrace(out);
+    }
+
+    // CPD-ON
 }
