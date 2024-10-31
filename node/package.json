@@ -20,7 +20,7 @@
     },
     "scripts": {
         "build": "npm-run-all clean compile copy-non-ts-source",
-        "clean": "rm -rf apidocs dist src/protos",
+        "clean": "rm -rf apidocs dist",
         "compile": "tsc --project tsconfig.build.json",
         "copy-non-ts-source": "rsync -rv --prune-empty-dirs --include='*.d.ts' --exclude='*.ts' src/ dist",
         "format": "prettier '**/*.{ts,js}' --check",

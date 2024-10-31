@@ -78,7 +78,9 @@ staticcheck:
 
 .PHONY: install-golangci-lint
 install-golangci-lint:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b '$(go_bin_dir)'
+	curl --fail --location --show-error --silent \
+		https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+		| sh -s -- -b '$(go_bin_dir)'
 
 $(go_bin_dir)/golangci-lint:
 	$(MAKE) install-golangci-lint
@@ -141,7 +143,7 @@ scan-java-osv-scanner:
 
 .PHONY: install-mockery
 install-mockery:
-	curl --fail --location \
+	curl --fail --location --show-error --silent \
 		'https://github.com/vektra/mockery/releases/download/v$(mockery_version)/mockery_$(mockery_version)_$(kernel_name)_$(machine_hardware).tar.gz' \
 		| tar -C '$(go_bin_dir)' -xzf - mockery
 
@@ -239,7 +241,7 @@ clean: clean-generated clean-node clean-java clean-docs
 
 .PHONY: clean-node
 clean-node:
-	rm -rf '$(node_dir)/package-lock.json' '$(node_dir)/node_modules'
+	cd '$(node_dir)' && rm -rf package-lock.json node_modules
 
 .PHONY: clean-java
 clean-java:
