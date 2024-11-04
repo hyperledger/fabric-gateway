@@ -8,8 +8,8 @@ package org.hyperledger.fabric.client;
 
 import io.grpc.StatusRuntimeException;
 
-final class GatewayExceptionTest extends CommonGatewayExceptionTest {
+final class GatewayRuntimeExceptionTest extends CommonGatewayExceptionTest {
     protected Exception newInstance(final StatusRuntimeException e) {
-        return new GatewayException(e);
+        return new GatewayRuntimeException(e);
     }
 }
