@@ -1,14 +1,21 @@
 {
     "name": "Ubuntu",
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
     "features": {
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
-        "ghcr.io/devcontainers/features/go:1": {},
+        "ghcr.io/devcontainers/features/go:1": {
+            "version": "latest"
+        },
         "ghcr.io/devcontainers/features/java:1": {
+            "version": "lts",
+            "jdkDistro": "tem",
             "installMaven": true
         },
-        "ghcr.io/devcontainers/features/node:1": {},
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "lts"
+        },
         "ghcr.io/devcontainers/features/python:1": {
+            "version": "latest",
             "installTools": false
         },
         "ghcr.io/devcontainers-contrib/features/apt-get-packages:1": {
@@ -22,6 +29,7 @@
     "customizations": {
         "vscode": {
             "settings": {
+                "editor.defaultFormatter": "esbenp.prettier-vscode",
                 "go.buildTags": "pkcs11"
             },
             "extensions": [
@@ -32,5 +40,7 @@
             ]
         }
     },
-    "postStartCommand": ["make", "generate"]
+    "postCreateCommand": {
+        "generate": ["make", "generate"]
+    }
 }
