@@ -15,8 +15,8 @@
     "homepage": "https://hyperledger.github.io/fabric-gateway/",
     "author": {
         "name": "hyperledger/fabric",
-        "email": "fabric@lists.hyperledger.org",
-        "url": "https://www.hyperledger.org/use/fabric"
+        "email": "fabric@lists.lfdecentralizedtrust.org",
+        "url": "https://www.lfdecentralizedtrust.org/projects/fabric"
     },
     "scripts": {
         "build": "npm-run-all clean compile copy-non-ts-source",

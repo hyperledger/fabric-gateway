@@ -1,3 +1,3 @@
 # Code of conduct
 
-This project follows the [Hyperledger code of conduct](https://toc.hyperledger.org/code-of-conduct.html). Please review these guidelines before participating.
+This project follows the [LF Decentralized Trust code of conduct](https://lf-decentralized-trust.github.io/governance/governing-documents/code-of-conduct). Please review these guidelines before participating.

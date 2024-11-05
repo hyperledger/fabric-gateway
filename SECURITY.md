@@ -1,6 +1,6 @@
 # Security policy
 
-The Hyperledger policy for reporting and handling security bugs can be found in the [Hyperledger Defect Response wiki page](https://wiki.hyperledger.org/display/SEC/Defect+Response). Details specific to this repository are documented below.
+This document defines how security vulnerability reporting is handled for this project. The approach aligns with the [LF Decentralized Trust security policy](https://lf-decentralized-trust.github.io/governance/governing-documents/security). Please review that document to understand the basis of the security reporting for this project. Details specific to this repository are documented below.
 
 ## Supported versions
 

@@ -32,7 +32,7 @@ extra:
       link: https://discord.gg/hyperledger
       name: Hyperledger Discord
     - icon: fontawesome/regular/envelope
-      link: https://lists.hyperledger.org/g/fabric
+      link: https://lists.lfdecentralizedtrust.org/g/fabric
       name: Fabric mailing list
 nav:
   - index.md

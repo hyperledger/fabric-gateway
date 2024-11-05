@@ -24,8 +24,8 @@
     <developers>
         <developer>
             <name>fabric-gateway maintainers</name>
-            <email>hyperledger-technical-discuss@lists.hyperledger.org</email>
-            <organization>https://www.hyperledger.org/</organization>
+            <email>fabric@lists.lfdecentralizedtrust.org</email>
+            <organization>https://www.lfdecentralizedtrust.org/</organization>
         </developer>
     </developers>
 
