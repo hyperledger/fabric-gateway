@@ -6,7 +6,7 @@ If you have any questions about the project or how to contribute, you can use:
 
 - The GitHub repository [Discussions](https://github.com/hyperledger/fabric-gateway/discussions).
 - The `#fabric-client-apis` channel on Hyperledger [Discord](https://discord.com/channels/905194001349627914/943089887589048350) ([invite link](https://discord.gg/hyperledger)).
-- The [Fabric mailing list](https://lists.hyperledger.org/g/fabric).
+- The [Fabric mailing list](https://lists.lfdecentralizedtrust.org/g/fabric).
 
 Here are a few guidelines to help you contribute successfully...
 
