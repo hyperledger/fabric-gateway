@@ -35,7 +35,7 @@ build: build-node build-java
 .PHONY: build-node
 build-node:
 	cd '$(node_dir)' && \
-		npm install && \
+		npm ci && \
 		npm run build && \
 		rm -f fabric-gateway-dev.tgz && \
 		mv $$(npm pack) fabric-gateway-dev.tgz
@@ -117,15 +117,15 @@ scan-node: scan-node-npm-audit scan-node-osv-scanner
 .PHONY: scan-node-npm-audit
 scan-node-npm-audit:
 	cd '$(node_dir)' && \
-		npm install --package-lock-only && \
+		npm install --omit=dev --package-lock-only --no-audit && \
 		npm audit --omit=dev
 
 .PHONY: scan-node-osv-scanner
 scan-node-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
 	cd '$(node_dir)' && \
-		npm install --package-lock-only && \
-		npm sbom --omit dev --package-lock-only --sbom-format cyclonedx > sbom.json && \
+		npm install --omit=dev --package-lock-only --no-audit && \
+		npm sbom --omit=dev --package-lock-only --sbom-format cyclonedx > sbom.json && \
 		osv-scanner scan --sbom=sbom.json
 
 .PHONY: scan-java
@@ -174,15 +174,15 @@ scenario-test-go-no-hsm: vendor-chaincode
 .PHONY: scenario-test-node
 scenario-test-node: vendor-chaincode build-node fabric-ca-client setup-softhsm
 	cd '$(scenario_dir)/node' && \
-		rm -rf package-lock.json node_modules && \
-		npm install && \
+		npm ci && \
+		npm install @hyperledger/fabric-gateway@file:../../node/fabric-gateway-dev.tgz && \
 		npm test
 
 .PHONY: scenario-test-node-no-hsm
 scenario-test-node-no-hsm: vendor-chaincode build-node fabric-ca-client
 	cd '$(scenario_dir)/node' && \
-		rm -rf package-lock.json node_modules && \
-		npm install && \
+		npm ci && \
+		npm install @hyperledger/fabric-gateway@file:../../node/fabric-gateway-dev.tgz && \
 		npm run test:no-hsm
 
 .PHONY: scenario-test-java
@@ -222,7 +222,7 @@ generate-docs:
 .PHONY: generate-docs-node
 generate-docs-node:
 	cd '$(node_dir)' && \
-		npm install && \
+		npm ci && \
 		npm run generate-apidoc
 
 .PHONY: generate-docs-java
@@ -241,7 +241,7 @@ clean: clean-generated clean-node clean-java clean-docs
 
 .PHONY: clean-node
 clean-node:
-	cd '$(node_dir)' && rm -rf package-lock.json node_modules
+	cd '$(node_dir)' && rm -rf node_modules
 
 .PHONY: clean-java
 clean-java:
