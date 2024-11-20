@@ -13,9 +13,12 @@ scenario_dir := $(base_dir)/scenario
 
 go_bin_dir := $(shell go env GOPATH)/bin
 
-mockery_version := 2.46.2
+mockery_version := 2.48.0
 kernel_name := $(shell uname -s)
 machine_hardware := $(shell uname -m)
+ifeq ($(machine_hardware), aarch64)
+	machine_hardware := arm64
+endif
 
 export SOFTHSM2_CONF ?= $(base_dir)/softhsm2.conf
 TMPDIR ?= /tmp
