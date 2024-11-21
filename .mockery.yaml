@@ -1,3 +1,4 @@
+issue-845-fix: true
 with-expecter: true
 exported: true
 filename: "{{.InterfaceName | lower}}_mock_test.go"
