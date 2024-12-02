@@ -2,7 +2,7 @@ name: Scheduled build
 
 on:
   schedule:
-    - cron: "32 23 * * *"
+    - cron: "32 23 * * 6"
   workflow_dispatch:
 
 permissions:
