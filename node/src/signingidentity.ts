@@ -14,7 +14,7 @@ import { Signer } from './identity/signer';
 export const undefinedSignerMessage = 'No signing implementation';
 
 const undefinedSigner: Signer = () => {
-    throw new Error(undefinedSignerMessage);
+    return Promise.reject(new Error(undefinedSignerMessage));
 };
 
 type SigningIdentityOptions = Pick<ConnectOptions, 'identity' | 'signer' | 'hash'>;
@@ -55,7 +55,7 @@ export class SigningIdentity {
         return this.#hash(message);
     }
 
-    async sign(digest: Uint8Array): Promise<Uint8Array> {
+    sign(digest: Uint8Array): Promise<Uint8Array> {
         return this.#sign(digest);
     }
 }

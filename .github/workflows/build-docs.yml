@@ -40,6 +40,22 @@ jobs:
           name: java-doc
           path: java/target/reports/apidocs/
 
+  web:
+    runs-on: ubuntu-22.04
+    name: Web documentation
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+      - name: Generate documentation
+        run: make generate-docs-web
+      - name: Upload documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-doc
+          path: web/apidocs/
+
   site:
     runs-on: ubuntu-24.04
     name: Documentation site
