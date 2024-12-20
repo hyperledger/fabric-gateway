@@ -29,6 +29,7 @@ echo "Updating Java version to ${NEXT_JAVA_VERSION}"
 echo "Updating Node version to ${NEXT_VERSION}"
 ( cd "${NODE_DIR}" && \
     npm --allow-same-version --no-git-tag-version version "${NEXT_VERSION}" )
+make build-scenario-node
 
 echo "Updating verify-versions.yml to ${NEXT_VERSION}"
 NEXT_VERIFY_VERSIONS="$( sed -r "s/^([ \t]*GATEWAY_VERSION:[ \t]*)[0-9.]+/\1${NEXT_VERSION}/" "${VERIFY_VERSIONS}" )"
