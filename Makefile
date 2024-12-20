@@ -101,7 +101,7 @@ scan-go: scan-go-govulncheck scan-go-nancy scan-go-osv-scanner
 .PHONY: scan-go-govulncheck
 scan-go-govulncheck:
 	go install golang.org/x/vuln/cmd/govulncheck@latest
-	govulncheck -tags pkcs11 '$(go_dir)/...'
+	govulncheck -tags pkcs11 -show verbose '$(go_dir)/...'
 
 .PHONY: scan-go-nancy
 scan-go-nancy:
