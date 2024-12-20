@@ -30,7 +30,7 @@ Add the following dependency to your project's `pom.xml` file:
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-bom</artifactId>
-            <version>4.28.2</version>
+            <version>4.29.2</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>
@@ -56,7 +56,7 @@ A suitable gRPC channel service provider must also be specified (as described in
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-bom</artifactId>
-            <version>1.67.1</version>
+            <version>1.69.0</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>
@@ -82,7 +82,7 @@ Add the following dependency to your project's `build.gradle` file:
 
 ```groovy
 implementation 'org.hyperledger.fabric:fabric-gateway:1.7.0'
-implementation platform('com.google.protobuf:protobuf-bom:4.28.2')
+implementation platform('com.google.protobuf:protobuf-bom:4.29.2')
 ```
 
 Note the **platform** import, which ensures that v4 of the Java protocol buffers package is resolved by your project.
@@ -90,7 +90,7 @@ Note the **platform** import, which ensures that v4 of the Java protocol buffers
 A suitable gRPC channel service provider must also be specified (as described in the [gRPC security documentation](https://github.com/grpc/grpc-java/blob/master/SECURITY.md#transport-security-tls)), such as:
 
 ```groovy
-implementation platform('io.grpc:grpc-bom:1.67.1')
+implementation platform('io.grpc:grpc-bom:1.69.0')
 compileOnly 'io.grpc:grpc-api'
 runtimeOnly 'io.grpc:grpc-netty-shaded'
 ```
