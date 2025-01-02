@@ -43,6 +43,13 @@ build-node:
 		rm -f fabric-gateway-dev.tgz && \
 		mv $$(npm pack) fabric-gateway-dev.tgz
 
+.PHONY: build-scenario-node
+build-scenario-node: build-node
+	cd '$(scenario_dir)/node' && \
+		npm ci && \
+		npm install @hyperledger/fabric-gateway@file:../../node/fabric-gateway-dev.tgz
+
+
 .PHONY: build-java
 build-java:
 	cd '$(java_dir)' && \
@@ -175,17 +182,13 @@ scenario-test-go-no-hsm: vendor-chaincode
 		go test -timeout 20m -tags pkcs11 -v --godog.tags='~@hsm' -args '$(scenario_dir)/features/'
 
 .PHONY: scenario-test-node
-scenario-test-node: vendor-chaincode build-node fabric-ca-client setup-softhsm
+scenario-test-node: vendor-chaincode build-scenario-node fabric-ca-client setup-softhsm
 	cd '$(scenario_dir)/node' && \
-		npm ci && \
-		npm install @hyperledger/fabric-gateway@file:../../node/fabric-gateway-dev.tgz && \
 		npm test
 
 .PHONY: scenario-test-node-no-hsm
-scenario-test-node-no-hsm: vendor-chaincode build-node fabric-ca-client
+scenario-test-node-no-hsm: vendor-chaincode build-scenario-node fabric-ca-client
 	cd '$(scenario_dir)/node' && \
-		npm ci && \
-		npm install @hyperledger/fabric-gateway@file:../../node/fabric-gateway-dev.tgz && \
 		npm run test:no-hsm
 
 .PHONY: scenario-test-java
