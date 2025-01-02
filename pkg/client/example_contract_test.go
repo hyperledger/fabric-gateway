@@ -23,7 +23,7 @@ func ExampleContract_Evaluate() {
 		// Specify additional proposal options, such as transient data
 	)
 
-	fmt.Printf("Result: %s, Err: %v", result, err)
+	fmt.Printf("Result: %s, Err: %v\n", result, err)
 }
 
 func ExampleContract_Evaluate_errorHandling() {
@@ -38,7 +38,7 @@ func ExampleContract_Evaluate_errorHandling() {
 		}
 	}
 
-	fmt.Printf("Result: %s, Err: %v", result, err)
+	fmt.Printf("Result: %s, Err: %v\n", result, err)
 }
 
 func ExampleContract_Submit() {
@@ -50,7 +50,7 @@ func ExampleContract_Submit() {
 		// Specify additional proposal options, such as transient data.
 	)
 
-	fmt.Printf("Result: %s, Err: %v", result, err)
+	fmt.Printf("Result: %s, Err: %v\n", result, err)
 }
 
 func ExampleContract_Submit_errorHandling() {
@@ -64,26 +64,37 @@ func ExampleContract_Submit_errorHandling() {
 		var commitErr *client.CommitError
 
 		if errors.As(err, &endorseErr) {
-			fmt.Printf("Endorse error for transaction %s with gRPC status %v: %s\n",
+			fmt.Printf("Failed to endorse proposal for transaction %s with gRPC status %v: %s\n",
 				endorseErr.TransactionID, status.Code(endorseErr), endorseErr)
 		} else if errors.As(err, &submitErr) {
-			fmt.Printf("Submit error for transaction %s with gRPC status %v: %s\n",
+			fmt.Printf("Failed to submit endorsed transaction %s to orderer with gRPC status %v: %s\n",
 				submitErr.TransactionID, status.Code(submitErr), submitErr)
 		} else if errors.As(err, &commitStatusErr) {
 			if errors.Is(err, context.DeadlineExceeded) {
 				fmt.Printf("Timeout waiting for transaction %s commit status: %s",
 					commitStatusErr.TransactionID, commitStatusErr)
 			} else {
-				fmt.Printf("Error obtaining commit status for transaction %s with gRPC status %v: %s\n",
+				fmt.Printf("Failed to obtain commit status for transaction %s with gRPC status %v: %s\n",
 					commitStatusErr.TransactionID, status.Code(commitStatusErr), commitStatusErr)
 			}
 		} else if errors.As(err, &commitErr) {
 			fmt.Printf("Transaction %s failed to commit with status %d: %s\n",
 				commitErr.TransactionID, int32(commitErr.Code), err)
 		} else {
-			fmt.Printf("unexpected error type %T: %s", err, err)
+			fmt.Printf("Unexpected error type %T: %s", err, err)
 		}
+	}
 
+	fmt.Printf("Result: %s, Err: %v\n", result, err)
+}
+
+func ExampleContract_Submit_errorDetails() {
+	var contract *client.Contract // Obtained from Network.
+
+	result, err := contract.Submit("transactionName")
+	fmt.Printf("Result: %s, Err: %v\n", result, err)
+
+	if err != nil {
 		// Any error that originates from a peer or orderer node external to the gateway will have its details
 		// embedded within the gRPC status error. The following code shows how to extract that.
 		for _, detail := range status.Convert(err).Details() {
@@ -92,11 +103,7 @@ func ExampleContract_Submit_errorHandling() {
 				fmt.Printf("- address: %s; mspId: %s; message: %s\n", detail.Address, detail.MspId, detail.Message)
 			}
 		}
-
-		panic(err)
 	}
-
-	fmt.Printf("Result: %s, Err: %v", result, err)
 }
 
 func ExampleContract_Submit_privateData() {
