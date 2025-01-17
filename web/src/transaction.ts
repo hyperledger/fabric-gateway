@@ -6,7 +6,7 @@
 
 import { PreparedTransaction } from '@hyperledger/fabric-protos/lib/gateway/gateway_pb';
 import { assertDefined } from './gateway';
-import { Identity } from './identity';
+import { Identity } from './identity/identity';
 import { SigningIdentity } from './signingidentity';
 import { parseTransactionEnvelope } from './transactionparser';
 import { Envelope } from '@hyperledger/fabric-protos/lib/common/common_pb';
@@ -19,6 +19,11 @@ export interface Transaction {
      * Get the serialized bytes of the object. This is used to transfer the object state to a remote service.
      */
     getBytes(): Uint8Array;
+
+    /**
+     * Get the digest of the signable object. This is used to generate a digital signature.
+     */
+    getDigest(): Promise<Uint8Array>;
 
     /**
      * Get the transaction result. This is obtained during the endorsement process when the transaction proposal is
@@ -71,6 +76,11 @@ export class TransactionImpl implements Transaction {
         return this.#result;
     }
 
+    async getDigest(): Promise<Uint8Array> {
+        const bytes = this.#envelope.getPayload_asU8();
+        return this.#signingIdentity.hash(bytes);
+    }
+
     getTransactionId(): string {
         return this.#preparedTransaction.getTransactionId();
     }
@@ -84,11 +94,16 @@ export class TransactionImpl implements Transaction {
     }
 
     async #sign(): Promise<void> {
-        const signature = await this.#signingIdentity.sign(this.#getMessage());
+        if (this.#isSigned()) {
+            return;
+        }
+
+        const signature = await this.#signingIdentity.sign(await this.getDigest());
         this.#setSignature(signature);
     }
 
-    #getMessage(): Uint8Array {
-        return this.#envelope.getPayload_asU8();
+    #isSigned(): boolean {
+        const signatureLength = this.#envelope.getSignature_asU8().length || 0;
+        return signatureLength > 0;
     }
 }

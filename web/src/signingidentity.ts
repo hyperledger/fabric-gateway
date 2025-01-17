@@ -6,8 +6,8 @@
 
 import { SerializedIdentity } from '@hyperledger/fabric-protos/lib/msp/identities_pb';
 import { ConnectOptions } from './gateway';
-import { Identity } from './identity';
-import { Signer } from './signer';
+import { Identity } from './identity/identity';
+import { Signer } from './identity/signer';
 
 type SigningIdentityOptions = Pick<ConnectOptions, 'identity' | 'signer'>;
 
@@ -43,5 +43,10 @@ export class SigningIdentity {
 
     sign(message: Uint8Array): Promise<Uint8Array> {
         return this.#sign(message);
+    }
+
+    async hash(message: Uint8Array): Promise<Uint8Array> {
+        const hashBuffer = await crypto.subtle.digest('SHA-256', message);
+        return new Uint8Array(hashBuffer);
     }
 }

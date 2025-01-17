@@ -20,7 +20,7 @@ import {
     TransactionAction,
 } from '@hyperledger/fabric-protos/lib/peer/transaction_pb';
 import { assertDefined } from './gateway';
-import { Identity } from './identity';
+import { Identity } from './identity/identity';
 
 export function parseTransactionEnvelope(envelope: Envelope): {
     identity: Identity;

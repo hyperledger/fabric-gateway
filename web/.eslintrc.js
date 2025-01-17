@@ -3,7 +3,7 @@ module.exports = {
     env: {
         jest: true,
     },
-    ignorePatterns: ['*/**', '*.js', '*.ts', '!src/**/*.ts'],
+    ignorePatterns: ['*/**', '*.js', '*.ts', '!src/**/*.ts', '*.mjs'],
     plugins: ['jest', 'eslint-plugin-tsdoc'],
     extends: ['.eslintrc.base', 'plugin:jest/recommended'],
     rules: {

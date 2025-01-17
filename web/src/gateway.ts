@@ -5,9 +5,9 @@
  */
 
 import { PreparedTransaction } from '@hyperledger/fabric-protos/lib/gateway/gateway_pb';
-import { Identity } from './identity';
+import { Identity } from './identity/identity';
 import { Network, NetworkImpl } from './network';
-import { Signer } from './signer';
+import { Signer } from './identity/signer';
 import { SigningIdentity } from './signingidentity';
 import { Transaction, TransactionImpl } from './transaction';
 

@@ -1,5 +1,6 @@
 node_modules/
 dist/
+browser/
 coverage/
 *.tgz
 src/protos/

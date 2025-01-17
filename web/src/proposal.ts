@@ -19,6 +19,11 @@ export interface Proposal {
     getBytes(): Uint8Array;
 
     /**
+     * Get the digest of the signable object. This is used to generate a digital signature.
+     */
+    getDigest(): Promise<Uint8Array>;
+
+    /**
      * Get the transaction ID for this proposal.
      */
     getTransactionId(): string;
@@ -50,17 +55,27 @@ export class ProposalImpl implements Proposal {
         return this.#proposedTransaction.serializeBinary();
     }
 
+    async getDigest(): Promise<Uint8Array> {
+        const bytes = this.#proposal.getProposalBytes_asU8();
+        return this.#signingIdentity.hash(bytes);
+    }
+
     getTransactionId(): string {
         return this.#proposedTransaction.getTransactionId();
     }
 
     async #sign(): Promise<void> {
-        const signature = await this.#signingIdentity.sign(this.#getMessage());
+        if (this.#isSigned()) {
+            return;
+        }
+
+        const signature = await this.#signingIdentity.sign(await this.getDigest());
         this.#setSignature(signature);
     }
 
-    #getMessage(): Uint8Array {
-        return this.#proposal.getProposalBytes_asU8();
+    #isSigned(): boolean {
+        const signatureLength = this.#proposal.getSignature_asU8().length;
+        return signatureLength > 0;
     }
 
     #setSignature(signature: Uint8Array): void {

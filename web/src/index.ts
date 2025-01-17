@@ -6,9 +6,10 @@
 
 export { Contract } from './contract';
 export { ConnectOptions, Gateway, connect } from './gateway';
-export { Identity } from './identity';
+export { Identity } from './identity/identity';
 export { Network } from './network';
 export { Proposal } from './proposal';
 export { ProposalOptions } from './proposalbuilder';
-export { Signer } from './signer';
+export { Signer } from './identity/signer';
+export { newPrivateKeySigner } from './identity/signers';
 export { Transaction } from './transaction';
