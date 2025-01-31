@@ -116,10 +116,13 @@ scan-go-nancy:
 	go list -json -deps '$(go_dir)/...' | nancy sleuth
 
 .PHONY: scan-go-osv-scanner
-scan-go-osv-scanner:
-	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
+scan-go-osv-scanner: install-osv-scanner
 	echo "GoVersionOverride = '$$(go env GOVERSION | sed 's/^go//')'" > osv-scanner.toml
 	osv-scanner scan --lockfile='$(base_dir)/go.mod' || [ \( $$? -gt 1 \) -a \( $$? -lt 127 \) ]
+
+.PHONY: install-osv-scanner
+install-osv-scanner:
+	go install github.com/google/osv-scanner/v2/cmd/osv-scanner@latest
 
 .PHONY: scan-node
 scan-node: scan-node-npm-audit scan-node-osv-scanner
@@ -131,12 +134,11 @@ scan-node-npm-audit:
 		npm audit --omit=dev
 
 .PHONY: scan-node-osv-scanner
-scan-node-osv-scanner:
-	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
+scan-node-osv-scanner: install-osv-scanner
 	cd '$(node_dir)' && \
 		npm install --omit=dev --package-lock-only --no-audit && \
-		npm sbom --omit=dev --package-lock-only --sbom-format cyclonedx > sbom.json && \
-		osv-scanner scan --sbom=sbom.json
+		npm sbom --omit=dev --package-lock-only --sbom-format cyclonedx > bom.cdx.json && \
+		osv-scanner scan --sbom=bom.cdx.json
 
 .PHONY: scan-java
 scan-java: scan-java-dependency-check scan-java-osv-scanner
@@ -147,8 +149,7 @@ scan-java-dependency-check:
 		mvn dependency-check:check -P owasp
 
 .PHONY: scan-java-osv-scanner
-scan-java-osv-scanner:
-	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
+scan-java-osv-scanner: install-osv-scanner
 	osv-scanner scan --lockfile='$(java_dir)/pom.xml'
 
 .PHONY: install-mockery
