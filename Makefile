@@ -13,7 +13,7 @@ scenario_dir := $(base_dir)/scenario
 
 go_bin_dir := $(shell go env GOPATH)/bin
 
-mockery_version := 2.48.0
+mockery_version := 2.52.2
 kernel_name := $(shell uname -s)
 machine_hardware := $(shell uname -m)
 ifeq ($(machine_hardware), aarch64)
@@ -46,8 +46,8 @@ build-node:
 .PHONY: build-scenario-node
 build-scenario-node: build-node
 	cd '$(scenario_dir)/node' && \
-		npm ci && \
-		npm install @hyperledger/fabric-gateway@file:../../node/fabric-gateway-dev.tgz
+		npm install @hyperledger/fabric-gateway@file:../../node/fabric-gateway-dev.tgz && \
+		npm ci
 
 
 .PHONY: build-java

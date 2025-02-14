@@ -40,10 +40,13 @@ The following files need to be modified when updating the version number, and th
 - The `GATEWAY_VERSION` variable in [.github/workflows/verify-versions.yml](.github/workflows/verify-versions.yml)
 - The `version` element in [java/pom.xml](java/pom.xml)
 - The `version` property in [node/package.json](node/package.json)
+- The Node package-lock.json files for the Node [implementation](node/package-lock.json) and [scenario tests](scenario/node/package-lock.json).
 
-**Note:** there is no file to update for the Go SDK, which is versioned by the release tag.
+There is no file to update for the Go SDK, which is versioned by the release tag.
 
-The [scripts/update-versions.sh](scripts/update-versions.sh) script can be used to update the version number in the files listed above. With no arguments, the script will update to the next patch version. An argument supplied to the script specifies the new version number, which should **not** include a leading `v`.
+**Note:** The [scripts/update-versions.sh](scripts/update-versions.sh) script is used to update the version number in the files listed above. With no arguments, the script will update to the next patch version. An argument supplied to the script specifies the new version number, which should **not** include a leading `v`.
+
+Removing support for Go, Node or Java runtime versions requires at least a minor version change. Adding support for a new runtime version while retaining support for existing versions can be done in a patch release.
 
 ## Updating the major version
 

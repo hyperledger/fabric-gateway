@@ -7,7 +7,7 @@ The following table shows versions of Fabric, programming language runtimes, and
 |              | Tested       | Supported     |
 | ------------ | ------------ | ------------- |
 | **Fabric**   | 2.5          | 2.4.4+        |
-| **Go**       | 1.22, 1.23   | 1.22, 1.23    |
+| **Go**       | 1.23, 1.24   | 1.23, 1.24    |
 | **Node**     | 18, 20, 22   | 18, 20, 22    |
 | **Java**     | 11, 17, 21   | 8, 11, 17, 21 |
 | **Platform** | Ubuntu 24.04 |               |
