@@ -46,7 +46,7 @@ In order to run any of the Hardware Security Module (HSM) tests, [SoftHSM v2](ht
 
 This project includes a [Dev Container](https://containers.dev/) configuration that includes all of the pre-requisite software described above in a Docker container, avoiding the need to install them locally. The only requirement is that [Docker](https://www.docker.com/) is installed and available.
 
-Opening the project folder in an IDE such as [VS Code](https://code.visualstudio.com/docs/devcontainers/containers) (with the [Dev Containers extention](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)) should offer the option of opening in the Dev Container. Alternatively, VS Code allows the remote repository to [opened directly in an isolated Dev Container](https://code.visualstudio.com/docs/devcontainers/containers#_quick-start-open-a-git-repository-or-github-pr-in-an-isolated-container-volume).
+Opening the project folder in an IDE such as [VS Code](https://code.visualstudio.com/docs/devcontainers/containers) (with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)) should offer the option of opening in the Dev Container. Alternatively, VS Code allows the remote repository to [opened directly in an isolated Dev Container](https://code.visualstudio.com/docs/devcontainers/containers#_quick-start-open-a-git-repository-or-github-pr-in-an-isolated-container-volume).
 
 ### Build using make
 
