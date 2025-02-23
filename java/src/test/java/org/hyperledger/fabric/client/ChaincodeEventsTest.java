@@ -63,7 +63,7 @@ public final class ChaincodeEventsTest {
     void assertStartPosition(final ChaincodeEventsRequest actual, final Checkpoint checkpoint) {
         long blockNumber = checkpoint
                 .getBlockNumber()
-                .orElseThrow(() -> new IllegalArgumentException("No checkoint block number set"));
+                .orElseThrow(() -> new IllegalArgumentException("No checkpoint block number set"));
         String transactionId = checkpoint.getTransactionId().orElse("");
         assertStartPosition(actual, blockNumber, transactionId);
     }
