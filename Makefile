@@ -205,10 +205,13 @@ scenario-test-no-hsm: scenario-test-go-no-hsm scenario-test-node-no-hsm scenario
 .PHONY: pull-docker-images
 pull-docker-images:
 	for IMAGE in peer orderer baseos ccenv tools; do \
-		docker pull --quiet "hyperledger/fabric-$${IMAGE}:$(FABRIC_VERSION)"; \
+		docker pull --quiet "ghcr.io/hyperledger/fabric-$${IMAGE}:$(FABRIC_VERSION)"; \
+		docker tag "ghcr.io/hyperledger/fabric-$${IMAGE}:$(FABRIC_VERSION)" "hyperledger/fabric-$${IMAGE}:$(FABRIC_VERSION)"; \
 	done
-	docker pull --quiet 'hyperledger/fabric-nodeenv:$(NODEENV_VERSION)'
-	docker pull --quiet 'hyperledger/fabric-ca:$(CA_VERSION)'
+	docker pull --quiet 'ghcr.io/hyperledger/fabric-nodeenv:$(NODEENV_VERSION)'
+	docker tag 'ghcr.io/hyperledger/fabric-nodeenv:$(NODEENV_VERSION)' 'hyperledger/fabric-nodeenv:$(NODEENV_VERSION)'
+	docker pull --quiet 'ghcr.io/hyperledger/fabric-ca:$(CA_VERSION)'
+	docker tag 'ghcr.io/hyperledger/fabric-ca:$(CA_VERSION)' 'hyperledger/fabric-ca:$(CA_VERSION)'
 
 .PHONY: fabric-ca-client
 fabric-ca-client:
