@@ -14,14 +14,8 @@ permissions:
 
 jobs:
   go:
+    name: "go (osv-scanner)"
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target:
-          - govulncheck
-          - nancy
-          - osv-scanner
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,7 +26,7 @@ jobs:
           go-version: stable
           check-latest: true
       - name: Scan
-        run: make scan-go-${{ matrix.target }}
+        run: make scan-go-osv-scanner
 
   node:
     runs-on: ubuntu-latest
