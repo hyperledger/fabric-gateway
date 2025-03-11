@@ -22,6 +22,12 @@ endif
 
 export SOFTHSM2_CONF ?= $(base_dir)/softhsm2.conf
 TMPDIR ?= /tmp
+TMPDIR := $(abspath $(TMPDIR))
+
+osv_scanner := go run github.com/google/osv-scanner/v2/cmd/osv-scanner@latest
+govulncheck := go run golang.org/x/vuln/cmd/govulncheck@latest
+nancy := go run github.com/sonatype-nexus-community/nancy@latest
+staticcheck := go run honnef.co/go/tools/cmd/staticcheck@latest
 
 # These should match names in Docker .env file
 export FABRIC_VERSION ?= 2.5
@@ -83,8 +89,7 @@ lint: staticcheck golangci-lint
 
 .PHONY: staticcheck
 staticcheck:
-	go install honnef.co/go/tools/cmd/staticcheck@latest
-	staticcheck -f stylish -tags=pkcs11 '$(go_dir)/...' '$(scenario_dir)/go'
+	$(staticcheck) -f stylish -tags=pkcs11 '$(go_dir)/...' '$(scenario_dir)/go'
 
 .PHONY: install-golangci-lint
 install-golangci-lint:
@@ -107,19 +112,16 @@ scan-go: scan-go-govulncheck scan-go-nancy scan-go-osv-scanner
 
 .PHONY: scan-go-govulncheck
 scan-go-govulncheck:
-	go install golang.org/x/vuln/cmd/govulncheck@latest
-	govulncheck -tags pkcs11 -show verbose '$(go_dir)/...'
+	$(govulncheck) -tags pkcs11 -show verbose '$(go_dir)/...'
 
 .PHONY: scan-go-nancy
 scan-go-nancy:
-	go install github.com/sonatype-nexus-community/nancy@latest
-	go list -json -deps '$(go_dir)/...' | nancy sleuth
+	go list -json -deps '$(go_dir)/...' | $(nancy) sleuth
 
 .PHONY: scan-go-osv-scanner
 scan-go-osv-scanner:
-	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
-	echo "GoVersionOverride = '$$(go env GOVERSION | sed 's/^go//')'" > osv-scanner.toml
-	osv-scanner scan --lockfile='$(base_dir)/go.mod' || [ \( $$? -gt 1 \) -a \( $$? -lt 127 \) ]
+	echo "GoVersionOverride = '$$(go env GOVERSION | sed -e 's/^go//' -e 's/-.*$$//')'" > '$(TMPDIR)/osv-scanner.toml'
+	$(osv_scanner) scan --config='$(TMPDIR)/osv-scanner.toml' --lockfile='$(base_dir)/go.mod' || [ \( $$? -gt 1 \) -a \( $$? -lt 127 \) ]
 
 .PHONY: scan-node
 scan-node: scan-node-npm-audit scan-node-osv-scanner
@@ -132,11 +134,10 @@ scan-node-npm-audit:
 
 .PHONY: scan-node-osv-scanner
 scan-node-osv-scanner:
-	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
 	cd '$(node_dir)' && \
 		npm install --omit=dev --package-lock-only --no-audit && \
-		npm sbom --omit=dev --package-lock-only --sbom-format cyclonedx > sbom.json && \
-		osv-scanner scan --sbom=sbom.json
+		npm sbom --omit=dev --package-lock-only --sbom-format cyclonedx > bom.cdx.json && \
+		$(osv_scanner) scan --sbom=bom.cdx.json
 
 .PHONY: scan-java
 scan-java: scan-java-dependency-check scan-java-osv-scanner
@@ -148,8 +149,7 @@ scan-java-dependency-check:
 
 .PHONY: scan-java-osv-scanner
 scan-java-osv-scanner:
-	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
-	osv-scanner scan --lockfile='$(java_dir)/pom.xml'
+	$(osv_scanner) scan --lockfile='$(java_dir)/pom.xml'
 
 .PHONY: install-mockery
 install-mockery:
@@ -172,7 +172,7 @@ vendor-chaincode:
 		GO111MODULE=on go mod vendor
 
 .PHONY: scenario-test-go
-scenario-test-go: vendor-chaincode fabric-ca-client setup-softhsm
+scenario-test-go: vendor-chaincode install-fabric-ca-client setup-softhsm
 	cd '$(scenario_dir)/go' && \
 		go test -timeout 20m -tags pkcs11 -v -args '$(scenario_dir)/features/'
 
@@ -182,12 +182,12 @@ scenario-test-go-no-hsm: vendor-chaincode
 		go test -timeout 20m -tags pkcs11 -v --godog.tags='~@hsm' -args '$(scenario_dir)/features/'
 
 .PHONY: scenario-test-node
-scenario-test-node: vendor-chaincode build-scenario-node fabric-ca-client setup-softhsm
+scenario-test-node: vendor-chaincode build-scenario-node install-fabric-ca-client setup-softhsm
 	cd '$(scenario_dir)/node' && \
 		npm test
 
 .PHONY: scenario-test-node-no-hsm
-scenario-test-node-no-hsm: vendor-chaincode build-scenario-node fabric-ca-client
+scenario-test-node-no-hsm: vendor-chaincode build-scenario-node install-fabric-ca-client
 	cd '$(scenario_dir)/node' && \
 		npm run test:no-hsm
 
@@ -213,8 +213,8 @@ pull-docker-images:
 	docker pull --quiet 'ghcr.io/hyperledger/fabric-ca:$(CA_VERSION)'
 	docker tag 'ghcr.io/hyperledger/fabric-ca:$(CA_VERSION)' 'hyperledger/fabric-ca:$(CA_VERSION)'
 
-.PHONY: fabric-ca-client
-fabric-ca-client:
+.PHONY: install-fabric-ca-client
+install-fabric-ca-client:
 	go install -tags pkcs11 github.com/hyperledger/fabric-ca/cmd/fabric-ca-client@latest
 
 .PHONY: setup-softhsm
