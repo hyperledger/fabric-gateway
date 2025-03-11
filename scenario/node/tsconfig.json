@@ -3,6 +3,8 @@
     "extends": "@tsconfig/node18/tsconfig.json",
     "compilerOptions": {
         "declaration": false,
+        "erasableSyntaxOnly": true,
+        "module": "node18",
         "sourceMap": true,
         "outDir": "dist",
         "rootDir": "src",

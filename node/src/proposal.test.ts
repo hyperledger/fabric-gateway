@@ -11,7 +11,7 @@ import { EndorseError } from './endorseerror';
 import { Gateway, assertDefined, internalConnect } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
-import { MockGatewayGrpcClient, newEndorseResponse } from './testutils.test';
+import { asString, MockGatewayGrpcClient, newEndorseResponse } from './testutils.test';
 
 function assertDecodeEvaluateRequest(request: gatewayproto.EvaluateRequest): peer.Proposal {
     let proposalBytes = request.getProposedTransaction()?.getProposalBytes_asU8();
@@ -243,10 +243,9 @@ describe('Proposal', () => {
             await contract.evaluateTransaction('TRANSACTION_NAME');
 
             const evaluateRequest = client.getEvaluateRequest();
-            const signature = Buffer.from(
-                evaluateRequest.getProposedTransaction()?.getSignature_asU8() ?? '',
-            ).toString();
-            expect(signature).toBe('MY_SIGNATURE');
+            const signature = evaluateRequest.getProposedTransaction()?.getSignature_asU8();
+            const actual = asString(signature);
+            expect(actual).toBe('MY_SIGNATURE');
         });
 
         it('uses signer with newProposal', async () => {
@@ -256,10 +255,9 @@ describe('Proposal', () => {
             await newProposal.evaluate();
 
             const evaluateRequest = client.getEvaluateRequest();
-            const signature = Buffer.from(
-                evaluateRequest.getProposedTransaction()?.getSignature_asU8() ?? '',
-            ).toString();
-            expect(signature).toBe('MY_SIGNATURE');
+            const signature = evaluateRequest.getProposedTransaction()?.getSignature_asU8();
+            const actual = asString(signature);
+            expect(actual).toBe('MY_SIGNATURE');
         });
 
         it('uses hash', async () => {
@@ -443,10 +441,9 @@ describe('Proposal', () => {
             await contract.submitTransaction('TRANSACTION_NAME');
 
             const endorseRequest = client.getEndorseRequest();
-            const signature = Buffer.from(
-                endorseRequest.getProposedTransaction()?.getSignature_asU8() ?? '',
-            ).toString();
-            expect(signature).toBe('MY_SIGNATURE');
+            const signature = endorseRequest.getProposedTransaction()?.getSignature_asU8();
+            const actual = asString(signature);
+            expect(actual).toBe('MY_SIGNATURE');
         });
 
         it('uses signer with newProposal', async () => {
@@ -456,10 +453,9 @@ describe('Proposal', () => {
             await newProposal.endorse();
 
             const endorseRequest = client.getEndorseRequest();
-            const signature = Buffer.from(
-                endorseRequest.getProposedTransaction()?.getSignature_asU8() ?? '',
-            ).toString();
-            expect(signature).toBe('MY_SIGNATURE');
+            const signature = endorseRequest.getProposedTransaction()?.getSignature_asU8();
+            const actual = asString(signature);
+            expect(actual).toBe('MY_SIGNATURE');
         });
 
         it('uses hash', async () => {
