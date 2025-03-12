@@ -14,7 +14,7 @@ import { Signer } from './identity/signer';
 export const undefinedSignerMessage = 'No signing implementation';
 
 const undefinedSigner: Signer = () => {
-    throw new Error(undefinedSignerMessage);
+    return Promise.reject(new Error(undefinedSignerMessage));
 };
 
 type SigningIdentityOptions = Pick<ConnectOptions, 'identity' | 'signer' | 'hash'>;
