@@ -10,5 +10,6 @@ vendor/
 *.iml
 softhsm2.conf
 .python-version
+.venv/
 site/
 osv-scanner.toml
