@@ -12,6 +12,8 @@ java_dir := $(base_dir)/java
 scenario_dir := $(base_dir)/scenario
 
 go_bin_dir := $(shell go env GOPATH)/bin
+python_venv_dir := $(base_dir)/.venv
+python_venv_activate := $(python_venv_dir)/bin/activate
 
 mockery_version := 2.52.2
 kernel_name := $(shell uname -s)
@@ -224,9 +226,14 @@ setup-softhsm:
 	softhsm2-util --init-token --slot 0 --label 'ForFabric' --pin 98765432 --so-pin 1234 || true
 
 .PHONY: generate-docs
-generate-docs:
-	pip install --quiet --upgrade --requirement '$(base_dir)/requirements.txt'
-	cd '$(base_dir)' && TZ=UTC mkdocs build --strict
+generate-docs: $(python_venv_activate)
+	. '$(python_venv_activate)' && \
+		cd '$(base_dir)' && \
+		python -m pip install --quiet --upgrade --require-virtualenv --disable-pip-version-check --requirement requirements.txt && \
+		TZ=UTC mkdocs build --strict
+
+$(python_venv_activate):
+	python -m venv '$(python_venv_dir)'
 
 .PHONY: generate-docs-node
 generate-docs-node:

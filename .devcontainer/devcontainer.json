@@ -1,6 +1,6 @@
 {
     "name": "Ubuntu",
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
     "features": {
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
         "ghcr.io/devcontainers/features/go:1": {
@@ -18,12 +18,8 @@
             "version": "latest",
             "installTools": false
         },
-        "ghcr.io/devcontainers-contrib/features/apt-get-packages:1": {
-            "packages": "softhsm2"
-        },
-        "ghcr.io/devcontainers-contrib/features/gh-release:1": {
-            "repo": "koalaman/shellcheck",
-            "binaryNames": "shellcheck"
+        "ghcr.io/devcontainers-extra/features/apt-get-packages:1": {
+            "packages": "shellcheck,softhsm2"
         }
     },
     "customizations": {
@@ -35,6 +31,9 @@
             "extensions": [
                 "esbenp.prettier-vscode",
                 "github.vscode-github-actions",
+                "-ms-python.python",
+                "-ms-python.vscode-pylance",
+                "-ms-python.autopep8",
                 "ms-vscode.makefile-tools",
                 "timonwong.shellcheck"
             ]
