@@ -10,14 +10,14 @@ jobs:
     runs-on: ubuntu-24.04
     name: Node documentation
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4.3.0
         with:
           node-version: "lts/*"
       - name: Generate documentation
         run: make generate-docs-node
       - name: Upload documentation
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: node-doc
           path: node/apidocs/
@@ -26,8 +26,8 @@ jobs:
     runs-on: ubuntu-24.04
     name: Java documentation
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
         with:
           java-version: 21
           distribution: temurin
@@ -35,7 +35,7 @@ jobs:
       - name: Generate JavaDoc
         run: make generate-docs-java
       - name: Upload JavaDoc
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: java-doc
           path: java/target/reports/apidocs/
@@ -44,14 +44,14 @@ jobs:
     runs-on: ubuntu-24.04
     name: Documentation site
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: 3.x
       - name: Generate documentation site
         run: make generate-docs
       - name: Upload documentation site
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: site-doc
           path: site/
