@@ -37,9 +37,7 @@ func TestCheckpointer(t *testing.T) {
 		require.Equal(t, transactionID, checkpoint.TransactionID(), "TransactionID")
 	}
 
-	tempDir, err := os.MkdirTemp("", "test")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	tempDir := t.TempDir()
 
 	for testName, testCase := range map[string]struct {
 		newCheckpointer func(*testing.T) Checkpointer
@@ -74,7 +72,7 @@ func TestCheckpointer(t *testing.T) {
 				checkpointer := testCase.newCheckpointer(t)
 				defer checkpointer.Close()
 
-				err = checkpointer.CheckpointBlock(blockNumber)
+				err := checkpointer.CheckpointBlock(blockNumber)
 				require.NoError(t, err)
 
 				assertState(t, checkpointer, blockNumber+1, "")
@@ -85,7 +83,7 @@ func TestCheckpointer(t *testing.T) {
 				checkpointer := testCase.newCheckpointer(t)
 				defer checkpointer.Close()
 
-				err = checkpointer.CheckpointTransaction(blockNumber, "txn1")
+				err := checkpointer.CheckpointTransaction(blockNumber, "txn1")
 				require.NoError(t, err)
 
 				assertState(t, checkpointer, blockNumber, "txn1")
@@ -99,7 +97,7 @@ func TestCheckpointer(t *testing.T) {
 				checkpointer := testCase.newCheckpointer(t)
 				defer checkpointer.Close()
 
-				err = checkpointer.CheckpointChaincodeEvent(event)
+				err := checkpointer.CheckpointChaincodeEvent(event)
 				require.NoError(t, err)
 
 				assertState(t, checkpointer, event.BlockNumber, event.TransactionID)

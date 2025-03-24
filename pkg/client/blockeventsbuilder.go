@@ -58,7 +58,7 @@ func (builder *baseBlockEventsBuilder) channelHeaderBytes() ([]byte, error) {
 	channelHeader := &common.ChannelHeader{
 		Type:        int32(common.HeaderType_DELIVER_SEEK_INFO),
 		Timestamp:   timestamppb.Now(),
-		ChannelId:   builder.eventsBuilder.channelName,
+		ChannelId:   builder.channelName,
 		Epoch:       0,
 		TlsCertHash: builder.tlsCertificateHash,
 	}

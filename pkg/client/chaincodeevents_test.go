@@ -296,7 +296,7 @@ func TestChaincodeEvents(t *testing.T) {
 
 		for _, event := range expected {
 			actual := <-receive
-			require.EqualValues(t, event, actual)
+			require.Equal(t, event, actual)
 		}
 	})
 

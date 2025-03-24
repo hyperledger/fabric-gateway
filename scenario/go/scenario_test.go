@@ -196,7 +196,7 @@ func useGateway(name string) error {
 }
 
 func loadX509Cert(certFile string) (*x509.Certificate, error) {
-	cf, e := os.ReadFile(certFile)
+	cf, e := os.ReadFile(certFile) // #nosec G304
 	if e != nil {
 		return nil, e
 	}
