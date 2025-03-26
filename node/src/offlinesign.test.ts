@@ -10,7 +10,7 @@ import { Gateway, InternalConnectOptions, internalConnect } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
 import { undefinedSignerMessage } from './signingidentity';
-import { MockGatewayGrpcClient, newDuplexStreamResponse, newEndorseResponse } from './testutils.test';
+import { asString, MockGatewayGrpcClient, newDuplexStreamResponse, newEndorseResponse } from './testutils.test';
 
 describe('Offline sign', () => {
     const expectedResult = 'TX_RESULT';
@@ -72,7 +72,8 @@ describe('Offline sign', () => {
             await signedProposal.evaluate();
 
             const evaluateRequest = client.getEvaluateRequest();
-            const actual = Buffer.from(evaluateRequest.getProposedTransaction()?.getSignature_asU8() ?? '').toString();
+            const signature = evaluateRequest.getProposedTransaction()?.getSignature_asU8();
+            const actual = asString(signature);
             expect(actual).toBe(expected.toString());
         });
 
@@ -85,7 +86,8 @@ describe('Offline sign', () => {
             await deserializedSignedProposal.evaluate();
 
             const evaluateRequest = client.getEvaluateRequest();
-            const actual = Buffer.from(evaluateRequest.getProposedTransaction()?.getSignature_asU8() ?? '').toString();
+            const signature = evaluateRequest.getProposedTransaction()?.getSignature_asU8();
+            const actual = asString(signature);
             expect(actual).toBe(expected.toString());
         });
 
@@ -119,7 +121,8 @@ describe('Offline sign', () => {
             await signedProposal.endorse();
 
             const endorseRequest = client.getEndorseRequest();
-            const actual = Buffer.from(endorseRequest.getProposedTransaction()?.getSignature_asU8() ?? '').toString();
+            const signature = endorseRequest.getProposedTransaction()?.getSignature_asU8();
+            const actual = asString(signature);
             expect(actual).toBe(expected.toString());
         });
 
@@ -132,7 +135,8 @@ describe('Offline sign', () => {
             await deserializedSignedProposal.endorse();
 
             const endorseRequest = client.getEndorseRequest();
-            const actual = Buffer.from(endorseRequest.getProposedTransaction()?.getSignature_asU8() ?? '').toString();
+            const signature = endorseRequest.getProposedTransaction()?.getSignature_asU8();
+            const actual = asString(signature);
             expect(actual).toBe(expected.toString());
         });
 
@@ -170,7 +174,8 @@ describe('Offline sign', () => {
             await signedTransaction.submit();
 
             const submitRequest = client.getSubmitRequest();
-            const actual = Buffer.from(submitRequest.getPreparedTransaction()?.getSignature_asU8() ?? '').toString();
+            const signature = submitRequest.getPreparedTransaction()?.getSignature_asU8();
+            const actual = asString(signature);
             expect(actual).toBe(expected.toString());
         });
 
@@ -186,7 +191,8 @@ describe('Offline sign', () => {
             await deserializedSignedTransaction.submit();
 
             const submitRequest = client.getSubmitRequest();
-            const actual = Buffer.from(submitRequest.getPreparedTransaction()?.getSignature_asU8() ?? '').toString();
+            const signature = submitRequest.getPreparedTransaction()?.getSignature_asU8();
+            const actual = asString(signature);
             expect(actual).toBe(expected.toString());
         });
     });
