@@ -4,4 +4,4 @@ coverage/
 *.tgz
 src/protos/
 apidocs/
-sbom.json
+*.cdx.json
