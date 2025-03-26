@@ -32,6 +32,7 @@ build these components, the following need to be installed and available in the 
 - [Make](https://www.gnu.org/software/make/)
 - [Maven](https://maven.apache.org/)
 - [ShellCheck](https://github.com/koalaman/shellcheck#readme) (for linting shell scripts)
+- [Python 3](https://www.python.org/) (for building documentation site content)
 
 In order to run any of the Hardware Security Module (HSM) tests, [SoftHSM v2](https://www.opendnssec.org/softhsm/) is required. This can either be:
 
@@ -71,6 +72,10 @@ The following Makefile targets are available:
 - `make shellcheck` - check for script errors
 - `make test` - run all tests
 - `make format` - fix all code formatting
+- `make generate-docs` - generate documentation site content
+- `make generate-docs-node` - generate Node API documentation
+- `make generate-docs-java` - generate Java API documentation
+- `make clean` - remove all generated content
 
 ### Scenario tests
 

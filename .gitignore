@@ -10,4 +10,5 @@ vendor/
 *.iml
 softhsm2.conf
 .python-version
+.venv/
 site/
