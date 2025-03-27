@@ -1,37 +1,57 @@
-# See https://golangci-lint.run/usage/configuration/
-
+version: "2"
 run:
   build-tags:
     - pkcs11
-  timeout: 5m
-
 linters:
-  disable-all: true
+  default: none
   enable:
+    - cyclop
     - errcheck
+    - errname
+    - errorlint
     - gocognit
-    - gocyclo
-    - gofmt
     - goheader
-    - goimports
     - gosec
-    - gosimple
     - govet
     - ineffassign
     - misspell
+    - nolintlint
+    - staticcheck
     - testifylint
-    - typecheck
     - unused
-
-linters-settings:
-  gocognit:
-    min-complexity: 15
-  gocyclo:
-    min-complexity: 10
-  goheader:
-    values:
-      const:
-        COMPANY: IBM Corp.
-    template: |-
-      Copyright {{ COMPANY }} All Rights Reserved.
-      SPDX-License-Identifier: Apache-2.0
+    - usetesting
+  settings:
+    cyclop:
+      max-complexity: 10
+    gocognit:
+      min-complexity: 15
+    goheader:
+      values:
+        const:
+          COMPANY: IBM Corp.
+      template: |-
+        Copyright {{ COMPANY }} All Rights Reserved.
+        SPDX-License-Identifier: Apache-2.0
+    staticcheck:
+      checks:
+        - all
+  exclusions:
+    generated: strict
+    warn-unused: true
+    presets:
+      - std-error-handling
+    rules:
+      - path: pkg/internal/test/
+        text: "^ST1000:"
+        linters:
+          - staticcheck
+      - path: pkg/hash/hash.go
+        text: "^ST1003:.* ALL_CAPS"
+        linters:
+          - staticcheck
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: strict

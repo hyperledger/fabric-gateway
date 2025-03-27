@@ -144,6 +144,7 @@ func (factory *HSMSignerFactory) createSession(slot uint, pin string) (pkcs11.Se
 		return 0, fmt.Errorf("open session failed: %w", err)
 	}
 
+	//nolint:errorlint
 	if err := factory.ctx.Login(session, pkcs11.CKU_USER, pin); err != nil && err != pkcs11.Error(pkcs11.CKR_USER_ALREADY_LOGGED_IN) {
 		_ = factory.ctx.CloseSession(session)
 		return 0, fmt.Errorf("login failed: %w", err)

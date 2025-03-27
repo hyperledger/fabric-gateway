@@ -13,9 +13,7 @@ import (
 )
 
 func TestFileCheckpointer(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "test")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	tempDir := t.TempDir()
 
 	newCheckpointer := func(t *testing.T) (*FileCheckpointer, string) {
 		fileName := NonExistentFileName(t, tempDir)
@@ -29,7 +27,7 @@ func TestFileCheckpointer(t *testing.T) {
 		expected, fileName := newCheckpointer(t)
 		defer expected.Close()
 
-		err = expected.CheckpointTransaction(uint64(1), "TRANSACTION_ID")
+		err := expected.CheckpointTransaction(uint64(1), "TRANSACTION_ID")
 		require.NoError(t, err)
 
 		actual, err := NewFileCheckpointer(fileName)
@@ -49,7 +47,7 @@ func TestFileCheckpointer(t *testing.T) {
 		defer actual.Close()
 
 		require.Equal(t, uint64(0), actual.BlockNumber())
-		require.Equal(t, "", actual.TransactionID())
+		require.Empty(t, actual.TransactionID())
 	})
 
 	t.Run("error reading invalid checkpoint JSON from file", func(t *testing.T) {
@@ -84,7 +82,7 @@ func TestFileCheckpointer(t *testing.T) {
 	})
 
 	t.Run("error checkpointing to non-writable file location", func(t *testing.T) {
-		_, err = NewFileCheckpointer(path.Join(tempDir, "NON_EXISTENT_DIR", "FILE"))
+		_, err := NewFileCheckpointer(path.Join(tempDir, "NON_EXISTENT_DIR", "FILE"))
 
 		require.Error(t, err)
 	})

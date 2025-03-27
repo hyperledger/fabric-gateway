@@ -53,7 +53,7 @@ func TestEvaluateTransaction(t *testing.T) {
 			actual, err := testCase.run(t, contract)
 			require.NoError(t, err)
 
-			require.EqualValues(t, expected, actual)
+			require.Equal(t, expected, actual)
 		})
 	}
 
@@ -133,7 +133,7 @@ func TestEvaluateTransaction(t *testing.T) {
 
 		args := AssertUnmarshalInvocationSpec(t, (<-requests).ProposedTransaction).ChaincodeSpec.Input.Args
 		actual := bytesAsStrings(args[1:])
-		require.EqualValues(t, expected, actual, "got Args: %s", args)
+		require.Equal(t, expected, actual, "got Args: %s", args)
 	})
 
 	t.Run("Includes channel name in proposed transaction", func(t *testing.T) {
@@ -199,7 +199,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		require.NoError(t, err)
 
 		actual := (<-requests).ProposedTransaction.Signature
-		require.EqualValues(t, expected, actual)
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Uses hash", func(t *testing.T) {
@@ -222,7 +222,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		require.NoError(t, err)
 
 		actual := <-digests
-		require.EqualValues(t, expected, actual)
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Sends private data with evaluate", func(t *testing.T) {
@@ -242,11 +242,11 @@ func TestEvaluateTransaction(t *testing.T) {
 
 		request := <-requests
 		actualOrgs := request.TargetOrganizations
-		require.EqualValues(t, expectedOrgs, actualOrgs)
+		require.Equal(t, expectedOrgs, actualOrgs)
 
 		transient := AssertUnmarshalProposalPayload(t, request.ProposedTransaction).TransientMap
 		actualPrice := transient["price"]
-		require.EqualValues(t, expectedPrice, actualPrice)
+		require.Equal(t, expectedPrice, actualPrice)
 	})
 
 	for name, testCase := range map[string]struct {

@@ -32,15 +32,11 @@ func SHA384(message []byte) []byte {
 }
 
 // SHA3_256 hash the supplied message bytes to create a digest for signing.
-//
-//lint:ignore ST1003 This naming is consistent with Go crypto package hash function constants.
 func SHA3_256(message []byte) []byte {
 	return digest(sha3.New256(), message)
 }
 
 // SHA3_384 hash the supplied message bytes to create a digest for signing.
-//
-//lint:ignore ST1003 This naming is consistent with Go crypto package hash function constants.
 func SHA3_384(message []byte) []byte {
 	return digest(sha3.New384(), message)
 }

@@ -30,7 +30,7 @@ func TestSign(t *testing.T) {
 		require.NoError(t, err)
 
 		actual := (<-requests).ProposedTransaction.Signature
-		require.EqualValues(t, expected, actual)
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Submit signs proposal using client signing implementation", func(t *testing.T) {
@@ -51,7 +51,7 @@ func TestSign(t *testing.T) {
 		require.NoError(t, err)
 
 		actual := (<-requests).ProposedTransaction.Signature
-		require.EqualValues(t, expected, actual)
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Submit signs transaction using client signing implementation", func(t *testing.T) {
@@ -72,7 +72,7 @@ func TestSign(t *testing.T) {
 		require.NoError(t, err)
 
 		actual := (<-requests).PreparedTransaction.Signature
-		require.EqualValues(t, expected, actual)
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Default error implementation is used if no signing implementation supplied", func(t *testing.T) {
