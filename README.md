@@ -16,13 +16,13 @@ Adding a gateway component to the Fabric peer provides a single entry point to a
 The Gateway component in the Fabric Peer exposes a simple gRPC interface to client applications and manages the lifecycle of transaction invocation on behalf of the client.
 This minimises the network traffic passing between the client and the blockchain network, as well as minimising the number of network ports that need to be opened.
 
-See the [gateway.proto file](https://github.com/hyperledger/fabric-protos/blob/main/gateway/gateway.proto) for details of the gRPC interface.
+See the [proto definitions](https://github.com/hyperledger/fabric-protos/blob/main/gateway/gateway.proto) for details of the gRPC interface.
 
 ## Building and testing
 
 ### Install pre-reqs
 
-This repository comprises three functionally equivalent client APIs, written in Go, Typescript, and Java. In order to
+This repository comprises three functionally equivalent client APIs, written in Go, TypeScript, and Java. In order to
 build these components, the following need to be installed and available in the PATH:
 
 - [Go 1.23+](https://go.dev/)
@@ -34,20 +34,18 @@ build these components, the following need to be installed and available in the 
 - [ShellCheck](https://github.com/koalaman/shellcheck#readme) (for linting shell scripts)
 - [Python 3](https://www.python.org/) (for building documentation site content)
 
-In order to run any of the Hardware Security Module (HSM) tests, [SoftHSM v2](https://www.opendnssec.org/softhsm/) is required. This can either be:
+In order to run any of the Hardware Security Module (HSM) tests, [SoftHSM v2](https://www.opendnssec.org/en/latest/softhsm/) is required. This can either be:
 
 - installed using the package manager for your host system:
   - Ubuntu: `sudo apt install softhsm2`
   - macOS: `brew install softhsm`
-  - Windows: **unsupported**
-- or compiled and installed from source, following the [SoftHSM2 install instructions](https://wiki.opendnssec.org/display/SoftHSMDOCS/SoftHSM+Documentation+v2)
-  - It is recommended to use the `--disable-gost` option unless you need **gost** algorithm support for the Russian market, since it requires additional libraries.
+- or compiled and installed from [source](https://github.com/softhsm/SoftHSMv2).
 
 #### Dev Container
 
-This project includes a [Dev Container](https://containers.dev/) configuration that includes all of the pre-requisite software described above in a Docker container, avoiding the need to install them locally. The only requirement is that [Docker](https://www.docker.com/) is installed and available.
+This project includes a [Dev Container](https://containers.dev/) configuration that includes all of the pre-requisite software described above in a Docker container, avoiding the need to install them locally. The only requirement is that [Docker](https://www.docker.com/) (or compliant [alternative](https://code.visualstudio.com/remote/advancedcontainers/docker-options)) is installed and available.
 
-Opening the project folder in an IDE such as [VS Code](https://code.visualstudio.com/docs/devcontainers/containers) (with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)) should offer the option of opening in the Dev Container. Alternatively, VS Code allows the remote repository to [opened directly in an isolated Dev Container](https://code.visualstudio.com/docs/devcontainers/containers#_quick-start-open-a-git-repository-or-github-pr-in-an-isolated-container-volume).
+Opening the project folder in an IDE such as [VS Code](https://code.visualstudio.com/docs/devcontainers/containers) (with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)) should offer the option of opening in the Dev Container. Alternatively, VS Code allows the remote repository to be [opened directly in an isolated Dev Container](https://code.visualstudio.com/docs/devcontainers/containers#_quick-start-open-a-git-repository-or-github-pr-in-an-isolated-container-volume).
 
 ### Build using make
 
