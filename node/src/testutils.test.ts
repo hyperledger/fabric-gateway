@@ -482,3 +482,7 @@ export async function createTempDir(): Promise<string> {
     const prefix = `${os.tmpdir()}${path.sep}`;
     return await fs.promises.mkdtemp(prefix);
 }
+
+export function asString(value: Uint8Array | undefined): string {
+    return value ? Buffer.from(value).toString() : '';
+}

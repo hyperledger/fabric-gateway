@@ -70,7 +70,7 @@ export class GatewayError extends Error {
 export function newGatewayError(err: ServiceError): GatewayError {
     const metadata = err.metadata.get('grpc-status-details-bin');
     const details = metadata
-        .flatMap((metadataValue) => google.rpc.Status.deserializeBinary(Buffer.from(metadataValue)).getDetailsList())
+        .flatMap((value) => google.rpc.Status.deserializeBinary(asBuffer(value)).getDetailsList())
         .map((statusDetail) => {
             const endpointError = gateway.ErrorDetail.deserializeBinary(statusDetail.getValue_asU8());
             const detail: ErrorDetail = {
@@ -87,4 +87,8 @@ export function newGatewayError(err: ServiceError): GatewayError {
         details,
         cause: err,
     });
+}
+
+function asBuffer(value: string | Buffer): Buffer {
+    return typeof value === 'string' ? Buffer.from(value) : value;
 }
