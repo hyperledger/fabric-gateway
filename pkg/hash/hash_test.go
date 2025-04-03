@@ -26,7 +26,7 @@ func TestHash(t *testing.T) {
 				hash1 := testCase.hash(message)
 				hash2 := testCase.hash(message)
 
-				require.EqualValues(t, hash1, hash2)
+				require.Equal(t, hash1, hash2)
 			})
 
 			t.Run("Hashes of different data are not identical", func(t *testing.T) {
@@ -36,7 +36,7 @@ func TestHash(t *testing.T) {
 				fooHash := testCase.hash(foo)
 				barHash := testCase.hash(bar)
 
-				require.NotEqualValues(t, fooHash, barHash)
+				require.NotEqual(t, fooHash, barHash)
 			})
 		})
 	}
@@ -44,6 +44,6 @@ func TestHash(t *testing.T) {
 	t.Run("NONE returns input", func(t *testing.T) {
 		message := []byte("foobar")
 		result := NONE(message)
-		require.EqualValues(t, message, result)
+		require.Equal(t, message, result)
 	})
 }

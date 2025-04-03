@@ -23,7 +23,7 @@ func TestNetwork(t *testing.T) {
 
 		require.NotNil(t, contract)
 		require.Equal(t, chaincodeName, contract.ChaincodeName(), "chaincode name")
-		require.Equal(t, "", contract.ContractName(), "contract name")
+		require.Empty(t, contract.ContractName(), "contract name")
 	})
 
 	t.Run("GetContractWithName returns correctly named Contract", func(t *testing.T) {

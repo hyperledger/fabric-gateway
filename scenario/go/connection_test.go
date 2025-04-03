@@ -117,7 +117,7 @@ func NewGatewayConnectionWithHSMSigner(user string, mspID string) (*GatewayConne
 }
 
 func newIdentity(mspID string, certPath string) (*identity.X509Identity, error) {
-	certificatePEM, err := os.ReadFile(certPath)
+	certificatePEM, err := os.ReadFile(certPath) // #nosec G304
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +131,7 @@ func newIdentity(mspID string, certPath string) (*identity.X509Identity, error) 
 }
 
 func NewSign(keyPath string) (identity.Sign, error) {
-	privateKeyPEM, err := os.ReadFile(keyPath)
+	privateKeyPEM, err := os.ReadFile(keyPath) // #nosec G304
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +240,7 @@ func (connection *GatewayConnection) Connect(grpcClient *grpc.ClientConn) error 
 
 	gateway, err := client.Connect(connection.id, options...)
 	if err != nil {
-		grpcClient.Close()
+		_ = grpcClient.Close()
 		return err
 	}
 
@@ -507,10 +507,10 @@ func (connection *GatewayConnection) Close() {
 	connection.cancel() // Closes all listener contexts
 
 	if connection.gateway != nil {
-		connection.gateway.Close()
+		_ = connection.gateway.Close()
 	}
 	if connection.grpcClient != nil {
-		connection.grpcClient.Close()
+		_ = connection.grpcClient.Close()
 	}
 }
 

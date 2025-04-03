@@ -87,16 +87,12 @@ unit-test-java:
 		mvn test jacoco:report
 
 .PHONY: lint
-lint: staticcheck golangci-lint
-
-.PHONY: staticcheck
-staticcheck:
-	$(staticcheck) -f stylish -tags=pkcs11 '$(go_dir)/...' '$(scenario_dir)/go'
+lint: golangci-lint
 
 .PHONY: install-golangci-lint
 install-golangci-lint:
 	curl --fail --location --show-error --silent \
-		https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+		https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
 		| sh -s -- -b '$(go_bin_dir)'
 
 $(go_bin_dir)/golangci-lint:
