@@ -4,33 +4,37 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { BlockEventsOptions } from './blockeventsbuilder';
-export { BlockAndPrivateDataEventsRequest, BlockEventsRequest, FilteredBlockEventsRequest } from './blockeventsrequest';
-export { ChaincodeEvent } from './chaincodeevent';
-export { ChaincodeEventsOptions } from './chaincodeeventsbuilder';
-export { ChaincodeEventsRequest } from './chaincodeeventsrequest';
-export { Checkpoint, Checkpointer } from './checkpointer';
+export { type BlockEventsOptions } from './blockeventsbuilder';
+export {
+    type BlockAndPrivateDataEventsRequest,
+    type BlockEventsRequest,
+    type FilteredBlockEventsRequest,
+} from './blockeventsrequest';
+export { type ChaincodeEvent } from './chaincodeevent';
+export { type ChaincodeEventsOptions } from './chaincodeeventsbuilder';
+export { type ChaincodeEventsRequest } from './chaincodeeventsrequest';
+export { type Checkpoint, type Checkpointer } from './checkpointer';
 export * as checkpointers from './checkpointers';
-export { CloseableAsyncIterable } from './client';
-export { Commit } from './commit';
+export { type CloseableAsyncIterable } from './client';
+export { type Commit } from './commit';
 export { CommitError } from './commiterror';
 export { CommitStatusError } from './commitstatuserror';
-export { Contract } from './contract';
+export { type Contract } from './contract';
 export { EndorseError } from './endorseerror';
-export { EventsOptions } from './eventsbuilder';
-export { ConnectOptions, Gateway, GrpcClient, connect } from './gateway';
-export { ErrorDetail, GatewayError } from './gatewayerror';
-export { Hash } from './hash/hash';
+export { type EventsOptions } from './eventsbuilder';
+export { type ConnectOptions, type Gateway, type GrpcClient, connect } from './gateway';
+export { type ErrorDetail, GatewayError } from './gatewayerror';
+export { type Hash } from './hash/hash';
 export * as hash from './hash/hashes';
-export { HSMSigner, HSMSignerFactory, HSMSignerOptions } from './identity/hsmsigner';
-export { Identity } from './identity/identity';
-export { Signer } from './identity/signer';
+export { type HSMSigner, type HSMSignerFactory, type HSMSignerOptions } from './identity/hsmsigner';
+export { type Identity } from './identity/identity';
+export { type Signer } from './identity/signer';
 export * as signers from './identity/signers';
-export { Network } from './network';
-export { Proposal } from './proposal';
-export { ProposalOptions } from './proposalbuilder';
-export { Signable } from './signable';
-export { Status, StatusCode } from './status';
-export { SubmitError } from './submiterror';
-export { SubmittedTransaction } from './submittedtransaction';
-export { Transaction } from './transaction';
+export { type Network } from './network';
+export { type Proposal } from './proposal';
+export { type ProposalOptions } from './proposalbuilder';
+export { type Signable } from './signable';
+export { type Status, StatusCode } from './status';
+export { type SubmitError } from './submiterror';
+export { type SubmittedTransaction } from './submittedtransaction';
+export { type Transaction } from './transaction';

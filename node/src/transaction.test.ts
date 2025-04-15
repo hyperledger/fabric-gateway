@@ -9,11 +9,11 @@ import { gateway as gatewayproto, peer } from '@hyperledger/fabric-protos';
 import { CommitError } from './commiterror';
 import { CommitStatusError } from './commitstatuserror';
 import { Contract } from './contract';
-import { Gateway, InternalConnectOptions, internalConnect } from './gateway';
+import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
 import { SubmitError } from './submiterror';
-import { MockGatewayGrpcClient, newEndorseResponse } from './testutils.test';
+import { asString, MockGatewayGrpcClient, newEndorseResponse } from './testutils.test';
 
 describe('Transaction', () => {
     const expectedResult = 'TX_RESULT';
@@ -154,8 +154,9 @@ describe('Transaction', () => {
         await contract.submitTransaction('TRANSACTION_NAME');
 
         const submitRequest = client.getSubmitRequest();
-        const signature = Buffer.from(submitRequest.getPreparedTransaction()?.getSignature_asU8() ?? '').toString();
-        expect(signature).toBe('MY_SIGNATURE');
+        const signature = submitRequest.getPreparedTransaction()?.getSignature_asU8();
+        const actual = asString(signature);
+        expect(actual).toBe('MY_SIGNATURE');
     });
 
     it('uses signer with newTransaction', async () => {
@@ -168,8 +169,9 @@ describe('Transaction', () => {
         await signedTransaction.submit();
 
         const submitRequest = client.getSubmitRequest();
-        const signature = Buffer.from(submitRequest.getPreparedTransaction()?.getSignature_asU8() ?? '').toString();
-        expect(signature).toBe('MY_SIGNATURE');
+        const signature = submitRequest.getPreparedTransaction()?.getSignature_asU8();
+        const actual = asString(signature);
+        expect(actual).toBe('MY_SIGNATURE');
     });
 
     it('uses signer for commit', async () => {
@@ -178,7 +180,7 @@ describe('Transaction', () => {
         await contract.submitTransaction('TRANSACTION_NAME');
 
         const statusRequest = client.getCommitStatusRequest();
-        const signature = Buffer.from(statusRequest.getSignature()).toString();
+        const signature = Buffer.from(statusRequest.getSignature_asU8()).toString();
         expect(signature).toBe('MY_SIGNATURE');
     });
 
@@ -195,7 +197,7 @@ describe('Transaction', () => {
         await deserializedSignedCommit.getStatus();
 
         const statusRequest = client.getCommitStatusRequest();
-        const signature = Buffer.from(statusRequest.getSignature()).toString();
+        const signature = Buffer.from(statusRequest.getSignature_asU8()).toString();
         expect(signature).toBe('MY_SIGNATURE');
     });
 
