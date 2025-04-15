@@ -43,7 +43,7 @@ func TestIdentity(t *testing.T) {
 		require.NoError(t, err)
 
 		actual := AssertUnmarshalSignatureHeader(t, (<-requests).ProposedTransaction).Creator
-		require.EqualValues(t, creator, actual)
+		require.Equal(t, creator, actual)
 	})
 
 	t.Run("Submit uses client identity for proposals", func(t *testing.T) {
@@ -60,6 +60,6 @@ func TestIdentity(t *testing.T) {
 		require.NoError(t, err)
 
 		actual := AssertUnmarshalSignatureHeader(t, (<-requests).ProposedTransaction).Creator
-		require.EqualValues(t, creator, actual)
+		require.Equal(t, creator, actual)
 	})
 }

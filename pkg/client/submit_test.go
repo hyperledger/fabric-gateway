@@ -254,7 +254,7 @@ func TestSubmitTransaction(t *testing.T) {
 
 		args := AssertUnmarshalInvocationSpec(t, (<-requests).ProposedTransaction).ChaincodeSpec.Input.Args
 		actual := bytesAsStrings(args[1:])
-		require.EqualValues(t, expected, actual)
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Includes channel name in endorse request", func(t *testing.T) {
@@ -369,7 +369,7 @@ func TestSubmitTransaction(t *testing.T) {
 		require.NoError(t, err)
 
 		actual := (<-requests).ProposedTransaction.Signature
-		require.EqualValues(t, expected, actual)
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Uses signer for submit", func(t *testing.T) {
@@ -390,7 +390,7 @@ func TestSubmitTransaction(t *testing.T) {
 		require.NoError(t, err)
 
 		actual := (<-requests).PreparedTransaction.Signature
-		require.EqualValues(t, expected, actual)
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Sends private data with submit", func(t *testing.T) {
@@ -415,7 +415,7 @@ func TestSubmitTransaction(t *testing.T) {
 		require.ElementsMatch(t, []string{expectedOrg}, request.EndorsingOrganizations)
 
 		transient := AssertUnmarshalProposalPayload(t, request.ProposedTransaction).TransientMap
-		require.EqualValues(t, expectedPrice, transient["price"])
+		require.Equal(t, expectedPrice, transient["price"])
 	})
 
 	t.Run("Uses signer for commit status", func(t *testing.T) {
@@ -436,7 +436,7 @@ func TestSubmitTransaction(t *testing.T) {
 		require.NoError(t, err)
 
 		actual := (<-requests).Signature
-		require.EqualValues(t, expected, actual)
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Uses hash", func(t *testing.T) {
@@ -461,7 +461,7 @@ func TestSubmitTransaction(t *testing.T) {
 
 		expected := [][]byte{digest, digest, digest}
 		actual := ReceiveAll(digests)
-		require.EqualValues(t, expected, actual)
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("Commit returns transaction status", func(t *testing.T) {
