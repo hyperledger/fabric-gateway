@@ -41,21 +41,21 @@
         "pkcs11js": "^2.1.0"
     },
     "devDependencies": {
-        "@eslint/eslintrc": "^3.2.0",
-        "@eslint/js": "^9.17.0",
+        "@eslint/eslintrc": "^3.3.1",
+        "@eslint/js": "^9.25.1",
         "@tsconfig/node20": "^20.1.5",
         "@types/google-protobuf": "^3.15.12",
         "@types/jest": "^29.5.14",
         "@types/node": "^20.17.32",
-        "eslint": "^9.22.0",
-        "eslint-config-prettier": "^10.1.1",
+        "eslint": "^9.25.1",
+        "eslint-config-prettier": "^10.1.2",
         "eslint-plugin-jest": "^28.11.0",
         "eslint-plugin-tsdoc": "^0.4.0",
         "jest": "^29.7.0",
         "prettier": "^3.5.3",
-        "ts-jest": "^29.3.0",
-        "typedoc": "^0.28.1",
-        "typescript": "~5.8.2",
-        "typescript-eslint": "^8.28.0"
+        "ts-jest": "^29.3.2",
+        "typedoc": "^0.28.3",
+        "typescript": "~5.8.3",
+        "typescript-eslint": "^8.31.1"
     }
 }
