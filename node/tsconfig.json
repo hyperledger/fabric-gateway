@@ -1,13 +1,11 @@
 {
     "$schema": "https://json.schemastore.org/tsconfig",
-    "extends": "@tsconfig/node18/tsconfig.json",
+    "extends": "@tsconfig/node20/tsconfig.json",
     "compilerOptions": {
         "declaration": true,
         "declarationMap": true,
         "erasableSyntaxOnly": true,
         "isolatedModules": true,
-        "lib": ["es2023", "esnext.disposable"],
-        "module": "node18",
         "sourceMap": true,
         "outDir": "dist",
         "strict": true,

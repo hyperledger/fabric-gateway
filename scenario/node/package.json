@@ -3,7 +3,7 @@
     "version": "0.0.1",
     "description": "Scenario test for Fabric Gateway",
     "engines": {
-        "node": ">=18.12.0"
+        "node": ">=20.9.0"
     },
     "scripts": {
         "build": "npm run clean && npm run compile && npm run lint && npm run format",
@@ -26,8 +26,8 @@
     },
     "devDependencies": {
         "@cucumber/cucumber": "^11.2.0",
-        "@tsconfig/node18": "^18.2.4",
-        "@types/node": "^18.19.83",
+        "@tsconfig/node20": "^20.1.5",
+        "@types/node": "^20.17.32",
         "cucumber-console-formatter": "^1.0.0",
         "eslint": "^9.22.0",
         "eslint-config-prettier": "^10.1.1",
