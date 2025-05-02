@@ -9,6 +9,7 @@ package identity
 import (
 	"crypto/elliptic"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/big"
 	"sync"
@@ -36,7 +37,7 @@ type HSMSignClose = func() error
 // signers.
 func NewHSMSignerFactory(library string) (*HSMSignerFactory, error) {
 	if library == "" {
-		return nil, fmt.Errorf("library path not provided")
+		return nil, errors.New("library path not provided")
 	}
 
 	ctx := pkcs11.New(library)
@@ -57,15 +58,15 @@ func NewHSMSignerFactory(library string) (*HSMSignerFactory, error) {
 // HSM signers.
 func (factory *HSMSignerFactory) NewHSMSigner(options HSMSignerOptions) (Sign, HSMSignClose, error) {
 	if options.Label == "" {
-		return nil, nil, fmt.Errorf("no Label provided")
+		return nil, nil, errors.New("no Label provided")
 	}
 
 	if options.Pin == "" {
-		return nil, nil, fmt.Errorf("no Pin provided")
+		return nil, nil, errors.New("no Pin provided")
 	}
 
 	if options.Identifier == "" {
-		return nil, nil, fmt.Errorf("no Identifier provided")
+		return nil, nil, errors.New("no Identifier provided")
 	}
 
 	slot, err := factory.findSlotForLabel(options.Label)

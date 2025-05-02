@@ -5,7 +5,7 @@ package scenario
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"time"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
@@ -38,11 +38,11 @@ func (listener *ChaincodeEventListener) Event() (*client.ChaincodeEvent, error) 
 	select {
 	case event, ok := <-listener.events:
 		if !ok {
-			return nil, fmt.Errorf("event channel closed")
+			return nil, errors.New("event channel closed")
 		}
 		return event, nil
 	case <-time.After(30 * time.Second):
-		return nil, fmt.Errorf("timeout waiting for event")
+		return nil, errors.New("timeout waiting for event")
 	}
 }
 

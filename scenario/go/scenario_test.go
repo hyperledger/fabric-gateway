@@ -366,14 +366,14 @@ func theErrorDetailsShouldBe(table *godog.Table) error {
 		}
 	}
 	for _, detail := range details {
-		ee := expected[detail.Address]
+		ee := expected[detail.GetAddress()]
 		if ee == nil {
-			return fmt.Errorf("unexpected error from endpoint: %s", detail.Address)
+			return fmt.Errorf("unexpected error from endpoint: %s", detail.GetAddress())
 		}
-		if !strings.Contains(detail.Message, ee.Message) {
+		if !strings.Contains(detail.GetMessage(), ee.GetMessage()) {
 			return fmt.Errorf("expected error detail %+v, got %+v", ee, detail)
 		}
-		delete(expected, detail.Address)
+		delete(expected, detail.GetAddress())
 	}
 	if len(expected) > 0 {
 		keys := make([]string, 0, len(expected))

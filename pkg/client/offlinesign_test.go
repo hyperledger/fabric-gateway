@@ -325,7 +325,7 @@ func (s *signingTest) endorse() (*Transaction, []byte, error) {
 		return nil, nil, err
 	}
 
-	return transaction, (<-requests).ProposedTransaction.GetSignature(), nil
+	return transaction, (<-requests).GetProposedTransaction().GetSignature(), nil
 }
 
 func (s *signingTest) Endorse() ([]byte, error) {
