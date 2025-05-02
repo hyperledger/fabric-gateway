@@ -1,8 +1,7 @@
 {
     "cleanOutputDir": true,
-    "entryPoints": [
-        "src/index.ts"
-    ],
+    "entryPoints": ["src/index.ts"],
     "out": "apidocs",
+    "readme": "src/README.md",
     "treatWarningsAsErrors": true
 }
