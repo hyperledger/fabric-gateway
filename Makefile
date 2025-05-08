@@ -15,7 +15,7 @@ go_bin_dir := $(shell go env GOPATH)/bin
 python_venv_dir := $(base_dir)/.venv
 python_venv_activate := $(python_venv_dir)/bin/activate
 
-mockery_version := 2.52.2
+mockery_version := 3.2.5
 kernel_name := $(shell uname -s)
 machine_hardware := $(shell uname -m)
 ifeq ($(machine_hardware), aarch64)
@@ -261,7 +261,7 @@ clean-java:
 
 .PHONY: clean-generated
 clean-generated:
-	find '$(go_dir)' -name '*_mock_test.go' -delete
+	find '$(go_dir)' -name mocks_test.go -delete
 
 .PHONY: clean-docs
 clean-docs:
