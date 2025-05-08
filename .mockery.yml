@@ -1,0 +1,12 @@
+structname: Mock{{.InterfaceName | firstUpper}}
+template: testify
+template-data:
+  unroll-variadic: false
+packages:
+  google.golang.org/grpc:
+    config:
+      dir: pkg/client
+      pkgname: client
+    interfaces:
+      ClientConnInterface: {}
+      ClientStream: {}
