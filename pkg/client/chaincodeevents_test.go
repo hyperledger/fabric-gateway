@@ -221,7 +221,7 @@ func TestChaincodeEvents(t *testing.T) {
 			}
 			proto.Merge(expected, testCase.expected)
 			actual := &gateway.ChaincodeEventsRequest{}
-			AssertUnmarshal(t, (<-messages).Request, actual)
+			AssertUnmarshal(t, (<-messages).GetRequest(), actual)
 			AssertProtoEqual(t, expected, actual)
 		})
 	}

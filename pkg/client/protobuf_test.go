@@ -70,10 +70,10 @@ func AssertUnmarshal(t *testing.T, b []byte, m protoreflect.ProtoMessage) {
 // AssertUnmarshalProposalPayload ensures that a ChaincodeProposalPayload protobuf is umarshalled without error
 func AssertUnmarshalProposalPayload(t *testing.T, proposedTransaction *peer.SignedProposal) *peer.ChaincodeProposalPayload {
 	proposal := &peer.Proposal{}
-	AssertUnmarshal(t, proposedTransaction.ProposalBytes, proposal)
+	AssertUnmarshal(t, proposedTransaction.GetProposalBytes(), proposal)
 
 	payload := &peer.ChaincodeProposalPayload{}
-	AssertUnmarshal(t, proposal.Payload, payload)
+	AssertUnmarshal(t, proposal.GetPayload(), payload)
 
 	return payload
 }
@@ -81,13 +81,13 @@ func AssertUnmarshalProposalPayload(t *testing.T, proposedTransaction *peer.Sign
 // AssertUnmarshalInvocationSpec ensures that a ChaincodeInvocationSpec protobuf is umarshalled without error
 func AssertUnmarshalInvocationSpec(t *testing.T, proposedTransaction *peer.SignedProposal) *peer.ChaincodeInvocationSpec {
 	proposal := &peer.Proposal{}
-	AssertUnmarshal(t, proposedTransaction.ProposalBytes, proposal)
+	AssertUnmarshal(t, proposedTransaction.GetProposalBytes(), proposal)
 
 	payload := &peer.ChaincodeProposalPayload{}
-	AssertUnmarshal(t, proposal.Payload, payload)
+	AssertUnmarshal(t, proposal.GetPayload(), payload)
 
 	input := &peer.ChaincodeInvocationSpec{}
-	AssertUnmarshal(t, payload.Input, input)
+	AssertUnmarshal(t, payload.GetInput(), input)
 
 	return input
 }
@@ -97,7 +97,7 @@ func AssertUnmarshalChannelheader(t *testing.T, proposedTransaction *peer.Signed
 	header := AssertUnmarshalHeader(t, proposedTransaction)
 
 	channelHeader := &common.ChannelHeader{}
-	AssertUnmarshal(t, header.ChannelHeader, channelHeader)
+	AssertUnmarshal(t, header.GetChannelHeader(), channelHeader)
 
 	return channelHeader
 }
@@ -105,10 +105,10 @@ func AssertUnmarshalChannelheader(t *testing.T, proposedTransaction *peer.Signed
 // AssertUnmarshalHeader ensures that a Header protobuf is umarshalled without error
 func AssertUnmarshalHeader(t *testing.T, proposedTransaction *peer.SignedProposal) *common.Header {
 	proposal := &peer.Proposal{}
-	AssertUnmarshal(t, proposedTransaction.ProposalBytes, proposal)
+	AssertUnmarshal(t, proposedTransaction.GetProposalBytes(), proposal)
 
 	header := &common.Header{}
-	AssertUnmarshal(t, proposal.Header, header)
+	AssertUnmarshal(t, proposal.GetHeader(), header)
 
 	return header
 }
@@ -118,7 +118,7 @@ func AssertUnmarshalSignatureHeader(t *testing.T, proposedTransaction *peer.Sign
 	header := AssertUnmarshalHeader(t, proposedTransaction)
 
 	signatureHeader := &common.SignatureHeader{}
-	AssertUnmarshal(t, header.SignatureHeader, signatureHeader)
+	AssertUnmarshal(t, header.GetSignatureHeader(), signatureHeader)
 
 	return signatureHeader
 }

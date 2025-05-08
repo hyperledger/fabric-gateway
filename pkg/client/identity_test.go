@@ -42,7 +42,7 @@ func TestIdentity(t *testing.T) {
 		_, err := contract.EvaluateTransaction("transaction")
 		require.NoError(t, err)
 
-		actual := AssertUnmarshalSignatureHeader(t, (<-requests).ProposedTransaction).Creator
+		actual := AssertUnmarshalSignatureHeader(t, (<-requests).GetProposedTransaction()).GetCreator()
 		require.Equal(t, creator, actual)
 	})
 
@@ -59,7 +59,7 @@ func TestIdentity(t *testing.T) {
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
 
-		actual := AssertUnmarshalSignatureHeader(t, (<-requests).ProposedTransaction).Creator
+		actual := AssertUnmarshalSignatureHeader(t, (<-requests).GetProposedTransaction()).GetCreator()
 		require.Equal(t, creator, actual)
 	})
 }

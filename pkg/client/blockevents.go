@@ -51,7 +51,7 @@ func (events *baseBlockEventsRequest) sign() error {
 }
 
 func (events *baseBlockEventsRequest) isSigned() bool {
-	return len(events.request.Signature) > 0
+	return len(events.request.GetSignature()) > 0
 }
 
 func (events *baseBlockEventsRequest) setSignature(signature []byte) {

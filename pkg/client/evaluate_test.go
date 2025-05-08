@@ -70,7 +70,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		_, err := contract.EvaluateTransaction("transaction")
 		require.NoError(t, err)
 
-		actual := AssertUnmarshalChannelheader(t, (<-requests).ProposedTransaction).ChannelId
+		actual := AssertUnmarshalChannelheader(t, (<-requests).GetProposedTransaction()).GetChannelId()
 		require.Equal(t, expected, actual)
 	})
 
@@ -85,7 +85,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		_, err := contract.EvaluateTransaction("transaction")
 		require.NoError(t, err)
 
-		actual := AssertUnmarshalInvocationSpec(t, (<-requests).ProposedTransaction).ChaincodeSpec.ChaincodeId.Name
+		actual := AssertUnmarshalInvocationSpec(t, (<-requests).GetProposedTransaction()).GetChaincodeSpec().GetChaincodeId().GetName()
 		require.Equal(t, expected, actual)
 	})
 
@@ -100,7 +100,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		_, err := contract.EvaluateTransaction(expected)
 		require.NoError(t, err)
 
-		args := AssertUnmarshalInvocationSpec(t, (<-requests).ProposedTransaction).ChaincodeSpec.Input.Args
+		args := AssertUnmarshalInvocationSpec(t, (<-requests).GetProposedTransaction()).GetChaincodeSpec().GetInput().GetArgs()
 		actual := string(args[0])
 		require.Equal(t, expected, actual, "got Args: %s", args)
 	})
@@ -114,7 +114,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		_, err := contract.EvaluateTransaction("TRANSACTION_NAME")
 		require.NoError(t, err)
 
-		args := AssertUnmarshalInvocationSpec(t, (<-requests).ProposedTransaction).ChaincodeSpec.Input.Args
+		args := AssertUnmarshalInvocationSpec(t, (<-requests).GetProposedTransaction()).GetChaincodeSpec().GetInput().GetArgs()
 		actual := string(args[0])
 		expected := "CONTRACT_NAME:TRANSACTION_NAME"
 		require.Equal(t, expected, actual, "got Args: %s", args)
@@ -131,7 +131,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		_, err := contract.EvaluateTransaction("transaction", expected...)
 		require.NoError(t, err)
 
-		args := AssertUnmarshalInvocationSpec(t, (<-requests).ProposedTransaction).ChaincodeSpec.Input.Args
+		args := AssertUnmarshalInvocationSpec(t, (<-requests).GetProposedTransaction()).GetChaincodeSpec().GetInput().GetArgs()
 		actual := bytesAsStrings(args[1:])
 		require.Equal(t, expected, actual, "got Args: %s", args)
 	})
@@ -149,7 +149,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		_, err := contract.EvaluateTransaction("transaction")
 		require.NoError(t, err)
 
-		actual := (<-requests).ChannelId
+		actual := (<-requests).GetChannelId()
 		require.Equal(t, contract.channelName, actual)
 	})
 
@@ -164,7 +164,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		_, err = proposal.Evaluate()
 		require.NoError(t, err, "Evaluate")
 
-		actual := AssertUnmarshalChannelheader(t, (<-requests).ProposedTransaction).TxId
+		actual := AssertUnmarshalChannelheader(t, (<-requests).GetProposedTransaction()).GetTxId()
 		require.Equal(t, proposal.TransactionID(), actual)
 	})
 
@@ -179,7 +179,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		_, err = proposal.Evaluate()
 		require.NoError(t, err, "Evaluate")
 
-		actual := (<-requests).TransactionId
+		actual := (<-requests).GetTransactionId()
 		require.Equal(t, proposal.TransactionID(), actual)
 	})
 
@@ -198,7 +198,7 @@ func TestEvaluateTransaction(t *testing.T) {
 		_, err := contract.EvaluateTransaction("transaction")
 		require.NoError(t, err)
 
-		actual := (<-requests).ProposedTransaction.Signature
+		actual := (<-requests).GetProposedTransaction().GetSignature()
 		require.Equal(t, expected, actual)
 	})
 
@@ -241,10 +241,10 @@ func TestEvaluateTransaction(t *testing.T) {
 		require.NoError(t, err)
 
 		request := <-requests
-		actualOrgs := request.TargetOrganizations
+		actualOrgs := request.GetTargetOrganizations()
 		require.Equal(t, expectedOrgs, actualOrgs)
 
-		transient := AssertUnmarshalProposalPayload(t, request.ProposedTransaction).TransientMap
+		transient := AssertUnmarshalProposalPayload(t, request.GetProposedTransaction()).GetTransientMap()
 		actualPrice := transient["price"]
 		require.Equal(t, expectedPrice, actualPrice)
 	})

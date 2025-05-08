@@ -16,6 +16,8 @@ linters:
     - ineffassign
     - misspell
     - nolintlint
+    - perfsprint
+    - protogetter
     - staticcheck
     - testifylint
     - unused

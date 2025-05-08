@@ -179,7 +179,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
 
-		actual := AssertUnmarshalChannelheader(t, (<-requests).ProposedTransaction).ChannelId
+		actual := AssertUnmarshalChannelheader(t, (<-requests).GetProposedTransaction()).GetChannelId()
 		expected := contract.channelName
 		require.Equal(t, expected, actual)
 	})
@@ -196,7 +196,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
 
-		actual := AssertUnmarshalInvocationSpec(t, (<-requests).ProposedTransaction).ChaincodeSpec.ChaincodeId.Name
+		actual := AssertUnmarshalInvocationSpec(t, (<-requests).GetProposedTransaction()).GetChaincodeSpec().GetChaincodeId().GetName()
 		expected := contract.chaincodeName
 		require.Equal(t, expected, actual)
 	})
@@ -216,7 +216,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, err := contract.SubmitTransaction(expected)
 		require.NoError(t, err)
 
-		args := AssertUnmarshalInvocationSpec(t, (<-requests).ProposedTransaction).ChaincodeSpec.Input.Args
+		args := AssertUnmarshalInvocationSpec(t, (<-requests).GetProposedTransaction()).GetChaincodeSpec().GetInput().GetArgs()
 		actual := string(args[0])
 		require.Equal(t, expected, actual)
 	})
@@ -233,7 +233,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, err := contract.SubmitTransaction("TRANSACTION_NAME")
 		require.NoError(t, err)
 
-		args := AssertUnmarshalInvocationSpec(t, (<-requests).ProposedTransaction).ChaincodeSpec.Input.Args
+		args := AssertUnmarshalInvocationSpec(t, (<-requests).GetProposedTransaction()).GetChaincodeSpec().GetInput().GetArgs()
 		actual := string(args[0])
 		expected := "CONTRACT_NAME:TRANSACTION_NAME"
 		require.Equal(t, expected, actual)
@@ -252,7 +252,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, err := contract.SubmitTransaction("transaction", expected...)
 		require.NoError(t, err)
 
-		args := AssertUnmarshalInvocationSpec(t, (<-requests).ProposedTransaction).ChaincodeSpec.Input.Args
+		args := AssertUnmarshalInvocationSpec(t, (<-requests).GetProposedTransaction()).GetChaincodeSpec().GetInput().GetArgs()
 		actual := bytesAsStrings(args[1:])
 		require.Equal(t, expected, actual)
 	})
@@ -273,7 +273,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
 
-		actual := (<-requests).ChannelId
+		actual := (<-requests).GetChannelId()
 		require.Equal(t, expected, actual)
 	})
 
@@ -289,7 +289,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, err = proposal.Endorse()
 		require.NoError(t, err, "Endorse")
 
-		actual := AssertUnmarshalChannelheader(t, (<-requests).ProposedTransaction).TxId
+		actual := AssertUnmarshalChannelheader(t, (<-requests).GetProposedTransaction()).GetTxId()
 		require.Equal(t, proposal.TransactionID(), actual)
 	})
 
@@ -305,7 +305,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, err = proposal.Endorse()
 		require.NoError(t, err, "Endorse")
 
-		actual := (<-requests).TransactionId
+		actual := (<-requests).GetTransactionId()
 		require.Equal(t, proposal.TransactionID(), actual)
 	})
 
@@ -326,8 +326,8 @@ func TestSubmitTransaction(t *testing.T) {
 		require.NoError(t, err)
 
 		request := &gateway.CommitStatusRequest{}
-		AssertUnmarshal(t, (<-requests).Request, request)
-		actual := request.ChannelId
+		AssertUnmarshal(t, (<-requests).GetRequest(), request)
+		actual := request.GetChannelId()
 		require.Equal(t, expected, actual)
 	})
 
@@ -344,10 +344,10 @@ func TestSubmitTransaction(t *testing.T) {
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
 
-		expected := AssertUnmarshalChannelheader(t, (<-endorseRequests).ProposedTransaction).TxId
+		expected := AssertUnmarshalChannelheader(t, (<-endorseRequests).GetProposedTransaction()).GetTxId()
 		request := &gateway.CommitStatusRequest{}
-		AssertUnmarshal(t, (<-commitStatusRequests).Request, request)
-		actual := request.TransactionId
+		AssertUnmarshal(t, (<-commitStatusRequests).GetRequest(), request)
+		actual := request.GetTransactionId()
 		require.Equal(t, expected, actual)
 	})
 
@@ -368,7 +368,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
 
-		actual := (<-requests).ProposedTransaction.Signature
+		actual := (<-requests).GetProposedTransaction().GetSignature()
 		require.Equal(t, expected, actual)
 	})
 
@@ -389,7 +389,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
 
-		actual := (<-requests).PreparedTransaction.Signature
+		actual := (<-requests).GetPreparedTransaction().GetSignature()
 		require.Equal(t, expected, actual)
 	})
 
@@ -412,9 +412,9 @@ func TestSubmitTransaction(t *testing.T) {
 		require.NoError(t, err)
 
 		request := <-requests
-		require.ElementsMatch(t, []string{expectedOrg}, request.EndorsingOrganizations)
+		require.ElementsMatch(t, []string{expectedOrg}, request.GetEndorsingOrganizations())
 
-		transient := AssertUnmarshalProposalPayload(t, request.ProposedTransaction).TransientMap
+		transient := AssertUnmarshalProposalPayload(t, request.GetProposedTransaction()).GetTransientMap()
 		require.Equal(t, expectedPrice, transient["price"])
 	})
 
@@ -435,7 +435,7 @@ func TestSubmitTransaction(t *testing.T) {
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
 
-		actual := (<-requests).Signature
+		actual := (<-requests).GetSignature()
 		require.Equal(t, expected, actual)
 	})
 

@@ -29,7 +29,6 @@ TMPDIR := $(abspath $(TMPDIR))
 osv_scanner := go run github.com/google/osv-scanner/v2/cmd/osv-scanner@latest
 govulncheck := go run golang.org/x/vuln/cmd/govulncheck@latest
 nancy := go run github.com/sonatype-nexus-community/nancy@latest
-staticcheck := go run honnef.co/go/tools/cmd/staticcheck@latest
 
 # These should match names in Docker .env file
 export FABRIC_VERSION ?= 2.5

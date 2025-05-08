@@ -79,7 +79,7 @@ func (events *ChaincodeEventsRequest) sign() error {
 }
 
 func (events *ChaincodeEventsRequest) isSigned() bool {
-	return len(events.signedRequest.Signature) > 0
+	return len(events.signedRequest.GetSignature()) > 0
 }
 
 func (events *ChaincodeEventsRequest) setSignature(signature []byte) {

@@ -100,7 +100,7 @@ func ExampleContract_Submit_errorDetails() {
 		for _, detail := range status.Convert(err).Details() {
 			switch detail := detail.(type) {
 			case *gateway.ErrorDetail:
-				fmt.Printf("- address: %s; mspId: %s; message: %s\n", detail.Address, detail.MspId, detail.Message)
+				fmt.Printf("- address: %s; mspId: %s; message: %s\n", detail.GetAddress(), detail.GetMspId(), detail.GetMessage())
 			}
 		}
 	}

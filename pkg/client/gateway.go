@@ -267,11 +267,11 @@ func (gw *Gateway) NewCommit(bytes []byte) (*Commit, error) {
 	}
 
 	request := &gateway.CommitStatusRequest{}
-	if err := proto.Unmarshal(signedRequest.Request, request); err != nil {
+	if err := proto.Unmarshal(signedRequest.GetRequest(), request); err != nil {
 		return nil, fmt.Errorf("failed to deserialize commit status request: %w", err)
 	}
 
-	commit := newCommit(gw.client, gw.signingID, request.TransactionId, signedRequest)
+	commit := newCommit(gw.client, gw.signingID, request.GetTransactionId(), signedRequest)
 
 	return commit, nil
 }

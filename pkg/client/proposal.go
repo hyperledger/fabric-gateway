@@ -32,7 +32,7 @@ func (proposal *Proposal) Bytes() ([]byte, error) {
 
 // Digest of the proposal. This is used to generate a digital signature.
 func (proposal *Proposal) Digest() []byte {
-	return proposal.signingID.Hash(proposal.proposedTransaction.Proposal.ProposalBytes)
+	return proposal.signingID.Hash(proposal.proposedTransaction.GetProposal().GetProposalBytes())
 }
 
 // TransactionID for the proposal.

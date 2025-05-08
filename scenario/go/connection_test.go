@@ -10,7 +10,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
-	"fmt"
 	"os"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
@@ -38,7 +37,7 @@ func findSoftHSMLibrary() (string, error) {
 			return libraryLocation, nil
 		}
 	}
-	return "", fmt.Errorf("no SoftHSM Library found")
+	return "", errors.New("no SoftHSM Library found")
 }
 
 type ChaincodeEvents interface {
@@ -252,7 +251,7 @@ func (connection *GatewayConnection) Connect(grpcClient *grpc.ClientConn) error 
 
 func (connection *GatewayConnection) UseContract(contractName string) error {
 	if connection.network == nil {
-		return fmt.Errorf("no network selected")
+		return errors.New("no network selected")
 	}
 
 	connection.contract = connection.network.GetContract(contractName)
@@ -261,7 +260,7 @@ func (connection *GatewayConnection) UseContract(contractName string) error {
 
 func (connection *GatewayConnection) UseNetwork(channelName string) error {
 	if connection.gateway == nil {
-		return fmt.Errorf("gateway not connected")
+		return errors.New("gateway not connected")
 	}
 
 	connection.network = connection.gateway.GetNetwork(channelName)
@@ -270,10 +269,10 @@ func (connection *GatewayConnection) UseNetwork(channelName string) error {
 
 func (connection *GatewayConnection) PrepareTransaction(txnType TransactionType, name string) (*Transaction, error) {
 	if connection.network == nil {
-		return nil, fmt.Errorf("no network selected")
+		return nil, errors.New("no network selected")
 	}
 	if connection.contract == nil {
-		return nil, fmt.Errorf("no contract selected")
+		return nil, errors.New("no contract selected")
 	}
 
 	return NewTransaction(connection.gateway, connection.contract, txnType, name), nil
@@ -294,7 +293,7 @@ func (connection *GatewayConnection) createCheckpointer() {
 
 func (connection *GatewayConnection) ListenForChaincodeEventsUsingCheckpointer(listenerName string, chaincodeName string) error {
 	if connection.checkpointer == nil {
-		return fmt.Errorf("no checkpointer")
+		return errors.New("no checkpointer")
 	}
 
 	listener, err := connection.newChaincodeEventListener(chaincodeName, client.WithCheckpoint(connection.checkpointer))
@@ -341,7 +340,7 @@ func (connection *GatewayConnection) setBlockAndPrivateDataEventListener(listene
 
 func (connection *GatewayConnection) newChaincodeEventListener(chaincodeName string, options ...client.ChaincodeEventsOption) (*ChaincodeEventListener, error) {
 	if connection.network == nil {
-		return nil, fmt.Errorf("no network selected")
+		return nil, errors.New("no network selected")
 	}
 
 	return NewChaincodeEventListener(connection.ctx, connection.network, chaincodeName, options...)
@@ -350,7 +349,7 @@ func (connection *GatewayConnection) newChaincodeEventListener(chaincodeName str
 func (connection *GatewayConnection) ChaincodeEvent(listenerName string) (*client.ChaincodeEvent, error) {
 	listener := connection.chaincodeEventListeners[listenerName]
 	if listener == nil {
-		return nil, fmt.Errorf("no chaincode event listener attached")
+		return nil, errors.New("no chaincode event listener attached")
 	}
 
 	return listener.Event()
@@ -362,7 +361,7 @@ func (connection *GatewayConnection) ListenForBlockEvents(listenerName string) e
 
 func (connection *GatewayConnection) ListenForBlockEventsUsingCheckpointer(listenerName string) error {
 	if connection.checkpointer == nil {
-		return fmt.Errorf("no checkpointer")
+		return errors.New("no checkpointer")
 	}
 
 	listener, err := NewBlockEventListener(connection.ctx, connection.network, client.WithCheckpoint(connection.checkpointer))
@@ -371,7 +370,7 @@ func (connection *GatewayConnection) ListenForBlockEventsUsingCheckpointer(liste
 	}
 
 	checkpointListener := NewCheckpointBlockEventListener(listener, func(event *common.Block) {
-		connection.checkpointer.CheckpointBlock(event.Header.Number)
+		connection.checkpointer.CheckpointBlock(event.GetHeader().GetNumber())
 	})
 	connection.setBlockEventListener(listenerName, checkpointListener)
 	return nil
@@ -379,7 +378,7 @@ func (connection *GatewayConnection) ListenForBlockEventsUsingCheckpointer(liste
 
 func (connection *GatewayConnection) ListenForFilteredBlockEventsUsingCheckpointer(listenerName string) error {
 	if connection.checkpointer == nil {
-		return fmt.Errorf("no checkpointer")
+		return errors.New("no checkpointer")
 	}
 
 	listener, err := NewFilteredBlockEventListener(connection.ctx, connection.network, client.WithCheckpoint(connection.checkpointer))
@@ -388,7 +387,7 @@ func (connection *GatewayConnection) ListenForFilteredBlockEventsUsingCheckpoint
 	}
 
 	checkpointListener := NewCheckpointFilteredBlockEventListener(listener, func(event *peer.FilteredBlock) {
-		connection.checkpointer.CheckpointBlock(event.Number)
+		connection.checkpointer.CheckpointBlock(event.GetNumber())
 	})
 	connection.setFilteredBlockEventListener(listenerName, checkpointListener)
 	return nil
@@ -396,7 +395,7 @@ func (connection *GatewayConnection) ListenForFilteredBlockEventsUsingCheckpoint
 
 func (connection *GatewayConnection) ListenForBlockAndPrivateDataEventsUsingCheckpointer(listenerName string) error {
 	if connection.checkpointer == nil {
-		return fmt.Errorf("no checkpointer")
+		return errors.New("no checkpointer")
 	}
 
 	listener, err := NewBlockAndPrivateDataEventListener(connection.ctx, connection.network, client.WithCheckpoint(connection.checkpointer))
@@ -405,7 +404,7 @@ func (connection *GatewayConnection) ListenForBlockAndPrivateDataEventsUsingChec
 	}
 
 	checkpointListener := NewCheckpointBlockAndPrivateDataEventListener(listener, func(event *peer.BlockAndPrivateData) {
-		connection.checkpointer.CheckpointBlock(event.Block.Header.Number)
+		connection.checkpointer.CheckpointBlock(event.GetBlock().GetHeader().GetNumber())
 	})
 	connection.setBlockAndPrivateDataEventListener(listenerName, checkpointListener)
 	return nil
@@ -417,7 +416,7 @@ func (connection *GatewayConnection) ReplayBlockEvents(listenerName string, star
 
 func (connection *GatewayConnection) receiveBlockEvents(listenerName string, options ...client.BlockEventsOption) error {
 	if connection.network == nil {
-		return fmt.Errorf("no network selected")
+		return errors.New("no network selected")
 	}
 
 	listener, err := NewBlockEventListener(connection.ctx, connection.network, options...)
@@ -433,7 +432,7 @@ func (connection *GatewayConnection) receiveBlockEvents(listenerName string, opt
 func (connection *GatewayConnection) BlockEvent(listenerName string) (*common.Block, error) {
 	listener := connection.blockEventListeners[listenerName]
 	if listener == nil {
-		return nil, fmt.Errorf("no block event listener attached")
+		return nil, errors.New("no block event listener attached")
 	}
 
 	return listener.Event()
@@ -449,7 +448,7 @@ func (connection *GatewayConnection) ReplayFilteredBlockEvents(listenerName stri
 
 func (connection *GatewayConnection) receiveFilteredBlockEvents(listenerName string, options ...client.BlockEventsOption) error {
 	if connection.network == nil {
-		return fmt.Errorf("no network selected")
+		return errors.New("no network selected")
 	}
 
 	listener, err := NewFilteredBlockEventListener(connection.ctx, connection.network, options...)
@@ -465,7 +464,7 @@ func (connection *GatewayConnection) receiveFilteredBlockEvents(listenerName str
 func (connection *GatewayConnection) FilteredBlockEvent(listenerName string) (*peer.FilteredBlock, error) {
 	listener := connection.filteredBlockEventListeners[listenerName]
 	if listener == nil {
-		return nil, fmt.Errorf("no filtered block event listener attached")
+		return nil, errors.New("no filtered block event listener attached")
 	}
 
 	return listener.Event()
@@ -481,7 +480,7 @@ func (connection *GatewayConnection) ReplayBlockAndPrivateDataEvents(listenerNam
 
 func (connection *GatewayConnection) receiveBlockAndPrivateDataEvents(listenerName string, options ...client.BlockEventsOption) error {
 	if connection.network == nil {
-		return fmt.Errorf("no network selected")
+		return errors.New("no network selected")
 	}
 
 	listener, err := NewBlockAndPrivateDataEventListener(connection.ctx, connection.network, options...)
@@ -497,7 +496,7 @@ func (connection *GatewayConnection) receiveBlockAndPrivateDataEvents(listenerNa
 func (connection *GatewayConnection) BlockAndPrivateDataEvent(listenerName string) (*peer.BlockAndPrivateData, error) {
 	listener := connection.blockAndPrivateDataEventListeners[listenerName]
 	if listener == nil {
-		return nil, fmt.Errorf("no block and private data event listener attached")
+		return nil, errors.New("no block and private data event listener attached")
 	}
 
 	return listener.Event()
