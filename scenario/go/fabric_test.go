@@ -4,6 +4,7 @@
 package scenario
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -262,7 +263,7 @@ func committedSequenceNumber(chaincodeName string, channelName string) (int, err
 	pattern := regexp.MustCompile(".*Sequence: ([0-9]+),.*")
 	match := pattern.FindStringSubmatch(out)
 	if len(match) != 2 {
-		return 0, fmt.Errorf("cannot find installed chaincode for Org1")
+		return 0, errors.New("cannot find installed chaincode for Org1")
 	}
 	i, err := strconv.Atoi(match[1])
 	if err != nil {
@@ -318,7 +319,7 @@ func approveChaincode(name string, version string, sequence string, channelName 
 		pattern := regexp.MustCompile(".*Package ID: (.*), Label: " + label + ".*")
 		match := pattern.FindStringSubmatch(out)
 		if len(match) != 2 {
-			return fmt.Errorf("cannot find installed chaincode for Org1")
+			return errors.New("cannot find installed chaincode for Org1")
 		}
 		packageID := match[1]
 

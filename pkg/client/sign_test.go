@@ -29,7 +29,7 @@ func TestSign(t *testing.T) {
 		_, err := contract.EvaluateTransaction("transaction")
 		require.NoError(t, err)
 
-		actual := (<-requests).ProposedTransaction.Signature
+		actual := (<-requests).GetProposedTransaction().GetSignature()
 		require.Equal(t, expected, actual)
 	})
 
@@ -50,7 +50,7 @@ func TestSign(t *testing.T) {
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
 
-		actual := (<-requests).ProposedTransaction.Signature
+		actual := (<-requests).GetProposedTransaction().GetSignature()
 		require.Equal(t, expected, actual)
 	})
 
@@ -71,7 +71,7 @@ func TestSign(t *testing.T) {
 		_, err := contract.SubmitTransaction("transaction")
 		require.NoError(t, err)
 
-		actual := (<-requests).PreparedTransaction.Signature
+		actual := (<-requests).GetPreparedTransaction().GetSignature()
 		require.Equal(t, expected, actual)
 	})
 
