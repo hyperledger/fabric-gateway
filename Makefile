@@ -60,7 +60,7 @@ build-scenario-node: build-node
 .PHONY: build-java
 build-java:
 	cd '$(java_dir)' && \
-		mvn -DskipTests install
+		./mvnw -DskipTests install
 
 .PHONY: unit-test
 unit-test: generate lint unit-test-go unit-test-node unit-test-java
@@ -83,7 +83,7 @@ unit-test-node: build-node
 .PHONY: unit-test-java
 unit-test-java:
 	cd '$(java_dir)' && \
-		mvn test jacoco:report
+		./mvnw test jacoco:report
 
 .PHONY: lint
 lint: golangci-lint
@@ -142,7 +142,7 @@ scan-java: scan-java-dependency-check scan-java-osv-scanner
 .PHONY: scan-java-dependency-check
 scan-java-dependency-check:
 	cd '$(java_dir)' && \
-		mvn dependency-check:check -P owasp
+		./mvnw dependency-check:check -P owasp
 
 .PHONY: scan-java-osv-scanner
 scan-java-osv-scanner:
@@ -191,7 +191,7 @@ scenario-test-node-no-hsm: vendor-chaincode build-scenario-node install-fabric-c
 .PHONY: scenario-test-java
 scenario-test-java: vendor-chaincode
 	cd '$(java_dir)' && \
-		mvn -Dmaven.javadoc.skip=true -DskipUnitTests verify
+		./mvnw -Dmaven.javadoc.skip=true -DskipUnitTests verify
 
 .PHONY: scenario-test
 scenario-test: scenario-test-go scenario-test-node scenario-test-java
@@ -239,7 +239,7 @@ generate-docs-node:
 .PHONY: generate-docs-java
 generate-docs-java:
 	cd '$(java_dir)' && \
-		mvn javadoc:javadoc
+		./mvnw javadoc:javadoc
 
 .PHONY: test
 test: shellcheck unit-test scenario-test
@@ -256,7 +256,7 @@ clean-node:
 
 .PHONY: clean-java
 clean-java:
-	cd '$(java_dir)' && mvn clean
+	cd '$(java_dir)' && ./mvnw clean
 
 .PHONY: clean-generated
 clean-generated:
@@ -285,4 +285,4 @@ format-node:
 
 .PHONY: format-java
 format-java:
-	cd '$(java_dir)' && mvn spotless:apply
+	cd '$(java_dir)' && ./mvnw spotless:apply
