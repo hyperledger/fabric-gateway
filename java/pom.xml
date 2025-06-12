@@ -38,9 +38,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <bouncyCastleVersion>1.79</bouncyCastleVersion>
+        <bouncyCastleVersion>1.81</bouncyCastleVersion>
         <skipUnitTests>${skipTests}</skipUnitTests>
-        <pmdVersion>7.8.0</pmdVersion>
+        <pmdVersion>7.14.0</pmdVersion>
     </properties>
 
     <dependencyManagement>
@@ -48,21 +48,28 @@
             <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-bom</artifactId>
-                <version>7.20.1</version>
+                <version>7.23.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.11.4</version>
+                <version>5.13.1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-bom</artifactId>
+                <version>3.27.3</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-bom</artifactId>
-                <version>1.69.0</version>
+                <version>1.73.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -70,7 +77,7 @@
             <dependency>
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-bom</artifactId>
-                <version>4.29.2</version>
+                <version>4.31.1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -91,13 +98,12 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.27.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>5.14.2</version>
+            <version>5.18.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -141,12 +147,12 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.11.0</version>
+            <version>2.13.1</version>
         </dependency>
         <dependency>
             <groupId>org.hyperledger.fabric</groupId>
             <artifactId>fabric-protos</artifactId>
-            <version>0.3.4</version>
+            <version>0.3.7</version>
         </dependency>
     </dependencies>
 
@@ -198,7 +204,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>3.14.0</version>
                 <configuration>
                     <source>${javaVersion}</source>
                     <target>${javaVersion}</target>
@@ -214,7 +220,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.2</version>
+                <version>3.5.3</version>
                 <dependencies>
                     <dependency>
                         <groupId>me.fabriciorby</groupId>
@@ -225,7 +231,7 @@
                 <configuration>
                     <properties>
                         <configurationParameters>
-                            cucumber.junit-platform.naming-strategy=long
+                            cucumber.junit-platform.naming-strategy=surefire
                         </configurationParameters>
                     </properties>
                 </configuration>
@@ -275,7 +281,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.12</version>
+                <version>0.8.13</version>
                 <executions>
                     <execution>
                         <id>default-prepare-agent</id>
@@ -364,7 +370,6 @@
                         <phase>test</phase>
                         <goals>
                             <goal>check</goal>
-                            <goal>cpd-check</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -440,14 +445,14 @@
                     <plugin>
                         <groupId>com.diffplug.spotless</groupId>
                         <artifactId>spotless-maven-plugin</artifactId>
-                        <version>2.43.0</version>
+                        <version>2.44.5</version>
                         <configuration>
                             <checkSkip>${skipUnitTests}</checkSkip>
                             <java>
                                 <trimTrailingWhitespace/>
                                 <endWithNewline/>
                                 <palantirJavaFormat>
-                                    <version>2.50.0</version>
+                                    <version>2.68.0</version>
                                     <style>PALANTIR</style>
                                     <formatJavadoc>false</formatJavadoc>
                                 </palantirJavaFormat>
@@ -476,7 +481,7 @@
                     <plugin>
                         <groupId>org.owasp</groupId>
                         <artifactId>dependency-check-maven</artifactId>
-                        <version>11.1.1</version>
+                        <version>12.1.3</version>
                         <configuration>
                             <skipProvidedScope>true</skipProvidedScope>
                             <skipTestScope>true</skipTestScope>

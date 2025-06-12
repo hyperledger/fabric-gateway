@@ -135,7 +135,6 @@ public interface Proposal extends Signable {
          * @param mspids The Member Services Provider IDs of the endorsing organizations.
          * @return This builder.
          */
-        @SuppressWarnings("PMD.LinguisticNaming")
         Builder setEndorsingOrganizations(String... mspids);
 
         /**

@@ -133,7 +133,7 @@ final class GatewayClient {
         return invokeStreamingCall(context, call);
     }
 
-    @SuppressWarnings({"PMD.AvoidCatchingGenericException", "PMD.AvoidCatchingGenericException"})
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     private <T> CloseableIterator<T> invokeStreamingCall(
             final Context.CancellableContext context, final Supplier<Iterator<T>> call) {
         try {

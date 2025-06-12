@@ -10,6 +10,7 @@ package org.hyperledger.fabric.client;
  * A builder used to create new object instances from configuration state.
  * @param <T> The type of object built.
  */
+@FunctionalInterface
 public interface Builder<T> {
     /**
      * Build an instance.
