@@ -151,7 +151,7 @@ scan-java-dependency-check:
 
 .PHONY: scan-java-osv-scanner
 scan-java-osv-scanner:
-	$(osv_scanner) scan --lockfile='$(java_dir)/pom.xml'
+	$(osv_scanner) scan --lockfile='$(java_dir)/pom.xml' --data-source=native
 
 .PHONY: install-mockery
 install-mockery:
