@@ -87,7 +87,7 @@ jobs:
       - name: Scan
         env:
           JAVA_HOME: /opt/jdk
-        uses: dependency-check/Dependency-Check_Action@3102a65fd5f36d0000297576acc56a475b0de98d # main
+        uses: dependency-check/Dependency-Check_Action@2ba636726705b0f74f126ebeaacaf2ad4600b967 # main
         with:
           project: fabric-gateway
           path: java/target/dependency
