@@ -44,11 +44,10 @@ jobs:
           java-version: 21
           distribution: temurin
           cache: maven
-          gpg-private-key: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
-          gpg-passphrase: MAVEN_GPG_PASSPHRASE
       - name: Publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAVEN_GPG_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
         run: ${{ github.workspace }}/.github/scripts/maven_publish_release.sh github
         working-directory: java
@@ -65,14 +64,13 @@ jobs:
           distribution: temurin
           cache: maven
           server-id: central
-          server-username: MAVEN_USERNAME
-          server-password: MAVEN_PASSWORD
-          gpg-private-key: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
-          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+          server-username: MAVENCENTRAL_USERNAME
+          server-password: MAVENCENTRAL_PASSWORD
       - name: Publish
         env:
-          MAVEN_USERNAME: ${{ secrets.MAVENCENTRAL_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.MAVENCENTRAL_PASSWORD }}
+          MAVENCENTRAL_USERNAME: ${{ secrets.MAVENCENTRAL_USERNAME }}
+          MAVENCENTRAL_PASSWORD: ${{ secrets.MAVENCENTRAL_PASSWORD }}
+          MAVEN_GPG_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
         run: ${{ github.workspace }}/.github/scripts/maven_publish_release.sh central
         working-directory: java
