@@ -47,7 +47,7 @@
         "@tsconfig/node20": "^20.1.5",
         "@types/google-protobuf": "^3.15.12",
         "@types/jest": "^29.5.14",
-        "@types/node": "^20.17.32",
+        "@types/node": "^20.19.1",
         "eslint": "^9.29.0",
         "eslint-config-prettier": "^10.1.2",
         "eslint-plugin-jest": "^28.11.0",
