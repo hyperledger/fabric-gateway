@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/cucumber/godog v0.15.0
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.6
 	github.com/miekg/pkcs11 v1.1.1
 	github.com/spf13/pflag v1.0.6
