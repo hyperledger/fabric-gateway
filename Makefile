@@ -229,7 +229,7 @@ setup-softhsm:
 generate-docs: $(python_venv_activate)
 	. '$(python_venv_activate)' && \
 		cd '$(base_dir)' && \
-		python -m pip install --quiet --upgrade --require-virtualenv --disable-pip-version-check --requirement requirements.txt && \
+		python -m pip install --quiet --require-virtualenv --disable-pip-version-check --requirement requirements.txt && \
 		TZ=UTC mkdocs build --strict
 
 $(python_venv_activate):

@@ -1,10 +1,44 @@
 version: 2
 updates:
-  - package-ecosystem: "devcontainers"
+  - package-ecosystem: devcontainers
     directory: "/"
     schedule:
       interval: weekly
   - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: weekly
+  - package-ecosystem: gomod
+    directories:
+      - "/"
+      - "/scenario/fixtures/chaincode/golang/*"
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    versioning-strategy: increase
+    ignore:
+      # TypeScript updates are managed explicitly to avoid breaking changes.
+      - dependency-name: typescript
+      # Node major version must remain at the current supported runtime version.
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
+      # Avoid incrementing patch level to keep version ranges more compatible.
+      - dependency-name: "*"
+        update-types:
+        - "version-update:semver-patch"
+    directories:
+      - "/node"
+      - "/scenario/node"
+      - "/scenario/fixtures/chaincode/node/*"
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: "/java"
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    versioning-strategy: increase
     directory: "/"
     schedule:
       interval: weekly
