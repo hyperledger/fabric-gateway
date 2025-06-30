@@ -14,28 +14,37 @@ permissions:
 
 jobs:
   go:
-    name: "go (osv-scanner)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ inputs.ref }}
       - name: Set up Go
+        id: setup-go
         uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
         with:
           go-version: stable
           check-latest: true
+      - name: Create OSV-Scanner config
+        run: |
+          echo "GoVersionOverride = '${{ steps.setup-go.outputs.go-version }}'" > osv-scanner.toml
       - name: Scan
-        run: make scan-go-osv-scanner
+        id: scan-go
+        run: |
+          docker run --rm \
+            --volume './:/src' \
+            ghcr.io/google/osv-scanner:latest \
+            scan \
+            --config=/src/osv-scanner.toml \
+            --lockfile=/src/go.mod \
+            --format=markdown > osv-scanner.md
+      - name: Report failure
+        if: ${{ failure() && steps.scan-go.conclusion == 'failure' }}
+        run: |
+          cat osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
 
   node:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target:
-          - npm-audit
-          - osv-scanner
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -44,61 +53,42 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "lts/*"
-      - name: Set up Go
-        if: ${{ matrix.target == 'osv-scanner' }}
-        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
-        with:
-          go-version: stable
+      - name: Create BOM
+        working-directory: node
+        run: |
+          npm install --omit=dev --package-lock-only --no-audit
+          npm sbom --omit=dev --package-lock-only --sbom-format cyclonedx > bom.cdx.json
       - name: Scan
-        run: make scan-node-${{ matrix.target }}
+        id: scan-node
+        run: |
+          docker run --rm \
+            --volume './:/src' \
+            ghcr.io/google/osv-scanner:latest \
+            scan \
+            --sbom=/src/node/bom.cdx.json \
+            --format=markdown > osv-scanner.md
+      - name: Report failure
+        if: ${{ failure() && steps.scan-node.conclusion == 'failure' }}
+        run: |
+          cat osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
 
-  java_osv_scanner:
-    name: "java (osv-scanner)"
+  java:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ inputs.ref }}
-      - name: Set up Go
-        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
-        with:
-          go-version: stable
       - name: Scan
-        run: make scan-java-osv-scanner
-
-  java_dependency_check:
-    name: "java (dependency-check)"
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: java
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          ref: ${{ inputs.ref }}
-      - name: Set up Java
-        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
-        with:
-          java-version: 21
-          distribution: temurin
-          cache: maven
-      - name: Download dependencies
-        run: mvn dependency:copy-dependencies -DincludeScope=runtime
-      - name: Scan
-        env:
-          JAVA_HOME: /opt/jdk
-        uses: dependency-check/Dependency-Check_Action@2ba636726705b0f74f126ebeaacaf2ad4600b967 # main
-        with:
-          project: fabric-gateway
-          path: java/target/dependency
-          format: HTML
-          out: reports
-          args: >
-            --suppression java/dependency-suppression.xml
-            --failOnCVSS 4
-      - name: Archive dependency-check report
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: dependency-check-report-${{ inputs.ref || github.event.pull_request.number || github.ref_name }}
-          path: reports
+        id: scan-java
+        run: |
+          docker run --rm \
+            --volume './:/src' \
+            ghcr.io/google/osv-scanner:latest \
+            scan \
+            --lockfile=/src/java/pom.xml \
+            --data-source=native \
+            --format=markdown > osv-scanner.md
+      - name: Report failure
+        if: ${{ failure() && steps.scan-java.conclusion == 'failure' }}
+        run: |
+          cat osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
