@@ -26,13 +26,19 @@ updates:
       # Avoid incrementing patch level to keep version ranges more compatible.
       - dependency-name: "*"
         update-types:
-        - "version-update:semver-patch"
+          - "version-update:semver-patch"
     directories:
       - "/node"
       - "/scenario/node"
       - "/scenario/fixtures/chaincode/node/*"
     schedule:
       interval: weekly
+    groups:
+      # Group updates to minimise merge conflicts on package-lock.json
+      production-dependencies:
+        dependency-type: production
+      development-dependencies:
+        dependency-type: development
   - package-ecosystem: maven
     directory: "/java"
     schedule:
