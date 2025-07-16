@@ -26,10 +26,6 @@ export SOFTHSM2_CONF ?= $(base_dir)/softhsm2.conf
 TMPDIR ?= /tmp
 TMPDIR := $(abspath $(TMPDIR))
 
-osv_scanner := go run github.com/google/osv-scanner/v2/cmd/osv-scanner@latest
-govulncheck := go run golang.org/x/vuln/cmd/govulncheck@latest
-nancy := go run github.com/sonatype-nexus-community/nancy@latest
-
 maven := mvn
 ifneq (, $(shell command -v mvnd 2>/dev/null))
 	maven := mvnd
@@ -110,23 +106,29 @@ golangci-lint: $(go_bin_dir)/golangci-lint
 scan: scan-go scan-node scan-java
 
 .PHONY: scan-go
-scan-go: scan-go-govulncheck scan-go-nancy scan-go-osv-scanner
+scan-go: scan-go-osv-scanner
 
 .PHONY: scan-go-govulncheck
 scan-go-govulncheck:
-	$(govulncheck) -tags pkcs11 -show verbose '$(go_dir)/...'
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+	govulncheck -tags pkcs11 -show verbose '$(go_dir)/...'
 
 .PHONY: scan-go-nancy
 scan-go-nancy:
-	go list -json -deps '$(go_dir)/...' | $(nancy) sleuth
+	go install github.com/sonatype-nexus-community/nancy@latest
+	go list -json -deps '$(go_dir)/...' | nancy sleuth
+
+.PHONY: install-osv-scanner
+install-osv-scanner:
+	go install github.com/google/osv-scanner/v2/cmd/osv-scanner@latest
 
 .PHONY: scan-go-osv-scanner
-scan-go-osv-scanner:
-	echo "GoVersionOverride = '$$(go env GOVERSION | sed -e 's/^go//' -e 's/-.*$$//')'" > '$(TMPDIR)/osv-scanner.toml'
-	$(osv_scanner) scan --config='$(TMPDIR)/osv-scanner.toml' --lockfile='$(base_dir)/go.mod' || [ \( $$? -gt 1 \) -a \( $$? -lt 127 \) ]
+scan-go-osv-scanner: install-osv-scanner
+	echo "GoVersionOverride = '$$(go env GOVERSION | sed -e 's/^go//' -e 's/-.*//')'" > '$(TMPDIR)/osv-scanner.toml'
+	osv-scanner scan --config='$(TMPDIR)/osv-scanner.toml' --lockfile='$(base_dir)/go.mod'
 
 .PHONY: scan-node
-scan-node: scan-node-npm-audit scan-node-osv-scanner
+scan-node: scan-node-osv-scanner
 
 .PHONY: scan-node-npm-audit
 scan-node-npm-audit:
@@ -135,14 +137,14 @@ scan-node-npm-audit:
 		npm audit --omit=dev
 
 .PHONY: scan-node-osv-scanner
-scan-node-osv-scanner:
+scan-node-osv-scanner: install-osv-scanner
 	cd '$(node_dir)' && \
 		npm install --omit=dev --package-lock-only --no-audit && \
 		npm sbom --omit=dev --package-lock-only --sbom-format cyclonedx > bom.cdx.json && \
-		$(osv_scanner) scan --sbom=bom.cdx.json
+		osv-scanner scan --sbom=bom.cdx.json
 
 .PHONY: scan-java
-scan-java: scan-java-dependency-check scan-java-osv-scanner
+scan-java: scan-java-osv-scanner
 
 .PHONY: scan-java-dependency-check
 scan-java-dependency-check:
@@ -150,8 +152,8 @@ scan-java-dependency-check:
 		$(maven) dependency-check:check -P owasp
 
 .PHONY: scan-java-osv-scanner
-scan-java-osv-scanner:
-	$(osv_scanner) scan --lockfile='$(java_dir)/pom.xml' --data-source=native
+scan-java-osv-scanner: install-osv-scanner
+	osv-scanner scan --lockfile='$(java_dir)/pom.xml' --data-source=native
 
 .PHONY: install-mockery
 install-mockery:
