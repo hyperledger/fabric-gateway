@@ -5,8 +5,8 @@
  */
 
 import { CurveFn } from '@noble/curves/abstract/weierstrass';
-import { p256 } from '@noble/curves/p256';
-import { p384 } from '@noble/curves/p384';
+import { p256 } from '@noble/curves/nist';
+import { p384 } from '@noble/curves/nist';
 import { KeyObject } from 'node:crypto';
 import { Signer } from './signer';
 
@@ -29,7 +29,7 @@ export function newECPrivateKeySigner(key: KeyObject): Signer {
 
     return (digest) => {
         const signature = curve.sign(digest, privateKey, { lowS: true });
-        return Promise.resolve(signature.toDERRawBytes());
+        return Promise.resolve(signature.toBytes('der'));
     };
 }
 

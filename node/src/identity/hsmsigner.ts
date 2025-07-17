@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { p256 } from '@noble/curves/p256';
+import { p256 } from '@noble/curves/nist';
 import * as pkcs11js from 'pkcs11js';
 import { Signer } from './signer';
 
@@ -101,9 +101,9 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
                     Buffer.from(digest),
                     // EC signatures have length of 2n according to the PKCS11 spec:
                     // https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.1/pkcs11-spec-v3.1.html
-                    Buffer.alloc(p256.CURVE.nByteLength * 2),
+                    Buffer.alloc(p256.Point.Fn.BYTES * 2),
                 );
-                const signature = p256.Signature.fromCompact(compactSignature).normalizeS().toDERRawBytes();
+                const signature = p256.Signature.fromBytes(compactSignature, 'compact').normalizeS().toBytes('der');
                 return Promise.resolve(signature);
             },
             close: () => {

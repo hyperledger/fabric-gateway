@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { p256 } from '@noble/curves/p256';
+import { p256 } from '@noble/curves/nist';
 import { createHash } from 'node:crypto';
 import { Mechanism, Pkcs11Error, SessionInfo, SlotInfo, Template, TokenInfo } from 'pkcs11js';
 import { HSMSignerOptions } from './hsmsigner';
@@ -195,7 +195,7 @@ describe('When using an HSM Signer', () => {
 
     const hsmSignerFactory = newHSMSignerFactory('somelibrary');
 
-    const privateKey = p256.utils.randomPrivateKey();
+    const privateKey = p256.utils.randomSecretKey();
     const publicKey = p256.getPublicKey(privateKey);
 
     beforeEach(() => {
@@ -212,7 +212,7 @@ describe('When using an HSM Signer', () => {
         });
         pkcs11Stub.C_SignInit = jest.fn();
         pkcs11Stub.C_Sign = jest.fn((session, digest, buffer) => {
-            const signature = p256.sign(digest, privateKey).toCompactRawBytes();
+            const signature = p256.sign(digest, privateKey).toBytes('compact');
             signature.forEach((b, i) => buffer.writeUInt8(b, i));
             // Return buffer of exactly signature length regardless of supplied buffer size
             return buffer.subarray(0, signature.length);
