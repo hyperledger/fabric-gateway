@@ -56,7 +56,6 @@ jobs:
       - name: Create BOM
         working-directory: node
         run: |
-          npm install --omit=dev --package-lock-only --no-audit
           npm sbom --omit=dev --package-lock-only --sbom-format cyclonedx > bom.cdx.json
       - name: Scan
         id: scan-node
@@ -65,7 +64,7 @@ jobs:
             --volume './:/src' \
             ghcr.io/google/osv-scanner:latest \
             scan \
-            --sbom=/src/node/bom.cdx.json \
+            --lockfile=/src/node/bom.cdx.json \
             --format=markdown > osv-scanner.md
       - name: Report failure
         if: ${{ failure() && steps.scan-node.conclusion == 'failure' }}

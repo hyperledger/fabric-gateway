@@ -133,15 +133,13 @@ scan-node: scan-node-osv-scanner
 .PHONY: scan-node-npm-audit
 scan-node-npm-audit:
 	cd '$(node_dir)' && \
-		npm install --omit=dev --package-lock-only --no-audit && \
 		npm audit --omit=dev
 
 .PHONY: scan-node-osv-scanner
 scan-node-osv-scanner: install-osv-scanner
 	cd '$(node_dir)' && \
-		npm install --omit=dev --package-lock-only --no-audit && \
 		npm sbom --omit=dev --package-lock-only --sbom-format cyclonedx > bom.cdx.json && \
-		osv-scanner scan --sbom=bom.cdx.json
+		osv-scanner scan --lockfile=bom.cdx.json
 
 .PHONY: scan-java
 scan-java: scan-java-osv-scanner
