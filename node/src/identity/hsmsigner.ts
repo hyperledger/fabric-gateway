@@ -94,17 +94,16 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
         }
 
         return {
-            signer: (digest) => {
+            signer: async (digest) => {
                 pkcs11.C_SignInit(session, { mechanism: pkcs11js.CKM_ECDSA }, privateKeyHandle);
-                const compactSignature = pkcs11.C_Sign(
+                const compactSignature = await pkcs11.C_SignAsync(
                     session,
                     Buffer.from(digest),
                     // EC signatures have length of 2n according to the PKCS11 spec:
                     // https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.1/pkcs11-spec-v3.1.html
                     Buffer.alloc(p256.Point.Fn.BYTES * 2),
                 );
-                const signature = p256.Signature.fromBytes(compactSignature, 'compact').normalizeS().toBytes('der');
-                return Promise.resolve(signature);
+                return p256.Signature.fromBytes(compactSignature, 'compact').normalizeS().toBytes('der');
             },
             close: () => {
                 pkcs11.C_CloseSession(session);
