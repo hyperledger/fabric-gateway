@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { p256 } from '@noble/curves/p256';
+import { p256 } from '@noble/curves/nist';
 import { createHash } from 'node:crypto';
 import { Mechanism, Pkcs11Error, SessionInfo, SlotInfo, Template, TokenInfo } from 'pkcs11js';
 import { HSMSignerOptions } from './hsmsigner';
@@ -70,8 +70,8 @@ const pkcs11Stub = {
     C_SignInit: (session: Buffer, mechanism: Mechanism, key: Buffer): void => {
         return;
     },
-    C_Sign: (session: Buffer, digest: Buffer, store: Buffer): Buffer => {
-        return digest;
+    C_SignAsync: (session: Buffer, digest: Buffer, store: Buffer): Promise<Buffer> => {
+        return Promise.resolve(digest);
     },
 };
 
@@ -117,8 +117,8 @@ const resetPkcs11Stub: () => void = () => {
     pkcs11Stub.C_SignInit = (session: Buffer, mechanism: Mechanism, key: Buffer): void => {
         return;
     };
-    pkcs11Stub.C_Sign = (session: Buffer, digest: Buffer, store: Buffer): Buffer => {
-        return Buffer.from(digest);
+    pkcs11Stub.C_SignAsync = (session: Buffer, digest: Buffer, store: Buffer): Promise<Buffer> => {
+        return Promise.resolve(digest);
     };
 };
 
@@ -195,7 +195,7 @@ describe('When using an HSM Signer', () => {
 
     const hsmSignerFactory = newHSMSignerFactory('somelibrary');
 
-    const privateKey = p256.utils.randomPrivateKey();
+    const privateKey = p256.utils.randomSecretKey();
     const publicKey = p256.getPublicKey(privateKey);
 
     beforeEach(() => {
@@ -211,11 +211,12 @@ describe('When using an HSM Signer', () => {
             return [mockPrivateKeyHandle];
         });
         pkcs11Stub.C_SignInit = jest.fn();
-        pkcs11Stub.C_Sign = jest.fn((session, digest, buffer) => {
-            const signature = p256.sign(digest, privateKey).toCompactRawBytes();
+        pkcs11Stub.C_SignAsync = jest.fn((session, digest, buffer) => {
+            const signature = p256.sign(digest, privateKey).toBytes('compact');
             signature.forEach((b, i) => buffer.writeUInt8(b, i));
             // Return buffer of exactly signature length regardless of supplied buffer size
-            return buffer.subarray(0, signature.length);
+            const result = buffer.subarray(0, signature.length);
+            return Promise.resolve(result);
         });
     });
 
@@ -375,7 +376,7 @@ describe('When using an HSM Signer', () => {
         expect(valid).toBe(true);
 
         expect(pkcs11Stub.C_SignInit).toHaveBeenCalledWith(mockSession, { mechanism: CKM_ECDSA }, mockPrivateKeyHandle);
-        expect(pkcs11Stub.C_Sign).toHaveBeenCalledWith(mockSession, digest, expect.anything());
+        expect(pkcs11Stub.C_SignAsync).toHaveBeenCalledWith(mockSession, digest, expect.anything());
     });
 
     it('can be closed', () => {
