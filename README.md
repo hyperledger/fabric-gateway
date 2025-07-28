@@ -71,6 +71,7 @@ The following Makefile targets are available:
 - `make test` - run all tests
 - `make format` - fix all code formatting
 - `make generate-docs` - generate documentation site content
+- `make serve-docs` - serve the documentation site content on a local development server
 - `make generate-docs-node` - generate Node API documentation
 - `make generate-docs-java` - generate Java API documentation
 - `make clean` - remove all generated content
