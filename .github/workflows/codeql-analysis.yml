@@ -44,7 +44,7 @@ jobs:
         with:
           languages: ${{ matrix.language }}
       - name: Autobuild
-        uses: github/codeql-action/autobuild@76621b61decf072c1cee8dd1ce2d2a82d33c17ed # v3.29.5
+        uses: github/codeql-action/autobuild@76621b61decf072c1cee8dd1ce2d2a82d33c17ed # v3.29.8
         env:
           GOFLAGS: "-tags=pkcs11"
         with:
