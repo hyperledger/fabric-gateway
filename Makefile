@@ -226,14 +226,24 @@ setup-softhsm:
 	softhsm2-util --init-token --slot 0 --label 'ForFabric' --pin 98765432 --so-pin 1234 || true
 
 .PHONY: generate-docs
-generate-docs: $(python_venv_activate)
+generate-docs: install-mkdocs $(python_venv_activate)
 	. '$(python_venv_activate)' && \
-		cd '$(base_dir)' && \
-		python -m pip install --quiet --require-virtualenv --disable-pip-version-check --requirement requirements.txt && \
 		TZ=UTC mkdocs build --strict
 
 $(python_venv_activate):
 	python -m venv '$(python_venv_dir)'
+
+.PHONY: install-mkdocs
+install-mkdocs: $(python_venv_activate)
+	. '$(python_venv_activate)' && \
+		cd '$(base_dir)' && \
+		python -m pip install --quiet --require-virtualenv --disable-pip-version-check --requirement requirements.txt
+
+.PHONY: serve-docs
+serve-docs: install-mkdocs $(python_venv_activate)
+	. '$(python_venv_activate)' && \
+		cd '$(base_dir)' && \
+		TZ=UTC mkdocs serve --strict
 
 .PHONY: generate-docs-node
 generate-docs-node:
