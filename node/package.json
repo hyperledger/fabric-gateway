@@ -36,7 +36,7 @@
         "@grpc/grpc-js": "^1.12.0",
         "@hyperledger/fabric-protos": "^0.3.0",
         "@noble/curves": "^1.9.4",
-        "google-protobuf": "^3.21.0"
+        "google-protobuf": "^4.0.0"
     },
     "optionalDependencies": {
         "pkcs11js": "^2.1.0"
