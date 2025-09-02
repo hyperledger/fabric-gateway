@@ -6,10 +6,9 @@ package hash
 
 import (
 	"crypto/sha256"
+	"crypto/sha3"
 	"crypto/sha512"
 	gohash "hash"
-
-	"golang.org/x/crypto/sha3"
 )
 
 // Hash function generates a digest for the supplied message.

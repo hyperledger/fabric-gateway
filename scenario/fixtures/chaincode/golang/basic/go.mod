@@ -1,6 +1,6 @@
 module github.com/hyperledger/fabric-gateway/scenario/fixtures/chaincode/golang/basic
 
-go 1.23.0
+go 1.24.0
 
 require github.com/hyperledger/fabric-contract-api-go/v2 v2.2.0
 
