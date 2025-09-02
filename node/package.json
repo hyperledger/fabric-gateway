@@ -1,6 +1,6 @@
 {
     "name": "@hyperledger/fabric-gateway",
-    "version": "1.8.1",
+    "version": "1.9.0",
     "description": "Hyperledger Fabric Gateway client API for Node",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

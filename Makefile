@@ -15,7 +15,7 @@ go_bin_dir := $(shell go env GOPATH)/bin
 python_venv_dir := $(base_dir)/.venv
 python_venv_activate := $(python_venv_dir)/bin/activate
 
-mockery_version := 3.5.3
+mockery_version := 3.5.4
 kernel_name := $(shell uname -s)
 machine_hardware := $(shell uname -m)
 ifeq ($(machine_hardware), aarch64)

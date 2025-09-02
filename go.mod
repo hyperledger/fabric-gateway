@@ -1,6 +1,6 @@
 module github.com/hyperledger/fabric-gateway
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/cucumber/godog v0.15.1
@@ -9,7 +9,6 @@ require (
 	github.com/miekg/pkcs11 v1.1.1
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/crypto v0.41.0
 	google.golang.org/grpc v1.75.1
 	google.golang.org/protobuf v1.36.9
 )
