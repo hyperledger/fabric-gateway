@@ -1,6 +1,6 @@
 module github.com/hyperledger/fabric-gateway/scenario/fixtures/chaincode/golang/private
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/hyperledger/fabric-chaincode-go/v2 v2.3.0
