@@ -3,17 +3,25 @@ updates:
   - package-ecosystem: devcontainers
     directory: "/"
     schedule:
-      interval: weekly
+      interval: daily
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: weekly
+      interval: daily
+    groups:
+      actions:
+        patterns:
+          - "*"
   - package-ecosystem: gomod
     directories:
       - "/"
       - "/scenario/fixtures/chaincode/golang/*"
     schedule:
-      interval: weekly
+      interval: daily
+    groups:
+      go:
+        patterns:
+          - "*"
   - package-ecosystem: npm
     versioning-strategy: increase
     ignore:
@@ -32,19 +40,28 @@ updates:
       - "/scenario/node"
       - "/scenario/fixtures/chaincode/node/*"
     schedule:
-      interval: weekly
+      interval: daily
     groups:
       # Group updates to minimise merge conflicts on package-lock.json
-      production-dependencies:
+      production:
         dependency-type: production
-      development-dependencies:
+      development:
         dependency-type: development
   - package-ecosystem: maven
     directory: "/java"
     schedule:
-      interval: weekly
+      interval: daily
+    groups:
+      production:
+        dependency-type: production
+      development:
+        dependency-type: development
   - package-ecosystem: pip
     versioning-strategy: increase
     directory: "/"
     schedule:
-      interval: weekly
+      interval: daily
+    groups:
+      pip:
+        patterns:
+          - "*"
