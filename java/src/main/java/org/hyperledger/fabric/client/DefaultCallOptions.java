@@ -35,41 +35,39 @@ final class DefaultCallOptions {
         blockAndPrivateDataEvents = builder.blockAndPrivateDataEvents;
     }
 
-    public static Builder newBuiler() {
+    static Builder newBuiler() {
         return new Builder();
     }
 
-    public <T extends AbstractStub<T>> T applyEvaluate(final T stub, final UnaryOperator<CallOptions> additional) {
+    <T extends AbstractStub<T>> T applyEvaluate(final T stub, final UnaryOperator<CallOptions> additional) {
         return applyOptions(applyOptions(stub, additional), evaluate);
     }
 
-    public <T extends AbstractStub<T>> T applyEndorse(final T stub, final UnaryOperator<CallOptions> additional) {
+    <T extends AbstractStub<T>> T applyEndorse(final T stub, final UnaryOperator<CallOptions> additional) {
         return applyOptions(applyOptions(stub, additional), endorse);
     }
 
-    public <T extends AbstractStub<T>> T applySubmit(final T stub, final UnaryOperator<CallOptions> additional) {
+    <T extends AbstractStub<T>> T applySubmit(final T stub, final UnaryOperator<CallOptions> additional) {
         return applyOptions(applyOptions(stub, additional), submit);
     }
 
-    public <T extends AbstractStub<T>> T applyCommitStatus(final T stub, final UnaryOperator<CallOptions> additional) {
+    <T extends AbstractStub<T>> T applyCommitStatus(final T stub, final UnaryOperator<CallOptions> additional) {
         return applyOptions(applyOptions(stub, additional), commitStatus);
     }
 
-    public <T extends AbstractStub<T>> T applyChaincodeEvents(
-            final T stub, final UnaryOperator<CallOptions> additional) {
+    <T extends AbstractStub<T>> T applyChaincodeEvents(final T stub, final UnaryOperator<CallOptions> additional) {
         return applyOptions(applyOptions(stub, additional), chaincodeEvents);
     }
 
-    public <T extends AbstractStub<T>> T applyBlockEvents(final T stub, final UnaryOperator<CallOptions> additional) {
+    <T extends AbstractStub<T>> T applyBlockEvents(final T stub, final UnaryOperator<CallOptions> additional) {
         return applyOptions(applyOptions(stub, additional), blockEvents);
     }
 
-    public <T extends AbstractStub<T>> T applyFilteredBlockEvents(
-            final T stub, final UnaryOperator<CallOptions> additional) {
+    <T extends AbstractStub<T>> T applyFilteredBlockEvents(final T stub, final UnaryOperator<CallOptions> additional) {
         return applyOptions(applyOptions(stub, additional), filteredBlockEvents);
     }
 
-    public <T extends AbstractStub<T>> T applyBlockAndPrivateDataEvents(
+    <T extends AbstractStub<T>> T applyBlockAndPrivateDataEvents(
             final T stub, final UnaryOperator<CallOptions> additional) {
         return applyOptions(applyOptions(stub, additional), blockAndPrivateDataEvents);
     }
@@ -81,7 +79,7 @@ final class DefaultCallOptions {
 
         return stub.withInterceptors(new ClientInterceptor() {
             @Override
-            @SuppressWarnings("PMD.GenericsNaming")
+            @SuppressWarnings("PMD.TypeParameterNamingConventions")
             public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
                     final MethodDescriptor<ReqT, RespT> methodDescriptor,
                     final CallOptions callOptions,
@@ -91,7 +89,7 @@ final class DefaultCallOptions {
         });
     }
 
-    public static final class Builder {
+    static final class Builder {
         private UnaryOperator<CallOptions> evaluate;
         private UnaryOperator<CallOptions> endorse;
         private UnaryOperator<CallOptions> submit;
@@ -105,47 +103,47 @@ final class DefaultCallOptions {
             // Nothing to do
         }
 
-        public Builder evaluate(final UnaryOperator<CallOptions> options) {
+        Builder evaluate(final UnaryOperator<CallOptions> options) {
             evaluate = options;
             return this;
         }
 
-        public Builder endorse(final UnaryOperator<CallOptions> options) {
+        Builder endorse(final UnaryOperator<CallOptions> options) {
             endorse = options;
             return this;
         }
 
-        public Builder submit(final UnaryOperator<CallOptions> options) {
+        Builder submit(final UnaryOperator<CallOptions> options) {
             submit = options;
             return this;
         }
 
-        public Builder commitStatus(final UnaryOperator<CallOptions> options) {
+        Builder commitStatus(final UnaryOperator<CallOptions> options) {
             commitStatus = options;
             return this;
         }
 
-        public Builder chaincodeEvents(final UnaryOperator<CallOptions> options) {
+        Builder chaincodeEvents(final UnaryOperator<CallOptions> options) {
             chaincodeEvents = options;
             return this;
         }
 
-        public Builder blockEvents(final UnaryOperator<CallOptions> options) {
+        Builder blockEvents(final UnaryOperator<CallOptions> options) {
             blockEvents = options;
             return this;
         }
 
-        public Builder filteredBlockEvents(final UnaryOperator<CallOptions> options) {
+        Builder filteredBlockEvents(final UnaryOperator<CallOptions> options) {
             filteredBlockEvents = options;
             return this;
         }
 
-        public Builder blockAndPrivateDataEvents(final UnaryOperator<CallOptions> options) {
+        Builder blockAndPrivateDataEvents(final UnaryOperator<CallOptions> options) {
             blockAndPrivateDataEvents = options;
             return this;
         }
 
-        public DefaultCallOptions build() {
+        DefaultCallOptions build() {
             return new DefaultCallOptions(this);
         }
     }
