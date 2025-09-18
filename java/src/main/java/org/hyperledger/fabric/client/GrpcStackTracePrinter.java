@@ -23,6 +23,7 @@ class GrpcStackTracePrinter {
     }
 
     public void printStackTrace(final PrintStream out) {
+        @SuppressWarnings("PMD.RelianceOnDefaultCharset")
         PrintWriter writer = new PrintWriter(out);
         printStackTrace(writer);
         writer.flush();

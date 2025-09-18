@@ -40,7 +40,7 @@
         <javaVersion>8</javaVersion>
         <bouncyCastleVersion>1.81</bouncyCastleVersion>
         <skipUnitTests>${skipTests}</skipUnitTests>
-        <pmdVersion>7.16.0</pmdVersion>
+        <pmdVersion>7.17.0</pmdVersion>
     </properties>
 
     <dependencyManagement>

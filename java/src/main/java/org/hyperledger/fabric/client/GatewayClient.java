@@ -185,7 +185,7 @@ final class GatewayClient {
         }
     }
 
-    @SuppressWarnings("PMD.GenericsNaming")
+    @SuppressWarnings("PMD.TypeParameterNamingConventions")
     private <ReqT, RespT> CloseableIterator<RespT> invokeDuplexStreamingCall(
             final Function<StreamObserver<RespT>, StreamObserver<ReqT>> call, final ReqT request) {
         ResponseObserver<RespT> responseObserver = new ResponseObserver<>();
