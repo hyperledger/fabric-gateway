@@ -38,9 +38,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <bouncyCastleVersion>1.81</bouncyCastleVersion>
+        <bouncyCastleVersion>1.82</bouncyCastleVersion>
         <skipUnitTests>${skipTests}</skipUnitTests>
-        <pmdVersion>7.16.0</pmdVersion>
+        <pmdVersion>7.17.0</pmdVersion>
     </properties>
 
     <dependencyManagement>
@@ -62,7 +62,7 @@
             <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-bom</artifactId>
-                <version>3.27.4</version>
+                <version>3.27.5</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
