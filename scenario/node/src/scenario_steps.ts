@@ -50,13 +50,9 @@ After(function (this: CustomWorld): void {
     this.close();
 });
 
-Given(
-    'I have deployed a Fabric network',
-    { timeout: TIMEOUTS.LONG_STEP },
-    async function (this: CustomWorld): Promise<void> {
-        await fabric.deployNetwork();
-    },
-);
+Given('I have deployed a Fabric network', { timeout: TIMEOUTS.LONG_STEP }, function (this: CustomWorld): Promise<void> {
+    return fabric.deployNetwork();
+});
 
 Given(
     'I have created and joined all channels',
@@ -69,7 +65,7 @@ Given(
 Given(
     /^I deploy (\w+) chaincode named (\w+) at version ([^ ]+) for all organizations on channel (\w+) with endorsement policy (.+)$/,
     { timeout: TIMEOUTS.LONG_STEP },
-    async function (
+    function (
         this: CustomWorld,
         ccType: string,
         ccName: string,
@@ -77,7 +73,7 @@ Given(
         channelName: string,
         signaturePolicy: string,
     ): Promise<void> {
-        await fabric.deployChaincode(ccType, ccName, version, channelName, signaturePolicy);
+        return fabric.deployChaincode(ccType, ccName, version, channelName, signaturePolicy);
     },
 );
 
@@ -87,22 +83,22 @@ Given('I register and enroll an HSM user {word} in MSP Org1MSP', function (this:
 
 Given(
     'I create a gateway named {word} for user {word} in MSP {word}',
-    async function (this: CustomWorld, name: string, user: string, mspId: string): Promise<void> {
-        await this.createGateway(name, user, mspId);
+    function (this: CustomWorld, name: string, user: string, mspId: string): Promise<void> {
+        return this.createGateway(name, user, mspId);
     },
 );
 
 Given(
     'I create a gateway named {word} for HSM user {word} in MSP {word}',
-    async function (this: CustomWorld, name: string, user: string, mspId: string): Promise<void> {
-        await this.createGatewayWithHSMUser(name, user, mspId);
+    function (this: CustomWorld, name: string, user: string, mspId: string): Promise<void> {
+        return this.createGatewayWithHSMUser(name, user, mspId);
     },
 );
 
 Given(
     'I create a gateway named {word} without signer for user {word} in MSP {word}',
-    async function (this: CustomWorld, name: string, user: string, mspId: string): Promise<void> {
-        await this.createGatewayWithoutSigner(name, user, mspId);
+    function (this: CustomWorld, name: string, user: string, mspId: string): Promise<void> {
+        return this.createGatewayWithoutSigner(name, user, mspId);
     },
 );
 
@@ -110,8 +106,8 @@ Given('I use the gateway named {word}', function (this: CustomWorld, name: strin
     this.useGateway(name);
 });
 
-Given('I connect the gateway to {word}', async function (this: CustomWorld, address: string): Promise<void> {
-    await this.connect(address);
+Given('I connect the gateway to {word}', function (this: CustomWorld, address: string): Promise<void> {
+    return this.connect(address);
 });
 
 Given('I create a checkpointer', function (this: CustomWorld): void {
@@ -126,12 +122,12 @@ When('I use the {word} contract', function (this: CustomWorld, contractName: str
     this.useContract(contractName);
 });
 
-When(/I stop the peer named (.+)/, function (this: CustomWorld, peer: string): void {
-    fabric.stopPeer(peer);
+When(/I stop the peer named (.+)/, function (this: CustomWorld, peer: string): Promise<void> {
+    return fabric.stopPeer(peer);
 });
 
-When(/I start the peer named (.+)/, async function (this: CustomWorld, peer: string): Promise<void> {
-    await fabric.startPeer(peer);
+When(/I start the peer named (.+)/, function (this: CustomWorld, peer: string): Promise<void> {
+    return fabric.startPeer(peer);
 });
 
 When(
@@ -155,33 +151,30 @@ When(/I set the endorsing organizations? to (.+)/, function (this: CustomWorld, 
 
 When(
     'I do off-line signing as user {word} in MSP {word}',
-    async function (this: CustomWorld, user: string, mspId: string): Promise<void> {
-        await this.setOfflineSigner(user, mspId);
+    function (this: CustomWorld, user: string, mspId: string): Promise<void> {
+        return this.setOfflineSigner(user, mspId);
     },
 );
 
-When('I invoke the transaction', async function (this: CustomWorld): Promise<void> {
-    await this.invokeSuccessfulTransaction();
+When('I invoke the transaction', function (this: CustomWorld): Promise<void> {
+    return this.invokeSuccessfulTransaction();
+});
+
+When('I listen for chaincode events from {word}', function (this: CustomWorld, chaincodeName: string): Promise<void> {
+    return this.listenForChaincodeEvents(DEFAULT_LISTENER_NAME, chaincodeName);
 });
 
 When(
-    'I listen for chaincode events from {word}',
-    async function (this: CustomWorld, chaincodeName: string): Promise<void> {
-        await this.listenForChaincodeEvents(DEFAULT_LISTENER_NAME, chaincodeName);
-    },
-);
-
-When(
     'I listen for chaincode events from {word} on a listener named {string}',
-    async function (this: CustomWorld, chaincodeName: string, listenerName: string): Promise<void> {
-        await this.listenForChaincodeEvents(listenerName, chaincodeName);
+    function (this: CustomWorld, chaincodeName: string, listenerName: string): Promise<void> {
+        return this.listenForChaincodeEvents(listenerName, chaincodeName);
     },
 );
 
 When(
     'I replay chaincode events from {word} starting at last committed block',
-    async function (this: CustomWorld, chaincodeName: string): Promise<void> {
-        await this.replayChaincodeEvents(DEFAULT_LISTENER_NAME, chaincodeName, this.getLastCommittedBlockNumber());
+    function (this: CustomWorld, chaincodeName: string): Promise<void> {
+        return this.replayChaincodeEvents(DEFAULT_LISTENER_NAME, chaincodeName, this.getLastCommittedBlockNumber());
     },
 );
 
@@ -193,29 +186,26 @@ When('I stop listening for chaincode events on {string}', function (this: Custom
     this.closeChaincodeEvents(listenerName);
 });
 
-When('I listen for block events', async function (this: CustomWorld): Promise<void> {
-    await this.listenForBlockEvents(DEFAULT_LISTENER_NAME);
+When('I listen for block events', function (this: CustomWorld): Promise<void> {
+    return this.listenForBlockEvents(DEFAULT_LISTENER_NAME);
 });
 
-When('I use the checkpointer to listen for block events', async function (this: CustomWorld): Promise<void> {
-    await this.listenForBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
+When('I use the checkpointer to listen for block events', function (this: CustomWorld): Promise<void> {
+    return this.listenForBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
 });
 
-When('I use the checkpointer to listen for filtered block events', async function (this: CustomWorld): Promise<void> {
-    await this.listenForFilteredBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
+When('I use the checkpointer to listen for filtered block events', function (this: CustomWorld): Promise<void> {
+    return this.listenForFilteredBlockEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
 });
 
-When(
-    'I use the checkpointer to listen for block and private data events',
-    async function (this: CustomWorld): Promise<void> {
-        await this.listenForBlockAndPrivateDataEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
-    },
-);
+When('I use the checkpointer to listen for block and private data events', function (this: CustomWorld): Promise<void> {
+    return this.listenForBlockAndPrivateDataEventsUsingCheckpointer(DEFAULT_LISTENER_NAME);
+});
 
 When(
     'I listen for block events on a listener named {string}',
-    async function (this: CustomWorld, listenerName: string): Promise<void> {
-        await this.listenForBlockEvents(listenerName);
+    function (this: CustomWorld, listenerName: string): Promise<void> {
+        return this.listenForBlockEvents(listenerName);
     },
 );
 
@@ -231,23 +221,20 @@ When('I stop listening for block events on {string}', function (this: CustomWorl
     this.closeBlockEvents(listenerName);
 });
 
-When('I listen for filtered block events', async function (this: CustomWorld): Promise<void> {
-    await this.listenForFilteredBlockEvents(DEFAULT_LISTENER_NAME);
+When('I listen for filtered block events', function (this: CustomWorld): Promise<void> {
+    return this.listenForFilteredBlockEvents(DEFAULT_LISTENER_NAME);
 });
 
 When(
     'I listen for filtered block events on a listener named {string}',
-    async function (this: CustomWorld, listenerName: string): Promise<void> {
-        await this.listenForFilteredBlockEvents(listenerName);
+    function (this: CustomWorld, listenerName: string): Promise<void> {
+        return this.listenForFilteredBlockEvents(listenerName);
     },
 );
 
-When(
-    'I replay filtered block events starting at last committed block',
-    async function (this: CustomWorld): Promise<void> {
-        await this.replayFilteredBlockEvents(DEFAULT_LISTENER_NAME, this.getLastCommittedBlockNumber());
-    },
-);
+When('I replay filtered block events starting at last committed block', function (this: CustomWorld): Promise<void> {
+    return this.replayFilteredBlockEvents(DEFAULT_LISTENER_NAME, this.getLastCommittedBlockNumber());
+});
 
 When('I stop listening for filtered block events', function (this: CustomWorld): void {
     this.closeFilteredBlockEvents(DEFAULT_LISTENER_NAME);
@@ -260,21 +247,21 @@ When(
     },
 );
 
-When('I listen for block and private data events', async function (this: CustomWorld): Promise<void> {
-    await this.listenForBlockAndPrivateDataEvents(DEFAULT_LISTENER_NAME);
+When('I listen for block and private data events', function (this: CustomWorld): Promise<void> {
+    return this.listenForBlockAndPrivateDataEvents(DEFAULT_LISTENER_NAME);
 });
 
 When(
     'I listen for block and private data events on a listener named {string}',
-    async function (this: CustomWorld, listenerName: string): Promise<void> {
-        await this.listenForBlockAndPrivateDataEvents(listenerName);
+    function (this: CustomWorld, listenerName: string): Promise<void> {
+        return this.listenForBlockAndPrivateDataEvents(listenerName);
     },
 );
 
 When(
     'I replay block and private data events starting at last committed block',
-    async function (this: CustomWorld): Promise<void> {
-        await this.replayBlockAndPrivateDataEvents(DEFAULT_LISTENER_NAME, this.getLastCommittedBlockNumber());
+    function (this: CustomWorld): Promise<void> {
+        return this.replayBlockAndPrivateDataEvents(DEFAULT_LISTENER_NAME, this.getLastCommittedBlockNumber());
     },
 );
 
@@ -291,13 +278,13 @@ When(
 
 When(
     'I use the checkpointer to listen for chaincode events from {word}',
-    async function (this: CustomWorld, chaincodeName: string) {
-        await this.listenForChaincodeEventsUsingCheckpointer(DEFAULT_LISTENER_NAME, chaincodeName);
+    function (this: CustomWorld, chaincodeName: string) {
+        return this.listenForChaincodeEventsUsingCheckpointer(DEFAULT_LISTENER_NAME, chaincodeName);
     },
 );
 
-Then('the transaction invocation should fail', async function (this: CustomWorld): Promise<void> {
-    await this.assertTransactionFails();
+Then('the transaction invocation should fail', function (this: CustomWorld): Promise<void> {
+    return this.assertTransactionFails();
 });
 
 Then('the response should be JSON matching', function (this: CustomWorld, docString: string): void {
