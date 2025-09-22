@@ -16,6 +16,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -288,28 +290,45 @@ func installChaincode(name string, language string, version string) error {
 	path := "/opt/gopath/src/github.com/chaincode/" + language + "/" + name
 	pkg := name + ".tar.gz"
 
-	for _, org := range orgs {
-		_, err := dockerCommand(
-			"exec", org.cli, "peer", "lifecycle", "chaincode", "package", pkg,
-			"--lang", language,
-			"--label", chaincodeLabel(name, version),
-			"--path", path,
-		)
-		if err != nil {
-			return err
-		}
+	wg := new(errgroup.Group)
 
-		for _, peer := range org.peers {
-			env := "CORE_PEER_ADDRESS=" + peer
-			_, err := dockerCommand(
-				"exec", "-e", env, org.cli, "peer", "lifecycle", "chaincode", "install", pkg,
-			)
-			if err != nil {
-				return err
-			}
-		}
+	for _, org := range orgs {
+		wg.Go(func() error {
+			return installChaincodeToOrg(org, pkg, language, name, version, path)
+		})
 	}
 
+	return wg.Wait()
+}
+
+func installChaincodeToOrg(org orgConfig, pkg string, language string, name string, version string, path string) error {
+	if _, err := dockerCommand(
+		"exec", org.cli, "peer", "lifecycle", "chaincode", "package", pkg,
+		"--lang", language,
+		"--label", chaincodeLabel(name, version),
+		"--path", path,
+	); err != nil {
+		return err
+	}
+
+	wg := new(errgroup.Group)
+
+	for _, peer := range org.peers {
+		wg.Go(func() error {
+			return installChaincodeToPeer(peer, org, pkg)
+		})
+	}
+
+	return wg.Wait()
+}
+
+func installChaincodeToPeer(peer string, org orgConfig, pkg string) error {
+	env := "CORE_PEER_ADDRESS=" + peer
+	if _, err := dockerCommand(
+		"exec", "-e", env, org.cli, "peer", "lifecycle", "chaincode", "install", pkg,
+	); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -318,40 +337,48 @@ func chaincodeLabel(name string, version string) string {
 }
 
 func approveChaincode(name string, version string, sequence string, channelName string, signaturePolicy string, collectionConfig []string) error {
+	wg := new(errgroup.Group)
+
 	for _, org := range orgs {
-		out, err := dockerCommand(
-			"exec", org.cli, "peer", "lifecycle", "chaincode", "queryinstalled",
-		)
-		if err != nil {
-			return err
-		}
-
-		label := chaincodeLabel(name, version)
-		pattern := regexp.MustCompile(".*Package ID: (.*), Label: " + label + ".*")
-		match := pattern.FindStringSubmatch(out)
-		if len(match) != 2 {
-			return errors.New("cannot find installed chaincode for Org1")
-		}
-		packageID := match[1]
-
-		approveCommand := []string{
-			"exec", org.cli, "peer", "lifecycle", "chaincode", "approveformyorg",
-			"--package-id", packageID,
-			"--channelID", channelName,
-			"--orderer", "orderer1.example.com:7050",
-			"--name", name,
-			"--version", version,
-			"--signature-policy", signaturePolicy,
-			"--sequence", sequence,
-			"--waitForEvent",
-		}
-		approveCommand = append(approveCommand, collectionConfig...)
-		_, err = dockerCommandWithTLS(approveCommand...)
-		if err != nil {
-			return err
-		}
+		wg.Go(func() error {
+			return approveChaincodeForOrg(org, name, version, channelName, signaturePolicy, sequence, collectionConfig)
+		})
 	}
 
+	return wg.Wait()
+}
+
+func approveChaincodeForOrg(org orgConfig, name string, version string, channelName string, signaturePolicy string, sequence string, collectionConfig []string) error {
+	out, err := dockerCommand(
+		"exec", org.cli, "peer", "lifecycle", "chaincode", "queryinstalled",
+	)
+	if err != nil {
+		return err
+	}
+
+	label := chaincodeLabel(name, version)
+	pattern := regexp.MustCompile(".*Package ID: (.*), Label: " + label + ".*")
+	match := pattern.FindStringSubmatch(out)
+	if len(match) != 2 {
+		return errors.New("cannot find installed chaincode for Org1")
+	}
+	packageID := match[1]
+
+	approveCommand := []string{
+		"exec", org.cli, "peer", "lifecycle", "chaincode", "approveformyorg",
+		"--package-id", packageID,
+		"--channelID", channelName,
+		"--orderer", "orderer1.example.com:7050",
+		"--name", name,
+		"--version", version,
+		"--signature-policy", signaturePolicy,
+		"--sequence", sequence,
+		"--waitForEvent",
+	}
+	approveCommand = append(approveCommand, collectionConfig...)
+	if _, err = dockerCommandWithTLS(approveCommand...); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -401,31 +428,12 @@ func createAndJoinChannels() error {
 		return nil
 	}
 
-	for _, orderer := range orderers {
-		tlsdir := fmt.Sprintf("/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/%s/tls", orderer.address)
-		if _, err := dockerCommand(
-			"exec", "org1_cli", "osnadmin", "channel", "join",
-			"--channelID", "mychannel",
-			"--config-block", "/etc/hyperledger/configtx/mychannel.block",
-			"-o", fmt.Sprintf("%s:%s", orderer.address, orderer.port),
-			"--ca-file", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem",
-			"--client-cert", tlsdir+"/server.crt",
-			"--client-key", tlsdir+"/server.key",
-		); err != nil {
-			return err
-		}
+	if err := joinOrderers(); err != nil {
+		return err
 	}
 
-	for _, org := range orgs {
-		for _, peer := range org.peers {
-			env := "CORE_PEER_ADDRESS=" + peer
-			if _, err := dockerCommandWithTLS(
-				"exec", "-e", env, org.cli, "peer", "channel", "join",
-				"-b", "/etc/hyperledger/configtx/mychannel.block",
-			); err != nil {
-				return err
-			}
-		}
+	if err := joinPeers(); err != nil {
+		return err
 	}
 
 	channelsJoined = true
@@ -434,6 +442,58 @@ func createAndJoinChannels() error {
 		waitForHealthzOK(peer)
 	}
 
+	return nil
+}
+
+func joinOrderers() error {
+	wg := new(errgroup.Group)
+
+	for _, orderer := range orderers {
+		wg.Go(func() error {
+			return joinOrderer(orderer)
+		})
+	}
+
+	return wg.Wait()
+}
+
+func joinOrderer(orderer ordererConfig) error {
+	tlsdir := fmt.Sprintf("/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/%s/tls", orderer.address)
+	if _, err := dockerCommand(
+		"exec", "org1_cli", "osnadmin", "channel", "join",
+		"--channelID", "mychannel",
+		"--config-block", "/etc/hyperledger/configtx/mychannel.block",
+		"-o", fmt.Sprintf("%s:%s", orderer.address, orderer.port),
+		"--ca-file", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem",
+		"--client-cert", tlsdir+"/server.crt",
+		"--client-key", tlsdir+"/server.key",
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
+func joinPeers() error {
+	wg := new(errgroup.Group)
+
+	for _, org := range orgs {
+		for _, peer := range org.peers {
+			wg.Go(func() error {
+				return joinPeer(peer, org)
+			})
+		}
+	}
+	return nil
+}
+
+func joinPeer(peer string, org orgConfig) error {
+	env := "CORE_PEER_ADDRESS=" + peer
+	if _, err := dockerCommandWithTLS(
+		"exec", "-e", env, org.cli, "peer", "channel", "join",
+		"-b", "/etc/hyperledger/configtx/mychannel.block",
+	); err != nil {
+		return err
+	}
 	return nil
 }
 
