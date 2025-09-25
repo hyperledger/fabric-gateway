@@ -38,9 +38,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>8</javaVersion>
-        <bouncyCastleVersion>1.81</bouncyCastleVersion>
+        <bouncyCastleVersion>1.82</bouncyCastleVersion>
         <skipUnitTests>${skipTests}</skipUnitTests>
-        <pmdVersion>7.16.0</pmdVersion>
+        <pmdVersion>7.17.0</pmdVersion>
     </properties>
 
     <dependencyManagement>
@@ -48,7 +48,7 @@
             <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-bom</artifactId>
-                <version>7.28.2</version>
+                <version>7.29.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -62,7 +62,7 @@
             <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-bom</artifactId>
-                <version>3.27.4</version>
+                <version>3.27.6</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -204,7 +204,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.0</version>
+                <version>3.14.1</version>
                 <configuration>
                     <source>${javaVersion}</source>
                     <target>${javaVersion}</target>
@@ -312,7 +312,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.11.3</version>
+                <version>3.12.0</version>
                 <configuration>
                     <show>public</show>
                     <doctitle>Hyperledger Fabric Gateway client API for Java</doctitle>
@@ -445,7 +445,7 @@
                     <plugin>
                         <groupId>com.diffplug.spotless</groupId>
                         <artifactId>spotless-maven-plugin</artifactId>
-                        <version>2.46.1</version>
+                        <version>3.0.0</version>
                         <configuration>
                             <checkSkip>${skipUnitTests}</checkSkip>
                             <java>
@@ -481,7 +481,7 @@
                     <plugin>
                         <groupId>org.owasp</groupId>
                         <artifactId>dependency-check-maven</artifactId>
-                        <version>12.1.3</version>
+                        <version>12.1.6</version>
                         <configuration>
                             <skipProvidedScope>true</skipProvidedScope>
                             <skipTestScope>true</skipTestScope>
@@ -563,7 +563,7 @@
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.8.0</version>
+                        <version>0.9.0</version>
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>central</publishingServerId>
