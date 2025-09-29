@@ -59,7 +59,7 @@ jobs:
 
   publish-node:
     needs: build
-    name: Publish Node package
+    name: Publish Node package to GitHub Packages
     runs-on: ubuntu-24.04
     permissions:
       contents: read
