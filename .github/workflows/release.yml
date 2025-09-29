@@ -14,19 +14,23 @@ jobs:
 
   publish-node:
     needs: verify-versions
-    name: Publish Node package
+    name: Publish Node package to npm registry
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write # Required for OIDC
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: "lts/*"
           registry-url: "https://registry.npmjs.org"
+      # Ensure npm 11.5.1 or later for trusted publishing support
+      - name: Update npm
+        run: npm install -g npm@latest
       - name: Build
         run: make build-node
       - name: Publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: ${{ github.workspace }}/.github/scripts/npm_publish.sh latest
         working-directory: node
 
