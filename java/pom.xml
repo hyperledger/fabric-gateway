@@ -37,7 +37,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <javaVersion>8</javaVersion>
+        <javaReleaseVersion>8</javaReleaseVersion>
+        <requireJavaVersion>17</requireJavaVersion>
         <bouncyCastleVersion>1.82</bouncyCastleVersion>
         <skipUnitTests>${skipTests}</skipUnitTests>
         <pmdVersion>7.17.0</pmdVersion>
@@ -48,14 +49,14 @@
             <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-bom</artifactId>
-                <version>7.29.0</version>
+                <version>7.30.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.13.4</version>
+                <version>6.0.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -168,7 +169,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.6.1</version>
+                <version>3.6.2</version>
                 <executions>
                     <execution>
                         <id>enforce-version</id>
@@ -178,7 +179,7 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <version>11</version>
+                                    <version>${requireJavaVersion}</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
                                     <version>3.6.3</version>
@@ -206,14 +207,12 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.14.1</version>
                 <configuration>
-                    <source>${javaVersion}</source>
-                    <target>${javaVersion}</target>
+                    <release>${javaReleaseVersion}</release>
+                    <testRelease>${requireJavaVersion}</testRelease>
                     <showDeprecation>true</showDeprecation>
                     <showWarnings>true</showWarnings>
                     <compilerArgs>
-                        <arg>-Xlint</arg>
-                        <!-- Disable command line warnings, seen when building against multiple releases -->
-                        <arg>-Xlint:-options</arg>
+                        <arg>-Xlint:all,-options</arg>
                         <arg>-Werror</arg>
                     </compilerArgs>
                 </configuration>
@@ -322,11 +321,8 @@
                     <links>
                         <link>https://grpc.github.io/grpc-java/javadoc/</link>
                     </links>
-                    <source>${javaVersion}</source>
+                    <release>${javaReleaseVersion}</release>
                     <detectJavaApiLink>true</detectJavaApiLink>
-                    <additionalJOptions>
-                        <additionalJOption>${additionalJavadocOpts}</additionalJOption>
-                    </additionalJOptions>
                     <doclint>all,-missing</doclint>
                     <quiet>true</quiet>
                     <docfilessubdirs>true</docfilessubdirs>
@@ -418,28 +414,7 @@
 
     <profiles>
         <profile>
-            <id>javadoc-no-module-directories</id>
-            <activation>
-                <jdk>[11,13)</jdk>
-            </activation>
-            <properties>
-                <additionalJavadocOpts>--no-module-directories</additionalJavadocOpts>
-            </properties>
-        </profile>
-        <profile>
-            <id>maven-compiler-release</id>
-            <activation>
-                <jdk>[9,)</jdk>
-            </activation>
-            <properties>
-                <maven.compiler.release>${javaVersion}</maven.compiler.release>
-            </properties>
-        </profile>
-        <profile>
             <id>spotless</id>
-            <activation>
-                <jdk>[17,)</jdk>
-            </activation>
             <build>
                 <plugins>
                     <plugin>
