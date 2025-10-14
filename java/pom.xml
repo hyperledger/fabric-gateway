@@ -224,7 +224,7 @@
                     <dependency>
                         <groupId>me.fabriciorby</groupId>
                         <artifactId>maven-surefire-junit5-tree-reporter</artifactId>
-                        <version>1.5.0</version>
+                        <version>1.5.1</version>
                     </dependency>
                 </dependencies>
                 <configuration>
@@ -455,7 +455,7 @@
                     <plugin>
                         <groupId>org.owasp</groupId>
                         <artifactId>dependency-check-maven</artifactId>
-                        <version>12.1.7</version>
+                        <version>12.1.8</version>
                         <configuration>
                             <skipProvidedScope>true</skipProvidedScope>
                             <skipTestScope>true</skipTestScope>
