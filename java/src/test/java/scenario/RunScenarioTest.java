@@ -26,7 +26,7 @@ import org.junit.platform.suite.api.Suite;
 public class RunScenarioTest {
     @BeforeAll
     public static void startFabric() throws Exception {
-        System.err.println("Starting Fabric");
+        System.out.println("Starting Fabric");
         ScenarioSteps.startFabric();
     }
 
