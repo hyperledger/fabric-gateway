@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //go:build pkcs11
-// +build pkcs11
 
 package identity
 
