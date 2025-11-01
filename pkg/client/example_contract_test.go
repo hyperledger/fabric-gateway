@@ -10,7 +10,6 @@ import (
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 	"google.golang.org/grpc/status"
 )
 
@@ -94,14 +93,12 @@ func ExampleContract_Submit_errorDetails() {
 	result, err := contract.Submit("transactionName")
 	fmt.Printf("Result: %s, Err: %v\n", result, err)
 
-	if err != nil {
-		// Any error that originates from a peer or orderer node external to the gateway will have its details
-		// embedded within the gRPC status error. The following code shows how to extract that.
-		for _, detail := range status.Convert(err).Details() {
-			switch detail := detail.(type) {
-			case *gateway.ErrorDetail:
-				fmt.Printf("- address: %s; mspId: %s; message: %s\n", detail.GetAddress(), detail.GetMspId(), detail.GetMessage())
-			}
+	// Details of any errors that originate from a peer or orderer node external to the gateway will be included in the
+	// error message. The ErrorDetail messages can also be accessed directly from the error.
+	transactionErr := new(client.TransactionError)
+	if errors.As(err, &transactionErr) {
+		for _, detail := range transactionErr.Details() {
+			fmt.Printf("- Address: %s\n  MspId: %s\n  Message: %s\n", detail.GetAddress(), detail.GetMspId(), detail.GetMessage())
 		}
 	}
 }

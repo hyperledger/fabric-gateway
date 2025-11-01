@@ -38,16 +38,16 @@ class GrpcStackTracePrinter {
 
         List<ErrorDetail> details = grpcStatus.getDetails();
         if (!details.isEmpty()) {
-            message.append("Error details:\n");
+            message.append("Error details:");
             for (ErrorDetail detail : details) {
-                message.append("    address: ")
+                message.append("\n  - address: ")
                         .append(detail.getAddress())
-                        .append("; mspId: ")
+                        .append("\n    mspId: ")
                         .append(detail.getMspId())
-                        .append("; message: ")
-                        .append(detail.getMessage())
-                        .append('\n');
+                        .append("\n    message: ")
+                        .append(detail.getMessage());
             }
+            message.append('\n');
         }
 
         out.print(message);
