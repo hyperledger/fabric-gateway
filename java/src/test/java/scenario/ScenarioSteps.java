@@ -914,7 +914,7 @@ public class ScenarioSteps {
 
     private static String exec(Path dir, String... commandArgs) throws IOException, InterruptedException {
         String commandString = String.join(" ", commandArgs);
-        System.err.println(commandString);
+        System.out.println(commandString);
         StringBuilder sb = new StringBuilder();
 
         File dirFile = dir != null ? dir.toFile() : null;

@@ -39,13 +39,19 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaReleaseVersion>8</javaReleaseVersion>
         <requireJavaVersion>17</requireJavaVersion>
-        <bouncyCastleVersion>1.82</bouncyCastleVersion>
         <skipUnitTests>${skipTests}</skipUnitTests>
         <pmdVersion>7.17.0</pmdVersion>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bc-jdk18on-bom</artifactId>
+                <type>pom</type>
+                <version>1.82</version>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-bom</artifactId>
@@ -65,6 +71,13 @@
                 <artifactId>assertj-bom</artifactId>
                 <version>3.27.6</version>
                 <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-bom</artifactId>
+                <type>pom</type>
+                <version>5.20.0</version>
                 <scope>import</scope>
             </dependency>
             <dependency>
@@ -104,7 +117,6 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>5.20.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -120,12 +132,10 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk18on</artifactId>
-            <version>${bouncyCastleVersion}</version>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
-            <version>${bouncyCastleVersion}</version>
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
@@ -230,7 +240,7 @@
                 <configuration>
                     <properties>
                         <configurationParameters>
-                            cucumber.junit-platform.naming-strategy=surefire
+                            cucumber.junit-platform.naming-strategy=long
                         </configurationParameters>
                     </properties>
                 </configuration>
