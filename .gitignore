@@ -9,3 +9,4 @@ softhsm2.conf
 .python-version
 .venv/
 site/
+/trace.json
