@@ -1,6 +1,5 @@
 # Hyperledger Fabric Gateway Client API for Node
 
-
 The Fabric Gateway client API allows applications to interact with a Hyperledger Fabric blockchain network. It implements the Fabric programming model, providing a simple API to submit transactions to a ledger or query the contents of a ledger with minimal code.
 
 ## How to use

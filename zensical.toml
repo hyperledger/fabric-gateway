@@ -1,0 +1,56 @@
+[project]
+site_name = "Fabric Gateway client API"
+site_description = "Go, Node and Java client API for Hyperledger Fabric"
+repo_url = "https://github.com/hyperledger/fabric-gateway/"
+nav = [
+    "index.md",
+    "migration.md",
+    "compatibility.md",
+    "community.md",
+]
+
+[project.theme]
+variant = "modern"
+scheme = "default"
+logo = "assets/Hyperledger_Fabric.svg"
+favicon = "assets/Hyperledger_Fabric_Icon.svg"
+features = [
+    "navigation.tabs",
+    "navigation.top",
+    "toc.integrate",
+]
+
+# Palette toggle for automatic mode
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+# Palette toggle for light mode
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+# Palette toggle for dark mode
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"
+
+[[project.extra.social]]
+icon = "octicons/comment-discussion-16"
+link = "https://github.com/hyperledger/fabric-gateway/discussions"
+name = "GitHub discussions"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/discord"
+link = "https://discord.gg/hyperledger"
+name = "Hyperledger Discord"
+
+[[project.extra.social]]
+icon = "fontawesome/regular/envelope"
+link = "https://lists.lfdecentralizedtrust.org/g/fabric"
+name = "Fabric mailing list"
