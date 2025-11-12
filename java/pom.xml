@@ -238,46 +238,37 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <properties>
-                        <configurationParameters>
-                            cucumber.junit-platform.naming-strategy=long
-                        </configurationParameters>
-                    </properties>
+                    <skipTests>${skipUnitTests}</skipTests>
+                    <excludes>
+                        <exclude>**/scenario/**</exclude>
+                    </excludes>
+                    <reportFormat>plain</reportFormat>
+                    <consoleOutputReporter>
+                        <disable>true</disable>
+                    </consoleOutputReporter>
+                    <statelessTestsetInfoReporter
+                        implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporter">
+                        <theme>UNICODE</theme>
+                        <printStacktraceOnError>true</printStacktraceOnError>
+                        <printStacktraceOnFailure>true</printStacktraceOnFailure>
+                        <printStdoutOnError>true</printStdoutOnError>
+                        <printStdoutOnFailure>true</printStdoutOnFailure>
+                        <printStdoutOnSuccess>false</printStdoutOnSuccess>
+                        <printStderrOnError>true</printStderrOnError>
+                        <printStderrOnFailure>true</printStderrOnFailure>
+                        <printStderrOnSuccess>false</printStderrOnSuccess>
+                    </statelessTestsetInfoReporter>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.4</version>
                 <executions>
                     <execution>
-                        <id>default-test</id>
                         <goals>
-                            <goal>test</goal>
-                        </goals>
-                        <configuration>
-                            <skipTests>${skipUnitTests}</skipTests>
-                            <excludes>
-                                <exclude>**/scenario/**</exclude>
-                            </excludes>
-                            <reportFormat>plain</reportFormat>
-                            <consoleOutputReporter>
-                                <disable>true</disable>
-                            </consoleOutputReporter>
-                            <statelessTestsetInfoReporter
-                                implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporter">
-                                <theme>UNICODE</theme>
-                                <printStacktraceOnError>true</printStacktraceOnError>
-                                <printStacktraceOnFailure>true</printStacktraceOnFailure>
-                                <printStdoutOnError>true</printStdoutOnError>
-                                <printStdoutOnFailure>true</printStdoutOnFailure>
-                                <printStdoutOnSuccess>false</printStdoutOnSuccess>
-                                <printStderrOnError>true</printStderrOnError>
-                                <printStderrOnFailure>true</printStderrOnFailure>
-                                <printStderrOnSuccess>false</printStderrOnSuccess>
-                            </statelessTestsetInfoReporter>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>scenario-test</id>
-                        <phase>integration-test</phase>
-                        <goals>
-                            <goal>test</goal>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
                         </goals>
                         <configuration>
                             <includes>
