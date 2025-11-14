@@ -25,9 +25,6 @@ jobs:
         with:
           node-version: "lts/*"
           registry-url: "https://registry.npmjs.org"
-      # Ensure npm 11.5.1 or later for trusted publishing support
-      - name: Update npm
-        run: npm install -g npm@latest
       - name: Build
         run: make build-node
       - name: Publish
@@ -53,7 +50,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MAVEN_GPG_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
-        run: ${{ github.workspace }}/.github/scripts/maven_publish_release.sh github
+        run: ${{ github.workspace }}/.github/scripts/maven_publish.sh github
         working-directory: java
 
   publish-java-central:
@@ -76,5 +73,5 @@ jobs:
           MAVENCENTRAL_PASSWORD: ${{ secrets.MAVENCENTRAL_PASSWORD }}
           MAVEN_GPG_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
-        run: ${{ github.workspace }}/.github/scripts/maven_publish_release.sh central
+        run: ${{ github.workspace }}/.github/scripts/maven_publish.sh central
         working-directory: java
