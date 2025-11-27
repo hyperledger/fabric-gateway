@@ -49,7 +49,7 @@
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bc-jdk18on-bom</artifactId>
                 <type>pom</type>
-                <version>1.82</version>
+                <version>1.83</version>
                 <scope>import</scope>
             </dependency>
             <dependency>
