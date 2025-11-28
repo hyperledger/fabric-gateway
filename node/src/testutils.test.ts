@@ -456,8 +456,10 @@ function newAsyncIterable<T>(values: (T | Error)[]): AsyncIterable<T> {
     };
 }
 
-export interface DuplexStreamResponseStub<RequestType, ResponseType>
-    extends DuplexStreamResponse<RequestType, ResponseType> {
+export interface DuplexStreamResponseStub<RequestType, ResponseType> extends DuplexStreamResponse<
+    RequestType,
+    ResponseType
+> {
     cancel: jest.Mock<undefined, []>;
     write: jest.Mock<boolean, RequestType[]>;
     getRequest(index?: number): RequestType;
