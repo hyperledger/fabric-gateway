@@ -50,7 +50,7 @@
         "@types/node": "^20.19.1",
         "eslint": "^9.39.1",
         "eslint-config-prettier": "^10.1.2",
-        "eslint-plugin-jest": "^29.2.0",
+        "eslint-plugin-jest": "^29.5.0",
         "eslint-plugin-tsdoc": "^0.5.0",
         "jest": "^30.2.0",
         "prettier": "^3.7.1",
