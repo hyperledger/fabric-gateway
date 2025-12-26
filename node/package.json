@@ -50,13 +50,13 @@
         "@types/node": "^20.19.1",
         "eslint": "^9.39.1",
         "eslint-config-prettier": "^10.1.2",
-        "eslint-plugin-jest": "^29.5.0",
+        "eslint-plugin-jest": "^29.11.0",
         "eslint-plugin-tsdoc": "^0.5.0",
         "jest": "^30.2.0",
         "prettier": "^3.7.1",
         "ts-jest": "^29.4.0",
         "typedoc": "^0.28.3",
         "typescript": "~5.8.3",
-        "typescript-eslint": "^8.49.0"
+        "typescript-eslint": "^8.50.1"
     }
 }
