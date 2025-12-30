@@ -18,6 +18,7 @@ import { ChaincodeEventsBuilder, ChaincodeEventsOptions } from './chaincodeevent
 import { ChaincodeEventsRequest } from './chaincodeeventsrequest';
 import { CloseableAsyncIterable, GatewayClient } from './client';
 import { Contract, ContractImpl } from './contract';
+import { Commit, CommitImpl } from './commit';
 import { SigningIdentity } from './signingidentity';
 
 /**
@@ -199,6 +200,20 @@ export interface Network {
      * @param options - Event listening options.
      */
     newBlockAndPrivateDataEventsRequest(options?: BlockEventsOptions): BlockAndPrivateDataEventsRequest;
+
+        /**
+     * Create a Commit object representing a transaction that has already been committed to the ledger.
+     * The transaction content can be accessed using the Commit object. This method is particularly useful
+     * for querying transaction status and details after the transaction has been committed.
+     * @param transactionId - A transaction ID.
+     * @returns A Commit object for the specified transaction.
+     * @example
+     * ```typescript
+     * const commit = network.newCommit(transactionId);
+     * const status = await commit.getStatus();
+     * ```
+     */
+    newCommit(transactionId: string): Commit;
 }
 
 export interface NetworkOptions {
@@ -285,6 +300,15 @@ export class NetworkImpl implements Network {
     newBlockAndPrivateDataEventsRequest(options: Readonly<BlockEventsOptions> = {}): BlockAndPrivateDataEventsRequest {
         const builderOptions = this.#newBlockEventsBuilderOptions(options);
         return new BlockAndPrivateDataEventsBuilder(builderOptions).build();
+    }
+
+        newCommit(transactionId: string): Commit {
+        return new CommitImpl({
+            client: this.#client,
+            signingIdentity: this.#signingIdentity,
+            transactionId,
+            channelName: this.#channelName,
+        });
     }
 
     #newBlockEventsBuilderOptions(options: Readonly<BlockEventsOptions>): BlockEventsBuilderOptions {
