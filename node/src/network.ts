@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { common, peer } from '@hyperledger/fabric-protos';
+import { common, gateway, peer } from '@hyperledger/fabric-protos';
 import {
     BlockAndPrivateDataEventsBuilder,
     BlockEventsBuilder,
@@ -302,15 +302,29 @@ export class NetworkImpl implements Network {
         return new BlockAndPrivateDataEventsBuilder(builderOptions).build();
     }
 
-        newCommit(transactionId: string): Commit {
+    newCommit(transactionId: string): Commit {
+        const signedRequest = this.#newSignedCommitStatusRequest(transactionId);
         return new CommitImpl({
             client: this.#client,
             signingIdentity: this.#signingIdentity,
             transactionId,
-            channelName: this.#channelName,
+            signedRequest,
         });
     }
 
+    #newSignedCommitStatusRequest(transactionId: string): gateway.SignedCommitStatusRequest {
+        const result = new gateway.SignedCommitStatusRequest();
+        result.setRequest(this.#newCommitStatusRequest(transactionId).serializeBinary());
+        return result;
+    }
+
+    #newCommitStatusRequest(transactionId: string): gateway.CommitStatusRequest {
+        const result = new gateway.CommitStatusRequest();
+        result.setChannelId(this.#channelName);
+        result.setTransactionId(transactionId);
+        result.setIdentity(this.#signingIdentity.getCreator());
+        return result;
+    }
     #newBlockEventsBuilderOptions(options: Readonly<BlockEventsOptions>): BlockEventsBuilderOptions {
         return Object.assign({}, options, {
             channelName: this.#channelName,
