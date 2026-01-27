@@ -12,7 +12,10 @@ if [ $# -eq 1 ]; then
     NEXT_VERSION="$1"
 else
     NEXT_VERSION="$(
-        awk 'match($0, /^[ \t]*GATEWAY_VERSION:[ \t]*([0-9]+)\.([0-9]+)\.([0-9]+)/, v) {
+        awk -F'GATEWAY_VERSION:' '/^[ \t]*GATEWAY_VERSION:/ {
+                sub(/^[ \t]+/, "", $2)
+                sub(/[ \t]$/, "", $2)
+                split($2, v, ".")
                 printf "%d.%d.%d", v[1], v[2], v[3]+1
                 exit
             }' \
