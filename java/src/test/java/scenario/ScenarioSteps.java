@@ -648,7 +648,7 @@ public class ScenarioSteps {
     @When("I start the peer named {}")
     public void startPeer(String peer) throws IOException, InterruptedException {
         exec("docker", "start", peer);
-        peerConnectionInfo.get(peer).stop();
+        peerConnectionInfo.get(peer).start();
         Thread.sleep(20000);
     }
 
