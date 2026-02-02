@@ -215,7 +215,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.1</version>
+                <version>3.15.0</version>
                 <configuration>
                     <release>${javaReleaseVersion}</release>
                     <testRelease>${requireJavaVersion}</testRelease>
