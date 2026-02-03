@@ -31,15 +31,15 @@ final class SigningIdentity {
         this.creator = GatewayUtils.newSerializedIdentity(identity);
     }
 
-    public Identity getIdentity() {
+    Identity getIdentity() {
         return identity;
     }
 
-    public byte[] hash(final byte[] message) {
+    byte[] hash(final byte[] message) {
         return hash.apply(message);
     }
 
-    public byte[] sign(final byte[] digest) {
+    byte[] sign(final byte[] digest) {
         try {
             return signer.sign(digest);
         } catch (GeneralSecurityException e) {
@@ -47,7 +47,7 @@ final class SigningIdentity {
         }
     }
 
-    public byte[] getCreator() {
+    byte[] getCreator() {
         return creator.toByteArray();
     }
 }

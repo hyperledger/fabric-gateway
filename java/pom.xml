@@ -40,7 +40,7 @@
         <javaReleaseVersion>8</javaReleaseVersion>
         <requireJavaVersion>17</requireJavaVersion>
         <skipUnitTests>${skipTests}</skipUnitTests>
-        <pmdVersion>7.20.0</pmdVersion>
+        <pmdVersion>7.21.0</pmdVersion>
     </properties>
 
     <dependencyManagement>

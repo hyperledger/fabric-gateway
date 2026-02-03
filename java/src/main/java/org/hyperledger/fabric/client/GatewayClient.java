@@ -55,7 +55,7 @@ final class GatewayClient {
         this.defaultOptions = defaultOptions;
     }
 
-    public EvaluateResponse evaluate(final EvaluateRequest request, final UnaryOperator<CallOptions> options)
+    EvaluateResponse evaluate(final EvaluateRequest request, final UnaryOperator<CallOptions> options)
             throws GatewayException {
         GatewayGrpc.GatewayBlockingStub stub = defaultOptions.applyEvaluate(gatewayBlockingStub, options);
         try {
@@ -65,7 +65,7 @@ final class GatewayClient {
         }
     }
 
-    public EndorseResponse endorse(final EndorseRequest request, final UnaryOperator<CallOptions> options)
+    EndorseResponse endorse(final EndorseRequest request, final UnaryOperator<CallOptions> options)
             throws EndorseException {
         GatewayGrpc.GatewayBlockingStub stub = defaultOptions.applyEndorse(gatewayBlockingStub, options);
         try {
@@ -75,7 +75,7 @@ final class GatewayClient {
         }
     }
 
-    public SubmitResponse submit(final SubmitRequest request, final UnaryOperator<CallOptions> options)
+    SubmitResponse submit(final SubmitRequest request, final UnaryOperator<CallOptions> options)
             throws SubmitException {
         GatewayGrpc.GatewayBlockingStub stub = defaultOptions.applySubmit(gatewayBlockingStub, options);
         try {
@@ -85,8 +85,7 @@ final class GatewayClient {
         }
     }
 
-    public CommitStatusResponse commitStatus(
-            final SignedCommitStatusRequest request, final UnaryOperator<CallOptions> options)
+    CommitStatusResponse commitStatus(final SignedCommitStatusRequest request, final UnaryOperator<CallOptions> options)
             throws CommitStatusException {
         GatewayGrpc.GatewayBlockingStub stub = defaultOptions.applyCommitStatus(gatewayBlockingStub, options);
         try {
@@ -104,25 +103,24 @@ final class GatewayClient {
         }
     }
 
-    public CloseableIterator<ChaincodeEventsResponse> chaincodeEvents(
+    CloseableIterator<ChaincodeEventsResponse> chaincodeEvents(
             final SignedChaincodeEventsRequest request, final UnaryOperator<CallOptions> options) {
         GatewayGrpc.GatewayBlockingStub stub = defaultOptions.applyChaincodeEvents(gatewayBlockingStub, options);
         return invokeServerStreamingCall(() -> stub.chaincodeEvents(request));
     }
 
-    public CloseableIterator<DeliverResponse> blockEvents(
-            final Envelope request, final UnaryOperator<CallOptions> options) {
+    CloseableIterator<DeliverResponse> blockEvents(final Envelope request, final UnaryOperator<CallOptions> options) {
         DeliverGrpc.DeliverStub stub = defaultOptions.applyBlockEvents(deliverAsyncStub, options);
         return invokeDuplexStreamingCall(stub::deliver, request);
     }
 
-    public CloseableIterator<DeliverResponse> filteredBlockEvents(
+    CloseableIterator<DeliverResponse> filteredBlockEvents(
             final Envelope request, final UnaryOperator<CallOptions> options) {
         DeliverGrpc.DeliverStub stub = defaultOptions.applyFilteredBlockEvents(deliverAsyncStub, options);
         return invokeDuplexStreamingCall(stub::deliverFiltered, request);
     }
 
-    public CloseableIterator<DeliverResponse> blockAndPrivateDataEvents(
+    CloseableIterator<DeliverResponse> blockAndPrivateDataEvents(
             final Envelope request, final UnaryOperator<CallOptions> options) {
         DeliverGrpc.DeliverStub stub = defaultOptions.applyBlockAndPrivateDataEvents(deliverAsyncStub, options);
         return invokeDuplexStreamingCall(stub::deliverWithPrivateData, request);
