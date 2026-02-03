@@ -28,12 +28,12 @@ final class BlockEventsEnvelopeBuilder {
         this.tlsCertificateHash = tlsCertificateHash;
     }
 
-    public BlockEventsEnvelopeBuilder startBlock(final long blockNumber) {
+    BlockEventsEnvelopeBuilder startBlock(final long blockNumber) {
         startPositionBuilder.startBlock(blockNumber);
         return this;
     }
 
-    public Envelope build() {
+    Envelope build() {
         return Envelope.newBuilder().setPayload(newPayload().toByteString()).build();
     }
 

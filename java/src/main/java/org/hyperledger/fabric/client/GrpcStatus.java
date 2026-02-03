@@ -22,11 +22,11 @@ final class GrpcStatus {
         this.trailers = trailers;
     }
 
-    public io.grpc.Status getStatus() {
+    io.grpc.Status getStatus() {
         return status;
     }
 
-    public List<ErrorDetail> getDetails() {
+    List<ErrorDetail> getDetails() {
         return StatusProto.fromStatusAndTrailers(status, trailers).getDetailsList().stream()
                 .map(any -> {
                     try {

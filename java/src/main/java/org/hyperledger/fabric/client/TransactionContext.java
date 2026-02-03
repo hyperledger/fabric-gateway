@@ -49,11 +49,11 @@ final class TransactionContext {
                 .build();
     }
 
-    public String getTransactionId() {
+    String getTransactionId() {
         return transactionId;
     }
 
-    public SignatureHeader getSignatureHeader() {
+    SignatureHeader getSignatureHeader() {
         return signatureHeader;
     }
 }

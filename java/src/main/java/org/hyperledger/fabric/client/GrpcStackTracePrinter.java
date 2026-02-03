@@ -17,19 +17,19 @@ class GrpcStackTracePrinter {
     private final Consumer<PrintWriter> printStackTraceFn;
     private final GrpcStatus grpcStatus;
 
-    public GrpcStackTracePrinter(final Consumer<PrintWriter> printStackTraceFn, final GrpcStatus grpcStatus) {
+    GrpcStackTracePrinter(final Consumer<PrintWriter> printStackTraceFn, final GrpcStatus grpcStatus) {
         this.printStackTraceFn = printStackTraceFn;
         this.grpcStatus = grpcStatus;
     }
 
-    public void printStackTrace(final PrintStream out) {
+    void printStackTrace(final PrintStream out) {
         @SuppressWarnings("PMD.RelianceOnDefaultCharset")
         PrintWriter writer = new PrintWriter(out);
         printStackTrace(writer);
         writer.flush();
     }
 
-    public void printStackTrace(final PrintWriter out) {
+    void printStackTrace(final PrintWriter out) {
         CharArrayWriter message = new CharArrayWriter();
 
         try (PrintWriter printer = new PrintWriter(message)) {

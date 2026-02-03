@@ -14,7 +14,7 @@ final class StartPositionBuilder implements Builder<SeekPosition> {
     private final SeekPosition.Builder builder =
             SeekPosition.newBuilder().setNextCommit(SeekNextCommit.getDefaultInstance());
 
-    public StartPositionBuilder startBlock(final long blockNumber) {
+    StartPositionBuilder startBlock(final long blockNumber) {
         SeekSpecified specified =
                 SeekSpecified.newBuilder().setNumber(blockNumber).build();
         builder.setSpecified(specified);

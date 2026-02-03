@@ -58,15 +58,15 @@ final class ECSignature {
         this.s = s;
     }
 
-    public ASN1Integer getR() {
+    ASN1Integer getR() {
         return r;
     }
 
-    public ASN1Integer getS() {
+    ASN1Integer getS() {
         return s;
     }
 
-    public byte[] getBytes() {
+    byte[] getBytes() {
         try (ByteArrayOutputStream bytesOut = new ByteArrayOutputStream()) {
             DERSequenceGenerator sequence = new DERSequenceGenerator(bytesOut);
             sequence.addObject(r);

@@ -33,11 +33,11 @@ final class TransactionEnvelopeParser {
         }
     }
 
-    public String getChannelName() {
+    String getChannelName() {
         return channelName;
     }
 
-    public ByteString getResult() {
+    ByteString getResult() {
         return result;
     }
 

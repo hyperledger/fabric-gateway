@@ -28,17 +28,17 @@ final class GatewayUtils {
     // Private constructor to prevent instantiation
     private GatewayUtils() {}
 
-    public static String toString(final Object o) {
+    static String toString(final Object o) {
         return o != null
                 ? o.getClass().getSimpleName() + '@' + Integer.toHexString(System.identityHashCode(o))
                 : "null";
     }
 
-    public static String toString(final Object o, final String... additionalInfo) {
+    static String toString(final Object o, final String... additionalInfo) {
         return toString(o) + Arrays.stream(additionalInfo).collect(Collectors.joining(", ", "(", ")"));
     }
 
-    public static byte[] concat(final byte[]... bytes) {
+    static byte[] concat(final byte[]... bytes) {
         int length = Arrays.stream(bytes).mapToInt(b -> b.length).sum();
         try (ByteArrayOutputStream byteOut = new ByteArrayOutputStream(length)) {
             for (byte[] b : bytes) {
@@ -50,20 +50,20 @@ final class GatewayUtils {
         }
     }
 
-    public static SerializedIdentity newSerializedIdentity(final Identity identity) {
+    static SerializedIdentity newSerializedIdentity(final Identity identity) {
         return SerializedIdentity.newBuilder()
                 .setMspid(identity.getMspId())
                 .setIdBytes(ByteString.copyFrom(identity.getCredentials()))
                 .build();
     }
 
-    public static void requireNonNullArgument(final Object value, final String message) {
+    static void requireNonNullArgument(final Object value, final String message) {
         if (null == value) {
             throw new IllegalArgumentException(message);
         }
     }
 
-    public static Timestamp getCurrentTimestamp() {
+    static Timestamp getCurrentTimestamp() {
         Instant now = Instant.now();
         return Timestamp.newBuilder()
                 .setSeconds(now.getEpochSecond())
@@ -71,7 +71,7 @@ final class GatewayUtils {
                 .build();
     }
 
-    public static SeekPosition seekLargestBlockNumber() {
+    static SeekPosition seekLargestBlockNumber() {
         SeekSpecified largestBlockNumber =
                 SeekSpecified.newBuilder().setNumber(Long.MAX_VALUE).build();
 
