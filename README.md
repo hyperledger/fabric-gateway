@@ -25,7 +25,7 @@ See the [proto definitions](https://github.com/hyperledger/fabric-protos/blob/ma
 This repository comprises three functionally equivalent client APIs, written in Go, TypeScript, and Java. In order to
 build these components, the following need to be installed and available in the PATH:
 
-- [Go 1.24+](https://go.dev/)
+- [Go 1.25+](https://go.dev/)
 - [Node 18+](https://nodejs.org/)
 - [Java 11+](https://adoptium.net/)
 - [Docker](https://www.docker.com/)
