@@ -55,8 +55,8 @@
         "jest": "^30.2.0",
         "prettier": "^3.8.0",
         "ts-jest": "^29.4.0",
-        "typedoc": "^0.28.3",
-        "typescript": "~5.8.3",
-        "typescript-eslint": "^8.54.0"
+        "typedoc": "^0.28.16",
+        "typescript": "~5.9.3",
+        "typescript-eslint": "^8.55.0"
     }
 }
