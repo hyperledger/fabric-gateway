@@ -6,10 +6,10 @@
 
 import { common, gateway, peer } from '@hyperledger/fabric-protos';
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
-import { GatewayClient } from './client';
-import { Proposal, ProposalImpl } from './proposal';
-import { SigningIdentity } from './signingidentity';
-import { TransactionContext } from './transactioncontext';
+import { GatewayClient } from './client.js';
+import { Proposal, ProposalImpl } from './proposal.js';
+import { SigningIdentity } from './signingidentity.js';
+import { TransactionContext } from './transactioncontext.js';
 
 /**
  * Options used when evaluating or endorsing a transaction proposal.

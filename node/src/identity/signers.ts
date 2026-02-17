@@ -5,9 +5,9 @@
  */
 
 import { KeyObject, sign } from 'node:crypto';
-import { newECPrivateKeySigner } from './ecdsa';
-import { HSMSignerFactory, type HSMSignerFactoryImpl as HSMSignerFactoryImplType } from './hsmsigner';
-import { Signer } from './signer';
+import { newECPrivateKeySigner } from './ecdsa.js';
+import { HSMSignerFactory, type HSMSignerFactoryImpl as HSMSignerFactoryImplType } from './hsmsigner.js';
+import { Signer } from './signer.js';
 
 /**
  * Create a new signing implementation that uses the supplied private key to sign messages.

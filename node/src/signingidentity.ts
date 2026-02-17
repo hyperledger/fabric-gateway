@@ -5,11 +5,11 @@
  */
 
 import { msp } from '@hyperledger/fabric-protos';
-import { ConnectOptions } from './gateway';
-import { Hash } from './hash/hash';
-import { sha256 } from './hash/hashes';
-import { Identity } from './identity/identity';
-import { Signer } from './identity/signer';
+import { ConnectOptions } from './gateway.js';
+import { Hash } from './hash/hash.js';
+import { sha256 } from './hash/hashes.js';
+import { Identity } from './identity/identity.js';
+import { Signer } from './identity/signer.js';
 
 export const undefinedSignerMessage = 'No signing implementation';
 

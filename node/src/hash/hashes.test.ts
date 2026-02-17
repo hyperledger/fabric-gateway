@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as hashes from './hashes';
+import * as hashes from './hashes.js';
 
 describe('hashes', () => {
     Object.entries(hashes).forEach(([name, hash]) => {

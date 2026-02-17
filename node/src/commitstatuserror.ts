@@ -5,7 +5,7 @@
  */
 
 import { ServiceError } from '@grpc/grpc-js';
-import { ErrorDetail, GatewayError } from './gatewayerror';
+import { ErrorDetail, GatewayError } from './gatewayerror.js';
 
 /**
  * CommitStatusError is thrown when a failure occurs obtaining the commit status of a transaction.

@@ -6,9 +6,9 @@
 
 import * as grpc from '@grpc/grpc-js';
 import { common, gateway } from '@hyperledger/fabric-protos';
-import { GatewayClient, newGatewayClient } from './client';
-import { GatewayError } from './gatewayerror';
-import { MockGatewayGrpcClient } from './testutils.test';
+import { GatewayClient, newGatewayClient } from './client.js';
+import { GatewayError } from './gatewayerror.js';
+import { MockGatewayGrpcClient } from './testutils.test.js';
 
 describe('client', () => {
     describe('throws GatewayError on gRPC error', () => {

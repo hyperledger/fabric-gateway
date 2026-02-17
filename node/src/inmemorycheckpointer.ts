@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Checkpointer } from './checkpointer';
-import { ChaincodeEvent } from './chaincodeevent';
+import { Checkpointer } from './checkpointer.js';
+import { ChaincodeEvent } from './chaincodeevent.js';
 
 /**
  * In-memory checkpointer class used to persist checkpointer state in memory.

@@ -4,6 +4,13 @@
     "description": "Hyperledger Fabric Gateway client API for Node",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
+    "type": "module",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+     },
     "engines": {
         "node": ">=20.9.0"
     },
@@ -35,7 +42,7 @@
     "dependencies": {
         "@grpc/grpc-js": "^1.14.0",
         "@hyperledger/fabric-protos": "^0.3.0",
-        "@noble/curves": "^1.9.4",
+        "@noble/curves": "^2.0.0",
         "google-protobuf": "^3.21.0"
     },
     "optionalDependencies": {

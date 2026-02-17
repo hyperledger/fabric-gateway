@@ -13,10 +13,10 @@ import {
     BlockEventsRequestImpl,
     FilteredBlockEventsRequest,
     FilteredBlockEventsRequestImpl,
-} from './blockeventsrequest';
-import { GatewayClient } from './client';
-import { EventsBuilder, EventsOptions } from './eventsbuilder';
-import { SigningIdentity } from './signingidentity';
+} from './blockeventsrequest.js';
+import { GatewayClient } from './client.js';
+import { EventsBuilder, EventsOptions } from './eventsbuilder.js';
+import { SigningIdentity } from './signingidentity.js';
 
 function seekLargestBlockNumber(): orderer.SeekPosition {
     const largestBlockNumber = new orderer.SeekSpecified();

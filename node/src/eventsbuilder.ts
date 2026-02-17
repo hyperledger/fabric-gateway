@@ -5,7 +5,7 @@
  */
 
 import { orderer } from '@hyperledger/fabric-protos';
-import { Checkpoint } from './checkpointer';
+import { Checkpoint } from './checkpointer.js';
 
 /**
  * Options used when requesting events.
