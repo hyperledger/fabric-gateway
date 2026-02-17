@@ -5,6 +5,9 @@
  */
 
 import { common, orderer } from '@hyperledger/fabric-protos';
+// google-protobuf has no package exports field, so deep path imports are
+// unresolvable under node18 module resolution. Disable unsafe rules for this import.
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
 import {
     BlockAndPrivateDataEventsRequest,

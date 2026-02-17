@@ -99,11 +99,16 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
                 const compactSignature = await pkcs11.C_SignAsync(
                     session,
                     Buffer.from(digest),
+                    // EC signatures have length of 2n according to the PKCS11 spec:
+                    // https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.1/pkcs11-spec-v3.1.html
                     Buffer.alloc(p256.Point.Fn.BYTES * 2),
                 );
-                const sig = p256.Signature.fromBytes(compactSignature, 'compact');
-                const normalizedSig = sig.hasHighS() ? new p256.Signature(sig.r, p256.Point.CURVE().n - sig.s) : sig;
-                return normalizedSig.toBytes('der');
+                let signature = p256.Signature.fromBytes(compactSignature, 'compact');
+                if (signature.hasHighS()) {
+                    signature = new p256.Signature(signature.r, p256.Point.CURVE().n - signature.s);
+                }
+
+                return signature.toBytes('der');
             },
             close: () => {
                 pkcs11.C_CloseSession(session);
