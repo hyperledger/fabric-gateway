@@ -205,7 +205,7 @@ func createCryptoMaterial() error {
 
 func generateHSMUser(hsmUserid string) error {
 	fmt.Println("generateHSMUser")
-	cmd := exec.Command("./generate-hsm-user.sh", hsmUserid)
+	cmd := exec.Command("./generate-hsm-user.sh", hsmUserid) //#nosec G204
 	cmd.Dir = fixturesDir
 	out, err := cmd.CombinedOutput()
 	if out != nil {
@@ -612,7 +612,7 @@ func dockerCommandWithTLS(args ...string) (string, error) {
 
 func dockerCommand(args ...string) (string, error) {
 	fmt.Println("\033[1m", ">", "docker", strings.Join(args, " "), "\033[0m")
-	cmd := exec.Command("docker", args...)
+	cmd := exec.Command("docker", args...) //#nosec G204
 	out, err := cmd.CombinedOutput()
 	if out != nil {
 		fmt.Println(string(out))

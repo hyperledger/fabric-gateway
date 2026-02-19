@@ -25,7 +25,7 @@ type checkpointState struct {
 
 // NewFileCheckpointer creates a properly initialized FileCheckpointer.
 func NewFileCheckpointer(name string) (*FileCheckpointer, error) {
-	file, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE, 0600) //#nosec G304 -- Caller responsible for safe file name
+	file, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE, 0600) //#nosec G304 G703 -- Caller responsible for safe file name
 	if err != nil {
 		return nil, err
 	}
