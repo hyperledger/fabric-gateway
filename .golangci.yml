@@ -51,6 +51,10 @@ linters:
         text: "^ST1003:.* ALL_CAPS"
         linters:
           - staticcheck
+      - path: "_test.go$"
+        text: "^G703:"
+        linters:
+          - gosec
 formatters:
   enable:
     - gofmt
