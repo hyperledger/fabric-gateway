@@ -6,20 +6,24 @@
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
 import { common, ledger, msp, orderer, peer } from '@hyperledger/fabric-protos';
-import { CloseableAsyncIterable } from '.';
-import { BlockEventsOptions } from './blockeventsbuilder';
-import { BlockAndPrivateDataEventsRequest, BlockEventsRequest, FilteredBlockEventsRequest } from './blockeventsrequest';
-import * as checkpointers from './checkpointers';
-import { Gateway, InternalConnectOptions, assertDefined, internalConnect } from './gateway';
-import { GatewayError } from './gatewayerror';
-import { Identity } from './identity/identity';
-import { Network } from './network';
+import { CloseableAsyncIterable } from './index.js';
+import { BlockEventsOptions } from './blockeventsbuilder.js';
+import {
+    BlockAndPrivateDataEventsRequest,
+    BlockEventsRequest,
+    FilteredBlockEventsRequest,
+} from './blockeventsrequest.js';
+import * as checkpointers from './checkpointers.js';
+import { Gateway, InternalConnectOptions, assertDefined, internalConnect } from './gateway.js';
+import { GatewayError } from './gatewayerror.js';
+import { Identity } from './identity/identity.js';
+import { Network } from './network.js';
 import {
     DuplexStreamResponseStub,
     MockGatewayGrpcClient,
     newDuplexStreamResponse,
     readElements,
-} from './testutils.test';
+} from './testutils.test.js';
 
 function assertStartPositionToBeSpecified(seekInfo: orderer.SeekInfo, blockNumber: number): void {
     const start = seekInfo.getStart();

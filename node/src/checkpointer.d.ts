@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ChaincodeEvent } from './chaincodeevent';
+import { ChaincodeEvent } from './chaincodeevent.js';
 
 /**
  * Used to get the checkpointed state.

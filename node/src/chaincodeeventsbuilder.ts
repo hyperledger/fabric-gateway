@@ -5,10 +5,10 @@
  */
 
 import { gateway } from '@hyperledger/fabric-protos';
-import { ChaincodeEventsRequest, ChaincodeEventsRequestImpl } from './chaincodeeventsrequest';
-import { GatewayClient } from './client';
-import { EventsBuilder, EventsOptions } from './eventsbuilder';
-import { SigningIdentity } from './signingidentity';
+import { ChaincodeEventsRequest, ChaincodeEventsRequestImpl } from './chaincodeeventsrequest.js';
+import { GatewayClient } from './client.js';
+import { EventsBuilder, EventsOptions } from './eventsbuilder.js';
+import { SigningIdentity } from './signingidentity.js';
 
 /**
  * Options used when requesting chaincode events.

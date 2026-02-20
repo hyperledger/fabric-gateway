@@ -6,7 +6,7 @@
 
 import { common, peer } from '@hyperledger/fabric-protos';
 import { inspect } from 'node:util';
-import { assertDefined } from './gateway';
+import { assertDefined } from './gateway.js';
 
 export function parseTransactionEnvelope(envelope: common.Envelope): {
     channelName: string;

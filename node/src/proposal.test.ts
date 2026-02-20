@@ -6,12 +6,12 @@
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
 import { common, gateway as gatewayproto, msp, peer } from '@hyperledger/fabric-protos';
-import { Contract } from './contract';
-import { EndorseError } from './endorseerror';
-import { Gateway, assertDefined, internalConnect } from './gateway';
-import { Identity } from './identity/identity';
-import { Network } from './network';
-import { asString, MockGatewayGrpcClient, newEndorseResponse } from './testutils.test';
+import { Contract } from './contract.js';
+import { EndorseError } from './endorseerror.js';
+import { Gateway, assertDefined, internalConnect } from './gateway.js';
+import { Identity } from './identity/identity.js';
+import { Network } from './network.js';
+import { asString, MockGatewayGrpcClient, newEndorseResponse } from './testutils.test.js';
 
 function assertDecodeEvaluateRequest(request: gatewayproto.EvaluateRequest): peer.Proposal {
     let proposalBytes = request.getProposedTransaction()?.getProposalBytes_asU8();

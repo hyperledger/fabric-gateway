@@ -6,10 +6,10 @@
 
 import { CallOptions } from '@grpc/grpc-js';
 import { gateway } from '@hyperledger/fabric-protos';
-import { GatewayClient } from './client';
-import { Signable } from './signable';
-import { SigningIdentity } from './signingidentity';
-import { Status, StatusCode } from './status';
+import { GatewayClient } from './client.js';
+import { Signable } from './signable.js';
+import { SigningIdentity } from './signingidentity.js';
+import { Status, StatusCode } from './status.js';
 
 /**
  * Allows access to information about a transaction that is committed to the ledger.

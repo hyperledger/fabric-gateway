@@ -6,13 +6,13 @@
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
 import { gateway as gatewayproto, orderer, peer } from '@hyperledger/fabric-protos';
-import { ChaincodeEvent } from './chaincodeevent';
-import * as checkpointers from './checkpointers';
-import { Gateway, InternalConnectOptions, internalConnect } from './gateway';
-import { GatewayError } from './gatewayerror';
-import { Identity } from './identity/identity';
-import { Network } from './network';
-import { MockGatewayGrpcClient, newServerStreamResponse, readElements } from './testutils.test';
+import { ChaincodeEvent } from './chaincodeevent.js';
+import * as checkpointers from './checkpointers.js';
+import { Gateway, InternalConnectOptions, internalConnect } from './gateway.js';
+import { GatewayError } from './gatewayerror.js';
+import { Identity } from './identity/identity.js';
+import { Network } from './network.js';
+import { MockGatewayGrpcClient, newServerStreamResponse, readElements } from './testutils.test.js';
 
 function assertDecodeChaincodeEventsRequest(
     signedRequest: gatewayproto.SignedChaincodeEventsRequest,

@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CurveFn } from '@noble/curves/abstract/weierstrass';
-import { p256 } from '@noble/curves/nist';
-import { p384 } from '@noble/curves/nist';
+import { p256, p384 } from '@noble/curves/nist.js';
 import { KeyObject } from 'node:crypto';
-import { Signer } from './signer';
+import { Signer } from './signer.js';
 
-const namedCurves: Record<string, CurveFn> = {
+type Curve = typeof p256;
+const namedCurves: Record<string, Curve> = {
     'P-256': p256,
     'P-384': p384,
 };
@@ -28,12 +27,12 @@ export function newECPrivateKeySigner(key: KeyObject): Signer {
     const privateKey = Buffer.from(d, 'base64url');
 
     return (digest) => {
-        const signature = curve.sign(digest, privateKey, { lowS: true });
-        return Promise.resolve(signature.toBytes('der'));
+        const signature = curve.sign(digest, privateKey, { lowS: true, prehash: false, format: 'der' });
+        return Promise.resolve(signature);
     };
 }
 
-function getCurve(name: string): CurveFn {
+function getCurve(name: string): Curve {
     const curve = namedCurves[name];
     if (!curve) {
         throw new Error(`Unsupported curve: ${name}`);

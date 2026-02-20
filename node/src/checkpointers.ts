@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Checkpointer } from './checkpointer';
-import { FileCheckPointer } from './filecheckpointer';
-import { InMemoryCheckPointer } from './inmemorycheckpointer';
+import { Checkpointer } from './checkpointer.js';
+import { FileCheckPointer } from './filecheckpointer.js';
+import { InMemoryCheckPointer } from './inmemorycheckpointer.js';
 
 /**
  * Create a checkpointer that uses the specified file to store persistent state.

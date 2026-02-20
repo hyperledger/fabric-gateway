@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { p256 } from '@noble/curves/nist';
+import { p256 } from '@noble/curves/nist.js';
 import * as pkcs11js from 'pkcs11js';
-import { Signer } from './signer';
+import { Signer } from './signer.js';
 
 export interface HSMSignerOptions {
     /**
@@ -103,7 +103,12 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
                     // https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.1/pkcs11-spec-v3.1.html
                     Buffer.alloc(p256.Point.Fn.BYTES * 2),
                 );
-                return p256.Signature.fromBytes(compactSignature, 'compact').normalizeS().toBytes('der');
+                let signature = p256.Signature.fromBytes(compactSignature, 'compact');
+                if (signature.hasHighS()) {
+                    signature = new p256.Signature(signature.r, p256.Point.CURVE().n - signature.s);
+                }
+
+                return signature.toBytes('der');
             },
             close: () => {
                 pkcs11.C_CloseSession(session);

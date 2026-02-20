@@ -5,7 +5,7 @@
  */
 
 import { ServiceError } from '@grpc/grpc-js';
-import { ErrorDetail, GatewayError } from './gatewayerror';
+import { ErrorDetail, GatewayError } from './gatewayerror.js';
 
 /**
  * EndorseError is thrown when a failure occurs endorsing a transaction proposal.

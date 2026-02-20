@@ -5,8 +5,8 @@
  */
 
 import * as grpc from '@grpc/grpc-js';
-import { connect, ConnectOptions } from './gateway';
-import { Identity } from './identity/identity';
+import { connect, ConnectOptions } from './gateway.js';
+import { Identity } from './identity/identity.js';
 
 describe('Gateway', () => {
     let identity: Identity;

@@ -6,10 +6,10 @@
 
 import { CallOptions } from '@grpc/grpc-js';
 import { common, peer } from '@hyperledger/fabric-protos';
-import { CloseableAsyncIterable, GatewayClient } from './client';
-import { assertDefined } from './gateway';
-import { Signable } from './signable';
-import { SigningIdentity } from './signingidentity';
+import { CloseableAsyncIterable, GatewayClient } from './client.js';
+import { assertDefined } from './gateway.js';
+import { Signable } from './signable.js';
+import { SigningIdentity } from './signingidentity.js';
 
 /**
  * Delivers block events.

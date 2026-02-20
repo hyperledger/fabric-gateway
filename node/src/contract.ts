@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GatewayClient } from './client';
-import { newCommitError } from './commiterror';
-import { Proposal } from './proposal';
-import { ProposalBuilder, ProposalOptions } from './proposalbuilder';
-import { SigningIdentity } from './signingidentity';
-import { SubmittedTransaction } from './submittedtransaction';
+import { GatewayClient } from './client.js';
+import { newCommitError } from './commiterror.js';
+import { Proposal } from './proposal.js';
+import { ProposalBuilder, ProposalOptions } from './proposalbuilder.js';
+import { SigningIdentity } from './signingidentity.js';
+import { SubmittedTransaction } from './submittedtransaction.js';
 
 /**
  * Represents a smart contract, and allows applications to:

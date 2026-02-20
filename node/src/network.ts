@@ -11,14 +11,18 @@ import {
     BlockEventsBuilderOptions,
     BlockEventsOptions,
     FilteredBlockEventsBuilder,
-} from './blockeventsbuilder';
-import { BlockAndPrivateDataEventsRequest, BlockEventsRequest, FilteredBlockEventsRequest } from './blockeventsrequest';
-import { ChaincodeEvent } from './chaincodeevent';
-import { ChaincodeEventsBuilder, ChaincodeEventsOptions } from './chaincodeeventsbuilder';
-import { ChaincodeEventsRequest } from './chaincodeeventsrequest';
-import { CloseableAsyncIterable, GatewayClient } from './client';
-import { Contract, ContractImpl } from './contract';
-import { SigningIdentity } from './signingidentity';
+} from './blockeventsbuilder.js';
+import {
+    BlockAndPrivateDataEventsRequest,
+    BlockEventsRequest,
+    FilteredBlockEventsRequest,
+} from './blockeventsrequest.js';
+import { ChaincodeEvent } from './chaincodeevent.js';
+import { ChaincodeEventsBuilder, ChaincodeEventsOptions } from './chaincodeeventsbuilder.js';
+import { ChaincodeEventsRequest } from './chaincodeeventsrequest.js';
+import { CloseableAsyncIterable, GatewayClient } from './client.js';
+import { Contract, ContractImpl } from './contract.js';
+import { SigningIdentity } from './signingidentity.js';
 
 /**
  * Network represents a network of nodes that are members of a specific Fabric channel. The Network can be used to

@@ -6,10 +6,10 @@
 
 import { CallOptions } from '@grpc/grpc-js';
 import { gateway } from '@hyperledger/fabric-protos';
-import { ChaincodeEvent, newChaincodeEvents } from './chaincodeevent';
-import { CloseableAsyncIterable, GatewayClient } from './client';
-import { Signable } from './signable';
-import { SigningIdentity } from './signingidentity';
+import { ChaincodeEvent, newChaincodeEvents } from './chaincodeevent.js';
+import { CloseableAsyncIterable, GatewayClient } from './client.js';
+import { Signable } from './signable.js';
+import { SigningIdentity } from './signingidentity.js';
 
 /**
  * Delivers events emitted by transaction functions in a specific chaincode.

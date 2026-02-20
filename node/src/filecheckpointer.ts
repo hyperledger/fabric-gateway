@@ -5,8 +5,8 @@
  */
 
 import fs from 'node:fs';
-import { ChaincodeEvent } from './chaincodeevent';
-import { Checkpointer } from './checkpointer';
+import { ChaincodeEvent } from './chaincodeevent.js';
+import { Checkpointer } from './checkpointer.js';
 
 /**
  * Interface to store checkpointer state during file read write operations .

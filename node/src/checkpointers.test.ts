@@ -6,10 +6,10 @@
 
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
-import { ChaincodeEvent } from './chaincodeevent';
-import { Checkpointer } from './checkpointer';
-import * as checkpointers from './checkpointers';
-import { createTempDir } from './testutils.test';
+import { ChaincodeEvent } from './chaincodeevent.js';
+import { Checkpointer } from './checkpointer.js';
+import * as checkpointers from './checkpointers.js';
+import { createTempDir } from './testutils.test.js';
 
 /* eslint-disable jest/expect-expect */
 

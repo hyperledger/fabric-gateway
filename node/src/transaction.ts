@@ -6,12 +6,12 @@
 
 import { CallOptions } from '@grpc/grpc-js';
 import { common, gateway } from '@hyperledger/fabric-protos';
-import { GatewayClient } from './client';
-import { assertDefined } from './gateway';
-import { Signable } from './signable';
-import { SigningIdentity } from './signingidentity';
-import { SubmittedTransaction, SubmittedTransactionImpl } from './submittedtransaction';
-import { parseTransactionEnvelope } from './transactionparser';
+import { GatewayClient } from './client.js';
+import { assertDefined } from './gateway.js';
+import { Signable } from './signable.js';
+import { SigningIdentity } from './signingidentity.js';
+import { SubmittedTransaction, SubmittedTransactionImpl } from './submittedtransaction.js';
+import { parseTransactionEnvelope } from './transactionparser.js';
 
 /**
  * Represents an endorsed transaction that can be submitted to the orderer for commit to the ledger.

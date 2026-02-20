@@ -5,12 +5,12 @@
  */
 
 import { common, gateway as gatewayproto, peer } from '@hyperledger/fabric-protos';
-import { Contract } from './contract';
-import { Gateway, InternalConnectOptions, internalConnect } from './gateway';
-import { Identity } from './identity/identity';
-import { Network } from './network';
-import { undefinedSignerMessage } from './signingidentity';
-import { asString, MockGatewayGrpcClient, newDuplexStreamResponse, newEndorseResponse } from './testutils.test';
+import { Contract } from './contract.js';
+import { Gateway, InternalConnectOptions, internalConnect } from './gateway.js';
+import { Identity } from './identity/identity.js';
+import { Network } from './network.js';
+import { undefinedSignerMessage } from './signingidentity.js';
+import { asString, MockGatewayGrpcClient, newDuplexStreamResponse, newEndorseResponse } from './testutils.test.js';
 
 describe('Offline sign', () => {
     const expectedResult = 'TX_RESULT';

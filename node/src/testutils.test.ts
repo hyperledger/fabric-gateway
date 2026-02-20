@@ -22,8 +22,8 @@ import {
     endorseMethod,
     evaluateMethod,
     submitMethod,
-} from './client';
-import { assertDefined } from './gateway';
+} from './client.js';
+import { assertDefined } from './gateway.js';
 
 /* eslint-disable jest/no-export */
 

@@ -5,6 +5,9 @@
  */
 
 import { common, orderer } from '@hyperledger/fabric-protos';
+// google-protobuf has no package exports field, so deep path imports are
+// unresolvable under node18 module resolution. Disable unsafe rules for this import.
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
 import {
     BlockAndPrivateDataEventsRequest,
@@ -13,10 +16,10 @@ import {
     BlockEventsRequestImpl,
     FilteredBlockEventsRequest,
     FilteredBlockEventsRequestImpl,
-} from './blockeventsrequest';
-import { GatewayClient } from './client';
-import { EventsBuilder, EventsOptions } from './eventsbuilder';
-import { SigningIdentity } from './signingidentity';
+} from './blockeventsrequest.js';
+import { GatewayClient } from './client.js';
+import { EventsBuilder, EventsOptions } from './eventsbuilder.js';
+import { SigningIdentity } from './signingidentity.js';
 
 function seekLargestBlockNumber(): orderer.SeekPosition {
     const largestBlockNumber = new orderer.SeekSpecified();

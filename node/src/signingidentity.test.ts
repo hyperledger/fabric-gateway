@@ -5,9 +5,9 @@
  */
 
 import { msp } from '@hyperledger/fabric-protos';
-import { Identity } from './identity/identity';
-import { Signer } from './identity/signer';
-import { SigningIdentity } from './signingidentity';
+import { Identity } from './identity/identity.js';
+import { Signer } from './identity/signer.js';
+import { SigningIdentity } from './signingidentity.js';
 
 describe('SigningIdentity', () => {
     let identity: Identity;

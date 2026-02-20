@@ -5,11 +5,14 @@
  */
 
 import { common, gateway, peer } from '@hyperledger/fabric-protos';
+// google-protobuf has no package exports field, so deep path imports are
+// unresolvable under node18 module resolution. Disable unsafe rules for this import.
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
-import { GatewayClient } from './client';
-import { Proposal, ProposalImpl } from './proposal';
-import { SigningIdentity } from './signingidentity';
-import { TransactionContext } from './transactioncontext';
+import { GatewayClient } from './client.js';
+import { Proposal, ProposalImpl } from './proposal.js';
+import { SigningIdentity } from './signingidentity.js';
+import { TransactionContext } from './transactioncontext.js';
 
 /**
  * Options used when evaluating or endorsing a transaction proposal.

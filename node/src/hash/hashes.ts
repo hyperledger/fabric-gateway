@@ -5,7 +5,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { Hash } from './hash';
+import { Hash } from './hash.js';
 
 /**
  * Returns the input message unchanged. This can be used if the signing implementation requires the full message bytes,
