@@ -6,11 +6,11 @@
 
 import { CallOptions } from '@grpc/grpc-js';
 import { common, gateway, peer } from '@hyperledger/fabric-protos';
-import { GatewayClient } from './client';
-import { assertDefined } from './gateway';
-import { Signable } from './signable';
-import { SigningIdentity } from './signingidentity';
-import { Transaction, TransactionImpl } from './transaction';
+import { GatewayClient } from './client.js';
+import { assertDefined } from './gateway.js';
+import { Signable } from './signable.js';
+import { SigningIdentity } from './signingidentity.js';
+import { Transaction, TransactionImpl } from './transaction.js';
 
 /**
  * Proposal represents a transaction proposal that can be sent to peers for endorsement or evaluated as a query.

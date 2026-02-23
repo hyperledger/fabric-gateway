@@ -5,7 +5,7 @@
  */
 
 import { createHash, generateKeyPairSync, verify } from 'node:crypto';
-import { newPrivateKeySigner } from './signers';
+import { newPrivateKeySigner } from './signers.js';
 
 describe('signers', () => {
     it('throws for public key', () => {

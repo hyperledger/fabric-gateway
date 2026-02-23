@@ -5,7 +5,7 @@
  */
 
 import { peer } from '@hyperledger/fabric-protos';
-import { Status, StatusNames } from './status';
+import { Status, StatusNames } from './status.js';
 
 /**
  * CommitError is thrown to indicate that a transaction committed with an unsuccessful status code.

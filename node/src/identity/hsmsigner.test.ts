@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { p256 } from '@noble/curves/nist';
+import { p256 } from '@noble/curves/nist.js';
 import { createHash } from 'node:crypto';
 import { Mechanism, Pkcs11Error, SessionInfo, SlotInfo, Template, TokenInfo } from 'pkcs11js';
-import { HSMSignerOptions } from './hsmsigner';
-import { newHSMSignerFactory } from './signers';
+import { HSMSignerOptions } from './hsmsigner.js';
+import { newHSMSignerFactory } from './signers.js';
 
 const CKO_PRIVATE_KEY = 179;
 const CKA_ID = 54;
@@ -212,7 +212,7 @@ describe('When using an HSM Signer', () => {
         });
         pkcs11Stub.C_SignInit = jest.fn();
         pkcs11Stub.C_SignAsync = jest.fn((session, digest, buffer) => {
-            const signature = p256.sign(digest, privateKey).toBytes('compact');
+            const signature = p256.sign(digest, privateKey, { format: 'compact', prehash: false });
             signature.forEach((b, i) => buffer.writeUInt8(b, i));
             // Return buffer of exactly signature length regardless of supplied buffer size
             const result = buffer.subarray(0, signature.length);
@@ -372,7 +372,7 @@ describe('When using an HSM Signer', () => {
         const { signer } = hsmSignerFactory.newSigner(hsmOptions);
         const signature = await signer(digest);
 
-        const valid = p256.verify(signature, digest, publicKey);
+        const valid = p256.verify(signature, digest, publicKey, { format: 'der', prehash: false });
         expect(valid).toBe(true);
 
         expect(pkcs11Stub.C_SignInit).toHaveBeenCalledWith(mockSession, { mechanism: CKM_ECDSA }, mockPrivateKeyHandle);

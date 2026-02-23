@@ -5,9 +5,9 @@
  */
 
 import * as grpc from '@grpc/grpc-js';
-import { connect, ConnectOptions } from './gateway';
-import { Identity } from './identity/identity';
-import { Network } from './network';
+import { connect, ConnectOptions } from './gateway.js';
+import { Identity } from './identity/identity.js';
+import { Network } from './network.js';
 
 describe('Network', () => {
     let network: Network;

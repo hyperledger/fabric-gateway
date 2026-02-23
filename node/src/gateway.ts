@@ -16,7 +16,7 @@ import {
     requestCallback,
 } from '@grpc/grpc-js';
 import { common, gateway, peer } from '@hyperledger/fabric-protos';
-import { ChaincodeEventsRequest, Commit, Proposal, Transaction } from '.';
+import { ChaincodeEventsRequest, Commit, Proposal, Transaction } from './index.js';
 import {
     BlockAndPrivateDataEventsRequest,
     BlockAndPrivateDataEventsRequestImpl,
@@ -24,17 +24,17 @@ import {
     BlockEventsRequestImpl,
     FilteredBlockEventsRequest,
     FilteredBlockEventsRequestImpl,
-} from './blockeventsrequest';
-import { ChaincodeEventsRequestImpl } from './chaincodeeventsrequest';
-import { GatewayClient, GatewayGrpcClient, newGatewayClient } from './client';
-import { CommitImpl } from './commit';
-import { Hash } from './hash/hash';
-import { Identity } from './identity/identity';
-import { Signer } from './identity/signer';
-import { Network, NetworkImpl } from './network';
-import { ProposalImpl } from './proposal';
-import { SigningIdentity } from './signingidentity';
-import { TransactionImpl } from './transaction';
+} from './blockeventsrequest.js';
+import { ChaincodeEventsRequestImpl } from './chaincodeeventsrequest.js';
+import { GatewayClient, GatewayGrpcClient, newGatewayClient } from './client.js';
+import { CommitImpl } from './commit.js';
+import { Hash } from './hash/hash.js';
+import { Identity } from './identity/identity.js';
+import { Signer } from './identity/signer.js';
+import { Network, NetworkImpl } from './network.js';
+import { ProposalImpl } from './proposal.js';
+import { SigningIdentity } from './signingidentity.js';
+import { TransactionImpl } from './transaction.js';
 
 /**
  * Interface describing the public API of the gRPC [Client](https://grpc.github.io/grpc/node/grpc.Client.html) class,

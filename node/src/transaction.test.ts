@@ -6,14 +6,14 @@
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
 import { gateway as gatewayproto, peer } from '@hyperledger/fabric-protos';
-import { CommitError } from './commiterror';
-import { CommitStatusError } from './commitstatuserror';
-import { Contract } from './contract';
-import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
-import { Identity } from './identity/identity';
-import { Network } from './network';
-import { SubmitError } from './submiterror';
-import { asString, MockGatewayGrpcClient, newEndorseResponse } from './testutils.test';
+import { CommitError } from './commiterror.js';
+import { CommitStatusError } from './commitstatuserror.js';
+import { Contract } from './contract.js';
+import { Gateway, internalConnect, InternalConnectOptions } from './gateway.js';
+import { Identity } from './identity/identity.js';
+import { Network } from './network.js';
+import { SubmitError } from './submiterror.js';
+import { asString, MockGatewayGrpcClient, newEndorseResponse } from './testutils.test.js';
 
 describe('Transaction', () => {
     const expectedResult = 'TX_RESULT';

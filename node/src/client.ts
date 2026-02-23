@@ -7,11 +7,11 @@
 import { CallOptions, ClientUnaryCall, Metadata, requestCallback, ServiceError } from '@grpc/grpc-js';
 import { common, gateway, peer } from '@hyperledger/fabric-protos';
 import { Message } from 'google-protobuf';
-import { CommitStatusError } from './commitstatuserror';
-import { EndorseError } from './endorseerror';
-import { ConnectOptions } from './gateway';
-import { GatewayError, newGatewayError } from './gatewayerror';
-import { SubmitError } from './submiterror';
+import { CommitStatusError } from './commitstatuserror.js';
+import { EndorseError } from './endorseerror.js';
+import { ConnectOptions } from './gateway.js';
+import { GatewayError, newGatewayError } from './gatewayerror.js';
+import { SubmitError } from './submiterror.js';
 
 export const evaluateMethod = '/gateway.Gateway/Evaluate';
 export const endorseMethod = '/gateway.Gateway/Endorse';

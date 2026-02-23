@@ -5,7 +5,7 @@
  */
 
 import { gateway, peer } from '@hyperledger/fabric-protos';
-import { CloseableAsyncIterable } from './client';
+import { CloseableAsyncIterable } from './client.js';
 
 /**
  * Chaincode event emitted by a transaction function.

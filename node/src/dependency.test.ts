@@ -6,7 +6,7 @@
 
 import { generateKeyPairSync } from 'node:crypto';
 import { dirname, sep as pathSeparator } from 'node:path';
-import type { signers as SignersType } from '.';
+import type { signers as SignersType } from './index.js';
 
 function isLoaded(moduleName: string): boolean {
     const moduleFile = require.resolve(moduleName);

@@ -1,6 +1,12 @@
-module.exports = {
+export default {
     roots: ['<rootDir>/src'],
-    preset: 'ts-jest',
+    extensionsToTreatAsEsm: ['.ts'],
+    moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' },
+    transform: {
+        '^.+\\.tsx?$': ['ts-jest', { useESM: true }],
+        '^.+\\.js$': ['ts-jest', { useESM: true }],
+    },
+    transformIgnorePatterns: ['node_modules/(?!(@noble)/)'],
     testEnvironment: 'node',
     collectCoverage: true,
     collectCoverageFrom: ['**/*.[jt]s?(x)', '!**/*.d.ts'],
