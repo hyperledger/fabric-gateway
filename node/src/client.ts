@@ -54,13 +54,11 @@ Symbol.dispose ??= Symbol('Symbol.dispose');
  *
  * @see [ECMAScript explicit resource management](https://github.com/tc39/proposal-explicit-resource-management)
  */
-export interface CloseableAsyncIterable<T> extends AsyncIterable<T> {
+export interface CloseableAsyncIterable<T> extends AsyncIterable<T>, Disposable {
     /**
      * Close the iterable to free up resources when no more elements are required.
      */
     close(): void;
-
-    [Symbol.dispose](): void;
 }
 
 /**
