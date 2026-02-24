@@ -1,7 +1,16 @@
 {
     "cleanOutputDir": true,
     "entryPoints": ["src/index.ts"],
+    "excludeInternal": true,
     "out": "apidocs",
     "readme": "src/README.md",
-    "treatWarningsAsErrors": true
+    "treatWarningsAsErrors": true,
+    "validation": {
+        "notExported": true,
+        "invalidLink": true,
+        "invalidPath": true,
+        "rewrittenLink": true,
+        "notDocumented": true,
+        "unusedMergeModuleWith": true
+    }
 }

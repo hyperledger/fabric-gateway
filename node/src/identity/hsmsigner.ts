@@ -8,6 +8,9 @@ import { p256 } from '@noble/curves/nist';
 import * as pkcs11js from 'pkcs11js';
 import { Signer } from './signer';
 
+/**
+ * Options used when creating a new HSM signer implementation.
+ */
 export interface HSMSignerOptions {
     /**
      * The label associated with the token for the slot.
@@ -30,6 +33,10 @@ export interface HSMSignerOptions {
     userType?: number;
 }
 
+/**
+ * HSM signer implementation and accompanying {@link close} function to free
+ * resources after use.
+ */
 export interface HSMSigner {
     /**
      * HSM signer implementation.

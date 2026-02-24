@@ -42,9 +42,13 @@ import { TransactionImpl } from './transaction';
  * concrete gRPC [Client](https://grpc.github.io/grpc/node/grpc.Client.html) instance.
  */
 export interface GrpcClient {
+    /** @internal */
     close(): void;
+    /** @internal */
     getChannel(): ChannelInterface;
+    /** @internal */
     waitForReady(deadline: Deadline, callback: (error?: Error) => void): void;
+    /** @internal */
     makeUnaryRequest<RequestType, ResponseType>(
         method: string,
         serialize: (value: RequestType) => Buffer,
@@ -54,6 +58,7 @@ export interface GrpcClient {
         options: CallOptions,
         callback: requestCallback<ResponseType>,
     ): ClientUnaryCall;
+    /** @internal */
     makeUnaryRequest<RequestType, ResponseType>(
         method: string,
         serialize: (value: RequestType) => Buffer,
@@ -62,6 +67,7 @@ export interface GrpcClient {
         metadata: CallOptions | Metadata,
         callback: requestCallback<ResponseType>,
     ): ClientUnaryCall;
+    /** @internal */
     makeUnaryRequest<RequestType, ResponseType>(
         method: string,
         serialize: (value: RequestType) => Buffer,
@@ -69,6 +75,7 @@ export interface GrpcClient {
         argument: RequestType,
         callback: requestCallback<ResponseType>,
     ): ClientUnaryCall;
+    /** @internal */
     makeClientStreamRequest<RequestType, ResponseType>(
         method: string,
         serialize: (value: RequestType) => Buffer,
@@ -77,6 +84,7 @@ export interface GrpcClient {
         options: CallOptions,
         callback: requestCallback<ResponseType>,
     ): ClientWritableStream<RequestType>;
+    /** @internal */
     makeClientStreamRequest<RequestType, ResponseType>(
         method: string,
         serialize: (value: RequestType) => Buffer,
@@ -84,12 +92,14 @@ export interface GrpcClient {
         metadata: CallOptions | Metadata,
         callback: requestCallback<ResponseType>,
     ): ClientWritableStream<RequestType>;
+    /** @internal */
     makeClientStreamRequest<RequestType, ResponseType>(
         method: string,
         serialize: (value: RequestType) => Buffer,
         deserialize: (value: Buffer) => ResponseType,
         callback: requestCallback<ResponseType>,
     ): ClientWritableStream<RequestType>;
+    /** @internal */
     makeServerStreamRequest<RequestType, ResponseType>(
         method: string,
         serialize: (value: RequestType) => Buffer,
@@ -98,6 +108,7 @@ export interface GrpcClient {
         metadata: Metadata,
         options?: CallOptions,
     ): ClientReadableStream<ResponseType>;
+    /** @internal */
     makeServerStreamRequest<RequestType, ResponseType>(
         method: string,
         serialize: (value: RequestType) => Buffer,
@@ -105,6 +116,7 @@ export interface GrpcClient {
         argument: RequestType,
         options?: CallOptions,
     ): ClientReadableStream<ResponseType>;
+    /** @internal */
     makeBidiStreamRequest<RequestType, ResponseType>(
         method: string,
         serialize: (value: RequestType) => Buffer,
@@ -112,6 +124,7 @@ export interface GrpcClient {
         metadata: Metadata,
         options?: CallOptions,
     ): ClientDuplexStream<RequestType, ResponseType>;
+    /** @internal */
     makeBidiStreamRequest<RequestType, ResponseType>(
         method: string,
         serialize: (value: RequestType) => Buffer,
@@ -261,7 +274,7 @@ Symbol.dispose ??= Symbol('Symbol.dispose');
  *
  * @see [ECMAScript explicit resource management](https://github.com/tc39/proposal-explicit-resource-management)
  */
-export interface Gateway {
+export interface Gateway extends Disposable {
     /**
      * Get the identity used by this gateway.
      */
@@ -388,8 +401,6 @@ export interface Gateway {
      * contracts obtained using the Gateway, including removing event listeners.
      */
     close(): void;
-
-    [Symbol.dispose](): void;
 }
 
 interface GatewayOptions {
