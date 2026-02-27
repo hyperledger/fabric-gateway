@@ -17,7 +17,7 @@ jobs:
       - name: Generate documentation
         run: make generate-docs-node
       - name: Upload documentation
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: node-doc
           path: node/apidocs/
@@ -35,7 +35,7 @@ jobs:
       - name: Generate JavaDoc
         run: make generate-docs-java
       - name: Upload JavaDoc
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: java-doc
           path: java/target/reports/apidocs/
@@ -51,7 +51,7 @@ jobs:
       - name: Generate documentation site
         run: make generate-docs
       - name: Upload documentation site
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: site-doc
           path: site/
