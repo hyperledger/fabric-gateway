@@ -19,6 +19,8 @@ func (factory *contextFactory) getOrDefault(supplier contextWithCancel) (context
 	if supplier != nil {
 		return supplier(factory.ctx)
 	}
+
+	//#nosec G118 -- CancelFunc will be used by caller, not called here.
 	return context.WithCancel(factory.ctx)
 }
 

@@ -108,6 +108,7 @@ func WithClientConnection(clientConnection grpc.ClientConnInterface) ConnectOpti
 func WithEvaluateTimeout(timeout time.Duration) ConnectOption {
 	return func(gw *Gateway) error {
 		gw.client.contexts.evaluate = func(parent context.Context) (context.Context, context.CancelFunc) {
+			//#nosec G118 -- CancelFunc will be used by caller, not called here.
 			return context.WithTimeout(parent, timeout)
 		}
 		return nil
@@ -118,6 +119,7 @@ func WithEvaluateTimeout(timeout time.Duration) ConnectOption {
 func WithEndorseTimeout(timeout time.Duration) ConnectOption {
 	return func(gw *Gateway) error {
 		gw.client.contexts.endorse = func(parent context.Context) (context.Context, context.CancelFunc) {
+			//#nosec G118 -- CancelFunc will be used by caller, not called here.
 			return context.WithTimeout(parent, timeout)
 		}
 		return nil
@@ -128,6 +130,7 @@ func WithEndorseTimeout(timeout time.Duration) ConnectOption {
 func WithSubmitTimeout(timeout time.Duration) ConnectOption {
 	return func(gw *Gateway) error {
 		gw.client.contexts.submit = func(parent context.Context) (context.Context, context.CancelFunc) {
+			//#nosec G118 -- CancelFunc will be used by caller, not called here.
 			return context.WithTimeout(parent, timeout)
 		}
 		return nil
@@ -138,6 +141,7 @@ func WithSubmitTimeout(timeout time.Duration) ConnectOption {
 func WithCommitStatusTimeout(timeout time.Duration) ConnectOption {
 	return func(gw *Gateway) error {
 		gw.client.contexts.commitStatus = func(parent context.Context) (context.Context, context.CancelFunc) {
+			//#nosec G118 -- CancelFunc will be used by caller, not called here.
 			return context.WithTimeout(parent, timeout)
 		}
 		return nil
