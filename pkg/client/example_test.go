@@ -5,6 +5,7 @@ package client_test
 
 import (
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"os"
 
@@ -51,11 +52,11 @@ func NewGrpcConnection() (*grpc.ClientConn, error) {
 	tlsCertificatePEM, err := os.ReadFile("tlsRootCertificate.pem")
 	panicOnError(err)
 
-	tlsCertificate, err := identity.CertificateFromPEM(tlsCertificatePEM)
-	panicOnError(err)
-
 	certPool := x509.NewCertPool()
-	certPool.AddCert(tlsCertificate)
+	if !certPool.AppendCertsFromPEM(tlsCertificatePEM) {
+		return nil, errors.New("failed to parse TLS certificate")
+	}
+
 	transportCredentials := credentials.NewClientTLSFromCert(certPool, "")
 
 	return grpc.NewClient("dns:///gateway.example.org:1337", grpc.WithTransportCredentials(transportCredentials))

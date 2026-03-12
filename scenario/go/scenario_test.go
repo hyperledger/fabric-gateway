@@ -7,7 +7,7 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -168,17 +168,19 @@ func connectGateway(peer string) error {
 		return fmt.Errorf("no connection info found for peer: %s", peer)
 	}
 
-	certificate, err := loadX509Cert(conn.tlsRootCertPath)
+	tlsCertificatePEM, err := os.ReadFile(conn.tlsRootCertPath) // #nosec G304
 	if err != nil {
 		return err
 	}
 
 	certPool := x509.NewCertPool()
-	certPool.AddCert(certificate)
+	if !certPool.AppendCertsFromPEM(tlsCertificatePEM) {
+		return errors.New("failed to parse TLS certificate")
+	}
 
 	url := fmt.Sprintf("dns:///%s:%d", conn.host, conn.port)
-
 	transportCredentials := credentials.NewClientTLSFromCert(certPool, conn.serverNameOverride)
+
 	clientConn, err := grpc.NewClient(url, grpc.WithTransportCredentials(transportCredentials))
 	if err != nil {
 		return err
@@ -193,21 +195,6 @@ func useGateway(name string) error {
 		return fmt.Errorf("no gateway found: %s", name)
 	}
 	return nil
-}
-
-func loadX509Cert(certFile string) (*x509.Certificate, error) {
-	cf, e := os.ReadFile(certFile) // #nosec G304
-	if e != nil {
-		return nil, e
-	}
-
-	cpb, _ := pem.Decode(cf)
-	crt, e := x509.ParseCertificate(cpb.Bytes)
-
-	if e != nil {
-		return nil, e
-	}
-	return crt, nil
 }
 
 func prepareTransaction(action string, name string) error {
