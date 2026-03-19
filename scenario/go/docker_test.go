@@ -157,7 +157,7 @@ func parseExecArgs(args []string) (containerName string, cmd []string, env []str
 // uses the docker compose sdk v5
 func ComposeCommand(action ComposeAction, fixturesDir string, dockerComposeFile string, projectname string) error {
 
-	configpath := []string{fixturesDir + "/docker-compose/" + dockerComposeFile}
+	configpath := []string{fixturesDir + "/" + dockerComposeFile}
 
 	dockerCLI, err := command.NewDockerCli()
 	if err != nil {
