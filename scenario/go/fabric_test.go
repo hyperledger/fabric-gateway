@@ -156,12 +156,7 @@ func startFabric() error {
 		return err
 	}
 
-	dm, err := getDockerManager()
-	if err != nil {
-		return err
-	}
-
-	if _, err = dm.ComposeCommand(ComposeUp, dockerComposeDir, dockerComposeFile, "node"); err != nil {
+	if err := ComposeCommand("ComposeUp", dockerComposeDir, dockerComposeFile, "node"); err != nil {
 		return err
 	}
 
@@ -181,12 +176,7 @@ func stopFabric() error {
 
 	fmt.Println("stopFabric")
 
-	dm, err := getDockerManager()
-	if err != nil {
-		return err
-	}
-
-	if _, err = dm.ComposeCommand(ComposeDown, dockerComposeDir, dockerComposeFile, "node"); err != nil {
+	if err := ComposeCommand("ComposeDown", dockerComposeDir, dockerComposeFile, "node"); err != nil {
 		return err
 	}
 
