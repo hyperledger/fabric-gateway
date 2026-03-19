@@ -40,7 +40,7 @@ jobs:
           go-version: stable
           check-latest: true
           cache: false
-      - name: Create OSV-Scanner config
+      - name: Create OSV-Scanner configuration
         run: |
           echo "GoVersionOverride = '${{ steps.setup-go.outputs.go-version }}'" > src/osv-scanner-config.toml
           if [ -r latest/osv-scanner.toml ]; then
@@ -78,7 +78,7 @@ jobs:
           sparse-checkout: |
             osv-scanner.toml
           sparse-checkout-cone-mode: false
-      - name: Use latest OSV-Scanner config
+      - name: Use latest OSV-Scanner configuration
         if: ${{ inputs.latest-config && inputs.ref }}
         run: |
           if [ -r latest/osv-scanner.toml ]; then
@@ -121,7 +121,7 @@ jobs:
           sparse-checkout: |
             osv-scanner.toml
           sparse-checkout-cone-mode: false
-      - name: Use latest OSV-Scanner config
+      - name: Use latest OSV-Scanner configuration
         if: ${{ inputs.latest-config && inputs.ref }}
         run: |
           if [ -r latest/osv-scanner.toml ]; then
