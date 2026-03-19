@@ -124,8 +124,9 @@ install-osv-scanner:
 
 .PHONY: scan-go-osv-scanner
 scan-go-osv-scanner: install-osv-scanner
-	echo "GoVersionOverride = '$$(go env GOVERSION | sed -e 's/^go//' -e 's/-.*//')'" > '$(TMPDIR)/osv-scanner.toml'
-	osv-scanner scan --config='$(TMPDIR)/osv-scanner.toml' --lockfile='$(base_dir)/go.mod'
+	echo "GoVersionOverride = '$$(go env GOVERSION | sed -e 's/^go//' -e 's/-.*//')'" > '$(TMPDIR)/osv-scanner.toml' && \
+		if [ -r '$(base_dir)/osv-scanner.toml' ]; then cat '$(base_dir)/osv-scanner.toml' >> '$(TMPDIR)/osv-scanner.toml'; fi && \
+		osv-scanner scan --config='$(TMPDIR)/osv-scanner.toml' --lockfile='$(base_dir)/go.mod'
 
 .PHONY: scan-node
 scan-node: scan-node-osv-scanner

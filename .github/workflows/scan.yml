@@ -8,6 +8,11 @@ on:
         type: string
         required: false
         default: ""
+      latest-config:
+        description: Whether to use the latest OSV Scanner configuration.
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -18,24 +23,39 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          path: src
           ref: ${{ inputs.ref }}
+      - name: Checkout latest OSV Scanner configuration
+        if: ${{ inputs.latest-config && inputs.ref }}
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          path: latest
+          sparse-checkout: |
+            osv-scanner.toml
+          sparse-checkout-cone-mode: false
       - name: Set up Go
         id: setup-go
         uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
         with:
           go-version: stable
           check-latest: true
+          cache: false
       - name: Create OSV-Scanner config
         run: |
-          echo "GoVersionOverride = '${{ steps.setup-go.outputs.go-version }}'" > osv-scanner.toml
+          echo "GoVersionOverride = '${{ steps.setup-go.outputs.go-version }}'" > src/osv-scanner-config.toml
+          if [ -r latest/osv-scanner.toml ]; then
+              cat latest/osv-scanner.toml >> src/osv-scanner-config.toml
+          elif [ -r src/osv-scanner.toml ]; then
+              cat src/osv-scanner.toml >> src/osv-scanner-config.toml
+          fi
       - name: Scan
         id: scan-go
         run: |
           docker run --rm \
-            --volume './:/src' \
+            --volume './src/:/src' \
             ghcr.io/google/osv-scanner:latest \
-            scan \
-            --config=/src/osv-scanner.toml \
+            scan source \
+            --config=/src/osv-scanner-config.toml \
             --lockfile=/src/go.mod \
             --format=markdown > osv-scanner.md
       - name: Report failure
@@ -48,22 +68,37 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          path: src
           ref: ${{ inputs.ref }}
+      - name: Checkout latest OSV Scanner configuration
+        if: ${{ inputs.latest-config && inputs.ref }}
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          path: latest
+          sparse-checkout: |
+            osv-scanner.toml
+          sparse-checkout-cone-mode: false
+      - name: Use latest OSV-Scanner config
+        if: ${{ inputs.latest-config && inputs.ref }}
+        run: |
+          if [ -r latest/osv-scanner.toml ]; then
+              cp -f latest/osv-scanner.toml src/osv-scanner.toml
+          fi
       - name: Set up Node
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: "lts/*"
       - name: Create BOM
-        working-directory: node
+        working-directory: src/node
         run: |
           npm sbom --omit=dev --package-lock-only --sbom-format cyclonedx > bom.cdx.json
       - name: Scan
         id: scan-node
         run: |
           docker run --rm \
-            --volume './:/src' \
+            --volume './src/:/src' \
             ghcr.io/google/osv-scanner:latest \
-            scan \
+            scan source \
             --lockfile=/src/node/bom.cdx.json \
             --format=markdown > osv-scanner.md
       - name: Report failure
@@ -76,14 +111,29 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          path: src
           ref: ${{ inputs.ref }}
+      - name: Checkout latest OSV Scanner configuration
+        if: ${{ inputs.latest-config && inputs.ref }}
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          path: latest
+          sparse-checkout: |
+            osv-scanner.toml
+          sparse-checkout-cone-mode: false
+      - name: Use latest OSV-Scanner config
+        if: ${{ inputs.latest-config && inputs.ref }}
+        run: |
+          if [ -r latest/osv-scanner.toml ]; then
+              cp -f latest/osv-scanner.toml src/osv-scanner.toml
+          fi
       - name: Scan
         id: scan-java
         run: |
           docker run --rm \
-            --volume './:/src' \
+            --volume './src/:/src' \
             ghcr.io/google/osv-scanner:latest \
-            scan \
+            scan source \
             --lockfile=/src/java/pom.xml \
             --data-source=native \
             --format=markdown > osv-scanner.md
