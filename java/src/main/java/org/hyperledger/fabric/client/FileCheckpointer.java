@@ -100,11 +100,6 @@ public final class FileCheckpointer implements Checkpointer, AutoCloseable {
     }
 
     @Override
-    public void checkpointChaincodeEvent(final ChaincodeEvent event) throws IOException {
-        checkpointTransaction(event.getBlockNumber(), event.getTransactionId());
-    }
-
-    @Override
     public OptionalLong getBlockNumber() {
         return blockNumber;
     }

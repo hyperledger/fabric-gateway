@@ -34,5 +34,7 @@ public interface Checkpointer extends Checkpoint {
      * @param event a chaincode event.
      * @throws IOException if an I/O error occurs.
      */
-    void checkpointChaincodeEvent(ChaincodeEvent event) throws IOException;
+    default void checkpointChaincodeEvent(final ChaincodeEvent event) throws IOException {
+        checkpointTransaction(event.getBlockNumber(), event.getTransactionId());
+    }
 }
