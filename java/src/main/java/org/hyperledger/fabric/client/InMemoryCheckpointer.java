@@ -14,9 +14,15 @@ import java.util.OptionalLong;
  * It can be used to checkpoint progress after successfully processing events, allowing eventing to be resumed from this point.
  */
 public final class InMemoryCheckpointer implements Checkpointer {
-
     private OptionalLong blockNumber = OptionalLong.empty();
     private String transactionId;
+
+    /**
+     * Default constructor.
+     */
+    public InMemoryCheckpointer() {
+        // Nothing to do.
+    }
 
     @Override
     public void checkpointBlock(final long blockNumber) {

@@ -324,7 +324,7 @@
                     </links>
                     <release>${javaReleaseVersion}</release>
                     <detectJavaApiLink>true</detectJavaApiLink>
-                    <doclint>all,-missing</doclint>
+                    <doclint>all</doclint>
                     <quiet>true</quiet>
                     <docfilessubdirs>true</docfilessubdirs>
                 </configuration>
