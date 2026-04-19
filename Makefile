@@ -126,7 +126,7 @@ install-osv-scanner:
 scan-go-osv-scanner: install-osv-scanner
 	echo "GoVersionOverride = '$$(go env GOVERSION | sed -e 's/^go//' -e 's/-.*//')'" > '$(TMPDIR)/osv-scanner.toml' && \
 		if [ -r '$(base_dir)/osv-scanner.toml' ]; then cat '$(base_dir)/osv-scanner.toml' >> '$(TMPDIR)/osv-scanner.toml'; fi && \
-		osv-scanner scan --config='$(TMPDIR)/osv-scanner.toml' --lockfile='$(base_dir)/go.mod'
+		osv-scanner scan source --config='$(TMPDIR)/osv-scanner.toml' --lockfile='$(base_dir)/go.mod'
 
 .PHONY: scan-node
 scan-node: scan-node-osv-scanner
@@ -140,7 +140,7 @@ scan-node-npm-audit:
 scan-node-osv-scanner: install-osv-scanner
 	cd '$(node_dir)' && \
 		npm sbom --omit=dev --package-lock-only --sbom-format cyclonedx > bom.cdx.json && \
-		osv-scanner scan --lockfile=bom.cdx.json
+		osv-scanner scan source --lockfile=bom.cdx.json
 
 .PHONY: scan-java
 scan-java: scan-java-osv-scanner
@@ -152,7 +152,7 @@ scan-java-dependency-check:
 
 .PHONY: scan-java-osv-scanner
 scan-java-osv-scanner: install-osv-scanner
-	osv-scanner scan --lockfile='$(java_dir)/pom.xml' --data-source=native
+	osv-scanner scan source --lockfile='$(java_dir)/pom.xml' --data-source=native
 
 .PHONY: install-mockery
 install-mockery:
