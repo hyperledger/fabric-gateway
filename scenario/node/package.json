@@ -34,6 +34,6 @@
         "expect": "^30.3.0",
         "prettier": "^3.8.0",
         "typescript": "~5.9.3",
-        "typescript-eslint": "^8.58.0"
+        "typescript-eslint": "^8.59.0"
     }
 }
