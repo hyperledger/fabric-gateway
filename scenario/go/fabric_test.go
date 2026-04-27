@@ -109,17 +109,17 @@ var peerConnectionInfos = map[string]*peerConnectionInfo{
 	},
 }
 
-var _mspToOrgMap map[string]string
-
 func GetOrgForMSP(mspID string) string {
-	if nil == _mspToOrgMap {
-		_mspToOrgMap = make(map[string]string)
-		_mspToOrgMap["Org1MSP"] = "org1.example.com"
-		_mspToOrgMap["Org2MSP"] = "org2.example.com"
-		_mspToOrgMap["Org3MSP"] = "org3.example.com"
+	switch mspID {
+	case "Org1MSP":
+		return "org1.example.com"
+	case "Org2MSP":
+		return "org2.example.com"
+	case "Org3MSP":
+		return "org3.example.com"
+	default:
+		return ""
 	}
-
-	return _mspToOrgMap[mspID]
 }
 
 var (
@@ -287,6 +287,8 @@ func committedSequenceNumber(chaincodeName string, channelName string) (int, err
 }
 
 func installChaincode(name string, language string, version string) error {
+	fmt.Printf("Install %s chaincode named %s at version %s\n", language, name, version)
+
 	path := "/opt/gopath/src/github.com/chaincode/" + language + "/" + name
 	pkg := name + ".tar.gz"
 
@@ -337,6 +339,8 @@ func chaincodeLabel(name string, version string) string {
 }
 
 func approveChaincode(name string, version string, sequence string, channelName string, signaturePolicy string, collectionConfig []string) error {
+	fmt.Printf("Approve chaincode named %s at version %s and sequence %s on channel %s\n", name, version, sequence, channelName)
+
 	wg := new(errgroup.Group)
 
 	for _, org := range orgs {
@@ -383,6 +387,8 @@ func approveChaincodeForOrg(org orgConfig, name string, version string, channelN
 }
 
 func commitChaincode(name string, version string, sequence string, channelName string, signaturePolicy string, collectionConfig []string) error {
+	fmt.Printf("Commit chaincode named %s at version %s and sequence %s on channel %s\n", name, version, sequence, channelName)
+
 	commitCommand := []string{
 		"exec", "org1_cli", "peer", "lifecycle", "chaincode", "commit",
 		"--channelID", channelName,
@@ -420,12 +426,12 @@ func commitChaincode(name string, version string, sequence string, channelName s
 func createAndJoinChannels() error {
 	fmt.Println("createAndJoinChannels")
 
-	if err := startAllPeers(); err != nil {
-		return err
+	if channelsJoined {
+		return restartAllPeers()
 	}
 
-	if channelsJoined {
-		return nil
+	if _, err := startAllPeers(); err != nil {
+		return err
 	}
 
 	if err := joinOrderers(); err != nil {
@@ -437,10 +443,6 @@ func createAndJoinChannels() error {
 	}
 
 	channelsJoined = true
-
-	for peer := range peerConnectionInfos {
-		waitForHealthzOK(peer)
-	}
 
 	return nil
 }
@@ -488,33 +490,27 @@ func joinPeers() error {
 
 func joinPeer(peer string, org orgConfig) error {
 	env := "CORE_PEER_ADDRESS=" + peer
-	if _, err := dockerCommandWithTLS(
+	_, err := dockerCommandWithTLS(
 		"exec", "-e", env, org.cli, "peer", "channel", "join",
 		"-b", "/etc/hyperledger/configtx/mychannel.block",
-	); err != nil {
-		return err
-	}
-	return nil
+	)
+	return err
 }
 
 func stopPeer(peer string) error {
-	_, err := dockerCommand(
-		"stop", peer,
-	)
-	if err != nil {
+	if _, err := dockerCommand("stop", peer); err != nil {
 		return err
 	}
+
 	peerConnectionInfos[peer].running = false
 	return nil
 }
 
 func startPeer(peer string) error {
-	_, err := dockerCommand(
-		"start", peer,
-	)
-	if err != nil {
+	if _, err := dockerCommand("start", peer); err != nil {
 		return err
 	}
+
 	peerConnectionInfos[peer].running = true
 	waitForHealthzOK(peer)
 	return nil
@@ -527,7 +523,7 @@ func waitForHealthzOK(peer string) {
 	var health *HealthStatus
 	for !health.IsOK() {
 		if health != nil {
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(time.Second)
 		}
 
 		if current, err := getHealth(healthzURL); err != nil {
@@ -577,31 +573,45 @@ func (h *HealthStatus) IsOK() bool {
 	return h != nil && h.Status == "OK"
 }
 
-func startAllPeers() error {
+func restartAllPeers() error {
+	startedPeers, err := startAllPeers()
+	if err != nil {
+		return err
+	}
+
+	if len(startedPeers) > 0 {
+		// Give service discovery time to sync after restarting peers
+		time.Sleep(5 * time.Second)
+	}
+
+	return nil
+}
+
+func startAllPeers() ([]string, error) {
 	fmt.Println("startAllPeers")
-	startedPeers := false
+
+	var startedPeers []string
+
 	for peer, info := range peerConnectionInfos {
 		if !info.running {
 			if _, err := dockerCommand("start", peer); err != nil {
-				return err
+				return startedPeers, err
 			}
 			peerConnectionInfos[peer].running = true
-			startedPeers = true
+			startedPeers = append(startedPeers, peer)
 		}
 	}
 
-	if startedPeers {
-		for peer := range peerConnectionInfos {
-			waitForHealthzOK(peer)
-		}
+	for _, peer := range startedPeers {
+		waitForHealthzOK(peer)
 	}
-	return nil
+
+	return startedPeers, nil
 }
 
 func dockerCommandWithTLS(args ...string) (string, error) {
 	tlsOptions := []string{
 		"--tls",
-		//"true",
 		"--cafile",
 		"/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem",
 	}
