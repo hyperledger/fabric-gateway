@@ -23,7 +23,7 @@ mockery := $(go_bin_dir)/mockery
 mockery_version := 3.7.0
 
 kernel_name := $(shell uname -s)
-lowercase_kernel_name := $(shell tr '[:upper:]' '[:lower:]' <<< '$(kernel_name)')
+lowercase_kernel_name := $(shell echo '$(kernel_name)' | tr '[:upper:]' '[:lower:]')
 
 machine_hardware := $(shell uname -m)
 ifeq ($(machine_hardware), aarch64)
