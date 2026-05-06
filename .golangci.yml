@@ -51,6 +51,8 @@ linters:
         text: "^ST1003:.* ALL_CAPS"
         linters:
           - staticcheck
+    paths:
+      - ".*/node_modules/.*"
 formatters:
   enable:
     - gofmt
