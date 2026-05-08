@@ -135,7 +135,6 @@ jobs:
             ghcr.io/google/osv-scanner:latest \
             scan source \
             --lockfile=/src/java/pom.xml \
-            --data-source=native \
             --format=markdown > osv-scanner.md
       - name: Report failure
         if: ${{ failure() && steps.scan-java.conclusion == 'failure' }}
