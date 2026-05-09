@@ -31,7 +31,7 @@
         "cucumber-console-formatter": "^1.0.0",
         "eslint": "^10.3.0",
         "eslint-config-prettier": "^10.1.2",
-        "expect": "^30.3.0",
+        "expect": "^30.4.1",
         "prettier": "^3.8.0",
         "typescript": "~5.9.3",
         "typescript-eslint": "^8.59.0"
