@@ -57,7 +57,8 @@ jobs:
             scan source \
             --config=/src/osv-scanner-config.toml \
             --lockfile=/src/go.mod \
-            --format=markdown > osv-scanner.md
+            --format=markdown \
+            --output-file=osv-scanner.md
       - name: Report failure
         if: ${{ failure() && steps.scan-go.conclusion == 'failure' }}
         run: |
@@ -100,7 +101,8 @@ jobs:
             ghcr.io/google/osv-scanner:latest \
             scan source \
             --lockfile=/src/node/bom.cdx.json \
-            --format=markdown > osv-scanner.md
+            --format=markdown \
+            --output-file=osv-scanner.md
       - name: Report failure
         if: ${{ failure() && steps.scan-node.conclusion == 'failure' }}
         run: |
@@ -135,7 +137,8 @@ jobs:
             ghcr.io/google/osv-scanner:latest \
             scan source \
             --lockfile=/src/java/pom.xml \
-            --format=markdown > osv-scanner.md
+            --format=markdown \
+            --output-file=osv-scanner.md
       - name: Report failure
         if: ${{ failure() && steps.scan-java.conclusion == 'failure' }}
         run: |
