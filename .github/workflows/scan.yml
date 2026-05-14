@@ -58,11 +58,11 @@ jobs:
             --config=/src/osv-scanner-config.toml \
             --lockfile=/src/go.mod \
             --format=markdown \
-            --output-file=osv-scanner.md
+            --output-file=/src/osv-scanner.md
       - name: Report failure
         if: ${{ failure() && steps.scan-go.conclusion == 'failure' }}
         run: |
-          cat osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
+          cat src/osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
 
   node:
     runs-on: ubuntu-latest
@@ -102,11 +102,11 @@ jobs:
             scan source \
             --lockfile=/src/node/bom.cdx.json \
             --format=markdown \
-            --output-file=osv-scanner.md
+            --output-file=/src/osv-scanner.md
       - name: Report failure
         if: ${{ failure() && steps.scan-node.conclusion == 'failure' }}
         run: |
-          cat osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
+          cat src/osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
 
   java:
     runs-on: ubuntu-latest
@@ -138,8 +138,8 @@ jobs:
             scan source \
             --lockfile=/src/java/pom.xml \
             --format=markdown \
-            --output-file=osv-scanner.md
+            --output-file=/src/osv-scanner.md
       - name: Report failure
         if: ${{ failure() && steps.scan-java.conclusion == 'failure' }}
         run: |
-          cat osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
+          cat src/osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
