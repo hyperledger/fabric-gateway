@@ -92,6 +92,7 @@ jobs:
       - name: Create BOM
         working-directory: src/node
         run: |
+          npm update --omit=dev
           npm sbom --omit=dev --package-lock-only --sbom-format cyclonedx > bom.cdx.json
       - name: Scan
         id: scan-node

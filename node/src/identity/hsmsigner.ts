@@ -110,7 +110,14 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
                     // https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.1/pkcs11-spec-v3.1.html
                     Buffer.alloc(p256.Point.Fn.BYTES * 2),
                 );
-                return p256.Signature.fromBytes(compactSignature, 'compact').normalizeS().toBytes('der');
+
+                let signature = p256.Signature.fromBytes(compactSignature, 'compact');
+                if (signature.hasHighS()) {
+                    const lowS = p256.Point.Fn.neg(signature.s);
+                    signature = new p256.Signature(signature.r, lowS, signature.recovery);
+                }
+
+                return signature.toBytes('der');
             },
             close: () => {
                 pkcs11.C_CloseSession(session);
