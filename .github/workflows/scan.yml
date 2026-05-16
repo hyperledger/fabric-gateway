@@ -35,7 +35,7 @@ jobs:
           sparse-checkout-cone-mode: false
       - name: Set up Go
         id: setup-go
-        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version: stable
           check-latest: true
@@ -57,11 +57,12 @@ jobs:
             scan source \
             --config=/src/osv-scanner-config.toml \
             --lockfile=/src/go.mod \
-            --format=markdown > osv-scanner.md
+            --format=markdown \
+            --output-file=/src/osv-scanner.md
       - name: Report failure
         if: ${{ failure() && steps.scan-go.conclusion == 'failure' }}
         run: |
-          cat osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
+          cat src/osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
 
   node:
     runs-on: ubuntu-latest
@@ -76,21 +77,22 @@ jobs:
         with:
           path: latest
           sparse-checkout: |
-            osv-scanner.toml
+            node/osv-scanner.toml
           sparse-checkout-cone-mode: false
       - name: Use latest OSV-Scanner configuration
         if: ${{ inputs.latest-config && inputs.ref }}
         run: |
-          if [ -r latest/osv-scanner.toml ]; then
-              cp -f latest/osv-scanner.toml src/osv-scanner.toml
+          if [ -r latest/node/osv-scanner.toml ]; then
+              cp -f latest/node/osv-scanner.toml src/node/osv-scanner.toml
           fi
       - name: Set up Node
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: "lts/*"
       - name: Create BOM
         working-directory: src/node
         run: |
+          npm update --omit=dev
           npm sbom --omit=dev --package-lock-only --sbom-format cyclonedx > bom.cdx.json
       - name: Scan
         id: scan-node
@@ -100,11 +102,12 @@ jobs:
             ghcr.io/google/osv-scanner:latest \
             scan source \
             --lockfile=/src/node/bom.cdx.json \
-            --format=markdown > osv-scanner.md
+            --format=markdown \
+            --output-file=/src/osv-scanner.md
       - name: Report failure
         if: ${{ failure() && steps.scan-node.conclusion == 'failure' }}
         run: |
-          cat osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
+          cat src/osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
 
   java:
     runs-on: ubuntu-latest
@@ -119,13 +122,13 @@ jobs:
         with:
           path: latest
           sparse-checkout: |
-            osv-scanner.toml
+            java/osv-scanner.toml
           sparse-checkout-cone-mode: false
       - name: Use latest OSV-Scanner configuration
         if: ${{ inputs.latest-config && inputs.ref }}
         run: |
-          if [ -r latest/osv-scanner.toml ]; then
-              cp -f latest/osv-scanner.toml src/osv-scanner.toml
+          if [ -r latest/java/osv-scanner.toml ]; then
+              cp -f latest/java/osv-scanner.toml src/java/osv-scanner.toml
           fi
       - name: Scan
         id: scan-java
@@ -135,9 +138,9 @@ jobs:
             ghcr.io/google/osv-scanner:latest \
             scan source \
             --lockfile=/src/java/pom.xml \
-            --data-source=native \
-            --format=markdown > osv-scanner.md
+            --format=markdown \
+            --output-file=/src/osv-scanner.md
       - name: Report failure
         if: ${{ failure() && steps.scan-java.conclusion == 'failure' }}
         run: |
-          cat osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
+          cat src/osv-scanner.md >> ${GITHUB_STEP_SUMMARY}

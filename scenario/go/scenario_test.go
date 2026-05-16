@@ -66,7 +66,7 @@ func InitializeScenario(s *godog.ScenarioContext) {
 	s.Step(`^I set transient data on the transaction to$`, setTransientData)
 	s.Step(`^I set the endorsing organizations? to (.+)$`, setEndorsingOrgs)
 	s.Step(`^I do off-line signing as user (\S+) in MSP (\S+)$`, useOfflineSigner)
-	s.Step(`^I invoke the transaction$`, invokeSuccessfulTransaction)
+	s.Step(`^I invoke the transaction$`, invokeTransaction)
 	s.Step(`^I use the (\S+) contract$`, useContract)
 	s.Step(`^I use the (\S+) network$`, useNetwork)
 	s.Step(`^I use the checkpointer to listen for chaincode events from (\S+)$`, listenForChaincodeEventsUsingCheckpointer)
@@ -259,20 +259,14 @@ func setEndorsingOrgs(argsJSON string) error {
 	return nil
 }
 
-func invokeSuccessfulTransaction() error {
-	if err := invokeTransaction(); err != nil {
-		if s, ok := status.FromError(err); ok {
-			fmt.Printf("Error details: %+v\n", s.Details())
-		}
-		return err
-	}
-
-	return nil
-}
-
 func invokeTransaction() error {
 	err := transaction.Invoke()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
 	lastCommittedBlockNumber = transaction.BlockNumber()
+
 	return err
 }
 
@@ -285,13 +279,10 @@ func useContract(contractName string) error {
 }
 
 func theTransactionShouldFail() error {
-	err := invokeTransaction()
-	if err == nil {
+	if err := invokeTransaction(); err == nil {
 		return fmt.Errorf("transaction invocation was expected to fail, but it returned: %s", transaction.Result())
 	}
-	if s, ok := status.FromError(err); ok {
-		fmt.Printf("Error details: %+v\n", s.Details())
-	}
+
 	return nil
 }
 
@@ -300,9 +291,11 @@ func theResponseShouldBeJSONMatching(arg *godog.DocString) error {
 	if err != nil {
 		return err
 	}
+
 	if !same {
 		return fmt.Errorf("transaction response doesn't match expected value. Got: %s", transaction.Result())
 	}
+
 	return nil
 }
 

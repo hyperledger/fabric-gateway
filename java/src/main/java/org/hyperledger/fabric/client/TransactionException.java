@@ -14,6 +14,9 @@ import io.grpc.StatusRuntimeException;
 public class TransactionException extends GatewayException {
     private static final long serialVersionUID = 1L;
 
+    /**
+     * The ID of the transaction asociated with this exception.
+     */
     private final String transactionId;
 
     /**
@@ -27,7 +30,7 @@ public class TransactionException extends GatewayException {
     }
 
     /**
-     * The ID of the transaction.
+     * The ID of the transaction associated with this exception.
      * @return a transaction ID.
      */
     public String getTransactionId() {

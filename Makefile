@@ -15,11 +15,24 @@ go_bin_dir := $(shell go env GOPATH)/bin
 python_venv_dir := $(base_dir)/.venv
 python_venv_activate := $(python_venv_dir)/bin/activate
 
-mockery_version := 3.5.4
+golangci_lint := $(go_bin_dir)/golangci-lint
+
+osv_scanner := $(go_bin_dir)/osv-scanner
+
+mockery := $(go_bin_dir)/mockery
+mockery_version := 3.7.0
+
 kernel_name := $(shell uname -s)
+lowercase_kernel_name := $(shell echo '$(kernel_name)' | tr '[:upper:]' '[:lower:]')
+
 machine_hardware := $(shell uname -m)
 ifeq ($(machine_hardware), aarch64)
-	machine_hardware := arm64
+	amd_arm_machine_hardware := arm64
+endif
+
+amd_arm_machine_hardware := $(machine_hardware)
+ifeq ($(machine_hardware), x86_64)
+	amd_arm_machine_hardware := amd64
 endif
 
 export SOFTHSM2_CONF ?= $(base_dir)/softhsm2.conf
@@ -95,11 +108,11 @@ install-golangci-lint:
 		https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
 		| sh -s -- -b '$(go_bin_dir)'
 
-$(go_bin_dir)/golangci-lint:
+$(golangci_lint):
 	$(MAKE) install-golangci-lint
 
 .PHONY: golangci-lint
-golangci-lint: $(go_bin_dir)/golangci-lint
+golangci-lint: $(golangci_lint)
 	golangci-lint run
 
 .PHONY: scan
@@ -120,13 +133,18 @@ scan-go-nancy:
 
 .PHONY: install-osv-scanner
 install-osv-scanner:
-	go install github.com/google/osv-scanner/v2/cmd/osv-scanner@latest
+	curl --fail --location --show-error --silent --output '$(osv_scanner)' \
+    	'https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_$(lowercase_kernel_name)_$(amd_arm_machine_hardware)'
+	chmod u+x '$(osv_scanner)'
+
+$(osv_scanner):
+	$(MAKE) install-osv-scanner
 
 .PHONY: scan-go-osv-scanner
-scan-go-osv-scanner: install-osv-scanner
+scan-go-osv-scanner: $(osv_scanner)
 	echo "GoVersionOverride = '$$(go env GOVERSION | sed -e 's/^go//' -e 's/-.*//')'" > '$(TMPDIR)/osv-scanner.toml' && \
 		if [ -r '$(base_dir)/osv-scanner.toml' ]; then cat '$(base_dir)/osv-scanner.toml' >> '$(TMPDIR)/osv-scanner.toml'; fi && \
-		osv-scanner scan --config='$(TMPDIR)/osv-scanner.toml' --lockfile='$(base_dir)/go.mod'
+		osv-scanner scan source --config='$(TMPDIR)/osv-scanner.toml' --lockfile='$(base_dir)/go.mod'
 
 .PHONY: scan-node
 scan-node: scan-node-osv-scanner
@@ -137,10 +155,10 @@ scan-node-npm-audit:
 		npm audit --omit=dev
 
 .PHONY: scan-node-osv-scanner
-scan-node-osv-scanner: install-osv-scanner
+scan-node-osv-scanner: $(osv_scanner)
 	cd '$(node_dir)' && \
 		npm sbom --omit=dev --package-lock-only --sbom-format cyclonedx > bom.cdx.json && \
-		osv-scanner scan --lockfile=bom.cdx.json
+		osv-scanner scan source --lockfile=bom.cdx.json
 
 .PHONY: scan-java
 scan-java: scan-java-osv-scanner
@@ -151,8 +169,8 @@ scan-java-dependency-check:
 		$(maven) dependency-check:check -P owasp
 
 .PHONY: scan-java-osv-scanner
-scan-java-osv-scanner: install-osv-scanner
-	osv-scanner scan --lockfile='$(java_dir)/pom.xml' --data-source=native
+scan-java-osv-scanner: $(osv_scanner)
+	osv-scanner scan source --lockfile='$(java_dir)/pom.xml'
 
 .PHONY: install-mockery
 install-mockery:
@@ -160,11 +178,11 @@ install-mockery:
 		'https://github.com/vektra/mockery/releases/download/v$(mockery_version)/mockery_$(mockery_version)_$(kernel_name)_$(machine_hardware).tar.gz' \
 		| tar -C '$(go_bin_dir)' -xzf - mockery
 
-$(go_bin_dir)/mockery:
+$(mockery):
 	$(MAKE) install-mockery
 
 .PHONY: generate
-generate: $(go_bin_dir)/mockery clean-generated
+generate: $(mockery) clean-generated
 	cd '$(base_dir)' && mockery
 
 .PHONY: vendor-chaincode
