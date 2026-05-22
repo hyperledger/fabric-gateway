@@ -11,8 +11,8 @@
         "cucumber": "NODE_OPTIONS='--enable-source-maps' cucumber-js --format cucumber-console-formatter --require 'dist/**/*.js' ../features",
         "cucumber:no-hsm": "NODE_OPTIONS='--enable-source-maps' cucumber-js --tags 'not @hsm' --format cucumber-console-formatter --require 'dist/**/*.js' ../features",
         "compile": "tsc",
-        "format": "prettier '**/*.{ts,js}' --check",
-        "format:fix": "prettier '**/*.{ts,js}' --write",
+        "format": "prettier '**/*.{mj,cj,j,t}s' --check",
+        "format:fix": "prettier '**/*.{mj,cj,j,t}s' --write",
         "lint": "eslint src",
         "test": "npm run build && npm run cucumber",
         "test:no-hsm": "npm run build && npm run cucumber:no-hsm"
@@ -33,7 +33,7 @@
         "eslint-config-prettier": "^10.1.2",
         "expect": "^30.4.1",
         "prettier": "^3.8.0",
-        "typescript": "~5.9.3",
+        "typescript": "~6.0.3",
         "typescript-eslint": "^8.59.0"
     }
 }

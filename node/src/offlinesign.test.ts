@@ -5,8 +5,9 @@
  */
 
 import { common, gateway as gatewayproto, peer } from '@hyperledger/fabric-protos';
+import { beforeEach, describe, expect, it } from '@jest/globals';
 import { Contract } from './contract';
-import { Gateway, InternalConnectOptions, internalConnect } from './gateway';
+import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 import { Network } from './network';
 import { undefinedSignerMessage } from './signingidentity';

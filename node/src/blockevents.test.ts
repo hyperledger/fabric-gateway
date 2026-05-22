@@ -6,13 +6,16 @@
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
 import { common, ledger, msp, orderer, peer } from '@hyperledger/fabric-protos';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { CloseableAsyncIterable } from '.';
 import { BlockEventsOptions } from './blockeventsbuilder';
 import { BlockAndPrivateDataEventsRequest, BlockEventsRequest, FilteredBlockEventsRequest } from './blockeventsrequest';
 import * as checkpointers from './checkpointers';
 import { Gateway, InternalConnectOptions, assertDefined, internalConnect } from './gateway';
 import { GatewayError } from './gatewayerror';
+import { Hash } from './hash/hash';
 import { Identity } from './identity/identity';
+import { Signer } from './identity/signer';
 import { Network } from './network';
 import {
     DuplexStreamResponseStub,
@@ -57,8 +60,8 @@ describe('Block Events', () => {
     let defaultOptions: () => CallOptions;
     let client: MockGatewayGrpcClient;
     let identity: Identity;
-    let signer: jest.Mock<Promise<Uint8Array>, Uint8Array[]>;
-    let hash: jest.Mock<Uint8Array, Uint8Array[]>;
+    let signer: jest.Mock<Signer>;
+    let hash: jest.Mock<Hash>;
     let gateway: Gateway;
     let network: Network;
 
@@ -272,7 +275,10 @@ describe('Block Events', () => {
                 const stream = newDuplexStreamResponse<common.Envelope, peer.DeliverResponse>([]);
                 testCase.mockResponse(stream);
                 const startBlock = BigInt(418);
-                await testCase.getEvents({ startBlock: startBlock, checkpoint: checkpointers.inMemory() });
+                await testCase.getEvents({
+                    startBlock: startBlock,
+                    checkpoint: checkpointers.inMemory(),
+                });
 
                 const request = stream.getRequest();
                 const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
@@ -292,7 +298,10 @@ describe('Block Events', () => {
                 const startBlock = BigInt(418);
                 const checkpointer = checkpointers.inMemory();
                 await checkpointer.checkpointBlock(1n);
-                await testCase.getEvents({ startBlock: startBlock, checkpoint: checkpointer });
+                await testCase.getEvents({
+                    startBlock: startBlock,
+                    checkpoint: checkpointer,
+                });
 
                 const request = stream.getRequest();
                 const payload = common.Payload.deserializeBinary(request.getPayload_asU8());
@@ -313,7 +322,10 @@ describe('Block Events', () => {
                 const blockNumber = 0n;
                 const checkpointer = checkpointers.inMemory();
                 await checkpointer.checkpointTransaction(blockNumber, 'transactionID');
-                await testCase.getEvents({ startBlock: startBlock, checkpoint: checkpointer });
+                await testCase.getEvents({
+                    startBlock: startBlock,
+                    checkpoint: checkpointer,
+                });
 
                 const request = stream.getRequest();
                 const payload = common.Payload.deserializeBinary(request.getPayload_asU8());

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { describe, expect, it, jest } from '@jest/globals';
 import { generateKeyPairSync } from 'node:crypto';
 import { dirname, sep as pathSeparator } from 'node:path';
 import type { signers as SignersType } from '.';

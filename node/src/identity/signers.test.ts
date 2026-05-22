@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { describe, expect, it } from '@jest/globals';
 import { createHash, generateKeyPairSync, verify } from 'node:crypto';
 import { newPrivateKeySigner } from './signers';
 
@@ -14,14 +15,19 @@ describe('signers', () => {
     });
 
     it('throws for unsupported private key type', () => {
-        const { privateKey } = generateKeyPairSync('dsa', { modulusLength: 2048, divisorLength: 256 });
+        const { privateKey } = generateKeyPairSync('dsa', {
+            modulusLength: 2048,
+            divisorLength: 256,
+        });
 
         expect(() => newPrivateKeySigner(privateKey)).toThrow(privateKey.asymmetricKeyType);
     });
 
     describe('EC', () => {
         it('creates valid signer for P-256 private key', async () => {
-            const { publicKey, privateKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
+            const { publicKey, privateKey } = generateKeyPairSync('ec', {
+                namedCurve: 'P-256',
+            });
             const message = Buffer.from('conga');
 
             const signer = newPrivateKeySigner(privateKey);
@@ -33,7 +39,9 @@ describe('signers', () => {
         });
 
         it('creates valid signer for P-384 private key', async () => {
-            const { publicKey, privateKey } = generateKeyPairSync('ec', { namedCurve: 'P-384' });
+            const { publicKey, privateKey } = generateKeyPairSync('ec', {
+                namedCurve: 'P-384',
+            });
             const message = Buffer.from('conga');
 
             const signer = newPrivateKeySigner(privateKey);
@@ -45,7 +53,9 @@ describe('signers', () => {
         });
 
         it('throws for unsupported curve', () => {
-            const { privateKey } = generateKeyPairSync('ec', { namedCurve: 'secp256k1' });
+            const { privateKey } = generateKeyPairSync('ec', {
+                namedCurve: 'secp256k1',
+            });
             expect(() => newPrivateKeySigner(privateKey)).toThrow('secp256k1');
         });
     });

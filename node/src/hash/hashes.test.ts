@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { describe, expect, it } from '@jest/globals';
 import * as hashes from './hashes';
 
 describe('hashes', () => {

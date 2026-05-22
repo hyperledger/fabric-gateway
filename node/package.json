@@ -24,8 +24,8 @@
         "clean": "rm -rf apidocs dist",
         "compile": "tsc --project tsconfig.build.json",
         "copy-non-ts-source": "rsync -rv --prune-empty-dirs --include='*.d.ts' --exclude='*.ts' src/ dist",
-        "format": "prettier '**/*.{ts,js}' --check",
-        "format:fix": "prettier '**/*.{ts,js}' --write",
+        "format": "prettier '**/*.{mj,cj,j,t}s' --check",
+        "format:fix": "prettier '**/*.{mj,cj,j,t}s' --write",
         "generate-apidoc": "typedoc",
         "lint": "eslint src",
         "test": "npm run lint && npm run format && npm run unit-test",
@@ -44,9 +44,9 @@
     "devDependencies": {
         "@eslint/eslintrc": "^3.3.4",
         "@eslint/js": "^10.0.1",
+        "@jest/globals": "^30.4.1",
         "@tsconfig/node22": "^22.0.5",
         "@types/google-protobuf": "^3.15.12",
-        "@types/jest": "^30.0.0",
         "@types/node": "^22.19.19",
         "eslint": "^10.4.0",
         "eslint-config-prettier": "^10.1.8",
@@ -55,7 +55,7 @@
         "prettier": "^3.8.0",
         "ts-jest": "^29.4.0",
         "typedoc": "^0.28.16",
-        "typescript": "~5.9.3",
+        "typescript": "~6.0.3",
         "typescript-eslint": "^8.59.0"
     }
 }

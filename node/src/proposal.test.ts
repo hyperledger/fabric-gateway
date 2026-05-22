@@ -6,10 +6,13 @@
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
 import { common, gateway as gatewayproto, msp, peer } from '@hyperledger/fabric-protos';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { Contract } from './contract';
 import { EndorseError } from './endorseerror';
-import { Gateway, assertDefined, internalConnect } from './gateway';
+import { assertDefined, Gateway, internalConnect } from './gateway';
+import { Hash } from './hash/hash';
 import { Identity } from './identity/identity';
+import { Signer } from './identity/signer';
 import { Network } from './network';
 import { asString, MockGatewayGrpcClient, newEndorseResponse } from './testutils.test';
 
@@ -64,8 +67,8 @@ describe('Proposal', () => {
     let endorseOptions: () => CallOptions;
     let client: MockGatewayGrpcClient;
     let identity: Identity;
-    let signer: jest.Mock<Promise<Uint8Array>, Uint8Array[]>;
-    let hash: jest.Mock<Uint8Array, Uint8Array[]>;
+    let signer: jest.Mock<Signer>;
+    let hash: jest.Mock<Hash>;
     let gateway: Gateway;
     let network: Network;
     let contract: Contract;
@@ -86,9 +89,9 @@ describe('Proposal', () => {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
         };
-        signer = jest.fn(undefined);
+        signer = jest.fn();
         signer.mockResolvedValue(Buffer.from('SIGNATURE'));
-        hash = jest.fn(undefined);
+        hash = jest.fn();
         hash.mockReturnValue(Buffer.from('DIGEST'));
 
         gateway = internalConnect({
@@ -230,7 +233,9 @@ describe('Proposal', () => {
         });
 
         it('sets endorsing orgs', async () => {
-            await contract.evaluate('TRANSACTION_NAME', { endorsingOrganizations: ['org1'] });
+            await contract.evaluate('TRANSACTION_NAME', {
+                endorsingOrganizations: ['org1'],
+            });
 
             const evaluateRequest = client.getEvaluateRequest();
             const actualOrgs = evaluateRequest.getTargetOrganizationsList();

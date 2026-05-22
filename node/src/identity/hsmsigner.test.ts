@@ -4,21 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { p256 } from '@noble/curves/nist';
 import { createHash } from 'node:crypto';
-import { Mechanism, Pkcs11Error, SessionInfo, SlotInfo, Template, TokenInfo } from 'pkcs11js';
+import pkcs11js, { Handle, InitializationOptions, Mechanism, Pkcs11Error, Template, TokenInfo } from 'pkcs11js';
 import { HSMSignerOptions } from './hsmsigner';
 import { newHSMSignerFactory } from './signers';
-
-const CKO_PRIVATE_KEY = 179;
-const CKA_ID = 54;
-const CKA_CLASS = 67;
-const CKA_KEY_TYPE = 6;
-const CKK_EC = 87;
-const CKM_ECDSA = 532;
-const CKF_SERIAL_SESSION = 24;
-const CKU_USER = 72;
-const CKR_USER_ALREADY_LOGGED_IN = 256;
 
 const hsmOptions: HSMSignerOptions = {
     label: 'ForFabric',
@@ -26,149 +17,49 @@ const hsmOptions: HSMSignerOptions = {
     identifier: 'id',
 };
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-const pkcs11Stub = {
-    load: (): void => {
-        return;
-    },
-    C_Initialize: (): void => {
-        return;
-    },
-    C_GetInfo: (): string => 'Info',
-    C_GetSlotList: (): Buffer[] => [],
-    C_GetTokenInfo: (slot: Buffer): TokenInfo | null => null,
-    C_GetSlotInfo: (slot: Buffer): SlotInfo | string => slot.toString(),
-    C_GetMechanismList: (slot: Buffer): string[] => ['ECDSA'],
-    C_OpenSession: (): void => {
-        return;
-    },
-    C_GetSessionInfo: (): SessionInfo | undefined => {
-        return;
-    },
-    C_Login: (): void => {
-        return;
-    },
-    C_Logout: (session: Buffer): void => {
-        return;
-    },
-    C_CloseSession: (): void => {
-        return;
-    },
-    C_Finalize: (): void => {
-        return;
-    },
-    C_FindObjectsInit: (session: Buffer, template: Template): void => {
-        return;
-    },
-    C_FindObjects: (session: Buffer, limit: number): Buffer[] => {
-        return [];
-    },
-    C_FindObjectsFinal: (session: Buffer): void => {
-        return;
-    },
-    C_SignInit: (session: Buffer, mechanism: Mechanism, key: Buffer): void => {
-        return;
-    },
-    C_SignAsync: (session: Buffer, digest: Buffer, store: Buffer): Promise<Buffer> => {
-        return Promise.resolve(digest);
-    },
+const mocks = {
+    load: jest.fn<(path: string) => void>(),
+    C_Initialize: jest.fn<(options?: InitializationOptions) => void>(),
+    close: jest.fn<() => void>(),
+    C_Finalize: jest.fn<() => void>(),
+    C_OpenSession: jest.fn<(slot: Handle, flags: number) => Handle>(),
+    C_CloseSession: jest.fn<(session: Handle) => void>(),
+    C_SignInit: jest.fn<(session: Handle, mechanism: Mechanism, key: Handle) => void>(),
+    C_SignAsync: jest.fn<(session: Handle, inData: Buffer, outData: Buffer) => Promise<Buffer>>(),
+    C_GetSlotList: jest.fn<(tokenPresent?: boolean) => Handle[]>(),
+    C_GetTokenInfo: jest.fn<(slot: Handle) => TokenInfo>(),
+    C_Login: jest.fn<(session: Handle, userType: number, pin?: string) => void>(),
+    C_FindObjectsInit: jest.fn<(session: Handle, template: Template) => void>(),
+    C_FindObjects: jest.fn<(session: Handle, maxObjectCount: number) => Handle[]>(),
+    C_FindObjectsFinal: jest.fn<(session: Handle) => void>(),
 };
 
-const resetPkcs11Stub: () => void = () => {
-    pkcs11Stub.load = (): void => {
-        return;
-    };
-    pkcs11Stub.C_Initialize = (): void => {
-        return;
-    };
-    pkcs11Stub.C_GetInfo = (): string => 'Info';
-    pkcs11Stub.C_GetSlotList = (): Buffer[] => [];
-    pkcs11Stub.C_GetTokenInfo = (slot: Buffer): TokenInfo | null => null;
-    pkcs11Stub.C_GetSlotInfo = (slot: Buffer): SlotInfo | string => slot.toString();
-    pkcs11Stub.C_GetMechanismList = (slot: Buffer): string[] => ['ECDSA'];
-    pkcs11Stub.C_OpenSession = (): void => {
-        return;
-    };
-    pkcs11Stub.C_GetSessionInfo = (): SessionInfo | undefined => {
-        return;
-    };
-    pkcs11Stub.C_Login = (): void => {
-        return;
-    };
-    pkcs11Stub.C_Logout = (session: Buffer): void => {
-        return;
-    };
-    pkcs11Stub.C_CloseSession = (): void => {
-        return;
-    };
-    pkcs11Stub.C_Finalize = (): void => {
-        return;
-    };
-    pkcs11Stub.C_FindObjectsInit = (session: Buffer, template: Template): void => {
-        return;
-    };
-    pkcs11Stub.C_FindObjects = (session: Buffer, limit: number): Buffer[] => {
-        return [];
-    };
-    pkcs11Stub.C_FindObjectsFinal = (session: Buffer): void => {
-        return;
-    };
-    pkcs11Stub.C_SignInit = (session: Buffer, mechanism: Mechanism, key: Buffer): void => {
-        return;
-    };
-    pkcs11Stub.C_SignAsync = (session: Buffer, digest: Buffer, store: Buffer): Promise<Buffer> => {
-        return Promise.resolve(digest);
-    };
-};
-
-/* eslint-enable */
+function resetMocks(): void {
+    Object.values(mocks).forEach((mock) => mock.mockReset());
+}
 
 jest.mock('pkcs11js', () => {
-    // eslint-disable-next-line @typescript-eslint/no-extraneous-class
-    class PKCS11 {
-        constructor() {
-            return pkcs11Stub;
-        }
-    }
+    const originalModule = jest.requireActual<typeof pkcs11js>('pkcs11js');
 
-    // These are defined with random meaningless but unique values which have to be replicated because of jest
-    const CKO_PRIVATE_KEY = 179;
-    const CKA_ID = 54;
-    const CKA_CLASS = 67;
-    const CKA_KEY_TYPE = 6;
-    const CKK_EC = 87;
-    const CKM_ECDSA = 532;
-    const CKF_SERIAL_SESSION = 24;
-    const CKU_USER = 72;
-    const CKR_USER_ALREADY_LOGGED_IN = 256;
-
-    const exports = {
-        PKCS11,
-        CKO_PRIVATE_KEY,
-        CKA_ID,
-        CKA_CLASS,
-        CKA_KEY_TYPE,
-        CKK_EC,
-        CKM_ECDSA,
-        CKF_SERIAL_SESSION,
-        CKU_USER,
-        CKR_USER_ALREADY_LOGGED_IN,
+    return {
+        ...originalModule,
+        PKCS11: jest.fn().mockImplementation(() => mocks),
     };
-    return exports;
 });
 
 describe('when creating or disposing of an HSM Signer Factory', () => {
     beforeEach(() => {
-        resetPkcs11Stub();
+        resetMocks();
     });
 
     it('throws if library option is not valid', () => {
-        pkcs11Stub.C_Initialize = () => {
+        mocks.C_Initialize.mockImplementation(() => {
             throw new Error('Some Error');
-        };
+        });
         expect(() => newHSMSignerFactory('somelibrary')).toThrow('Some Error');
+    });
 
+    it('throws if library option is not provided', () => {
         expect(() => newHSMSignerFactory('')).toThrow('library must be provided');
     });
 
@@ -183,12 +74,6 @@ describe('when creating or disposing of an HSM Signer Factory', () => {
 describe('When using an HSM Signer', () => {
     const slot1 = Buffer.from('1234');
     const slot2 = Buffer.from('5678');
-    const mockTokenInfo = (slot: Buffer): TokenInfo => {
-        if (slot === slot1) {
-            return { label: 'ForFabric' } as TokenInfo;
-        }
-        return { label: 'someLabel' } as TokenInfo;
-    };
 
     const mockSession = Buffer.from('mockSession');
     const mockPrivateKeyHandle = Buffer.from('someobject');
@@ -199,19 +84,17 @@ describe('When using an HSM Signer', () => {
     const publicKey = p256.getPublicKey(privateKey);
 
     beforeEach(() => {
-        resetPkcs11Stub();
-        pkcs11Stub.C_GetTokenInfo = mockTokenInfo;
-        pkcs11Stub.C_GetSlotList = () => [slot1, slot2];
-        pkcs11Stub.C_OpenSession = () => {
-            return mockSession;
-        };
-        pkcs11Stub.C_FindObjectsInit = jest.fn();
-        pkcs11Stub.C_FindObjectsFinal = jest.fn();
-        pkcs11Stub.C_FindObjects = jest.fn(() => {
-            return [mockPrivateKeyHandle];
+        resetMocks();
+        mocks.C_GetTokenInfo.mockImplementation((slot: Buffer): TokenInfo => {
+            if (Buffer.compare(slot, slot1) === 0) {
+                return { label: 'ForFabric' } as TokenInfo;
+            }
+            return { label: 'someLabel' } as TokenInfo;
         });
-        pkcs11Stub.C_SignInit = jest.fn();
-        pkcs11Stub.C_SignAsync = jest.fn((session, digest, buffer) => {
+        mocks.C_GetSlotList.mockReturnValue([slot1, slot2]);
+        mocks.C_OpenSession.mockReturnValue(mockSession);
+        mocks.C_FindObjects.mockReturnValue([mockPrivateKeyHandle]);
+        mocks.C_SignAsync.mockImplementation((session: Buffer, digest: Buffer, buffer: Buffer) => {
             const signature = p256.sign(digest, privateKey).toBytes('compact');
             signature.forEach((b, i) => buffer.writeUInt8(b, i));
             // Return buffer of exactly signature length regardless of supplied buffer size
@@ -263,7 +146,7 @@ describe('When using an HSM Signer', () => {
     });
 
     it('throws an error if no slots are returned', () => {
-        pkcs11Stub.C_GetSlotList = () => [];
+        mocks.C_GetSlotList.mockReturnValue([]);
         expect(() => hsmSignerFactory.newSigner(hsmOptions)).toThrow('No pkcs11 slots can be found');
     });
 
@@ -280,71 +163,63 @@ describe('When using an HSM Signer', () => {
     });
 
     it('finds the correct slot when the correct label is available', () => {
-        pkcs11Stub.C_OpenSession = jest.fn();
         expect(() => hsmSignerFactory.newSigner(hsmOptions)).not.toThrow();
-        expect(pkcs11Stub.C_OpenSession).toHaveBeenCalledWith(slot1, CKF_SERIAL_SESSION);
+        expect(mocks.C_OpenSession).toHaveBeenCalledWith(slot1, pkcs11js.CKF_SERIAL_SESSION);
     });
 
     it('defaults to a CKU_USER if none provided', () => {
-        pkcs11Stub.C_Login = jest.fn();
         expect(() => hsmSignerFactory.newSigner(hsmOptions)).not.toThrow();
-        expect(pkcs11Stub.C_Login).toHaveBeenCalledWith(mockSession, CKU_USER, hsmOptions.pin);
+        expect(mocks.C_Login).toHaveBeenCalledWith(mockSession, pkcs11js.CKU_USER, hsmOptions.pin);
     });
 
     it('uses usertype if provided', () => {
-        const hsmOptionsWithUserType: HSMSignerOptions = {
+        const hsmOptionsWithUserType = {
             label: 'ForFabric',
             pin: '98765432',
             identifier: 'id',
             userType: 100,
         };
 
-        pkcs11Stub.C_Login = jest.fn();
         expect(() => hsmSignerFactory.newSigner(hsmOptionsWithUserType)).not.toThrow();
-        expect(pkcs11Stub.C_Login).toHaveBeenCalledWith(mockSession, hsmOptionsWithUserType.userType, hsmOptions.pin);
+        expect(mocks.C_Login).toHaveBeenCalledWith(mockSession, hsmOptionsWithUserType.userType, hsmOptions.pin);
     });
 
     it('throws if pkcs11 open session throws an error', () => {
-        pkcs11Stub.C_OpenSession = () => {
+        mocks.C_OpenSession.mockImplementation(() => {
             throw new Error('Some Error');
-        };
+        });
         expect(() => hsmSignerFactory.newSigner(hsmOptions)).toThrow('Some Error');
     });
 
     it('throws if pkcs11 login throws an error', () => {
-        pkcs11Stub.C_Login = () => {
+        mocks.C_Login.mockImplementation(() => {
             throw new Error('Some Error');
-        };
-        pkcs11Stub.C_CloseSession = jest.fn();
-        pkcs11Stub.C_GetSlotList = () => [slot1, slot2];
+        });
+        mocks.C_GetSlotList.mockReturnValue([slot1, slot2]);
         expect(() => hsmSignerFactory.newSigner(hsmOptions)).toThrow('Some Error');
-        expect(pkcs11Stub.C_CloseSession).toHaveBeenCalledWith(mockSession);
+        expect(mocks.C_CloseSession).toHaveBeenCalledWith(mockSession);
     });
 
     it('Ignores already logged in errors at login time', () => {
-        pkcs11Stub.C_CloseSession = jest.fn();
         const alreadyLoggedInError: Pkcs11Error = {
-            code: CKR_USER_ALREADY_LOGGED_IN,
+            code: pkcs11js.CKR_USER_ALREADY_LOGGED_IN,
             message: 'CKR_USER_ALREADY_LOGGED_IN',
             nativeStack: '[Native]',
             method: 'C_Login',
             name: 'error',
         };
-        pkcs11Stub.C_Login = () => {
+        mocks.C_Login.mockImplementation(() => {
             throw alreadyLoggedInError;
-        };
+        });
         expect(() => hsmSignerFactory.newSigner(hsmOptions)).not.toThrow();
-        expect(pkcs11Stub.C_CloseSession).not.toHaveBeenCalled();
+        expect(mocks.C_CloseSession).not.toHaveBeenCalled();
     });
 
     it('throws and calls find final if it cannot find the HSM object', () => {
-        pkcs11Stub.C_CloseSession = jest.fn();
-        pkcs11Stub.C_FindObjects = jest.fn(() => {
-            return [];
-        });
+        mocks.C_FindObjects.mockReturnValue([]);
         expect(() => hsmSignerFactory.newSigner(hsmOptions)).toThrow('Unable to find object in HSM with ID id');
-        expect(pkcs11Stub.C_FindObjectsFinal).toHaveBeenCalled();
-        expect(pkcs11Stub.C_CloseSession).toHaveBeenCalledWith(mockSession);
+        expect(mocks.C_FindObjectsFinal).toHaveBeenCalled();
+        expect(mocks.C_CloseSession).toHaveBeenCalledWith(mockSession);
     });
 
     it('finds the HSM object if it exists', () => {
@@ -352,17 +227,14 @@ describe('When using an HSM Signer', () => {
         expect(signer).toBeDefined();
 
         const expectedTemplate = [
-            { type: CKA_ID, value: hsmOptions.identifier },
-            { type: CKA_CLASS, value: CKO_PRIVATE_KEY },
-            { type: CKA_KEY_TYPE, value: CKK_EC },
+            { type: pkcs11js.CKA_ID, value: hsmOptions.identifier },
+            { type: pkcs11js.CKA_CLASS, value: pkcs11js.CKO_PRIVATE_KEY },
+            { type: pkcs11js.CKA_KEY_TYPE, value: pkcs11js.CKK_EC },
         ];
 
-        expect(pkcs11Stub.C_FindObjectsInit).toHaveBeenCalledWith(
-            mockSession,
-            expect.arrayContaining(expectedTemplate),
-        );
-        expect(pkcs11Stub.C_FindObjects).toHaveBeenCalledWith(mockSession, 1);
-        expect(pkcs11Stub.C_FindObjects).toHaveBeenCalledWith(mockSession, 1);
+        expect(mocks.C_FindObjectsInit).toHaveBeenCalledWith(mockSession, expect.arrayContaining(expectedTemplate));
+        expect(mocks.C_FindObjects).toHaveBeenCalledWith(mockSession, 1);
+        expect(mocks.C_FindObjects).toHaveBeenCalledWith(mockSession, 1);
     });
 
     it('signs using the HSM', async () => {
@@ -375,8 +247,12 @@ describe('When using an HSM Signer', () => {
         const valid = p256.verify(signature, digest, publicKey);
         expect(valid).toBe(true);
 
-        expect(pkcs11Stub.C_SignInit).toHaveBeenCalledWith(mockSession, { mechanism: CKM_ECDSA }, mockPrivateKeyHandle);
-        expect(pkcs11Stub.C_SignAsync).toHaveBeenCalledWith(mockSession, digest, expect.anything());
+        expect(mocks.C_SignInit).toHaveBeenCalledWith(
+            mockSession,
+            { mechanism: pkcs11js.CKM_ECDSA },
+            mockPrivateKeyHandle,
+        );
+        expect(mocks.C_SignAsync).toHaveBeenCalledWith(mockSession, digest, expect.anything());
     });
 
     it('can be closed', () => {

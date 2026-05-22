@@ -6,11 +6,14 @@
 
 import { CallOptions, Metadata, ServiceError, status } from '@grpc/grpc-js';
 import { gateway as gatewayproto, peer } from '@hyperledger/fabric-protos';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { CommitError } from './commiterror';
 import { CommitStatusError } from './commitstatuserror';
 import { Contract } from './contract';
 import { Gateway, internalConnect, InternalConnectOptions } from './gateway';
+import { Hash } from './hash/hash';
 import { Identity } from './identity/identity';
+import { Signer } from './identity/signer';
 import { Network } from './network';
 import { SubmitError } from './submiterror';
 import { asString, MockGatewayGrpcClient, newEndorseResponse } from './testutils.test';
@@ -27,8 +30,8 @@ describe('Transaction', () => {
     let commitStatusOptions: () => CallOptions;
     let client: MockGatewayGrpcClient;
     let identity: Identity;
-    let signer: jest.Mock<Promise<Uint8Array>, Uint8Array[]>;
-    let hash: jest.Mock<Uint8Array, Uint8Array[]>;
+    let signer: jest.Mock<Signer>;
+    let hash: jest.Mock<Hash>;
     let gateway: Gateway;
     let network: Network;
     let contract: Contract;
@@ -59,9 +62,9 @@ describe('Transaction', () => {
             mspId: 'MSP_ID',
             credentials: Buffer.from('CERTIFICATE'),
         };
-        signer = jest.fn(undefined);
+        signer = jest.fn();
         signer.mockResolvedValue(Buffer.from('SIGNATURE'));
-        hash = jest.fn(undefined);
+        hash = jest.fn();
         hash.mockReturnValue(Buffer.from('DIGEST'));
 
         const options: InternalConnectOptions = {
@@ -131,7 +134,9 @@ describe('Transaction', () => {
     });
 
     it('sets endorsing orgs', async () => {
-        await contract.submit('TRANSACTION_NAME', { endorsingOrganizations: ['org1', 'org3'] });
+        await contract.submit('TRANSACTION_NAME', {
+            endorsingOrganizations: ['org1', 'org3'],
+        });
         const actualOrgs = client.getEndorseRequest().getEndorsingOrganizationsList();
         expect(actualOrgs).toStrictEqual(['org1', 'org3']);
     });
@@ -208,7 +213,7 @@ describe('Transaction', () => {
 
         expect(signer).toHaveBeenCalledTimes(3); // endorse, submit and commit
         signer.mock.calls.forEach((call) => {
-            const digest = call[0]?.toString();
+            const digest = call[0].toString();
             expect(digest).toBe('MY_DIGEST');
         });
     });
