@@ -5,6 +5,7 @@
  */
 
 import * as grpc from '@grpc/grpc-js';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { connect, ConnectOptions } from './gateway';
 import { Identity } from './identity/identity';
 

@@ -6,6 +6,7 @@
 
 import * as grpc from '@grpc/grpc-js';
 import { common, gateway, peer } from '@hyperledger/fabric-protos';
+import { it, jest } from '@jest/globals';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -33,16 +34,17 @@ it('Test utilities', () => {
 });
 
 type MockUnaryRequest<RequestType, ResponseType> = jest.Mock<
-    grpc.ClientUnaryCall,
-    [RequestType, grpc.CallOptions, grpc.requestCallback<ResponseType>]
+    (
+        request: RequestType,
+        options: grpc.CallOptions,
+        callback: grpc.requestCallback<ResponseType>,
+    ) => grpc.ClientUnaryCall
 >;
 type MockServerStreamRequest<RequestType, ResponseType> = jest.Mock<
-    ServerStreamResponse<ResponseType>,
-    [RequestType, grpc.CallOptions]
+    (request: RequestType, options: grpc.CallOptions) => ServerStreamResponse<ResponseType>
 >;
 type MockDuplexStreamRequest<RequestType, ResponseType> = jest.Mock<
-    DuplexStreamResponse<RequestType, ResponseType>,
-    [grpc.CallOptions]
+    (options: grpc.CallOptions) => DuplexStreamResponse<RequestType, ResponseType>
 >;
 
 const emptyDuplexStreamResponse = {
@@ -420,7 +422,7 @@ export async function readElements<T>(
 }
 
 export interface CloseableAsyncIterableStub<T> extends CloseableAsyncIterable<T> {
-    close: jest.Mock<void, []>;
+    close: jest.Mock<() => void>;
 }
 
 // @ts-expect-error Polyfill for Symbol.dispose if not present
@@ -428,18 +430,18 @@ Symbol.dispose ??= Symbol('Symbol.dispose');
 
 export function newCloseableAsyncIterable<T>(values: T[]): CloseableAsyncIterableStub<T> {
     return Object.assign(newAsyncIterable(values), {
-        close: jest.fn<undefined, []>(),
-        [Symbol.dispose]: jest.fn<undefined, []>(),
+        close: jest.fn<() => void>(),
+        [Symbol.dispose]: jest.fn<() => void>(),
     });
 }
 
 export interface ServerStreamResponseStub<T> extends ServerStreamResponse<T> {
-    cancel: jest.Mock<undefined, []>;
+    cancel: jest.Mock<() => void>;
 }
 
 export function newServerStreamResponse<T>(values: (T | Error)[]): ServerStreamResponseStub<T> {
     return Object.assign(newAsyncIterable(values), {
-        cancel: jest.fn<undefined, []>(),
+        cancel: jest.fn<() => void>(),
     });
 }
 
@@ -460,15 +462,15 @@ export interface DuplexStreamResponseStub<RequestType, ResponseType> extends Dup
     RequestType,
     ResponseType
 > {
-    cancel: jest.Mock<undefined, []>;
-    write: jest.Mock<boolean, RequestType[]>;
+    cancel: jest.Mock<() => void>;
+    write: jest.Mock<(request: RequestType) => boolean>;
     getRequest(index?: number): RequestType;
 }
 
 export function newDuplexStreamResponse<RequestType, ResponseType>(
     values: (ResponseType | Error)[],
 ): DuplexStreamResponseStub<RequestType, ResponseType> {
-    const write = jest.fn<boolean, RequestType[]>();
+    const write = jest.fn<(request: RequestType) => boolean>();
 
     return Object.assign(newServerStreamResponse(values), {
         write,

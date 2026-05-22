@@ -125,7 +125,7 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
         };
     }
 
-    #findSlotForLabel(pkcs11Label: string): Buffer {
+    #findSlotForLabel(pkcs11Label: string): pkcs11js.Handle {
         const slots = this.#pkcs11.C_GetSlotList(true);
 
         if (slots.length === 0) {
@@ -155,7 +155,7 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
         }
     }
 
-    #findObjectInHSM(session: Buffer, keytype: number, identifier: string | Buffer): Buffer {
+    #findObjectInHSM(session: Buffer, keytype: number, identifier: string | Buffer): pkcs11js.Handle {
         const pkcs11Template: pkcs11js.Template = [
             { type: pkcs11js.CKA_ID, value: identifier },
             { type: pkcs11js.CKA_CLASS, value: keytype },
@@ -164,13 +164,11 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
         this.#pkcs11.C_FindObjectsInit(session, pkcs11Template);
 
         const hsmObject = this.#pkcs11.C_FindObjects(session, 1)[0];
+        this.#pkcs11.C_FindObjectsFinal(session);
 
         if (!hsmObject) {
-            this.#pkcs11.C_FindObjectsFinal(session);
             throw new Error(`Unable to find object in HSM with ID ${identifier.toString()}`);
         }
-
-        this.#pkcs11.C_FindObjectsFinal(session);
 
         return hsmObject;
     }

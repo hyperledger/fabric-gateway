@@ -286,7 +286,7 @@ clean: clean-generated clean-node clean-java clean-docs
 
 .PHONY: clean-node
 clean-node:
-	cd '$(node_dir)' && rm -rf node_modules
+	rm -rf '$(node_dir)/node_modules'
 
 .PHONY: clean-java
 clean-java:
@@ -316,6 +316,7 @@ format-go:
 .PHONY: format-node
 format-node:
 	cd '$(node_dir)' && npm run format:fix
+	cd '$(scenario_dir)/node' && npm run format:fix
 
 .PHONY: format-java
 format-java:

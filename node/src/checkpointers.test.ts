@@ -4,14 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from '@jest/globals';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import { ChaincodeEvent } from './chaincodeevent';
 import { Checkpointer } from './checkpointer';
 import * as checkpointers from './checkpointers';
 import { createTempDir } from './testutils.test';
-
-/* eslint-disable jest/expect-expect */
 
 describe('Checkpointers', () => {
     let tempDir: string;
@@ -25,11 +24,6 @@ describe('Checkpointers', () => {
     afterAll(async () => {
         await fs.rm(tempDir, { recursive: true, force: true });
     });
-
-    function assertState(checkpointer: Checkpointer, blockNumber: bigint | undefined, transactionId?: string): void {
-        expect(checkpointer.getBlockNumber()).toBe(blockNumber);
-        expect(checkpointer.getTransactionId()).toEqual(transactionId);
-    }
 
     const testCases: Record<
         string,
@@ -61,19 +55,22 @@ describe('Checkpointers', () => {
             });
 
             it('Initial state is undefined block and no transactions', () => {
-                assertState(checkpointer, undefined);
+                expect(checkpointer.getBlockNumber()).toBeUndefined();
+                expect(checkpointer.getTransactionId()).toBeUndefined();
             });
 
             it('Checkpointing a block gives next block number & empty transaction ID', async () => {
                 await checkpointer.checkpointBlock(1n);
 
-                assertState(checkpointer, 1n + 1n);
+                expect(checkpointer.getBlockNumber()).toEqual(1n + 1n);
+                expect(checkpointer.getTransactionId()).toBeUndefined();
             });
 
             it('Checkpointing a transaction gives valid transaction ID and blocknumber', async () => {
                 await checkpointer.checkpointTransaction(1n, 'tx1');
 
-                assertState(checkpointer, 1n, 'tx1');
+                expect(checkpointer.getBlockNumber()).toEqual(1n);
+                expect(checkpointer.getTransactionId()).toEqual('tx1');
             });
 
             it('Checkpointing a chaincode event gives valid transaction ID and blocknumber', async () => {
@@ -87,7 +84,8 @@ describe('Checkpointers', () => {
 
                 await checkpointer.checkpointChaincodeEvent(event);
 
-                assertState(checkpointer, event.blockNumber, event.transactionId);
+                expect(checkpointer.getBlockNumber()).toEqual(event.blockNumber);
+                expect(checkpointer.getTransactionId()).toEqual(event.transactionId);
             });
         });
     });

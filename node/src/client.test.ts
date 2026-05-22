@@ -6,6 +6,7 @@
 
 import * as grpc from '@grpc/grpc-js';
 import { common, gateway } from '@hyperledger/fabric-protos';
+import { beforeEach, describe, expect, it } from '@jest/globals';
 import { GatewayClient, newGatewayClient } from './client';
 import { GatewayError } from './gatewayerror';
 import { MockGatewayGrpcClient } from './testutils.test';

@@ -5,6 +5,7 @@
  */
 
 import { msp } from '@hyperledger/fabric-protos';
+import { beforeEach, describe, expect, it } from '@jest/globals';
 import { Identity } from './identity/identity';
 import { Signer } from './identity/signer';
 import { SigningIdentity } from './signingidentity';
