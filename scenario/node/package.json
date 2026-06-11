@@ -35,5 +35,9 @@
         "prettier": "^3.8.0",
         "typescript": "~6.0.3",
         "typescript-eslint": "^8.60.0"
+    },
+    "allowScripts": {
+        "pkcs11js": true,
+        "protobufjs": false
     }
 }
