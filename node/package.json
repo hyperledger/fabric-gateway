@@ -19,6 +19,12 @@
         "email": "fabric@lists.lfdecentralizedtrust.org",
         "url": "https://www.lfdecentralizedtrust.org/projects/fabric"
     },
+    "allowScripts": {
+        "fsevents": true,
+        "pkcs11js": true,
+        "protobufjs": false,
+        "unrs-resolver": false
+    },
     "scripts": {
         "build": "npm run clean && npm run compile && npm run copy-non-ts-source",
         "clean": "rm -rf apidocs dist",
