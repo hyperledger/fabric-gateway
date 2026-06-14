@@ -29,12 +29,12 @@
         "@tsconfig/node22": "^22.0.5",
         "@types/node": "^22.19.19",
         "cucumber-console-formatter": "^1.0.0",
-        "eslint": "^10.4.0",
+        "eslint": "^10.5.0",
         "eslint-config-prettier": "^10.1.2",
         "expect": "^30.4.1",
         "prettier": "^3.8.0",
         "typescript": "~6.0.3",
-        "typescript-eslint": "^8.60.0"
+        "typescript-eslint": "^8.61.0"
     },
     "allowScripts": {
         "pkcs11js": true,
