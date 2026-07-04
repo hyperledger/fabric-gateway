@@ -14,7 +14,6 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -146,46 +145,42 @@ func (set ChaincodeSet) add(chaincodeName string, version string, channelName st
 }
 
 func startFabric() error {
-	if !fabricRunning {
-		fmt.Println("startFabric")
-		err := createCryptoMaterial()
-		if err != nil {
-			return err
-		}
-		cmd := exec.Command("docker", "compose", "-f", dockerComposeFile, "-p", "node", "up", "-d")
-		cmd.Dir = dockerComposeDir
-		out, err := cmd.CombinedOutput()
-		if out != nil {
-			fmt.Println(string(out))
-		}
-		if err != nil {
-			return err
-		}
-		fabricRunning = true
-		for peer := range peerConnectionInfos {
-			waitForHealthzOK(peer)
-		}
-	} else {
+	if fabricRunning {
 		fmt.Println("Fabric already running")
+		return nil
+	}
+
+	fmt.Println("startFabric")
+
+	if err := createCryptoMaterial(); err != nil {
+		return err
+	}
+
+	if err := ComposeCommand("ComposeUp", dockerComposeDir, dockerComposeFile, "node"); err != nil {
+		return err
+	}
+
+	fabricRunning = true
+
+	for peer := range peerConnectionInfos {
+		waitForHealthzOK(peer)
 	}
 
 	return nil
 }
 
 func stopFabric() error {
-	if fabricRunning {
-		fmt.Println("stopFabric")
-		cmd := exec.Command("docker", "compose", "-f", dockerComposeFile, "-p", "node", "down")
-		cmd.Dir = dockerComposeDir
-		out, err := cmd.CombinedOutput()
-		if out != nil {
-			fmt.Println(string(out))
-		}
-		if err != nil {
-			return err
-		}
-		fabricRunning = false
+	if !fabricRunning {
+		return nil
 	}
+
+	fmt.Println("stopFabric")
+
+	if err := ComposeCommand("ComposeDown", dockerComposeDir, dockerComposeFile, "node"); err != nil {
+		return err
+	}
+
+	fabricRunning = false
 	return nil
 }
 
