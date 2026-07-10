@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { p256 } from '@noble/curves/nist';
+import { p256 } from '@noble/curves/nist.js';
 import * as pkcs11js from 'pkcs11js';
 import { Signer } from './signer';
 
@@ -114,9 +114,8 @@ export class HSMSignerFactoryImpl implements HSMSignerFactory {
                 let signature = p256.Signature.fromBytes(compactSignature, 'compact');
                 if (signature.hasHighS()) {
                     const lowS = p256.Point.Fn.neg(signature.s);
-                    signature = new p256.Signature(signature.r, lowS, signature.recovery);
+                    signature = new p256.Signature(signature.r, lowS);
                 }
-
                 return signature.toBytes('der');
             },
             close: () => {
