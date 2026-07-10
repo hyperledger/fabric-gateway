@@ -5,7 +5,7 @@
  */
 
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { p256 } from '@noble/curves/nist';
+import { p256 } from '@noble/curves/nist.js';
 import { createHash } from 'node:crypto';
 import pkcs11js, { Handle, InitializationOptions, Mechanism, Pkcs11Error, Template, TokenInfo } from 'pkcs11js';
 import { HSMSignerOptions } from './hsmsigner';
@@ -95,7 +95,7 @@ describe('When using an HSM Signer', () => {
         mocks.C_OpenSession.mockReturnValue(mockSession);
         mocks.C_FindObjects.mockReturnValue([mockPrivateKeyHandle]);
         mocks.C_SignAsync.mockImplementation((session: Buffer, digest: Buffer, buffer: Buffer) => {
-            const signature = p256.sign(digest, privateKey).toBytes('compact');
+            const signature = p256.sign(digest, privateKey, { format: 'compact', prehash: false });
             signature.forEach((b, i) => buffer.writeUInt8(b, i));
             // Return buffer of exactly signature length regardless of supplied buffer size
             const result = buffer.subarray(0, signature.length);
@@ -244,7 +244,7 @@ describe('When using an HSM Signer', () => {
         const { signer } = hsmSignerFactory.newSigner(hsmOptions);
         const signature = await signer(digest);
 
-        const valid = p256.verify(signature, digest, publicKey);
+        const valid = p256.verify(signature, digest, publicKey, { format: 'der', prehash: false });
         expect(valid).toBe(true);
 
         expect(mocks.C_SignInit).toHaveBeenCalledWith(

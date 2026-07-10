@@ -8,4 +8,10 @@ module.exports = {
     testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],
     verbose: true,
     workerThreads: true,
+    // Transform ESM JavaScript files in @node/curves and @noble/hashes.
+    transformIgnorePatterns: ['node_modules/(?!@noble/)'],
+    transform: {
+        '^.+\\.tsx?$': ['ts-jest', {}],
+        '^.+\\.js$': ['ts-jest', { tsconfig: { allowJs: true } }],
+    },
 };
