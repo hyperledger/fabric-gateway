@@ -8,6 +8,11 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    groups:
+      # CodeQL updates must be applied together to avoid breaking the build.
+      codeql:
+        patterns:
+         - "github/codeql-action/*"
   - package-ecosystem: gomod
     directories:
       - "/"
