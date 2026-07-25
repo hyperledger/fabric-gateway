@@ -20,11 +20,22 @@ updates:
     schedule:
       interval: weekly
     groups:
-      # Single PR to update a dependency in multiple directories.
+      # Single PR to update a specific dependency in multiple directories.
       go:
         group-by: dependency-name
   - package-ecosystem: npm
     versioning-strategy: increase
+    allow:
+      # Avoid incrementing patch level in production dependencies to keep version ranges more compatible.
+      - dependency-type: production
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+      - dependency-type: development
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
     ignore:
       # TypeScript updates are managed explicitly to avoid breaking changes.
       - dependency-name: typescript
@@ -32,10 +43,6 @@ updates:
       - dependency-name: "@types/node"
         update-types:
           - "version-update:semver-major"
-      # Avoid incrementing patch level to keep version ranges more compatible.
-      - dependency-name: "*"
-        update-types:
-          - "version-update:semver-patch"
     directories:
       - "/node"
       - "/scenario/node"
@@ -46,7 +53,7 @@ updates:
       # Dev updates of multiple packages (such as ESLint) must be applied together.
       dev:
         dependency-type: development
-      # Single PR to update a dependency in multiple directories.
+      # Single PR to update a specific dependency in multiple directories.
       node:
         group-by: dependency-name
   - package-ecosystem: maven
