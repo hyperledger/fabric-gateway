@@ -20,14 +20,14 @@ golangci_lint := $(go_bin_dir)/golangci-lint
 osv_scanner := $(go_bin_dir)/osv-scanner
 
 mockery := $(go_bin_dir)/mockery
-mockery_version := 3.7.0
+mockery_version := 3.7.2
 
 kernel_name := $(shell uname -s)
 lowercase_kernel_name := $(shell echo '$(kernel_name)' | tr '[:upper:]' '[:lower:]')
 
 machine_hardware := $(shell uname -m)
 ifeq ($(machine_hardware), aarch64)
-	amd_arm_machine_hardware := arm64
+	machine_hardware := arm64
 endif
 
 amd_arm_machine_hardware := $(machine_hardware)
