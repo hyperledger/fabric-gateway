@@ -37,8 +37,11 @@ updates:
           - "version-update:semver-minor"
           - "version-update:semver-patch"
     ignore:
-      # TypeScript updates are managed explicitly to avoid breaking changes.
+      # TypeScript major/minor version updates are managed explicitly to avoid breaking changes.
       - dependency-name: typescript
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
       # Node major version must remain at the current supported runtime version.
       - dependency-name: "@types/node"
         update-types:
