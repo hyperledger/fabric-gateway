@@ -400,13 +400,15 @@
                 <configuration>
                     <checkSkip>${skipUnitTests}</checkSkip>
                     <java>
-                        <trimTrailingWhitespace/>
-                        <endWithNewline/>
+                        <trimTrailingWhitespace />
+                        <endWithNewline />
                         <palantirJavaFormat>
                             <formatJavadoc>false</formatJavadoc>
                         </palantirJavaFormat>
-                        <removeUnusedImports/>
-                        <forbidWildcardImports/>
+                        <removeUnusedImports>
+                            <engine>google-java-format</engine>
+                        </removeUnusedImports>
+                        <forbidWildcardImports />
                         <licenseHeader>
                             <file>${project.basedir}/license-header.txt</file>
                         </licenseHeader>
