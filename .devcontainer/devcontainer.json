@@ -1,23 +1,8 @@
 {
     "name": "Ubuntu",
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "image": "mcr.microsoft.com/devcontainers/universal:noble",
     "features": {
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
-        "ghcr.io/devcontainers/features/go:1": {
-            "version": "latest"
-        },
-        "ghcr.io/devcontainers/features/java:1": {
-            "version": "lts",
-            "jdkDistro": "tem",
-            "installMaven": true
-        },
-        "ghcr.io/devcontainers/features/node:2": {
-            "version": "lts"
-        },
-        "ghcr.io/devcontainers/features/python:1": {
-            "version": "latest",
-            "installTools": false
-        },
         "ghcr.io/devcontainers-extra/features/apt-get-packages:1": {
             "packages": "shellcheck,softhsm2"
         }
@@ -26,20 +11,30 @@
         "vscode": {
             "settings": {
                 "editor.defaultFormatter": "esbenp.prettier-vscode",
+                "files.insertFinalNewline": true,
+                "[xml]": {
+                    "editor.defaultFormatter": "redhat.vscode-xml"
+                },
+                "[yaml]": {
+                    "editor.defaultFormatter": "redhat.vscode-yaml"
+                },
                 "go.buildTags": "pkcs11"
             },
             "extensions": [
+                "dbaeumer.vscode-eslint",
                 "esbenp.prettier-vscode",
                 "github.vscode-github-actions",
-                "-ms-python.python",
-                "-ms-python.vscode-pylance",
-                "-ms-python.autopep8",
+                "golang.go",
                 "ms-vscode.makefile-tools",
-                "timonwong.shellcheck"
+                "redhat.vscode-xml",
+                "redhat.vscode-yaml",
+                "timonwong.shellcheck",
+                "vscjava.vscode-java-pack"
             ]
         }
     },
     "postCreateCommand": {
-        "generate": ["make", "generate"]
+        "generate": ["make", "generate"],
+        "mvnd": "bash -c '. \"${SDKMAN_DIR}/bin/sdkman-init.sh\" && sdk install mvnd'"
     }
 }

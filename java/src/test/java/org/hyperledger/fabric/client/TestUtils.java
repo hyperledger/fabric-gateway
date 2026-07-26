@@ -204,12 +204,10 @@ public final class TestUtils {
         }
     }
 
-    public <Request, Response> void invokeStubUnaryCall(
-            final Function<Request, Response> stubCall,
-            final Request request,
-            final StreamObserver<Response> responseObserver) {
+    public <ReqT, RespT> void invokeStubUnaryCall(
+            final Function<ReqT, RespT> stubCall, final ReqT request, final StreamObserver<RespT> responseObserver) {
         try {
-            Response response = stubCall.apply(request);
+            RespT response = stubCall.apply(request);
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         } catch (Exception e) {
@@ -217,10 +215,10 @@ public final class TestUtils {
         }
     }
 
-    public <Request, Response> void invokeStubServerStreamingCall(
-            final Function<Request, Stream<Response>> stubCall,
-            final Request request,
-            final StreamObserver<Response> responseObserver) {
+    public <ReqT, RespT> void invokeStubServerStreamingCall(
+            final Function<ReqT, Stream<RespT>> stubCall,
+            final ReqT request,
+            final StreamObserver<RespT> responseObserver) {
         try {
             stubCall.apply(request).forEachOrdered(responseObserver::onNext);
             responseObserver.onCompleted();
@@ -229,16 +227,16 @@ public final class TestUtils {
         }
     }
 
-    public <Request, Response> StreamObserver<Request> invokeStubDuplexCall(
-            final Function<Stream<Request>, Stream<Response>> stubCall,
-            final ServerCallStreamObserver<Response> responseObserver,
+    public <ReqT, RespT> StreamObserver<ReqT> invokeStubDuplexCall(
+            final Function<Stream<ReqT>, Stream<RespT>> stubCall,
+            final ServerCallStreamObserver<RespT> responseObserver,
             final int initialRequestCount) {
-        BlockingQueue<Request> requestQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<ReqT> requestQueue = new LinkedBlockingQueue<>();
         CountDownLatch requestCountLatch = new CountDownLatch(initialRequestCount);
         CompletableFuture<Void> responseFuture = CompletableFuture.completedFuture(null);
 
         try {
-            Stream<Response> responses = stubCall.apply(requestQueue.stream()); // Stub invocation may throw exception
+            Stream<RespT> responses = stubCall.apply(requestQueue.stream()); // Stub invocation may throw exception
             responseFuture = CompletableFuture.runAsync(
                     () -> {
                         try {
