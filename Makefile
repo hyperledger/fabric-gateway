@@ -22,6 +22,9 @@ osv_scanner := $(go_bin_dir)/osv-scanner
 mockery := $(go_bin_dir)/mockery
 mockery_version := 3.7.2
 
+fabric_ca_client := $(go_bin_dir)/fabric-ca-client
+fabric_ca_client_version := 1.5.22
+
 kernel_name := $(shell uname -s)
 lowercase_kernel_name := $(shell echo '$(kernel_name)' | tr '[:upper:]' '[:lower:]')
 
@@ -193,7 +196,7 @@ vendor-chaincode:
 		GO111MODULE=on go mod vendor
 
 .PHONY: scenario-test-go
-scenario-test-go: vendor-chaincode install-fabric-ca-client setup-softhsm
+scenario-test-go: vendor-chaincode $(fabric_ca_client) setup-softhsm
 	cd '$(scenario_dir)/go' && \
 		go test -timeout 20m -tags pkcs11 -v -args '$(scenario_dir)/features/'
 
@@ -203,12 +206,12 @@ scenario-test-go-no-hsm: vendor-chaincode
 		go test -timeout 20m -tags pkcs11 -v --godog.tags='~@hsm' -args '$(scenario_dir)/features/'
 
 .PHONY: scenario-test-node
-scenario-test-node: vendor-chaincode build-scenario-node install-fabric-ca-client setup-softhsm
+scenario-test-node: vendor-chaincode build-scenario-node $(fabric_ca_client) setup-softhsm
 	cd '$(scenario_dir)/node' && \
 		npm test
 
 .PHONY: scenario-test-node-no-hsm
-scenario-test-node-no-hsm: vendor-chaincode build-scenario-node install-fabric-ca-client
+scenario-test-node-no-hsm: vendor-chaincode build-scenario-node $(fabric_ca_client)
 	cd '$(scenario_dir)/node' && \
 		npm run test:no-hsm
 
@@ -236,7 +239,13 @@ pull-docker-images:
 
 .PHONY: install-fabric-ca-client
 install-fabric-ca-client:
-	go install -tags pkcs11 github.com/hyperledger/fabric-ca/cmd/fabric-ca-client@latest
+	curl --fail --location --show-error --silent \
+    	'https://github.com/hyperledger/fabric-ca/releases/latest/download/hyperledger-fabric-ca-$(lowercase_kernel_name)-$(amd_arm_machine_hardware)-$(fabric_ca_client_version).tar.gz' \
+		| tar -C '$(go_bin_dir)' --strip-components=1 -xzf - bin/fabric-ca-client
+	chmod u+x '$(fabric_ca_client)'
+
+$(fabric_ca_client):
+	$(MAKE) install-fabric-ca-client
 
 .PHONY: setup-softhsm
 setup-softhsm:
