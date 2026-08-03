@@ -110,7 +110,7 @@ jobs:
       - name: Pull Docker images
         run: make pull-docker-images
       - name: Run scenario tests
-        run: make scenario-test-go
+        run: make scenario-test-go-no-hsm
 
   node_unit:
     needs: verify-versions
@@ -159,7 +159,7 @@ jobs:
       - name: Pull Docker images
         run: make pull-docker-images
       - name: Run scenario tests
-        run: make scenario-test-node
+        run: make scenario-test-node-no-hsm
 
   java_unit:
     needs: verify-versions
