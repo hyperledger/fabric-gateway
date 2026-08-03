@@ -23,7 +23,6 @@ mockery := $(go_bin_dir)/mockery
 mockery_version := 3.7.2
 
 fabric_ca_client := $(go_bin_dir)/fabric-ca-client
-fabric_ca_client_version := 1.5.22
 
 kernel_name := $(shell uname -s)
 lowercase_kernel_name := $(shell echo '$(kernel_name)' | tr '[:upper:]' '[:lower:]')
@@ -239,10 +238,7 @@ pull-docker-images:
 
 .PHONY: install-fabric-ca-client
 install-fabric-ca-client:
-	curl --fail --location --show-error --silent \
-    	'https://github.com/hyperledger/fabric-ca/releases/latest/download/hyperledger-fabric-ca-$(lowercase_kernel_name)-$(amd_arm_machine_hardware)-$(fabric_ca_client_version).tar.gz' \
-		| tar -C '$(go_bin_dir)' --strip-components=1 -xzf - bin/fabric-ca-client
-	chmod u+x '$(fabric_ca_client)'
+	go install -tags pkcs11 github.com/hyperledger/fabric-ca/cmd/fabric-ca-client@latest
 
 $(fabric_ca_client):
 	$(MAKE) install-fabric-ca-client
