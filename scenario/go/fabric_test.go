@@ -4,57 +4,78 @@
 package scenario
 
 import (
+	"bytes"
+	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
-	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
+	"github.com/hyperledger/fabric-admin-sdk/pkg/channel"
+	adminidentity "github.com/hyperledger/fabric-admin-sdk/pkg/identity"
+	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
 	fixturesDir       = "../fixtures"
 	dockerComposeFile = "docker-compose-tls.yaml"
 	dockerComposeDir  = fixturesDir + "/docker-compose"
+
+	chaincodeDir       = fixturesDir + "/chaincode"
+	cryptoMaterialDir  = fixturesDir + "/crypto-material"
+	configBlockFile    = cryptoMaterialDir + "/mychannel.block"
+	ordererOrgDir      = cryptoMaterialDir + "/crypto-config/ordererOrganizations/example.com"
+	ordererCACertFile  = ordererOrgDir + "/tlsca/tlsca.example.com-cert.pem"
+	collectionFileName = "collections_config.json"
+
+	// adminUser is the organization user whose credentials are used for Fabric administrative operations.
+	adminUser = "Admin"
+
+	installTimeout     = 5 * time.Minute
+	transactionTimeout = 2 * time.Minute
 )
 
 type orgConfig struct {
-	cli   string
+	mspID string
 	peers []string
 }
 
 type ordererConfig struct {
-	address string
-	port    string
+	name      string
+	adminPort string
 }
 
 var orgs = []orgConfig{
 	{
-		cli:   "org1_cli",
-		peers: []string{"peer0.org1.example.com:7051", "peer1.org1.example.com:9051"},
+		mspID: "Org1MSP",
+		peers: []string{"peer0.org1.example.com", "peer1.org1.example.com"},
 	},
 	{
-		cli:   "org2_cli",
-		peers: []string{"peer0.org2.example.com:8051", "peer1.org2.example.com:10051"},
+		mspID: "Org2MSP",
+		peers: []string{"peer0.org2.example.com", "peer1.org2.example.com"},
 	},
 	{
-		cli:   "org3_cli",
-		peers: []string{"peer0.org3.example.com:11051"},
+		mspID: "Org3MSP",
+		peers: []string{"peer0.org3.example.com"},
 	},
 }
 
 var orderers = []ordererConfig{
-	{address: "orderer1.example.com", port: "7053"},
-	{address: "orderer2.example.com", port: "8053"},
-	{address: "orderer3.example.com", port: "9053"},
+	{name: "orderer1.example.com", adminPort: "7053"},
+	{name: "orderer2.example.com", adminPort: "8053"},
+	{name: "orderer3.example.com", adminPort: "9053"},
 }
 
 type peerConnectionInfo struct {
@@ -145,6 +166,29 @@ func (set ChaincodeSet) add(chaincodeName string, version string, channelName st
 	set[key] = signaturePolicy
 }
 
+// adminIdentity is the signing identity used to carry out administrative operations on behalf of an organization.
+func (org orgConfig) adminIdentity() (adminidentity.SigningIdentity, error) {
+	certificate, err := adminidentity.ReadCertificate(certificatePath(adminUser, org.mspID))
+	if err != nil {
+		return nil, err
+	}
+
+	privateKey, err := adminidentity.ReadPrivateKey(PrivateKeyPath(adminUser, org.mspID))
+	if err != nil {
+		return nil, err
+	}
+
+	return adminidentity.NewPrivateKeySigningIdentity(org.mspID, certificate, privateKey)
+}
+
+func (orderer ordererConfig) adminURL() string {
+	return "https://localhost:" + orderer.adminPort
+}
+
+func (orderer ordererConfig) tlsDir() string {
+	return ordererOrgDir + "/orderers/" + orderer.name + "/tls"
+}
+
 func startFabric() error {
 	if !fabricRunning {
 		fmt.Println("startFabric")
@@ -217,210 +261,195 @@ func generateHSMUser(hsmUserid string) error {
 	return nil
 }
 
-func deployChaincode(ccType, ccName, version, channelName, signaturePolicy string) error {
-	fmt.Println("deployChaincode")
+// chaincodeDeployment describes a chaincode to be deployed to a channel.
+type chaincodeDeployment struct {
+	language        string
+	name            string
+	version         string
+	channelName     string
+	signaturePolicy string
+}
 
-	sequence := "1"
+func deployChaincode(ccType string, ccName string, version string, channelName string, signaturePolicy string) error {
+	deployment := &chaincodeDeployment{
+		language:        ccType,
+		name:            ccName,
+		version:         version,
+		channelName:     channelName,
+		signaturePolicy: signaturePolicy,
+	}
+	return deployment.deploy()
+}
 
-	if policy, exists := runningChaincodes.policy(ccName, version, channelName); exists {
-		if policy == signaturePolicy {
-			// Nothing to do as already deployed with correct signature policy.
-			return nil
+func (d *chaincodeDeployment) deploy() error {
+	currentPolicy, deployed := runningChaincodes.policy(d.name, d.version, d.channelName)
+	if deployed && currentPolicy == d.signaturePolicy {
+		// Nothing to do as already deployed with correct signature policy.
+		return nil
+	}
+
+	fmt.Printf("Deploy %s chaincode named %s at version %s on channel %s\n", d.language, d.name, d.version, d.channelName)
+
+	chaincodePackage, err := newChaincodePackage(d.language, d.sourceDir(), d.label())
+	if err != nil {
+		return err
+	}
+
+	// A chaincode that has already been deployed only needs a new definition with an incremented sequence number to be
+	// approved and committed; its chaincode package is already installed.
+	sequence := int64(1)
+	if deployed {
+		if sequence, err = d.nextSequenceNumber(); err != nil {
+			return err
 		}
+	} else if err := installChaincode(chaincodePackage); err != nil {
+		return err
+	}
 
-		// Already exists but different signature policy...
-		// No need to re-install, just increment the sequence number and approve/commit new signature policy.
-		currentSequence, err := committedSequenceNumber(ccName, channelName)
+	definition, err := d.newDefinition(chaincodePackage, sequence)
+	if err != nil {
+		return err
+	}
+
+	if err := approveChaincode(definition); err != nil {
+		return err
+	}
+
+	if err := commitChaincode(definition); err != nil {
+		return err
+	}
+
+	runningChaincodes.add(d.name, d.version, d.channelName, d.signaturePolicy)
+
+	return nil
+}
+
+func (d *chaincodeDeployment) newDefinition(chaincodePackage []byte, sequence int64) (*chaincode.Definition, error) {
+	packageID, err := chaincode.PackageID(bytes.NewReader(chaincodePackage))
+	if err != nil {
+		return nil, err
+	}
+
+	applicationPolicy, err := chaincode.NewApplicationPolicy(d.signaturePolicy, "")
+	if err != nil {
+		return nil, err
+	}
+
+	collections, err := readCollectionConfig(d.sourceDir() + "/" + collectionFileName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &chaincode.Definition{
+		ChannelName:       d.channelName,
+		PackageID:         packageID,
+		Name:              d.name,
+		Version:           d.version,
+		Sequence:          sequence,
+		ApplicationPolicy: applicationPolicy,
+		Collections:       collections,
+	}, nil
+}
+
+func (d *chaincodeDeployment) sourceDir() string {
+	return chaincodeDir + "/" + d.language + "/" + d.name
+}
+
+func (d *chaincodeDeployment) label() string {
+	return d.name + "v" + d.version
+}
+
+func (d *chaincodeDeployment) nextSequenceNumber() (int64, error) {
+	var sequence int64
+
+	err := withOrgGateway(orgs[0], func(gateway *chaincode.Gateway) error {
+		ctx, cancel := context.WithTimeout(context.Background(), transactionTimeout)
+		defer cancel()
+
+		result, err := gateway.QueryCommittedWithName(ctx, d.channelName, d.name)
 		if err != nil {
 			return err
 		}
-		sequence = strconv.Itoa(currentSequence + 1)
-	} else {
-		if err := installChaincode(ccName, ccType, version); err != nil {
-			return err
+
+		sequence = result.GetSequence() + 1
+		return nil
+	})
+
+	return sequence, err
+}
+
+func installChaincode(chaincodePackage []byte) error {
+	fmt.Println("Install chaincode on all peers")
+
+	wg := new(errgroup.Group)
+
+	for _, org := range orgs {
+		for _, peer := range org.peers {
+			wg.Go(func() error {
+				return installChaincodeToPeer(org, peer, chaincodePackage)
+			})
 		}
 	}
 
-	// is there a collections_config.json file?
-	var collectionConfig []string
-	collectionFile := "/chaincode/" + ccType + "/" + ccName + "/collections_config.json"
-	if _, err := os.Stat(fixturesDir + collectionFile); err == nil {
-		collectionConfig = []string{
-			"--collections-config",
-			"/opt/gopath/src/github.com" + collectionFile,
+	return wg.Wait()
+}
+
+func installChaincodeToPeer(org orgConfig, peer string, chaincodePackage []byte) error {
+	id, err := org.adminIdentity()
+	if err != nil {
+		return err
+	}
+
+	return withPeerConnection(peer, func(connection *grpc.ClientConn) error {
+		ctx, cancel := context.WithTimeout(context.Background(), installTimeout)
+		defer cancel()
+
+		if _, err := chaincode.NewPeer(connection, id).Install(ctx, bytes.NewReader(chaincodePackage)); err != nil {
+			return fmt.Errorf("failed to install chaincode on peer %s: %w", peer, err)
 		}
-	}
 
-	if err := approveChaincode(ccName, version, sequence, channelName, signaturePolicy, collectionConfig); err != nil {
-		return err
-	}
-
-	if err := commitChaincode(ccName, version, sequence, channelName, signaturePolicy, collectionConfig); err != nil {
-		return err
-	}
-
-	runningChaincodes.add(ccName, version, channelName, signaturePolicy)
-
-	return nil
+		return nil
+	})
 }
 
-func committedSequenceNumber(chaincodeName string, channelName string) (int, error) {
-	out, err := dockerCommandWithTLS(
-		"exec", "org1_cli", "peer", "lifecycle", "chaincode", "querycommitted",
-		"-o", "orderer1.example.com:7050", "--channelID", channelName, "--name", chaincodeName,
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	pattern := regexp.MustCompile(".*Sequence: ([0-9]+),.*")
-	match := pattern.FindStringSubmatch(out)
-	if len(match) != 2 {
-		return 0, errors.New("cannot find installed chaincode for Org1")
-	}
-	i, err := strconv.Atoi(match[1])
-	if err != nil {
-		return 0, err
-	}
-
-	return i, nil
-}
-
-func installChaincode(name string, language string, version string) error {
-	fmt.Printf("Install %s chaincode named %s at version %s\n", language, name, version)
-
-	path := "/opt/gopath/src/github.com/chaincode/" + language + "/" + name
-	pkg := name + ".tar.gz"
+func approveChaincode(definition *chaincode.Definition) error {
+	fmt.Printf("Approve chaincode named %s at version %s and sequence %d on channel %s\n",
+		definition.Name, definition.Version, definition.Sequence, definition.ChannelName)
 
 	wg := new(errgroup.Group)
 
 	for _, org := range orgs {
 		wg.Go(func() error {
-			return installChaincodeToOrg(org, pkg, language, name, version, path)
+			return approveChaincodeForOrg(org, definition)
 		})
 	}
 
 	return wg.Wait()
 }
 
-func installChaincodeToOrg(org orgConfig, pkg string, language string, name string, version string, path string) error {
-	if _, err := dockerCommand(
-		"exec", org.cli, "peer", "lifecycle", "chaincode", "package", pkg,
-		"--lang", language,
-		"--label", chaincodeLabel(name, version),
-		"--path", path,
-	); err != nil {
-		return err
-	}
+func approveChaincodeForOrg(org orgConfig, definition *chaincode.Definition) error {
+	return withOrgGateway(org, func(gateway *chaincode.Gateway) error {
+		ctx, cancel := context.WithTimeout(context.Background(), transactionTimeout)
+		defer cancel()
 
-	wg := new(errgroup.Group)
+		if err := gateway.Approve(ctx, definition); err != nil {
+			return fmt.Errorf("failed to approve chaincode for %s: %w", org.mspID, err)
+		}
 
-	for _, peer := range org.peers {
-		wg.Go(func() error {
-			return installChaincodeToPeer(peer, org, pkg)
-		})
-	}
-
-	return wg.Wait()
+		return nil
+	})
 }
 
-func installChaincodeToPeer(peer string, org orgConfig, pkg string) error {
-	env := "CORE_PEER_ADDRESS=" + peer
-	if _, err := dockerCommand(
-		"exec", "-e", env, org.cli, "peer", "lifecycle", "chaincode", "install", pkg,
-	); err != nil {
-		return err
-	}
-	return nil
-}
+func commitChaincode(definition *chaincode.Definition) error {
+	fmt.Printf("Commit chaincode named %s at version %s and sequence %d on channel %s\n",
+		definition.Name, definition.Version, definition.Sequence, definition.ChannelName)
 
-func chaincodeLabel(name string, version string) string {
-	return name + "v" + version
-}
+	return withOrgGateway(orgs[0], func(gateway *chaincode.Gateway) error {
+		ctx, cancel := context.WithTimeout(context.Background(), transactionTimeout)
+		defer cancel()
 
-func approveChaincode(name string, version string, sequence string, channelName string, signaturePolicy string, collectionConfig []string) error {
-	fmt.Printf("Approve chaincode named %s at version %s and sequence %s on channel %s\n", name, version, sequence, channelName)
-
-	wg := new(errgroup.Group)
-
-	for _, org := range orgs {
-		wg.Go(func() error {
-			return approveChaincodeForOrg(org, name, version, channelName, signaturePolicy, sequence, collectionConfig)
-		})
-	}
-
-	return wg.Wait()
-}
-
-func approveChaincodeForOrg(org orgConfig, name string, version string, channelName string, signaturePolicy string, sequence string, collectionConfig []string) error {
-	out, err := dockerCommand(
-		"exec", org.cli, "peer", "lifecycle", "chaincode", "queryinstalled",
-	)
-	if err != nil {
-		return err
-	}
-
-	label := chaincodeLabel(name, version)
-	pattern := regexp.MustCompile(".*Package ID: (.*), Label: " + label + ".*")
-	match := pattern.FindStringSubmatch(out)
-	if len(match) != 2 {
-		return errors.New("cannot find installed chaincode for Org1")
-	}
-	packageID := match[1]
-
-	approveCommand := []string{
-		"exec", org.cli, "peer", "lifecycle", "chaincode", "approveformyorg",
-		"--package-id", packageID,
-		"--channelID", channelName,
-		"--orderer", "orderer1.example.com:7050",
-		"--name", name,
-		"--version", version,
-		"--signature-policy", signaturePolicy,
-		"--sequence", sequence,
-		"--waitForEvent",
-	}
-	approveCommand = append(approveCommand, collectionConfig...)
-	if _, err = dockerCommandWithTLS(approveCommand...); err != nil {
-		return err
-	}
-	return nil
-}
-
-func commitChaincode(name string, version string, sequence string, channelName string, signaturePolicy string, collectionConfig []string) error {
-	fmt.Printf("Commit chaincode named %s at version %s and sequence %s on channel %s\n", name, version, sequence, channelName)
-
-	commitCommand := []string{
-		"exec", "org1_cli", "peer", "lifecycle", "chaincode", "commit",
-		"--channelID", channelName,
-		"--orderer", "orderer1.example.com:7050",
-		"--name", name,
-		"--version", version,
-		"--signature-policy", signaturePolicy,
-		"--sequence", sequence,
-		"--waitForEvent",
-		"--peerAddresses", "peer0.org1.example.com:7051",
-		"--peerAddresses", "peer1.org1.example.com:9051",
-		"--peerAddresses", "peer0.org2.example.com:8051",
-		"--peerAddresses", "peer1.org2.example.com:10051",
-		"--peerAddresses", "peer0.org3.example.com:11051",
-		"--tlsRootCertFiles",
-		"/etc/hyperledger/configtx/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
-		"--tlsRootCertFiles",
-		"/etc/hyperledger/configtx/crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt",
-		"--tlsRootCertFiles",
-		"/etc/hyperledger/configtx/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt",
-		"--tlsRootCertFiles",
-		"/etc/hyperledger/configtx/crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls/ca.crt",
-		"--tlsRootCertFiles",
-		"/etc/hyperledger/configtx/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt",
-	}
-	commitCommand = append(commitCommand, collectionConfig...)
-	_, err := dockerCommandWithTLS(commitCommand...)
-	if err != nil {
-		return err
-	}
-
-	return nil
+		return gateway.Commit(ctx, definition)
+	})
 }
 
 func createAndJoinChannels() error {
@@ -434,11 +463,16 @@ func createAndJoinChannels() error {
 		return err
 	}
 
-	if err := joinOrderers(); err != nil {
+	configBlock, err := readConfigBlock()
+	if err != nil {
 		return err
 	}
 
-	if err := joinPeers(); err != nil {
+	if err := joinOrderers(configBlock); err != nil {
+		return err
+	}
+
+	if err := joinPeers(configBlock); err != nil {
 		return err
 	}
 
@@ -447,54 +481,143 @@ func createAndJoinChannels() error {
 	return nil
 }
 
-func joinOrderers() error {
+// readConfigBlock reads the channel configuration block created with the network's crypto material.
+func readConfigBlock() (*common.Block, error) {
+	blockBytes, err := os.ReadFile(configBlockFile)
+	if err != nil {
+		return nil, err
+	}
+
+	block := &common.Block{}
+	if err := proto.Unmarshal(blockBytes, block); err != nil {
+		return nil, fmt.Errorf("failed to parse config block %s: %w", configBlockFile, err)
+	}
+
+	return block, nil
+}
+
+func joinOrderers(configBlock *common.Block) error {
+	certPool, err := newCertPool(ordererCACertFile)
+	if err != nil {
+		return err
+	}
+
 	wg := new(errgroup.Group)
 
 	for _, orderer := range orderers {
 		wg.Go(func() error {
-			return joinOrderer(orderer)
+			return joinOrderer(orderer, configBlock, certPool)
 		})
 	}
 
 	return wg.Wait()
 }
 
-func joinOrderer(orderer ordererConfig) error {
-	tlsdir := fmt.Sprintf("/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/orderers/%s/tls", orderer.address)
-	if _, err := dockerCommand(
-		"exec", "org1_cli", "osnadmin", "channel", "join",
-		"--channelID", "mychannel",
-		"--config-block", "/etc/hyperledger/configtx/mychannel.block",
-		"-o", fmt.Sprintf("%s:%s", orderer.address, orderer.port),
-		"--ca-file", "/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem",
-		"--client-cert", tlsdir+"/server.crt",
-		"--client-key", tlsdir+"/server.key",
-	); err != nil {
+func joinOrderer(orderer ordererConfig, configBlock *common.Block, certPool *x509.CertPool) error {
+	clientCertificate, err := tls.LoadX509KeyPair(orderer.tlsDir()+"/server.crt", orderer.tlsDir()+"/server.key")
+	if err != nil {
 		return err
 	}
+
+	response, err := channel.CreateChannel(orderer.adminURL(), configBlock, certPool, clientCertificate)
+	if err != nil {
+		return fmt.Errorf("failed to join orderer %s to channel: %w", orderer.name, err)
+	}
+	defer func() { _ = response.Body.Close() }()
+
+	if response.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(response.Body)
+		return fmt.Errorf("failed to join orderer %s to channel: %s: %s", orderer.name, response.Status, body)
+	}
+
 	return nil
 }
 
-func joinPeers() error {
+func joinPeers(configBlock *common.Block) error {
 	wg := new(errgroup.Group)
 
 	for _, org := range orgs {
 		for _, peer := range org.peers {
 			wg.Go(func() error {
-				return joinPeer(peer, org)
+				return joinPeer(org, peer, configBlock)
 			})
 		}
 	}
-	return nil
+
+	return wg.Wait()
 }
 
-func joinPeer(peer string, org orgConfig) error {
-	env := "CORE_PEER_ADDRESS=" + peer
-	_, err := dockerCommandWithTLS(
-		"exec", "-e", env, org.cli, "peer", "channel", "join",
-		"-b", "/etc/hyperledger/configtx/mychannel.block",
-	)
-	return err
+func joinPeer(org orgConfig, peer string, configBlock *common.Block) error {
+	id, err := org.adminIdentity()
+	if err != nil {
+		return err
+	}
+
+	return withPeerConnection(peer, func(connection *grpc.ClientConn) error {
+		ctx, cancel := context.WithTimeout(context.Background(), transactionTimeout)
+		defer cancel()
+
+		if err := channel.JoinChannel(ctx, connection, id, configBlock); err != nil {
+			return fmt.Errorf("failed to join peer %s to channel: %w", peer, err)
+		}
+
+		return nil
+	})
+}
+
+// withOrgGateway invokes a function with a chaincode gateway that transacts as an organization's admin user, using
+// one of the organization's peers as the gateway.
+func withOrgGateway(org orgConfig, f func(*chaincode.Gateway) error) error {
+	id, err := org.adminIdentity()
+	if err != nil {
+		return err
+	}
+
+	return withPeerConnection(org.peers[0], func(connection *grpc.ClientConn) error {
+		return f(chaincode.NewGateway(connection, id))
+	})
+}
+
+// withPeerConnection invokes a function with a gRPC connection to a specific peer, closing the connection afterwards.
+func withPeerConnection(peer string, f func(*grpc.ClientConn) error) error {
+	connection, err := newPeerConnection(peer)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = connection.Close() }()
+
+	return f(connection)
+}
+
+func newPeerConnection(peer string) (*grpc.ClientConn, error) {
+	peerInfo, ok := peerConnectionInfos[peer]
+	if !ok {
+		return nil, fmt.Errorf("no connection info found for peer: %s", peer)
+	}
+
+	certPool, err := newCertPool(peerInfo.tlsRootCertPath)
+	if err != nil {
+		return nil, err
+	}
+
+	url := fmt.Sprintf("dns:///%s:%d", peerInfo.host, peerInfo.port)
+	transportCredentials := credentials.NewClientTLSFromCert(certPool, peerInfo.serverNameOverride)
+
+	return grpc.NewClient(url, grpc.WithTransportCredentials(transportCredentials))
+}
+
+func newCertPool(certificateFile string) (*x509.CertPool, error) {
+	certificatePEM, err := os.ReadFile(certificateFile) // #nosec G304
+	if err != nil {
+		return nil, err
+	}
+
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(certificatePEM) {
+		return nil, fmt.Errorf("failed to parse TLS certificate: %s", certificateFile)
+	}
+
+	return certPool, nil
 }
 
 func stopPeer(peer string) error {
@@ -607,17 +730,6 @@ func startAllPeers() ([]string, error) {
 	}
 
 	return startedPeers, nil
-}
-
-func dockerCommandWithTLS(args ...string) (string, error) {
-	tlsOptions := []string{
-		"--tls",
-		"--cafile",
-		"/etc/hyperledger/configtx/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem",
-	}
-
-	fullArgs := append(args, tlsOptions...)
-	return dockerCommand(fullArgs...)
 }
 
 func dockerCommand(args ...string) (string, error) {
