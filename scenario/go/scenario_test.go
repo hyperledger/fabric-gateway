@@ -5,9 +5,7 @@ package scenario
 
 import (
 	"context"
-	"crypto/x509"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -16,9 +14,7 @@ import (
 	"github.com/cucumber/godog"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 )
 
@@ -163,25 +159,7 @@ func createCheckpointer() {
 }
 
 func connectGateway(peer string) error {
-	conn, ok := peerConnectionInfos[peer]
-	if !ok {
-		return fmt.Errorf("no connection info found for peer: %s", peer)
-	}
-
-	tlsCertificatePEM, err := os.ReadFile(conn.tlsRootCertPath) // #nosec G304
-	if err != nil {
-		return err
-	}
-
-	certPool := x509.NewCertPool()
-	if !certPool.AppendCertsFromPEM(tlsCertificatePEM) {
-		return errors.New("failed to parse TLS certificate")
-	}
-
-	url := fmt.Sprintf("dns:///%s:%d", conn.host, conn.port)
-	transportCredentials := credentials.NewClientTLSFromCert(certPool, conn.serverNameOverride)
-
-	clientConn, err := grpc.NewClient(url, grpc.WithTransportCredentials(transportCredentials))
+	clientConn, err := newPeerConnection(peer)
 	if err != nil {
 		return err
 	}
