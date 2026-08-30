@@ -51,7 +51,7 @@ func TestSigner(t *testing.T) {
 
 		halfOrder := new(big.Int).Rsh(ecdsaPrivateKey.Params().N, 1)
 
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			signature, err := sign(digest)
 			require.NoError(t, err, "sign")
 
@@ -89,7 +89,7 @@ func BenchmarkECDSA(b *testing.B) {
 	_, err = rand.Read(digest)
 	require.NoError(b, err)
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = sign(digest)
 	}
 }

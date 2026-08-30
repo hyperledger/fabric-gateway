@@ -654,8 +654,7 @@ func TestSubmitTransaction(t *testing.T) {
 		proposal, err := contract.NewProposal("transaction")
 		require.NoError(t, err, "NewProposal")
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		_, err = proposal.EndorseWithContext(ctx, expected)
 		require.NoError(t, err, "Endorse")
@@ -701,8 +700,7 @@ func TestSubmitTransaction(t *testing.T) {
 		transaction, err := proposal.Endorse()
 		require.NoError(t, err, "Endorse")
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		_, err = transaction.SubmitWithContext(ctx, expected)
 		require.NoError(t, err, "Submit")
@@ -762,8 +760,7 @@ func TestSubmitTransaction(t *testing.T) {
 		commit, err := transaction.Submit(expected)
 		require.NoError(t, err, "Submit")
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		_, err = commit.StatusWithContext(ctx, expected)
 		require.NoError(t, err, "Status")
