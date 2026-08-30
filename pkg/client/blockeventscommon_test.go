@@ -38,8 +38,7 @@ func TestCommonBlockEvents(t *testing.T) {
 				tester := newTester(t)
 				tester.SetConnectError(expected)
 
-				ctx, cancel := context.WithCancel(context.Background())
-				defer cancel()
+				ctx := t.Context()
 
 				err := tester.Events(ctx)
 
@@ -155,8 +154,7 @@ func TestCommonBlockEvents(t *testing.T) {
 				tester := newTester(t)
 				tester.SetNetworkName(networkName)
 
-				ctx, cancel := context.WithCancel(context.Background())
-				defer cancel()
+				ctx := t.Context()
 
 				err := tester.Events(ctx, testCase.options...)
 				require.NoError(t, err)
@@ -175,8 +173,7 @@ func TestCommonBlockEvents(t *testing.T) {
 			tester := newTester(t)
 			tester.SetReceiveError(errors.New("fake"))
 
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			ctx := t.Context()
 
 			err := tester.Events(ctx)
 			require.NoError(t, err)
@@ -191,8 +188,7 @@ func TestCommonBlockEvents(t *testing.T) {
 
 			tester := newTester(t)
 
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			ctx := t.Context()
 
 			err := tester.EventsWithCallOptions(ctx, expected)
 			require.NoError(t, err)
@@ -206,8 +202,7 @@ func TestCommonBlockEvents(t *testing.T) {
 			tester := newTester(t)
 			tester.SetGatewayOptions(WithTLSClientCertificateHash(expected))
 
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			ctx := t.Context()
 
 			err := tester.Events(ctx)
 			require.NoError(t, err)

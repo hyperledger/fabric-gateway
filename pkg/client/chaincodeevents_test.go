@@ -4,7 +4,6 @@
 package client
 
 import (
-	"context"
 	"errors"
 	"io"
 	"testing"
@@ -46,8 +45,7 @@ func TestChaincodeEvents(t *testing.T) {
 		mockConnection := NewMockClientConnInterface(t)
 		ExpectChaincodeEvents(mockConnection, WithNewStreamError(expected))
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithClientConnection(mockConnection))
 		_, err := network.ChaincodeEvents(ctx, "CHAINCODE")
@@ -204,8 +202,7 @@ func TestChaincodeEvents(t *testing.T) {
 			mockStream.EXPECT().CloseSend().Return(nil)
 			ExpectRecvMsg(mockStream).Maybe().Return(io.EOF)
 
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			ctx := t.Context()
 
 			network := AssertNewTestNetwork(t, "NETWORK", WithClientConnection(mockConnection))
 			_, err := network.ChaincodeEvents(ctx, "CHAINCODE", testCase.options...)
@@ -235,8 +232,7 @@ func TestChaincodeEvents(t *testing.T) {
 		mockStream.EXPECT().CloseSend().Return(nil)
 		ExpectRecvMsg(mockStream).Maybe().Return(errors.New("fake"))
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithClientConnection(mockConnection))
 
@@ -286,8 +282,7 @@ func TestChaincodeEvents(t *testing.T) {
 			newChaincodeEventsResponse(expected[2:]),
 		))
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithClientConnection(mockConnection))
 
@@ -313,8 +308,7 @@ func TestChaincodeEvents(t *testing.T) {
 		mockStream.EXPECT().CloseSend().Return(nil)
 		ExpectRecvMsg(mockStream).Maybe().Return(io.EOF)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		network := AssertNewTestNetwork(t, "NETWORK", WithClientConnection(mockConnection))
 

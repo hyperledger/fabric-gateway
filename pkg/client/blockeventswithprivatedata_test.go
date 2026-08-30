@@ -4,7 +4,6 @@
 package client
 
 import (
-	"context"
 	"testing"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
@@ -66,8 +65,7 @@ func TestBlockAndPrivateDataEvents(t *testing.T) {
 		tester := NewBlockAndPrivateDataEventsTest(t)
 		tester.SetResponses(responses...)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		err := tester.Events(ctx)
 		require.NoError(t, err)
@@ -118,8 +116,7 @@ func TestBlockAndPrivateDataEvents(t *testing.T) {
 		tester := NewBlockAndPrivateDataEventsTest(t)
 		tester.SetResponses(responses...)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		err := tester.Events(ctx)
 		require.NoError(t, err)
