@@ -20,7 +20,7 @@ golangci_lint := $(go_bin_dir)/golangci-lint
 osv_scanner := $(go_bin_dir)/osv-scanner
 
 mockery := $(go_bin_dir)/mockery
-mockery_version := 3.7.2
+mockery_version := 3.7.4
 
 fabric_ca_client := $(go_bin_dir)/fabric-ca-client
 
