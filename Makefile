@@ -16,12 +16,8 @@ python_venv_dir := $(base_dir)/.venv
 python_venv_activate := $(python_venv_dir)/bin/activate
 
 golangci_lint := $(go_bin_dir)/golangci-lint
-
 osv_scanner := $(go_bin_dir)/osv-scanner
-
 mockery := $(go_bin_dir)/mockery
-mockery_version := 3.7.4
-
 fabric_ca_client := $(go_bin_dir)/fabric-ca-client
 
 kernel_name := $(shell uname -s)
@@ -188,9 +184,11 @@ uninstall-mockery:
 	rm -f '$(mockery)'
 
 $(mockery):
-	curl --fail --location --show-error --silent \
-		'https://github.com/vektra/mockery/releases/download/v$(mockery_version)/mockery_$(mockery_version)_$(kernel_name)_$(machine_hardware).tar.gz' \
-		| tar -C '$(go_bin_dir)' -xzf - mockery
+	mockery_version=$$(curl --fail --show-error --silent https://api.github.com/repos/vektra/mockery/releases/latest | jq --raw-output .tag_name) && \
+		curl --fail --location --show-error --silent \
+			"https://github.com/vektra/mockery/releases/download/$${mockery_version}/mockery_$${mockery_version#v}_$(kernel_name)_$(machine_hardware).tar.gz" \
+			| tar -C '$(go_bin_dir)' -xzf - mockery
+	chmod u+x '$(mockery)'
 
 .PHONY: generate
 generate: $(mockery) clean-generated
