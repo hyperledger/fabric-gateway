@@ -105,13 +105,16 @@ unit-test-java:
 lint: golangci-lint
 
 .PHONY: install-golangci-lint
-install-golangci-lint:
+install-golangci-lint: uninstall-golangci-lint $(golangci_lint)
+
+.PHONY: uninstall-golangci-lint
+uninstall-golangci-lint:
+	rm -f '$(golangci_lint)'
+
+$(golangci_lint):
 	curl --fail --location --show-error --silent \
 		https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
 		| sh -s -- -b '$(go_bin_dir)'
-
-$(golangci_lint):
-	$(MAKE) install-golangci-lint
 
 .PHONY: golangci-lint
 golangci-lint: $(golangci_lint)
@@ -134,13 +137,16 @@ scan-go-nancy:
 	go list -json -deps '$(go_dir)/...' | nancy sleuth
 
 .PHONY: install-osv-scanner
-install-osv-scanner:
+install-osv-scanner: uninstall-osv-scanner $(osv_scanner)
+	
+.PHONY: uninstall-osv-scanner
+uninstall-osv-scanner:
+	rm -f '$(osv_scanner)'
+
+$(osv_scanner):
 	curl --fail --location --show-error --silent --output '$(osv_scanner)' \
     	'https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_$(lowercase_kernel_name)_$(amd_arm_machine_hardware)'
 	chmod u+x '$(osv_scanner)'
-
-$(osv_scanner):
-	$(MAKE) install-osv-scanner
 
 .PHONY: scan-go-osv-scanner
 scan-go-osv-scanner: $(osv_scanner)
@@ -175,13 +181,16 @@ scan-java-osv-scanner: $(osv_scanner)
 	osv-scanner scan source --lockfile='$(java_dir)/pom.xml'
 
 .PHONY: install-mockery
-install-mockery:
+install-mockery: uninstall-mockery $(mockery)
+
+.PHONY: uninstall-mockery
+uninstall-mockery:
+	rm -f '$(mockery)'
+
+$(mockery):
 	curl --fail --location --show-error --silent \
 		'https://github.com/vektra/mockery/releases/download/v$(mockery_version)/mockery_$(mockery_version)_$(kernel_name)_$(machine_hardware).tar.gz' \
 		| tar -C '$(go_bin_dir)' -xzf - mockery
-
-$(mockery):
-	$(MAKE) install-mockery
 
 .PHONY: generate
 generate: $(mockery) clean-generated
@@ -210,7 +219,7 @@ scenario-test-node: vendor-chaincode build-scenario-node $(fabric_ca_client) set
 		npm test
 
 .PHONY: scenario-test-node-no-hsm
-scenario-test-node-no-hsm: vendor-chaincode build-scenario-node $(fabric_ca_client)
+scenario-test-node-no-hsm: vendor-chaincode build-scenario-node
 	cd '$(scenario_dir)/node' && \
 		npm run test:no-hsm
 
@@ -237,11 +246,14 @@ pull-docker-images:
 	docker tag 'ghcr.io/hyperledger/fabric-ca:$(CA_VERSION)' 'hyperledger/fabric-ca:$(CA_VERSION)'
 
 .PHONY: install-fabric-ca-client
-install-fabric-ca-client:
-	go install -tags pkcs11 github.com/hyperledger/fabric-ca/cmd/fabric-ca-client@latest
+install-fabric-ca-client: uninstall-fabric-ca-client $(fabric_ca_client)
+
+.PHONY: uninstall-fabric-ca-client
+uninstall-fabric-ca-client:	
+	rm -f '$(fabric_ca_client)'
 
 $(fabric_ca_client):
-	$(MAKE) install-fabric-ca-client
+	go install -tags pkcs11 github.com/hyperledger/fabric-ca/cmd/fabric-ca-client@latest
 
 .PHONY: setup-softhsm
 setup-softhsm:
