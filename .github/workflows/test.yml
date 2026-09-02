@@ -35,6 +35,8 @@ jobs:
           go-version: stable
       - name: Generate mocks
         run: make generate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: golangci-lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
@@ -66,6 +68,8 @@ jobs:
           TMPDIR: ${{ runner.temp }}
       - name: Generate mocks
         run: make generate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run unit tests
         run: make unit-test-go-pkcs11
       - name: Coverage report
@@ -107,6 +111,8 @@ jobs:
           TMPDIR: ${{ runner.temp }}
       - name: Generate mocks
         run: make generate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Pull Docker images
         run: make pull-docker-images
       - name: Run scenario tests
