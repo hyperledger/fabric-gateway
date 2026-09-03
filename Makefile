@@ -42,6 +42,9 @@ ifneq (, $(shell command -v mvnd 2>/dev/null))
 	maven := mvnd
 endif
 
+# If GH_TOKEN environment variable is set, use it as the GitHub API auth token
+gh_api_auth := $(if $(GH_TOKEN),--header 'Authorization: Bearer $(GH_TOKEN)',)
+
 # These should match names in Docker .env file
 export FABRIC_VERSION ?= 2.5
 export NODEENV_VERSION ?= 2.5
@@ -108,7 +111,7 @@ uninstall-golangci-lint:
 	rm -f '$(golangci_lint)'
 
 $(golangci_lint):
-	curl --fail --location --show-error --silent \
+	curl --fail --location --show-error --silent $(gh_api_auth) \
 		https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
 		| sh -s -- -b '$(go_bin_dir)'
 
@@ -140,7 +143,7 @@ uninstall-osv-scanner:
 	rm -f '$(osv_scanner)'
 
 $(osv_scanner):
-	curl --fail --location --show-error --silent --output '$(osv_scanner)' \
+	curl --fail --location --show-error --silent $(gh_api_auth) --output '$(osv_scanner)' \
     	'https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_$(lowercase_kernel_name)_$(amd_arm_machine_hardware)'
 	chmod u+x '$(osv_scanner)'
 
@@ -183,8 +186,10 @@ install-mockery: uninstall-mockery $(mockery)
 uninstall-mockery:
 	rm -f '$(mockery)'
 
+# Silent to prevent printing of auth token
+.SILENT: $(mockery)
 $(mockery):
-	mockery_version=$$(curl --fail --show-error --silent https://api.github.com/repos/vektra/mockery/releases/latest | jq --raw-output .tag_name) && \
+	mockery_version=$$(curl --fail --show-error --silent $(gh_api_auth) https://api.github.com/repos/vektra/mockery/releases/latest | jq --raw-output .tag_name) && \
 		curl --fail --location --show-error --silent \
 			"https://github.com/vektra/mockery/releases/download/$${mockery_version}/mockery_$${mockery_version#v}_$(kernel_name)_$(machine_hardware).tar.gz" \
 			| tar -C '$(go_bin_dir)' -xzf - mockery
