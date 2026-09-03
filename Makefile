@@ -10,15 +10,15 @@ go_dir := $(base_dir)/pkg
 node_dir := $(base_dir)/node
 java_dir := $(base_dir)/java
 scenario_dir := $(base_dir)/scenario
+bin_dir := $(base_dir)/.bin
 
-go_bin_dir := $(shell go env GOPATH)/bin
 python_venv_dir := $(base_dir)/.venv
 python_venv_activate := $(python_venv_dir)/bin/activate
 
-golangci_lint := $(go_bin_dir)/golangci-lint
-osv_scanner := $(go_bin_dir)/osv-scanner
-mockery := $(go_bin_dir)/mockery
-fabric_ca_client := $(go_bin_dir)/fabric-ca-client
+golangci_lint := $(bin_dir)/golangci-lint
+osv_scanner := $(bin_dir)/osv-scanner
+mockery := $(bin_dir)/mockery
+fabric_ca_client := $(bin_dir)/fabric-ca-client
 
 kernel_name := $(shell uname -s)
 lowercase_kernel_name := $(shell echo '$(kernel_name)' | tr '[:upper:]' '[:lower:]')
@@ -44,6 +44,8 @@ endif
 
 # If GH_TOKEN environment variable is set, use it as the GitHub API auth token
 gh_api_auth := $(if $(GH_TOKEN),--header 'Authorization: Bearer $(GH_TOKEN)',)
+
+OSV_SCANNER_ARGS ?=
 
 # These should match names in Docker .env file
 export FABRIC_VERSION ?= 2.5
@@ -113,11 +115,11 @@ uninstall-golangci-lint:
 $(golangci_lint):
 	curl --fail --location --show-error --silent $(gh_api_auth) \
 		https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
-		| sh -s -- -b '$(go_bin_dir)'
+		| sh -s -- -b '$(dir $(golangci_lint))'
 
 .PHONY: golangci-lint
 golangci-lint: $(golangci_lint)
-	golangci-lint run
+	$(golangci-lint) run
 
 .PHONY: scan
 scan: scan-go scan-node scan-java
@@ -151,7 +153,7 @@ $(osv_scanner):
 scan-go-osv-scanner: $(osv_scanner)
 	echo "GoVersionOverride = '$$(go env GOVERSION | sed -e 's/^go//' -e 's/-.*//')'" > '$(TMPDIR)/osv-scanner.toml' && \
 		if [ -r '$(base_dir)/osv-scanner.toml' ]; then cat '$(base_dir)/osv-scanner.toml' >> '$(TMPDIR)/osv-scanner.toml'; fi && \
-		osv-scanner scan source --config='$(TMPDIR)/osv-scanner.toml' --lockfile='$(base_dir)/go.mod'
+		$(osv_scanner) scan source --config='$(TMPDIR)/osv-scanner.toml' --lockfile='$(base_dir)/go.mod' $(OSV_SCANNER_ARGS)
 
 .PHONY: scan-node
 scan-node: scan-node-osv-scanner
@@ -165,7 +167,7 @@ scan-node-npm-audit:
 scan-node-osv-scanner: $(osv_scanner)
 	cd '$(node_dir)' && \
 		npm sbom --omit=dev --package-lock-only --sbom-format cyclonedx > bom.cdx.json && \
-		osv-scanner scan source --lockfile=bom.cdx.json
+		$(osv_scanner) scan source --lockfile=bom.cdx.json $(OSV_SCANNER_ARGS)
 
 .PHONY: scan-java
 scan-java: scan-java-osv-scanner
@@ -177,7 +179,7 @@ scan-java-dependency-check:
 
 .PHONY: scan-java-osv-scanner
 scan-java-osv-scanner: $(osv_scanner)
-	osv-scanner scan source --lockfile='$(java_dir)/pom.xml'
+	$(osv_scanner) scan source --lockfile='$(java_dir)/pom.xml' $(OSV_SCANNER_ARGS)
 
 .PHONY: install-mockery
 install-mockery: uninstall-mockery $(mockery)
@@ -192,12 +194,12 @@ $(mockery):
 	mockery_version=$$(curl --fail --show-error --silent $(gh_api_auth) https://api.github.com/repos/vektra/mockery/releases/latest | jq --raw-output .tag_name) && \
 		curl --fail --location --show-error --silent \
 			"https://github.com/vektra/mockery/releases/download/$${mockery_version}/mockery_$${mockery_version#v}_$(kernel_name)_$(machine_hardware).tar.gz" \
-			| tar -C '$(go_bin_dir)' -xzf - mockery
+			| tar -C '$(dir $(mockery))' -xzf - mockery
 	chmod u+x '$(mockery)'
 
 .PHONY: generate
 generate: $(mockery) clean-generated
-	cd '$(base_dir)' && mockery
+	cd '$(base_dir)' && $(mockery)
 
 .PHONY: vendor-chaincode
 vendor-chaincode:
@@ -257,6 +259,7 @@ uninstall-fabric-ca-client:
 
 $(fabric_ca_client):
 	go install -tags pkcs11 github.com/hyperledger/fabric-ca/cmd/fabric-ca-client@latest
+	cp -f $(shell go env GOBIN)/fabric-ca-client $(fabric_ca_client)
 
 .PHONY: setup-softhsm
 setup-softhsm:
