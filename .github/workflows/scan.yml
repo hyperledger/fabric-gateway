@@ -42,27 +42,19 @@ jobs:
           cache: false
       - name: Create OSV-Scanner configuration
         run: |
-          echo "GoVersionOverride = '${{ steps.setup-go.outputs.go-version }}'" > src/osv-scanner-config.toml
           if [ -r latest/osv-scanner.toml ]; then
-              cat latest/osv-scanner.toml >> src/osv-scanner-config.toml
-          elif [ -r src/osv-scanner.toml ]; then
-              cat src/osv-scanner.toml >> src/osv-scanner-config.toml
+              cp -f latest/osv-scanner.toml src/osv-scanner.toml
           fi
       - name: Scan
         id: scan-go
-        run: |
-          docker run --rm \
-            --volume './src/:/src' \
-            ghcr.io/google/osv-scanner:latest \
-            scan source \
-            --config=/src/osv-scanner-config.toml \
-            --lockfile=/src/go.mod \
-            --format=markdown \
-            --output-file=/src/osv-scanner.md
+        working-directory: src
+        run: make scan-go
+        env:
+          OSV_SCANNER_ARGS: --format=markdown --output-file=${{ github.workspace }}/osv-scanner.md
       - name: Report failure
         if: ${{ failure() && steps.scan-go.conclusion == 'failure' }}
         run: |
-          cat src/osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
+          cat osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
 
   node:
     runs-on: ubuntu-latest
@@ -89,25 +81,16 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "lts/*"
-      - name: Create BOM
-        working-directory: src/node
-        run: |
-          npm update --omit=dev
-          npm sbom --omit=dev --package-lock-only --sbom-format cyclonedx > bom.cdx.json
       - name: Scan
         id: scan-node
-        run: |
-          docker run --rm \
-            --volume './src/:/src' \
-            ghcr.io/google/osv-scanner:latest \
-            scan source \
-            --lockfile=/src/node/bom.cdx.json \
-            --format=markdown \
-            --output-file=/src/osv-scanner.md
+        working-directory: src
+        run: make scan-node
+        env:
+          OSV_SCANNER_ARGS: --format=markdown --output-file=${{ github.workspace }}/osv-scanner.md
       - name: Report failure
         if: ${{ failure() && steps.scan-node.conclusion == 'failure' }}
         run: |
-          cat src/osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
+          cat osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
 
   java:
     runs-on: ubuntu-latest
@@ -132,15 +115,11 @@ jobs:
           fi
       - name: Scan
         id: scan-java
-        run: |
-          docker run --rm \
-            --volume './src/:/src' \
-            ghcr.io/google/osv-scanner:latest \
-            scan source \
-            --lockfile=/src/java/pom.xml \
-            --format=markdown \
-            --output-file=/src/osv-scanner.md
+        working-directory: src
+        run: make scan-java
+        env:
+          OSV_SCANNER_ARGS: --format=markdown --output-file=${{ github.workspace }}/osv-scanner.md
       - name: Report failure
         if: ${{ failure() && steps.scan-java.conclusion == 'failure' }}
         run: |
-          cat src/osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
+          cat osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
