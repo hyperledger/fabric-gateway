@@ -113,7 +113,7 @@ uninstall-golangci-lint:
 	rm -f '$(golangci_lint)'
 
 $(golangci_lint):
-	curl --fail --location --show-error --silent $(gh_api_auth) \
+	curl --fail --location --show-error --silent \
 		https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
 		| sh -s -- -b '$(dir $(golangci_lint))'
 
@@ -145,7 +145,7 @@ uninstall-osv-scanner:
 	rm -f '$(osv_scanner)'
 
 $(osv_scanner):
-	curl --fail --location --show-error --silent $(gh_api_auth) --output '$(osv_scanner)' \
+	curl --fail --location --show-error --silent --output '$(osv_scanner)' \
     	'https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_$(lowercase_kernel_name)_$(amd_arm_machine_hardware)'
 	chmod u+x '$(osv_scanner)'
 
@@ -191,7 +191,7 @@ uninstall-mockery:
 # Silent to prevent printing of auth token
 .SILENT: $(mockery)
 $(mockery):
-	mockery_version=$$(curl --fail --show-error --silent $(gh_api_auth) https://api.github.com/repos/vektra/mockery/releases/latest | jq --raw-output .tag_name) && \
+	mockery_version=$$(curl --fail --show-error --silent $(gh_api_auth) https://api.github.com/repos/vektra/mockery/releases | jq --raw-output '.[].tag_name' | sort --version-sort | tail -1) && \
 		curl --fail --location --show-error --silent \
 			"https://github.com/vektra/mockery/releases/download/$${mockery_version}/mockery_$${mockery_version#v}_$(kernel_name)_$(machine_hardware).tar.gz" \
 			| tar -C '$(dir $(mockery))' -xzf - mockery
