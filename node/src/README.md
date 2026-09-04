@@ -10,6 +10,13 @@ Client applications interact with the blockchain network using a Fabric Gateway.
 
 gRPC connections to a Fabric Gateway may be shared by all `Gateway` instances interacting with that Fabric Gateway.
 
+### gRPC client recommendations
+
+Create the gRPC client with the endpoint and TLS credentials for the Gateway service. The endpoint must include the host and port of the Gateway service, for example `gateway.example.org:1337`. Do not append a URL scheme such as `https://` to the endpoint passed to `grpc.Client`.
+
+Keep the gRPC client open for as long as the application needs to use the Gateway. Close both the `Gateway` and the gRPC client during shutdown. A connection failure usually indicates an unreachable or incorrectly configured endpoint. Check the host, port, TLS root certificate, and network routing before retrying the application request.
+
+
 ## Example
 
 The following complete example shows how to connect to a Fabric network, submit a transaction and query the ledger state using an instantiated smart contract.
