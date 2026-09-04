@@ -1,3 +1,11 @@
 [[IgnoredVulns]]
 id = "CVE-2026-41242"
 reason = "Client API uses pre-compiled protobuf bindings and this vulnerability affects on-the-fly compilation"
+
+[[IgnoredVulns]]
+id = "CVE-2026-54269"
+reason = "Client API uses pre-compiled protobuf bindings and this vulnerability affects on-the-fly compilation of untrusted schemas"
+
+[[IgnoredVulns]]
+id = "CVE-2026-59877"
+reason = "Client API uses pre-compiled protobuf bindings and this vulnerability affects on-the-fly compilation of untrusted schemas"
