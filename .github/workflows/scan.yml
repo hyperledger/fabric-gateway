@@ -18,108 +18,55 @@ permissions:
   contents: read
 
 jobs:
-  go:
+  scan:
+    name: Scan ${{ matrix.lang }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - lang: go
+            config: osv-scanner.toml
+          - lang: node
+            config: node/osv-scanner.toml
+          - lang: java
+            config: java/osv-scanner.toml
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: src
           ref: ${{ inputs.ref }}
-      - name: Checkout latest OSV Scanner configuration
-        if: ${{ inputs.latest-config && inputs.ref }}
+      - name: Checkout latest
+        if: ${{ inputs.latest-config || inputs.ref }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: latest
           sparse-checkout: |
-            osv-scanner.toml
+            Makefile
+            ${{ matrix.config }}
           sparse-checkout-cone-mode: false
-      - name: Set up Go
-        id: setup-go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version: stable
-          check-latest: true
-          cache: false
-      - name: Create OSV-Scanner configuration
+      - name: Set up scan
+        if: ${{ inputs.ref }}
         run: |
-          if [ -r latest/osv-scanner.toml ]; then
-              cp -f latest/osv-scanner.toml src/osv-scanner.toml
-          fi
-      - name: Scan
-        id: scan-go
-        working-directory: src
-        run: make scan-go
-        env:
-          OSV_SCANNER_ARGS: --format=markdown --output-file=${{ github.workspace }}/osv-scanner.md
-      - name: Report failure
-        if: ${{ failure() && steps.scan-go.conclusion == 'failure' }}
-        run: |
-          cat osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
-
-  node:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          path: src
-          ref: ${{ inputs.ref }}
-      - name: Checkout latest OSV Scanner configuration
-        if: ${{ inputs.latest-config && inputs.ref }}
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          path: latest
-          sparse-checkout: |
-            node/osv-scanner.toml
-          sparse-checkout-cone-mode: false
+          cp -f latest/Makefile src/Makefile
       - name: Use latest OSV-Scanner configuration
-        if: ${{ inputs.latest-config && inputs.ref }}
+        if: ${{ inputs.latest-config }}
         run: |
-          if [ -r latest/node/osv-scanner.toml ]; then
-              cp -f latest/node/osv-scanner.toml src/node/osv-scanner.toml
+          if [ -r latest/${{ matrix.config }} ]; then
+              cp -f latest/${{ matrix.config }} src/${{ matrix.config }}
           fi
       - name: Set up Node
+        if: ${{ matrix.lang == 'node' }}
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "lts/*"
       - name: Scan
-        id: scan-node
+        id: scan
         working-directory: src
-        run: make scan-node
+        run: make scan-${{ matrix.lang }}
         env:
           OSV_SCANNER_ARGS: --format=markdown --output-file=${{ github.workspace }}/osv-scanner.md
       - name: Report failure
-        if: ${{ failure() && steps.scan-node.conclusion == 'failure' }}
-        run: |
-          cat osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
-
-  java:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          path: src
-          ref: ${{ inputs.ref }}
-      - name: Checkout latest OSV Scanner configuration
-        if: ${{ inputs.latest-config && inputs.ref }}
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          path: latest
-          sparse-checkout: |
-            java/osv-scanner.toml
-          sparse-checkout-cone-mode: false
-      - name: Use latest OSV-Scanner configuration
-        if: ${{ inputs.latest-config && inputs.ref }}
-        run: |
-          if [ -r latest/java/osv-scanner.toml ]; then
-              cp -f latest/java/osv-scanner.toml src/java/osv-scanner.toml
-          fi
-      - name: Scan
-        id: scan-java
-        working-directory: src
-        run: make scan-java
-        env:
-          OSV_SCANNER_ARGS: --format=markdown --output-file=${{ github.workspace }}/osv-scanner.md
-      - name: Report failure
-        if: ${{ failure() && steps.scan-java.conclusion == 'failure' }}
+        if: ${{ failure() && steps.scan.conclusion == 'failure' }}
         run: |
           cat osv-scanner.md >> ${GITHUB_STEP_SUMMARY}
