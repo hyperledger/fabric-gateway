@@ -1,5 +1,6 @@
 .idea/
 .vscode/
+.bin/
 bin/
 cover.out
 fabric-protos/
