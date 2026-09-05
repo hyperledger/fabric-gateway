@@ -32,10 +32,10 @@
         "cucumber-console-formatter": "^1.0.0",
         "eslint": "^10.9.1",
         "eslint-config-prettier": "^10.1.2",
-        "expect": "^30.4.1",
+        "expect": "^30.5.1",
         "prettier": "^3.9.6",
         "typescript": "npm:@typescript/typescript6@~6.0.3",
-        "typescript-eslint": "^8.68.0"
+        "typescript-eslint": "^8.69.0"
     },
     "allowScripts": {
         "pkcs11js": true,
