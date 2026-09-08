@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { common, peer } from '@hyperledger/fabric-protos';
+import { common, gateway, peer } from '@hyperledger/fabric-protos';
 import {
     BlockAndPrivateDataEventsBuilder,
     BlockEventsBuilder,
@@ -18,6 +18,7 @@ import { ChaincodeEventsBuilder, ChaincodeEventsOptions } from './chaincodeevent
 import { ChaincodeEventsRequest } from './chaincodeeventsrequest';
 import { CloseableAsyncIterable, GatewayClient } from './client';
 import { Contract, ContractImpl } from './contract';
+import { Commit, CommitImpl } from './commit';
 import { SigningIdentity } from './signingidentity';
 
 /**
@@ -199,6 +200,20 @@ export interface Network {
      * @param options - Event listening options.
      */
     newBlockAndPrivateDataEventsRequest(options?: BlockEventsOptions): BlockAndPrivateDataEventsRequest;
+
+        /**
+     * Create a Commit object representing a transaction that has already been committed to the ledger.
+     * The transaction content can be accessed using the Commit object. This method is particularly useful
+     * for querying transaction status and details after the transaction has been committed.
+     * @param transactionId - A transaction ID.
+     * @returns A Commit object for the specified transaction.
+     * @example
+     * ```typescript
+     * const commit = network.newCommit(transactionId);
+     * const status = await commit.getStatus();
+     * ```
+     */
+    newCommit(transactionId: string): Commit;
 }
 
 export interface NetworkOptions {
@@ -287,6 +302,29 @@ export class NetworkImpl implements Network {
         return new BlockAndPrivateDataEventsBuilder(builderOptions).build();
     }
 
+    newCommit(transactionId: string): Commit {
+        const signedRequest = this.#newSignedCommitStatusRequest(transactionId);
+        return new CommitImpl({
+            client: this.#client,
+            signingIdentity: this.#signingIdentity,
+            transactionId,
+            signedRequest,
+        });
+    }
+
+    #newSignedCommitStatusRequest(transactionId: string): gateway.SignedCommitStatusRequest {
+        const result = new gateway.SignedCommitStatusRequest();
+        result.setRequest(this.#newCommitStatusRequest(transactionId).serializeBinary());
+        return result;
+    }
+
+    #newCommitStatusRequest(transactionId: string): gateway.CommitStatusRequest {
+        const result = new gateway.CommitStatusRequest();
+        result.setChannelId(this.#channelName);
+        result.setTransactionId(transactionId);
+        result.setIdentity(this.#signingIdentity.getCreator());
+        return result;
+    }
     #newBlockEventsBuilderOptions(options: Readonly<BlockEventsOptions>): BlockEventsBuilderOptions {
         return Object.assign({}, options, {
             channelName: this.#channelName,
