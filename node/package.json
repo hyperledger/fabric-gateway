@@ -50,19 +50,19 @@
     "devDependencies": {
         "@eslint/eslintrc": "^3.3.7",
         "@eslint/js": "^10.0.1",
-        "@jest/globals": "^30.5.1",
+        "@jest/globals": "^30.5.2",
         "@tsconfig/node22": "^22.0.6",
         "@types/google-protobuf": "^3.15.12",
-        "@types/node": "^22.20.3",
+        "@types/node": "^22.20.4",
         "@typescript/native": "npm:typescript@~7.0.2",
-        "eslint": "^10.10.0",
+        "eslint": "^10.11.0",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-jest": "^29.16.6",
-        "jest": "^30.5.1",
-        "prettier": "^3.9.6",
+        "jest": "^30.5.2",
+        "prettier": "^3.9.8",
         "ts-jest": "^29.4.12",
         "typedoc": "^0.28.20",
         "typescript": "npm:@typescript/typescript6@~6.0.3",
-        "typescript-eslint": "^8.70.0"
+        "typescript-eslint": "^8.70.1"
     }
 }
