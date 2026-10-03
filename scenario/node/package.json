@@ -33,9 +33,9 @@
         "eslint": "^10.11.0",
         "eslint-config-prettier": "^10.1.2",
         "expect": "^30.5.2",
-        "prettier": "^3.9.8",
+        "prettier": "^3.9.9",
         "typescript": "npm:@typescript/typescript6@~6.0.3",
-        "typescript-eslint": "^8.70.1"
+        "typescript-eslint": "^8.71.0"
     },
     "allowScripts": {
         "pkcs11js": true,
