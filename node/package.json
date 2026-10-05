@@ -23,7 +23,8 @@
         "fsevents": true,
         "pkcs11js": true,
         "protobufjs": false,
-        "unrs-resolver": false
+        "unrs-resolver": false,
+        "@parcel/watcher": true
     },
     "scripts": {
         "build": "npm run clean && npm run compile && npm run copy-non-ts-source",
@@ -62,7 +63,7 @@
         "prettier": "^3.9.9",
         "ts-jest": "^29.4.14",
         "typedoc": "^0.28.20",
-        "typescript": "npm:@typescript/typescript6@~6.0.3",
+        "typescript": "npm:@typescript/typescript6@~6.0.2",
         "typescript-eslint": "^8.71.0"
     }
 }
