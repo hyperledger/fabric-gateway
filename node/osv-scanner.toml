@@ -9,3 +9,11 @@ reason = "Client API uses pre-compiled protobuf bindings and this vulnerability 
 [[IgnoredVulns]]
 id = "CVE-2026-59877"
 reason = "Client API uses pre-compiled protobuf bindings and this vulnerability affects on-the-fly compilation of untrusted schemas"
+
+[[IgnoredVulns]]
+id = "CVE-2026-101915"
+reason = "Affects only gRPC servers, not client applications"
+
+[[IgnoredVulns]]
+id = "CVE-2026-101916"
+reason = "Affects only gRPC servers, not client applications"
