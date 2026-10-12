@@ -40,7 +40,7 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@grpc/grpc-js": "^1.14.0",
+        "@grpc/grpc-js": "^1.14.6",
         "@hyperledger/fabric-protos": "^0.3.0",
         "@noble/curves": "^2.2.0",
         "google-protobuf": "^3.21.0"
