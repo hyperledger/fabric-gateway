@@ -1,10 +1,20 @@
 {
     "name": "Ubuntu",
-    "image": "mcr.microsoft.com/devcontainers/universal:noble",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu26.04",
     "features": {
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+        "ghcr.io/devcontainers/features/go:1": {
+            "installGoTools": false
+        },
+        "ghcr.io/devcontainers/features/node:2": {},
+        "ghcr.io/devcontainers/features/java:1": {
+            "version": "25",
+            "jdkDistro": "tem",
+            "installMaven": true
+        },
+        "ghcr.io/devcontainers-extra/features/shellcheck:1": {},
         "ghcr.io/devcontainers-extra/features/apt-get-packages:1": {
-            "packages": "shellcheck,softhsm2"
+            "packages": "softhsm2"
         }
     },
     "customizations": {

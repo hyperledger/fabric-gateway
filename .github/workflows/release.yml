@@ -15,7 +15,7 @@ jobs:
   publish-node-github:
     needs: verify-versions
     name: Publish Node package to GitHub Packages
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
       packages: write
@@ -39,7 +39,7 @@ jobs:
   publish-node-npmjs:
     needs: verify-versions
     name: Publish Node package to npm registry
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
       id-token: write # Required for OIDC
@@ -58,7 +58,7 @@ jobs:
   publish-java-github:
     needs: verify-versions
     name: Publish Java artifact to GitHub Packages
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
       packages: write
@@ -80,7 +80,7 @@ jobs:
   publish-java-central:
     needs: verify-versions
     name: Publish Java artifact to Maven Central
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1

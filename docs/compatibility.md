@@ -10,4 +10,4 @@ The following table shows versions of Fabric, programming language runtimes, and
 | **Go**       | 1.26, 1.27   | 1.26, 1.27        |
 | **Node**     | 22, 24, 26   | 22, 24, 26        |
 | **Java**     | 17, 21, 25   | 8, 11, 17, 21, 25 |
-| **Platform** | Ubuntu 24.04 |                   |
+| **Platform** | Ubuntu 26.04 |                   |
