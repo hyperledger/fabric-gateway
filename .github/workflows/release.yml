@@ -89,8 +89,8 @@ jobs:
           distribution: temurin
           cache: maven
           server-id: central
-          server-username: MAVENCENTRAL_USERNAME
-          server-password: MAVENCENTRAL_PASSWORD
+          server-username-env-var: MAVENCENTRAL_USERNAME
+          server-password-env-var: MAVENCENTRAL_PASSWORD
       - name: Publish
         env:
           MAVENCENTRAL_USERNAME: ${{ secrets.MAVENCENTRAL_USERNAME }}
