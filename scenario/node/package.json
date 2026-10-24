@@ -30,12 +30,12 @@
         "@types/node": "^22.20.5",
         "@typescript/native": "npm:typescript@~7.0.2",
         "cucumber-console-formatter": "^1.0.0",
-        "eslint": "^10.12.0",
+        "eslint": "^10.13.0",
         "eslint-config-prettier": "^10.1.2",
         "expect": "^30.5.2",
-        "prettier": "^3.9.9",
+        "prettier": "^3.9.10",
         "typescript": "npm:@typescript/typescript6@~6.0.3",
-        "typescript-eslint": "^8.71.1"
+        "typescript-eslint": "^8.72.0"
     },
     "allowScripts": {
         "pkcs11js": true,
