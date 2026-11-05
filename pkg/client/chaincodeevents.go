@@ -55,7 +55,9 @@ func (events *ChaincodeEventsRequest) Events(ctx context.Context, opts ...grpc.C
 				return
 			}
 
-			deliverChaincodeEvents(response, results)
+			if !deliverChaincodeEvents(ctx, response, results) {
+				return
+			}
 		}
 	}()
 
@@ -95,14 +97,22 @@ type ChaincodeEvent struct {
 	Payload       []byte
 }
 
-func deliverChaincodeEvents(response *gateway.ChaincodeEventsResponse, send chan<- *ChaincodeEvent) {
+func deliverChaincodeEvents(ctx context.Context, response *gateway.ChaincodeEventsResponse, send chan<- *ChaincodeEvent) bool {
 	for _, event := range response.GetEvents() {
-		send <- &ChaincodeEvent{
+		chaincodeEvent := &ChaincodeEvent{
 			BlockNumber:   response.GetBlockNumber(),
 			TransactionID: event.GetTxId(),
 			ChaincodeName: event.GetChaincodeId(),
 			EventName:     event.GetEventName(),
 			Payload:       event.GetPayload(),
 		}
+
+		select {
+		case send <- chaincodeEvent:
+		case <-ctx.Done():
+			return false
+		}
 	}
+
+	return true
 }

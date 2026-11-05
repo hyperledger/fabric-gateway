@@ -85,7 +85,11 @@ func (events *FilteredBlockEventsRequest) Events(ctx context.Context, opts ...gr
 				return
 			}
 
-			results <- result
+			select {
+			case results <- result:
+			case <-ctx.Done():
+				return
+			}
 		}
 	}()
 
@@ -119,7 +123,11 @@ func (events *BlockEventsRequest) Events(ctx context.Context, opts ...grpc.CallO
 				return
 			}
 
-			results <- result
+			select {
+			case results <- result:
+			case <-ctx.Done():
+				return
+			}
 		}
 	}()
 
@@ -153,7 +161,11 @@ func (events *BlockAndPrivateDataEventsRequest) Events(ctx context.Context, opts
 				return
 			}
 
-			results <- result
+			select {
+			case results <- result:
+			case <-ctx.Done():
+				return
+			}
 		}
 	}()
 

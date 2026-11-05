@@ -4,7 +4,9 @@
 package client
 
 import (
+	"context"
 	"testing"
+	"testing/synctest"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
@@ -105,5 +107,36 @@ func TestBlockEvents(t *testing.T) {
 			actual := <-tester.BlockEvents
 			AssertProtoEqual(t, event, actual)
 		}
+	})
+
+	t.Run("Stops sending events after context is cancelled", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			var responses []*peer.DeliverResponse
+			for blockNumber := range uint64(2) {
+				responses = append(responses, &peer.DeliverResponse{
+					Type: &peer.DeliverResponse_Block{
+						Block: &common.Block{
+							Header: &common.BlockHeader{
+								Number: blockNumber,
+							},
+						},
+					},
+				})
+			}
+
+			tester := NewBlockEventsTest(t)
+			tester.SetResponses(responses...)
+
+			ctx, cancel := context.WithCancel(t.Context())
+
+			err := tester.Events(ctx)
+			require.NoError(t, err)
+
+			<-tester.BlockEvents
+			cancel()
+
+			// Unread events must not block the sending goroutine after the context is cancelled.
+			synctest.Wait()
+		})
 	})
 }
