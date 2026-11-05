@@ -4,7 +4,9 @@
 package client
 
 import (
+	"context"
 	"testing"
+	"testing/synctest"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"github.com/hyperledger/fabric-protos-go-apiv2/ledger/rwset"
@@ -130,5 +132,38 @@ func TestBlockAndPrivateDataEvents(t *testing.T) {
 			actual := <-tester.BlocksAndPrivateData
 			AssertProtoEqual(t, event, actual)
 		}
+	})
+
+	t.Run("Stops sending events after context is cancelled", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			var responses []*peer.DeliverResponse
+			for blockNumber := range uint64(2) {
+				responses = append(responses, &peer.DeliverResponse{
+					Type: &peer.DeliverResponse_BlockAndPrivateData{
+						BlockAndPrivateData: &peer.BlockAndPrivateData{
+							Block: &common.Block{
+								Header: &common.BlockHeader{
+									Number: blockNumber,
+								},
+							},
+						},
+					},
+				})
+			}
+
+			tester := NewBlockAndPrivateDataEventsTest(t)
+			tester.SetResponses(responses...)
+
+			ctx, cancel := context.WithCancel(t.Context())
+
+			err := tester.Events(ctx)
+			require.NoError(t, err)
+
+			<-tester.BlocksAndPrivateData
+			cancel()
+
+			// Unread events must not block the sending goroutine after the context is cancelled.
+			synctest.Wait()
+		})
 	})
 }

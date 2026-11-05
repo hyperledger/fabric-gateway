@@ -4,9 +4,11 @@
 package client
 
 import (
+	"context"
 	"errors"
 	"io"
 	"testing"
+	"testing/synctest"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
@@ -319,5 +321,45 @@ func TestChaincodeEvents(t *testing.T) {
 		require.NoError(t, err, "Events")
 
 		require.Contains(t, <-options, expected, "CallOptions")
+	})
+
+	t.Run("Stops sending events after context is cancelled", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			events := []*ChaincodeEvent{
+				{
+					BlockNumber:   1,
+					ChaincodeName: "CHAINCODE",
+					EventName:     "EVENT_1",
+					TransactionID: "TRANSACTION_ID_1",
+				},
+				{
+					BlockNumber:   1,
+					ChaincodeName: "CHAINCODE",
+					EventName:     "EVENT_2",
+					TransactionID: "TRANSACTION_ID_2",
+				},
+			}
+
+			mockConnection := NewMockClientConnInterface(t)
+			mockStream := NewMockClientStream(t)
+			ExpectChaincodeEvents(mockConnection, WithNewStreamResult(mockStream))
+
+			ExpectSendMsg(mockStream)
+			mockStream.EXPECT().CloseSend().Return(nil)
+			ExpectRecvMsg(mockStream, WithRecvMsgs(newChaincodeEventsResponse(events)))
+
+			ctx, cancel := context.WithCancel(t.Context())
+
+			network := AssertNewTestNetwork(t, "NETWORK", WithClientConnection(mockConnection))
+
+			receive, err := network.ChaincodeEvents(ctx, "CHAINCODE")
+			require.NoError(t, err)
+
+			<-receive
+			cancel()
+
+			// Unread events must not block the sending goroutine after the context is cancelled.
+			synctest.Wait()
+		})
 	})
 }
